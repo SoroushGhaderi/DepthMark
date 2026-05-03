@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Orbit Scenario Signal Map",
+  "type": "object",
+  "required": [
+    "scenario_id",
+    "signal_id",
+    "created_at"
+  ],
+  "properties": {
+    "scenario_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "signal_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": true
+}
+

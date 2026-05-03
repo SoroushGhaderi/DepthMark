@@ -4,6 +4,28 @@
 name: pitchwise_orbit
 
 services:
+  # MongoDB - Stores signal/scenario/template content catalog for Orbit
+  mongodb:
+    image: mongo:8.0
+    container_name: pitchwise_orbit_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-orbit_admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-orbit_pass}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-orbit_content}
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--username", "${MONGODB_USER:-orbit_admin}", "--password", "${MONGODB_PASSWORD:-orbit_pass}", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping').ok"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - football_network
+    restart: unless-stopped
+
   # ClickHouse Database - Stores data for FotMob
   # NOTE: Table creation is handled by the Python script (setup_clickhouse.py)
   # in the scraper container, NOT by ClickHouse's automatic initialization.
@@ -145,6 +167,8 @@ volumes:
   clickhouse_data:
     driver: local
   clickhouse_logs:
+    driver: local
+  mongodb_data:
     driver: local
 
 networks:

@@ -1,0 +1,44 @@
+"""Scenarios repository for Orbit content catalog."""
+
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+from pymongo.collection import Collection
+from pymongo.database import Database
+
+from ..collections import SCENARIOS_COLLECTION
+
+
+def _now_utc() -> datetime:
+    return datetime.now(timezone.utc).replace(microsecond=0)
+
+
+class ScenariosRepository:
+    """CRUD-like operations for scenario documents."""
+
+    def __init__(self, database: Database):
+        self.collection: Collection = database[SCENARIOS_COLLECTION]
+
+    def upsert_scenario(self, scenario_id: str, payload: Dict[str, Any]) -> None:
+        update_doc = {
+            "$set": {
+                **payload,
+                "scenario_id": scenario_id,
+                "updated_at": _now_utc(),
+            },
+            "$setOnInsert": {"created_at": _now_utc()},
+        }
+        self.collection.update_one({"scenario_id": scenario_id}, update_doc, upsert=True)
+
+    def get_scenario(self, scenario_id: str) -> Optional[Dict[str, Any]]:
+        return self.collection.find_one({"scenario_id": scenario_id}, {"_id": 0})
+
+    def list_scenarios(
+        self, status: Optional[str] = None, limit: int = 100
+    ) -> List[Dict[str, Any]]:
+        query: Dict[str, Any] = {}
+        if status:
+            query["status"] = status
+        cursor = self.collection.find(query, {"_id": 0}).sort("updated_at", -1).limit(limit)
+        return list(cursor)
+

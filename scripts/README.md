@@ -30,6 +30,7 @@ Use these for all new documentation, automation, and daily runs:
 - `scripts/ensure_directories.py`
 - `scripts/health_check.py`
 - `scripts/refresh_turnstile.py`
+- `scripts/mongodb/init_indexes.py`
 
 ## Quality Check Scripts
 

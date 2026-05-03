@@ -23,6 +23,7 @@ pyarrow>=14.0.0
 
 # ClickHouse client
 clickhouse-connect>=0.6.0
+pymongo>=4.8.0
 
 # Configuration
 pyyaml>=6.0.1

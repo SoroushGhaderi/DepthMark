@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Orbit Channel Template",
+  "type": "object",
+  "required": [
+    "template_id",
+    "content_type",
+    "channel",
+    "status",
+    "template_body",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "template_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "content_type": {
+      "type": "string",
+      "enum": ["signal", "scenario"]
+    },
+    "channel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "draft", "deprecated"]
+    },
+    "scenario_id": {
+      "type": ["string", "null"]
+    },
+    "signal_id": {
+      "type": ["string", "null"]
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "template_body": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": true
+}
+

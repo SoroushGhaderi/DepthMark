@@ -31,6 +31,7 @@ FotMob API
 - Python 3.11 if running locally outside Docker
 - A valid `FOTMOB_X_MAS_TOKEN`
 - ClickHouse credentials in `.env`
+- MongoDB credentials in `.env` (for content catalog)
 
 ## Quick Start
 
@@ -75,6 +76,11 @@ CLICKHOUSE_HOST=clickhouse
 CLICKHOUSE_PORT=8123
 CLICKHOUSE_USER=fotmob_user
 CLICKHOUSE_PASSWORD=fotmob_pass
+MONGODB_HOST=mongodb
+MONGODB_PORT=27017
+MONGODB_USER=orbit_admin
+MONGODB_PASSWORD=your_mongodb_password_here
+MONGODB_DATABASE=orbit_content
 ```
 
 ### `config.yaml`
@@ -90,12 +96,24 @@ fotmob:
 
 See `DEVELOPMENT_ARCHITECTURE.md` for the full development, architecture, and configuration reference.
 
+### MongoDB code layout
+
+- `src/storage/mongodb/` - client, collection constants, indexes, repositories
+- `schemas/mongodb/` - JSON schemas for content collections
+- `scripts/mongodb/init_indexes.py` - index bootstrap script
+
 ## Running The Code
 
 ### 1. Start infrastructure
 
 ```bash
 docker-compose -f docker/docker-compose.yml up -d
+```
+
+To start only MongoDB (content catalog service):
+
+```bash
+docker-compose -f docker/docker-compose.yml up -d mongodb
 ```
 
 ### 2. Create ClickHouse schema
@@ -112,6 +130,12 @@ Or create one layer at a time:
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/bronze/setup_clickhouse.py
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/silver/setup_clickhouse.py
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/setup_clickhouse_gold.py
+```
+
+### 2.1 Initialize MongoDB content indexes
+
+```bash
+python scripts/mongodb/init_indexes.py
 ```
 
 ### 3. Scrape Bronze files
