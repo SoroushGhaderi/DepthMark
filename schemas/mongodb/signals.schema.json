@@ -4,10 +4,16 @@
   "type": "object",
   "required": [
     "signal_id",
-    "name",
     "status",
+    "entity",
+    "family",
+    "subfamily",
+    "grain",
+    "row_identity",
+    "asset_paths",
+    "frontmatter",
+    "source_path",
     "markdown_body",
-    "channels",
     "created_at",
     "updated_at"
   ],
@@ -16,13 +22,27 @@
       "type": "string",
       "minLength": 3
     },
-    "name": {
-      "type": "string",
-      "minLength": 1
-    },
     "status": {
       "type": "string",
       "enum": ["active", "draft", "deprecated"]
+    },
+    "entity": {
+      "type": "string"
+    },
+    "family": {
+      "type": "string"
+    },
+    "subfamily": {
+      "type": "string"
+    },
+    "grain": {
+      "type": "string"
+    },
+    "headline": {
+      "type": ["string", "null"]
+    },
+    "trigger": {
+      "type": ["string", "null"]
     },
     "tags": {
       "type": "array",
@@ -31,22 +51,23 @@
       },
       "default": []
     },
-    "channels": {
+    "row_identity": {
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "scenario_ids": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "default": []
-    },
-    "metadata": {
+    "asset_paths": {
       "type": "object",
       "additionalProperties": true
+    },
+    "frontmatter": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "source_path": {
+      "type": "string",
+      "minLength": 1
     },
     "markdown_body": {
       "type": "string"
@@ -62,4 +83,3 @@
   },
   "additionalProperties": true
 }
-

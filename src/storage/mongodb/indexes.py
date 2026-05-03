@@ -21,7 +21,10 @@ def ensure_content_catalog_indexes(database: Database) -> Dict[str, List[str]]:
     created[SIGNALS_COLLECTION] = [
         database[SIGNALS_COLLECTION].create_index([("signal_id", ASCENDING)], unique=True),
         database[SIGNALS_COLLECTION].create_index([("status", ASCENDING), ("updated_at", DESCENDING)]),
-        database[SIGNALS_COLLECTION].create_index([("tags", ASCENDING)]),
+        database[SIGNALS_COLLECTION].create_index(
+            [("entity", ASCENDING), ("family", ASCENDING), ("subfamily", ASCENDING), ("grain", ASCENDING)]
+        ),
+        database[SIGNALS_COLLECTION].create_index([("source_path", ASCENDING)]),
     ]
 
     created[SCENARIOS_COLLECTION] = [
@@ -64,4 +67,3 @@ def ensure_content_catalog_indexes(database: Database) -> Dict[str, List[str]]:
     ]
 
     return created
-

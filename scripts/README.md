@@ -31,6 +31,7 @@ Use these for all new documentation, automation, and daily runs:
 - `scripts/health_check.py`
 - `scripts/refresh_turnstile.py`
 - `scripts/mongodb/init_indexes.py`
+- `scripts/mongodb/sync_signal_catalogs.py`
 
 ## Quality Check Scripts
 

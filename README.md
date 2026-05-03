@@ -101,6 +101,32 @@ See `DEVELOPMENT_ARCHITECTURE.md` for the full development, architecture, and co
 - `src/storage/mongodb/` - client, collection constants, indexes, repositories
 - `schemas/mongodb/` - JSON schemas for content collections
 - `scripts/mongodb/init_indexes.py` - index bootstrap script
+- `scripts/mongodb/sync_signal_catalogs.py` - sync signal markdown catalogs to MongoDB
+
+### Signal Catalog Source Of Truth
+
+Signal metadata is authored in markdown frontmatter under:
+
+- `scripts/gold/signal/catalogs/*.md`
+
+The YAML frontmatter block is the authoritative source for signal metadata stored in MongoDB.
+Current required keys expected by the sync script:
+
+- `signal_id`
+- `status`
+- `entity`
+- `family`
+- `subfamily`
+- `grain`
+- `row_identity`
+- `asset_paths`
+
+The sync process stores:
+
+- flattened metadata fields for fast querying
+- full `frontmatter` object for full-fidelity reuse
+- full markdown body in `markdown_body`
+- relative source file path in `source_path`
 
 ## Running The Code
 
@@ -136,6 +162,18 @@ docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/set
 
 ```bash
 python scripts/mongodb/init_indexes.py
+```
+
+### 2.2 Sync signal catalogs into MongoDB
+
+```bash
+python scripts/mongodb/sync_signal_catalogs.py
+```
+
+Dry-run validation (no DB writes):
+
+```bash
+python scripts/mongodb/sync_signal_catalogs.py --dry-run
 ```
 
 ### 3. Scrape Bronze files
