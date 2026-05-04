@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import yaml
+from dotenv import load_dotenv
 
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
@@ -16,6 +17,17 @@ logger = get_logger(__name__)
 
 DEFAULT_CATALOG_DIR = project_root / "scripts" / "gold" / "signal" / "catalogs"
 FRONTMATTER_DELIMITER = "\n---\n"
+
+
+def load_environment() -> None:
+    """Load env vars for local script execution."""
+    env_files = [
+        project_root / ".env",
+        project_root.parent / ".env",
+    ]
+    for env_file in env_files:
+        if env_file.exists():
+            load_dotenv(env_file, override=False)
 
 
 def parse_args() -> argparse.Namespace:
@@ -160,6 +172,7 @@ def sync_signals(catalog_dir: Path, dry_run: bool = False) -> Tuple[int, int]:
 
 
 def main() -> int:
+    load_environment()
     args = parse_args()
     setup_logging(
         name="mongodb_sync_signal_catalogs",

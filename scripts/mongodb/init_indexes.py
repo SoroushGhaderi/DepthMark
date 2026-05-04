@@ -4,6 +4,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
@@ -11,6 +13,17 @@ from src.storage.mongodb import ensure_content_catalog_indexes, get_mongodb_clie
 from src.utils.logging_utils import get_logger, setup_logging
 
 logger = get_logger(__name__)
+
+
+def load_environment() -> None:
+    """Load env vars for local script execution."""
+    env_files = [
+        project_root / ".env",
+        project_root.parent / ".env",
+    ]
+    for env_file in env_files:
+        if env_file.exists():
+            load_dotenv(env_file, override=False)
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,6 +39,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> int:
+    load_environment()
     args = parse_args()
     setup_logging(
         name="mongodb_init_indexes",
@@ -56,4 +70,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
