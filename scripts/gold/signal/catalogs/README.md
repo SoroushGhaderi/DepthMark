@@ -23,6 +23,8 @@ Use `asset_binding.overrides` only when a signal breaks the default convention.
 
 | Signal ID | Entity | Family | Subfamily | Grain | Status | Catalog |
 |---|---|---|---|---|---|---|
+| `sig_match_discipline_cards_battle_of_attrition` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_battle_of_attrition.md](sig_match_discipline_cards_battle_of_attrition.md) |
+| `sig_match_discipline_cards_referee_strictness` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_strictness.md](sig_match_discipline_cards_referee_strictness.md) |
 | `sig_match_possession_passing_dead_zone_game` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_dead_zone_game.md](sig_match_possession_passing_dead_zone_game.md) |
 | `sig_match_possession_passing_dribble_fest` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_dribble_fest.md](sig_match_possession_passing_dribble_fest.md) |
 | `sig_match_possession_passing_heavy_rotation` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_heavy_rotation.md](sig_match_possession_passing_heavy_rotation.md) |
@@ -67,6 +69,7 @@ Use `asset_binding.overrides` only when a signal breaks the default convention.
 | `sig_team_possession_passing_territorial_dominance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_territorial_dominance.md](sig_team_possession_passing_territorial_dominance.md) |
 | `sig_team_possession_passing_vertical_imbalance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_vertical_imbalance.md](sig_team_possession_passing_vertical_imbalance.md) |
 | `sig_team_discipline_cards_collective_aggression` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_collective_aggression.md](sig_team_discipline_cards_collective_aggression.md) |
+| `sig_team_discipline_cards_aggression_spike` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_aggression_spike.md](sig_team_discipline_cards_aggression_spike.md) |
 | `sig_team_discipline_cards_early_warning` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_early_warning.md](sig_team_discipline_cards_early_warning.md) |
 | `sig_team_discipline_cards_half_time_talk_fail` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_half_time_talk_fail.md](sig_team_discipline_cards_half_time_talk_fail.md) |
 | `sig_team_discipline_cards_frustration_peak` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_frustration_peak.md](sig_team_discipline_cards_frustration_peak.md) |
@@ -74,7 +77,10 @@ Use `asset_binding.overrides` only when a signal breaks the default convention.
 | `sig_team_discipline_cards_clean_discipline` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_clean_discipline.md](sig_team_discipline_cards_clean_discipline.md) |
 | `sig_team_discipline_cards_discipline_meltdown` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_discipline_meltdown.md](sig_team_discipline_cards_discipline_meltdown.md) |
 | `sig_team_discipline_cards_man_down_resilience` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_man_down_resilience.md](sig_team_discipline_cards_man_down_resilience.md) |
+| `sig_team_discipline_cards_systematic_fouling` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_systematic_fouling.md](sig_team_discipline_cards_systematic_fouling.md) |
+| `sig_team_discipline_cards_man_advantage_collapse` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_man_advantage_collapse.md](sig_team_discipline_cards_man_advantage_collapse.md) |
 | `sig_team_discipline_cards_penalty_prone` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_penalty_prone.md](sig_team_discipline_cards_penalty_prone.md) |
+| `sig_team_discipline_cards_away_hostility` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_away_hostility.md](sig_team_discipline_cards_away_hostility.md) |
 | `sig_player_discipline_cards_early_bath` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_early_bath.md](sig_player_discipline_cards_early_bath.md) |
 | `sig_player_discipline_cards_late_red_drama` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_late_red_drama.md](sig_player_discipline_cards_late_red_drama.md) |
 | `sig_player_discipline_cards_captain_reprimand` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_captain_reprimand.md](sig_player_discipline_cards_captain_reprimand.md) |
