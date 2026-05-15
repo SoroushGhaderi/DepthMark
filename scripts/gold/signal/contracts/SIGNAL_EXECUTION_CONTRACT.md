@@ -102,7 +102,9 @@ Recommended focused checks:
 
 ## Git Commit Policy
 
-A per-signal commit is mandatory. The commit MUST be created only after all 5 package parts are complete and consistent. Do not create partial commits. Do not move to unrelated work before this commit exists.
+A per-signal commit is mandatory. The commit MUST be created only after all 5 package parts are complete and consistent.
+Each individual newly created signal MUST be committed separately; do not batch multiple new signals into one commit.
+Do not create partial commits. Do not move to unrelated work before this commit exists.
 
 ### Completion Checklist (verify before committing)
 

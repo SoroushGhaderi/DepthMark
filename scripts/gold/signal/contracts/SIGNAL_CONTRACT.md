@@ -43,5 +43,6 @@ See `SIGNAL_EXECUTION_CONTRACT.md` § Naming and Consistency Contract.
 
 ## Git Commit Policy (summary)
 
-Each signal MUST be committed as one complete per-signal commit after all 5 package parts are done.
+Each individual signal MUST be committed as exactly one complete per-signal commit immediately after that signal's 5 package parts are done.
+Multiple newly created signals MUST NOT be batched in one commit.
 No partial commits. See `SIGNAL_EXECUTION_CONTRACT.md` § Git Commit Policy for the checklist and commit message templates.
