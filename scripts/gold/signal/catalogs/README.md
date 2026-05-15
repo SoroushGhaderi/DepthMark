@@ -82,6 +82,7 @@ Use `asset_binding.overrides` only when a signal breaks the default convention.
 | `sig_team_possession_passing_vertical_imbalance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_vertical_imbalance.md](sig_team_possession_passing_vertical_imbalance.md) |
 | `sig_team_discipline_cards_collective_aggression` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_collective_aggression.md](sig_team_discipline_cards_collective_aggression.md) |
 | `sig_team_discipline_cards_aggression_spike` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_aggression_spike.md](sig_team_discipline_cards_aggression_spike.md) |
+| `sig_team_discipline_cards_aggression_drop_off` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_aggression_drop_off.md](sig_team_discipline_cards_aggression_drop_off.md) |
 | `sig_team_discipline_cards_early_warning` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_early_warning.md](sig_team_discipline_cards_early_warning.md) |
 | `sig_team_discipline_cards_first_half_frenzy` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_first_half_frenzy.md](sig_team_discipline_cards_first_half_frenzy.md) |
 | `sig_team_discipline_cards_the_triple_booking` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_the_triple_booking.md](sig_team_discipline_cards_the_triple_booking.md) |
