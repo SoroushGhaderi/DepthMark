@@ -105,6 +105,8 @@ Recommended focused checks:
 A per-signal commit is mandatory. The commit MUST be created only after all 5 package parts are complete and consistent.
 Each individual newly created signal MUST be committed separately; do not batch multiple new signals into one commit.
 Do not create partial commits. Do not move to unrelated work before this commit exists.
+For agent-driven workflows, the agent MUST create this per-signal commit immediately after the package is complete and checks pass, without waiting for a separate user reminder to commit.
+If the commit cannot be created (for example permissions, conflicts, or policy constraints), work MUST pause and the blocker MUST be reported explicitly before any unrelated changes continue.
 
 ### Completion Checklist (verify before committing)
 
