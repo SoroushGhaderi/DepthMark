@@ -43,6 +43,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_discipline_cards_asymmetric_fouls` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_asymmetric_fouls.md](sig_match_discipline_cards_asymmetric_fouls.md) |
 | `sig_match_discipline_cards_foul_parity` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_parity.md](sig_match_discipline_cards_foul_parity.md) |
 | `sig_match_discipline_cards_foul_heavy_stalemate` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_heavy_stalemate.md](sig_match_discipline_cards_foul_heavy_stalemate.md) |
+| `sig_match_discipline_cards_stop_start_hell` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_stop_start_hell.md](sig_match_discipline_cards_stop_start_hell.md) |
 | `sig_match_possession_passing_dead_zone_game` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_dead_zone_game.md](sig_match_possession_passing_dead_zone_game.md) |
 | `sig_match_possession_passing_dribble_fest` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_dribble_fest.md](sig_match_possession_passing_dribble_fest.md) |
 | `sig_match_possession_passing_heavy_rotation` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_heavy_rotation.md](sig_match_possession_passing_heavy_rotation.md) |
