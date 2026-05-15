@@ -100,6 +100,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_team_discipline_cards_discipline_meltdown` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_discipline_meltdown.md](sig_team_discipline_cards_discipline_meltdown.md) |
 | `sig_team_discipline_cards_total_implosion` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_total_implosion.md](sig_team_discipline_cards_total_implosion.md) |
 | `sig_team_discipline_cards_man_down_resilience` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_man_down_resilience.md](sig_team_discipline_cards_man_down_resilience.md) |
+| `sig_team_discipline_cards_red_card_neutralizer` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_red_card_neutralizer.md](sig_team_discipline_cards_red_card_neutralizer.md) |
 | `sig_team_discipline_cards_systematic_fouling` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_systematic_fouling.md](sig_team_discipline_cards_systematic_fouling.md) |
 | `sig_team_discipline_cards_midfield_enforcement` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_midfield_enforcement.md](sig_team_discipline_cards_midfield_enforcement.md) |
 | `sig_team_discipline_cards_man_advantage_collapse` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_man_advantage_collapse.md](sig_team_discipline_cards_man_advantage_collapse.md) |
