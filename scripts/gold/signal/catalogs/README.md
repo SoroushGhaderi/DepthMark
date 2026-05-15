@@ -83,6 +83,7 @@ Use `asset_binding.overrides` only when a signal breaks the default convention.
 | `sig_team_discipline_cards_collective_aggression` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_collective_aggression.md](sig_team_discipline_cards_collective_aggression.md) |
 | `sig_team_discipline_cards_aggression_spike` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_aggression_spike.md](sig_team_discipline_cards_aggression_spike.md) |
 | `sig_team_discipline_cards_early_warning` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_early_warning.md](sig_team_discipline_cards_early_warning.md) |
+| `sig_team_discipline_cards_first_half_frenzy` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_first_half_frenzy.md](sig_team_discipline_cards_first_half_frenzy.md) |
 | `sig_team_discipline_cards_the_triple_booking` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_the_triple_booking.md](sig_team_discipline_cards_the_triple_booking.md) |
 | `sig_team_discipline_cards_half_time_talk_fail` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_half_time_talk_fail.md](sig_team_discipline_cards_half_time_talk_fail.md) |
 | `sig_team_discipline_cards_frustration_peak` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_frustration_peak.md](sig_team_discipline_cards_frustration_peak.md) |
