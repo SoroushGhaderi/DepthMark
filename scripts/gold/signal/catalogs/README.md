@@ -131,6 +131,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_player_discipline_cards_bench_discipline` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_bench_discipline.md](sig_player_discipline_cards_bench_discipline.md) |
 | `sig_player_discipline_cards_walking_tightrope` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_walking_tightrope.md](sig_player_discipline_cards_walking_tightrope.md) |
 | `sig_player_shooting_goals_clinical_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clinical_brace.md](sig_player_shooting_goals_clinical_brace.md) |
+| `sig_player_shooting_goals_wasteful_finisher` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_wasteful_finisher.md](sig_player_shooting_goals_wasteful_finisher.md) |
 | `sig_player_possession_passing_back_pass_heavy` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_back_pass_heavy.md](sig_player_possession_passing_back_pass_heavy.md) |
 | `sig_player_possession_passing_box_penetrator` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_box_penetrator.md](sig_player_possession_passing_box_penetrator.md) |
 | `sig_player_possession_passing_century_touches` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_century_touches.md](sig_player_possession_passing_century_touches.md) |
