@@ -30,6 +30,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_discipline_cards_battle_of_attrition` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_battle_of_attrition.md](sig_match_discipline_cards_battle_of_attrition.md) |
 | `sig_match_discipline_cards_blood_and_thunder` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_blood_and_thunder.md](sig_match_discipline_cards_blood_and_thunder.md) |
 | `sig_match_discipline_cards_boiling_over` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_boiling_over.md](sig_match_discipline_cards_boiling_over.md) |
+| `sig_match_discipline_cards_chaos_90_plus` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_chaos_90_plus.md](sig_match_discipline_cards_chaos_90_plus.md) |
 | `sig_match_discipline_cards_clean_fair_play` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_clean_fair_play.md](sig_match_discipline_cards_clean_fair_play.md) |
 | `sig_match_discipline_cards_card_frenzy` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_card_frenzy.md](sig_match_discipline_cards_card_frenzy.md) |
 | `sig_match_discipline_cards_double_red_drama` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_double_red_drama.md](sig_match_discipline_cards_double_red_drama.md) |
@@ -37,6 +38,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_discipline_cards_physical_showdown` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_physical_showdown.md](sig_match_discipline_cards_physical_showdown.md) |
 | `sig_match_discipline_cards_unpunished_aggression` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_unpunished_aggression.md](sig_match_discipline_cards_unpunished_aggression.md) |
 | `sig_match_discipline_cards_referee_strictness` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_strictness.md](sig_match_discipline_cards_referee_strictness.md) |
+| `sig_match_discipline_cards_referee_showdown` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_showdown.md](sig_match_discipline_cards_referee_showdown.md) |
 | `sig_match_discipline_cards_one_sided_discipline` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_one_sided_discipline.md](sig_match_discipline_cards_one_sided_discipline.md) |
 | `sig_match_discipline_cards_asymmetric_fouls` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_asymmetric_fouls.md](sig_match_discipline_cards_asymmetric_fouls.md) |
 | `sig_match_discipline_cards_foul_parity` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_parity.md](sig_match_discipline_cards_foul_parity.md) |
