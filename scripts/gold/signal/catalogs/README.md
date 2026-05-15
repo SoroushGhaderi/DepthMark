@@ -41,6 +41,8 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_discipline_cards_referee_showdown` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_showdown.md](sig_match_discipline_cards_referee_showdown.md) |
 | `sig_match_discipline_cards_one_sided_discipline` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_one_sided_discipline.md](sig_match_discipline_cards_one_sided_discipline.md) |
 | `sig_match_discipline_cards_asymmetric_fouls` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_asymmetric_fouls.md](sig_match_discipline_cards_asymmetric_fouls.md) |
+| `sig_match_discipline_cards_asymmetric_aggression` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_asymmetric_aggression.md](sig_match_discipline_cards_asymmetric_aggression.md) |
+| `sig_match_discipline_cards_the_disciplined_siege` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_the_disciplined_siege.md](sig_match_discipline_cards_the_disciplined_siege.md) |
 | `sig_match_discipline_cards_foul_parity` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_parity.md](sig_match_discipline_cards_foul_parity.md) |
 | `sig_match_discipline_cards_foul_heavy_stalemate` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_heavy_stalemate.md](sig_match_discipline_cards_foul_heavy_stalemate.md) |
 | `sig_match_discipline_cards_stop_start_hell` | team | discipline | cards | `match_team` | active | [sig_match_discipline_cards_stop_start_hell.md](sig_match_discipline_cards_stop_start_hell.md) |
