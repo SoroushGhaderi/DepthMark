@@ -131,11 +131,14 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_player_discipline_cards_bench_discipline` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_bench_discipline.md](sig_player_discipline_cards_bench_discipline.md) |
 | `sig_player_discipline_cards_walking_tightrope` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_walking_tightrope.md](sig_player_discipline_cards_walking_tightrope.md) |
 | `sig_player_shooting_goals_clinical_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clinical_brace.md](sig_player_shooting_goals_clinical_brace.md) |
+| `sig_player_shooting_goals_headers_only` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_headers_only.md](sig_player_shooting_goals_headers_only.md) |
 | `sig_player_shooting_goals_hat_trick_hero` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_hat_trick_hero.md](sig_player_shooting_goals_hat_trick_hero.md) |
 | `sig_player_shooting_goals_shot_volume_monster` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_shot_volume_monster.md](sig_player_shooting_goals_shot_volume_monster.md) |
 | `sig_player_shooting_goals_sniper_accuracy` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_sniper_accuracy.md](sig_player_shooting_goals_sniper_accuracy.md) |
 | `sig_player_shooting_goals_long_range_specialist` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_long_range_specialist.md](sig_player_shooting_goals_long_range_specialist.md) |
 | `sig_player_shooting_goals_clutch_equalizer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clutch_equalizer.md](sig_player_shooting_goals_clutch_equalizer.md) |
+| `sig_player_shooting_goals_super_sub_goal` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_super_sub_goal.md](sig_player_shooting_goals_super_sub_goal.md) |
+| `sig_player_shooting_goals_winning_impact` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_winning_impact.md](sig_player_shooting_goals_winning_impact.md) |
 | `sig_player_shooting_goals_wasteful_finisher` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_wasteful_finisher.md](sig_player_shooting_goals_wasteful_finisher.md) |
 | `sig_player_possession_passing_back_pass_heavy` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_back_pass_heavy.md](sig_player_possession_passing_back_pass_heavy.md) |
 | `sig_player_possession_passing_box_penetrator` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_box_penetrator.md](sig_player_possession_passing_box_penetrator.md) |
