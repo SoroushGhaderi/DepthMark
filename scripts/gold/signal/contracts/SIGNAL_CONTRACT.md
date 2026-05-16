@@ -40,10 +40,3 @@ See `SIGNAL_CORE_CONTRACT.md` § Signal Similarity Gate for the full rule.
 
 A single canonical naming contract applies to all signal assets.
 See `SIGNAL_EXECUTION_CONTRACT.md` § Naming and Consistency Contract.
-
-## Git Commit Policy (summary)
-
-Each individual signal MUST be committed as exactly one complete per-signal commit immediately after that signal's 5 package parts are done.
-In agent-driven execution, this commit MUST be created automatically at that point (no separate commit prompt step).
-Multiple newly created signals MUST NOT be batched in one commit.
-No partial commits. See `SIGNAL_EXECUTION_CONTRACT.md` § Git Commit Policy for the checklist and commit message templates.
