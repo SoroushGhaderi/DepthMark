@@ -1,0 +1,99 @@
+---
+signal_id: sig_player_shooting_goals_high_xg_no_shot
+status: active
+entity: player
+family: shooting
+subfamily: goals
+grain: match_player
+headline: "High-XG No-Shot Box Presence"
+trigger: "Player records >= 10 touches in the opposition box and 0 total shots in the same finished match."
+row_identity:
+  - match_id
+  - triggered_player_id
+  - triggered_team_id
+asset_paths:
+  table: gold.sig_player_shooting_goals_high_xg_no_shot
+  sql: clickhouse/gold/signal/sig_player_shooting_goals_high_xg_no_shot.sql
+  runner: scripts/gold/signal/runners/sig_player_shooting_goals_high_xg_no_shot.py
+---
+# sig_player_shooting_goals_high_xg_no_shot
+
+## Purpose
+
+Flags rare player events where penalty-area occupation is high (`>= 10` opposition-box touches) but shot output is zero, surfacing hidden shot-suppression or role-friction patterns.
+
+## Tactical And Statistical Logic
+
+- Trigger condition:
+  - `triggered_player_touches_opposition_box >= 10`
+  - `triggered_player_total_shots = 0`
+- Triggered player identity and primary metrics come from `silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields for shots, xG, big chances, possession, and box touches.
+- Signal adds severity and interpretability diagnostics (`box_touches_above_threshold`, `player_share_of_team_touches_opposition_box_pct`, and `triggered_player_goal_minus_expected_goals`) so analysts can rank how extreme each shotless-box-presence event is.
+- Similarity gate note: the closest active signal is `sig_player_possession_passing_box_penetrator` (`touches_opp_box > 10`). Owner decision for this addition was explicit coexistence, with this signal kept distinct by the mandatory `total_shots = 0` predicate and shooting-oriented context.
+
+## Technical Assets
+
+- SQL: `clickhouse/gold/signal/sig_player_shooting_goals_high_xg_no_shot.sql`
+- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_high_xg_no_shot.py`
+- Target table: `gold.sig_player_shooting_goals_high_xg_no_shot`
+
+## Example Execution
+
+```bash
+python scripts/gold/signal/runners/sig_player_shooting_goals_high_xg_no_shot.py
+```
+
+## Output Schema
+
+| Column Name | Description | Reason |
+|---|---|---|
+| `match_id` | Unique match identifier | Football developer: stable key for joins and deduplication |
+| `match_date` | Match date | Football developer: temporal slicing for trend and scouting workflows |
+| `home_team_id` | Home team ID | Football developer: bilateral match context anchor |
+| `home_team_name` | Home team name | Football developer: readable home-side context |
+| `away_team_id` | Away team ID | Football developer: bilateral match context anchor |
+| `away_team_name` | Away team name | Football developer: readable away-side context |
+| `home_score` | Home full-time score | Football developer: scoreline context for shot-suppression interpretation |
+| `away_score` | Away full-time score | Football developer: scoreline context for shot-suppression interpretation |
+| `triggered_side` | Side of triggered player (`home` or `away`) | Football developer: canonical side orientation for match-player grain |
+| `triggered_player_id` | Triggered player ID | Football developer: durable player identity key |
+| `triggered_player_name` | Triggered player name | Football developer: readable player attribution |
+| `triggered_team_id` | Team ID of triggered player | Football developer: links player event to team tactical context |
+| `triggered_team_name` | Team name of triggered player | Football developer: readable team attribution |
+| `opponent_team_id` | Opponent team ID | Football developer: bilateral matchup anchor |
+| `opponent_team_name` | Opponent team name | Football developer: readable opponent context |
+| `trigger_threshold_min_touches_opposition_box` | Minimum opposition-box-touch trigger threshold (`10`) | Football developer: explicit trigger provenance for QA and reproducibility |
+| `trigger_threshold_max_total_shots` | Maximum total-shot trigger threshold (`0`) | Football developer: explicit shotlessness trigger provenance |
+| `triggered_player_touches_opposition_box` | Triggered player touches in opposition box | Football developer: primary trigger penetration metric |
+| `triggered_player_total_shots` | Total shots by triggered player | Football developer: primary trigger suppression metric |
+| `triggered_player_shots_on_target` | Shots on target by triggered player | Football developer: execution context sanity check under zero-shot trigger |
+| `triggered_player_shot_accuracy_pct` | Shots-on-target share of player shots (%) | Football developer: precision diagnostic retained for downstream consistency |
+| `triggered_player_goals` | Goals scored by triggered player | Football developer: output context around shotless box presence |
+| `triggered_player_expected_goals` | Expected goals generated by triggered player | Football developer: chance-quality context for paradoxical no-shot events |
+| `triggered_player_expected_goals_per_shot` | Expected goals per shot for triggered player | Football developer: per-shot chance profile context with explicit zero handling |
+| `triggered_player_goal_minus_expected_goals` | Player goals minus player expected goals | Football developer: finishing over/under-performance diagnostic |
+| `triggered_player_chances_created` | Chances created by triggered player | Football developer: creator-role context that can explain shot deferral behavior |
+| `triggered_player_expected_assists` | Expected assists generated by triggered player | Football developer: pass-led chance-quality context when shots are absent |
+| `triggered_player_total_touches` | Total touches by triggered player | Football developer: involvement denominator for box-touch concentration |
+| `triggered_player_minutes_played` | Minutes played by triggered player | Football developer: exposure context for reliability and intensity |
+| `box_touches_above_threshold` | Margin above trigger (`touches_opposition_box - 10`) | Football developer: severity ranking beyond binary activation |
+| `triggered_team_goals` | Goals scored by triggered player's team | Football developer: team finishing context around player shot suppression |
+| `opponent_goals` | Goals scored by opponent team | Football developer: bilateral scoreline comparator |
+| `goal_delta` | Triggered-team goals minus opponent goals | Football developer: side-relative outcome edge context |
+| `triggered_team_expected_goals` | Team expected goals for triggered side | Football developer: team chance-quality baseline around player event |
+| `opponent_expected_goals` | Team expected goals for opponent side | Football developer: bilateral chance-quality comparator |
+| `expected_goals_delta` | Triggered-team expected goals minus opponent expected goals | Football developer: net chance-quality balance context |
+| `triggered_team_total_shots` | Total shots by triggered side | Football developer: team shot-volume baseline |
+| `opponent_total_shots` | Total shots by opponent side | Football developer: bilateral shot-volume comparator |
+| `triggered_team_shots_on_target` | Shots on target by triggered side | Football developer: team shot-execution context |
+| `opponent_shots_on_target` | Shots on target by opponent side | Football developer: bilateral shot-execution comparator |
+| `triggered_team_big_chances` | Big chances created by triggered side | Football developer: high-value chance context around trigger |
+| `opponent_big_chances` | Big chances created by opponent side | Football developer: bilateral high-value chance comparator |
+| `triggered_team_possession_pct` | Possession percentage of triggered side | Football developer: control-profile context for interpreting no-shot behavior |
+| `opponent_possession_pct` | Possession percentage of opponent side | Football developer: bilateral control comparator |
+| `triggered_team_touches_opposition_box` | Triggered-side touches in opponent box | Football developer: team territorial pressure baseline |
+| `opponent_touches_opposition_box` | Opponent-side touches in opponent box | Football developer: bilateral territorial-pressure comparator |
+| `player_share_of_team_expected_goals_pct` | Triggered player share of team expected goals (%) | Football developer: chance-load concentration around triggered player |
+| `player_share_of_team_total_shots_pct` | Triggered player share of team shots (%) | Football developer: confirms whether player is truly shotless relative to team output |
+| `player_share_of_team_touches_opposition_box_pct` | Triggered player share of team opposition-box touches (%) | Football developer: concentration metric for penalty-area occupancy responsibility |
