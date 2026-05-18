@@ -137,13 +137,16 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_player_shooting_goals_shot_volume_monster` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_shot_volume_monster.md](sig_player_shooting_goals_shot_volume_monster.md) |
 | `sig_player_shooting_goals_volume_over_quality` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_volume_over_quality.md](sig_player_shooting_goals_volume_over_quality.md) |
 | `sig_player_shooting_goals_shot_magnet` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_shot_magnet.md](sig_player_shooting_goals_shot_magnet.md) |
+| `sig_player_shooting_goals_shot_conversion_peak` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_shot_conversion_peak.md](sig_player_shooting_goals_shot_conversion_peak.md) |
 | `sig_player_shooting_goals_high_xg_no_shot` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_high_xg_no_shot.md](sig_player_shooting_goals_high_xg_no_shot.md) |
+| `sig_player_shooting_goals_xg_accumulator_midfielder` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_xg_accumulator_midfielder.md](sig_player_shooting_goals_xg_accumulator_midfielder.md) |
 | `sig_player_shooting_goals_big_chance_bottler` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_big_chance_bottler.md](sig_player_shooting_goals_big_chance_bottler.md) |
 | `sig_player_shooting_goals_sniper_accuracy` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_sniper_accuracy.md](sig_player_shooting_goals_sniper_accuracy.md) |
 | `sig_player_shooting_goals_long_range_specialist` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_long_range_specialist.md](sig_player_shooting_goals_long_range_specialist.md) |
 | `sig_player_shooting_goals_one_man_army` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_one_man_army.md](sig_player_shooting_goals_one_man_army.md) |
 | `sig_player_shooting_goals_rapid_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_rapid_brace.md](sig_player_shooting_goals_rapid_brace.md) |
 | `sig_player_shooting_goals_clutch_equalizer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clutch_equalizer.md](sig_player_shooting_goals_clutch_equalizer.md) |
+| `sig_player_shooting_goals_defensive_scorer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_defensive_scorer.md](sig_player_shooting_goals_defensive_scorer.md) |
 | `sig_player_shooting_goals_late_winner_clutch` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_late_winner_clutch.md](sig_player_shooting_goals_late_winner_clutch.md) |
 | `sig_player_shooting_goals_super_sub_goal` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_super_sub_goal.md](sig_player_shooting_goals_super_sub_goal.md) |
 | `sig_player_shooting_goals_winning_impact` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_winning_impact.md](sig_player_shooting_goals_winning_impact.md) |
