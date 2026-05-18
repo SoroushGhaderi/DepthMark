@@ -141,6 +141,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_player_shooting_goals_big_chance_bottler` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_big_chance_bottler.md](sig_player_shooting_goals_big_chance_bottler.md) |
 | `sig_player_shooting_goals_sniper_accuracy` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_sniper_accuracy.md](sig_player_shooting_goals_sniper_accuracy.md) |
 | `sig_player_shooting_goals_long_range_specialist` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_long_range_specialist.md](sig_player_shooting_goals_long_range_specialist.md) |
+| `sig_player_shooting_goals_freekick_master` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_freekick_master.md](sig_player_shooting_goals_freekick_master.md) |
 | `sig_player_shooting_goals_one_man_army` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_one_man_army.md](sig_player_shooting_goals_one_man_army.md) |
 | `sig_player_shooting_goals_rapid_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_rapid_brace.md](sig_player_shooting_goals_rapid_brace.md) |
 | `sig_player_shooting_goals_clutch_equalizer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clutch_equalizer.md](sig_player_shooting_goals_clutch_equalizer.md) |
