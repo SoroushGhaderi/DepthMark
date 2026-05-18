@@ -138,6 +138,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_player_shooting_goals_volume_over_quality` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_volume_over_quality.md](sig_player_shooting_goals_volume_over_quality.md) |
 | `sig_player_shooting_goals_shot_magnet` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_shot_magnet.md](sig_player_shooting_goals_shot_magnet.md) |
 | `sig_player_shooting_goals_high_xg_no_shot` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_high_xg_no_shot.md](sig_player_shooting_goals_high_xg_no_shot.md) |
+| `sig_player_shooting_goals_impact_accumulator` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_impact_accumulator.md](sig_player_shooting_goals_impact_accumulator.md) |
 | `sig_player_shooting_goals_big_chance_bottler` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_big_chance_bottler.md](sig_player_shooting_goals_big_chance_bottler.md) |
 | `sig_player_shooting_goals_sniper_accuracy` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_sniper_accuracy.md](sig_player_shooting_goals_sniper_accuracy.md) |
 | `sig_player_shooting_goals_long_range_specialist` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_long_range_specialist.md](sig_player_shooting_goals_long_range_specialist.md) |
