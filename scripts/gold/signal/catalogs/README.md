@@ -65,8 +65,13 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_possession_passing_wing_play_extravaganza` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_wing_play_extravaganza.md](sig_match_possession_passing_wing_play_extravaganza.md) |
 | `sig_match_shooting_goals_basketball_match` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_basketball_match.md](sig_match_shooting_goals_basketball_match.md) |
 | `sig_match_shooting_goals_boring_stalemate` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_boring_stalemate.md](sig_match_shooting_goals_boring_stalemate.md) |
+| `sig_match_shooting_goals_clinical_showdown` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_showdown.md](sig_match_shooting_goals_clinical_showdown.md) |
+| `sig_match_shooting_goals_end_to_end_drama` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_end_to_end_drama.md](sig_match_shooting_goals_end_to_end_drama.md) |
+| `sig_match_shooting_goals_game_of_two_halves` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_game_of_two_halves.md](sig_match_shooting_goals_game_of_two_halves.md) |
 | `sig_match_shooting_goals_goal_fest` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goal_fest.md](sig_match_shooting_goals_goal_fest.md) |
+| `sig_match_shooting_goals_goalless_siege` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goalless_siege.md](sig_match_shooting_goals_goalless_siege.md) |
 | `sig_match_shooting_goals_high_xg_low_score` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_xg_low_score.md](sig_match_shooting_goals_high_xg_low_score.md) |
+| `sig_match_shooting_goals_rapid_fire_exchange` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_rapid_fire_exchange.md](sig_match_shooting_goals_rapid_fire_exchange.md) |
 | `sig_match_shooting_goals_unlucky_game` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unlucky_game.md](sig_match_shooting_goals_unlucky_game.md) |
 | `sig_team_possession_passing_accurate_unit` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_accurate_unit.md](sig_team_possession_passing_accurate_unit.md) |
 | `sig_team_possession_passing_aerial_reliance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_aerial_reliance.md](sig_team_possession_passing_aerial_reliance.md) |
