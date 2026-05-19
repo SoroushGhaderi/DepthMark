@@ -63,6 +63,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_possession_passing_set_piece_dominance` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_set_piece_dominance.md](sig_match_possession_passing_set_piece_dominance.md) |
 | `sig_match_possession_passing_unproductive_game` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_unproductive_game.md](sig_match_possession_passing_unproductive_game.md) |
 | `sig_match_possession_passing_wing_play_extravaganza` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_wing_play_extravaganza.md](sig_match_possession_passing_wing_play_extravaganza.md) |
+| `sig_match_shooting_goals_goal_fest` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goal_fest.md](sig_match_shooting_goals_goal_fest.md) |
 | `sig_team_possession_passing_accurate_unit` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_accurate_unit.md](sig_team_possession_passing_accurate_unit.md) |
 | `sig_team_possession_passing_aerial_reliance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_aerial_reliance.md](sig_team_possession_passing_aerial_reliance.md) |
 | `sig_team_possession_passing_cross_accuracy_peak` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_cross_accuracy_peak.md](sig_team_possession_passing_cross_accuracy_peak.md) |
@@ -94,6 +95,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_team_shooting_goals_blank_range` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_blank_range.md](sig_team_shooting_goals_blank_range.md) |
 | `sig_team_shooting_goals_box_siege` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_box_siege.md](sig_team_shooting_goals_box_siege.md) |
 | `sig_team_shooting_goals_no_shots_allowed` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_no_shots_allowed.md](sig_team_shooting_goals_no_shots_allowed.md) |
+| `sig_team_shooting_goals_shot_on_target_monopoly` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shot_on_target_monopoly.md](sig_team_shooting_goals_shot_on_target_monopoly.md) |
 | `sig_team_shooting_goals_shot_shy` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shot_shy.md](sig_team_shooting_goals_shot_shy.md) |
 | `sig_team_shooting_goals_shooting_gallery` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shooting_gallery.md](sig_team_shooting_goals_shooting_gallery.md) |
 | `sig_team_shooting_goals_late_surge_goals` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_late_surge_goals.md](sig_team_shooting_goals_late_surge_goals.md) |
@@ -123,9 +125,13 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_team_discipline_cards_away_hostility` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_away_hostility.md](sig_team_discipline_cards_away_hostility.md) |
 | `sig_team_discipline_cards_hostile_territory` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_hostile_territory.md](sig_team_discipline_cards_hostile_territory.md) |
 | `sig_team_shooting_goals_ruthless_efficiency` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_ruthless_efficiency.md](sig_team_shooting_goals_ruthless_efficiency.md) |
+| `sig_team_shooting_goals_clinical_finishing_streak` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_clinical_finishing_streak.md](sig_team_shooting_goals_clinical_finishing_streak.md) |
 | `sig_team_shooting_goals_xg_overperformance_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_overperformance_team.md](sig_team_shooting_goals_xg_overperformance_team.md) |
+| `sig_team_shooting_goals_offensive_masterclass` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_offensive_masterclass.md](sig_team_shooting_goals_offensive_masterclass.md) |
 | `sig_team_shooting_goals_shared_scoring` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shared_scoring.md](sig_team_shooting_goals_shared_scoring.md) |
+| `sig_team_shooting_goals_bench_goals_impact` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_bench_goals_impact.md](sig_team_shooting_goals_bench_goals_impact.md) |
 | `sig_team_shooting_goals_defensive_scoring_unit` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_defensive_scoring_unit.md](sig_team_shooting_goals_defensive_scoring_unit.md) |
+| `sig_team_shooting_goals_no_striker_needed` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_no_striker_needed.md](sig_team_shooting_goals_no_striker_needed.md) |
 | `sig_player_discipline_cards_early_bath` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_early_bath.md](sig_player_discipline_cards_early_bath.md) |
 | `sig_player_discipline_cards_late_red_drama` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_late_red_drama.md](sig_player_discipline_cards_late_red_drama.md) |
 | `sig_player_discipline_cards_captain_reprimand` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_captain_reprimand.md](sig_player_discipline_cards_captain_reprimand.md) |
