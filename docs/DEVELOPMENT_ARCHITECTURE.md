@@ -150,9 +150,9 @@ Current Gold inventory:
 
 - 48 scenario runners in `scripts/gold/scenario/scenario_*.py`
 - 48 scenario SQL transforms in `clickhouse/gold/scenario/{team,player}/`
-- 131 signal runners in `scripts/gold/signal/runners/sig_*.py`
-- 131 signal SQL transforms in `clickhouse/gold/signal/`
-- 131 signal catalog markdown files in `scripts/gold/signal/catalogs/`
+- 211 signal runners in `scripts/gold/signal/runners/sig_*.py`
+- 211 signal SQL transforms in `clickhouse/gold/signal/`
+- 211 signal catalog markdown files in `scripts/gold/signal/catalogs/`
 
 ## Python Layout
 

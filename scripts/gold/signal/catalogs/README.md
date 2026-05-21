@@ -64,6 +64,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_possession_passing_unproductive_game` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_unproductive_game.md](sig_match_possession_passing_unproductive_game.md) |
 | `sig_match_possession_passing_wing_play_extravaganza` | team | possession | passing | `match_team` | active | [sig_match_possession_passing_wing_play_extravaganza.md](sig_match_possession_passing_wing_play_extravaganza.md) |
 | `sig_match_shooting_goals_basketball_match` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_basketball_match.md](sig_match_shooting_goals_basketball_match.md) |
+| `sig_match_shooting_goals_box_siege_match` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_box_siege_match.md](sig_match_shooting_goals_box_siege_match.md) |
 | `sig_match_shooting_goals_boring_stalemate` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_boring_stalemate.md](sig_match_shooting_goals_boring_stalemate.md) |
 | `sig_match_shooting_goals_clean_sheet_broken_late` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clean_sheet_broken_late.md](sig_match_shooting_goals_clean_sheet_broken_late.md) |
 | `sig_match_shooting_goals_clinical_showdown` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_showdown.md](sig_match_shooting_goals_clinical_showdown.md) |
@@ -71,6 +72,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_shooting_goals_complete_dominance` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_complete_dominance.md](sig_match_shooting_goals_complete_dominance.md) |
 | `sig_match_shooting_goals_end_to_end_drama` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_end_to_end_drama.md](sig_match_shooting_goals_end_to_end_drama.md) |
 | `sig_match_shooting_goals_early_goal_late_goal` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_early_goal_late_goal.md](sig_match_shooting_goals_early_goal_late_goal.md) |
+| `sig_match_shooting_goals_distance_shooting_duel` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_distance_shooting_duel.md](sig_match_shooting_goals_distance_shooting_duel.md) |
 | `sig_match_shooting_goals_game_of_two_halves` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_game_of_two_halves.md](sig_match_shooting_goals_game_of_two_halves.md) |
 | `sig_match_shooting_goals_goal_fest` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goal_fest.md](sig_match_shooting_goals_goal_fest.md) |
 | `sig_match_shooting_goals_goalless_siege` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goalless_siege.md](sig_match_shooting_goals_goalless_siege.md) |
@@ -82,7 +84,11 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_match_shooting_goals_penalty_decided_match` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_penalty_decided_match.md](sig_match_shooting_goals_penalty_decided_match.md) |
 | `sig_match_shooting_goals_rapid_fire_exchange` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_rapid_fire_exchange.md](sig_match_shooting_goals_rapid_fire_exchange.md) |
 | `sig_match_shooting_goals_shot_efficiency_parity` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_shot_efficiency_parity.md](sig_match_shooting_goals_shot_efficiency_parity.md) |
+| `sig_match_shooting_goals_substituted_scoring_fest` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_substituted_scoring_fest.md](sig_match_shooting_goals_substituted_scoring_fest.md) |
+| `sig_match_shooting_goals_the_brace_battle` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_the_brace_battle.md](sig_match_shooting_goals_the_brace_battle.md) |
+| `sig_match_shooting_goals_unproductive_dominance` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unproductive_dominance.md](sig_match_shooting_goals_unproductive_dominance.md) |
 | `sig_match_shooting_goals_unlucky_game` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unlucky_game.md](sig_match_shooting_goals_unlucky_game.md) |
+| `sig_match_shooting_goals_woodwork_record_match` | team | shooting | goals | `match_team` | active | [sig_match_shooting_goals_woodwork_record_match.md](sig_match_shooting_goals_woodwork_record_match.md) |
 | `sig_team_possession_passing_accurate_unit` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_accurate_unit.md](sig_team_possession_passing_accurate_unit.md) |
 | `sig_team_possession_passing_aerial_reliance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_aerial_reliance.md](sig_team_possession_passing_aerial_reliance.md) |
 | `sig_team_possession_passing_cross_accuracy_peak` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_cross_accuracy_peak.md](sig_team_possession_passing_cross_accuracy_peak.md) |
@@ -158,6 +164,7 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_team_shooting_goals_ruthless_efficiency` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_ruthless_efficiency.md](sig_team_shooting_goals_ruthless_efficiency.md) |
 | `sig_team_shooting_goals_efficiency_peak` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_efficiency_peak.md](sig_team_shooting_goals_efficiency_peak.md) |
 | `sig_team_shooting_goals_clinical_finishing_streak` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_clinical_finishing_streak.md](sig_team_shooting_goals_clinical_finishing_streak.md) |
+| `sig_team_shooting_goals_big_chance_efficiency` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_big_chance_efficiency.md](sig_team_shooting_goals_big_chance_efficiency.md) |
 | `sig_team_shooting_goals_xg_overperformance_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_overperformance_team.md](sig_team_shooting_goals_xg_overperformance_team.md) |
 | `sig_team_shooting_goals_offensive_masterclass` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_offensive_masterclass.md](sig_team_shooting_goals_offensive_masterclass.md) |
 | `sig_team_shooting_goals_high_quality_only` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_high_quality_only.md](sig_team_shooting_goals_high_quality_only.md) |
@@ -184,6 +191,13 @@ Keep this index aligned with active catalog files when adding, renaming, or dele
 | `sig_player_discipline_cards_instant_impact_red` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_instant_impact_red.md](sig_player_discipline_cards_instant_impact_red.md) |
 | `sig_player_discipline_cards_bench_discipline` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_bench_discipline.md](sig_player_discipline_cards_bench_discipline.md) |
 | `sig_player_discipline_cards_walking_tightrope` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_walking_tightrope.md](sig_player_discipline_cards_walking_tightrope.md) |
+| `sig_player_goalkeeping_defense_brick_wall` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_brick_wall.md](sig_player_goalkeeping_defense_brick_wall.md) |
+| `sig_player_goalkeeping_defense_clean_sheet_locked` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_clean_sheet_locked.md](sig_player_goalkeeping_defense_clean_sheet_locked.md) |
+| `sig_player_goalkeeping_defense_penalty_stopper` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_penalty_stopper.md](sig_player_goalkeeping_defense_penalty_stopper.md) |
+| `sig_player_goalkeeping_defense_save_paralyzer` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_save_paralyzer.md](sig_player_goalkeeping_defense_save_paralyzer.md) |
+| `sig_player_goalkeeping_defense_reflex_save_streak` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_reflex_save_streak.md](sig_player_goalkeeping_defense_reflex_save_streak.md) |
+| `sig_player_goalkeeping_defense_aerial_stronghold` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_aerial_stronghold.md](sig_player_goalkeeping_defense_aerial_stronghold.md) |
+| `sig_player_goalkeeping_defense_tackle_master` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_tackle_master.md](sig_player_goalkeeping_defense_tackle_master.md) |
 | `sig_player_shooting_goals_clinical_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clinical_brace.md](sig_player_shooting_goals_clinical_brace.md) |
 | `sig_player_shooting_goals_the_tap_in_merchant` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_the_tap_in_merchant.md](sig_player_shooting_goals_the_tap_in_merchant.md) |
 | `sig_player_shooting_goals_man_of_the_match_output` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_man_of_the_match_output.md](sig_player_shooting_goals_man_of_the_match_output.md) |

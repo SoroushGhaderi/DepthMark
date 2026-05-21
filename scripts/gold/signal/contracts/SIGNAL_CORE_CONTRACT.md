@@ -35,6 +35,25 @@ When proposing a new signal, similarity against existing active signals MUST be 
 2. The proposal MUST cite the closest existing signal IDs and summarize overlap/differences before requesting the decision.
 3. No production package changes SHOULD be finalized until that decision is provided.
 
+### Token-Efficient Similarity Workflow
+
+When signal inventory is large, similarity checks MUST follow this workflow to avoid loading unnecessary context:
+
+1. Stage 1 (index-only scan):
+   - Read only `scripts/gold/signal/catalogs/README.md` table rows.
+   - Filter to `status=active` plus exact `entity`, `family`, and `subfamily` match.
+2. Stage 2 (narrow candidate set):
+   - Keep at most 8 candidates.
+   - If more than 8 remain, prefer exact `grain` match first, then lexical proximity of `signal_id`.
+3. Stage 3 (partial catalog read):
+   - For shortlisted candidates, read only frontmatter, `Purpose`, and `Trigger` sections.
+   - Do NOT read full schema tables or full SQL during initial similarity judgement.
+4. Stage 4 (decision note):
+   - Produce a compact overlap note containing: `signal_id`, overlap reason, key difference.
+   - Keep similarity evidence concise (target <= 250 words total before implementation starts).
+5. Stage 5 (deep read only when needed):
+   - Open full catalog/SQL only for the top 2-3 most similar candidates, or when conflict risk is high.
+
 ## Naming and Consistency
 
 See `SIGNAL_EXECUTION_CONTRACT.md` § Naming and Consistency Contract for the canonical naming rules.

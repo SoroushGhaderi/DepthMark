@@ -57,7 +57,7 @@ Current inventory: 48 scenario runners and 48 matching SQL transforms.
 These `scripts/gold/signal/runners/sig_*.py` runners are also discovered and executed by `scripts/gold/load_clickhouse_scenarios.py`.
 Legacy `signal_*.py` runners are still supported by the loader for migration compatibility, but new work should use `sig_*.py`.
 
-Current inventory: 131 signal runners, 131 matching SQL transforms, and 131 matching markdown catalogs.
+Current inventory: 211 signal runners, 211 matching SQL transforms, and 211 matching markdown catalogs.
 
 - Runner files: `scripts/gold/signal/runners/sig_*.py`
 - SQL files: `clickhouse/gold/signal/sig_*.sql`
@@ -69,3 +69,9 @@ Per-signal docs live in `scripts/gold/signal/catalogs/` and include tactical log
 
 - `scripts/gold/signal/catalogs/README.md`
 - `scripts/gold/signal/catalogs/sig_*.md`
+
+Before deep review of many full catalogs, use a token-efficient manual flow:
+
+- read only `catalogs/README.md` table first
+- shortlist max 8 active candidates by `entity/family/subfamily` (+ `grain` when available)
+- read only frontmatter + Purpose + Trigger for shortlisted candidates
