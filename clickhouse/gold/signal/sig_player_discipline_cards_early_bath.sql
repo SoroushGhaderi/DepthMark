@@ -40,7 +40,6 @@ INSERT INTO gold.sig_player_discipline_cards_early_bath (
 WITH player_red_card_counts AS (
     SELECT
         c.match_id,
-        c.team_id,
         c.player_id,
         count() AS triggered_player_red_card_count_match
     FROM silver.card AS c
@@ -49,29 +48,27 @@ WITH player_red_card_counts AS (
       AND positionCaseInsensitive(ifNull(c.card_type, ''), 'red') > 0
     GROUP BY
         c.match_id,
-        c.team_id,
         c.player_id
 ),
 first_early_red AS (
     SELECT
         c.match_id,
         c.team_side AS triggered_side,
-        c.team_id AS triggered_team_id,
         c.player_id AS triggered_player_id,
         c.player_name AS triggered_player_name,
-        toInt32OrZero(c.card_minute) AS triggered_player_red_card_minute,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_red,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_red,
+        toInt32(coalesce(c.card_minute, 0)) AS triggered_player_red_card_minute,
+        toInt32(coalesce(c.score_home_at_time, 0)) AS score_home_at_red,
+        toInt32(coalesce(c.score_away_at_time, 0)) AS score_away_at_red,
         row_number() OVER (
-            PARTITION BY c.match_id, c.team_id, c.player_id
-            ORDER BY toInt32OrZero(c.card_minute) ASC
+            PARTITION BY c.match_id, c.player_id
+            ORDER BY toInt32(coalesce(c.card_minute, 0)) ASC
         ) AS rn
     FROM silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id > 0
       AND c.team_side IN ('home', 'away')
       AND positionCaseInsensitive(ifNull(c.card_type, ''), 'red') > 0
-      AND toInt32OrZero(c.card_minute) BETWEEN 1 AND 20
+      AND toInt32(coalesce(c.card_minute, 0)) BETWEEN 1 AND 20
 )
 SELECT
     m.match_id,
@@ -220,7 +217,6 @@ INNER JOIN silver.match AS m
     ON m.match_id = er.match_id
 LEFT JOIN player_red_card_counts AS prc
     ON prc.match_id = er.match_id
-   AND prc.team_id = er.triggered_team_id
    AND prc.player_id = er.triggered_player_id
 LEFT JOIN silver.period_stat AS ps
     ON ps.match_id = er.match_id
@@ -228,14 +224,9 @@ LEFT JOIN silver.period_stat AS ps
 WHERE m.match_finished = 1
   AND m.match_id > 0
   AND er.rn = 1
-  AND (
-        (er.triggered_side = 'home' AND er.triggered_team_id = m.home_team_id)
-        OR
-        (er.triggered_side = 'away' AND er.triggered_team_id = m.away_team_id)
-    )
 
 ORDER BY
-    triggered_player_red_card_minute ASC,
-    match_date DESC,
-    match_id DESC,
-    triggered_player_id ASC;
+    er.triggered_player_red_card_minute ASC,
+    m.match_date DESC,
+    m.match_id DESC,
+    er.triggered_player_id ASC;

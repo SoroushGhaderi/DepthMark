@@ -1,16 +1,3 @@
-WITH team_creation_stats AS (
-    SELECT
-        p.match_id,
-        p.team_id,
-        toInt32(sum(coalesce(p.passes_final_third, 0))) AS team_successful_final_third_passes,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
-    WHERE p.team_id IS NOT NULL
-    GROUP BY
-        p.match_id,
-        p.team_id
-)
 INSERT INTO gold.sig_team_creativity_playmaking_final_third_siege (
     match_id,
     match_date,
@@ -57,6 +44,19 @@ INSERT INTO gold.sig_team_creativity_playmaking_final_third_siege (
     triggered_team_expected_goals,
     opponent_expected_goals,
     expected_goals_delta
+)
+WITH team_creation_stats AS (
+    SELECT
+        p.match_id,
+        p.team_id,
+        toInt32(sum(coalesce(p.passes_final_third, 0))) AS team_successful_final_third_passes,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
+    FROM silver.player_match_stat AS p
+    WHERE p.team_id IS NOT NULL
+    GROUP BY
+        p.match_id,
+        p.team_id
 )
 -- Signal: sig_team_creativity_playmaking_final_third_siege
 -- Trigger: team records >= 150 successful passes in the final third in a single finished match.

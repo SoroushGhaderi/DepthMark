@@ -1,16 +1,3 @@
-WITH player_positions AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-)
 INSERT INTO gold.sig_player_goalkeeping_defense_passive_defender (
     match_id,
     match_date,
@@ -75,6 +62,19 @@ INSERT INTO gold.sig_player_goalkeeping_defense_passive_defender (
     triggered_team_pass_accuracy_pct,
     opponent_pass_accuracy_pct,
     pass_accuracy_delta_pct
+)
+WITH player_positions AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
 )
 -- Signal: sig_player_goalkeeping_defense_passive_defender
 -- Intent: detect full-match defenders with near-zero proactive defensive interventions under low-possession stress.
@@ -312,10 +312,8 @@ SELECT
             p.team_id = m.home_team_id, coalesce(ps.pass_attempts_home, 0),
             p.team_id = m.away_team_id, coalesce(ps.pass_attempts_away, 0),
             0
-        )), 0.0),
-        1
-    ) - round(
-        100.0 * multiIf(
+        )), 0.0)
+        - 100.0 * multiIf(
             p.team_id = m.home_team_id, coalesce(ps.accurate_passes_away, 0),
             p.team_id = m.away_team_id, coalesce(ps.accurate_passes_home, 0),
             0
@@ -325,7 +323,7 @@ SELECT
             0
         )), 0.0),
         1
-    ), 1), 0.0)) AS pass_accuracy_delta_pct
+    ), 0.0)) AS pass_accuracy_delta_pct
 FROM silver.player_match_stat AS p
 INNER JOIN silver.match AS m
     ON m.match_id = p.match_id

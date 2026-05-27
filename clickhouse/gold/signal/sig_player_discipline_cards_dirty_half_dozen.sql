@@ -1,23 +1,3 @@
-WITH player_cards AS (
-    SELECT
-        c.match_id,
-        toInt32(assumeNotNull(c.player_id)) AS player_id,
-        count() AS triggered_player_total_cards,
-        countIf(
-            positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
-            OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0
-        ) AS triggered_player_yellow_cards,
-        countIf(
-            positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
-            OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
-        ) AS triggered_player_red_cards
-    FROM silver.card AS c
-    WHERE c.match_id > 0
-      AND c.player_id IS NOT NULL
-    GROUP BY
-        c.match_id,
-        player_id
-)
 INSERT INTO gold.sig_player_discipline_cards_dirty_half_dozen (
     match_id,
     match_date,
@@ -56,6 +36,26 @@ INSERT INTO gold.sig_player_discipline_cards_dirty_half_dozen (
     opponent_duels_won,
     triggered_team_possession_pct,
     opponent_possession_pct
+)
+WITH player_cards AS (
+    SELECT
+        c.match_id,
+        toInt32(assumeNotNull(c.player_id)) AS player_id,
+        count() AS triggered_player_total_cards,
+        countIf(
+            positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
+            OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0
+        ) AS triggered_player_yellow_cards,
+        countIf(
+            positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
+            OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
+        ) AS triggered_player_red_cards
+    FROM silver.card AS c
+    WHERE c.match_id > 0
+      AND c.player_id IS NOT NULL
+    GROUP BY
+        c.match_id,
+        player_id
 )
 -- Signal: sig_player_discipline_cards_dirty_half_dozen
 -- Trigger: player commits >= 6 fouls while winning exactly 0 tackles in the same match.

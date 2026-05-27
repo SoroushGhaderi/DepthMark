@@ -1,26 +1,3 @@
-WITH player_positions AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-), team_key_passes AS (
-    SELECT
-        p.match_id,
-        p.team_id,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes
-    FROM silver.player_match_stat AS p
-    WHERE p.team_id IS NOT NULL
-    GROUP BY
-        p.match_id,
-        p.team_id
-)
 INSERT INTO gold.sig_player_creativity_playmaking_unselfish_forward (
     match_id,
     match_date,
@@ -80,6 +57,29 @@ INSERT INTO gold.sig_player_creativity_playmaking_unselfish_forward (
     player_share_of_team_key_passes_pct,
     player_share_of_team_passes_pct,
     player_share_of_team_opposition_box_touches_pct
+)
+WITH player_positions AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
+), team_key_passes AS (
+    SELECT
+        p.match_id,
+        p.team_id,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes
+    FROM silver.player_match_stat AS p
+    WHERE p.team_id IS NOT NULL
+    GROUP BY
+        p.match_id,
+        p.team_id
 )
 -- Signal: sig_player_creativity_playmaking_unselfish_forward
 -- Trigger: striker proxy records >= 3 key passes with 0 total shots in a finished match.

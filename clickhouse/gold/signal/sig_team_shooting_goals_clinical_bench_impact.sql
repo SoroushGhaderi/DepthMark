@@ -57,12 +57,12 @@ WITH substitute_entries AS (
     SELECT
         mp.match_id,
         toInt32(assumeNotNull(mp.person_id)) AS player_id,
-        toInt32(max(toInt32OrZero(mp.substitution_time))) AS substitution_time
+        toInt32(max(coalesce(mp.substitution_time, 0))) AS substitution_time
     FROM silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id IS NOT NULL
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
-      AND toInt32OrZero(mp.substitution_time) > 0
+      AND coalesce(mp.substitution_time, 0) > 0
     GROUP BY
         mp.match_id,
         player_id

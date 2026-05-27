@@ -1,23 +1,3 @@
-WITH player_cards AS (
-    SELECT
-        match_id,
-        assumeNotNull(player_id) AS player_id,
-        count() AS triggered_player_total_cards,
-        countIf(
-            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'yellow') > 0
-            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'yellow') > 0
-        ) AS triggered_player_yellow_cards,
-        countIf(
-            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'red') > 0
-            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'red') > 0
-        ) AS triggered_player_red_cards
-    FROM silver.card
-    WHERE match_id > 0
-      AND player_id IS NOT NULL
-    GROUP BY
-        match_id,
-        player_id
-)
 INSERT INTO gold.sig_player_discipline_cards_foul_magnet (
     match_id,
     match_date,
@@ -52,6 +32,26 @@ INSERT INTO gold.sig_player_discipline_cards_foul_magnet (
     opponent_red_cards,
     triggered_team_possession_pct,
     opponent_possession_pct
+)
+WITH player_cards AS (
+    SELECT
+        match_id,
+        assumeNotNull(player_id) AS player_id,
+        count() AS triggered_player_total_cards,
+        countIf(
+            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'yellow') > 0
+            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'yellow') > 0
+        ) AS triggered_player_yellow_cards,
+        countIf(
+            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'red') > 0
+            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'red') > 0
+        ) AS triggered_player_red_cards
+    FROM silver.card
+    WHERE match_id > 0
+      AND player_id IS NOT NULL
+    GROUP BY
+        match_id,
+        player_id
 )
 -- Signal: sig_player_discipline_cards_foul_magnet
 -- Trigger: player is fouled >= 6 times in a single match.

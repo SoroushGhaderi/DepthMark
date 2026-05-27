@@ -57,7 +57,7 @@ WITH personnel_candidates AS (
             coalesce(mp.name, 'Unknown'),
             coalesce(mp._loaded_at, toDateTime('1970-01-01 00:00:00'))
         ) AS triggered_player_name,
-        toInt32OrZero(max(mp.substitution_time)) AS triggered_personnel_substitution_time
+        toInt32(coalesce(max(mp.substitution_time), 0)) AS triggered_personnel_substitution_time
     FROM silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id > 0
@@ -95,9 +95,9 @@ card_events AS (
         c.match_id,
         toInt32(assumeNotNull(c.player_id)) AS triggered_player_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_team_side,
-        toInt32OrZero(c.card_minute) AS card_minute,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_card,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_card,
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute,
+        toInt32(coalesce(c.score_home_at_time, 0)) AS score_home_at_card,
+        toInt32(coalesce(c.score_away_at_time, 0)) AS score_away_at_card,
         c.event_id,
         (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
@@ -126,7 +126,7 @@ card_events AS (
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
-      AND toInt32OrZero(c.card_minute) > 0
+      AND toInt32(coalesce(c.card_minute, 0)) > 0
 ),
 player_card_rollup AS (
     SELECT

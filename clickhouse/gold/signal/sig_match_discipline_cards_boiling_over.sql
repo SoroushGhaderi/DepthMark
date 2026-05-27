@@ -62,11 +62,11 @@ WITH card_events AS (
     SELECT
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_team_side,
-        toInt32OrZero(c.card_minute) AS card_minute
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute
     FROM silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
-      AND toInt32OrZero(c.card_minute) > 0
+      AND toInt32(coalesce(c.card_minute, 0)) > 0
       AND (
           positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
           OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0
@@ -137,189 +137,189 @@ base_stats AS (
       AND m.match_id > 0
 )
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
 
     'home' AS triggered_side,
-    b.home_team_id AS triggered_team_id,
-    b.home_team_name AS triggered_team_name,
-    b.away_team_id AS opponent_team_id,
-    b.away_team_name AS opponent_team_name,
+    home_team_id AS triggered_team_id,
+    home_team_name AS triggered_team_name,
+    away_team_id AS opponent_team_id,
+    away_team_name AS opponent_team_name,
 
     toInt32(4) AS trigger_threshold_min_late_window_cards,
     toInt32(80) AS trigger_threshold_window_start_minute,
     CAST(NULL, 'Nullable(Int32)') AS trigger_threshold_window_end_minute,
-    toInt32(b.match_late_window_cards) AS match_late_window_cards,
-    toInt32(b.match_late_window_cards - 4) AS match_late_window_cards_above_threshold,
-    toInt32(b.home_late_window_cards) AS home_late_window_cards,
-    toInt32(b.away_late_window_cards) AS away_late_window_cards,
-    toInt32(b.home_late_window_cards) AS triggered_team_late_window_cards,
-    toInt32(b.away_late_window_cards) AS opponent_late_window_cards,
-    toInt32(b.home_late_window_cards - b.away_late_window_cards) AS late_window_cards_delta,
+    toInt32(match_late_window_cards) AS match_late_window_cards,
+    toInt32(match_late_window_cards - 4) AS match_late_window_cards_above_threshold,
+    toInt32(home_late_window_cards) AS home_late_window_cards,
+    toInt32(away_late_window_cards) AS away_late_window_cards,
+    toInt32(home_late_window_cards) AS triggered_team_late_window_cards,
+    toInt32(away_late_window_cards) AS opponent_late_window_cards,
+    toInt32(home_late_window_cards - away_late_window_cards) AS late_window_cards_delta,
     toFloat32(round(
-        100.0 * b.home_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0),
+        100.0 * home_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0),
         1
     )) AS triggered_team_late_window_cards_share_pct,
     toFloat32(round(
-        100.0 * b.away_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0),
+        100.0 * away_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0),
         1
     )) AS opponent_late_window_cards_share_pct,
     toFloat32(round(
         (
-            100.0 * b.home_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0)
+            100.0 * home_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0)
         ) - (
-            100.0 * b.away_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0)
+            100.0 * away_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0)
         ),
         1
     )) AS late_window_cards_share_delta_pct,
 
-    toInt32(b.match_total_cards) AS match_total_cards,
-    toInt32(b.match_total_yellow_cards) AS match_total_yellow_cards,
-    toInt32(b.match_total_red_cards) AS match_total_red_cards,
-    toInt32(b.yellow_cards_home) AS triggered_team_yellow_cards,
-    toInt32(b.yellow_cards_away) AS opponent_yellow_cards,
-    toInt32(b.yellow_cards_home - b.yellow_cards_away) AS yellow_cards_delta,
-    toInt32(b.red_cards_home) AS triggered_team_red_cards,
-    toInt32(b.red_cards_away) AS opponent_red_cards,
-    toInt32(b.red_cards_home - b.red_cards_away) AS red_cards_delta,
-    toInt32(b.yellow_cards_home + b.red_cards_home) AS triggered_team_total_cards,
-    toInt32(b.yellow_cards_away + b.red_cards_away) AS opponent_total_cards,
+    toInt32(match_total_cards) AS match_total_cards,
+    toInt32(match_total_yellow_cards) AS match_total_yellow_cards,
+    toInt32(match_total_red_cards) AS match_total_red_cards,
+    toInt32(yellow_cards_home) AS triggered_team_yellow_cards,
+    toInt32(yellow_cards_away) AS opponent_yellow_cards,
+    toInt32(yellow_cards_home - yellow_cards_away) AS yellow_cards_delta,
+    toInt32(red_cards_home) AS triggered_team_red_cards,
+    toInt32(red_cards_away) AS opponent_red_cards,
+    toInt32(red_cards_home - red_cards_away) AS red_cards_delta,
+    toInt32(yellow_cards_home + red_cards_home) AS triggered_team_total_cards,
+    toInt32(yellow_cards_away + red_cards_away) AS opponent_total_cards,
     toInt32(
-        (b.yellow_cards_home + b.red_cards_home)
-        - (b.yellow_cards_away + b.red_cards_away)
+        (yellow_cards_home + red_cards_home)
+        - (yellow_cards_away + red_cards_away)
     ) AS card_count_delta,
 
-    toInt32(b.fouls_home) AS triggered_team_fouls_committed,
-    toInt32(b.fouls_away) AS opponent_fouls_committed,
-    toInt32(b.fouls_home - b.fouls_away) AS fouls_committed_delta,
+    toInt32(fouls_home) AS triggered_team_fouls_committed,
+    toInt32(fouls_away) AS opponent_fouls_committed,
+    toInt32(fouls_home - fouls_away) AS fouls_committed_delta,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0),
+        100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0),
         1
     ))) AS triggered_team_cards_per_foul_pct,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0),
+        100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0),
         1
     ))) AS opponent_cards_per_foul_pct,
     toNullable(toFloat32(round(
         (
-            100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0)
+            100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0)
         ) - (
-            100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0)
+            100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0)
         ),
         1
     ))) AS cards_per_foul_delta_pct,
 
-    toInt32(b.duels_won_home) AS triggered_team_duels_won,
-    toInt32(b.duels_won_away) AS opponent_duels_won,
-    toInt32(b.tackles_won_home) AS triggered_team_tackles_won,
-    toInt32(b.tackles_won_away) AS opponent_tackles_won,
-    toInt32(b.interceptions_home) AS triggered_team_interceptions,
-    toInt32(b.interceptions_away) AS opponent_interceptions,
-    toInt32(b.clearances_home) AS triggered_team_clearances,
-    toInt32(b.clearances_away) AS opponent_clearances,
-    b.possession_home_pct AS triggered_team_possession_pct,
-    b.possession_away_pct AS opponent_possession_pct,
-    toFloat32(round(b.possession_home_pct - b.possession_away_pct, 1)) AS possession_delta_pct
+    toInt32(duels_won_home) AS triggered_team_duels_won,
+    toInt32(duels_won_away) AS opponent_duels_won,
+    toInt32(tackles_won_home) AS triggered_team_tackles_won,
+    toInt32(tackles_won_away) AS opponent_tackles_won,
+    toInt32(interceptions_home) AS triggered_team_interceptions,
+    toInt32(interceptions_away) AS opponent_interceptions,
+    toInt32(clearances_home) AS triggered_team_clearances,
+    toInt32(clearances_away) AS opponent_clearances,
+    possession_home_pct AS triggered_team_possession_pct,
+    possession_away_pct AS opponent_possession_pct,
+    toFloat32(round(possession_home_pct - possession_away_pct, 1)) AS possession_delta_pct
 FROM base_stats AS b
 
 UNION ALL
 
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
 
     'away' AS triggered_side,
-    b.away_team_id AS triggered_team_id,
-    b.away_team_name AS triggered_team_name,
-    b.home_team_id AS opponent_team_id,
-    b.home_team_name AS opponent_team_name,
+    away_team_id AS triggered_team_id,
+    away_team_name AS triggered_team_name,
+    home_team_id AS opponent_team_id,
+    home_team_name AS opponent_team_name,
 
     toInt32(4) AS trigger_threshold_min_late_window_cards,
     toInt32(80) AS trigger_threshold_window_start_minute,
     CAST(NULL, 'Nullable(Int32)') AS trigger_threshold_window_end_minute,
-    toInt32(b.match_late_window_cards) AS match_late_window_cards,
-    toInt32(b.match_late_window_cards - 4) AS match_late_window_cards_above_threshold,
-    toInt32(b.home_late_window_cards) AS home_late_window_cards,
-    toInt32(b.away_late_window_cards) AS away_late_window_cards,
-    toInt32(b.away_late_window_cards) AS triggered_team_late_window_cards,
-    toInt32(b.home_late_window_cards) AS opponent_late_window_cards,
-    toInt32(b.away_late_window_cards - b.home_late_window_cards) AS late_window_cards_delta,
+    toInt32(match_late_window_cards) AS match_late_window_cards,
+    toInt32(match_late_window_cards - 4) AS match_late_window_cards_above_threshold,
+    toInt32(home_late_window_cards) AS home_late_window_cards,
+    toInt32(away_late_window_cards) AS away_late_window_cards,
+    toInt32(away_late_window_cards) AS triggered_team_late_window_cards,
+    toInt32(home_late_window_cards) AS opponent_late_window_cards,
+    toInt32(away_late_window_cards - home_late_window_cards) AS late_window_cards_delta,
     toFloat32(round(
-        100.0 * b.away_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0),
+        100.0 * away_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0),
         1
     )) AS triggered_team_late_window_cards_share_pct,
     toFloat32(round(
-        100.0 * b.home_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0),
+        100.0 * home_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0),
         1
     )) AS opponent_late_window_cards_share_pct,
     toFloat32(round(
         (
-            100.0 * b.away_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0)
+            100.0 * away_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0)
         ) - (
-            100.0 * b.home_late_window_cards / nullIf(toFloat64(b.match_late_window_cards), 0)
+            100.0 * home_late_window_cards / nullIf(toFloat64(match_late_window_cards), 0)
         ),
         1
     )) AS late_window_cards_share_delta_pct,
 
-    toInt32(b.match_total_cards) AS match_total_cards,
-    toInt32(b.match_total_yellow_cards) AS match_total_yellow_cards,
-    toInt32(b.match_total_red_cards) AS match_total_red_cards,
-    toInt32(b.yellow_cards_away) AS triggered_team_yellow_cards,
-    toInt32(b.yellow_cards_home) AS opponent_yellow_cards,
-    toInt32(b.yellow_cards_away - b.yellow_cards_home) AS yellow_cards_delta,
-    toInt32(b.red_cards_away) AS triggered_team_red_cards,
-    toInt32(b.red_cards_home) AS opponent_red_cards,
-    toInt32(b.red_cards_away - b.red_cards_home) AS red_cards_delta,
-    toInt32(b.yellow_cards_away + b.red_cards_away) AS triggered_team_total_cards,
-    toInt32(b.yellow_cards_home + b.red_cards_home) AS opponent_total_cards,
+    toInt32(match_total_cards) AS match_total_cards,
+    toInt32(match_total_yellow_cards) AS match_total_yellow_cards,
+    toInt32(match_total_red_cards) AS match_total_red_cards,
+    toInt32(yellow_cards_away) AS triggered_team_yellow_cards,
+    toInt32(yellow_cards_home) AS opponent_yellow_cards,
+    toInt32(yellow_cards_away - yellow_cards_home) AS yellow_cards_delta,
+    toInt32(red_cards_away) AS triggered_team_red_cards,
+    toInt32(red_cards_home) AS opponent_red_cards,
+    toInt32(red_cards_away - red_cards_home) AS red_cards_delta,
+    toInt32(yellow_cards_away + red_cards_away) AS triggered_team_total_cards,
+    toInt32(yellow_cards_home + red_cards_home) AS opponent_total_cards,
     toInt32(
-        (b.yellow_cards_away + b.red_cards_away)
-        - (b.yellow_cards_home + b.red_cards_home)
+        (yellow_cards_away + red_cards_away)
+        - (yellow_cards_home + red_cards_home)
     ) AS card_count_delta,
 
-    toInt32(b.fouls_away) AS triggered_team_fouls_committed,
-    toInt32(b.fouls_home) AS opponent_fouls_committed,
-    toInt32(b.fouls_away - b.fouls_home) AS fouls_committed_delta,
+    toInt32(fouls_away) AS triggered_team_fouls_committed,
+    toInt32(fouls_home) AS opponent_fouls_committed,
+    toInt32(fouls_away - fouls_home) AS fouls_committed_delta,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0),
+        100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0),
         1
     ))) AS triggered_team_cards_per_foul_pct,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0),
+        100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0),
         1
     ))) AS opponent_cards_per_foul_pct,
     toNullable(toFloat32(round(
         (
-            100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0)
+            100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0)
         ) - (
-            100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0)
+            100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0)
         ),
         1
     ))) AS cards_per_foul_delta_pct,
 
-    toInt32(b.duels_won_away) AS triggered_team_duels_won,
-    toInt32(b.duels_won_home) AS opponent_duels_won,
-    toInt32(b.tackles_won_away) AS triggered_team_tackles_won,
-    toInt32(b.tackles_won_home) AS opponent_tackles_won,
-    toInt32(b.interceptions_away) AS triggered_team_interceptions,
-    toInt32(b.interceptions_home) AS opponent_interceptions,
-    toInt32(b.clearances_away) AS triggered_team_clearances,
-    toInt32(b.clearances_home) AS opponent_clearances,
-    b.possession_away_pct AS triggered_team_possession_pct,
-    b.possession_home_pct AS opponent_possession_pct,
-    toFloat32(round(b.possession_away_pct - b.possession_home_pct, 1)) AS possession_delta_pct
+    toInt32(duels_won_away) AS triggered_team_duels_won,
+    toInt32(duels_won_home) AS opponent_duels_won,
+    toInt32(tackles_won_away) AS triggered_team_tackles_won,
+    toInt32(tackles_won_home) AS opponent_tackles_won,
+    toInt32(interceptions_away) AS triggered_team_interceptions,
+    toInt32(interceptions_home) AS opponent_interceptions,
+    toInt32(clearances_away) AS triggered_team_clearances,
+    toInt32(clearances_home) AS opponent_clearances,
+    possession_away_pct AS triggered_team_possession_pct,
+    possession_home_pct AS opponent_possession_pct,
+    toFloat32(round(possession_away_pct - possession_home_pct, 1)) AS possession_delta_pct
 FROM base_stats AS b
 
 ORDER BY match_id, triggered_side;

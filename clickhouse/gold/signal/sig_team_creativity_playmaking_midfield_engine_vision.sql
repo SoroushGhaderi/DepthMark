@@ -67,13 +67,13 @@ INSERT INTO gold.sig_team_creativity_playmaking_midfield_engine_vision (
 WITH player_roles AS (
     SELECT
         mp.match_id,
-        toInt32(mp.team_id) AS team_id,
+        toInt32(mp.primary_team_id) AS team_id,
         toInt32(mp.person_id) AS player_id,
         argMax(coalesce(mp.usual_playing_position_id, 0), if(mp.role = 'starter', 2, 1))
             AS usual_playing_position_id
     FROM silver.match_personnel AS mp
     WHERE mp.match_id > 0
-      AND mp.team_id > 0
+      AND mp.primary_team_id > 0
       AND mp.person_id > 0
       AND mp.role IN ('starter', 'substitute')
     GROUP BY

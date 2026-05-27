@@ -56,12 +56,12 @@ WITH booking_events AS (
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_team_side,
         toInt32(assumeNotNull(c.player_id)) AS player_id,
-        toInt32OrZero(c.card_minute) AS card_minute
+        toInt32OrZero(toString(c.card_minute)) AS card_minute
     FROM silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
-      AND toInt32OrZero(c.card_minute) BETWEEN 1 AND 29
+      AND toInt32OrZero(toString(c.card_minute)) BETWEEN 1 AND 29
       AND (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0

@@ -1,33 +1,3 @@
-WITH dead_ball_shot_stats AS (
-    SELECT
-        s.match_id,
-        assumeNotNull(s.team_id) AS team_id,
-        toInt32(count()) AS team_dead_ball_chances,
-        toInt32(countIf(coalesce(s.is_on_target, 0) = 1)) AS team_dead_ball_shots_on_target,
-        toInt32(countIf(
-            coalesce(s.is_goal, 0) = 1
-            AND coalesce(s.is_own_goal, 0) = 0
-        )) AS team_dead_ball_goals,
-        toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS team_dead_ball_expected_goals
-    FROM silver.shot AS s
-    WHERE s.team_id IS NOT NULL
-      AND coalesce(s.situation, '') IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')
-    GROUP BY
-        s.match_id,
-        s.team_id
-),
-team_creation_stats AS (
-    SELECT
-        p.match_id,
-        p.team_id,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
-    WHERE p.team_id IS NOT NULL
-    GROUP BY
-        p.match_id,
-        p.team_id
-)
 INSERT INTO gold.sig_team_creativity_playmaking_set_piece_threat_volume (
     match_id,
     match_date,
@@ -88,6 +58,36 @@ INSERT INTO gold.sig_team_creativity_playmaking_set_piece_threat_volume (
     triggered_team_possession_pct,
     opponent_possession_pct,
     possession_delta_pct
+)
+WITH dead_ball_shot_stats AS (
+    SELECT
+        s.match_id,
+        assumeNotNull(s.team_id) AS team_id,
+        toInt32(count()) AS team_dead_ball_chances,
+        toInt32(countIf(coalesce(s.is_on_target, 0) = 1)) AS team_dead_ball_shots_on_target,
+        toInt32(countIf(
+            coalesce(s.is_goal, 0) = 1
+            AND coalesce(s.is_own_goal, 0) = 0
+        )) AS team_dead_ball_goals,
+        toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS team_dead_ball_expected_goals
+    FROM silver.shot AS s
+    WHERE s.team_id IS NOT NULL
+      AND coalesce(s.situation, '') IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')
+    GROUP BY
+        s.match_id,
+        s.team_id
+),
+team_creation_stats AS (
+    SELECT
+        p.match_id,
+        p.team_id,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
+    FROM silver.player_match_stat AS p
+    WHERE p.team_id IS NOT NULL
+    GROUP BY
+        p.match_id,
+        p.team_id
 )
 -- Signal: sig_team_creativity_playmaking_set_piece_threat_volume
 -- Trigger: Team creates >= 8 chances from dead-ball situations in a finished match.

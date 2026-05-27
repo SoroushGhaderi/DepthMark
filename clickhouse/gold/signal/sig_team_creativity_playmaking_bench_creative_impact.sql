@@ -1,65 +1,3 @@
-WITH substitute_entries AS (
-    SELECT
-        mp.match_id,
-        toInt32(assumeNotNull(mp.person_id)) AS player_id,
-        toInt32(max(toInt32OrZero(mp.substitution_time))) AS substitution_time
-    FROM silver.match_personnel AS mp
-    WHERE mp.match_id > 0
-      AND mp.person_id IS NOT NULL
-      AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
-      AND toInt32OrZero(mp.substitution_time) > 0
-    GROUP BY
-        mp.match_id,
-        player_id
-),
-substitute_playmaking_stats AS (
-    SELECT
-        p.match_id,
-        toInt32(p.team_id) AS team_id,
-        toInt32(p.player_id) AS player_id,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS substitute_key_passes,
-        toInt32(sum(coalesce(p.assists, 0))) AS substitute_assists,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS substitute_expected_assists
-    FROM silver.player_match_stat AS p
-    INNER JOIN substitute_entries AS se
-        ON se.match_id = p.match_id
-       AND se.player_id = p.player_id
-    WHERE p.match_id > 0
-      AND coalesce(p.team_id, 0) > 0
-    GROUP BY
-        p.match_id,
-        team_id,
-        player_id
-),
-team_substitute_playmaking_rollup AS (
-    SELECT
-        sps.match_id,
-        sps.team_id,
-        toInt32(sum(sps.substitute_key_passes)) AS team_substitute_key_passes,
-        toInt32(sum(sps.substitute_assists)) AS team_substitute_assists,
-        toFloat32(round(sum(sps.substitute_expected_assists), 3)) AS team_substitute_expected_assists,
-        toInt32(countIf(sps.substitute_key_passes > 0)) AS team_distinct_substitute_key_pass_creators,
-        toInt32(countIf(sps.substitute_assists > 0)) AS team_distinct_substitute_assist_providers,
-        toInt32(max(sps.substitute_key_passes)) AS team_top_substitute_key_passes
-    FROM substitute_playmaking_stats AS sps
-    GROUP BY
-        sps.match_id,
-        sps.team_id
-),
-team_total_playmaking_rollup AS (
-    SELECT
-        p.match_id,
-        toInt32(p.team_id) AS team_id,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes,
-        toInt32(sum(coalesce(p.assists, 0))) AS team_total_assists,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_total_expected_assists
-    FROM silver.player_match_stat AS p
-    WHERE p.match_id > 0
-      AND coalesce(p.team_id, 0) > 0
-    GROUP BY
-        p.match_id,
-        team_id
-)
 INSERT INTO gold.sig_team_creativity_playmaking_bench_creative_impact (
     match_id,
     match_date,
@@ -132,6 +70,68 @@ INSERT INTO gold.sig_team_creativity_playmaking_bench_creative_impact (
     triggered_team_goals,
     opponent_goals,
     goal_delta
+)
+WITH substitute_entries AS (
+    SELECT
+        mp.match_id,
+        toInt32(assumeNotNull(mp.person_id)) AS player_id,
+        toInt32(max(coalesce(mp.substitution_time, 0))) AS substitution_time
+    FROM silver.match_personnel AS mp
+    WHERE mp.match_id > 0
+      AND mp.person_id IS NOT NULL
+      AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
+      AND coalesce(mp.substitution_time, 0) > 0
+    GROUP BY
+        mp.match_id,
+        player_id
+),
+substitute_playmaking_stats AS (
+    SELECT
+        p.match_id,
+        toInt32(p.team_id) AS team_id,
+        toInt32(p.player_id) AS player_id,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS substitute_key_passes,
+        toInt32(sum(coalesce(p.assists, 0))) AS substitute_assists,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS substitute_expected_assists
+    FROM silver.player_match_stat AS p
+    INNER JOIN substitute_entries AS se
+        ON se.match_id = p.match_id
+       AND se.player_id = p.player_id
+    WHERE p.match_id > 0
+      AND coalesce(p.team_id, 0) > 0
+    GROUP BY
+        p.match_id,
+        team_id,
+        player_id
+),
+team_substitute_playmaking_rollup AS (
+    SELECT
+        sps.match_id,
+        sps.team_id,
+        toInt32(sum(sps.substitute_key_passes)) AS team_substitute_key_passes,
+        toInt32(sum(sps.substitute_assists)) AS team_substitute_assists,
+        toFloat32(round(sum(sps.substitute_expected_assists), 3)) AS team_substitute_expected_assists,
+        toInt32(countIf(sps.substitute_key_passes > 0)) AS team_distinct_substitute_key_pass_creators,
+        toInt32(countIf(sps.substitute_assists > 0)) AS team_distinct_substitute_assist_providers,
+        toInt32(max(sps.substitute_key_passes)) AS team_top_substitute_key_passes
+    FROM substitute_playmaking_stats AS sps
+    GROUP BY
+        sps.match_id,
+        sps.team_id
+),
+team_total_playmaking_rollup AS (
+    SELECT
+        p.match_id,
+        toInt32(p.team_id) AS team_id,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes,
+        toInt32(sum(coalesce(p.assists, 0))) AS team_total_assists,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_total_expected_assists
+    FROM silver.player_match_stat AS p
+    WHERE p.match_id > 0
+      AND coalesce(p.team_id, 0) > 0
+    GROUP BY
+        p.match_id,
+        team_id
 )
 -- Signal: sig_team_creativity_playmaking_bench_creative_impact
 -- Trigger: Substitutes provide >= 2 key passes and >= 1 assist in one finished match.

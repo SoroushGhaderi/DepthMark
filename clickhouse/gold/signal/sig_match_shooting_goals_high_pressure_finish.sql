@@ -146,193 +146,193 @@ base_stats AS (
 )
 
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
     'home' AS triggered_side,
-    b.home_team_id AS triggered_team_id,
-    b.home_team_name AS triggered_team_name,
-    b.away_team_id AS opponent_team_id,
-    b.away_team_name AS opponent_team_name,
+    home_team_id AS triggered_team_id,
+    home_team_name AS triggered_team_name,
+    away_team_id AS opponent_team_id,
+    away_team_name AS opponent_team_name,
     toInt32(85) AS trigger_threshold_late_shot_minute_exclusive,
     toInt32(10) AS trigger_threshold_match_total_late_shots_min,
-    b.match_late_shots_total,
-    b.home_late_shots,
-    b.away_late_shots,
-    b.match_late_shots_on_target_total,
+    match_late_shots_total,
+    home_late_shots,
+    away_late_shots,
+    match_late_shots_on_target_total,
     toFloat32(coalesce(round(
-        100.0 * b.match_late_shots_on_target_total / nullIf(toFloat64(b.match_late_shots_total), 0),
+        100.0 * match_late_shots_on_target_total / nullIf(toFloat64(match_late_shots_total), 0),
         1
     ), 0.0)) AS match_late_shot_accuracy_pct,
-    b.home_late_shots AS triggered_team_late_shots,
-    b.away_late_shots AS opponent_late_shots,
-    b.home_late_shots - b.away_late_shots AS late_shot_volume_delta,
-    b.home_late_shots_on_target AS triggered_team_late_shots_on_target,
-    b.away_late_shots_on_target AS opponent_late_shots_on_target,
-    b.home_late_shots_on_target - b.away_late_shots_on_target AS late_shot_on_target_delta,
+    home_late_shots AS triggered_team_late_shots,
+    away_late_shots AS opponent_late_shots,
+    home_late_shots - away_late_shots AS late_shot_volume_delta,
+    home_late_shots_on_target AS triggered_team_late_shots_on_target,
+    away_late_shots_on_target AS opponent_late_shots_on_target,
+    home_late_shots_on_target - away_late_shots_on_target AS late_shot_on_target_delta,
     toFloat32(coalesce(round(
-        100.0 * b.home_late_shots_on_target / nullIf(toFloat64(b.home_late_shots), 0),
+        100.0 * home_late_shots_on_target / nullIf(toFloat64(home_late_shots), 0),
         1
     ), 0.0)) AS triggered_team_late_shot_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.away_late_shots_on_target / nullIf(toFloat64(b.away_late_shots), 0),
+        100.0 * away_late_shots_on_target / nullIf(toFloat64(away_late_shots), 0),
         1
     ), 0.0)) AS opponent_late_shot_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.home_late_shots_on_target / nullIf(toFloat64(b.home_late_shots), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.away_late_shots_on_target / nullIf(toFloat64(b.away_late_shots), 0), 1), 0.0),
+        coalesce(round(100.0 * home_late_shots_on_target / nullIf(toFloat64(home_late_shots), 0), 1), 0.0)
+        - coalesce(round(100.0 * away_late_shots_on_target / nullIf(toFloat64(away_late_shots), 0), 1), 0.0),
         1
     )) AS late_shot_accuracy_delta_pct,
-    b.total_shots_home AS triggered_team_total_shots,
-    b.total_shots_away AS opponent_total_shots,
-    b.total_shots_home - b.total_shots_away AS shot_volume_delta,
-    b.shots_on_target_home AS triggered_team_shots_on_target,
-    b.shots_on_target_away AS opponent_shots_on_target,
-    b.shots_on_target_home - b.shots_on_target_away AS shot_on_target_delta,
-    b.expected_goals_home AS triggered_team_xg,
-    b.expected_goals_away AS opponent_xg,
-    toFloat32(round(b.expected_goals_home - b.expected_goals_away, 3)) AS xg_delta,
-    b.home_goals AS triggered_team_goals,
-    b.away_goals AS opponent_goals,
-    b.home_goals - b.away_goals AS goal_gap,
+    total_shots_home AS triggered_team_total_shots,
+    total_shots_away AS opponent_total_shots,
+    total_shots_home - total_shots_away AS shot_volume_delta,
+    shots_on_target_home AS triggered_team_shots_on_target,
+    shots_on_target_away AS opponent_shots_on_target,
+    shots_on_target_home - shots_on_target_away AS shot_on_target_delta,
+    expected_goals_home AS triggered_team_xg,
+    expected_goals_away AS opponent_xg,
+    toFloat32(round(expected_goals_home - expected_goals_away, 3)) AS xg_delta,
+    home_goals AS triggered_team_goals,
+    away_goals AS opponent_goals,
+    home_goals - away_goals AS goal_gap,
     toFloat32(coalesce(round(
-        100.0 * b.home_goals / nullIf(toFloat64(b.total_shots_home), 0),
+        100.0 * home_goals / nullIf(toFloat64(total_shots_home), 0),
         1
     ), 0.0)) AS triggered_team_shot_conversion_pct,
     toFloat32(coalesce(round(
-        100.0 * b.away_goals / nullIf(toFloat64(b.total_shots_away), 0),
+        100.0 * away_goals / nullIf(toFloat64(total_shots_away), 0),
         1
     ), 0.0)) AS opponent_shot_conversion_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.home_goals / nullIf(toFloat64(b.total_shots_home), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.away_goals / nullIf(toFloat64(b.total_shots_away), 0), 1), 0.0),
+        coalesce(round(100.0 * home_goals / nullIf(toFloat64(total_shots_home), 0), 1), 0.0)
+        - coalesce(round(100.0 * away_goals / nullIf(toFloat64(total_shots_away), 0), 1), 0.0),
         1
     )) AS shot_conversion_delta_pct,
-    b.big_chances_home AS triggered_team_big_chances,
-    b.big_chances_away AS opponent_big_chances,
-    b.big_chances_home - b.big_chances_away AS big_chance_delta,
-    b.big_chances_missed_home AS triggered_team_big_chances_missed,
-    b.big_chances_missed_away AS opponent_big_chances_missed,
-    b.big_chances_missed_home - b.big_chances_missed_away AS big_chances_missed_delta,
-    b.touches_opposition_box_home AS triggered_team_touches_opposition_box,
-    b.touches_opposition_box_away AS opponent_touches_opposition_box,
-    b.touches_opposition_box_home - b.touches_opposition_box_away AS opposition_box_touch_delta,
-    b.possession_home_pct AS triggered_team_possession_pct,
-    b.possession_away_pct AS opponent_possession_pct,
-    toFloat32(round(b.possession_home_pct - b.possession_away_pct, 1)) AS possession_delta_pct,
+    big_chances_home AS triggered_team_big_chances,
+    big_chances_away AS opponent_big_chances,
+    big_chances_home - big_chances_away AS big_chance_delta,
+    big_chances_missed_home AS triggered_team_big_chances_missed,
+    big_chances_missed_away AS opponent_big_chances_missed,
+    big_chances_missed_home - big_chances_missed_away AS big_chances_missed_delta,
+    touches_opposition_box_home AS triggered_team_touches_opposition_box,
+    touches_opposition_box_away AS opponent_touches_opposition_box,
+    touches_opposition_box_home - touches_opposition_box_away AS opposition_box_touch_delta,
+    possession_home_pct AS triggered_team_possession_pct,
+    possession_away_pct AS opponent_possession_pct,
+    toFloat32(round(possession_home_pct - possession_away_pct, 1)) AS possession_delta_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0), 1), 0.0),
+        coalesce(round(100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0), 1), 0.0)
+        - coalesce(round(100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM base_stats AS b
+FROM base_stats AS bs
 
 UNION ALL
 
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
     'away' AS triggered_side,
-    b.away_team_id AS triggered_team_id,
-    b.away_team_name AS triggered_team_name,
-    b.home_team_id AS opponent_team_id,
-    b.home_team_name AS opponent_team_name,
+    away_team_id AS triggered_team_id,
+    away_team_name AS triggered_team_name,
+    home_team_id AS opponent_team_id,
+    home_team_name AS opponent_team_name,
     toInt32(85) AS trigger_threshold_late_shot_minute_exclusive,
     toInt32(10) AS trigger_threshold_match_total_late_shots_min,
-    b.match_late_shots_total,
-    b.home_late_shots,
-    b.away_late_shots,
-    b.match_late_shots_on_target_total,
+    match_late_shots_total,
+    home_late_shots,
+    away_late_shots,
+    match_late_shots_on_target_total,
     toFloat32(coalesce(round(
-        100.0 * b.match_late_shots_on_target_total / nullIf(toFloat64(b.match_late_shots_total), 0),
+        100.0 * match_late_shots_on_target_total / nullIf(toFloat64(match_late_shots_total), 0),
         1
     ), 0.0)) AS match_late_shot_accuracy_pct,
-    b.away_late_shots AS triggered_team_late_shots,
-    b.home_late_shots AS opponent_late_shots,
-    b.away_late_shots - b.home_late_shots AS late_shot_volume_delta,
-    b.away_late_shots_on_target AS triggered_team_late_shots_on_target,
-    b.home_late_shots_on_target AS opponent_late_shots_on_target,
-    b.away_late_shots_on_target - b.home_late_shots_on_target AS late_shot_on_target_delta,
+    away_late_shots AS triggered_team_late_shots,
+    home_late_shots AS opponent_late_shots,
+    away_late_shots - home_late_shots AS late_shot_volume_delta,
+    away_late_shots_on_target AS triggered_team_late_shots_on_target,
+    home_late_shots_on_target AS opponent_late_shots_on_target,
+    away_late_shots_on_target - home_late_shots_on_target AS late_shot_on_target_delta,
     toFloat32(coalesce(round(
-        100.0 * b.away_late_shots_on_target / nullIf(toFloat64(b.away_late_shots), 0),
+        100.0 * away_late_shots_on_target / nullIf(toFloat64(away_late_shots), 0),
         1
     ), 0.0)) AS triggered_team_late_shot_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.home_late_shots_on_target / nullIf(toFloat64(b.home_late_shots), 0),
+        100.0 * home_late_shots_on_target / nullIf(toFloat64(home_late_shots), 0),
         1
     ), 0.0)) AS opponent_late_shot_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.away_late_shots_on_target / nullIf(toFloat64(b.away_late_shots), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.home_late_shots_on_target / nullIf(toFloat64(b.home_late_shots), 0), 1), 0.0),
+        coalesce(round(100.0 * away_late_shots_on_target / nullIf(toFloat64(away_late_shots), 0), 1), 0.0)
+        - coalesce(round(100.0 * home_late_shots_on_target / nullIf(toFloat64(home_late_shots), 0), 1), 0.0),
         1
     )) AS late_shot_accuracy_delta_pct,
-    b.total_shots_away AS triggered_team_total_shots,
-    b.total_shots_home AS opponent_total_shots,
-    b.total_shots_away - b.total_shots_home AS shot_volume_delta,
-    b.shots_on_target_away AS triggered_team_shots_on_target,
-    b.shots_on_target_home AS opponent_shots_on_target,
-    b.shots_on_target_away - b.shots_on_target_home AS shot_on_target_delta,
-    b.expected_goals_away AS triggered_team_xg,
-    b.expected_goals_home AS opponent_xg,
-    toFloat32(round(b.expected_goals_away - b.expected_goals_home, 3)) AS xg_delta,
-    b.away_goals AS triggered_team_goals,
-    b.home_goals AS opponent_goals,
-    b.away_goals - b.home_goals AS goal_gap,
+    total_shots_away AS triggered_team_total_shots,
+    total_shots_home AS opponent_total_shots,
+    total_shots_away - total_shots_home AS shot_volume_delta,
+    shots_on_target_away AS triggered_team_shots_on_target,
+    shots_on_target_home AS opponent_shots_on_target,
+    shots_on_target_away - shots_on_target_home AS shot_on_target_delta,
+    expected_goals_away AS triggered_team_xg,
+    expected_goals_home AS opponent_xg,
+    toFloat32(round(expected_goals_away - expected_goals_home, 3)) AS xg_delta,
+    away_goals AS triggered_team_goals,
+    home_goals AS opponent_goals,
+    away_goals - home_goals AS goal_gap,
     toFloat32(coalesce(round(
-        100.0 * b.away_goals / nullIf(toFloat64(b.total_shots_away), 0),
+        100.0 * away_goals / nullIf(toFloat64(total_shots_away), 0),
         1
     ), 0.0)) AS triggered_team_shot_conversion_pct,
     toFloat32(coalesce(round(
-        100.0 * b.home_goals / nullIf(toFloat64(b.total_shots_home), 0),
+        100.0 * home_goals / nullIf(toFloat64(total_shots_home), 0),
         1
     ), 0.0)) AS opponent_shot_conversion_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.away_goals / nullIf(toFloat64(b.total_shots_away), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.home_goals / nullIf(toFloat64(b.total_shots_home), 0), 1), 0.0),
+        coalesce(round(100.0 * away_goals / nullIf(toFloat64(total_shots_away), 0), 1), 0.0)
+        - coalesce(round(100.0 * home_goals / nullIf(toFloat64(total_shots_home), 0), 1), 0.0),
         1
     )) AS shot_conversion_delta_pct,
-    b.big_chances_away AS triggered_team_big_chances,
-    b.big_chances_home AS opponent_big_chances,
-    b.big_chances_away - b.big_chances_home AS big_chance_delta,
-    b.big_chances_missed_away AS triggered_team_big_chances_missed,
-    b.big_chances_missed_home AS opponent_big_chances_missed,
-    b.big_chances_missed_away - b.big_chances_missed_home AS big_chances_missed_delta,
-    b.touches_opposition_box_away AS triggered_team_touches_opposition_box,
-    b.touches_opposition_box_home AS opponent_touches_opposition_box,
-    b.touches_opposition_box_away - b.touches_opposition_box_home AS opposition_box_touch_delta,
-    b.possession_away_pct AS triggered_team_possession_pct,
-    b.possession_home_pct AS opponent_possession_pct,
-    toFloat32(round(b.possession_away_pct - b.possession_home_pct, 1)) AS possession_delta_pct,
+    big_chances_away AS triggered_team_big_chances,
+    big_chances_home AS opponent_big_chances,
+    big_chances_away - big_chances_home AS big_chance_delta,
+    big_chances_missed_away AS triggered_team_big_chances_missed,
+    big_chances_missed_home AS opponent_big_chances_missed,
+    big_chances_missed_away - big_chances_missed_home AS big_chances_missed_delta,
+    touches_opposition_box_away AS triggered_team_touches_opposition_box,
+    touches_opposition_box_home AS opponent_touches_opposition_box,
+    touches_opposition_box_away - touches_opposition_box_home AS opposition_box_touch_delta,
+    possession_away_pct AS triggered_team_possession_pct,
+    possession_home_pct AS opponent_possession_pct,
+    toFloat32(round(possession_away_pct - possession_home_pct, 1)) AS possession_delta_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0), 1), 0.0),
+        coalesce(round(100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0), 1), 0.0)
+        - coalesce(round(100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM base_stats AS b;
+FROM base_stats AS bs;

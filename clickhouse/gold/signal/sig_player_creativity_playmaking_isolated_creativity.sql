@@ -1,13 +1,3 @@
-WITH team_key_passes AS (
-    SELECT
-        match_id,
-        team_id,
-        sum(coalesce(chances_created, 0)) AS triggered_team_total_key_passes
-    FROM silver.player_match_stat
-    GROUP BY
-        match_id,
-        team_id
-)
 INSERT INTO gold.sig_player_creativity_playmaking_isolated_creativity (
     match_id,
     match_date,
@@ -49,6 +39,16 @@ INSERT INTO gold.sig_player_creativity_playmaking_isolated_creativity (
     opponent_touches_opposition_box,
     player_share_of_team_passes_pct,
     player_share_of_team_opposition_box_touches_pct
+)
+WITH team_key_passes AS (
+    SELECT
+        match_id,
+        team_id,
+        sum(coalesce(chances_created, 0)) AS triggered_team_total_key_passes
+    FROM silver.player_match_stat
+    GROUP BY
+        match_id,
+        team_id
 )
 -- Signal: sig_player_creativity_playmaking_isolated_creativity
 -- Trigger: player creates >= 50% of their team's total key passes in a finished match.

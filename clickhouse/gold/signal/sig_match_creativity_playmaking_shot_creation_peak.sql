@@ -1,66 +1,3 @@
-WITH team_creation_stats AS (
-    SELECT
-        p.match_id,
-        p.team_id,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
-    WHERE p.team_id IS NOT NULL
-    GROUP BY
-        p.match_id,
-        p.team_id
-),
-base_stats AS (
-    SELECT
-        m.match_id AS match_id,
-        m.match_date AS match_date,
-        m.home_team_id AS home_team_id,
-        m.home_team_name AS home_team_name,
-        m.away_team_id AS away_team_id,
-        m.away_team_name AS away_team_name,
-        m.home_score AS home_score,
-        m.away_score AS away_score,
-        toInt32(coalesce(m.home_score, 0)) AS home_goals,
-        toInt32(coalesce(m.away_score, 0)) AS away_goals,
-        toInt32(coalesce(m.home_score, 0) + coalesce(m.away_score, 0)) AS match_total_goals,
-        toInt32(coalesce(ps.total_shots_home, 0)) AS total_shots_home,
-        toInt32(coalesce(ps.total_shots_away, 0)) AS total_shots_away,
-        toInt32(coalesce(ps.total_shots_home, 0) + coalesce(ps.total_shots_away, 0)) AS match_total_shots,
-        toInt32(coalesce(ps.shots_on_target_home, 0)) AS shots_on_target_home,
-        toInt32(coalesce(ps.shots_on_target_away, 0)) AS shots_on_target_away,
-        toFloat32(coalesce(ps.expected_goals_home, 0.0)) AS expected_goals_home,
-        toFloat32(coalesce(ps.expected_goals_away, 0.0)) AS expected_goals_away,
-        toInt32(coalesce(ps.big_chances_home, 0)) AS big_chances_home,
-        toInt32(coalesce(ps.big_chances_away, 0)) AS big_chances_away,
-        toInt32(coalesce(ps.pass_attempts_home, 0)) AS pass_attempts_home,
-        toInt32(coalesce(ps.pass_attempts_away, 0)) AS pass_attempts_away,
-        toInt32(coalesce(ps.accurate_passes_home, 0)) AS accurate_passes_home,
-        toInt32(coalesce(ps.accurate_passes_away, 0)) AS accurate_passes_away,
-        toFloat32(coalesce(ps.ball_possession_home, 0.0)) AS possession_home_pct,
-        toFloat32(coalesce(ps.ball_possession_away, 0.0)) AS possession_away_pct,
-        toInt32(coalesce(ps.opposition_half_passes_home, 0)) AS opposition_half_passes_home,
-        toInt32(coalesce(ps.opposition_half_passes_away, 0)) AS opposition_half_passes_away,
-        toInt32(coalesce(ps.touches_opp_box_home, 0)) AS touches_opposition_box_home,
-        toInt32(coalesce(ps.touches_opp_box_away, 0)) AS touches_opposition_box_away,
-        toInt32(coalesce(hc.team_key_passes, 0)) AS home_key_passes,
-        toInt32(coalesce(ac.team_key_passes, 0)) AS away_key_passes,
-        toFloat32(coalesce(hc.team_expected_assists, 0.0)) AS home_expected_assists,
-        toFloat32(coalesce(ac.team_expected_assists, 0.0)) AS away_expected_assists
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
-        ON ps.match_id = m.match_id
-       AND ps.match_date = m.match_date
-       AND ps.period = 'All'
-    LEFT JOIN team_creation_stats AS hc
-        ON hc.match_id = m.match_id
-       AND hc.team_id = m.home_team_id
-    LEFT JOIN team_creation_stats AS ac
-        ON ac.match_id = m.match_id
-       AND ac.team_id = m.away_team_id
-    WHERE m.match_finished = 1
-      AND m.match_id > 0
-      AND (coalesce(ps.total_shots_home, 0) + coalesce(ps.total_shots_away, 0)) >= 30
-)
 INSERT INTO gold.sig_match_creativity_playmaking_shot_creation_peak (
     match_id,
     match_date,
@@ -126,6 +63,69 @@ INSERT INTO gold.sig_match_creativity_playmaking_shot_creation_peak (
     triggered_team_touches_opposition_box,
     opponent_touches_opposition_box,
     opposition_box_touches_delta
+)
+WITH team_creation_stats AS (
+    SELECT
+        p.match_id,
+        p.team_id,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
+    FROM silver.player_match_stat AS p
+    WHERE p.team_id IS NOT NULL
+    GROUP BY
+        p.match_id,
+        p.team_id
+),
+base_stats AS (
+    SELECT
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.home_team_id AS home_team_id,
+        m.home_team_name AS home_team_name,
+        m.away_team_id AS away_team_id,
+        m.away_team_name AS away_team_name,
+        m.home_score AS home_score,
+        m.away_score AS away_score,
+        toInt32(coalesce(m.home_score, 0)) AS home_goals,
+        toInt32(coalesce(m.away_score, 0)) AS away_goals,
+        toInt32(coalesce(m.home_score, 0) + coalesce(m.away_score, 0)) AS match_total_goals,
+        toInt32(coalesce(ps.total_shots_home, 0)) AS total_shots_home,
+        toInt32(coalesce(ps.total_shots_away, 0)) AS total_shots_away,
+        toInt32(coalesce(ps.total_shots_home, 0) + coalesce(ps.total_shots_away, 0)) AS match_total_shots,
+        toInt32(coalesce(ps.shots_on_target_home, 0)) AS shots_on_target_home,
+        toInt32(coalesce(ps.shots_on_target_away, 0)) AS shots_on_target_away,
+        toFloat32(coalesce(ps.expected_goals_home, 0.0)) AS expected_goals_home,
+        toFloat32(coalesce(ps.expected_goals_away, 0.0)) AS expected_goals_away,
+        toInt32(coalesce(ps.big_chances_home, 0)) AS big_chances_home,
+        toInt32(coalesce(ps.big_chances_away, 0)) AS big_chances_away,
+        toInt32(coalesce(ps.pass_attempts_home, 0)) AS pass_attempts_home,
+        toInt32(coalesce(ps.pass_attempts_away, 0)) AS pass_attempts_away,
+        toInt32(coalesce(ps.accurate_passes_home, 0)) AS accurate_passes_home,
+        toInt32(coalesce(ps.accurate_passes_away, 0)) AS accurate_passes_away,
+        toFloat32(coalesce(ps.ball_possession_home, 0.0)) AS possession_home_pct,
+        toFloat32(coalesce(ps.ball_possession_away, 0.0)) AS possession_away_pct,
+        toInt32(coalesce(ps.opposition_half_passes_home, 0)) AS opposition_half_passes_home,
+        toInt32(coalesce(ps.opposition_half_passes_away, 0)) AS opposition_half_passes_away,
+        toInt32(coalesce(ps.touches_opp_box_home, 0)) AS touches_opposition_box_home,
+        toInt32(coalesce(ps.touches_opp_box_away, 0)) AS touches_opposition_box_away,
+        toInt32(coalesce(hc.team_key_passes, 0)) AS home_key_passes,
+        toInt32(coalesce(ac.team_key_passes, 0)) AS away_key_passes,
+        toFloat32(coalesce(hc.team_expected_assists, 0.0)) AS home_expected_assists,
+        toFloat32(coalesce(ac.team_expected_assists, 0.0)) AS away_expected_assists
+    FROM silver.match AS m
+    INNER JOIN silver.period_stat AS ps
+        ON ps.match_id = m.match_id
+       AND ps.match_date = m.match_date
+       AND ps.period = 'All'
+    LEFT JOIN team_creation_stats AS hc
+        ON hc.match_id = m.match_id
+       AND hc.team_id = m.home_team_id
+    LEFT JOIN team_creation_stats AS ac
+        ON ac.match_id = m.match_id
+       AND ac.team_id = m.away_team_id
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
+      AND (coalesce(ps.total_shots_home, 0) + coalesce(ps.total_shots_away, 0)) >= 30
 )
 -- Signal: sig_match_creativity_playmaking_shot_creation_peak
 -- Trigger: Match averages at least one shot every 3 minutes (`match_total_shots >= 30` over 90 minutes).

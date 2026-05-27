@@ -75,7 +75,7 @@ card_events AS (
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS triggered_side,
         toInt32(assumeNotNull(c.player_id)) AS triggered_player_id,
-        toInt32OrZero(c.card_minute) AS card_minute,
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute,
         toUInt8(1) AS has_card_event
     FROM silver.card AS c
     WHERE c.match_id > 0

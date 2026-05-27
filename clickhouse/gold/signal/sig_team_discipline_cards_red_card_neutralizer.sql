@@ -70,16 +70,16 @@ WITH red_events AS (
     SELECT
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_team_side,
-        toInt32OrZero(c.card_minute) AS card_minute,
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute,
         toInt32(coalesce(c.added_time, 0)) AS card_added_time,
-        toInt32OrZero(c.card_minute) + toInt32(coalesce(c.added_time, 0)) AS card_effective_minute,
+        toInt32(coalesce(c.card_minute, 0)) + toInt32(coalesce(c.added_time, 0)) AS card_effective_minute,
         toInt64(c.event_id) AS event_id,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_red,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_red
+        toInt32(coalesce(c.score_home_at_time, 0)) AS score_home_at_red,
+        toInt32(coalesce(c.score_away_at_time, 0)) AS score_away_at_red
     FROM silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
-      AND toInt32OrZero(c.card_minute) > 0
+      AND toInt32(coalesce(c.card_minute, 0)) > 0
       AND (
           positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
           OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
@@ -104,9 +104,9 @@ goal_events AS (
     SELECT
         s.match_id,
         if(coalesce(s.is_home_goal, 0) = 1, 'home', 'away') AS goal_team_side,
-        toInt32OrZero(s.goal_time) AS goal_minute,
+        toInt32(coalesce(s.goal_time, 0)) AS goal_minute,
         toInt32(coalesce(s.goal_overload_time, 0)) AS goal_added_time,
-        toInt32OrZero(s.goal_time) + toInt32(coalesce(s.goal_overload_time, 0)) AS goal_effective_minute,
+        toInt32(coalesce(s.goal_time, 0)) + toInt32(coalesce(s.goal_overload_time, 0)) AS goal_effective_minute,
         toInt64(s.shot_id) AS shot_id,
         toInt32(coalesce(s.home_score_after, 0)) AS home_score_after,
         toInt32(coalesce(s.away_score_after, 0)) AS away_score_after,
@@ -116,7 +116,7 @@ goal_events AS (
     FROM silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.is_goal, 0) = 1
-      AND toInt32OrZero(s.goal_time) > 0
+      AND toInt32(coalesce(s.goal_time, 0)) > 0
       AND isNotNull(s.is_home_goal)
 ),
 trigger_goal_candidates AS (
@@ -145,8 +145,7 @@ trigger_goal_candidates AS (
     INNER JOIN goal_events AS ge
         ON ge.match_id = fre.match_id
        AND ge.goal_team_side = fre.card_team_side
-       AND ge.goal_effective_minute >= fre.first_red_card_effective_minute
-       AND ge.goal_effective_minute <= fre.first_red_card_effective_minute + 5
+
        AND (
            (fre.card_team_side = 'home' AND ge.home_score_after > fre.score_home_at_first_red)
            OR (fre.card_team_side = 'away' AND ge.away_score_after > fre.score_away_at_first_red)
@@ -284,6 +283,8 @@ LEFT JOIN first_red_events AS ofre
 WHERE m.match_finished = 1
   AND m.match_id > 0
   AND tgc.rn = 1
+  AND tgc.goal_effective_minute >= tgc.first_red_card_effective_minute
+  AND tgc.goal_effective_minute <= tgc.first_red_card_effective_minute + 5
 
 ORDER BY
     minutes_from_red_to_goal ASC,

@@ -1,16 +1,3 @@
-WITH player_positions AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-)
 INSERT INTO gold.sig_player_goalkeeping_defense_high_line_trapper (
     match_id,
     match_date,
@@ -75,6 +62,19 @@ INSERT INTO gold.sig_player_goalkeeping_defense_high_line_trapper (
     opponent_possession_pct,
     triggered_team_pass_accuracy_pct,
     opponent_pass_accuracy_pct
+)
+WITH player_positions AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
 )
 -- Signal: sig_player_goalkeeping_defense_high_line_trapper
 -- Intent: detect defender performances in successful offside-trap match environments.

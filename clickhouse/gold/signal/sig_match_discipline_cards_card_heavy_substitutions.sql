@@ -58,7 +58,7 @@ WITH yellow_card_events AS (
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_side,
         toInt32(assumeNotNull(c.player_id)) AS player_id,
-        toInt32OrZero(c.card_minute) AS card_minute
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute
     FROM silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
@@ -78,7 +78,7 @@ substitute_personnel AS (
     WHERE mp.match_id > 0
       AND mp.person_id > 0
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
-      AND toInt32OrZero(mp.substitution_time) > 0
+      AND toInt32(coalesce(mp.substitution_time, 0)) > 0
       AND lowerUTF8(coalesce(mp.team_side, '')) IN ('home', 'away')
     GROUP BY
         mp.match_id,
@@ -181,210 +181,210 @@ base_stats AS (
       AND m.match_id > 0
 )
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
 
     'home' AS triggered_side,
-    b.home_team_id AS triggered_team_id,
-    b.home_team_name AS triggered_team_name,
-    b.away_team_id AS opponent_team_id,
-    b.away_team_name AS opponent_team_name,
+    home_team_id AS triggered_team_id,
+    home_team_name AS triggered_team_name,
+    away_team_id AS opponent_team_id,
+    away_team_name AS opponent_team_name,
 
     toInt32(4) AS trigger_threshold_min_distinct_substitute_yellow_carded_players,
-    toInt32(b.match_distinct_substitute_yellow_carded_players) AS match_distinct_substitute_yellow_carded_players,
-    toInt32(b.match_distinct_substitute_yellow_carded_players - 4)
+    toInt32(match_distinct_substitute_yellow_carded_players) AS match_distinct_substitute_yellow_carded_players,
+    toInt32(match_distinct_substitute_yellow_carded_players - 4)
         AS match_distinct_substitute_yellow_carded_players_above_threshold,
-    toInt32(b.home_distinct_substitute_yellow_carded_players) AS home_distinct_substitute_yellow_carded_players,
-    toInt32(b.away_distinct_substitute_yellow_carded_players) AS away_distinct_substitute_yellow_carded_players,
-    toInt32(b.home_distinct_substitute_yellow_carded_players)
+    toInt32(home_distinct_substitute_yellow_carded_players) AS home_distinct_substitute_yellow_carded_players,
+    toInt32(away_distinct_substitute_yellow_carded_players) AS away_distinct_substitute_yellow_carded_players,
+    toInt32(home_distinct_substitute_yellow_carded_players)
         AS triggered_team_distinct_substitute_yellow_carded_players,
-    toInt32(b.away_distinct_substitute_yellow_carded_players)
+    toInt32(away_distinct_substitute_yellow_carded_players)
         AS opponent_distinct_substitute_yellow_carded_players,
     toInt32(
-        b.home_distinct_substitute_yellow_carded_players - b.away_distinct_substitute_yellow_carded_players
+        home_distinct_substitute_yellow_carded_players - away_distinct_substitute_yellow_carded_players
     ) AS distinct_substitute_yellow_carded_players_delta,
 
-    toInt32(b.home_substitute_yellow_card_events) AS triggered_team_substitute_yellow_card_events,
-    toInt32(b.away_substitute_yellow_card_events) AS opponent_substitute_yellow_card_events,
-    toInt32(b.home_substitute_yellow_card_events - b.away_substitute_yellow_card_events)
+    toInt32(home_substitute_yellow_card_events) AS triggered_team_substitute_yellow_card_events,
+    toInt32(away_substitute_yellow_card_events) AS opponent_substitute_yellow_card_events,
+    toInt32(home_substitute_yellow_card_events - away_substitute_yellow_card_events)
         AS substitute_yellow_card_events_delta,
-    toNullable(toInt32(b.home_first_substitute_yellow_card_minute))
+    toNullable(toInt32(home_first_substitute_yellow_card_minute))
         AS triggered_team_first_substitute_yellow_card_minute,
-    toNullable(toInt32(b.away_first_substitute_yellow_card_minute))
+    toNullable(toInt32(away_first_substitute_yellow_card_minute))
         AS opponent_first_substitute_yellow_card_minute,
 
     toFloat32(coalesce(round(
-        100.0 * b.home_distinct_substitute_yellow_carded_players
-        / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+        100.0 * home_distinct_substitute_yellow_carded_players
+        / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
         1
     ), 0.0)) AS triggered_team_substitute_yellow_carded_share_pct,
     toFloat32(coalesce(round(
-        100.0 * b.away_distinct_substitute_yellow_carded_players
-        / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+        100.0 * away_distinct_substitute_yellow_carded_players
+        / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
         1
     ), 0.0)) AS opponent_substitute_yellow_carded_share_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * b.home_distinct_substitute_yellow_carded_players
-            / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+            100.0 * home_distinct_substitute_yellow_carded_players
+            / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
             1
         ), 0.0)
       - coalesce(round(
-            100.0 * b.away_distinct_substitute_yellow_carded_players
-            / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+            100.0 * away_distinct_substitute_yellow_carded_players
+            / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
             1
         ), 0.0),
         1
     )) AS substitute_yellow_carded_share_delta_pct,
 
-    toInt32(b.yellow_cards_home) AS triggered_team_yellow_cards,
-    toInt32(b.yellow_cards_away) AS opponent_yellow_cards,
-    toInt32(b.yellow_cards_home - b.yellow_cards_away) AS yellow_cards_delta,
-    toInt32(b.red_cards_home) AS triggered_team_red_cards,
-    toInt32(b.red_cards_away) AS opponent_red_cards,
-    toInt32(b.red_cards_home - b.red_cards_away) AS red_cards_delta,
-    toInt32(b.yellow_cards_home + b.red_cards_home) AS triggered_team_total_cards,
-    toInt32(b.yellow_cards_away + b.red_cards_away) AS opponent_total_cards,
-    toInt32((b.yellow_cards_home + b.red_cards_home) - (b.yellow_cards_away + b.red_cards_away))
+    toInt32(yellow_cards_home) AS triggered_team_yellow_cards,
+    toInt32(yellow_cards_away) AS opponent_yellow_cards,
+    toInt32(yellow_cards_home - yellow_cards_away) AS yellow_cards_delta,
+    toInt32(red_cards_home) AS triggered_team_red_cards,
+    toInt32(red_cards_away) AS opponent_red_cards,
+    toInt32(red_cards_home - red_cards_away) AS red_cards_delta,
+    toInt32(yellow_cards_home + red_cards_home) AS triggered_team_total_cards,
+    toInt32(yellow_cards_away + red_cards_away) AS opponent_total_cards,
+    toInt32((yellow_cards_home + red_cards_home) - (yellow_cards_away + red_cards_away))
         AS card_count_delta,
 
-    toInt32(b.fouls_home) AS triggered_team_fouls_committed,
-    toInt32(b.fouls_away) AS opponent_fouls_committed,
-    toInt32(b.fouls_home - b.fouls_away) AS fouls_committed_delta,
+    toInt32(fouls_home) AS triggered_team_fouls_committed,
+    toInt32(fouls_away) AS opponent_fouls_committed,
+    toInt32(fouls_home - fouls_away) AS fouls_committed_delta,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0),
+        100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0),
         1
     ))) AS triggered_team_cards_per_foul_pct,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0),
+        100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0),
         1
     ))) AS opponent_cards_per_foul_pct,
     toNullable(toFloat32(round(
         (
-            100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0)
+            100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0)
         ) - (
-            100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0)
+            100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0)
         ),
         1
     ))) AS cards_per_foul_delta_pct,
 
-    toFloat32(b.possession_home_pct) AS triggered_team_possession_pct,
-    toFloat32(b.possession_away_pct) AS opponent_possession_pct,
-    toFloat32(round(b.possession_home_pct - b.possession_away_pct, 1)) AS possession_delta_pct,
-    toFloat32(b.pass_accuracy_home_pct) AS triggered_team_pass_accuracy_pct,
-    toFloat32(b.pass_accuracy_away_pct) AS opponent_pass_accuracy_pct,
-    toFloat32(round(b.pass_accuracy_home_pct - b.pass_accuracy_away_pct, 1)) AS pass_accuracy_delta_pct
+    toFloat32(possession_home_pct) AS triggered_team_possession_pct,
+    toFloat32(possession_away_pct) AS opponent_possession_pct,
+    toFloat32(round(possession_home_pct - possession_away_pct, 1)) AS possession_delta_pct,
+    toFloat32(pass_accuracy_home_pct) AS triggered_team_pass_accuracy_pct,
+    toFloat32(pass_accuracy_away_pct) AS opponent_pass_accuracy_pct,
+    toFloat32(round(pass_accuracy_home_pct - pass_accuracy_away_pct, 1)) AS pass_accuracy_delta_pct
 
 FROM base_stats AS b
 
 UNION ALL
 
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
 
     'away' AS triggered_side,
-    b.away_team_id AS triggered_team_id,
-    b.away_team_name AS triggered_team_name,
-    b.home_team_id AS opponent_team_id,
-    b.home_team_name AS opponent_team_name,
+    away_team_id AS triggered_team_id,
+    away_team_name AS triggered_team_name,
+    home_team_id AS opponent_team_id,
+    home_team_name AS opponent_team_name,
 
     toInt32(4) AS trigger_threshold_min_distinct_substitute_yellow_carded_players,
-    toInt32(b.match_distinct_substitute_yellow_carded_players) AS match_distinct_substitute_yellow_carded_players,
-    toInt32(b.match_distinct_substitute_yellow_carded_players - 4)
+    toInt32(match_distinct_substitute_yellow_carded_players) AS match_distinct_substitute_yellow_carded_players,
+    toInt32(match_distinct_substitute_yellow_carded_players - 4)
         AS match_distinct_substitute_yellow_carded_players_above_threshold,
-    toInt32(b.home_distinct_substitute_yellow_carded_players) AS home_distinct_substitute_yellow_carded_players,
-    toInt32(b.away_distinct_substitute_yellow_carded_players) AS away_distinct_substitute_yellow_carded_players,
-    toInt32(b.away_distinct_substitute_yellow_carded_players)
+    toInt32(home_distinct_substitute_yellow_carded_players) AS home_distinct_substitute_yellow_carded_players,
+    toInt32(away_distinct_substitute_yellow_carded_players) AS away_distinct_substitute_yellow_carded_players,
+    toInt32(away_distinct_substitute_yellow_carded_players)
         AS triggered_team_distinct_substitute_yellow_carded_players,
-    toInt32(b.home_distinct_substitute_yellow_carded_players)
+    toInt32(home_distinct_substitute_yellow_carded_players)
         AS opponent_distinct_substitute_yellow_carded_players,
     toInt32(
-        b.away_distinct_substitute_yellow_carded_players - b.home_distinct_substitute_yellow_carded_players
+        away_distinct_substitute_yellow_carded_players - home_distinct_substitute_yellow_carded_players
     ) AS distinct_substitute_yellow_carded_players_delta,
 
-    toInt32(b.away_substitute_yellow_card_events) AS triggered_team_substitute_yellow_card_events,
-    toInt32(b.home_substitute_yellow_card_events) AS opponent_substitute_yellow_card_events,
-    toInt32(b.away_substitute_yellow_card_events - b.home_substitute_yellow_card_events)
+    toInt32(away_substitute_yellow_card_events) AS triggered_team_substitute_yellow_card_events,
+    toInt32(home_substitute_yellow_card_events) AS opponent_substitute_yellow_card_events,
+    toInt32(away_substitute_yellow_card_events - home_substitute_yellow_card_events)
         AS substitute_yellow_card_events_delta,
-    toNullable(toInt32(b.away_first_substitute_yellow_card_minute))
+    toNullable(toInt32(away_first_substitute_yellow_card_minute))
         AS triggered_team_first_substitute_yellow_card_minute,
-    toNullable(toInt32(b.home_first_substitute_yellow_card_minute))
+    toNullable(toInt32(home_first_substitute_yellow_card_minute))
         AS opponent_first_substitute_yellow_card_minute,
 
     toFloat32(coalesce(round(
-        100.0 * b.away_distinct_substitute_yellow_carded_players
-        / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+        100.0 * away_distinct_substitute_yellow_carded_players
+        / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
         1
     ), 0.0)) AS triggered_team_substitute_yellow_carded_share_pct,
     toFloat32(coalesce(round(
-        100.0 * b.home_distinct_substitute_yellow_carded_players
-        / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+        100.0 * home_distinct_substitute_yellow_carded_players
+        / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
         1
     ), 0.0)) AS opponent_substitute_yellow_carded_share_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * b.away_distinct_substitute_yellow_carded_players
-            / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+            100.0 * away_distinct_substitute_yellow_carded_players
+            / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
             1
         ), 0.0)
       - coalesce(round(
-            100.0 * b.home_distinct_substitute_yellow_carded_players
-            / nullIf(toFloat64(b.match_distinct_substitute_yellow_carded_players), 0),
+            100.0 * home_distinct_substitute_yellow_carded_players
+            / nullIf(toFloat64(match_distinct_substitute_yellow_carded_players), 0),
             1
         ), 0.0),
         1
     )) AS substitute_yellow_carded_share_delta_pct,
 
-    toInt32(b.yellow_cards_away) AS triggered_team_yellow_cards,
-    toInt32(b.yellow_cards_home) AS opponent_yellow_cards,
-    toInt32(b.yellow_cards_away - b.yellow_cards_home) AS yellow_cards_delta,
-    toInt32(b.red_cards_away) AS triggered_team_red_cards,
-    toInt32(b.red_cards_home) AS opponent_red_cards,
-    toInt32(b.red_cards_away - b.red_cards_home) AS red_cards_delta,
-    toInt32(b.yellow_cards_away + b.red_cards_away) AS triggered_team_total_cards,
-    toInt32(b.yellow_cards_home + b.red_cards_home) AS opponent_total_cards,
-    toInt32((b.yellow_cards_away + b.red_cards_away) - (b.yellow_cards_home + b.red_cards_home))
+    toInt32(yellow_cards_away) AS triggered_team_yellow_cards,
+    toInt32(yellow_cards_home) AS opponent_yellow_cards,
+    toInt32(yellow_cards_away - yellow_cards_home) AS yellow_cards_delta,
+    toInt32(red_cards_away) AS triggered_team_red_cards,
+    toInt32(red_cards_home) AS opponent_red_cards,
+    toInt32(red_cards_away - red_cards_home) AS red_cards_delta,
+    toInt32(yellow_cards_away + red_cards_away) AS triggered_team_total_cards,
+    toInt32(yellow_cards_home + red_cards_home) AS opponent_total_cards,
+    toInt32((yellow_cards_away + red_cards_away) - (yellow_cards_home + red_cards_home))
         AS card_count_delta,
 
-    toInt32(b.fouls_away) AS triggered_team_fouls_committed,
-    toInt32(b.fouls_home) AS opponent_fouls_committed,
-    toInt32(b.fouls_away - b.fouls_home) AS fouls_committed_delta,
+    toInt32(fouls_away) AS triggered_team_fouls_committed,
+    toInt32(fouls_home) AS opponent_fouls_committed,
+    toInt32(fouls_away - fouls_home) AS fouls_committed_delta,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0),
+        100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0),
         1
     ))) AS triggered_team_cards_per_foul_pct,
     toNullable(toFloat32(round(
-        100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0),
+        100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0),
         1
     ))) AS opponent_cards_per_foul_pct,
     toNullable(toFloat32(round(
         (
-            100.0 * (b.yellow_cards_away + b.red_cards_away) / nullIf(toFloat64(b.fouls_away), 0)
+            100.0 * (yellow_cards_away + red_cards_away) / nullIf(toFloat64(fouls_away), 0)
         ) - (
-            100.0 * (b.yellow_cards_home + b.red_cards_home) / nullIf(toFloat64(b.fouls_home), 0)
+            100.0 * (yellow_cards_home + red_cards_home) / nullIf(toFloat64(fouls_home), 0)
         ),
         1
     ))) AS cards_per_foul_delta_pct,
 
-    toFloat32(b.possession_away_pct) AS triggered_team_possession_pct,
-    toFloat32(b.possession_home_pct) AS opponent_possession_pct,
-    toFloat32(round(b.possession_away_pct - b.possession_home_pct, 1)) AS possession_delta_pct,
-    toFloat32(b.pass_accuracy_away_pct) AS triggered_team_pass_accuracy_pct,
-    toFloat32(b.pass_accuracy_home_pct) AS opponent_pass_accuracy_pct,
-    toFloat32(round(b.pass_accuracy_away_pct - b.pass_accuracy_home_pct, 1)) AS pass_accuracy_delta_pct
+    toFloat32(possession_away_pct) AS triggered_team_possession_pct,
+    toFloat32(possession_home_pct) AS opponent_possession_pct,
+    toFloat32(round(possession_away_pct - possession_home_pct, 1)) AS possession_delta_pct,
+    toFloat32(pass_accuracy_away_pct) AS triggered_team_pass_accuracy_pct,
+    toFloat32(pass_accuracy_home_pct) AS opponent_pass_accuracy_pct,
+    toFloat32(round(pass_accuracy_away_pct - pass_accuracy_home_pct, 1)) AS pass_accuracy_delta_pct
 
 FROM base_stats AS b
 

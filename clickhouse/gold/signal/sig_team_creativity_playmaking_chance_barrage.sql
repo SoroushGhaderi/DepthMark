@@ -1,15 +1,3 @@
-WITH team_creation_stats AS (
-    SELECT
-        p.match_id,
-        p.team_id,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
-    WHERE p.team_id IS NOT NULL
-    GROUP BY
-        p.match_id,
-        p.team_id
-)
 INSERT INTO gold.sig_team_creativity_playmaking_chance_barrage (
     match_id,
     match_date,
@@ -59,6 +47,18 @@ INSERT INTO gold.sig_team_creativity_playmaking_chance_barrage (
     triggered_team_touches_opposition_box,
     opponent_touches_opposition_box,
     opposition_box_touches_delta
+)
+WITH team_creation_stats AS (
+    SELECT
+        p.match_id,
+        p.team_id,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
+    FROM silver.player_match_stat AS p
+    WHERE p.team_id IS NOT NULL
+    GROUP BY
+        p.match_id,
+        p.team_id
 )
 -- Signal: sig_team_creativity_playmaking_chance_barrage
 -- Trigger: team creates >= 15 key passes in a single finished match.

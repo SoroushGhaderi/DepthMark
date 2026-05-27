@@ -1,16 +1,3 @@
-WITH player_positions AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-)
 INSERT INTO gold.sig_player_goalkeeping_defense_pressure_absorber (
     match_id,
     match_date,
@@ -78,6 +65,19 @@ INSERT INTO gold.sig_player_goalkeeping_defense_pressure_absorber (
     opponent_interceptions,
     triggered_team_clearances,
     opponent_clearances
+)
+WITH player_positions AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
 )
 -- Signal: sig_player_goalkeeping_defense_pressure_absorber
 -- Intent: detect high-touch full-match defenders who retain possession cleanly under pressure.

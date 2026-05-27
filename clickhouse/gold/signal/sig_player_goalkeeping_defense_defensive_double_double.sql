@@ -1,16 +1,3 @@
-WITH player_positions AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-)
 INSERT INTO gold.sig_player_goalkeeping_defense_defensive_double_double (
     match_id,
     match_date,
@@ -74,6 +61,19 @@ INSERT INTO gold.sig_player_goalkeeping_defense_defensive_double_double (
     pass_accuracy_delta_pct,
     player_share_of_team_tackles_won_pct,
     player_share_of_team_interceptions_pct
+)
+WITH player_positions AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
 )
 -- Signal: sig_player_goalkeeping_defense_defensive_double_double
 -- Intent: detect players who post a dual defensive volume peak in both tackling and interceptions.
@@ -297,10 +297,8 @@ SELECT
             p.team_id = m.home_team_id, coalesce(ps.pass_attempts_home, 0),
             p.team_id = m.away_team_id, coalesce(ps.pass_attempts_away, 0),
             0
-        )), 0.0),
-        1
-    ) - round(
-        100.0 * multiIf(
+        )), 0.0)
+        - 100.0 * multiIf(
             p.team_id = m.home_team_id, coalesce(ps.accurate_passes_away, 0),
             p.team_id = m.away_team_id, coalesce(ps.accurate_passes_home, 0),
             0
@@ -310,7 +308,7 @@ SELECT
             0
         )), 0.0),
         1
-    ), 1), 0.0)) AS pass_accuracy_delta_pct,
+    ), 0.0)) AS pass_accuracy_delta_pct,
     toFloat32(coalesce(round(
         100.0 * coalesce(p.tackles_won, 0)
             / nullIf(toFloat64(multiIf(

@@ -1,56 +1,3 @@
-WITH yellow_card_events AS (
-    SELECT
-        c.match_id,
-        lowerUTF8(coalesce(c.team_side, '')) AS triggered_side,
-        toInt32OrZero(c.card_minute) AS card_minute,
-        c.event_id,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_card,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_card
-    FROM silver.card AS c
-    WHERE c.match_id > 0
-      AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
-      AND toInt32OrZero(c.card_minute) BETWEEN 46 AND 60
-      AND (
-          positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
-          OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0
-      )
-),
-yellow_window_ranked AS (
-    SELECT
-        yce.match_id,
-        yce.triggered_side,
-        yce.card_minute,
-        yce.event_id,
-        yce.score_home_at_card,
-        yce.score_away_at_card,
-        row_number() OVER (
-            PARTITION BY yce.match_id, yce.triggered_side
-            ORDER BY yce.card_minute ASC, yce.event_id ASC
-        ) AS yellow_card_sequence_in_window
-    FROM yellow_card_events AS yce
-),
-yellow_window_rollup AS (
-    SELECT
-        ywr.match_id,
-        ywr.triggered_side,
-        count() AS triggered_team_yellow_cards_window,
-        min(ywr.card_minute) AS triggered_team_first_yellow_card_window_minute,
-        minIf(ywr.card_minute, ywr.yellow_card_sequence_in_window = 3) AS triggered_team_third_yellow_card_window_minute,
-        argMinIf(
-            ywr.score_home_at_card,
-            tuple(ywr.card_minute, ywr.event_id),
-            ywr.yellow_card_sequence_in_window = 3
-        ) AS score_home_at_third_yellow,
-        argMinIf(
-            ywr.score_away_at_card,
-            tuple(ywr.card_minute, ywr.event_id),
-            ywr.yellow_card_sequence_in_window = 3
-        ) AS score_away_at_third_yellow
-    FROM yellow_window_ranked AS ywr
-    GROUP BY
-        ywr.match_id,
-        ywr.triggered_side
-)
 INSERT INTO gold.sig_team_discipline_cards_half_time_talk_fail (
     match_id,
     match_date,
@@ -99,6 +46,59 @@ INSERT INTO gold.sig_team_discipline_cards_half_time_talk_fail (
     triggered_team_possession_pct,
     opponent_possession_pct,
     possession_delta_pct
+)
+WITH yellow_card_events AS (
+    SELECT
+        c.match_id,
+        lowerUTF8(coalesce(c.team_side, '')) AS triggered_side,
+        toInt32OrZero(toString(c.card_minute)) AS card_minute,
+        c.event_id,
+        toInt32OrZero(toString(c.score_home_at_time)) AS score_home_at_card,
+        toInt32OrZero(toString(c.score_away_at_time)) AS score_away_at_card
+    FROM silver.card AS c
+    WHERE c.match_id > 0
+      AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
+      AND toInt32OrZero(toString(c.card_minute)) BETWEEN 46 AND 60
+      AND (
+          positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
+          OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0
+      )
+),
+yellow_window_ranked AS (
+    SELECT
+        yce.match_id,
+        yce.triggered_side,
+        yce.card_minute,
+        yce.event_id,
+        yce.score_home_at_card,
+        yce.score_away_at_card,
+        row_number() OVER (
+            PARTITION BY yce.match_id, yce.triggered_side
+            ORDER BY yce.card_minute ASC, yce.event_id ASC
+        ) AS yellow_card_sequence_in_window
+    FROM yellow_card_events AS yce
+),
+yellow_window_rollup AS (
+    SELECT
+        ywr.match_id,
+        ywr.triggered_side,
+        count() AS triggered_team_yellow_cards_window,
+        min(ywr.card_minute) AS triggered_team_first_yellow_card_window_minute,
+        minIf(ywr.card_minute, ywr.yellow_card_sequence_in_window = 3) AS triggered_team_third_yellow_card_window_minute,
+        argMinIf(
+            ywr.score_home_at_card,
+            tuple(ywr.card_minute, ywr.event_id),
+            ywr.yellow_card_sequence_in_window = 3
+        ) AS score_home_at_third_yellow,
+        argMinIf(
+            ywr.score_away_at_card,
+            tuple(ywr.card_minute, ywr.event_id),
+            ywr.yellow_card_sequence_in_window = 3
+        ) AS score_away_at_third_yellow
+    FROM yellow_window_ranked AS ywr
+    GROUP BY
+        ywr.match_id,
+        ywr.triggered_side
 )
 -- Signal: sig_team_discipline_cards_half_time_talk_fail
 -- Trigger: team receives >= 3 yellow cards between minutes 46 and 60.

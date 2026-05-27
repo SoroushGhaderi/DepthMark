@@ -331,6 +331,6 @@ WHERE agk.goalkeeper_fotmob_rating >= mtr.match_highest_player_rating - 0.0001
 ORDER BY
     match_highest_player_rating DESC,
     triggered_goalkeeper_fotmob_rating DESC,
-    match_date DESC,
-    match_id DESC,
+    lm.match_date DESC,
+    lm.match_id DESC,
     triggered_side;

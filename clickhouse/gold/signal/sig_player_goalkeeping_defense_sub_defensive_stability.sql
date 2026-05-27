@@ -1,18 +1,3 @@
-WITH substitute_personnel AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        max(coalesce(mp.substitution_time, 0)) AS substitution_time,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-    HAVING countIf(mp.role = 'substitute') > 0
-)
 INSERT INTO gold.sig_player_goalkeeping_defense_sub_defensive_stability (
     match_id,
     match_date,
@@ -81,6 +66,21 @@ INSERT INTO gold.sig_player_goalkeeping_defense_sub_defensive_stability (
     pass_accuracy_delta_pct,
     player_share_of_team_clearances_pct,
     player_share_of_team_tackles_won_pct
+)
+WITH substitute_personnel AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        max(coalesce(mp.substitution_time, 0)) AS substitution_time,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
+    HAVING countIf(mp.role = 'substitute') > 0
 )
 -- Signal: sig_player_goalkeeping_defense_sub_defensive_stability
 -- Intent: identify short-cameo defensive substitutes who stabilize late phases with immediate clearance and tackle output.
@@ -321,10 +321,8 @@ SELECT
             p.team_id = m.home_team_id, coalesce(ps.pass_attempts_home, 0),
             p.team_id = m.away_team_id, coalesce(ps.pass_attempts_away, 0),
             0
-        )), 0.0),
-        1
-    ) - round(
-        100.0 * multiIf(
+        )), 0.0)
+        - 100.0 * multiIf(
             p.team_id = m.home_team_id, coalesce(ps.accurate_passes_away, 0),
             p.team_id = m.away_team_id, coalesce(ps.accurate_passes_home, 0),
             0
@@ -334,7 +332,7 @@ SELECT
             0
         )), 0.0),
         1
-    ), 1), 0.0)) AS pass_accuracy_delta_pct,
+    ), 0.0)) AS pass_accuracy_delta_pct,
 
     toFloat32(coalesce(round(
         100.0 * coalesce(p.clearances, 0)

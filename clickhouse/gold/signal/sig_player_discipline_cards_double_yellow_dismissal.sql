@@ -53,10 +53,10 @@ WITH card_events AS (
         toInt32(assumeNotNull(c.player_id)) AS triggered_player_id,
         coalesce(c.player_name, 'Unknown') AS triggered_player_name,
         lowerUTF8(coalesce(c.team_side, '')) AS triggered_side,
-        toInt32OrZero(c.card_minute) AS card_minute,
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute,
         c.event_id,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_card,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_card,
+        toInt32(coalesce(c.score_home_at_time, 0)) AS score_home_at_card,
+        toInt32(coalesce(c.score_away_at_time, 0)) AS score_away_at_card,
         (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0

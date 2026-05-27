@@ -99,8 +99,8 @@ window_player_bookings AS (
     INNER JOIN yellow_card_events AS yce
         ON yce.match_id = ws.match_id
        AND yce.triggered_side = ws.triggered_side
-       AND yce.card_minute >= ws.window_start_minute
-       AND yce.card_minute <= ws.window_start_minute + 5
+    WHERE yce.card_minute >= ws.window_start_minute
+      AND yce.card_minute <= ws.window_start_minute + 5
     GROUP BY
         ws.match_id,
         ws.triggered_side,

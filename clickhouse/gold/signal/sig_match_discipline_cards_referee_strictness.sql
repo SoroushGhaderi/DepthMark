@@ -53,14 +53,14 @@ WITH yellow_card_events AS (
     SELECT
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_team_side,
-        toInt32OrZero(c.card_minute) AS card_minute,
-        toInt32OrZero(c.event_id) AS event_id,
-        toInt32OrZero(c.player_id) AS player_id,
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute,
+        toInt32(coalesce(c.event_id, 0)) AS event_id,
+        toInt32(coalesce(c.player_id, 0)) AS player_id,
         coalesce(c.player_name, 'Unknown') AS player_name
     FROM silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
-      AND toInt32OrZero(c.card_minute) > 0
+      AND toInt32(coalesce(c.card_minute, 0)) > 0
       AND (
           positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
           OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0
@@ -274,4 +274,4 @@ LEFT JOIN early_yellow_counts AS away_eyc
 WHERE m.match_finished = 1
   AND m.match_id > 0
 
-ORDER BY match_id, triggered_side;
+ORDER BY m.match_id, triggered_side;

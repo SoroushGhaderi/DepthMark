@@ -98,7 +98,7 @@ card_events AS (
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_side,
         toInt32(assumeNotNull(c.player_id)) AS card_player_id,
-        toInt32OrZero(c.card_minute) AS card_minute,
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute,
         (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'yellow') > 0
@@ -365,4 +365,4 @@ INNER JOIN dual_captain_matches AS dcm
 WHERE m.match_finished = 1
   AND m.match_id > 0
 
-ORDER BY match_id, triggered_side;
+ORDER BY m.match_id, triggered_side;

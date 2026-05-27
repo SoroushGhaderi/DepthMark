@@ -1,17 +1,3 @@
-WITH team_creation_stats AS (
-    SELECT
-        p.match_id,
-        p.team_id,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
-        toInt32(sum(coalesce(p.accurate_crosses, 0))) AS team_accurate_crosses,
-        toInt32(sum(coalesce(p.cross_attempts, 0))) AS team_cross_attempts,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
-    WHERE p.team_id IS NOT NULL
-    GROUP BY
-        p.match_id,
-        p.team_id
-)
 INSERT INTO gold.sig_team_creativity_playmaking_wide_play_monopoly (
     match_id,
     match_date,
@@ -72,6 +58,20 @@ INSERT INTO gold.sig_team_creativity_playmaking_wide_play_monopoly (
     triggered_team_goals,
     opponent_goals,
     goal_delta
+)
+WITH team_creation_stats AS (
+    SELECT
+        p.match_id,
+        p.team_id,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
+        toInt32(sum(coalesce(p.accurate_crosses, 0))) AS team_accurate_crosses,
+        toInt32(sum(coalesce(p.cross_attempts, 0))) AS team_cross_attempts,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
+    FROM silver.player_match_stat AS p
+    WHERE p.team_id IS NOT NULL
+    GROUP BY
+        p.match_id,
+        p.team_id
 )
 -- Signal: sig_team_creativity_playmaking_wide_play_monopoly
 -- Trigger: >= 70% of team-created chances come from wide-play crossing actions.

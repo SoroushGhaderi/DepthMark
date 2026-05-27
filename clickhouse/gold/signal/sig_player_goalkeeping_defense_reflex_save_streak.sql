@@ -110,8 +110,8 @@ keeper_window_candidates AS (
     INNER JOIN keeper_save_events AS window_save
         ON window_save.match_id = anchor.match_id
        AND window_save.keeper_id = anchor.keeper_id
-       AND window_save.shot_effective_minute >= anchor.shot_effective_minute
-       AND window_save.shot_effective_minute <= anchor.shot_effective_minute + 5
+    WHERE window_save.shot_effective_minute >= anchor.shot_effective_minute
+      AND window_save.shot_effective_minute <= anchor.shot_effective_minute + 5
     GROUP BY
         anchor.match_id,
         anchor.keeper_id,
@@ -176,24 +176,52 @@ window_bilateral_context AS (
         bkw.keeper_side,
         bkw.trigger_window_start_effective_minute,
         bkw.trigger_window_end_effective_minute,
-        toInt32(sumIf(kse.is_save, kse.keeper_side = bkw.keeper_side))
+        toInt32(sumIf(
+            kse.is_save,
+            kse.keeper_side = bkw.keeper_side
+            AND kse.shot_effective_minute >= bkw.trigger_window_start_effective_minute
+            AND kse.shot_effective_minute <= bkw.trigger_window_end_effective_minute
+        ))
             AS triggered_team_saves_in_trigger_window,
-        toInt32(sumIf(kse.is_save, kse.keeper_side != bkw.keeper_side))
+        toInt32(sumIf(
+            kse.is_save,
+            kse.keeper_side != bkw.keeper_side
+            AND kse.shot_effective_minute >= bkw.trigger_window_start_effective_minute
+            AND kse.shot_effective_minute <= bkw.trigger_window_end_effective_minute
+        ))
             AS opponent_saves_in_trigger_window,
-        toInt32(sumIf(kse.is_on_target, kse.keeper_side = bkw.keeper_side))
+        toInt32(sumIf(
+            kse.is_on_target,
+            kse.keeper_side = bkw.keeper_side
+            AND kse.shot_effective_minute >= bkw.trigger_window_start_effective_minute
+            AND kse.shot_effective_minute <= bkw.trigger_window_end_effective_minute
+        ))
             AS triggered_team_shots_on_target_faced_in_trigger_window,
-        toInt32(sumIf(kse.is_on_target, kse.keeper_side != bkw.keeper_side))
+        toInt32(sumIf(
+            kse.is_on_target,
+            kse.keeper_side != bkw.keeper_side
+            AND kse.shot_effective_minute >= bkw.trigger_window_start_effective_minute
+            AND kse.shot_effective_minute <= bkw.trigger_window_end_effective_minute
+        ))
             AS opponent_shots_on_target_faced_in_trigger_window,
-        toInt32(sumIf(kse.is_goal, kse.keeper_side = bkw.keeper_side))
+        toInt32(sumIf(
+            kse.is_goal,
+            kse.keeper_side = bkw.keeper_side
+            AND kse.shot_effective_minute >= bkw.trigger_window_start_effective_minute
+            AND kse.shot_effective_minute <= bkw.trigger_window_end_effective_minute
+        ))
             AS triggered_team_goals_conceded_in_trigger_window,
-        toInt32(sumIf(kse.is_goal, kse.keeper_side != bkw.keeper_side))
+        toInt32(sumIf(
+            kse.is_goal,
+            kse.keeper_side != bkw.keeper_side
+            AND kse.shot_effective_minute >= bkw.trigger_window_start_effective_minute
+            AND kse.shot_effective_minute <= bkw.trigger_window_end_effective_minute
+        ))
             AS opponent_goals_conceded_in_trigger_window
     FROM best_keeper_window AS bkw
     LEFT JOIN keeper_shot_events AS kse
         ON kse.match_id = bkw.match_id
        AND kse.keeper_side IN ('home', 'away')
-       AND kse.shot_effective_minute >= bkw.trigger_window_start_effective_minute
-       AND kse.shot_effective_minute <= bkw.trigger_window_end_effective_minute
     GROUP BY
         bkw.match_id,
         bkw.keeper_id,

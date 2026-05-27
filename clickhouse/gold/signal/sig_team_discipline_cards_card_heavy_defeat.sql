@@ -1,30 +1,3 @@
-WITH red_events AS (
-    SELECT
-        c.match_id,
-        lowerUTF8(coalesce(c.team_side, '')) AS triggered_side,
-        toInt32OrZero(c.card_minute) AS card_minute,
-        c.event_id,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_red,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_red
-    FROM silver.card AS c
-    WHERE c.match_id > 0
-      AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
-      AND positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
-      AND toInt32OrZero(c.card_minute) > 0
-),
-red_rollup AS (
-    SELECT
-        re.match_id,
-        re.triggered_side,
-        count() AS red_cards_match,
-        min(re.card_minute) AS first_red_card_minute,
-        argMin(re.score_home_at_red, tuple(re.card_minute, re.event_id)) AS score_home_at_first_red,
-        argMin(re.score_away_at_red, tuple(re.card_minute, re.event_id)) AS score_away_at_first_red
-    FROM red_events AS re
-    GROUP BY
-        re.match_id,
-        re.triggered_side
-)
 INSERT INTO gold.sig_team_discipline_cards_card_heavy_defeat (
     match_id,
     match_date,
@@ -74,6 +47,33 @@ INSERT INTO gold.sig_team_discipline_cards_card_heavy_defeat (
     triggered_team_possession_pct,
     opponent_possession_pct,
     possession_delta_pct
+)
+WITH red_events AS (
+    SELECT
+        c.match_id,
+        lowerUTF8(coalesce(c.team_side, '')) AS triggered_side,
+        toInt32(c.card_minute) AS card_minute,
+        c.event_id,
+        toInt32(coalesce(c.score_home_at_time, 0)) AS score_home_at_red,
+        toInt32(coalesce(c.score_away_at_time, 0)) AS score_away_at_red
+    FROM silver.card AS c
+    WHERE c.match_id > 0
+      AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
+      AND positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
+      AND toInt32(c.card_minute) > 0
+),
+red_rollup AS (
+    SELECT
+        re.match_id,
+        re.triggered_side,
+        count() AS red_cards_match,
+        min(re.card_minute) AS first_red_card_minute,
+        argMin(re.score_home_at_red, tuple(re.card_minute, re.event_id)) AS score_home_at_first_red,
+        argMin(re.score_away_at_red, tuple(re.card_minute, re.event_id)) AS score_away_at_first_red
+    FROM red_events AS re
+    GROUP BY
+        re.match_id,
+        re.triggered_side
 )
 -- Signal: sig_team_discipline_cards_card_heavy_defeat
 -- Trigger: team loses by >= 3 goals and receives at least one red card.

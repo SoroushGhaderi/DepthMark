@@ -50,12 +50,12 @@ WITH substitute_entries AS (
     SELECT
         mp.match_id,
         toInt32(assumeNotNull(mp.person_id)) AS triggered_player_id,
-        toInt32OrZero(max(mp.substitution_time)) AS triggered_player_substitution_time
+        toInt32(coalesce(max(mp.substitution_time), 0)) AS triggered_player_substitution_time
     FROM silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id IS NOT NULL
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
-      AND toInt32OrZero(mp.substitution_time) > 0
+      AND toInt32(coalesce(mp.substitution_time, 0)) > 0
     GROUP BY
         mp.match_id,
         triggered_player_id
@@ -64,9 +64,9 @@ card_events AS (
     SELECT
         c.match_id,
         toInt32(assumeNotNull(c.player_id)) AS triggered_player_id,
-        toInt32OrZero(c.card_minute) AS card_minute,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_card,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_card,
+        toInt32(coalesce(c.card_minute, 0)) AS card_minute,
+        toInt32(coalesce(c.score_home_at_time, 0)) AS score_home_at_card,
+        toInt32(coalesce(c.score_away_at_time, 0)) AS score_away_at_card,
         c.event_id,
         (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0
@@ -94,7 +94,7 @@ card_events AS (
     FROM silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
-      AND toInt32OrZero(c.card_minute) > 0
+      AND toInt32(coalesce(c.card_minute, 0)) > 0
 ),
 player_card_counts AS (
     SELECT

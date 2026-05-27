@@ -119,8 +119,8 @@ rapid_brace_pairs AS (
         ON g2.match_id = g1.match_id
        AND g2.team_id = g1.team_id
        AND g2.player_id = g1.player_id
-       AND g2.goal_event_order > g1.goal_event_order
-    WHERE g2.goal_effective_minute - g1.goal_effective_minute <= 10
+    WHERE g2.goal_event_order > g1.goal_event_order
+      AND g2.goal_effective_minute - g1.goal_effective_minute <= 10
 ),
 rapid_brace_triggered_players AS (
     SELECT

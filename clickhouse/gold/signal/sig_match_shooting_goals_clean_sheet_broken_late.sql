@@ -186,147 +186,147 @@ base_stats AS (
 )
 
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    bs.match_id AS match_id,
+    bs.match_date AS match_date,
+    bs.home_team_id AS home_team_id,
+    bs.home_team_name AS home_team_name,
+    bs.away_team_id AS away_team_id,
+    bs.away_team_name AS away_team_name,
+    bs.home_score AS home_score,
+    bs.away_score AS away_score,
     side.triggered_side AS triggered_side,
-    if(side.triggered_side = 'home', b.home_team_id, b.away_team_id) AS triggered_team_id,
-    if(side.triggered_side = 'home', b.home_team_name, b.away_team_name) AS triggered_team_name,
-    if(side.triggered_side = 'home', b.away_team_id, b.home_team_id) AS opponent_team_id,
-    if(side.triggered_side = 'home', b.away_team_name, b.home_team_name) AS opponent_team_name,
+    if(side.triggered_side = 'home', home_team_id, away_team_id) AS triggered_team_id,
+    if(side.triggered_side = 'home', home_team_name, away_team_name) AS triggered_team_name,
+    if(side.triggered_side = 'home', away_team_id, home_team_id) AS opponent_team_id,
+    if(side.triggered_side = 'home', away_team_name, home_team_name) AS opponent_team_name,
     toInt32(89) AS trigger_threshold_min_first_goal_effective_minute,
     toInt32(0) AS trigger_threshold_max_home_score_before_first_goal,
     toInt32(0) AS trigger_threshold_max_away_score_before_first_goal,
-    b.first_goal_side,
-    if(b.first_goal_side = 'home', b.home_team_id, b.away_team_id) AS first_goal_scoring_team_id,
-    if(b.first_goal_side = 'home', b.home_team_name, b.away_team_name) AS first_goal_scoring_team_name,
-    if(b.first_goal_side = 'home', b.away_team_id, b.home_team_id) AS first_goal_conceding_team_id,
-    if(b.first_goal_side = 'home', b.away_team_name, b.home_team_name) AS first_goal_conceding_team_name,
-    b.first_goal_minute,
-    b.first_goal_added_time,
-    b.first_goal_effective_minute,
-    b.home_score_before_first_goal,
-    b.away_score_before_first_goal,
-    b.home_score_after_first_goal,
-    b.away_score_after_first_goal,
-    toUInt8(b.home_score_before_first_goal = 0 AND b.away_score_before_first_goal = 0)
+    first_goal_side,
+    if(first_goal_side = 'home', home_team_id, away_team_id) AS first_goal_scoring_team_id,
+    if(first_goal_side = 'home', home_team_name, away_team_name) AS first_goal_scoring_team_name,
+    if(first_goal_side = 'home', away_team_id, home_team_id) AS first_goal_conceding_team_id,
+    if(first_goal_side = 'home', away_team_name, home_team_name) AS first_goal_conceding_team_name,
+    first_goal_minute,
+    first_goal_added_time,
+    first_goal_effective_minute,
+    home_score_before_first_goal,
+    away_score_before_first_goal,
+    home_score_after_first_goal,
+    away_score_after_first_goal,
+    toUInt8(home_score_before_first_goal = 0 AND away_score_before_first_goal = 0)
         AS scoreline_zero_zero_before_first_goal_flag,
-    b.match_total_goals,
-    toInt32(b.match_total_goals - 1) AS goals_after_first_goal,
+    match_total_goals,
+    toInt32(match_total_goals - 1) AS goals_after_first_goal,
     toUInt8(if(
-        b.first_goal_side = 'home',
-        b.home_goals > b.away_goals,
-        b.away_goals > b.home_goals
+        first_goal_side = 'home',
+        home_goals > away_goals,
+        away_goals > home_goals
     )) AS first_goal_scoring_side_won_match_flag,
-    toUInt8(side.triggered_side = b.first_goal_side) AS triggered_team_scored_first_goal_flag,
-    toUInt8(side.triggered_side != b.first_goal_side) AS triggered_team_clean_sheet_broken_flag,
-    if(side.triggered_side = 'home', b.home_goals, b.away_goals) AS triggered_team_goals,
-    if(side.triggered_side = 'home', b.away_goals, b.home_goals) AS opponent_goals,
-    if(side.triggered_side = 'home', b.home_goals - b.away_goals, b.away_goals - b.home_goals)
+    toUInt8(side.triggered_side = first_goal_side) AS triggered_team_scored_first_goal_flag,
+    toUInt8(side.triggered_side != first_goal_side) AS triggered_team_clean_sheet_broken_flag,
+    if(side.triggered_side = 'home', home_goals, away_goals) AS triggered_team_goals,
+    if(side.triggered_side = 'home', away_goals, home_goals) AS opponent_goals,
+    if(side.triggered_side = 'home', home_goals - away_goals, away_goals - home_goals)
         AS goal_gap,
-    if(side.triggered_side = 'home', b.total_shots_home, b.total_shots_away) AS triggered_team_total_shots,
-    if(side.triggered_side = 'home', b.total_shots_away, b.total_shots_home) AS opponent_total_shots,
-    if(side.triggered_side = 'home', b.total_shots_home - b.total_shots_away, b.total_shots_away - b.total_shots_home)
+    if(side.triggered_side = 'home', total_shots_home, total_shots_away) AS triggered_team_total_shots,
+    if(side.triggered_side = 'home', total_shots_away, total_shots_home) AS opponent_total_shots,
+    if(side.triggered_side = 'home', total_shots_home - total_shots_away, total_shots_away - total_shots_home)
         AS shot_volume_delta,
-    if(side.triggered_side = 'home', b.shots_on_target_home, b.shots_on_target_away) AS triggered_team_shots_on_target,
-    if(side.triggered_side = 'home', b.shots_on_target_away, b.shots_on_target_home) AS opponent_shots_on_target,
+    if(side.triggered_side = 'home', shots_on_target_home, shots_on_target_away) AS triggered_team_shots_on_target,
+    if(side.triggered_side = 'home', shots_on_target_away, shots_on_target_home) AS opponent_shots_on_target,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', b.shots_on_target_home, b.shots_on_target_away)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_home, b.total_shots_away)), 0),
+        100.0 * if(side.triggered_side = 'home', shots_on_target_home, shots_on_target_away)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_home, total_shots_away)), 0),
         1
     ), 0.0)) AS triggered_team_shot_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', b.shots_on_target_away, b.shots_on_target_home)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_away, b.total_shots_home)), 0),
+        100.0 * if(side.triggered_side = 'home', shots_on_target_away, shots_on_target_home)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_away, total_shots_home)), 0),
         1
     ), 0.0)) AS opponent_shot_accuracy_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * if(side.triggered_side = 'home', b.shots_on_target_home, b.shots_on_target_away)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_home, b.total_shots_away)), 0),
+            100.0 * if(side.triggered_side = 'home', shots_on_target_home, shots_on_target_away)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_home, total_shots_away)), 0),
             1
         ), 0.0)
         - coalesce(round(
-            100.0 * if(side.triggered_side = 'home', b.shots_on_target_away, b.shots_on_target_home)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_away, b.total_shots_home)), 0),
+            100.0 * if(side.triggered_side = 'home', shots_on_target_away, shots_on_target_home)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_away, total_shots_home)), 0),
             1
         ), 0.0),
         1
     )) AS shot_accuracy_delta_pct,
-    if(side.triggered_side = 'home', b.expected_goals_home, b.expected_goals_away) AS triggered_team_xg,
-    if(side.triggered_side = 'home', b.expected_goals_away, b.expected_goals_home) AS opponent_xg,
+    if(side.triggered_side = 'home', expected_goals_home, expected_goals_away) AS triggered_team_xg,
+    if(side.triggered_side = 'home', expected_goals_away, expected_goals_home) AS opponent_xg,
     toFloat32(round(
-        if(side.triggered_side = 'home', b.expected_goals_home - b.expected_goals_away, b.expected_goals_away - b.expected_goals_home),
+        if(side.triggered_side = 'home', expected_goals_home - expected_goals_away, expected_goals_away - expected_goals_home),
         3
     )) AS xg_delta,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', b.home_goals, b.away_goals)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_home, b.total_shots_away)), 0),
+        100.0 * if(side.triggered_side = 'home', home_goals, away_goals)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_home, total_shots_away)), 0),
         1
     ), 0.0)) AS triggered_team_shot_conversion_pct,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', b.away_goals, b.home_goals)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_away, b.total_shots_home)), 0),
+        100.0 * if(side.triggered_side = 'home', away_goals, home_goals)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_away, total_shots_home)), 0),
         1
     ), 0.0)) AS opponent_shot_conversion_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * if(side.triggered_side = 'home', b.home_goals, b.away_goals)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_home, b.total_shots_away)), 0),
+            100.0 * if(side.triggered_side = 'home', home_goals, away_goals)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_home, total_shots_away)), 0),
             1
         ), 0.0)
         - coalesce(round(
-            100.0 * if(side.triggered_side = 'home', b.away_goals, b.home_goals)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', b.total_shots_away, b.total_shots_home)), 0),
+            100.0 * if(side.triggered_side = 'home', away_goals, home_goals)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', total_shots_away, total_shots_home)), 0),
             1
         ), 0.0),
         1
     )) AS shot_conversion_delta_pct,
-    if(side.triggered_side = 'home', b.big_chances_home, b.big_chances_away) AS triggered_team_big_chances,
-    if(side.triggered_side = 'home', b.big_chances_away, b.big_chances_home) AS opponent_big_chances,
-    if(side.triggered_side = 'home', b.big_chances_missed_home, b.big_chances_missed_away) AS triggered_team_big_chances_missed,
-    if(side.triggered_side = 'home', b.big_chances_missed_away, b.big_chances_missed_home) AS opponent_big_chances_missed,
-    if(side.triggered_side = 'home', b.big_chances_missed_home - b.big_chances_missed_away, b.big_chances_missed_away - b.big_chances_missed_home)
+    if(side.triggered_side = 'home', big_chances_home, big_chances_away) AS triggered_team_big_chances,
+    if(side.triggered_side = 'home', big_chances_away, big_chances_home) AS opponent_big_chances,
+    if(side.triggered_side = 'home', big_chances_missed_home, big_chances_missed_away) AS triggered_team_big_chances_missed,
+    if(side.triggered_side = 'home', big_chances_missed_away, big_chances_missed_home) AS opponent_big_chances_missed,
+    if(side.triggered_side = 'home', big_chances_missed_home - big_chances_missed_away, big_chances_missed_away - big_chances_missed_home)
         AS big_chances_missed_delta,
-    if(side.triggered_side = 'home', b.touches_opposition_box_home, b.touches_opposition_box_away) AS triggered_team_touches_opposition_box,
-    if(side.triggered_side = 'home', b.touches_opposition_box_away, b.touches_opposition_box_home) AS opponent_touches_opposition_box,
-    if(side.triggered_side = 'home', b.touches_opposition_box_home - b.touches_opposition_box_away, b.touches_opposition_box_away - b.touches_opposition_box_home)
+    if(side.triggered_side = 'home', touches_opposition_box_home, touches_opposition_box_away) AS triggered_team_touches_opposition_box,
+    if(side.triggered_side = 'home', touches_opposition_box_away, touches_opposition_box_home) AS opponent_touches_opposition_box,
+    if(side.triggered_side = 'home', touches_opposition_box_home - touches_opposition_box_away, touches_opposition_box_away - touches_opposition_box_home)
         AS opposition_box_touch_delta,
-    if(side.triggered_side = 'home', b.possession_home_pct, b.possession_away_pct) AS triggered_team_possession_pct,
-    if(side.triggered_side = 'home', b.possession_away_pct, b.possession_home_pct) AS opponent_possession_pct,
+    if(side.triggered_side = 'home', possession_home_pct, possession_away_pct) AS triggered_team_possession_pct,
+    if(side.triggered_side = 'home', possession_away_pct, possession_home_pct) AS opponent_possession_pct,
     toFloat32(round(
-        if(side.triggered_side = 'home', b.possession_home_pct - b.possession_away_pct, b.possession_away_pct - b.possession_home_pct),
+        if(side.triggered_side = 'home', possession_home_pct - possession_away_pct, possession_away_pct - possession_home_pct),
         1
     )) AS possession_delta_pct,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', b.accurate_passes_home, b.accurate_passes_away)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', b.pass_attempts_home, b.pass_attempts_away)), 0),
+        100.0 * if(side.triggered_side = 'home', accurate_passes_home, accurate_passes_away)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_home, pass_attempts_away)), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', b.accurate_passes_away, b.accurate_passes_home)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', b.pass_attempts_away, b.pass_attempts_home)), 0),
+        100.0 * if(side.triggered_side = 'home', accurate_passes_away, accurate_passes_home)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_away, pass_attempts_home)), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * if(side.triggered_side = 'home', b.accurate_passes_home, b.accurate_passes_away)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', b.pass_attempts_home, b.pass_attempts_away)), 0),
+            100.0 * if(side.triggered_side = 'home', accurate_passes_home, accurate_passes_away)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_home, pass_attempts_away)), 0),
             1
         ), 0.0)
         - coalesce(round(
-            100.0 * if(side.triggered_side = 'home', b.accurate_passes_away, b.accurate_passes_home)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', b.pass_attempts_away, b.pass_attempts_home)), 0),
+            100.0 * if(side.triggered_side = 'home', accurate_passes_away, accurate_passes_home)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_away, pass_attempts_home)), 0),
             1
         ), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM base_stats AS b
+FROM base_stats AS bs
 CROSS JOIN (
     SELECT arrayJoin(['home', 'away']) AS triggered_side
 ) AS side;

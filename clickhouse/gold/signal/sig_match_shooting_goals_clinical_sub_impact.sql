@@ -66,12 +66,12 @@ WITH substitute_entries AS (
     SELECT
         mp.match_id,
         toInt32(assumeNotNull(mp.person_id)) AS player_id,
-        toInt32(max(toInt32OrZero(mp.substitution_time))) AS substitution_time
+        toInt32(max(toInt32(coalesce(mp.substitution_time, 0)))) AS substitution_time
     FROM silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id IS NOT NULL
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
-      AND toInt32OrZero(mp.substitution_time) > 0
+      AND toInt32(coalesce(mp.substitution_time, 0)) > 0
     GROUP BY
         mp.match_id,
         player_id
@@ -232,190 +232,190 @@ base_stats AS (
 )
 
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
     'home' AS triggered_side,
-    b.home_team_id AS triggered_team_id,
-    b.home_team_name AS triggered_team_name,
-    b.away_team_id AS opponent_team_id,
-    b.away_team_name AS opponent_team_name,
+    home_team_id AS triggered_team_id,
+    home_team_name AS triggered_team_name,
+    away_team_id AS opponent_team_id,
+    away_team_name AS opponent_team_name,
     toInt32(3) AS trigger_threshold_match_substitute_non_own_goals_min,
-    b.match_substitute_non_own_goals,
-    b.match_total_non_own_goals,
+    match_substitute_non_own_goals,
+    match_total_non_own_goals,
     toFloat32(coalesce(round(
-        100.0 * b.match_substitute_non_own_goals / nullIf(toFloat64(b.match_total_non_own_goals), 0),
+        100.0 * match_substitute_non_own_goals / nullIf(toFloat64(match_total_non_own_goals), 0),
         1
     ), 0.0)) AS match_substitute_goal_share_pct,
-    b.home_substitute_non_own_goals,
-    b.away_substitute_non_own_goals,
-    b.home_distinct_substitute_goal_scorers,
-    b.away_distinct_substitute_goal_scorers,
+    home_substitute_non_own_goals,
+    away_substitute_non_own_goals,
+    home_distinct_substitute_goal_scorers,
+    away_distinct_substitute_goal_scorers,
 
-    b.home_substitute_non_own_goals AS triggered_team_substitute_non_own_goals,
-    b.away_substitute_non_own_goals AS opponent_substitute_non_own_goals,
-    b.home_substitute_non_own_goals - b.away_substitute_non_own_goals AS substitute_non_own_goals_delta,
-    b.home_distinct_substitute_goal_scorers AS triggered_team_distinct_substitute_goal_scorers,
-    b.away_distinct_substitute_goal_scorers AS opponent_distinct_substitute_goal_scorers,
-    b.home_distinct_substitute_goal_scorers - b.away_distinct_substitute_goal_scorers
+    home_substitute_non_own_goals AS triggered_team_substitute_non_own_goals,
+    away_substitute_non_own_goals AS opponent_substitute_non_own_goals,
+    home_substitute_non_own_goals - away_substitute_non_own_goals AS substitute_non_own_goals_delta,
+    home_distinct_substitute_goal_scorers AS triggered_team_distinct_substitute_goal_scorers,
+    away_distinct_substitute_goal_scorers AS opponent_distinct_substitute_goal_scorers,
+    home_distinct_substitute_goal_scorers - away_distinct_substitute_goal_scorers
         AS distinct_substitute_goal_scorers_delta,
-    b.home_top_substitute_scorer_goals AS triggered_team_top_substitute_scorer_goals,
-    b.away_top_substitute_scorer_goals AS opponent_top_substitute_scorer_goals,
-    b.home_top_substitute_scorer_goals - b.away_top_substitute_scorer_goals AS top_substitute_scorer_goals_delta,
-    b.home_first_substitute_goal_effective_minute AS triggered_team_first_substitute_goal_effective_minute,
-    b.away_first_substitute_goal_effective_minute AS opponent_first_substitute_goal_effective_minute,
-    b.home_last_substitute_goal_effective_minute AS triggered_team_last_substitute_goal_effective_minute,
-    b.away_last_substitute_goal_effective_minute AS opponent_last_substitute_goal_effective_minute,
+    home_top_substitute_scorer_goals AS triggered_team_top_substitute_scorer_goals,
+    away_top_substitute_scorer_goals AS opponent_top_substitute_scorer_goals,
+    home_top_substitute_scorer_goals - away_top_substitute_scorer_goals AS top_substitute_scorer_goals_delta,
+    home_first_substitute_goal_effective_minute AS triggered_team_first_substitute_goal_effective_minute,
+    away_first_substitute_goal_effective_minute AS opponent_first_substitute_goal_effective_minute,
+    home_last_substitute_goal_effective_minute AS triggered_team_last_substitute_goal_effective_minute,
+    away_last_substitute_goal_effective_minute AS opponent_last_substitute_goal_effective_minute,
     toFloat32(coalesce(round(
-        100.0 * b.home_substitute_non_own_goals / nullIf(toFloat64(b.home_non_own_goals), 0),
+        100.0 * home_substitute_non_own_goals / nullIf(toFloat64(home_non_own_goals), 0),
         1
     ), 0.0)) AS triggered_team_substitute_goal_share_pct,
     toFloat32(coalesce(round(
-        100.0 * b.away_substitute_non_own_goals / nullIf(toFloat64(b.away_non_own_goals), 0),
+        100.0 * away_substitute_non_own_goals / nullIf(toFloat64(away_non_own_goals), 0),
         1
     ), 0.0)) AS opponent_substitute_goal_share_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * b.home_substitute_non_own_goals / nullIf(toFloat64(b.home_non_own_goals), 0),
+            100.0 * home_substitute_non_own_goals / nullIf(toFloat64(home_non_own_goals), 0),
             1
         ), 0.0)
       - coalesce(round(
-            100.0 * b.away_substitute_non_own_goals / nullIf(toFloat64(b.away_non_own_goals), 0),
+            100.0 * away_substitute_non_own_goals / nullIf(toFloat64(away_non_own_goals), 0),
             1
         ), 0.0),
         1
     )) AS substitute_goal_share_delta_pct,
-    b.home_non_own_goals AS triggered_team_non_own_goals,
-    b.away_non_own_goals AS opponent_non_own_goals,
-    b.home_non_own_goals - b.away_non_own_goals AS non_own_goals_delta,
-    b.home_goals AS triggered_team_goals,
-    b.away_goals AS opponent_goals,
-    b.home_goals - b.away_goals AS goal_delta,
-    b.total_shots_home AS triggered_team_total_shots,
-    b.total_shots_away AS opponent_total_shots,
-    b.shots_on_target_home AS triggered_team_shots_on_target,
-    b.shots_on_target_away AS opponent_shots_on_target,
-    b.expected_goals_home AS triggered_team_xg,
-    b.expected_goals_away AS opponent_xg,
-    toFloat32(round(b.expected_goals_home - b.expected_goals_away, 3)) AS xg_delta,
-    b.big_chances_home AS triggered_team_big_chances,
-    b.big_chances_away AS opponent_big_chances,
-    b.possession_home_pct AS triggered_team_possession_pct,
-    b.possession_away_pct AS opponent_possession_pct,
-    toFloat32(round(b.possession_home_pct - b.possession_away_pct, 1)) AS possession_delta_pct,
+    home_non_own_goals AS triggered_team_non_own_goals,
+    away_non_own_goals AS opponent_non_own_goals,
+    home_non_own_goals - away_non_own_goals AS non_own_goals_delta,
+    home_goals AS triggered_team_goals,
+    away_goals AS opponent_goals,
+    home_goals - away_goals AS goal_delta,
+    total_shots_home AS triggered_team_total_shots,
+    total_shots_away AS opponent_total_shots,
+    shots_on_target_home AS triggered_team_shots_on_target,
+    shots_on_target_away AS opponent_shots_on_target,
+    expected_goals_home AS triggered_team_xg,
+    expected_goals_away AS opponent_xg,
+    toFloat32(round(expected_goals_home - expected_goals_away, 3)) AS xg_delta,
+    big_chances_home AS triggered_team_big_chances,
+    big_chances_away AS opponent_big_chances,
+    possession_home_pct AS triggered_team_possession_pct,
+    possession_away_pct AS opponent_possession_pct,
+    toFloat32(round(possession_home_pct - possession_away_pct, 1)) AS possession_delta_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0), 1), 0.0),
+        coalesce(round(100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0), 1), 0.0)
+        - coalesce(round(100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM base_stats AS b
+FROM base_stats AS bs
 
 UNION ALL
 
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
     'away' AS triggered_side,
-    b.away_team_id AS triggered_team_id,
-    b.away_team_name AS triggered_team_name,
-    b.home_team_id AS opponent_team_id,
-    b.home_team_name AS opponent_team_name,
+    away_team_id AS triggered_team_id,
+    away_team_name AS triggered_team_name,
+    home_team_id AS opponent_team_id,
+    home_team_name AS opponent_team_name,
     toInt32(3) AS trigger_threshold_match_substitute_non_own_goals_min,
-    b.match_substitute_non_own_goals,
-    b.match_total_non_own_goals,
+    match_substitute_non_own_goals,
+    match_total_non_own_goals,
     toFloat32(coalesce(round(
-        100.0 * b.match_substitute_non_own_goals / nullIf(toFloat64(b.match_total_non_own_goals), 0),
+        100.0 * match_substitute_non_own_goals / nullIf(toFloat64(match_total_non_own_goals), 0),
         1
     ), 0.0)) AS match_substitute_goal_share_pct,
-    b.home_substitute_non_own_goals,
-    b.away_substitute_non_own_goals,
-    b.home_distinct_substitute_goal_scorers,
-    b.away_distinct_substitute_goal_scorers,
+    home_substitute_non_own_goals,
+    away_substitute_non_own_goals,
+    home_distinct_substitute_goal_scorers,
+    away_distinct_substitute_goal_scorers,
 
-    b.away_substitute_non_own_goals AS triggered_team_substitute_non_own_goals,
-    b.home_substitute_non_own_goals AS opponent_substitute_non_own_goals,
-    b.away_substitute_non_own_goals - b.home_substitute_non_own_goals AS substitute_non_own_goals_delta,
-    b.away_distinct_substitute_goal_scorers AS triggered_team_distinct_substitute_goal_scorers,
-    b.home_distinct_substitute_goal_scorers AS opponent_distinct_substitute_goal_scorers,
-    b.away_distinct_substitute_goal_scorers - b.home_distinct_substitute_goal_scorers
+    away_substitute_non_own_goals AS triggered_team_substitute_non_own_goals,
+    home_substitute_non_own_goals AS opponent_substitute_non_own_goals,
+    away_substitute_non_own_goals - home_substitute_non_own_goals AS substitute_non_own_goals_delta,
+    away_distinct_substitute_goal_scorers AS triggered_team_distinct_substitute_goal_scorers,
+    home_distinct_substitute_goal_scorers AS opponent_distinct_substitute_goal_scorers,
+    away_distinct_substitute_goal_scorers - home_distinct_substitute_goal_scorers
         AS distinct_substitute_goal_scorers_delta,
-    b.away_top_substitute_scorer_goals AS triggered_team_top_substitute_scorer_goals,
-    b.home_top_substitute_scorer_goals AS opponent_top_substitute_scorer_goals,
-    b.away_top_substitute_scorer_goals - b.home_top_substitute_scorer_goals AS top_substitute_scorer_goals_delta,
-    b.away_first_substitute_goal_effective_minute AS triggered_team_first_substitute_goal_effective_minute,
-    b.home_first_substitute_goal_effective_minute AS opponent_first_substitute_goal_effective_minute,
-    b.away_last_substitute_goal_effective_minute AS triggered_team_last_substitute_goal_effective_minute,
-    b.home_last_substitute_goal_effective_minute AS opponent_last_substitute_goal_effective_minute,
+    away_top_substitute_scorer_goals AS triggered_team_top_substitute_scorer_goals,
+    home_top_substitute_scorer_goals AS opponent_top_substitute_scorer_goals,
+    away_top_substitute_scorer_goals - home_top_substitute_scorer_goals AS top_substitute_scorer_goals_delta,
+    away_first_substitute_goal_effective_minute AS triggered_team_first_substitute_goal_effective_minute,
+    home_first_substitute_goal_effective_minute AS opponent_first_substitute_goal_effective_minute,
+    away_last_substitute_goal_effective_minute AS triggered_team_last_substitute_goal_effective_minute,
+    home_last_substitute_goal_effective_minute AS opponent_last_substitute_goal_effective_minute,
     toFloat32(coalesce(round(
-        100.0 * b.away_substitute_non_own_goals / nullIf(toFloat64(b.away_non_own_goals), 0),
+        100.0 * away_substitute_non_own_goals / nullIf(toFloat64(away_non_own_goals), 0),
         1
     ), 0.0)) AS triggered_team_substitute_goal_share_pct,
     toFloat32(coalesce(round(
-        100.0 * b.home_substitute_non_own_goals / nullIf(toFloat64(b.home_non_own_goals), 0),
+        100.0 * home_substitute_non_own_goals / nullIf(toFloat64(home_non_own_goals), 0),
         1
     ), 0.0)) AS opponent_substitute_goal_share_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * b.away_substitute_non_own_goals / nullIf(toFloat64(b.away_non_own_goals), 0),
+            100.0 * away_substitute_non_own_goals / nullIf(toFloat64(away_non_own_goals), 0),
             1
         ), 0.0)
       - coalesce(round(
-            100.0 * b.home_substitute_non_own_goals / nullIf(toFloat64(b.home_non_own_goals), 0),
+            100.0 * home_substitute_non_own_goals / nullIf(toFloat64(home_non_own_goals), 0),
             1
         ), 0.0),
         1
     )) AS substitute_goal_share_delta_pct,
-    b.away_non_own_goals AS triggered_team_non_own_goals,
-    b.home_non_own_goals AS opponent_non_own_goals,
-    b.away_non_own_goals - b.home_non_own_goals AS non_own_goals_delta,
-    b.away_goals AS triggered_team_goals,
-    b.home_goals AS opponent_goals,
-    b.away_goals - b.home_goals AS goal_delta,
-    b.total_shots_away AS triggered_team_total_shots,
-    b.total_shots_home AS opponent_total_shots,
-    b.shots_on_target_away AS triggered_team_shots_on_target,
-    b.shots_on_target_home AS opponent_shots_on_target,
-    b.expected_goals_away AS triggered_team_xg,
-    b.expected_goals_home AS opponent_xg,
-    toFloat32(round(b.expected_goals_away - b.expected_goals_home, 3)) AS xg_delta,
-    b.big_chances_away AS triggered_team_big_chances,
-    b.big_chances_home AS opponent_big_chances,
-    b.possession_away_pct AS triggered_team_possession_pct,
-    b.possession_home_pct AS opponent_possession_pct,
-    toFloat32(round(b.possession_away_pct - b.possession_home_pct, 1)) AS possession_delta_pct,
+    away_non_own_goals AS triggered_team_non_own_goals,
+    home_non_own_goals AS opponent_non_own_goals,
+    away_non_own_goals - home_non_own_goals AS non_own_goals_delta,
+    away_goals AS triggered_team_goals,
+    home_goals AS opponent_goals,
+    away_goals - home_goals AS goal_delta,
+    total_shots_away AS triggered_team_total_shots,
+    total_shots_home AS opponent_total_shots,
+    shots_on_target_away AS triggered_team_shots_on_target,
+    shots_on_target_home AS opponent_shots_on_target,
+    expected_goals_away AS triggered_team_xg,
+    expected_goals_home AS opponent_xg,
+    toFloat32(round(expected_goals_away - expected_goals_home, 3)) AS xg_delta,
+    big_chances_away AS triggered_team_big_chances,
+    big_chances_home AS opponent_big_chances,
+    possession_away_pct AS triggered_team_possession_pct,
+    possession_home_pct AS opponent_possession_pct,
+    toFloat32(round(possession_away_pct - possession_home_pct, 1)) AS possession_delta_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0), 1), 0.0)
-        - coalesce(round(100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0), 1), 0.0),
+        coalesce(round(100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0), 1), 0.0)
+        - coalesce(round(100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM base_stats AS b
+FROM base_stats
 
 ORDER BY
     match_substitute_non_own_goals DESC,

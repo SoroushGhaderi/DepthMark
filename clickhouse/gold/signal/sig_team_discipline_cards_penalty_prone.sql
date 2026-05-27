@@ -1,33 +1,3 @@
-WITH penalty_shots AS (
-    SELECT
-        s.match_id,
-        if(s.team_id = m.home_team_id, 'home', 'away') AS penalty_awarded_side,
-        toUInt8(
-            positionCaseInsensitiveUTF8(coalesce(s.event_type, ''), 'goal') > 0
-        ) AS penalty_scored
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
-        ON m.match_id = s.match_id
-    WHERE s.match_id > 0
-      AND (s.team_id = m.home_team_id OR s.team_id = m.away_team_id)
-      AND (
-          positionCaseInsensitiveUTF8(coalesce(s.situation, ''), 'penalty') > 0
-          OR positionCaseInsensitiveUTF8(coalesce(s.shot_type, ''), 'penalty') > 0
-      )
-),
-match_penalty_totals AS (
-    SELECT
-        ps.match_id,
-        countIf(ps.penalty_awarded_side = 'home') AS home_penalties_awarded,
-        countIf(ps.penalty_awarded_side = 'away') AS away_penalties_awarded,
-        countIf(ps.penalty_awarded_side = 'home' AND ps.penalty_scored = 1) AS home_penalties_scored,
-        countIf(ps.penalty_awarded_side = 'away' AND ps.penalty_scored = 1) AS away_penalties_scored,
-        countIf(ps.penalty_awarded_side = 'home' AND ps.penalty_scored = 0) AS home_penalties_missed,
-        countIf(ps.penalty_awarded_side = 'away' AND ps.penalty_scored = 0) AS away_penalties_missed,
-        count() AS total_match_penalties_awarded
-    FROM penalty_shots AS ps
-    GROUP BY ps.match_id
-)
 INSERT INTO gold.sig_team_discipline_cards_penalty_prone (
     match_id,
     match_date,
@@ -74,6 +44,36 @@ INSERT INTO gold.sig_team_discipline_cards_penalty_prone (
     triggered_team_possession_pct,
     opponent_possession_pct,
     possession_delta_pct
+)
+WITH penalty_shots AS (
+    SELECT
+        s.match_id,
+        if(s.team_id = m.home_team_id, 'home', 'away') AS penalty_awarded_side,
+        toUInt8(
+            positionCaseInsensitiveUTF8(coalesce(s.event_type, ''), 'goal') > 0
+        ) AS penalty_scored
+    FROM silver.shot AS s
+    INNER JOIN silver.match AS m
+        ON m.match_id = s.match_id
+    WHERE s.match_id > 0
+      AND (s.team_id = m.home_team_id OR s.team_id = m.away_team_id)
+      AND (
+          positionCaseInsensitiveUTF8(coalesce(s.situation, ''), 'penalty') > 0
+          OR positionCaseInsensitiveUTF8(coalesce(s.shot_type, ''), 'penalty') > 0
+      )
+),
+match_penalty_totals AS (
+    SELECT
+        ps.match_id,
+        countIf(ps.penalty_awarded_side = 'home') AS home_penalties_awarded,
+        countIf(ps.penalty_awarded_side = 'away') AS away_penalties_awarded,
+        countIf(ps.penalty_awarded_side = 'home' AND ps.penalty_scored = 1) AS home_penalties_scored,
+        countIf(ps.penalty_awarded_side = 'away' AND ps.penalty_scored = 1) AS away_penalties_scored,
+        countIf(ps.penalty_awarded_side = 'home' AND ps.penalty_scored = 0) AS home_penalties_missed,
+        countIf(ps.penalty_awarded_side = 'away' AND ps.penalty_scored = 0) AS away_penalties_missed,
+        count() AS total_match_penalties_awarded
+    FROM penalty_shots AS ps
+    GROUP BY ps.match_id
 )
 -- Signal: sig_team_discipline_cards_penalty_prone
 -- Trigger: team concedes >= 2 penalties in a single match.

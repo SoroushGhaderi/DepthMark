@@ -1,58 +1,3 @@
-WITH player_roles AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.team_id) AS team_id,
-        toInt32(mp.person_id) AS player_id,
-        argMax(coalesce(mp.position_id, 0), if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(coalesce(mp.usual_playing_position_id, 0), if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.match_id > 0
-      AND coalesce(mp.team_id, 0) > 0
-      AND coalesce(mp.person_id, 0) > 0
-      AND mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        team_id,
-        player_id
-),
-center_back_playmaking AS (
-    SELECT
-        p.match_id,
-        toInt32(p.team_id) AS team_id,
-        toInt32(count()) AS team_center_back_count,
-        toInt32(countIf(coalesce(p.assists, 0) > 0)) AS team_center_backs_with_assists,
-        toInt32(sum(coalesce(p.assists, 0))) AS team_center_back_assists,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_center_back_key_passes,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_center_back_expected_assists,
-        toInt32(max(coalesce(p.assists, 0))) AS team_top_center_back_assists
-    FROM silver.player_match_stat AS p
-    INNER JOIN player_roles AS pr
-        ON pr.match_id = p.match_id
-       AND pr.team_id = toInt32(p.team_id)
-       AND pr.player_id = toInt32(p.player_id)
-    WHERE p.match_id > 0
-      AND coalesce(p.team_id, 0) > 0
-      AND coalesce(pr.usual_playing_position_id, 0) = 1
-      AND coalesce(pr.position_id, 0) IN (3, 4)
-    GROUP BY
-        p.match_id,
-        team_id
-),
-team_total_playmaking AS (
-    SELECT
-        p.match_id,
-        toInt32(p.team_id) AS team_id,
-        toInt32(sum(coalesce(p.assists, 0))) AS team_total_assists,
-        toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes,
-        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_total_expected_assists
-    FROM silver.player_match_stat AS p
-    WHERE p.match_id > 0
-      AND coalesce(p.team_id, 0) > 0
-    GROUP BY
-        p.match_id,
-        team_id
-)
 INSERT INTO gold.sig_team_creativity_playmaking_unlikely_creative_source (
     match_id,
     match_date,
@@ -128,6 +73,61 @@ INSERT INTO gold.sig_team_creativity_playmaking_unlikely_creative_source (
     triggered_team_possession_pct,
     opponent_possession_pct,
     possession_delta_pct
+)
+WITH player_roles AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.primary_team_id) AS team_id,
+        toInt32(mp.person_id) AS player_id,
+        argMax(coalesce(mp.position_id, 0), if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(coalesce(mp.usual_playing_position_id, 0), if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.match_id > 0
+      AND coalesce(mp.primary_team_id, 0) > 0
+      AND coalesce(mp.person_id, 0) > 0
+      AND mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        team_id,
+        player_id
+),
+center_back_playmaking AS (
+    SELECT
+        p.match_id,
+        toInt32(p.team_id) AS team_id,
+        toInt32(count()) AS team_center_back_count,
+        toInt32(countIf(coalesce(p.assists, 0) > 0)) AS team_center_backs_with_assists,
+        toInt32(sum(coalesce(p.assists, 0))) AS team_center_back_assists,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_center_back_key_passes,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_center_back_expected_assists,
+        toInt32(max(coalesce(p.assists, 0))) AS team_top_center_back_assists
+    FROM silver.player_match_stat AS p
+    INNER JOIN player_roles AS pr
+        ON pr.match_id = p.match_id
+       AND pr.team_id = toInt32(p.team_id)
+       AND pr.player_id = toInt32(p.player_id)
+    WHERE p.match_id > 0
+      AND coalesce(p.team_id, 0) > 0
+      AND coalesce(pr.usual_playing_position_id, 0) = 1
+      AND coalesce(pr.position_id, 0) IN (3, 4)
+    GROUP BY
+        p.match_id,
+        team_id
+),
+team_total_playmaking AS (
+    SELECT
+        p.match_id,
+        toInt32(p.team_id) AS team_id,
+        toInt32(sum(coalesce(p.assists, 0))) AS team_total_assists,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes,
+        toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_total_expected_assists
+    FROM silver.player_match_stat AS p
+    WHERE p.match_id > 0
+      AND coalesce(p.team_id, 0) > 0
+    GROUP BY
+        p.match_id,
+        team_id
 )
 -- Signal: sig_team_creativity_playmaking_unlikely_creative_source
 -- Trigger: Center backs provide >= 2 assists in one finished match.

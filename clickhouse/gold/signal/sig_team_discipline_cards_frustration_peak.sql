@@ -59,9 +59,9 @@ WITH card_events AS (
     SELECT
         c.match_id,
         lowerUTF8(coalesce(c.team_side, '')) AS card_team_side,
-        toInt32OrZero(c.card_minute) AS card_minute,
-        toInt32OrZero(c.score_home_at_time) AS score_home_at_card,
-        toInt32OrZero(c.score_away_at_time) AS score_away_at_card,
+        toInt32OrZero(toString(c.card_minute)) AS card_minute,
+        toInt32OrZero(toString(c.score_home_at_time)) AS score_home_at_card,
+        toInt32OrZero(toString(c.score_away_at_time)) AS score_away_at_card,
         c.event_id,
         (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'yellow') > 0

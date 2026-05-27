@@ -1,34 +1,3 @@
-WITH team_recoveries AS (
-    SELECT
-        p.match_id,
-        p.match_date,
-        p.team_id,
-        toInt32(sum(coalesce(p.recoveries, 0))) AS team_total_recoveries
-    FROM silver.player_match_stat AS p
-    WHERE p.match_id > 0
-    GROUP BY
-        p.match_id,
-        p.match_date,
-        p.team_id
-),
-match_recovery_pairs AS (
-    SELECT
-        m.match_id,
-        m.match_date,
-        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
-        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
-    FROM silver.match AS m
-    LEFT JOIN team_recoveries AS home_recovery
-        ON home_recovery.match_id = m.match_id
-       AND home_recovery.match_date = m.match_date
-       AND home_recovery.team_id = m.home_team_id
-    LEFT JOIN team_recoveries AS away_recovery
-        ON away_recovery.match_id = m.match_id
-       AND away_recovery.match_date = m.match_date
-       AND away_recovery.team_id = m.away_team_id
-    WHERE m.match_finished = 1
-      AND m.match_id > 0
-)
 INSERT INTO gold.sig_team_goalkeeping_defense_recovery_dominance (
     match_id,
     match_date,
@@ -85,6 +54,37 @@ INSERT INTO gold.sig_team_goalkeeping_defense_recovery_dominance (
     opponent_goals,
     goal_delta,
     triggered_team_clean_sheet_flag
+)
+WITH team_recoveries AS (
+    SELECT
+        p.match_id,
+        p.match_date,
+        p.team_id,
+        toInt32(sum(coalesce(p.recoveries, 0))) AS team_total_recoveries
+    FROM silver.player_match_stat AS p
+    WHERE p.match_id > 0
+    GROUP BY
+        p.match_id,
+        p.match_date,
+        p.team_id
+),
+match_recovery_pairs AS (
+    SELECT
+        m.match_id,
+        m.match_date,
+        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
+        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
+    FROM silver.match AS m
+    LEFT JOIN team_recoveries AS home_recovery
+        ON home_recovery.match_id = m.match_id
+       AND home_recovery.match_date = m.match_date
+       AND home_recovery.team_id = m.home_team_id
+    LEFT JOIN team_recoveries AS away_recovery
+        ON away_recovery.match_id = m.match_id
+       AND away_recovery.match_date = m.match_date
+       AND away_recovery.team_id = m.away_team_id
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
 )
 -- Signal: sig_team_goalkeeping_defense_recovery_dominance
 -- Intent: detect team-level ball-recovery peaks and preserve bilateral defensive, control,

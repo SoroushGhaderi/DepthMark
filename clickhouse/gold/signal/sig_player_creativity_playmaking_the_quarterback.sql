@@ -1,16 +1,3 @@
-WITH player_positions AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-)
 INSERT INTO gold.sig_player_creativity_playmaking_the_quarterback (
     match_id,
     match_date,
@@ -63,6 +50,19 @@ INSERT INTO gold.sig_player_creativity_playmaking_the_quarterback (
     possession_delta_pct,
     player_share_of_team_accurate_long_balls_pct,
     player_share_of_team_long_ball_attempts_pct
+)
+WITH player_positions AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
 )
 -- Signal: sig_player_creativity_playmaking_the_quarterback
 -- Intent: detect center backs who drive playmaking through elite long-ball completion volume,

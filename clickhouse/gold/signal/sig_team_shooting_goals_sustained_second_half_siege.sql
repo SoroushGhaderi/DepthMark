@@ -1,22 +1,3 @@
-WITH half_shot_stats AS (
-    SELECT
-        ps.match_id,
-        maxIf(coalesce(ps.total_shots_home, 0), ps.period = 'FirstHalf') AS home_shots_first_half,
-        maxIf(coalesce(ps.total_shots_home, 0), ps.period = 'SecondHalf') AS home_shots_second_half,
-        maxIf(coalesce(ps.total_shots_away, 0), ps.period = 'FirstHalf') AS away_shots_first_half,
-        maxIf(coalesce(ps.total_shots_away, 0), ps.period = 'SecondHalf') AS away_shots_second_half,
-        maxIf(coalesce(ps.shots_on_target_home, 0), ps.period = 'SecondHalf')
-            AS home_shots_on_target_second_half,
-        maxIf(coalesce(ps.shots_on_target_away, 0), ps.period = 'SecondHalf')
-            AS away_shots_on_target_second_half,
-        maxIf(coalesce(ps.expected_goals_home, 0), ps.period = 'SecondHalf') AS home_xg_second_half,
-        maxIf(coalesce(ps.expected_goals_away, 0), ps.period = 'SecondHalf') AS away_xg_second_half,
-        toInt8(maxIf(1, ps.period = 'FirstHalf')) AS has_first_half_period_row_flag,
-        toInt8(maxIf(1, ps.period = 'SecondHalf')) AS has_second_half_period_row_flag
-    FROM silver.period_stat AS ps
-    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
-    GROUP BY ps.match_id
-)
 INSERT INTO gold.sig_team_shooting_goals_sustained_second_half_siege (
     match_id,
     match_date,
@@ -86,6 +67,25 @@ INSERT INTO gold.sig_team_shooting_goals_sustained_second_half_siege (
     pass_accuracy_delta_pct,
     triggered_team_corners,
     opponent_corners
+)
+WITH half_shot_stats AS (
+    SELECT
+        ps.match_id,
+        maxIf(coalesce(ps.total_shots_home, 0), ps.period = 'FirstHalf') AS home_shots_first_half,
+        maxIf(coalesce(ps.total_shots_home, 0), ps.period = 'SecondHalf') AS home_shots_second_half,
+        maxIf(coalesce(ps.total_shots_away, 0), ps.period = 'FirstHalf') AS away_shots_first_half,
+        maxIf(coalesce(ps.total_shots_away, 0), ps.period = 'SecondHalf') AS away_shots_second_half,
+        maxIf(coalesce(ps.shots_on_target_home, 0), ps.period = 'SecondHalf')
+            AS home_shots_on_target_second_half,
+        maxIf(coalesce(ps.shots_on_target_away, 0), ps.period = 'SecondHalf')
+            AS away_shots_on_target_second_half,
+        maxIf(coalesce(ps.expected_goals_home, 0), ps.period = 'SecondHalf') AS home_xg_second_half,
+        maxIf(coalesce(ps.expected_goals_away, 0), ps.period = 'SecondHalf') AS away_xg_second_half,
+        toInt8(maxIf(1, ps.period = 'FirstHalf')) AS has_first_half_period_row_flag,
+        toInt8(maxIf(1, ps.period = 'SecondHalf')) AS has_second_half_period_row_flag
+    FROM silver.period_stat AS ps
+    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
+    GROUP BY ps.match_id
 )
 -- Signal: sig_team_shooting_goals_sustained_second_half_siege
 -- Trigger: team records >= 15 total shots in SecondHalf.

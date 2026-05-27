@@ -1,14 +1,3 @@
-WITH half_foul_stats AS (
-    SELECT
-        ps.match_id,
-        maxIf(coalesce(ps.fouls_home, 0), ps.period = 'FirstHalf') AS home_fouls_first_half,
-        maxIf(coalesce(ps.fouls_home, 0), ps.period = 'SecondHalf') AS home_fouls_second_half,
-        maxIf(coalesce(ps.fouls_away, 0), ps.period = 'FirstHalf') AS away_fouls_first_half,
-        maxIf(coalesce(ps.fouls_away, 0), ps.period = 'SecondHalf') AS away_fouls_second_half
-    FROM silver.period_stat AS ps
-    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
-    GROUP BY ps.match_id
-)
 INSERT INTO gold.sig_team_discipline_cards_aggression_spike (
     match_id,
     match_date,
@@ -59,6 +48,17 @@ INSERT INTO gold.sig_team_discipline_cards_aggression_spike (
     triggered_team_possession_pct,
     opponent_possession_pct,
     possession_delta_pct
+)
+WITH half_foul_stats AS (
+    SELECT
+        ps.match_id,
+        maxIf(coalesce(ps.fouls_home, 0), ps.period = 'FirstHalf') AS home_fouls_first_half,
+        maxIf(coalesce(ps.fouls_home, 0), ps.period = 'SecondHalf') AS home_fouls_second_half,
+        maxIf(coalesce(ps.fouls_away, 0), ps.period = 'FirstHalf') AS away_fouls_first_half,
+        maxIf(coalesce(ps.fouls_away, 0), ps.period = 'SecondHalf') AS away_fouls_second_half
+    FROM silver.period_stat AS ps
+    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
+    GROUP BY ps.match_id
 )
 -- Signal: sig_team_discipline_cards_aggression_spike
 -- Trigger: second-half fouls >= 2x first-half fouls (with first-half fouls >= 1).

@@ -190,18 +190,6 @@ decisive_winning_goal_events AS (
         ON s2.match_id = c.match_id
        AND coalesce(s2.is_goal, 0) = 1
        AND coalesce(s2.is_own_goal, 0) = 0
-       AND tuple(
-            toInt32(coalesce(s2.goal_time, s2.minute, 0)),
-            toInt32(coalesce(s2.goal_overload_time, s2.minute_added, 0)),
-            toString(coalesce(s2.shot_id, ''))
-        ) > tuple(c.goal_minute, c.goal_added_time, c.shot_id_key)
-       AND if(
-            c.is_home_goal = 1,
-            coalesce(s2.is_home_goal, 0) = 0
-                AND coalesce(s2.away_score_after, 0) >= coalesce(s2.home_score_after, 0),
-            coalesce(s2.is_home_goal, 0) = 1
-                AND coalesce(s2.home_score_after, 0) >= coalesce(s2.away_score_after, 0)
-        )
     GROUP BY
         c.match_id,
         c.team_id,
@@ -216,7 +204,20 @@ decisive_winning_goal_events AS (
         c.opponent_score_after,
         c.final_goal_margin,
         c.shot_id_key
-    HAVING count(s2.match_id) = 0
+    HAVING countIf(
+        tuple(
+            toInt32(coalesce(s2.goal_time, s2.minute, 0)),
+            toInt32(coalesce(s2.goal_overload_time, s2.minute_added, 0)),
+            toString(coalesce(s2.shot_id, ''))
+        ) > tuple(c.goal_minute, c.goal_added_time, c.shot_id_key)
+        AND if(
+            c.is_home_goal = 1,
+            coalesce(s2.is_home_goal, 0) = 0
+                AND coalesce(s2.away_score_after, 0) >= coalesce(s2.home_score_after, 0),
+            coalesce(s2.is_home_goal, 0) = 1
+                AND coalesce(s2.home_score_after, 0) >= coalesce(s2.away_score_after, 0)
+        )
+    ) = 0
 ),
 player_equalizer_winner_events AS (
     SELECT
@@ -284,8 +285,8 @@ player_equalizer_winner_events AS (
         ON e.match_id = d.match_id
        AND e.team_id = d.team_id
        AND e.player_id = d.player_id
-       AND tuple(e.goal_minute, e.goal_added_time, e.shot_id_key)
-            < tuple(d.goal_minute, d.goal_added_time, d.shot_id_key)
+    WHERE tuple(e.goal_minute, e.goal_added_time, e.shot_id_key)
+        < tuple(d.goal_minute, d.goal_added_time, d.shot_id_key)
     GROUP BY
         d.match_id,
         d.team_id,

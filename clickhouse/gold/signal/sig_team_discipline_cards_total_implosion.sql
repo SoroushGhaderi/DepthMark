@@ -1,18 +1,3 @@
-WITH half_card_stats AS (
-    SELECT
-        ps.match_id,
-        maxIf(coalesce(ps.red_cards_home, 0), ps.period = 'FirstHalf') AS home_red_cards_first_half,
-        maxIf(coalesce(ps.red_cards_home, 0), ps.period = 'SecondHalf') AS home_red_cards_second_half,
-        maxIf(coalesce(ps.red_cards_away, 0), ps.period = 'FirstHalf') AS away_red_cards_first_half,
-        maxIf(coalesce(ps.red_cards_away, 0), ps.period = 'SecondHalf') AS away_red_cards_second_half,
-        maxIf(coalesce(ps.yellow_cards_home, 0), ps.period = 'FirstHalf') AS home_yellow_cards_first_half,
-        maxIf(coalesce(ps.yellow_cards_home, 0), ps.period = 'SecondHalf') AS home_yellow_cards_second_half,
-        maxIf(coalesce(ps.yellow_cards_away, 0), ps.period = 'FirstHalf') AS away_yellow_cards_first_half,
-        maxIf(coalesce(ps.yellow_cards_away, 0), ps.period = 'SecondHalf') AS away_yellow_cards_second_half
-    FROM silver.period_stat AS ps
-    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
-    GROUP BY ps.match_id
-)
 INSERT INTO gold.sig_team_discipline_cards_total_implosion (
     match_id,
     match_date,
@@ -66,6 +51,21 @@ INSERT INTO gold.sig_team_discipline_cards_total_implosion (
     triggered_team_possession_pct,
     opponent_possession_pct,
     possession_delta_pct
+)
+WITH half_card_stats AS (
+    SELECT
+        ps.match_id,
+        maxIf(coalesce(ps.red_cards_home, 0), ps.period = 'FirstHalf') AS home_red_cards_first_half,
+        maxIf(coalesce(ps.red_cards_home, 0), ps.period = 'SecondHalf') AS home_red_cards_second_half,
+        maxIf(coalesce(ps.red_cards_away, 0), ps.period = 'FirstHalf') AS away_red_cards_first_half,
+        maxIf(coalesce(ps.red_cards_away, 0), ps.period = 'SecondHalf') AS away_red_cards_second_half,
+        maxIf(coalesce(ps.yellow_cards_home, 0), ps.period = 'FirstHalf') AS home_yellow_cards_first_half,
+        maxIf(coalesce(ps.yellow_cards_home, 0), ps.period = 'SecondHalf') AS home_yellow_cards_second_half,
+        maxIf(coalesce(ps.yellow_cards_away, 0), ps.period = 'FirstHalf') AS away_yellow_cards_first_half,
+        maxIf(coalesce(ps.yellow_cards_away, 0), ps.period = 'SecondHalf') AS away_yellow_cards_second_half
+    FROM silver.period_stat AS ps
+    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
+    GROUP BY ps.match_id
 )
 -- Signal: sig_team_discipline_cards_total_implosion
 -- Trigger: team receives >= 2 red cards in the same half.

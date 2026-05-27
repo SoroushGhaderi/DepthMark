@@ -1,26 +1,3 @@
-WITH player_positions AS (
-    SELECT
-        mp.match_id,
-        toInt32(mp.person_id) AS person_id,
-        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
-        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
-            AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
-    WHERE mp.role IN ('starter', 'substitute')
-    GROUP BY
-        mp.match_id,
-        person_id
-), team_recoveries AS (
-    SELECT
-        p.match_id,
-        p.team_id,
-        toInt32(sum(coalesce(p.recoveries, 0))) AS team_recoveries
-    FROM silver.player_match_stat AS p
-    WHERE p.team_id IS NOT NULL
-    GROUP BY
-        p.match_id,
-        p.team_id
-)
 INSERT INTO gold.sig_player_creativity_playmaking_box_to_box_playmaker (
     match_id,
     match_date,
@@ -80,12 +57,35 @@ INSERT INTO gold.sig_player_creativity_playmaking_box_to_box_playmaker (
     player_share_of_team_passes_pct,
     player_share_of_team_opposition_half_passes_pct
 )
+WITH player_positions AS (
+    SELECT
+        mp.match_id,
+        toInt32(mp.person_id) AS person_id,
+        argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
+        argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
+            AS usual_playing_position_id
+    FROM silver.match_personnel AS mp
+    WHERE mp.role IN ('starter', 'substitute')
+    GROUP BY
+        mp.match_id,
+        person_id
+), team_recoveries AS (
+    SELECT
+        p.match_id,
+        p.team_id,
+        toInt32(sum(coalesce(p.recoveries, 0))) AS team_recoveries
+    FROM silver.player_match_stat AS p
+    WHERE p.team_id IS NOT NULL
+    GROUP BY
+        p.match_id,
+        p.team_id
+),
 -- Signal: sig_player_creativity_playmaking_box_to_box_playmaker
 -- Trigger: midfielder records directional progression proxy >= 5 (passes_final_third OR team
 --          long_ball_attempts) and recoveries >= 5 in a single finished match.
 -- Intent: identify two-way midfield playmakers who combine forward-direction passing influence
 --         with consistent ball-winning output.
-WITH
+ 
     toInt32(coalesce(p.passes_final_third, 0)) AS player_passes_final_third_directional_proxy,
     toInt32(multiIf(
         p.team_id = m.home_team_id, coalesce(ps.long_ball_attempts_home, 0),

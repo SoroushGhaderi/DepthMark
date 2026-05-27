@@ -76,7 +76,6 @@ midfielder_fouls AS (
     INNER JOIN silver.match_personnel AS mp
         ON mp.match_id = pms.match_id
        AND toInt32(mp.person_id) = pms.player_id
-       AND mp.team_id = pms.team_id
     WHERE pms.match_id > 0
       AND pms.player_id > 0
       AND lowerUTF8(coalesce(mp.team_side, '')) IN ('home', 'away')

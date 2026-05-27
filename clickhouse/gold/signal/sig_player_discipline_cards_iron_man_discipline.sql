@@ -1,35 +1,3 @@
-WITH player_cards AS (
-    SELECT
-        match_id,
-        assumeNotNull(player_id) AS player_id,
-        count() AS triggered_player_total_cards,
-        countIf(
-            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'yellow') > 0
-            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'yellow') > 0
-        ) AS triggered_player_yellow_cards,
-        countIf(
-            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'red') > 0
-            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'red') > 0
-        ) AS triggered_player_red_cards
-    FROM silver.card
-    WHERE match_id > 0
-      AND player_id IS NOT NULL
-    GROUP BY
-        match_id,
-        player_id
-),
-player_positions AS (
-    SELECT
-        match_id,
-        person_id,
-        argMax(position_id, if(role = 'starter', 2, 1)) AS position_id,
-        argMax(usual_playing_position_id, if(role = 'starter', 2, 1)) AS usual_playing_position_id
-    FROM silver.match_personnel
-    WHERE role IN ('starter', 'substitute')
-    GROUP BY
-        match_id,
-        person_id
-)
 INSERT INTO gold.sig_player_discipline_cards_iron_man_discipline (
     match_id,
     match_date,
@@ -73,6 +41,38 @@ INSERT INTO gold.sig_player_discipline_cards_iron_man_discipline (
     opponent_tackles_won,
     triggered_team_possession_pct,
     opponent_possession_pct
+)
+WITH player_cards AS (
+    SELECT
+        match_id,
+        assumeNotNull(player_id) AS player_id,
+        count() AS triggered_player_total_cards,
+        countIf(
+            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'yellow') > 0
+            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'yellow') > 0
+        ) AS triggered_player_yellow_cards,
+        countIf(
+            positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'red') > 0
+            OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'red') > 0
+        ) AS triggered_player_red_cards
+    FROM silver.card
+    WHERE match_id > 0
+      AND player_id IS NOT NULL
+    GROUP BY
+        match_id,
+        player_id
+),
+player_positions AS (
+    SELECT
+        match_id,
+        person_id,
+        argMax(position_id, if(role = 'starter', 2, 1)) AS position_id,
+        argMax(usual_playing_position_id, if(role = 'starter', 2, 1)) AS usual_playing_position_id
+    FROM silver.match_personnel
+    WHERE role IN ('starter', 'substitute')
+    GROUP BY
+        match_id,
+        person_id
 )
 -- Signal: sig_player_discipline_cards_iron_man_discipline
 -- Trigger: defender/defensive-midfielder proxy plays exactly 90 minutes, commits 0 fouls, and records >= 5 tackles won.

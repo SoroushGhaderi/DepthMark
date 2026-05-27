@@ -1,46 +1,3 @@
-WITH half_turnover_stats AS (
-    SELECT
-        ps.match_id,
-        maxIf(
-            greatest(coalesce(ps.pass_attempts_home, 0) - coalesce(ps.accurate_passes_home, 0), 0),
-            ps.period = 'FirstHalf'
-        ) AS home_failed_passes_first_half,
-        maxIf(
-            greatest(coalesce(ps.pass_attempts_home, 0) - coalesce(ps.accurate_passes_home, 0), 0),
-            ps.period = 'SecondHalf'
-        ) AS home_failed_passes_second_half,
-        maxIf(
-            greatest(coalesce(ps.pass_attempts_away, 0) - coalesce(ps.accurate_passes_away, 0), 0),
-            ps.period = 'FirstHalf'
-        ) AS away_failed_passes_first_half,
-        maxIf(
-            greatest(coalesce(ps.pass_attempts_away, 0) - coalesce(ps.accurate_passes_away, 0), 0),
-            ps.period = 'SecondHalf'
-        ) AS away_failed_passes_second_half,
-
-        maxIf(
-            greatest(coalesce(ps.dribble_attempts_home, 0) - coalesce(ps.dribbles_succeeded_home, 0), 0),
-            ps.period = 'FirstHalf'
-        ) AS home_failed_dribbles_first_half,
-        maxIf(
-            greatest(coalesce(ps.dribble_attempts_home, 0) - coalesce(ps.dribbles_succeeded_home, 0), 0),
-            ps.period = 'SecondHalf'
-        ) AS home_failed_dribbles_second_half,
-        maxIf(
-            greatest(coalesce(ps.dribble_attempts_away, 0) - coalesce(ps.dribbles_succeeded_away, 0), 0),
-            ps.period = 'FirstHalf'
-        ) AS away_failed_dribbles_first_half,
-        maxIf(
-            greatest(coalesce(ps.dribble_attempts_away, 0) - coalesce(ps.dribbles_succeeded_away, 0), 0),
-            ps.period = 'SecondHalf'
-        ) AS away_failed_dribbles_second_half,
-
-        toInt8(maxIf(1, ps.period = 'FirstHalf')) AS has_first_half_period_row_flag,
-        toInt8(maxIf(1, ps.period = 'SecondHalf')) AS has_second_half_period_row_flag
-    FROM silver.period_stat AS ps
-    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
-    GROUP BY ps.match_id
-)
 INSERT INTO gold.sig_team_goalkeeping_defense_defensive_pressure_peak (
     match_id,
     match_date,
@@ -107,6 +64,49 @@ INSERT INTO gold.sig_team_goalkeeping_defense_defensive_pressure_peak (
     opponent_goals,
     goal_delta,
     triggered_team_clean_sheet_flag
+)
+WITH half_turnover_stats AS (
+    SELECT
+        ps.match_id,
+        maxIf(
+            greatest(coalesce(ps.pass_attempts_home, 0) - coalesce(ps.accurate_passes_home, 0), 0),
+            ps.period = 'FirstHalf'
+        ) AS home_failed_passes_first_half,
+        maxIf(
+            greatest(coalesce(ps.pass_attempts_home, 0) - coalesce(ps.accurate_passes_home, 0), 0),
+            ps.period = 'SecondHalf'
+        ) AS home_failed_passes_second_half,
+        maxIf(
+            greatest(coalesce(ps.pass_attempts_away, 0) - coalesce(ps.accurate_passes_away, 0), 0),
+            ps.period = 'FirstHalf'
+        ) AS away_failed_passes_first_half,
+        maxIf(
+            greatest(coalesce(ps.pass_attempts_away, 0) - coalesce(ps.accurate_passes_away, 0), 0),
+            ps.period = 'SecondHalf'
+        ) AS away_failed_passes_second_half,
+
+        maxIf(
+            greatest(coalesce(ps.dribble_attempts_home, 0) - coalesce(ps.dribbles_succeeded_home, 0), 0),
+            ps.period = 'FirstHalf'
+        ) AS home_failed_dribbles_first_half,
+        maxIf(
+            greatest(coalesce(ps.dribble_attempts_home, 0) - coalesce(ps.dribbles_succeeded_home, 0), 0),
+            ps.period = 'SecondHalf'
+        ) AS home_failed_dribbles_second_half,
+        maxIf(
+            greatest(coalesce(ps.dribble_attempts_away, 0) - coalesce(ps.dribbles_succeeded_away, 0), 0),
+            ps.period = 'FirstHalf'
+        ) AS away_failed_dribbles_first_half,
+        maxIf(
+            greatest(coalesce(ps.dribble_attempts_away, 0) - coalesce(ps.dribbles_succeeded_away, 0), 0),
+            ps.period = 'SecondHalf'
+        ) AS away_failed_dribbles_second_half,
+
+        toInt8(maxIf(1, ps.period = 'FirstHalf')) AS has_first_half_period_row_flag,
+        toInt8(maxIf(1, ps.period = 'SecondHalf')) AS has_second_half_period_row_flag
+    FROM silver.period_stat AS ps
+    WHERE ps.period IN ('FirstHalf', 'SecondHalf')
+    GROUP BY ps.match_id
 )
 -- Signal: sig_team_goalkeeping_defense_defensive_pressure_peak
 -- Intent: detect team-level defensive pressure peaks where one side forces extreme opposition turnovers

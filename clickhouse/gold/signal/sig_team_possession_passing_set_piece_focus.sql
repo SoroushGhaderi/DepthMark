@@ -107,77 +107,77 @@ base_stats AS (
        AND away_sp.team_id = m.away_team_id
     WHERE m.match_finished = 1
       AND m.match_id > 0
-)
-
+),
+triggered_rows AS (
 -- Home-side triggers.
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
 
     'home' AS triggered_side,
-    b.home_team_id AS triggered_team_id,
-    b.home_team_name AS triggered_team_name,
-    b.away_team_id AS opponent_team_id,
-    b.away_team_name AS opponent_team_name,
+    home_team_id AS triggered_team_id,
+    home_team_name AS triggered_team_name,
+    away_team_id AS opponent_team_id,
+    away_team_name AS opponent_team_name,
 
     15 AS trigger_threshold_corners,
-    b.corners_home AS triggered_team_corners,
-    b.corners_away AS opponent_corners,
-    b.corners_home - b.corners_away AS corner_delta,
+    corners_home AS triggered_team_corners,
+    corners_away AS opponent_corners,
+    corners_home - corners_away AS corner_delta,
 
-    b.set_piece_shots_home AS triggered_team_set_piece_shots,
-    b.set_piece_shots_away AS opponent_set_piece_shots,
-    b.expected_goals_set_play_home AS triggered_team_set_play_xg,
-    b.expected_goals_set_play_away AS opponent_set_play_xg,
-    toFloat32(round(b.expected_goals_set_play_home - b.expected_goals_set_play_away, 3)) AS set_play_xg_delta,
+    set_piece_shots_home AS triggered_team_set_piece_shots,
+    set_piece_shots_away AS opponent_set_piece_shots,
+    expected_goals_set_play_home AS triggered_team_set_play_xg,
+    expected_goals_set_play_away AS opponent_set_play_xg,
+    toFloat32(round(expected_goals_set_play_home - expected_goals_set_play_away, 3)) AS set_play_xg_delta,
 
-    b.pass_attempts_home AS triggered_team_pass_attempts,
-    b.pass_attempts_away AS opponent_pass_attempts,
-    b.accurate_passes_home AS triggered_team_accurate_passes,
-    b.accurate_passes_away AS opponent_accurate_passes,
+    pass_attempts_home AS triggered_team_pass_attempts,
+    pass_attempts_away AS opponent_pass_attempts,
+    accurate_passes_home AS triggered_team_accurate_passes,
+    accurate_passes_away AS opponent_accurate_passes,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0), 1), 0.0)
-      - coalesce(round(100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0), 1), 0.0),
+        coalesce(round(100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0), 1), 0.0)
+      - coalesce(round(100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct,
 
-    b.cross_attempts_home AS triggered_team_cross_attempts,
-    b.cross_attempts_away AS opponent_cross_attempts,
-    b.cross_attempts_home - b.cross_attempts_away AS cross_attempts_delta,
+    cross_attempts_home AS triggered_team_cross_attempts,
+    cross_attempts_away AS opponent_cross_attempts,
+    cross_attempts_home - cross_attempts_away AS cross_attempts_delta,
 
-    b.opposition_half_passes_home AS triggered_team_opposition_half_passes,
-    b.opposition_half_passes_away AS opponent_opposition_half_passes,
-    b.touches_opposition_box_home AS triggered_team_touches_opposition_box,
-    b.touches_opposition_box_away AS opponent_touches_opposition_box,
-    b.total_shots_home AS triggered_team_total_shots,
-    b.total_shots_away AS opponent_total_shots,
-    b.possession_home_pct AS triggered_team_possession_pct,
-    b.possession_away_pct AS opponent_possession_pct,
+    opposition_half_passes_home AS triggered_team_opposition_half_passes,
+    opposition_half_passes_away AS opponent_opposition_half_passes,
+    touches_opposition_box_home AS triggered_team_touches_opposition_box,
+    touches_opposition_box_away AS opponent_touches_opposition_box,
+    total_shots_home AS triggered_team_total_shots,
+    total_shots_away AS opponent_total_shots,
+    possession_home_pct AS triggered_team_possession_pct,
+    possession_away_pct AS opponent_possession_pct,
 
-    b.player_throws_home AS triggered_team_player_throws,
-    b.player_throws_away AS opponent_player_throws,
-    b.player_throws_home + b.corners_home AS triggered_team_dead_ball_restart_passes_proxy,
-    b.player_throws_away + b.corners_away AS opponent_dead_ball_restart_passes_proxy,
+    player_throws_home AS triggered_team_player_throws,
+    player_throws_away AS opponent_player_throws,
+    player_throws_home + corners_home AS triggered_team_dead_ball_restart_passes_proxy,
+    player_throws_away + corners_away AS opponent_dead_ball_restart_passes_proxy,
     toFloat32(coalesce(round(
-        100.0 * (b.player_throws_home + b.corners_home) / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * (player_throws_home + corners_home) / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS triggered_team_dead_ball_restart_pass_share_pct,
     toFloat32(coalesce(round(
-        100.0 * (b.player_throws_away + b.corners_away) / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * (player_throws_away + corners_away) / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS opponent_dead_ball_restart_pass_share_pct
 FROM base_stats AS b
@@ -187,77 +187,127 @@ UNION ALL
 
 -- Away-side triggers.
 SELECT
-    b.match_id,
-    b.match_date,
-    b.home_team_id,
-    b.home_team_name,
-    b.away_team_id,
-    b.away_team_name,
-    b.home_score,
-    b.away_score,
+    match_id,
+    match_date,
+    home_team_id,
+    home_team_name,
+    away_team_id,
+    away_team_name,
+    home_score,
+    away_score,
 
     'away' AS triggered_side,
-    b.away_team_id AS triggered_team_id,
-    b.away_team_name AS triggered_team_name,
-    b.home_team_id AS opponent_team_id,
-    b.home_team_name AS opponent_team_name,
+    away_team_id AS triggered_team_id,
+    away_team_name AS triggered_team_name,
+    home_team_id AS opponent_team_id,
+    home_team_name AS opponent_team_name,
 
     15 AS trigger_threshold_corners,
-    b.corners_away AS triggered_team_corners,
-    b.corners_home AS opponent_corners,
-    b.corners_away - b.corners_home AS corner_delta,
+    corners_away AS triggered_team_corners,
+    corners_home AS opponent_corners,
+    corners_away - corners_home AS corner_delta,
 
-    b.set_piece_shots_away AS triggered_team_set_piece_shots,
-    b.set_piece_shots_home AS opponent_set_piece_shots,
-    b.expected_goals_set_play_away AS triggered_team_set_play_xg,
-    b.expected_goals_set_play_home AS opponent_set_play_xg,
-    toFloat32(round(b.expected_goals_set_play_away - b.expected_goals_set_play_home, 3)) AS set_play_xg_delta,
+    set_piece_shots_away AS triggered_team_set_piece_shots,
+    set_piece_shots_home AS opponent_set_piece_shots,
+    expected_goals_set_play_away AS triggered_team_set_play_xg,
+    expected_goals_set_play_home AS opponent_set_play_xg,
+    toFloat32(round(expected_goals_set_play_away - expected_goals_set_play_home, 3)) AS set_play_xg_delta,
 
-    b.pass_attempts_away AS triggered_team_pass_attempts,
-    b.pass_attempts_home AS opponent_pass_attempts,
-    b.accurate_passes_away AS triggered_team_accurate_passes,
-    b.accurate_passes_home AS opponent_accurate_passes,
+    pass_attempts_away AS triggered_team_pass_attempts,
+    pass_attempts_home AS opponent_pass_attempts,
+    accurate_passes_away AS triggered_team_accurate_passes,
+    accurate_passes_home AS opponent_accurate_passes,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
-        coalesce(round(100.0 * b.accurate_passes_away / nullIf(toFloat64(b.pass_attempts_away), 0), 1), 0.0)
-      - coalesce(round(100.0 * b.accurate_passes_home / nullIf(toFloat64(b.pass_attempts_home), 0), 1), 0.0),
+        coalesce(round(100.0 * accurate_passes_away / nullIf(toFloat64(pass_attempts_away), 0), 1), 0.0)
+      - coalesce(round(100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct,
 
-    b.cross_attempts_away AS triggered_team_cross_attempts,
-    b.cross_attempts_home AS opponent_cross_attempts,
-    b.cross_attempts_away - b.cross_attempts_home AS cross_attempts_delta,
+    cross_attempts_away AS triggered_team_cross_attempts,
+    cross_attempts_home AS opponent_cross_attempts,
+    cross_attempts_away - cross_attempts_home AS cross_attempts_delta,
 
-    b.opposition_half_passes_away AS triggered_team_opposition_half_passes,
-    b.opposition_half_passes_home AS opponent_opposition_half_passes,
-    b.touches_opposition_box_away AS triggered_team_touches_opposition_box,
-    b.touches_opposition_box_home AS opponent_touches_opposition_box,
-    b.total_shots_away AS triggered_team_total_shots,
-    b.total_shots_home AS opponent_total_shots,
-    b.possession_away_pct AS triggered_team_possession_pct,
-    b.possession_home_pct AS opponent_possession_pct,
+    opposition_half_passes_away AS triggered_team_opposition_half_passes,
+    opposition_half_passes_home AS opponent_opposition_half_passes,
+    touches_opposition_box_away AS triggered_team_touches_opposition_box,
+    touches_opposition_box_home AS opponent_touches_opposition_box,
+    total_shots_away AS triggered_team_total_shots,
+    total_shots_home AS opponent_total_shots,
+    possession_away_pct AS triggered_team_possession_pct,
+    possession_home_pct AS opponent_possession_pct,
 
-    b.player_throws_away AS triggered_team_player_throws,
-    b.player_throws_home AS opponent_player_throws,
-    b.player_throws_away + b.corners_away AS triggered_team_dead_ball_restart_passes_proxy,
-    b.player_throws_home + b.corners_home AS opponent_dead_ball_restart_passes_proxy,
+    player_throws_away AS triggered_team_player_throws,
+    player_throws_home AS opponent_player_throws,
+    player_throws_away + corners_away AS triggered_team_dead_ball_restart_passes_proxy,
+    player_throws_home + corners_home AS opponent_dead_ball_restart_passes_proxy,
     toFloat32(coalesce(round(
-        100.0 * (b.player_throws_away + b.corners_away) / nullIf(toFloat64(b.pass_attempts_away), 0),
+        100.0 * (player_throws_away + corners_away) / nullIf(toFloat64(pass_attempts_away), 0),
         1
     ), 0.0)) AS triggered_team_dead_ball_restart_pass_share_pct,
     toFloat32(coalesce(round(
-        100.0 * (b.player_throws_home + b.corners_home) / nullIf(toFloat64(b.pass_attempts_home), 0),
+        100.0 * (player_throws_home + corners_home) / nullIf(toFloat64(pass_attempts_home), 0),
         1
     ), 0.0)) AS opponent_dead_ball_restart_pass_share_pct
 FROM base_stats AS b
 WHERE b.corners_away >= 15
+)
+
+SELECT
+    t.match_id,
+    t.match_date,
+    t.home_team_id,
+    t.home_team_name,
+    t.away_team_id,
+    t.away_team_name,
+    t.home_score,
+    t.away_score,
+    t.triggered_side,
+    t.triggered_team_id,
+    t.triggered_team_name,
+    t.opponent_team_id,
+    t.opponent_team_name,
+    t.trigger_threshold_corners,
+    t.triggered_team_corners,
+    t.opponent_corners,
+    t.corner_delta,
+    t.triggered_team_set_piece_shots,
+    t.opponent_set_piece_shots,
+    t.triggered_team_set_play_xg,
+    t.opponent_set_play_xg,
+    t.set_play_xg_delta,
+    t.triggered_team_pass_attempts,
+    t.opponent_pass_attempts,
+    t.triggered_team_accurate_passes,
+    t.opponent_accurate_passes,
+    t.triggered_team_pass_accuracy_pct,
+    t.opponent_pass_accuracy_pct,
+    t.pass_accuracy_delta_pct,
+    t.triggered_team_cross_attempts,
+    t.opponent_cross_attempts,
+    t.cross_attempts_delta,
+    t.triggered_team_opposition_half_passes,
+    t.opponent_opposition_half_passes,
+    t.triggered_team_touches_opposition_box,
+    t.opponent_touches_opposition_box,
+    t.triggered_team_total_shots,
+    t.opponent_total_shots,
+    t.triggered_team_possession_pct,
+    t.opponent_possession_pct,
+    t.triggered_team_player_throws,
+    t.opponent_player_throws,
+    t.triggered_team_dead_ball_restart_passes_proxy,
+    t.opponent_dead_ball_restart_passes_proxy,
+    t.triggered_team_dead_ball_restart_pass_share_pct,
+    t.opponent_dead_ball_restart_pass_share_pct
+FROM triggered_rows AS t
 
 ORDER BY
     triggered_team_corners DESC,
