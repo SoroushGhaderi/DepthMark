@@ -31,7 +31,7 @@ services:
   # in the scraper container, NOT by ClickHouse's automatic initialization.
   # The script automatically checks if databases exist and creates them if missing.
   clickhouse:
-    image: clickhouse/clickhouse-server:23.8
+    image: clickhouse/clickhouse-server:24.8
     container_name: depthmark_clickhouse
     ports:
       - "8123:8123"  # HTTP interface

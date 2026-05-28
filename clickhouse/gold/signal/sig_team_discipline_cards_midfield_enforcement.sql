@@ -48,9 +48,6 @@ INSERT INTO gold.sig_team_discipline_cards_midfield_enforcement (
     opponent_possession_pct,
     possession_delta_pct
 )
--- Signal: sig_team_discipline_cards_midfield_enforcement
--- Trigger: a team's central midfielders combine for >= 10 fouls.
--- Intent: capture midfield-led enforcement profiles where central midfielders drive the foul load.
 WITH central_midfielders AS (
     SELECT
         mp.match_id,

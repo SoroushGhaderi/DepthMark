@@ -366,4 +366,5 @@ SELECT
       - coalesce(round(100.0 * accurate_passes_home / nullIf(toFloat64(pass_attempts_home), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM base_stats;
+FROM base_stats
+SETTINGS allow_experimental_analyzer = 0;

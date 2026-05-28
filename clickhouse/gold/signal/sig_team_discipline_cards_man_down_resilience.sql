@@ -74,11 +74,7 @@ early_red_rollup AS (
         ere.match_id,
         ere.triggered_side
 )
--- Signal: sig_team_discipline_cards_man_down_resilience
--- Trigger: team wins despite receiving a red card before the 60th minute.
--- Intent: detect teams that sustain an early dismissal and still secure victory, preserving bilateral discipline and game-control context.
 
--- Home side triggers the signal
 SELECT
     m.match_id,
     m.match_date,
@@ -159,7 +155,6 @@ WHERE m.match_finished = 1
 
 UNION ALL
 
--- Away side triggers the signal
 SELECT
     m.match_id,
     m.match_date,

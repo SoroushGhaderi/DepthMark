@@ -63,9 +63,6 @@ INSERT INTO gold.sig_team_discipline_cards_red_card_neutralizer (
     triggered_team_clearances,
     opponent_clearances
 )
--- Signal: sig_team_discipline_cards_red_card_neutralizer
--- Intent: identify teams that answer a red-card reduction immediately by scoring, preserving score-state, discipline, and match-control context.
--- Trigger: team scores a goal within five effective minutes of its first red card.
 WITH red_events AS (
     SELECT
         c.match_id,
@@ -145,11 +142,6 @@ trigger_goal_candidates AS (
     INNER JOIN goal_events AS ge
         ON ge.match_id = fre.match_id
        AND ge.goal_team_side = fre.card_team_side
-
-       AND (
-           (fre.card_team_side = 'home' AND ge.home_score_after > fre.score_home_at_first_red)
-           OR (fre.card_team_side = 'away' AND ge.away_score_after > fre.score_away_at_first_red)
-       )
 )
 SELECT
     m.match_id,
@@ -283,6 +275,7 @@ LEFT JOIN first_red_events AS ofre
 WHERE m.match_finished = 1
   AND m.match_id > 0
   AND tgc.rn = 1
+  AND ((tgc.triggered_side = 'home' AND tgc.home_score_after > tgc.score_home_at_first_red) OR (tgc.triggered_side = 'away' AND tgc.away_score_after > tgc.score_away_at_first_red))
   AND tgc.goal_effective_minute >= tgc.first_red_card_effective_minute
   AND tgc.goal_effective_minute <= tgc.first_red_card_effective_minute + 5
 

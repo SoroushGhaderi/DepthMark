@@ -100,11 +100,7 @@ yellow_window_rollup AS (
         ywr.match_id,
         ywr.triggered_side
 )
--- Signal: sig_team_discipline_cards_half_time_talk_fail
--- Trigger: team receives >= 3 yellow cards between minutes 46 and 60.
--- Intent: flag teams that restart the second half with immediate discipline collapse and preserve bilateral match context.
 
--- Home side triggers the signal
 SELECT
     m.match_id,
     m.match_date,
@@ -179,7 +175,6 @@ WHERE m.match_finished = 1
 
 UNION ALL
 
--- Away side triggers the signal
 SELECT
     m.match_id,
     m.match_date,

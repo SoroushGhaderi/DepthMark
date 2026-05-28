@@ -406,4 +406,5 @@ ORDER BY
     match_total_penalty_goals DESC,
     match_date DESC,
     match_id DESC,
-    triggered_side;
+    triggered_side
+SETTINGS allow_experimental_analyzer = 0;
