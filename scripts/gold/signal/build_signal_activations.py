@@ -164,7 +164,9 @@ def _hash_component_expr(column_name: str) -> str:
     return f"coalesce(toString({safe_col}), '')"
 
 
-def _activation_insert_sql(database: str, signal_id: str, available_columns: set[str], row_identity: list[str]) -> str:
+def _activation_insert_sql(
+    database: str, signal_id: str, available_columns: set[str], row_identity: list[str]
+) -> str:
     safe_database = _validate_identifier(database, "database")
     safe_signal_table = _validate_identifier(signal_id, "table")
 

@@ -7,6 +7,7 @@ INSERT INTO gold.sig_team_possession_passing_death_by_passes (
     away_team_name,
     home_score,
     away_score,
+    triggered_side,
     triggered_team_id,
     triggered_team_name,
     opponent_team_id,
@@ -64,6 +65,11 @@ SELECT
     m.away_team_name,
     m.home_score,
     m.away_score,
+    if(
+        coalesce(ps.touches_opp_box_home, 0) > 50,
+        'home',
+        'away'
+    )                                                                                           AS triggered_side,
 
     -- Triggered team identity — resolved dynamically
     if(

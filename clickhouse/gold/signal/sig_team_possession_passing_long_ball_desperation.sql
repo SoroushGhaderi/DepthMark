@@ -7,6 +7,7 @@ INSERT INTO gold.sig_team_possession_passing_long_ball_desperation (
     away_team_name,
     home_score,
     away_score,
+    triggered_side,
     score_margin_home_perspective,
     triggered_team_id,
     triggered_team_name,
@@ -61,6 +62,12 @@ SELECT
     m.away_team_name,
     m.home_score,
     m.away_score,
+    if(
+        coalesce(m.home_score, 0) < coalesce(m.away_score, 0)
+        AND coalesce(ps.long_ball_attempts_home, 0) > 60,
+        'home',
+        'away'
+    )                                                                                           AS triggered_side,
 
     -- Score margin — size of the deficit driving desperation behaviour (bilateral by construction)
     (coalesce(m.home_score, 0) - coalesce(m.away_score, 0))                                    AS score_margin_home_perspective,

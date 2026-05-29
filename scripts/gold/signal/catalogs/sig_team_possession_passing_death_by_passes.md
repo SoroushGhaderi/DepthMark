@@ -51,6 +51,7 @@ python scripts/gold/signal/runners/sig_team_possession_passing_death_by_passes.p
 | `away_team_name` | Display name of the away team | Football developer: anchors joins across match, team, and downstream feature tables — stable match/team reference field |
 | `home_score` | Home team final goals scored | Football developer: anchors joins across match, team, and downstream feature tables — stable match/team reference field |
 | `away_score` | Away team final goals scored | Football developer: anchors joins across match, team, and downstream feature tables — stable match/team reference field |
+| `triggered_side` | Triggered side (`home` or `away`) | Football developer: canonical row identity at match-team grain; required for deterministic activation IDs |
 | `triggered_team_id` | Numeric ID of the team that exceeded 50 box touches; home takes precedence when both trigger | Football developer: anchors joins across match, team, and downstream feature tables — stable match/team reference field |
 | `triggered_team_name` | Display name of the triggered team | Football developer: anchors joins across match, team, and downstream feature tables — stable match/team reference field |
 | `opponent_team_id` | Numeric ID of the opposing team | Football developer: anchors joins across match, team, and downstream feature tables — stable match/team reference field |

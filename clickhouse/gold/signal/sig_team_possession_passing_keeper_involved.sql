@@ -7,6 +7,7 @@ INSERT INTO gold.sig_team_possession_passing_keeper_involved (
     away_team_name,
     home_score,
     away_score,
+    triggered_side,
     triggered_team_id,
     triggered_team_name,
     triggered_goalkeeper_player_id,
@@ -44,6 +45,11 @@ SELECT
     m.away_team_name,
     m.home_score,
     m.away_score,
+    if(
+        gk.gk_team_id = assumeNotNull(m.home_team_id),
+        'home',
+        'away'
+    ) AS triggered_side,
 
     -- Triggered team + goalkeeper identifiers.
     gk.gk_team_id AS triggered_team_id,

@@ -51,6 +51,7 @@ python scripts/gold/signal/runners/sig_team_possession_passing_keeper_involved.p
 | `away_team_name` | Display name of the away team | Football developer: anchors joins across match, team, and downstream feature tables |
 | `home_score` | Full-time goals scored by home team | Football developer: anchors joins across match, team, and downstream feature tables |
 | `away_score` | Full-time goals scored by away team | Football developer: anchors joins across match, team, and downstream feature tables |
+| `triggered_side` | Triggered side (`home` or `away`) | Football developer: canonical row identity at match-team grain; required for deterministic activation IDs |
 | `triggered_team_id` | Team ID of the side whose goalkeeper triggered the signal | Football developer: this is the direct trigger metric used to classify the tactical pattern |
 | `triggered_team_name` | Display name of the triggered team | Football developer: this is the direct trigger metric used to classify the tactical pattern |
 | `triggered_goalkeeper_player_id` | Player ID of the goalkeeper who recorded >50 touches | Football developer: this is the direct trigger metric used to classify the tactical pattern |

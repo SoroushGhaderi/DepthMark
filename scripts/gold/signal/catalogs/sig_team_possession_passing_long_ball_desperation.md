@@ -51,6 +51,7 @@ python scripts/gold/signal/runners/sig_team_possession_passing_long_ball_despera
 | `away_team_name` | Display name of the away team | Football developer: anchors joins across match, team, and downstream feature tables |
 | `home_score` | Home team final goals scored | Football developer: anchors joins across match, team, and downstream feature tables |
 | `away_score` | Away team final goals scored | Football developer: anchors joins across match, team, and downstream feature tables |
+| `triggered_side` | Triggered side (`home` or `away`) | Football developer: canonical row identity at match-team grain; required for deterministic activation IDs |
 | `score_margin_home_perspective` | Home score minus away score; negative value means the home team was losing | Football developer: provides side/opponent orientation so tactical readings are not misattributed — quantifies the size of the deficit that motivated long-ball escalation |
 | `triggered_team_id` | Numeric ID of the losing team that exceeded 60 long-ball attempts | Football developer: anchors joins across match, team, and downstream feature tables |
 | `triggered_team_name` | Display name of the triggered team | Football developer: anchors joins across match, team, and downstream feature tables |

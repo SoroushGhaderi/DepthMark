@@ -566,6 +566,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_death_by_pas
     away_team_name Nullable(String),
     home_score Nullable(Int32),
     away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
     triggered_team_id Nullable(Int32),
     triggered_team_name Nullable(String),
     opponent_team_id Nullable(Int32),
@@ -601,7 +602,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_death_by_pas
     opponent_accurate_crosses Int32,
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, ifNull(triggered_team_id, -1))
+ORDER BY (match_id, triggered_side)
 PARTITION BY toYYYYMM(match_date);
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_long_ball_desperation (
@@ -613,6 +614,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_long_ball_de
     away_team_name Nullable(String),
     home_score Nullable(Int32),
     away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
     score_margin_home_perspective Int32,
     triggered_team_id Nullable(Int32),
     triggered_team_name Nullable(String),
@@ -644,7 +646,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_long_ball_de
     opponent_clearances_conceded Int32,
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, ifNull(triggered_team_id, -1))
+ORDER BY (match_id, triggered_side)
 PARTITION BY toYYYYMM(match_date);
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_vertical_imbalance (
@@ -703,6 +705,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_keeper_invol
     away_team_name Nullable(String),
     home_score Nullable(Int32),
     away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
     triggered_team_id Nullable(Int32),
     triggered_team_name Nullable(String),
     triggered_goalkeeper_player_id Nullable(Int32),
@@ -726,7 +729,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_keeper_invol
     pass_attempt_delta Int32,
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, ifNull(triggered_team_id, -1), ifNull(triggered_goalkeeper_player_id, -1))
+ORDER BY (match_id, triggered_side, ifNull(triggered_team_id, -1), ifNull(triggered_goalkeeper_player_id, -1))
 PARTITION BY toYYYYMM(match_date);
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_failed_penetration (
