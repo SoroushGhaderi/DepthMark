@@ -152,6 +152,8 @@ def create_user_if_not_exists(client: ClickHouseClient, username: str, password:
             f"GRANT ALL ON bronze.* TO {username}",
             f"GRANT ALL ON silver.* TO {username}",
             f"GRANT ALL ON gold.* TO {username}",
+            f"GRANT ALL ON gold_scenarios.* TO {username}",
+            f"GRANT ALL ON gold_signals.* TO {username}",
             f"GRANT CREATE DATABASE ON *.* TO {username}",
             f"GRANT TABLE ENGINE ON ReplacingMergeTree TO {username}",
         ):

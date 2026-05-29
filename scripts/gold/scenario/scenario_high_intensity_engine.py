@@ -1,6 +1,7 @@
 """Run the scenario_high_intensity_engine gold query against ClickHouse."""
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -9,6 +10,7 @@ sys.path.insert(0, str(project_root))
 
 from config.settings import settings
 from src.storage.clickhouse_client import ClickHouseClient
+from src.utils.gold_databases import gold_scenarios_db
 from src.utils.logging_utils import get_logger
 
 logger = get_logger()
@@ -19,7 +21,7 @@ SQL_FILE = next(
     (path for path in SCENARIO_SQL_DIR.rglob(f"{Path(__file__).stem}.sql") if path.is_file()),
     SCENARIO_SQL_DIR / f"{Path(__file__).stem}.sql",
 )
-TARGET_TABLE = "gold.scenario_high_intensity_engine"
+TARGET_TABLE = f"{gold_scenarios_db()}.scenario_high_intensity_engine"
 
 
 def parse_args(argv=None) -> argparse.Namespace:
@@ -40,6 +42,9 @@ def main(argv=None) -> int:
         return 1
 
     insert_query = SQL_FILE.read_text(encoding="utf-8").strip().rstrip(";")
+    target_db = os.getenv("CLICKHOUSE_GOLD_TARGET_DB", gold_scenarios_db())
+    insert_query = insert_query.replace("gold.", f"{target_db}.")
+    target_table = TARGET_TABLE.replace(gold_scenarios_db(), target_db)
 
     client = ClickHouseClient(
         host=settings.clickhouse_host,
@@ -57,7 +62,7 @@ def main(argv=None) -> int:
         client.execute(insert_query)
         logger.info("scenario_high_intensity_engine insert completed successfully")
 
-        optimize_sql = f"OPTIMIZE TABLE {TARGET_TABLE} FINAL DEDUPLICATE"
+        optimize_sql = f"OPTIMIZE TABLE {target_table} FINAL DEDUPLICATE"
         client.execute(optimize_sql)
         logger.info("Optimization completed for %s", TARGET_TABLE)
 

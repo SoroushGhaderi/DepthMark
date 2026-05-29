@@ -1,6 +1,7 @@
 """Process FotMob gold layer in ClickHouse."""
 
 import argparse
+import os
 import subprocess
 import sys
 import time
@@ -18,6 +19,7 @@ from src.processors.gold.fotmob import FotMobGoldProcessor
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.gold.fotmob import FotMobGoldStorage
 from src.utils.layer_completion_alerts import send_layer_completion_alert
+from src.utils.gold_databases import gold_scenarios_db, gold_signals_db
 from src.utils.layer_contracts import LayerContractError, assert_gold_layer_contracts
 from src.utils.logging_utils import get_logger, setup_logging
 
@@ -99,8 +101,12 @@ def _run_job_scripts(
             success_count += 1
             continue
         command = _build_command(script_path)
+        env = os.environ.copy()
+        env["CLICKHOUSE_GOLD_TARGET_DB"] = (
+            gold_scenarios_db() if job_name == "scenario" else gold_signals_db()
+        )
         script_start = time.perf_counter()
-        result = subprocess.run(command, cwd=project_root)
+        result = subprocess.run(command, cwd=project_root, env=env)
         elapsed_seconds = time.perf_counter() - script_start
         if result.returncode != 0:
             logger.error(
@@ -181,8 +187,13 @@ def main(argv=None) -> int:
         log_dir=settings.log_dir,
         log_level=settings.log_level,
     )
+    scenario_db = gold_scenarios_db()
+    signal_db = gold_signals_db()
+
     if args.dry_run:
         logger.info("Running gold loader in dry-run mode (no SQL will be executed)")
+        logger.info("Gold scenario database: %s", scenario_db)
+        logger.info("Gold signal database: %s", signal_db)
         sql_dir = project_root / "clickhouse" / "gold"
         processor = FotMobGoldProcessor(sql_dir=sql_dir)
         sql_files = processor.sql_files()
@@ -264,7 +275,7 @@ def main(argv=None) -> int:
     try:
         sql_dir = project_root / "clickhouse" / "gold"
         processor = FotMobGoldProcessor(sql_dir=sql_dir)
-        storage = FotMobGoldStorage(client, database="gold")
+        storage = FotMobGoldStorage(client, database=scenario_db)
 
         sql_files = processor.sql_files()
         if not sql_files:
@@ -285,7 +296,10 @@ def main(argv=None) -> int:
             exit_code = 1
             return exit_code
 
-        assert_gold_layer_contracts(client, database="gold", log=logger)
+        if args.part in ("all", "scenarios"):
+            assert_gold_layer_contracts(client, database=scenario_db, log=logger)
+        if args.part in ("all", "signals"):
+            assert_gold_layer_contracts(client, database=signal_db, log=logger)
         contracts_checked = True
         logger.info("Gold processing completed successfully")
         return exit_code

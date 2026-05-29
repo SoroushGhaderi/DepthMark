@@ -10,6 +10,7 @@ sys.path.insert(0, str(project_root))
 
 from config.settings import settings
 from src.storage.clickhouse_client import ClickHouseClient
+from src.utils.gold_databases import gold_scenarios_db, gold_signals_db
 from src.utils.logging_utils import get_logger
 
 logger = get_logger()
@@ -26,11 +27,6 @@ def parse_args(argv=None) -> argparse.Namespace:
         help="Which gold tables to drop: scenarios, signals, or all (default: scenarios)",
     )
     parser.add_argument(
-        "--database",
-        default="gold",
-        help="Target database name (default: gold)",
-    )
-    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="List matching tables without dropping them",
@@ -38,11 +34,7 @@ def parse_args(argv=None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _find_tables(
-    client: ClickHouseClient,
-    database: str,
-    part: str,
-) -> list[str]:
+def _find_tables(client: ClickHouseClient, database: str, part: str) -> list[str]:
     prefixes = []
     if part in ("all", "scenarios"):
         prefixes.append("scenario_")
@@ -67,7 +59,6 @@ def _find_tables(
 
 def main(argv=None) -> int:
     args = parse_args(argv)
-    database = args.database
 
     client = ClickHouseClient(
         host=settings.clickhouse_host,
@@ -83,7 +74,14 @@ def main(argv=None) -> int:
 
     try:
         find_start = time.perf_counter()
-        tables = _find_tables(client, database, args.part)
+        db_targets = []
+        if args.part in ("all", "scenarios"):
+            db_targets.append(("scenarios", gold_scenarios_db()))
+        if args.part in ("all", "signals"):
+            db_targets.append(("signals", gold_signals_db()))
+        if args.part == "all":
+            db_targets = [("scenarios", gold_scenarios_db()), ("signals", gold_signals_db())]
+
         find_elapsed_seconds = time.perf_counter() - find_start
         logger.info(
             "Gold %s table discovery completed in %.2f seconds",
@@ -91,43 +89,47 @@ def main(argv=None) -> int:
             find_elapsed_seconds,
         )
 
-        if not tables:
-            logger.info("No %s tables found in %s", args.part, database)
-            return 0
-
-        total_tables = len(tables)
-        logger.info("Found %s gold %s table(s) in %s", total_tables, args.part, database)
-
-        for index, table in enumerate(tables, start=1):
-            full_table = f"{database}.{table}"
-            if args.dry_run:
+        dropped_any = False
+        for group_name, database in db_targets:
+            tables = _find_tables(client, database, group_name)
+            if not tables:
+                logger.info("No %s tables found in %s", group_name, database)
+                continue
+            total_tables = len(tables)
+            logger.info("Found %s gold %s table(s) in %s", total_tables, group_name, database)
+            dropped_any = True
+            for index, table in enumerate(tables, start=1):
+                full_table = f"{database}.{table}"
+                if args.dry_run:
+                    logger.info(
+                        "[dry-run] Would drop gold %s table %s/%s: %s",
+                        group_name,
+                        index,
+                        total_tables,
+                        full_table,
+                    )
+                    continue
                 logger.info(
-                    "[dry-run] Would drop gold %s table %s/%s: %s",
-                    args.part,
+                    "Dropping gold %s table %s/%s: %s",
+                    group_name,
                     index,
                     total_tables,
                     full_table,
                 )
-                continue
+                drop_start = time.perf_counter()
+                client.execute(f"DROP TABLE IF EXISTS {full_table}")
+                drop_elapsed_seconds = time.perf_counter() - drop_start
+                logger.info(
+                    "Dropped gold %s table %s/%s: %s in %.2f seconds",
+                    group_name,
+                    index,
+                    total_tables,
+                    full_table,
+                    drop_elapsed_seconds,
+                )
 
-            logger.info(
-                "Dropping gold %s table %s/%s: %s",
-                args.part,
-                index,
-                total_tables,
-                full_table,
-            )
-            drop_start = time.perf_counter()
-            client.execute(f"DROP TABLE IF EXISTS {full_table}")
-            drop_elapsed_seconds = time.perf_counter() - drop_start
-            logger.info(
-                "Dropped gold %s table %s/%s: %s in %.2f seconds",
-                args.part,
-                index,
-                total_tables,
-                full_table,
-                drop_elapsed_seconds,
-            )
+        if not dropped_any:
+            return 0
 
         if args.dry_run:
             logger.info("Dry-run completed")

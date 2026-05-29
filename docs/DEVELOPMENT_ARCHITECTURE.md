@@ -18,7 +18,8 @@ FotMob API
   -> data/fotmob/          raw Bronze files
   -> bronze.*              raw warehouse tables
   -> silver.*              cleaned analytical tables
-  -> gold.*                scenarios and signals
+  -> gold_scenarios.*      scenario outputs
+  -> gold_signals.*        signal outputs
 ```
 
 ## Layer Boundaries
@@ -29,7 +30,7 @@ FotMob API
 4. Silver standardizes keys, types, and reusable entities.
 5. Gold produces downstream-ready scenario and signal tables.
 6. Warehouse tables must be schema-qualified as `bronze.*`, `silver.*`, or
-   `gold.*`.
+   `gold_scenarios.*` and `gold_signals.*`.
 
 ## Canonical Command Surface
 

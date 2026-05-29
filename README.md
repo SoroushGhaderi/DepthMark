@@ -5,14 +5,15 @@ architecture:
 
 - Bronze: raw FotMob API responses on disk plus raw ClickHouse `bronze.*` tables
 - Silver: cleaned and conformed ClickHouse `silver.*` tables
-- Gold: scenario and signal ClickHouse `gold.*` tables for product and analytics use
+- Gold: scenario tables in ClickHouse `gold_scenarios.*` and signal tables in `gold_signals.*` for product and analytics use
 
 ```text
 FotMob API
   -> data/fotmob/          raw Bronze files
   -> bronze.*              raw warehouse tables
   -> silver.*              cleaned analytical tables
-  -> gold.*                scenarios and signals
+  -> gold_scenarios.*      scenario outputs
+  -> gold_signals.*        signal outputs
 ```
 
 Bronze is the only filesystem-backed data layer. Silver and Gold exist only in
@@ -163,6 +164,6 @@ Subsystem contracts stay next to the code they govern, such as
 
 - DepthMark currently supports FotMob only.
 - Use schema-qualified table names such as `bronze.general`, `silver.match`,
-  and `gold.scenario_demolition`.
+  `gold_scenarios.scenario_demolition`, and `gold_signals.sig_match_shooting_goals_goal_fest`.
 - Bronze tables use `ReplacingMergeTree(inserted_at)` so reruns can be compacted
   by the ClickHouse optimization SQL in `clickhouse/bronze/99_optimize_tables.sql`.
