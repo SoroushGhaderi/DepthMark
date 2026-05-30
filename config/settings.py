@@ -63,6 +63,7 @@ class Settings(BaseSettings):
     clickhouse_password: str = ""
     clickhouse_database: str = "default"
     clickhouse_db_fotmob: str = "fotmob"
+    clickhouse_db_gold: str = "gold"
     clickhouse_db_gold_scenarios: str = "gold_scenarios"
     clickhouse_db_gold_signals: str = "gold_signals"
     

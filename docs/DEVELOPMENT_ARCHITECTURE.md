@@ -66,7 +66,6 @@ python scripts/silver/drop_clickhouse.py --dry-run
 ```bash
 python scripts/gold/load_clickhouse_gold.py
 python scripts/gold/load_clickhouse_gold.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
 python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
 python scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ```
@@ -201,7 +200,7 @@ is used to build deterministic activation IDs:
 ## Signal Activation IDs
 
 DepthMark materializes deterministic signal activation IDs into
-`gold_signals.signal_activations`.
+`gold.signal_activations`.
 
 Creation flow:
 
@@ -213,7 +212,10 @@ Creation flow:
 4. The script inserts one activation row per signal output row with:
    - `signal_instance_id = lower(hex(SHA256(concat('v1|', signal_id, '|', ...identity values))))`
    - `signal_id_version = 'v1'`
-5. `scripts/gold/load_clickhouse_gold.py` runs this activation builder after
+5. `scripts/gold/signal/runners/sig_signal_activations_match.py` aggregates
+   row-level activations into `gold.signal_activations_match` with one
+   row per `(match_id, signal_id)` and an `activation_count`.
+6. `scripts/gold/load_clickhouse_gold.py` runs both activation scripts after
    successful signal execution (`--part signals` or `--part all`).
 
 ## Operational Guarantees

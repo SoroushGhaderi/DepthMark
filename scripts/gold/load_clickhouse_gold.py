@@ -19,7 +19,7 @@ from src.processors.gold.fotmob import FotMobGoldProcessor
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.gold.fotmob import FotMobGoldStorage
 from src.utils.layer_completion_alerts import send_layer_completion_alert
-from src.utils.gold_databases import gold_scenarios_db, gold_signals_db
+from src.utils.gold_databases import gold_db, gold_signals_db
 from src.utils.layer_contracts import LayerContractError, assert_gold_layer_contracts
 from src.utils.logging_utils import get_logger, setup_logging
 
@@ -43,7 +43,7 @@ def _signal_scripts() -> list[Path]:
 
 
 def _selected_script_groups(part: str) -> tuple[list[Path], list[Path]]:
-    scenario_scripts = _scenario_scripts() if part in ("all", "scenarios") else []
+    scenario_scripts: list[Path] = []
     signal_scripts = _signal_scripts() if part in ("all", "signals") else []
     return scenario_scripts, signal_scripts
 
@@ -56,9 +56,9 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process FotMob gold layer in ClickHouse")
     parser.add_argument(
         "--part",
-        choices=("all", "scenarios", "signals"),
+        choices=("all", "signals"),
         default="all",
-        help="Which scenario/signal job groups to run.",
+        help="Which signal job groups to run. Scenario execution is disabled for now.",
     )
     parser.add_argument(
         "--dry-run",
@@ -102,9 +102,7 @@ def _run_job_scripts(
             continue
         command = _build_command(script_path)
         env = os.environ.copy()
-        env["CLICKHOUSE_GOLD_TARGET_DB"] = (
-            gold_scenarios_db() if job_name == "scenario" else gold_signals_db()
-        )
+        env["CLICKHOUSE_GOLD_TARGET_DB"] = gold_signals_db()
         script_start = time.perf_counter()
         result = subprocess.run(command, cwd=project_root, env=env)
         elapsed_seconds = time.perf_counter() - script_start
@@ -179,26 +177,33 @@ def _run_selected_jobs(part: str, dry_run: bool) -> tuple[int, int, int, int]:
 
 
 def _run_signal_activation_builder(dry_run: bool) -> int:
-    script_path = Path(__file__).resolve().parent / "signal" / "build_signal_activations.py"
-    if not script_path.exists():
-        logger.error("Signal activation builder script not found: %s", script_path)
-        return 1
+    activation_scripts = [
+        Path(__file__).resolve().parent / "signal" / "build_signal_activations.py",
+        Path(__file__).resolve().parent / "signal" / "runners" / "sig_signal_activations_match.py",
+    ]
 
-    if dry_run:
-        logger.info("[dry-run] Would execute signal activation builder: %s", script_path)
-        return 0
+    for script_path in activation_scripts:
+        if not script_path.exists():
+            logger.error("Signal activation script not found: %s", script_path)
+            return 1
 
-    logger.info("Running signal activation builder: %s", script_path.name)
-    command = _build_command(script_path)
-    result = subprocess.run(command, cwd=project_root)
-    if result.returncode != 0:
-        logger.error(
-            "Signal activation builder failed: %s (exit code %s)",
-            script_path.name,
-            result.returncode,
-        )
-        return result.returncode
-    logger.info("Signal activation builder completed: %s", script_path.name)
+    for script_path in activation_scripts:
+        if dry_run:
+            logger.info("[dry-run] Would execute signal activation script: %s", script_path)
+            continue
+
+        logger.info("Running signal activation script: %s", script_path.name)
+        command = _build_command(script_path)
+        result = subprocess.run(command, cwd=project_root)
+        if result.returncode != 0:
+            logger.error(
+                "Signal activation script failed: %s (exit code %s)",
+                script_path.name,
+                result.returncode,
+            )
+            return result.returncode
+        logger.info("Signal activation script completed: %s", script_path.name)
+
     return 0
 
 
@@ -211,13 +216,15 @@ def main(argv=None) -> int:
         log_dir=settings.log_dir,
         log_level=settings.log_level,
     )
-    scenario_db = gold_scenarios_db()
+    scenario_db = "disabled"
     signal_db = gold_signals_db()
+    metadata_db = gold_db()
 
     if args.dry_run:
         logger.info("Running gold loader in dry-run mode (no SQL will be executed)")
         logger.info("Gold scenario database: %s", scenario_db)
         logger.info("Gold signal database: %s", signal_db)
+        logger.info("Gold metadata database: %s", metadata_db)
         sql_dir = project_root / "clickhouse" / "gold"
         processor = FotMobGoldProcessor(sql_dir=sql_dir)
         sql_files = processor.sql_files()
@@ -250,18 +257,18 @@ def main(argv=None) -> int:
         scenario_success_rate = (successful_jobs / total_jobs * 100) if total_jobs > 0 else 0
         send_layer_completion_alert(
             layer="gold",
-            summary_message="Gold SQL/scenario/signal dry-run finished.",
+            summary_message="Gold SQL/signal dry-run finished.",
             scope="dry-run",
             success=failed_count == 0,
             duration_seconds=time.perf_counter() - stage_start,
             detail_lines=[
                 f"SQL files planned: <b>{len(sql_files)}</b>",
-                f"Scenario failures: <b>{scenario_failed_count}</b>",
+                "Scenario failures: <b>0</b>",
                 f"Signal failures: <b>{signal_failed_count}</b>",
                 f"Signal activation builder exit code: <b>{signal_activation_exit_code}</b>",
             ],
             insight_lines=[
-                f"Scenario/signal pass projection: <b>{scenario_success_rate:.1f}%</b>",
+                f"Signal pass projection: <b>{scenario_success_rate:.1f}%</b>",
                 "Dry-run mode: <b>no writes performed</b>",
             ],
         )
@@ -306,7 +313,7 @@ def main(argv=None) -> int:
     try:
         sql_dir = project_root / "clickhouse" / "gold"
         processor = FotMobGoldProcessor(sql_dir=sql_dir)
-        storage = FotMobGoldStorage(client, database=scenario_db)
+        storage = FotMobGoldStorage(client, database=metadata_db)
 
         sql_files = processor.sql_files()
         if not sql_files:
@@ -329,8 +336,8 @@ def main(argv=None) -> int:
             logger.warning("Skipping signal activation builder because signal scripts had failures")
             signal_activation_exit_code = 1
 
-        if scenario_failed_count > 0 or signal_failed_count > 0:
-            logger.error("Gold processing completed with failed scenario/signal scripts")
+        if signal_failed_count > 0:
+            logger.error("Gold processing completed with failed signal scripts")
             exit_code = 1
             return exit_code
         if signal_activation_exit_code != 0:
@@ -338,8 +345,6 @@ def main(argv=None) -> int:
             exit_code = 1
             return exit_code
 
-        if args.part in ("all", "scenarios"):
-            assert_gold_layer_contracts(client, database=scenario_db, log=logger)
         if args.part in ("all", "signals"):
             assert_gold_layer_contracts(client, database=signal_db, log=logger)
         contracts_checked = True
@@ -362,7 +367,7 @@ def main(argv=None) -> int:
             if total_jobs > 0
             else 0
         )
-        summary = "Gold SQL + scenario/signal processing finished."
+        summary = "Gold SQL + signal processing finished."
         send_layer_completion_alert(
             layer="gold",
             summary_message=summary,
@@ -371,15 +376,15 @@ def main(argv=None) -> int:
             duration_seconds=time.perf_counter() - stage_start,
             detail_lines=[
                 f"SQL files executed: <b>{sql_file_count}</b>",
-                f"Scenarios succeeded: <b>{scenario_success_count}</b>",
-                f"Scenario failures: <b>{scenario_failed_count}</b>",
+                "Scenarios succeeded: <b>0</b>",
+                "Scenario failures: <b>0</b>",
                 f"Signals succeeded: <b>{signal_success_count}</b>",
                 f"Signal failures: <b>{signal_failed_count}</b>",
                 f"Signal activation builder exit code: <b>{signal_activation_exit_code}</b>",
                 f"Contract checks: <b>{'passed' if contracts_checked else 'failed or skipped'}</b>",
             ],
             insight_lines=[
-                f"Scenario/signal success rate: <b>{scenario_success_rate:.1f}%</b>",
+                f"Signal success rate: <b>{scenario_success_rate:.1f}%</b>",
                 (
                     "Analytics quality signal: <b>gold contracts passed</b>"
                     if contracts_checked

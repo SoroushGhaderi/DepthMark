@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 
 from config.settings import settings
 from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.gold_databases import gold_signals_db
+from src.utils.gold_databases import gold_db, gold_signals_db
 from src.utils.logging_utils import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -54,9 +54,14 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Directory containing signal catalog markdown files.",
     )
     parser.add_argument(
-        "--target-db",
+        "--source-db",
         default=gold_signals_db(),
-        help="Target ClickHouse database for signal tables and signal_activations.",
+        help="Source ClickHouse database that stores signal output tables (sig_*).",
+    )
+    parser.add_argument(
+        "--target-db",
+        default=gold_db(),
+        help="Target ClickHouse database for signal_activations.",
     )
     parser.add_argument(
         "--dry-run",
@@ -165,9 +170,14 @@ def _hash_component_expr(column_name: str) -> str:
 
 
 def _activation_insert_sql(
-    database: str, signal_id: str, available_columns: set[str], row_identity: list[str]
+    source_database: str,
+    target_database: str,
+    signal_id: str,
+    available_columns: set[str],
+    row_identity: list[str],
 ) -> str:
-    safe_database = _validate_identifier(database, "database")
+    safe_source_database = _validate_identifier(source_database, "source database")
+    safe_target_database = _validate_identifier(target_database, "target database")
     safe_signal_table = _validate_identifier(signal_id, "table")
 
     def optional_col(column: str, cast_type: str) -> str:
@@ -192,7 +202,7 @@ def _activation_insert_sql(
 
     match_date_expr = optional_col("match_date", "Nullable(Date)")
     return f"""
-    INSERT INTO {safe_database}.signal_activations (
+    INSERT INTO {safe_target_database}.signal_activations (
         signal_instance_id,
         signal_id,
         signal_id_version,
@@ -213,7 +223,7 @@ def _activation_insert_sql(
         toNullable(toInt32({optional_col('triggered_team_id', 'Nullable(Int32)')})) AS triggered_team_id,
         toNullable(toInt32({optional_col('triggered_player_id', 'Nullable(Int32)')})) AS triggered_player_id,
         '{signal_id}' AS source_table
-    FROM {safe_database}.{safe_signal_table}
+    FROM {safe_source_database}.{safe_signal_table}
     WHERE match_id > 0
       AND {match_date_expr} IS NOT NULL
     """
@@ -221,7 +231,8 @@ def _activation_insert_sql(
 
 def build_signal_activations(
     client: ClickHouseClient,
-    database: str,
+    source_database: str,
+    target_database: str,
     catalogs: list[SignalCatalog],
     dry_run: bool,
 ) -> tuple[int, int]:
@@ -229,22 +240,25 @@ def build_signal_activations(
     skipped = 0
 
     if not dry_run:
-        client.execute(f"TRUNCATE TABLE {_validate_identifier(database, 'database')}.signal_activations")
+        client.execute(
+            f"TRUNCATE TABLE {_validate_identifier(target_database, 'database')}.signal_activations"
+        )
 
     for catalog in catalogs:
         signal_table = catalog.signal_id
-        if not _table_exists(client, database, signal_table):
+        if not _table_exists(client, source_database, signal_table):
             logger.warning(
                 "Signal table not found; skipping activation backfill",
                 signal_id=catalog.signal_id,
-                table=f"{database}.{signal_table}",
+                table=f"{source_database}.{signal_table}",
             )
             skipped += 1
             continue
 
-        columns = _column_names(client, database, signal_table)
+        columns = _column_names(client, source_database, signal_table)
         query = _activation_insert_sql(
-            database=database,
+            source_database=source_database,
+            target_database=target_database,
             signal_id=catalog.signal_id,
             available_columns=columns,
             row_identity=catalog.row_identity,
@@ -308,12 +322,14 @@ def main(argv: Optional[list[str]] = None) -> int:
     try:
         processed, skipped = build_signal_activations(
             client=client,
-            database=args.target_db,
+            source_database=args.source_db,
+            target_database=args.target_db,
             catalogs=catalogs,
             dry_run=args.dry_run,
         )
         logger.info(
             "Signal activation build completed",
+            source_db=args.source_db,
             target_db=args.target_db,
             processed=processed,
             skipped=skipped,

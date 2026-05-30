@@ -134,10 +134,17 @@ deterministic activation IDs. Typical values are:
 - player-grain signal: `match_id`, `triggered_player_id`, `triggered_team_id`
 
 DepthMark also materializes per-match signal activations in
-`gold_signals.signal_activations` using a deterministic hash key:
+`gold.signal_activations` using a deterministic hash key:
 
 - `signal_instance_id = SHA256(\"v1|signal_id|<row_identity values>\")`
 - version prefix (`v1`) keeps IDs stable and enables future controlled upgrades
+
+Signal SQL can also use `gold.match_reference` as a shared
+match-level lookup view (sourced from `bronze.match_reference`).
+
+For strict match-grain activation storage, DepthMark also writes
+`gold.signal_activations_match` with one row per
+`(match_id, signal_id)` plus `activation_count`.
 
 ## Project Layout
 

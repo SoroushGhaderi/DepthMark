@@ -25,7 +25,6 @@ Use these paths for new automation and daily runs:
 
 - `scripts/silver/load_clickhouse.py --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --dry-run`
-- `scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --part signals --dry-run`
 
 ## Operational Utility Scripts

@@ -195,6 +195,14 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
     # - fall back to legacy `create/`
     # - finally support flat layer directory for existing bronze/gold layouts
     candidate_dirs = [layer_dir / "ddl", layer_dir / "create", layer_dir]
+    if layer_name == "gold":
+        candidate_dirs.extend(
+            [
+                layer_dir / "create_table_signals" / "match",
+                layer_dir / "create_table_signals" / "player",
+                layer_dir / "create_table_signals" / "team",
+            ]
+        )
     sql_by_name: dict[str, Path] = {}
     for candidate_dir in candidate_dirs:
         if not candidate_dir.exists():
