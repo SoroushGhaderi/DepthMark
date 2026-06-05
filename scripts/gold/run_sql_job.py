@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -10,7 +11,11 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from config.settings import settings
-from scripts.gold.sql_jobs import execute_gold_sql_job, resolve_gold_sql_job
+from scripts.gold.sql_jobs import (
+    discover_gold_sql_jobs,
+    execute_gold_sql_job,
+    resolve_gold_sql_job,
+)
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.logging_utils import get_logger, setup_logging
 
@@ -28,8 +33,16 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--id",
-        required=True,
         help="Gold SQL job id, for example sig_player_shooting_goals_shot_conversion_peak",
+    )
+    parser.add_argument(
+        "--entity",
+        choices=("match", "player", "team"),
+        help="Signal entity filter for batch execution",
+    )
+    parser.add_argument(
+        "--family",
+        help="Signal family filter, for example shooting_goals or creativity_playmaking",
     )
     parser.add_argument(
         "--dry-run",
@@ -37,6 +50,72 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Preview the selected SQL job without connecting to ClickHouse or executing SQL",
     )
     return parser.parse_args(argv)
+
+
+def _validate_selection(args: argparse.Namespace) -> int:
+    """Validate CLI selection mode."""
+    has_filter = bool(args.entity or args.family)
+    if args.id and has_filter:
+        logger.error("Use either --id or --entity/--family filters, not both")
+        return 2
+    if not args.id and not has_filter:
+        logger.error("Provide --id or both --entity and --family")
+        return 2
+    if has_filter and args.kind != "signal":
+        logger.error("--entity and --family filters are only supported with --kind signal")
+        return 2
+    if has_filter and not (args.entity and args.family):
+        logger.error("Signal batch execution requires both --entity and --family")
+        return 2
+    return 0
+
+
+def _selected_jobs(args: argparse.Namespace):
+    """Resolve selected Gold SQL jobs from CLI arguments."""
+    if args.id:
+        return [resolve_gold_sql_job(args.kind, args.id)]
+    return discover_gold_sql_jobs(args.kind, entity=args.entity, family=args.family)
+
+
+def _run_jobs(client: Optional[ClickHouseClient], jobs, *, dry_run: bool) -> tuple[int, int]:
+    """Run selected jobs and return success/failure counts."""
+    if not jobs:
+        logger.error("No Gold SQL jobs matched the selection")
+        return 0, 1
+
+    success_count = 0
+    failed_jobs: list[str] = []
+    total_jobs = len(jobs)
+    logger.info("Selected Gold SQL jobs: %s", total_jobs)
+    for index, job in enumerate(jobs, start=1):
+        started_at = time.perf_counter()
+        logger.info("Running Gold %s SQL job %s/%s: %s", job.kind, index, total_jobs, job.job_id)
+        try:
+            if execute_gold_sql_job(client, job, dry_run=dry_run, log=logger):
+                success_count += 1
+                continue
+        except Exception as error:
+            logger.error("Gold %s SQL job raised an exception: %s", job.kind, error)
+
+        logger.error(
+            "Gold %s SQL job failed %s/%s: %s after %.2f seconds",
+            job.kind,
+            index,
+            total_jobs,
+            job.job_id,
+            time.perf_counter() - started_at,
+        )
+        failed_jobs.append(job.job_id)
+
+    if failed_jobs:
+        logger.error("Failed Gold SQL jobs: %s", ", ".join(failed_jobs))
+    logger.info(
+        "Gold SQL job execution report | total=%s success=%s failed=%s",
+        total_jobs,
+        success_count,
+        len(failed_jobs),
+    )
+    return success_count, len(failed_jobs)
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -49,14 +128,19 @@ def main(argv: Optional[list[str]] = None) -> int:
         log_level=settings.log_level,
     )
 
+    selection_exit_code = _validate_selection(args)
+    if selection_exit_code != 0:
+        return selection_exit_code
+
     try:
-        job = resolve_gold_sql_job(args.kind, args.id)
+        jobs = _selected_jobs(args)
     except ValueError as error:
         logger.error("Invalid Gold SQL job selection: %s", error)
         return 2
 
     if args.dry_run:
-        return 0 if execute_gold_sql_job(None, job, dry_run=True, log=logger) else 1
+        _, failed_count = _run_jobs(None, jobs, dry_run=True)
+        return 0 if failed_count == 0 else 1
 
     client = ClickHouseClient(
         host=settings.clickhouse_host,
@@ -71,7 +155,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 1
 
     try:
-        return 0 if execute_gold_sql_job(client, job, dry_run=False, log=logger) else 1
+        _, failed_count = _run_jobs(client, jobs, dry_run=False)
+        return 0 if failed_count == 0 else 1
     finally:
         client.disconnect()
 

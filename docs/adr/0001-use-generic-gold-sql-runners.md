@@ -32,6 +32,15 @@ python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_
 python scripts/gold/run_sql_job.py --kind scenario --id scenario_team_shooting_goals
 ```
 
+Signal jobs should also support DDL-grouped batch selection by entity and family,
+matching the grouping used by `clickhouse/gold/create_table_signals/`. For
+example:
+
+```bash
+python scripts/gold/run_sql_job.py --kind signal --entity player --family shooting_goals
+python scripts/gold/run_sql_job.py --kind signal --entity team --family creativity_playmaking
+```
+
 Bulk Gold loading should reuse the same generic execution path where practical.
 New Gold work should add or update SQL and catalog/contract documentation rather
 than adding new handwritten per-output Python wrappers.
@@ -44,6 +53,11 @@ responsible for discovery, execution, validation, logging, and reporting.
 It reduces per-signal and per-scenario boilerplate, makes runner behavior more
 consistent, and keeps individual execution available through one command
 surface.
+
+Entity/family filters make family-level development, debugging, and backfills
+possible without reintroducing per-output Python runner files. These filters are
+signal-specific because the stable grouping currently comes from signal table
+DDL files.
 
 The migration should be backward-compatible where practical. Existing runner
 files can remain until the generic runner and loader path are proven, then be

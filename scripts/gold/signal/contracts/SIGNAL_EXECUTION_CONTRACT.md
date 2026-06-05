@@ -69,8 +69,9 @@ No package is complete unless all 4 parts are present and consistent.
    - exit non-zero on failure
 2. Runner logic MUST NOT embed business SQL inline.
 3. Individual signal execution MUST remain available through `scripts/gold/run_sql_job.py --kind signal --id <signal_id>`.
-4. Runner SQL discovery MUST be deterministic and fail fast when the resolved SQL file is missing.
-5. Any SQL used by shared signal orchestration helpers MUST live in `.sql` files. Python MAY render validated SQL-template placeholders and pass query parameters, but MUST NOT inline business or reference queries.
+4. DDL-grouped signal execution MUST remain available through `scripts/gold/run_sql_job.py --kind signal --entity <match|player|team> --family <family>`.
+5. Runner SQL discovery MUST be deterministic and fail fast when the resolved SQL file is missing.
+6. Any SQL used by shared signal orchestration helpers MUST live in `.sql` files. Python MAY render validated SQL-template placeholders and pass query parameters, but MUST NOT inline business or reference queries.
 
 ## Bulk Execution Contract
 
@@ -98,6 +99,7 @@ Recommended focused checks:
 1. `python3 scripts/gold/load_clickhouse_gold.py --part signals --dry-run`
 2. `python3 scripts/gold/load_clickhouse_gold.py --part signals`
 3. `python3 scripts/gold/run_sql_job.py --kind signal --id <signal_id> --dry-run`
+4. `python3 scripts/gold/run_sql_job.py --kind signal --entity <entity> --family <family> --dry-run`
 
 ## Git Commit Policy
 

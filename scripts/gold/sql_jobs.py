@@ -11,10 +11,12 @@ from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.gold_databases import gold_scenarios_db, gold_signals_db
 
 GoldJobKind = Literal["scenario", "signal"]
+SignalEntity = Literal["match", "player", "team"]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 GOLD_SQL_DIR = PROJECT_ROOT / "clickhouse" / "gold"
 JOB_ID_RE = re.compile(r"^(scenario|sig|signal)_[a-z0-9_]+$")
+SIGNAL_FAMILY_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
 
 
 @dataclass(frozen=True)
@@ -51,6 +53,16 @@ def validate_job_id(kind: GoldJobKind, job_id: str) -> str:
     return job_id
 
 
+def validate_signal_family(family: str) -> str:
+    """Validate a signal family filter."""
+    if not SIGNAL_FAMILY_RE.match(family):
+        raise ValueError(
+            "Signal family must contain only lowercase letters, digits, and underscores: "
+            f"{family}"
+        )
+    return family
+
+
 def resolve_gold_sql_job(
     kind: GoldJobKind,
     job_id: str,
@@ -79,11 +91,27 @@ def resolve_gold_sql_job(
 def discover_gold_sql_jobs(
     kind: GoldJobKind,
     *,
+    entity: Optional[SignalEntity] = None,
+    family: Optional[str] = None,
     target_db: Optional[str] = None,
 ) -> list[GoldSqlJob]:
     """Discover all executable Gold SQL jobs for a kind."""
+    if kind != "signal" and (entity or family):
+        raise ValueError("Entity and family filters are only supported for signal SQL jobs")
+    if family is not None:
+        family = validate_signal_family(family)
+    if entity and not family:
+        raise ValueError("Signal entity filter requires --family")
+    if family and not entity:
+        raise ValueError("Signal family filter requires --entity")
+
     search_dir = GOLD_SQL_DIR / "scenario" if kind == "scenario" else GOLD_SQL_DIR / "signal"
-    pattern = "scenario_*.sql" if kind == "scenario" else "sig*.sql"
+    if kind == "scenario":
+        pattern = "scenario_*.sql"
+    elif entity and family:
+        pattern = f"sig_{entity}_{family}_*.sql"
+    else:
+        pattern = "sig*.sql"
     return [
         resolve_gold_sql_job(kind, path.stem, target_db=target_db)
         for path in sorted(search_dir.rglob(pattern))
