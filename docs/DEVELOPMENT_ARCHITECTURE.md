@@ -66,8 +66,9 @@ python scripts/silver/drop_clickhouse.py --dry-run
 ```bash
 python scripts/gold/load_clickhouse_gold.py
 python scripts/gold/load_clickhouse_gold.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
 python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
+python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run
 python scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ```
 
@@ -149,11 +150,14 @@ clickhouse/
 
 Current Gold inventory:
 
-- 48 scenario runners in `scripts/gold/scenario/scenario_*.py`
 - 48 scenario SQL transforms in `clickhouse/gold/scenario/{team,player}/`
-- 211 signal runners in `scripts/gold/signal/runners/sig_*.py`
-- 211 signal SQL transforms in `clickhouse/gold/signal/`
-- 211 signal catalog markdown files in `scripts/gold/signal/catalogs/`
+- 344 signal SQL transforms in `clickhouse/gold/signal/`
+- 344 signal catalog markdown files in `scripts/gold/signal/catalogs/`
+
+Gold SQL jobs are executed through the generic runner in
+`scripts/gold/run_sql_job.py` and shared helpers in `scripts/gold/sql_jobs.py`.
+Legacy per-output Python runners may exist during migration, but new Gold work
+should not add handwritten per-signal or per-scenario runner files.
 
 ## Python Layout
 
@@ -201,19 +205,27 @@ is used to build deterministic activation IDs:
 ## Signal Activation IDs
 
 DepthMark materializes deterministic signal activation IDs into
-`gold_signals.signal_activations`.
+`gold.signal_activations`.
 
 Creation flow:
 
 1. DDL creates the activation table from
    `clickhouse/gold/create_table_signal_activations.sql`.
-2. Gold signal runners populate `gold_signals.sig_*` tables.
-3. `scripts/gold/signal/build_signal_activations.py` scans active signal
+2. Gold signal SQL jobs populate `gold_signals.sig_*` tables.
+3. `scripts/gold/activations/build_signal_activations.py` scans active signal
    catalogs and reads each catalog `row_identity`.
 4. The script inserts one activation row per signal output row with:
    - `signal_instance_id = lower(hex(SHA256(concat('v1|', signal_id, '|', ...identity values))))`
    - `signal_id_version = 'v1'`
-5. `scripts/gold/load_clickhouse_gold.py` runs this activation builder after
+   - parsed signal metadata from `signal_id` pattern (`signal_prefix`, `signal_entity`,
+     `signal_family`, `signal_subfamily`, `signal_name`, `signal_tags`)
+5. `scripts/gold/activations/build_signal_activations_match.py` aggregates
+   row-level activations into `gold.signal_activations_match` with one
+   row per `match_id`, including `activated_signal_instance_ids`,
+   `activated_signal_ids`, `activated_signal_entities`,
+   `activated_signal_tags`, `activated_signal_names`,
+   `total_signal_rows`, and `unique_signal_count`.
+6. `scripts/gold/load_clickhouse_gold.py` runs both activation scripts after
    successful signal execution (`--part signals` or `--part all`).
 
 ## Operational Guarantees
@@ -223,7 +235,7 @@ Creation flow:
 2. Layer contracts are enforced at runtime by the Bronze, Silver, and Gold
    contract assertions.
 3. Silver and Gold loaders support `--dry-run` planning mode.
-4. Gold bulk loading supports `--part all|scenarios|signals`.
+4. Gold bulk loading supports `--part all|signals`; scenario bulk execution is disabled until re-enabled intentionally.
 5. Standardized layer completion alerts are sent through
    `send_layer_completion_alert`.
 6. Bronze runtime supports turnstile refresh automation through
@@ -240,9 +252,9 @@ Creation flow:
    `scenario_<name>.sql`, and Gold signals use `sig_<name>.sql`.
    Gold signal table DDL files use
    `create_table_{entity}_{family}_{subfamily}.sql`.
-4. New or changed scenario work must update SQL, runner, Gold scenario DDL, and
+4. New or changed scenario work must update SQL, Gold scenario DDL, and
    `scripts/gold/scenario/SCENARIOS_CATALOG.md` when relevant.
-5. New or changed signal work must update SQL, runner, signal DDL, catalog
+5. New or changed signal work must update SQL, signal DDL, catalog
    markdown, and `scripts/gold/signal/catalogs/README.md` when relevant.
 
 ## Incident Handling

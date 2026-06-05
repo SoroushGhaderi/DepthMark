@@ -95,6 +95,7 @@ docker-compose -f docker/docker-compose.yml exec scraper python scripts/bronze/s
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/bronze/load_clickhouse.py --date 20251208
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/silver/load_clickhouse.py
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/load_clickhouse_gold.py
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
 ```
 
 Preview non-destructive work:
@@ -103,6 +104,7 @@ Preview non-destructive work:
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/silver/load_clickhouse.py --dry-run
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/load_clickhouse_gold.py --dry-run
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
 ```
 
 Run health and quality checks:
@@ -134,10 +136,29 @@ deterministic activation IDs. Typical values are:
 - player-grain signal: `match_id`, `triggered_player_id`, `triggered_team_id`
 
 DepthMark also materializes per-match signal activations in
-`gold_signals.signal_activations` using a deterministic hash key:
+`gold.signal_activations` using a deterministic hash key:
 
 - `signal_instance_id = SHA256(\"v1|signal_id|<row_identity values>\")`
 - version prefix (`v1`) keeps IDs stable and enables future controlled upgrades
+- Parsed `signal_id` structure is also stored:
+  - `signal_prefix` (for example `sig`)
+  - `signal_entity` (for example `match`, `team`, `player`)
+  - `signal_family` and `signal_subfamily` (taxonomy tags)
+  - `signal_name` (remaining suffix after taxonomy)
+  - `signal_tags` (array form of taxonomy tags)
+
+Signal SQL can also use `gold.match_reference` as a shared
+match-level lookup view (sourced from `bronze.match_reference`).
+
+For match-level aggregation, DepthMark also writes
+`gold.signal_activations_match` with one row per `match_id`, including:
+- `activated_signal_instance_ids` (array of raw `signal_instance_id` values)
+- `activated_signal_ids` (array of unique active `signal_id` values)
+- `activated_signal_entities` (array of entity types such as match/team/player)
+- `activated_signal_tags` (array of unique taxonomy tags from activated signals)
+- `activated_signal_names` (array of unique signal name suffixes)
+- `total_signal_rows` (raw activation row count in that match)
+- `unique_signal_count` (distinct active signal IDs)
 
 ## Project Layout
 

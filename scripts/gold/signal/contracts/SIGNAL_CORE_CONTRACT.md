@@ -204,7 +204,7 @@ Additional rules:
 5. Asset paths SHOULD follow convention and MUST match actual package files:
    - table: `gold.<signal_id>`
    - SQL path: `clickhouse/gold/signal/<signal_id>.sql`
-   - runner path: `scripts/gold/signal/runners/<signal_id>.py`
+   - runner path: `scripts/gold/run_sql_job.py`
 6. Catalogs MUST reference SQL by path and MUST NOT embed full SQL bodies.
 7. `Reason` entries MUST explain analytical value (diagnostics, tactical interpretation, feature engineering, QA, or downstream modeling impact).
 8. `catalogs/README.md` MUST include every active `sig_<name>.md` in a structured table with these headers:

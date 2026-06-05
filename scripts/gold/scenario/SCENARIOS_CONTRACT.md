@@ -7,33 +7,30 @@ This document defines the stable contract for Gold scenario jobs in DepthMark.
 This contract applies to:
 
 - `clickhouse/gold/scenario/scenario_*.sql`
-- `scripts/gold/scenario/scenario_*.py`
+- `scripts/gold/run_sql_job.py`
+- `scripts/gold/sql_jobs.py`
 - `scripts/gold/load_clickhouse_gold.py`
 - `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 
 ## Scenario Unit Contract
 
-Each scenario is a 4-part unit:
+Each scenario is a 3-part unit:
 
 1. SQL transformation file  
    `clickhouse/gold/scenario/scenario_<name>.sql`
-2. Python runner  
-   `scripts/gold/scenario/scenario_<name>.py`
-3. Target table  
+2. Target table  
    `gold.scenario_<name>`
-4. Catalog entry in  
+3. Catalog entry in  
    `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 
-All four parts are required for a production-ready scenario.
+All three parts are required for a production-ready scenario.
 
 ## Naming Contract
 
 1. Scenario ID format: `scenario_<name>` (snake_case).
-2. SQL and Python filenames must match exactly by `<name>`.
+2. SQL filename and target table suffix must match exactly by `<name>`.
 3. Target table must be `gold.scenario_<name>`.
-4. Runner constants must point to matching SQL/table:
-   - `SQL_FILE = ... / scenario_<name>.sql`
-   - `TARGET_TABLE = "gold.scenario_<name>"`
+4. Generic SQL job resolution must map `scenario_<name>` to `scenario_<name>.sql`.
 
 ## SQL Contract
 
@@ -47,21 +44,21 @@ All four parts are required for a production-ready scenario.
 
 ## Runner Contract
 
-1. Runner must:
+1. The generic Gold SQL runner must:
    - connect via `ClickHouseClient`
-   - read SQL from file
+   - read SQL from the selected scenario SQL file
    - execute insert SQL
    - run `OPTIMIZE TABLE <target> FINAL DEDUPLICATE`
    - return non-zero on failure
 2. Runner should not embed business SQL in Python strings.
-3. Runner must only execute its own scenario SQL file.
+3. Individual scenario execution must remain available through `scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>`.
 
 ## Bulk Execution Contract
 
 `scripts/gold/load_clickhouse_gold.py` is the canonical bulk runner.
 
 1. Executes base gold SQL files from `clickhouse/gold/*.sql`.
-2. Discovers and executes `scripts/gold/scenario/scenario*.py` in sorted order.
+2. Scenario bulk execution may remain disabled until re-enabled intentionally.
 3. Supports `--dry-run` for plan/preview mode.
 4. Runs `assert_gold_layer_contracts` after scenario and signal execution.
 
@@ -73,7 +70,6 @@ Each scenario entry in `SCENARIOS_CATALOG.md` must include:
 2. Tactical/statistical logic (threshold rationale)
 3. Technical assets:
    - SQL file path
-   - Python runner path
    - target table
 4. Example execution command
 
@@ -83,7 +79,8 @@ Minimum operational checks:
 
 1. `python scripts/gold/load_clickhouse_gold.py --dry-run`
 2. `python scripts/gold/load_clickhouse_gold.py`
-3. Verify no gold contract failures (`invalid match_id`, missing scenario tables).
+3. `python scripts/gold/run_sql_job.py --kind scenario --id <scenario_id> --dry-run`
+4. Verify no gold contract failures (`invalid match_id`, missing scenario tables).
 
 ## Change Management Rules
 
@@ -92,7 +89,6 @@ Minimum operational checks:
    - `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 2. Renaming/deleting a scenario requires coordinated changes to:
    - SQL file
-   - Python runner
    - target table DDL
    - catalog entry
 3. No breaking renames without documentation updates in:

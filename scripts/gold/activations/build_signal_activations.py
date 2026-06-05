@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 
 from config.settings import settings
 from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.gold_databases import gold_signals_db
+from src.utils.gold_databases import gold_db, gold_signals_db
 from src.utils.logging_utils import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -30,6 +30,12 @@ SAFE_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 class SignalCatalog:
     signal_id: str
     row_identity: list[str]
+    signal_prefix: str
+    signal_entity: str
+    signal_family: str
+    signal_subfamily: str
+    signal_name: str
+    signal_tags: list[str]
 
 
 def load_environment() -> None:
@@ -54,9 +60,14 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         help="Directory containing signal catalog markdown files.",
     )
     parser.add_argument(
-        "--target-db",
+        "--source-db",
         default=gold_signals_db(),
-        help="Target ClickHouse database for signal tables and signal_activations.",
+        help="Source ClickHouse database that stores signal output tables (sig_*).",
+    )
+    parser.add_argument(
+        "--target-db",
+        default=gold_db(),
+        help="Target ClickHouse database for signal_activations.",
     )
     parser.add_argument(
         "--dry-run",
@@ -75,6 +86,39 @@ def _validate_identifier(value: str, kind: str) -> str:
     if not SAFE_IDENTIFIER_RE.match(value):
         raise ValueError(f"Unsafe {kind}: '{value}'")
     return value
+
+
+def _sql_string_literal(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def _sql_array_literal(values: list[str]) -> str:
+    return "[" + ", ".join(_sql_string_literal(value) for value in values) + "]"
+
+
+def _parse_signal_id_parts(signal_id: str) -> tuple[str, str, str, str, str, list[str]]:
+    parts = signal_id.split("_")
+    if len(parts) < 5:
+        raise ValueError(
+            f"signal_id '{signal_id}' must have at least 5 underscore-separated parts"
+        )
+    if parts[0] != "sig":
+        raise ValueError(f"signal_id '{signal_id}' must start with 'sig_'")
+
+    signal_prefix = parts[0]
+    signal_entity = parts[1]
+    signal_family = parts[2]
+    signal_subfamily = parts[3]
+    signal_name = "_".join(parts[4:])
+    signal_tags = [signal_family, signal_subfamily]
+    return (
+        signal_prefix,
+        signal_entity,
+        signal_family,
+        signal_subfamily,
+        signal_name,
+        signal_tags,
+    )
 
 
 def split_frontmatter(content: str, source_path: Path) -> tuple[dict, str]:
@@ -121,7 +165,53 @@ def iter_signal_catalogs(catalog_dir: Path) -> Iterable[SignalCatalog]:
         if not isinstance(row_identity, list) or not all(isinstance(v, str) for v in row_identity):
             raise ValueError(f"row_identity must be a list of strings in {file_path}")
 
-        yield SignalCatalog(signal_id=signal_id, row_identity=row_identity)
+        (
+            signal_prefix,
+            signal_entity,
+            signal_family,
+            signal_subfamily,
+            signal_name,
+            signal_tags,
+        ) = _parse_signal_id_parts(signal_id)
+
+        frontmatter_entity = str(frontmatter.get("entity", "")).strip()
+        frontmatter_family = str(frontmatter.get("family", "")).strip()
+        frontmatter_subfamily = str(frontmatter.get("subfamily", "")).strip()
+        if frontmatter_entity and frontmatter_entity != signal_entity:
+            logger.warning(
+                "signal_id/frontmatter entity mismatch; using parsed signal_id entity",
+                signal_id=signal_id,
+                parsed_entity=signal_entity,
+                frontmatter_entity=frontmatter_entity,
+                source_path=str(file_path),
+            )
+        if frontmatter_family and frontmatter_family != signal_family:
+            logger.warning(
+                "signal_id/frontmatter family mismatch; using parsed signal_id family",
+                signal_id=signal_id,
+                parsed_family=signal_family,
+                frontmatter_family=frontmatter_family,
+                source_path=str(file_path),
+            )
+        if frontmatter_subfamily and frontmatter_subfamily != signal_subfamily:
+            logger.warning(
+                "signal_id/frontmatter subfamily mismatch; using parsed signal_id subfamily",
+                signal_id=signal_id,
+                parsed_subfamily=signal_subfamily,
+                frontmatter_subfamily=frontmatter_subfamily,
+                source_path=str(file_path),
+            )
+
+        yield SignalCatalog(
+            signal_id=signal_id,
+            row_identity=row_identity,
+            signal_prefix=signal_prefix,
+            signal_entity=signal_entity,
+            signal_family=signal_family,
+            signal_subfamily=signal_subfamily,
+            signal_name=signal_name,
+            signal_tags=signal_tags,
+        )
 
 
 def _column_names(client: ClickHouseClient, database: str, table: str) -> set[str]:
@@ -165,10 +255,14 @@ def _hash_component_expr(column_name: str) -> str:
 
 
 def _activation_insert_sql(
-    database: str, signal_id: str, available_columns: set[str], row_identity: list[str]
+    source_database: str,
+    target_database: str,
+    catalog: SignalCatalog,
+    available_columns: set[str],
 ) -> str:
-    safe_database = _validate_identifier(database, "database")
-    safe_signal_table = _validate_identifier(signal_id, "table")
+    safe_source_database = _validate_identifier(source_database, "source database")
+    safe_target_database = _validate_identifier(target_database, "target database")
+    safe_signal_table = _validate_identifier(catalog.signal_id, "table")
 
     def optional_col(column: str, cast_type: str) -> str:
         safe_col = _validate_identifier(column, "column name")
@@ -176,26 +270,32 @@ def _activation_insert_sql(
             return safe_col
         return f"CAST(NULL, '{cast_type}')"
 
-    key_fields = _identity_fields(row_identity)
+    key_fields = _identity_fields(catalog.row_identity)
     missing_key_fields = [field for field in key_fields if field not in available_columns]
     if missing_key_fields:
         raise ValueError(
-            f"Signal {signal_id} is missing required row_identity columns: {missing_key_fields}"
+            f"Signal {catalog.signal_id} is missing required row_identity columns: {missing_key_fields}"
         )
 
     key_expr_parts = [
         f"'{SIGNAL_ID_VERSION}'",
-        f"'{signal_id}'",
+        f"'{catalog.signal_id}'",
         *[_hash_component_expr(field) for field in key_fields],
     ]
     key_expr = ", '|', ".join(key_expr_parts)
 
     match_date_expr = optional_col("match_date", "Nullable(Date)")
     return f"""
-    INSERT INTO {safe_database}.signal_activations (
+    INSERT INTO {safe_target_database}.signal_activations (
         signal_instance_id,
         signal_id,
         signal_id_version,
+        signal_prefix,
+        signal_entity,
+        signal_family,
+        signal_subfamily,
+        signal_name,
+        signal_tags,
         match_id,
         match_date,
         triggered_side,
@@ -205,15 +305,21 @@ def _activation_insert_sql(
     )
     SELECT
         lower(hex(SHA256(concat({key_expr})))) AS signal_instance_id,
-        '{signal_id}' AS signal_id,
+        '{catalog.signal_id}' AS signal_id,
         '{SIGNAL_ID_VERSION}' AS signal_id_version,
+        {_sql_string_literal(catalog.signal_prefix)} AS signal_prefix,
+        {_sql_string_literal(catalog.signal_entity)} AS signal_entity,
+        {_sql_string_literal(catalog.signal_family)} AS signal_family,
+        {_sql_string_literal(catalog.signal_subfamily)} AS signal_subfamily,
+        {_sql_string_literal(catalog.signal_name)} AS signal_name,
+        {_sql_array_literal(catalog.signal_tags)} AS signal_tags,
         toInt32(match_id) AS match_id,
         toDate({match_date_expr}) AS match_date,
         {optional_col('triggered_side', 'Nullable(String)')} AS triggered_side,
         toNullable(toInt32({optional_col('triggered_team_id', 'Nullable(Int32)')})) AS triggered_team_id,
         toNullable(toInt32({optional_col('triggered_player_id', 'Nullable(Int32)')})) AS triggered_player_id,
-        '{signal_id}' AS source_table
-    FROM {safe_database}.{safe_signal_table}
+        '{catalog.signal_id}' AS source_table
+    FROM {safe_source_database}.{safe_signal_table}
     WHERE match_id > 0
       AND {match_date_expr} IS NOT NULL
     """
@@ -221,7 +327,8 @@ def _activation_insert_sql(
 
 def build_signal_activations(
     client: ClickHouseClient,
-    database: str,
+    source_database: str,
+    target_database: str,
     catalogs: list[SignalCatalog],
     dry_run: bool,
 ) -> tuple[int, int]:
@@ -229,25 +336,27 @@ def build_signal_activations(
     skipped = 0
 
     if not dry_run:
-        client.execute(f"TRUNCATE TABLE {_validate_identifier(database, 'database')}.signal_activations")
+        client.execute(
+            f"TRUNCATE TABLE {_validate_identifier(target_database, 'database')}.signal_activations"
+        )
 
     for catalog in catalogs:
         signal_table = catalog.signal_id
-        if not _table_exists(client, database, signal_table):
+        if not _table_exists(client, source_database, signal_table):
             logger.warning(
                 "Signal table not found; skipping activation backfill",
                 signal_id=catalog.signal_id,
-                table=f"{database}.{signal_table}",
+                table=f"{source_database}.{signal_table}",
             )
             skipped += 1
             continue
 
-        columns = _column_names(client, database, signal_table)
+        columns = _column_names(client, source_database, signal_table)
         query = _activation_insert_sql(
-            database=database,
-            signal_id=catalog.signal_id,
+            source_database=source_database,
+            target_database=target_database,
+            catalog=catalog,
             available_columns=columns,
-            row_identity=catalog.row_identity,
         )
 
         if dry_run:
@@ -308,12 +417,14 @@ def main(argv: Optional[list[str]] = None) -> int:
     try:
         processed, skipped = build_signal_activations(
             client=client,
-            database=args.target_db,
+            source_database=args.source_db,
+            target_database=args.target_db,
             catalogs=catalogs,
             dry_run=args.dry_run,
         )
         logger.info(
             "Signal activation build completed",
+            source_db=args.source_db,
             target_db=args.target_db,
             processed=processed,
             skipped=skipped,
