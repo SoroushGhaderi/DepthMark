@@ -28,6 +28,7 @@ Use these paths for new automation and daily runs:
 - `scripts/gold/load_clickhouse_gold.py --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --part signals --dry-run`
 - `scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run`
+- `scripts/gold/run_sql_job.py --kind signal --entity player --family shooting_goals --dry-run`
 - `scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run`
 
 ## Operational Utility Scripts
@@ -60,6 +61,8 @@ Current inventory: 48 matching SQL transforms.
 Signal SQL jobs are discovered and executed through `scripts/gold/run_sql_job.py`
 and shared helpers in `scripts/gold/sql_jobs.py`. Legacy per-signal runner files may
 exist during migration, but new signal work should not add handwritten Python runner files.
+Use `--id` for one exact signal, or `--entity` and `--family` for a DDL-grouped batch such as
+`--entity player --family shooting_goals`.
 After successful signal SQL execution, the loader runs `scripts/gold/activations/build_signal_activations.py`
 to populate deterministic per-match activation IDs in `gold.signal_activations`.
 The activation ID key uses each signal catalog `row_identity` definition.

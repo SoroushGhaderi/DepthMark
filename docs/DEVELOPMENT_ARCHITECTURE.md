@@ -68,6 +68,7 @@ python scripts/gold/load_clickhouse_gold.py
 python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
 python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
+python scripts/gold/run_sql_job.py --kind signal --entity player --family shooting_goals --dry-run
 python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run
 python scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ```
@@ -158,6 +159,9 @@ Gold SQL jobs are executed through the generic runner in
 `scripts/gold/run_sql_job.py` and shared helpers in `scripts/gold/sql_jobs.py`.
 Legacy per-output Python runners may exist during migration, but new Gold work
 should not add handwritten per-signal or per-scenario runner files.
+Signal jobs can be selected exactly by `--id` or in batches by DDL grouping
+with `--entity {match,player,team}` and `--family`, matching
+`clickhouse/gold/create_table_signals/{entity}/create_table_{entity}_{family}.sql`.
 
 ## Python Layout
 
