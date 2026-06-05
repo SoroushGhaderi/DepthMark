@@ -26,7 +26,7 @@ Use `SIGNAL_CORE_CONTRACT.md` when the task requires:
 Use `SIGNAL_EXECUTION_CONTRACT.md` when the task requires:
 
 - creating/updating signal tables
-- writing/updating Python runners
+- wiring generic SQL execution
 - wiring bulk execution and release checks
 
 Both contracts are normative and complementary; a complete signal package must satisfy both.

@@ -1,7 +1,6 @@
 """Run FotMob gold layer orchestration in ClickHouse."""
 
 import argparse
-import os
 import subprocess
 import sys
 import time
@@ -15,37 +14,26 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import settings
+from scripts.gold.sql_jobs import GoldSqlJob, discover_gold_sql_jobs, execute_gold_sql_job
 from src.processors.gold.fotmob import FotMobGoldProcessor
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.gold.fotmob import FotMobGoldStorage
-from src.utils.layer_completion_alerts import send_layer_completion_alert
 from src.utils.gold_databases import gold_db, gold_signals_db
+from src.utils.layer_completion_alerts import send_layer_completion_alert
 from src.utils.layer_contracts import LayerContractError, assert_gold_layer_contracts
 from src.utils.logging_utils import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
 
-def _job_scripts(subdirectory: str, pattern: str) -> list[Path]:
-    scripts_path = Path(__file__).resolve().parent / subdirectory
-    return sorted(path for path in scripts_path.glob(pattern) if path.is_file())
-
-
-def _scenario_scripts() -> list[Path]:
-    return _job_scripts("scenario", "scenario*.py")
-
-
-def _signal_scripts() -> list[Path]:
-    scripts_path = Path(__file__).resolve().parent / "signal" / "runners"
-    signal_prefixed = list(scripts_path.glob("signal*.py"))
-    sig_prefixed = list(scripts_path.glob("sig*.py"))
-    return sorted(path for path in (signal_prefixed + sig_prefixed) if path.is_file())
-
-
-def _selected_script_groups(part: str) -> tuple[list[Path], list[Path]]:
-    scenario_scripts: list[Path] = []
-    signal_scripts = _signal_scripts() if part in ("all", "signals") else []
-    return scenario_scripts, signal_scripts
+def _selected_job_groups(part: str) -> tuple[list[GoldSqlJob], list[GoldSqlJob]]:
+    scenario_jobs: list[GoldSqlJob] = []
+    signal_jobs = (
+        discover_gold_sql_jobs("signal", target_db=gold_signals_db())
+        if part in ("all", "signals")
+        else []
+    )
+    return scenario_jobs, signal_jobs
 
 
 def _build_command(script_path: Path) -> list[str]:
@@ -68,105 +56,98 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def _run_job_scripts(
+def _run_sql_jobs(
     job_name: str,
-    script_paths: list[Path],
+    jobs: list[GoldSqlJob],
+    client: Optional[ClickHouseClient],
     dry_run: bool = False,
 ) -> tuple[int, int, list[str]]:
-    if not script_paths:
+    if not jobs:
         logger.warning(
-            "No gold %s scripts found in %s",
+            "No gold %s SQL jobs found",
             job_name,
-            Path(__file__).resolve().parent / job_name,
         )
         return 0, 0, []
 
     if dry_run:
-        logger.info("[dry-run] Planned gold %s scripts: %s", job_name, len(script_paths))
+        logger.info("[dry-run] Planned gold %s SQL jobs: %s", job_name, len(jobs))
 
-    total_scripts = len(script_paths)
+    total_jobs = len(jobs)
     success_count = 0
-    failed_scripts: list[str] = []
+    failed_jobs: list[str] = []
 
-    for index, script_path in enumerate(script_paths, start=1):
+    for index, job in enumerate(jobs, start=1):
         logger.info(
-            "Running gold %s script %s/%s: %s",
+            "Running gold %s SQL job %s/%s: %s",
             job_name,
             index,
-            total_scripts,
-            script_path.name,
+            total_jobs,
+            job.job_id,
         )
-        if dry_run:
-            logger.info("[dry-run] Would execute %s script: %s", job_name, script_path)
-            success_count += 1
-            continue
-        command = _build_command(script_path)
-        env = os.environ.copy()
-        env["CLICKHOUSE_GOLD_TARGET_DB"] = gold_signals_db()
         script_start = time.perf_counter()
-        result = subprocess.run(command, cwd=project_root, env=env)
+        try:
+            if execute_gold_sql_job(client, job, dry_run=dry_run, log=logger):
+                success_count += 1
+                continue
+        except Exception as error:
+            logger.error("Gold %s SQL job raised an exception: %s", job_name, error)
+
         elapsed_seconds = time.perf_counter() - script_start
-        if result.returncode != 0:
-            logger.error(
-                "Gold %s script failed %s/%s: %s (exit code %s) after %.2f seconds",
-                job_name,
-                index,
-                total_scripts,
-                script_path.name,
-                result.returncode,
-                elapsed_seconds,
-            )
-            failed_scripts.append(script_path.name)
-            continue
-        success_count += 1
         logger.info(
-            "Completed gold %s script %s/%s: %s in %.2f seconds",
+            "Gold %s SQL job finished with failure %s/%s: %s in %.2f seconds",
             job_name,
             index,
-            total_scripts,
-            script_path.name,
+            total_jobs,
+            job.job_id,
             elapsed_seconds,
         )
+        failed_jobs.append(job.job_id)
 
-    failed_count = len(failed_scripts)
+    failed_count = len(failed_jobs)
     logger.info(
         "Gold %s execution report | total=%s success=%s failed=%s",
         job_name,
-        total_scripts,
+        total_jobs,
         success_count,
         failed_count,
     )
-    if failed_scripts:
-        logger.error("Failed %s scripts: %s", job_name, ", ".join(failed_scripts))
+    if failed_jobs:
+        logger.error("Failed %s SQL jobs: %s", job_name, ", ".join(failed_jobs))
 
-    return success_count, failed_count, failed_scripts
+    return success_count, failed_count, failed_jobs
 
 
-def _run_selected_jobs(part: str, dry_run: bool) -> tuple[int, int, int, int]:
-    scenario_scripts, signal_scripts = _selected_script_groups(part)
+def _run_selected_jobs(
+    part: str,
+    dry_run: bool,
+    client: Optional[ClickHouseClient] = None,
+) -> tuple[int, int, int, int]:
+    scenario_jobs, signal_jobs = _selected_job_groups(part)
 
     scenario_success_count = 0
     scenario_failed_count = 0
     signal_success_count = 0
     signal_failed_count = 0
 
-    if scenario_scripts:
-        scenario_success_count, scenario_failed_count, _ = _run_job_scripts(
+    if scenario_jobs:
+        scenario_success_count, scenario_failed_count, _ = _run_sql_jobs(
             job_name="scenario",
-            script_paths=scenario_scripts,
+            jobs=scenario_jobs,
+            client=client,
             dry_run=dry_run,
         )
     else:
-        logger.info("Skipping scenario scripts because --part=%s", part)
+        logger.info("Skipping scenario SQL jobs because --part=%s", part)
 
-    if signal_scripts:
-        signal_success_count, signal_failed_count, _ = _run_job_scripts(
+    if signal_jobs:
+        signal_success_count, signal_failed_count, _ = _run_sql_jobs(
             job_name="signal",
-            script_paths=signal_scripts,
+            jobs=signal_jobs,
+            client=client,
             dry_run=dry_run,
         )
     else:
-        logger.info("Skipping signal scripts because --part=%s", part)
+        logger.info("Skipping signal SQL jobs because --part=%s", part)
 
     return (
         scenario_success_count,
@@ -234,7 +215,7 @@ def main(argv=None) -> int:
             logger.info("[dry-run] Planned gold SQL files: %s", len(sql_files))
             for sql_file in sql_files:
                 logger.info("[dry-run] Would execute SQL file: %s", sql_file)
-        logger.info("Selected gold job scripts via --part=%s", args.part)
+        logger.info("Selected gold SQL jobs via --part=%s", args.part)
         (
             scenario_success_count,
             scenario_failed_count,
@@ -322,13 +303,13 @@ def main(argv=None) -> int:
         else:
             sql_file_count = len(sql_files)
             storage.execute_sql_files(sql_files)
-        logger.info("Selected gold job scripts via --part=%s", args.part)
+        logger.info("Selected gold SQL jobs via --part=%s", args.part)
         (
             scenario_success_count,
             scenario_failed_count,
             signal_success_count,
             signal_failed_count,
-        ) = _run_selected_jobs(part=args.part, dry_run=False)
+        ) = _run_selected_jobs(part=args.part, dry_run=False, client=client)
         signal_activation_exit_code = 0
         if args.part in ("all", "signals") and signal_failed_count == 0:
             signal_activation_exit_code = _run_signal_activation_builder(dry_run=False)
