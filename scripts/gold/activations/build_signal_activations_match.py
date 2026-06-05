@@ -1,11 +1,11 @@
-"""Aggregate per-row signal activations into match-level signal activations."""
+"""Aggregate raw signal activations into match-level summary rows."""
 
 import os
 import re
 import sys
 from pathlib import Path
 
-project_root = Path(__file__).resolve().parents[4]
+project_root = Path(__file__).resolve().parents[3]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
@@ -15,7 +15,7 @@ from src.utils.gold_databases import gold_db
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
-SIGNAL_ID_VERSION = "v1"
+SUMMARY_ID_VERSION = "v1"
 SAFE_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
@@ -31,25 +31,31 @@ def build_match_level_activations(client: ClickHouseClient, database: str) -> No
 
     query = f"""
     INSERT INTO {safe_database}.signal_activations_match (
-        signal_match_instance_id,
-        signal_id,
-        signal_id_version,
+        match_activation_instance_id,
         match_id,
         match_date,
-        source_table,
-        activation_count
+        activated_signal_instance_ids,
+        activated_signal_ids,
+        activated_signal_entities,
+        activated_signal_tags,
+        activated_signal_names,
+        total_signal_rows,
+        unique_signal_count
     )
     SELECT
-        lower(hex(SHA256(concat('{SIGNAL_ID_VERSION}', '|', signal_id, '|', toString(match_id)))))
-            AS signal_match_instance_id,
-        signal_id,
-        signal_id_version,
+        lower(hex(SHA256(concat('{SUMMARY_ID_VERSION}', '|', toString(match_id)))))
+            AS match_activation_instance_id,
         toInt32(match_id) AS match_id,
         toDate(match_date) AS match_date,
-        source_table,
-        toUInt32(count()) AS activation_count
+        arraySort(groupUniqArray(signal_instance_id)) AS activated_signal_instance_ids,
+        arraySort(groupUniqArray(signal_id)) AS activated_signal_ids,
+        arraySort(groupUniqArray(signal_entity)) AS activated_signal_entities,
+        arraySort(arrayDistinct(arrayFlatten(groupArray(signal_tags)))) AS activated_signal_tags,
+        arraySort(groupUniqArray(signal_name)) AS activated_signal_names,
+        toUInt32(count()) AS total_signal_rows,
+        toUInt16(length(groupUniqArray(signal_id))) AS unique_signal_count
     FROM {safe_database}.signal_activations
-    GROUP BY signal_id, signal_id_version, match_id, match_date, source_table
+    GROUP BY match_id, match_date
     """
     client.execute(query)
     client.execute(f"OPTIMIZE TABLE {safe_database}.signal_activations_match FINAL DEDUPLICATE")

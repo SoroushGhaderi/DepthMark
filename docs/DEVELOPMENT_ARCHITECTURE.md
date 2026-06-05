@@ -207,14 +207,19 @@ Creation flow:
 1. DDL creates the activation table from
    `clickhouse/gold/create_table_signal_activations.sql`.
 2. Gold signal runners populate `gold_signals.sig_*` tables.
-3. `scripts/gold/signal/build_signal_activations.py` scans active signal
+3. `scripts/gold/activations/build_signal_activations.py` scans active signal
    catalogs and reads each catalog `row_identity`.
 4. The script inserts one activation row per signal output row with:
    - `signal_instance_id = lower(hex(SHA256(concat('v1|', signal_id, '|', ...identity values))))`
    - `signal_id_version = 'v1'`
-5. `scripts/gold/signal/runners/sig_signal_activations_match.py` aggregates
+   - parsed signal metadata from `signal_id` pattern (`signal_prefix`, `signal_entity`,
+     `signal_family`, `signal_subfamily`, `signal_name`, `signal_tags`)
+5. `scripts/gold/activations/build_signal_activations_match.py` aggregates
    row-level activations into `gold.signal_activations_match` with one
-   row per `(match_id, signal_id)` and an `activation_count`.
+   row per `match_id`, including `activated_signal_instance_ids`,
+   `activated_signal_ids`, `activated_signal_entities`,
+   `activated_signal_tags`, `activated_signal_names`,
+   `total_signal_rows`, and `unique_signal_count`.
 6. `scripts/gold/load_clickhouse_gold.py` runs both activation scripts after
    successful signal execution (`--part signals` or `--part all`).
 

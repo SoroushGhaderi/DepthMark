@@ -34,7 +34,7 @@ Use these paths for new automation and daily runs:
 - `scripts/refresh_turnstile.py`
 - `scripts/mongodb/init_indexes.py`
 - `scripts/mongodb/sync_signal_catalogs.py`
-- `scripts/gold/signal/build_signal_activations.py`
+- `scripts/gold/activations/build_signal_activations.py`
 
 ## Quality Check Scripts
 
@@ -56,7 +56,7 @@ Current inventory: 48 scenario runners and 48 matching SQL transforms.
 
 These `scripts/gold/signal/runners/sig_*.py` runners are also discovered and executed by `scripts/gold/load_clickhouse_gold.py`.
 Legacy `signal_*.py` runners are still supported by the loader for migration compatibility, but new work should use `sig_*.py`.
-After successful signal runner execution, the loader runs `scripts/gold/signal/build_signal_activations.py`
+After successful signal runner execution, the loader runs `scripts/gold/activations/build_signal_activations.py`
 to populate deterministic per-match activation IDs in `gold.signal_activations`.
 The activation ID key uses each signal catalog `row_identity` definition.
 

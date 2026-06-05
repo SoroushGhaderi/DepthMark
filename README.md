@@ -138,13 +138,25 @@ DepthMark also materializes per-match signal activations in
 
 - `signal_instance_id = SHA256(\"v1|signal_id|<row_identity values>\")`
 - version prefix (`v1`) keeps IDs stable and enables future controlled upgrades
+- Parsed `signal_id` structure is also stored:
+  - `signal_prefix` (for example `sig`)
+  - `signal_entity` (for example `match`, `team`, `player`)
+  - `signal_family` and `signal_subfamily` (taxonomy tags)
+  - `signal_name` (remaining suffix after taxonomy)
+  - `signal_tags` (array form of taxonomy tags)
 
 Signal SQL can also use `gold.match_reference` as a shared
 match-level lookup view (sourced from `bronze.match_reference`).
 
-For strict match-grain activation storage, DepthMark also writes
-`gold.signal_activations_match` with one row per
-`(match_id, signal_id)` plus `activation_count`.
+For match-level aggregation, DepthMark also writes
+`gold.signal_activations_match` with one row per `match_id`, including:
+- `activated_signal_instance_ids` (array of raw `signal_instance_id` values)
+- `activated_signal_ids` (array of unique active `signal_id` values)
+- `activated_signal_entities` (array of entity types such as match/team/player)
+- `activated_signal_tags` (array of unique taxonomy tags from activated signals)
+- `activated_signal_names` (array of unique signal name suffixes)
+- `total_signal_rows` (raw activation row count in that match)
+- `unique_signal_count` (distinct active signal IDs)
 
 ## Project Layout
 

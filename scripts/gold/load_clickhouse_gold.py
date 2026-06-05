@@ -178,8 +178,8 @@ def _run_selected_jobs(part: str, dry_run: bool) -> tuple[int, int, int, int]:
 
 def _run_signal_activation_builder(dry_run: bool) -> int:
     activation_scripts = [
-        Path(__file__).resolve().parent / "signal" / "build_signal_activations.py",
-        Path(__file__).resolve().parent / "signal" / "runners" / "sig_signal_activations_match.py",
+        Path(__file__).resolve().parent / "activations" / "build_signal_activations.py",
+        Path(__file__).resolve().parent / "activations" / "build_signal_activations_match.py",
     ]
 
     for script_path in activation_scripts:
