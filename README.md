@@ -129,7 +129,8 @@ python scripts/mongodb/sync_signal_catalogs.py
 ```
 
 The sync stores queryable metadata fields, the full frontmatter object, the
-markdown body, and the relative source path.
+markdown body, the relative source path, and embedded SQL/runner asset contents
+with hashes for integrity checks.
 
 `row_identity` in each signal catalog is the canonical per-row identity used for
 deterministic activation IDs. Typical values are:
