@@ -1,6 +1,7 @@
 """Sync signal markdown catalogs into MongoDB signals collection."""
 
 import argparse
+import hashlib
 import sys
 from pathlib import Path
 from typing import Any, Dict, Tuple
@@ -17,6 +18,7 @@ logger = get_logger(__name__)
 
 DEFAULT_CATALOG_DIR = project_root / "scripts" / "gold" / "signal" / "catalogs"
 FRONTMATTER_DELIMITER = "\n---\n"
+CONTENT_ASSET_KEYS = ("sql", "runner")
 
 
 def load_environment() -> None:
@@ -72,7 +74,57 @@ def split_frontmatter(content: str, source_path: Path) -> Tuple[Dict[str, Any], 
     return frontmatter, body
 
 
-def build_signal_document(frontmatter: Dict[str, Any], body: str, source_path: Path) -> Dict[str, Any]:
+def relative_project_path(file_path: Path) -> str:
+    """Return a project-relative path for stable Mongo documents."""
+    return str(file_path.resolve().relative_to(project_root))
+
+
+def resolve_project_asset(asset_path: str, source_path: Path) -> Path:
+    """Resolve a catalog asset path and keep it inside the project tree."""
+    resolved_path = (project_root / asset_path).resolve()
+    try:
+        resolved_path.relative_to(project_root)
+    except ValueError as exc:
+        raise ValueError(
+            f"Asset path '{asset_path}' escapes project root in {source_path}"
+        ) from exc
+    return resolved_path
+
+
+def read_text_asset(asset_path: str, source_path: Path) -> Dict[str, Any]:
+    """Read a project asset and return its content plus lightweight integrity metadata."""
+    resolved_path = resolve_project_asset(asset_path, source_path)
+    if not resolved_path.is_file():
+        raise ValueError(f"Asset path '{asset_path}' does not exist in {source_path}")
+
+    content = resolved_path.read_text(encoding="utf-8")
+    content_bytes = content.encode("utf-8")
+    return {
+        "path": relative_project_path(resolved_path),
+        "content": content,
+        "sha256": hashlib.sha256(content_bytes).hexdigest(),
+        "byte_count": len(content_bytes),
+    }
+
+
+def build_asset_documents(asset_paths: Dict[str, Any], source_path: Path) -> Dict[str, Any]:
+    """Build embedded Mongo documents for signal assets referenced by frontmatter."""
+    assets: Dict[str, Any] = {}
+    for asset_key, asset_path in asset_paths.items():
+        if asset_key in CONTENT_ASSET_KEYS:
+            if not isinstance(asset_path, str) or not asset_path.strip():
+                raise ValueError(
+                    f"asset_paths.{asset_key} must be a non-empty string in {source_path}"
+                )
+            assets[asset_key] = read_text_asset(asset_path, source_path)
+        else:
+            assets[asset_key] = asset_path
+    return assets
+
+
+def build_signal_document(
+    frontmatter: Dict[str, Any], body: str, source_path: Path
+) -> Dict[str, Any]:
     """Build Mongo document using frontmatter as the source of signal metadata."""
     required = [
         "signal_id",
@@ -102,6 +154,11 @@ def build_signal_document(frontmatter: Dict[str, Any], body: str, source_path: P
     asset_paths = frontmatter.get("asset_paths")
     if not isinstance(asset_paths, dict):
         raise ValueError(f"asset_paths must be an object in {source_path}")
+    for asset_key in CONTENT_ASSET_KEYS:
+        if asset_key not in asset_paths:
+            raise ValueError(f"asset_paths.{asset_key} is required in {source_path}")
+
+    assets = build_asset_documents(asset_paths, source_path)
 
     return {
         "signal_id": signal_id,
@@ -114,8 +171,9 @@ def build_signal_document(frontmatter: Dict[str, Any], body: str, source_path: P
         "trigger": frontmatter.get("trigger"),
         "row_identity": row_identity,
         "asset_paths": asset_paths,
+        "assets": assets,
         "frontmatter": frontmatter,
-        "source_path": str(source_path.relative_to(project_root)),
+        "source_path": relative_project_path(source_path),
         "markdown_body": body,
     }
 

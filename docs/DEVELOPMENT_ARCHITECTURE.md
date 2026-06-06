@@ -187,7 +187,9 @@ Signal metadata is authored in markdown frontmatter under
 1. flattened metadata fields for fast querying;
 2. the full `frontmatter` object for full-fidelity reuse;
 3. the full markdown body in `markdown_body`;
-4. the relative source file path in `source_path`.
+4. embedded SQL and runner source in `assets.sql.content` and
+   `assets.runner.content`, with SHA-256 hashes and byte counts;
+5. the relative source file path in `source_path`.
 
 Current required frontmatter keys:
 
