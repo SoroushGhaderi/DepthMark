@@ -147,6 +147,7 @@ def execute_gold_sql_job(
     insert_query = job.sql_file.read_text(encoding="utf-8").strip().rstrip(";")
     insert_query = insert_query.replace("gold.", f"{job.target_db}.")
 
+    client.execute("SET allow_experimental_analyzer = 0")
     client.execute(insert_query)
     log.info("Gold %s SQL job completed: %s", job.kind, job.job_id)
 

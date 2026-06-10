@@ -67,6 +67,24 @@ WITH team_recoveries AS (
         p.match_id,
         p.match_date,
         p.team_id
+),
+match_recovery_pairs AS (
+    SELECT
+        m2.match_id AS match_id,
+        m2.match_date AS match_date,
+        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
+        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
+    FROM silver.match AS m2
+    LEFT JOIN team_recoveries AS home_recovery
+        ON home_recovery.match_id = m2.match_id
+       AND home_recovery.match_date = m2.match_date
+       AND home_recovery.team_id = m2.home_team_id
+    LEFT JOIN team_recoveries AS away_recovery
+        ON away_recovery.match_id = m2.match_id
+       AND away_recovery.match_date = m2.match_date
+       AND away_recovery.team_id = m2.away_team_id
+    WHERE m2.match_finished = 1
+      AND m2.match_id > 0
 )
 -- Signal: sig_team_goalkeeping_defense_recovery_marathon
 -- Intent: detect team-level ball-recovery peaks and preserve bilateral defensive, control,
@@ -172,24 +190,7 @@ INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
-INNER JOIN (
-    SELECT
-        m2.match_id,
-        m2.match_date,
-        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
-        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
-    FROM silver.match AS m2
-    LEFT JOIN team_recoveries AS home_recovery
-        ON home_recovery.match_id = m2.match_id
-       AND home_recovery.match_date = m2.match_date
-       AND home_recovery.team_id = m2.home_team_id
-    LEFT JOIN team_recoveries AS away_recovery
-        ON away_recovery.match_id = m2.match_id
-       AND away_recovery.match_date = m2.match_date
-       AND away_recovery.team_id = m2.away_team_id
-    WHERE m2.match_finished = 1
-      AND m2.match_id > 0
-) AS mrp
+INNER JOIN match_recovery_pairs AS mrp
     ON mrp.match_id = m.match_id
    AND mrp.match_date = m.match_date
 WHERE m.match_finished = 1
@@ -297,24 +298,7 @@ INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
-INNER JOIN (
-    SELECT
-        m2.match_id,
-        m2.match_date,
-        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
-        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
-    FROM silver.match AS m2
-    LEFT JOIN team_recoveries AS home_recovery
-        ON home_recovery.match_id = m2.match_id
-       AND home_recovery.match_date = m2.match_date
-       AND home_recovery.team_id = m2.home_team_id
-    LEFT JOIN team_recoveries AS away_recovery
-        ON away_recovery.match_id = m2.match_id
-       AND away_recovery.match_date = m2.match_date
-       AND away_recovery.team_id = m2.away_team_id
-    WHERE m2.match_finished = 1
-      AND m2.match_id > 0
-) AS mrp
+INNER JOIN match_recovery_pairs AS mrp
     ON mrp.match_id = m.match_id
    AND mrp.match_date = m.match_date
 WHERE m.match_finished = 1

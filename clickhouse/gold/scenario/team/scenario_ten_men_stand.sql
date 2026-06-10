@@ -28,8 +28,8 @@ WITH first_red AS (
     SELECT
         match_id,
         team_side,
-        toInt32OrZero(score_home_at_time) AS score_home_at_red,
-        toInt32OrZero(score_away_at_time) AS score_away_at_red,
+        toInt32(score_home_at_time) AS score_home_at_red,
+        toInt32(score_away_at_time) AS score_away_at_red,
         card_minute AS red_card_time,
         player_id,
         player_name,
