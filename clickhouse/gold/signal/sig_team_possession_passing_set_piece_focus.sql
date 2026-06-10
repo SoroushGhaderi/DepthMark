@@ -64,14 +64,14 @@ WITH set_piece_team_shots AS (
 ),
 base_stats AS (
     SELECT
-        m.match_id AS match_id,
-        m.match_date AS match_date,
-        m.home_team_id AS home_team_id,
-        m.home_team_name AS home_team_name,
-        m.away_team_id AS away_team_id,
-        m.away_team_name AS away_team_name,
-        m.home_score AS home_score,
-        m.away_score AS away_score,
+        m.match_id,
+        m.match_date,
+        m.home_team_id,
+        m.home_team_name,
+        m.away_team_id,
+        m.away_team_name,
+        m.home_score,
+        m.away_score,
         coalesce(ps.pass_attempts_home, 0) AS pass_attempts_home,
         coalesce(ps.pass_attempts_away, 0) AS pass_attempts_away,
         coalesce(ps.accurate_passes_home, 0) AS accurate_passes_home,
@@ -180,7 +180,7 @@ SELECT
         100.0 * (b.player_throws_away + b.corners_away) / nullIf(toFloat64(b.pass_attempts_away), 0),
         1
     ), 0.0)) AS opponent_dead_ball_restart_pass_share_pct
-FROM base_stats AS b
+FROM (SELECT * FROM base_stats) AS b
 WHERE b.corners_home >= 15
 
 UNION ALL
@@ -256,7 +256,7 @@ SELECT
         100.0 * (b.player_throws_home + b.corners_home) / nullIf(toFloat64(b.pass_attempts_home), 0),
         1
     ), 0.0)) AS opponent_dead_ball_restart_pass_share_pct
-FROM base_stats AS b
+FROM (SELECT * FROM base_stats) AS b
 WHERE b.corners_away >= 15
 )
 
