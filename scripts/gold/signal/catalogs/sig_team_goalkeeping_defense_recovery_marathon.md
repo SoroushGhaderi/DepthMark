@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_recovery_marathon
+  table: gold_signals.sig_team_goalkeeping_defense_recovery_marathon
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_recovery_marathon.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_recovery_marathon.py
 ---
@@ -38,7 +38,7 @@ Detect team-level defensive control performances where a side records extreme ba
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_recovery_marathon.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_recovery_marathon.py`
-- Target table: `gold.sig_team_goalkeeping_defense_recovery_marathon`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_recovery_marathon`
 
 ## Example Execution
 

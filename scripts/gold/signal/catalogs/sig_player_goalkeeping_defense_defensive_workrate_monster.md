@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_defensive_workrate_monster
+  table: gold_signals.sig_player_goalkeeping_defense_defensive_workrate_monster
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_defensive_workrate_monster.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_defensive_workrate_monster.py
 ---
@@ -42,7 +42,7 @@ tackles won, interceptions, clearances, and shot blocks.
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_defensive_workrate_monster.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_defensive_workrate_monster.py`
-- Target table: `gold.sig_player_goalkeeping_defense_defensive_workrate_monster`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_defensive_workrate_monster`
 
 ## Example Execution
 

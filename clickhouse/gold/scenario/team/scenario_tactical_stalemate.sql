@@ -1,5 +1,5 @@
 -- scenario_tactical_stalemate: finished matches with very low combined xG
-INSERT INTO gold.scenario_tactical_stalemate
+INSERT INTO gold_scenarios.scenario_tactical_stalemate
 (
     match_id,
     home_team_id,

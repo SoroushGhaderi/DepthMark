@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_creativity_playmaking_deadball_wizard
+  table: gold_signals.sig_player_creativity_playmaking_deadball_wizard
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_deadball_wizard.sql
   runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_deadball_wizard.py
 ---
@@ -53,7 +53,7 @@ two goals from corner deliveries in a single finished match.
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_deadball_wizard.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_deadball_wizard.py`
-- Target table: `gold.sig_player_creativity_playmaking_deadball_wizard`
+- Target table: `gold_signals.sig_player_creativity_playmaking_deadball_wizard`
 
 ## Example Execution
 

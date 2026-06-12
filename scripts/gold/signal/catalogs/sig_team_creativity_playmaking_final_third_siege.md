@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_final_third_siege
+  table: gold_signals.sig_team_creativity_playmaking_final_third_siege
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_final_third_siege.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_final_third_siege.py
 ---
@@ -48,7 +48,7 @@ final third in a single finished match.
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_final_third_siege.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_final_third_siege.py`
-- Target table: `gold.sig_team_creativity_playmaking_final_third_siege`
+- Target table: `gold_signals.sig_team_creativity_playmaking_final_third_siege`
 
 ## Example Execution
 

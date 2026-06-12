@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_aerial_fortress
+  table: gold_signals.sig_team_goalkeeping_defense_aerial_fortress
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_aerial_fortress.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_aerial_fortress.py
 ---
@@ -46,7 +46,7 @@ match aerial duels, then preserve bilateral defensive-pressure, control, and out
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_aerial_fortress.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_aerial_fortress.py`
-- Target table: `gold.sig_team_goalkeeping_defense_aerial_fortress`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_aerial_fortress`
 
 ## Example Execution
 

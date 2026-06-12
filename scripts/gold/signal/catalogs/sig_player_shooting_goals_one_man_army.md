@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_one_man_army
+  table: gold_signals.sig_player_shooting_goals_one_man_army
   sql: clickhouse/gold/signal/sig_player_shooting_goals_one_man_army.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_one_man_army.py
 ---
@@ -42,7 +42,7 @@ Detects player-level 1-0 match winners where one player scores the only non-own 
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_one_man_army.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_one_man_army.py`
-- Target table: `gold.sig_player_shooting_goals_one_man_army`
+- Target table: `gold_signals.sig_player_shooting_goals_one_man_army`
 
 ## Example Execution
 

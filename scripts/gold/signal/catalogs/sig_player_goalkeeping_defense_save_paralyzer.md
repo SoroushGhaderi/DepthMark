@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_save_paralyzer
+  table: gold_signals.sig_player_goalkeeping_defense_save_paralyzer
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_save_paralyzer.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_save_paralyzer.py
 ---
@@ -38,7 +38,7 @@ Identify late-match, high-leverage goalkeeper interventions where a keeper denie
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_save_paralyzer.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_save_paralyzer.py`
-- Target table: `gold.sig_player_goalkeeping_defense_save_paralyzer`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_save_paralyzer`
 
 ## Example Execution
 

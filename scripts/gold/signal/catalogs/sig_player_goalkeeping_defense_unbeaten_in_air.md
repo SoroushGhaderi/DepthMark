@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_unbeaten_in_air
+  table: gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_unbeaten_in_air.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_unbeaten_in_air.py
 ---
@@ -48,7 +48,7 @@ duel, defensive-action, and control context.
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_unbeaten_in_air.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_unbeaten_in_air.py`
-- Target table: `gold.sig_player_goalkeeping_defense_unbeaten_in_air`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air`
 
 ## Example Execution
 

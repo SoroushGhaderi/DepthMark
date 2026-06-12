@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_century_touches
+  table: gold_signals.sig_player_possession_passing_century_touches
   sql: clickhouse/gold/signal/sig_player_possession_passing_century_touches.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_century_touches.py
 ---
@@ -34,7 +34,7 @@ Triggers when a player reaches at least 100 touches in a single match, flagging 
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_century_touches.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_century_touches.py`
-- Target table: `gold.sig_player_possession_passing_century_touches`
+- Target table: `gold_signals.sig_player_possession_passing_century_touches`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_shared_scoring
+  table: gold_signals.sig_team_shooting_goals_shared_scoring
   sql: clickhouse/gold/signal/sig_team_shooting_goals_shared_scoring.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_shared_scoring.py
 ---
@@ -34,7 +34,7 @@ Detect team scoring performances where goals are distributed across at least fou
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_shared_scoring.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_shared_scoring.py`
-- Target table: `gold.sig_team_shooting_goals_shared_scoring`
+- Target table: `gold_signals.sig_team_shooting_goals_shared_scoring`
 
 ## Example Execution
 

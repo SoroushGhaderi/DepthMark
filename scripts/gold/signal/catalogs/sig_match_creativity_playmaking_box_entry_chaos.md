@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_box_entry_chaos
+  table: gold_signals.sig_match_creativity_playmaking_box_entry_chaos
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_box_entry_chaos.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_box_entry_chaos.py
 ---
@@ -44,7 +44,7 @@ repeatedly move possession into advanced threat zones.
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_box_entry_chaos.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_box_entry_chaos.py`
-- Target table: `gold.sig_match_creativity_playmaking_box_entry_chaos`
+- Target table: `gold_signals.sig_match_creativity_playmaking_box_entry_chaos`
 
 ## Example Execution
 

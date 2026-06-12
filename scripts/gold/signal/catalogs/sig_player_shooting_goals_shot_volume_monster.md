@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_shot_volume_monster
+  table: gold_signals.sig_player_shooting_goals_shot_volume_monster
   sql: clickhouse/gold/signal/sig_player_shooting_goals_shot_volume_monster.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_shot_volume_monster.py
 ---
@@ -35,7 +35,7 @@ Flags extreme single-match shot-volume outputs (`>= 8` shots) at player grain to
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_shot_volume_monster.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_shot_volume_monster.py`
-- Target table: `gold.sig_player_shooting_goals_shot_volume_monster`
+- Target table: `gold_signals.sig_player_shooting_goals_shot_volume_monster`
 
 ## Example Execution
 

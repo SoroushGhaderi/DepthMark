@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_sustained_creative_pressure
+  table: gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_sustained_creative_pressure.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_sustained_creative_pressure.py
 ---
@@ -44,7 +44,7 @@ Detect team-level sustained creative pressure where chance-generation cadence re
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_sustained_creative_pressure.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_sustained_creative_pressure.py`
-- Target table: `gold.sig_team_creativity_playmaking_sustained_creative_pressure`
+- Target table: `gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure`
 
 ## Example Execution
 

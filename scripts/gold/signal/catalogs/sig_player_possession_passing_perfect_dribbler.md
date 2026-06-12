@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_perfect_dribbler
+  table: gold_signals.sig_player_possession_passing_perfect_dribbler
   sql: clickhouse/gold/signal/sig_player_possession_passing_perfect_dribbler.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_perfect_dribbler.py
 ---
@@ -35,7 +35,7 @@ Triggers when a player completes at least 5 successful dribbles with zero failed
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_perfect_dribbler.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_perfect_dribbler.py`
-- Target table: `gold.sig_player_possession_passing_perfect_dribbler`
+- Target table: `gold_signals.sig_player_possession_passing_perfect_dribbler`
 
 ## Example Execution
 

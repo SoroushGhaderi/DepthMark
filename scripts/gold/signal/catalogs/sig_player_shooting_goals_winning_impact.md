@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_winning_impact
+  table: gold_signals.sig_player_shooting_goals_winning_impact
   sql: clickhouse/gold/signal/sig_player_shooting_goals_winning_impact.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_winning_impact.py
 ---
@@ -41,7 +41,7 @@ Detects player-level match-winning finishing events where the triggered player s
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_winning_impact.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_winning_impact.py`
-- Target table: `gold.sig_player_shooting_goals_winning_impact`
+- Target table: `gold_signals.sig_player_shooting_goals_winning_impact`
 
 ## Example Execution
 

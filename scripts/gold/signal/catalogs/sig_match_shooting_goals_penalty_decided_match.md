@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_penalty_decided_match
+  table: gold_signals.sig_match_shooting_goals_penalty_decided_match
   sql: clickhouse/gold/signal/sig_match_shooting_goals_penalty_decided_match.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_penalty_decided_match.py
 ---
@@ -33,7 +33,7 @@ Detect tight finished matches that are decided entirely by penalties (1-0, 0-1, 
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_penalty_decided_match.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_penalty_decided_match.py`
-- Target table: `gold.sig_match_shooting_goals_penalty_decided_match`
+- Target table: `gold_signals.sig_match_shooting_goals_penalty_decided_match`
 
 ## Example Execution
 

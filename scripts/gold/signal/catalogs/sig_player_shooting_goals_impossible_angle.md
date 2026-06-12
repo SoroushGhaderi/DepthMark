@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_impossible_angle
+  table: gold_signals.sig_player_shooting_goals_impossible_angle
   sql: clickhouse/gold/signal/sig_player_shooting_goals_impossible_angle.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_impossible_angle.py
 ---
@@ -42,7 +42,7 @@ Detects match-player events where a player scores from an ultra-low-probability 
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_impossible_angle.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_impossible_angle.py`
-- Target table: `gold.sig_player_shooting_goals_impossible_angle`
+- Target table: `gold_signals.sig_player_shooting_goals_impossible_angle`
 
 ## Example Execution
 

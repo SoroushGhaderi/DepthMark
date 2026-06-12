@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_aerial_reliance
+  table: gold_signals.sig_team_possession_passing_aerial_reliance
   sql: clickhouse/gold/signal/sig_team_possession_passing_aerial_reliance.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_aerial_reliance.py
 ---
@@ -31,7 +31,7 @@ Detect teams that rely heavily on long-ball routes and win a dominant share of a
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_aerial_reliance.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_aerial_reliance.py`
-- Target table: `gold.sig_team_possession_passing_aerial_reliance`
+- Target table: `gold_signals.sig_team_possession_passing_aerial_reliance`
 
 ## Example Execution
 

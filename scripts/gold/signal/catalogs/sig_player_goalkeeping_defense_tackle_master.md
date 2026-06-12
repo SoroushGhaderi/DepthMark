@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_tackle_master
+  table: gold_signals.sig_player_goalkeeping_defense_tackle_master
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_tackle_master.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_tackle_master.py
 ---
@@ -41,7 +41,7 @@ Flags defender performances with high-volume perfect tackling (`>= 6` wins and `
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_tackle_master.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_tackle_master.py`
-- Target table: `gold.sig_player_goalkeeping_defense_tackle_master`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_tackle_master`
 
 ## Example Execution
 

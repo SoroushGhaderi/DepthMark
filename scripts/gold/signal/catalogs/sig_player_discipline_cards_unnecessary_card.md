@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_unnecessary_card
+  table: gold_signals.sig_player_discipline_cards_unnecessary_card
   sql: clickhouse/gold/signal/sig_player_discipline_cards_unnecessary_card.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_unnecessary_card.py
 ---
@@ -40,7 +40,7 @@ Flags players who are booked despite holding a comfortable lead, surfacing avoid
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_unnecessary_card.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_unnecessary_card.py`
-- Target table: `gold.sig_player_discipline_cards_unnecessary_card`
+- Target table: `gold_signals.sig_player_discipline_cards_unnecessary_card`
 
 ## Example Execution
 

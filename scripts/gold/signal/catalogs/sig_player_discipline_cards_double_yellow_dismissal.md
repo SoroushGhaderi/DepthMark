@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_double_yellow_dismissal
+  table: gold_signals.sig_player_discipline_cards_double_yellow_dismissal
   sql: clickhouse/gold/signal/sig_player_discipline_cards_double_yellow_dismissal.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_double_yellow_dismissal.py
 ---
@@ -36,7 +36,7 @@ Flags players dismissed via second-yellow dynamics, preserving trigger timing an
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_double_yellow_dismissal.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_double_yellow_dismissal.py`
-- Target table: `gold.sig_player_discipline_cards_double_yellow_dismissal`
+- Target table: `gold_signals.sig_player_discipline_cards_double_yellow_dismissal`
 
 ## Example Execution
 

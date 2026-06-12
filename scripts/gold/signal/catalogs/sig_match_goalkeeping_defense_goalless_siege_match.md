@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_goalless_siege_match
+  table: gold_signals.sig_match_goalkeeping_defense_goalless_siege_match
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_goalless_siege_match.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_goalless_siege_match.py
 ---
@@ -39,7 +39,7 @@ Detects goalkeeper-driven 0-0 stalemates where at least one side produces elite 
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_goalless_siege_match.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_goalless_siege_match.py`
-- Target table: `gold.sig_match_goalkeeping_defense_goalless_siege_match`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_goalless_siege_match`
 
 ## Example Execution
 

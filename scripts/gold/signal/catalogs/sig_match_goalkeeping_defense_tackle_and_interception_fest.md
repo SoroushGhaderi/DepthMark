@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_tackle_and_interception_fest
+  table: gold_signals.sig_match_goalkeeping_defense_tackle_and_interception_fest
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_tackle_and_interception_fest.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_tackle_and_interception_fest.py
 ---
@@ -38,7 +38,7 @@ Detect finished matches with extreme combined tackle-plus-interception defensive
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_tackle_and_interception_fest.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_tackle_and_interception_fest.py`
-- Target table: `gold.sig_match_goalkeeping_defense_tackle_and_interception_fest`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_tackle_and_interception_fest`
 
 ## Example Execution
 

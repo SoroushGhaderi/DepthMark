@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_bench_creative_impact
+  table: gold_signals.sig_team_creativity_playmaking_bench_creative_impact
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_bench_creative_impact.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_bench_creative_impact.py
 ---
@@ -36,7 +36,7 @@ Detect team matches where substitute players jointly deliver meaningful creative
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_bench_creative_impact.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_bench_creative_impact.py`
-- Target table: `gold.sig_team_creativity_playmaking_bench_creative_impact`
+- Target table: `gold_signals.sig_team_creativity_playmaking_bench_creative_impact`
 
 ## Example Execution
 

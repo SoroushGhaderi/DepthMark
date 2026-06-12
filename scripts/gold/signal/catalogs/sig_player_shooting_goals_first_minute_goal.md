@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_first_minute_goal
+  table: gold_signals.sig_player_shooting_goals_first_minute_goal
   sql: clickhouse/gold/signal/sig_player_shooting_goals_first_minute_goal.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_first_minute_goal.py
 ---
@@ -44,7 +44,7 @@ instant attacking impact and changes game state in the opening minute.
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_first_minute_goal.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_first_minute_goal.py`
-- Target table: `gold.sig_player_shooting_goals_first_minute_goal`
+- Target table: `gold_signals.sig_player_shooting_goals_first_minute_goal`
 
 ## Example Execution
 

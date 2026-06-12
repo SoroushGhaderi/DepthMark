@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_playmaker_showdown
+  table: gold_signals.sig_match_creativity_playmaking_playmaker_showdown
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_playmaker_showdown.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_playmaker_showdown.py
 ---
@@ -43,7 +43,7 @@ Detect bilateral creator duels where each team has at least one player producing
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_playmaker_showdown.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_playmaker_showdown.py`
-- Target table: `gold.sig_match_creativity_playmaking_playmaker_showdown`
+- Target table: `gold_signals.sig_match_creativity_playmaking_playmaker_showdown`
 
 ## Example Execution
 

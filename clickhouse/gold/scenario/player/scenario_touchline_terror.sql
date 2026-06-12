@@ -1,5 +1,5 @@
 -- scenario_touchline_terror: wide attackers dominating isolation duels and box entries
-INSERT INTO gold.scenario_touchline_terror
+INSERT INTO gold_scenarios.scenario_touchline_terror
 (
     -- 1. Match Identity
     match_id,

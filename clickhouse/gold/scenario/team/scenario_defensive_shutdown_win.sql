@@ -1,5 +1,5 @@
 -- scenario_defensive_shutdown_win: winning side concedes very low xG (<0.3)
-INSERT INTO gold.scenario_defensive_shutdown_win
+INSERT INTO gold_scenarios.scenario_defensive_shutdown_win
 (
     -- 1. Match Identity
     match_id,

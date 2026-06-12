@@ -1,5 +1,5 @@
 -- scenario_defensive_masterclass: dominant defensive individual displays without fouling
-INSERT INTO gold.scenario_defensive_masterclass
+INSERT INTO gold_scenarios.scenario_defensive_masterclass
 (
     match_id,
     home_team_id,

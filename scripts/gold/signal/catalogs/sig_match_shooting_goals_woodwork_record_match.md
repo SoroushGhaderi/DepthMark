@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_woodwork_record_match
+  table: gold_signals.sig_match_shooting_goals_woodwork_record_match
   sql: clickhouse/gold/signal/sig_match_shooting_goals_woodwork_record_match.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_woodwork_record_match.py
 ---
@@ -32,7 +32,7 @@ Flag extreme woodwork-heavy matches where finishing repeatedly strikes the post 
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_woodwork_record_match.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_woodwork_record_match.py`
-- Target table: `gold.sig_match_shooting_goals_woodwork_record_match`
+- Target table: `gold_signals.sig_match_shooting_goals_woodwork_record_match`
 
 ## Example Execution
 

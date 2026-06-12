@@ -7,6 +7,8 @@ import time
 from pathlib import Path
 from typing import Callable, Iterable, Optional
 
+from dotenv import load_dotenv
+
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
@@ -20,6 +22,57 @@ CREATE_TABLE_PATTERN = re.compile(
     r"^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([`\"\w.]+)",
     re.IGNORECASE,
 )
+CLICKHOUSE_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+LOCAL_ENVIRONMENT_VALUES = {"local", "development", "dev"}
+INSECURE_CLICKHOUSE_PASSWORDS = {
+    "",
+    "fotmob_pass",
+    "password",
+    "changeme",
+    "your_clickhouse_password_here",
+}
+
+
+def load_local_env_files() -> None:
+    """Load local environment files without overriding already exported values."""
+    for env_path in (project_root.parent / ".env", project_root / ".env"):
+        load_dotenv(env_path, override=False)
+
+
+load_local_env_files()
+
+
+def is_local_development_environment() -> bool:
+    """Return whether local-only development credentials are allowed."""
+    environment = (
+        os.getenv("DEPTHMARK_ENV") or os.getenv("ENVIRONMENT") or os.getenv("SCRAPER_ENV") or ""
+    ).strip()
+    return environment.lower() in LOCAL_ENVIRONMENT_VALUES
+
+
+def validate_clickhouse_credentials(username: str, password: str) -> None:
+    """Reject unsafe ClickHouse setup credentials outside explicit local development."""
+    if not CLICKHOUSE_IDENTIFIER_PATTERN.fullmatch(username):
+        raise RuntimeError(
+            "CLICKHOUSE_USER must be a simple ClickHouse identifier containing only "
+            "letters, numbers, and underscores, and must not start with a number."
+        )
+
+    if is_local_development_environment():
+        return
+
+    if password.strip().lower() in INSECURE_CLICKHOUSE_PASSWORDS:
+        raise RuntimeError(
+            "Refusing to run ClickHouse setup with empty, placeholder, or local-dev "
+            "credentials outside local development. Set DEPTHMARK_ENV=local for the "
+            "tracked Docker/local-dev workflow, or provide production-grade "
+            "CLICKHOUSE_PASSWORD credentials."
+        )
+
+
+def quote_sql_string(value: str) -> str:
+    """Quote a SQL string literal for ClickHouse setup statements."""
+    return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"
 
 
 def connect_clickhouse() -> ClickHouseClient:
@@ -28,6 +81,8 @@ def connect_clickhouse() -> ClickHouseClient:
     port = int(os.getenv("CLICKHOUSE_PORT", "8123"))
     username = os.getenv("CLICKHOUSE_USER", "fotmob_user")
     password = os.getenv("CLICKHOUSE_PASSWORD", "fotmob_pass")
+    validate_clickhouse_credentials(username, password)
+    allows_local_bootstrap = is_local_development_environment()
     is_docker_runtime = Path("/.dockerenv").exists()
     host_candidates = [host]
     if not is_docker_runtime:
@@ -54,8 +109,8 @@ def connect_clickhouse() -> ClickHouseClient:
 
         if client.connect():
             # User can authenticate, but may still miss newer grants.
-            # Try to reconcile grants via default admin user when possible.
-            if username != "default":
+            # Try to reconcile grants via default admin user in local development.
+            if allows_local_bootstrap and username != "default":
                 try:
                     grant_client = ClickHouseClient(
                         host=candidate_host,
@@ -82,6 +137,15 @@ def connect_clickhouse() -> ClickHouseClient:
                         exc,
                     )
             return client
+
+        if not allows_local_bootstrap:
+            logger.warning(
+                "Failed to connect with configured ClickHouse user '%s' on host '%s'. "
+                "Default-user bootstrap is local-development only.",
+                username,
+                candidate_host,
+            )
+            continue
 
         logger.warning("Failed to connect with user '%s', trying default user...", username)
         default_client = ClickHouseClient(
@@ -135,7 +199,10 @@ def connect_clickhouse() -> ClickHouseClient:
 def create_user_if_not_exists(client: ClickHouseClient, username: str, password: str) -> bool:
     """Create ClickHouse user if it does not exist."""
     try:
-        result = client.execute(f"SELECT name FROM system.users WHERE name = '{username}'")
+        validate_clickhouse_credentials(username, password)
+        result = client.execute(
+            f"SELECT name FROM system.users WHERE name = {quote_sql_string(username)}"
+        )
         user_exists = False
         if hasattr(result, "result_rows") and result.result_rows:
             user_exists = True
@@ -146,7 +213,9 @@ def create_user_if_not_exists(client: ClickHouseClient, username: str, password:
             logger.info("User '%s' already exists, ensuring grants...", username)
         else:
             logger.info("Creating user '%s'...", username)
-            client.execute(f"CREATE USER IF NOT EXISTS {username} IDENTIFIED BY '{password}'")
+            client.execute(
+                f"CREATE USER IF NOT EXISTS {username} IDENTIFIED BY {quote_sql_string(password)}"
+            )
 
         for grant_query in (
             f"GRANT ALL ON bronze.* TO {username}",
@@ -208,7 +277,9 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
         if not candidate_dir.exists():
             continue
         candidate_sql_files = [
-            sql_file for sql_file in candidate_dir.glob("*.sql") if not sql_file.name.startswith("scenario_")
+            sql_file
+            for sql_file in candidate_dir.glob("*.sql")
+            if not sql_file.name.startswith("scenario_")
         ]
         for sql_file in sorted(candidate_sql_files, key=lambda path: path.name):
             if sql_file.name in sql_by_name:
@@ -224,7 +295,9 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
 
     if not sql_by_name:
         searched = ", ".join(str(path) for path in candidate_dirs)
-        raise FileNotFoundError(f"No SQL files found for layer '{layer_name}'. Searched: {searched}")
+        raise FileNotFoundError(
+            f"No SQL files found for layer '{layer_name}'. Searched: {searched}"
+        )
 
     def _sort_key(sql_file: Path) -> tuple[int, int, str]:
         name = sql_file.name
@@ -241,7 +314,9 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
     return sorted(sql_by_name.values(), key=_sort_key)
 
 
-def execute_sql_file(client: ClickHouseClient, sql_file: Path, database: Optional[str] = None) -> bool:
+def execute_sql_file(
+    client: ClickHouseClient, sql_file: Path, database: Optional[str] = None
+) -> bool:
     """Execute an SQL file statement by statement."""
     try:
         sql_content = sql_file.read_text(encoding="utf-8")
@@ -278,7 +353,7 @@ def execute_sql_file(client: ClickHouseClient, sql_file: Path, database: Optiona
         for statement in statements:
             normalized_statement = statement.strip()
             create_match = CREATE_TABLE_PATTERN.match(normalized_statement)
-            table_name = create_match.group(1).strip("`\"") if create_match else None
+            table_name = create_match.group(1).strip('`"') if create_match else None
             statement_start = time.perf_counter()
             try:
                 client.execute(statement)
@@ -310,7 +385,9 @@ def execute_sql_file(client: ClickHouseClient, sql_file: Path, database: Optiona
                     elapsed_seconds,
                 )
 
-        logger.info("Executed %s/%s statements from %s", executed_count, total_statements, sql_file.name)
+        logger.info(
+            "Executed %s/%s statements from %s", executed_count, total_statements, sql_file.name
+        )
         return executed_count > 0
     except Exception as exc:
         logger.error("Error reading/executing %s: %s", sql_file, exc, exc_info=True)

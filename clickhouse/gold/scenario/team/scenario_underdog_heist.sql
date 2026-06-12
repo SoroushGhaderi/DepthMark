@@ -1,5 +1,5 @@
 -- scenario_underdog_heist: low-xG winner pulls off a win
-INSERT INTO gold.scenario_underdog_heist
+INSERT INTO gold_scenarios.scenario_underdog_heist
 (
     -- 1. Match Identity
     match_id,

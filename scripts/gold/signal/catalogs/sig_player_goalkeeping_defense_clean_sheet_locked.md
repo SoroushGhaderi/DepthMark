@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_clean_sheet_locked
+  table: gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_locked.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_locked.py
 ---
@@ -46,7 +46,7 @@ Flags goalkeepers who keep a clean sheet despite facing high expected-goals-on-t
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_locked.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_locked.py`
-- Target table: `gold.sig_player_goalkeeping_defense_clean_sheet_locked`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_clean_sheet_broken_late
+  table: gold_signals.sig_match_shooting_goals_clean_sheet_broken_late
   sql: clickhouse/gold/signal/sig_match_shooting_goals_clean_sheet_broken_late.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_clean_sheet_broken_late.py
 ---
@@ -34,7 +34,7 @@ Detect finished matches where the first non-own goal arrives only after the 88th
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_clean_sheet_broken_late.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_clean_sheet_broken_late.py`
-- Target table: `gold.sig_match_shooting_goals_clean_sheet_broken_late`
+- Target table: `gold_signals.sig_match_shooting_goals_clean_sheet_broken_late`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_deep_playmaker
+  table: gold_signals.sig_player_possession_passing_deep_playmaker
   sql: clickhouse/gold/signal/sig_player_possession_passing_deep_playmaker.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_deep_playmaker.py
 ---
@@ -36,7 +36,7 @@ Triggers when a center back records at least 80 accurate passes, highlighting de
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_deep_playmaker.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_deep_playmaker.py`
-- Target table: `gold.sig_player_possession_passing_deep_playmaker`
+- Target table: `gold_signals.sig_player_possession_passing_deep_playmaker`
 
 ## Example Execution
 

@@ -1,5 +1,5 @@
 -- scenario_dead_ball_dominance: winner scores at least two set-piece goals
-INSERT INTO gold.scenario_dead_ball_dominance
+INSERT INTO gold_scenarios.scenario_dead_ball_dominance
 (
     -- 1. Match Identity
     match_id,

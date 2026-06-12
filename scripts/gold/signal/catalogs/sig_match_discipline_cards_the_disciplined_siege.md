@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_the_disciplined_siege
+  table: gold_signals.sig_match_discipline_cards_the_disciplined_siege
   sql: clickhouse/gold/signal/sig_match_discipline_cards_the_disciplined_siege.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_the_disciplined_siege.py
 ---
@@ -33,7 +33,7 @@ Flags match-team cases where one side dominates the ball (at least 75% possessio
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_the_disciplined_siege.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_the_disciplined_siege.py`
-- Target table: `gold.sig_match_discipline_cards_the_disciplined_siege`
+- Target table: `gold_signals.sig_match_discipline_cards_the_disciplined_siege`
 
 ## Example Execution
 

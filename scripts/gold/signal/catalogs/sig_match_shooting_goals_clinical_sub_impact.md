@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_clinical_sub_impact
+  table: gold_signals.sig_match_shooting_goals_clinical_sub_impact
   sql: clickhouse/gold/signal/sig_match_shooting_goals_clinical_sub_impact.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_clinical_sub_impact.py
 ---
@@ -34,7 +34,7 @@ Detect matches where substitutes score at least three non-own goals in aggregate
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_clinical_sub_impact.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_clinical_sub_impact.py`
-- Target table: `gold.sig_match_shooting_goals_clinical_sub_impact`
+- Target table: `gold_signals.sig_match_shooting_goals_clinical_sub_impact`
 
 ## Example Execution
 

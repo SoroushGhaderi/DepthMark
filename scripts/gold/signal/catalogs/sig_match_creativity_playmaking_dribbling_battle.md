@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_dribbling_battle
+  table: gold_signals.sig_match_creativity_playmaking_dribbling_battle
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_dribbling_battle.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_dribbling_battle.py
 ---
@@ -48,7 +48,7 @@ high-tempo bilateral dribbling contests and preserving playmaking and execution 
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_dribbling_battle.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_dribbling_battle.py`
-- Target table: `gold.sig_match_creativity_playmaking_dribbling_battle`
+- Target table: `gold_signals.sig_match_creativity_playmaking_dribbling_battle`
 
 ## Example Execution
 

@@ -1,5 +1,7 @@
 # DepthMark - Docker Compose Configuration
 # Project name: depthmark (set via COMPOSE_PROJECT_NAME or directory name)
+# Local development only: do not use this compose file as a production manifest.
+# Production deployments must provide non-default secrets and set DEPTHMARK_ENV.
 
 name: depthmark
 
@@ -11,6 +13,7 @@ services:
     ports:
       - "27017:27017"
     environment:
+      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-orbit_admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-orbit_pass}
       MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-orbit_content}
@@ -42,9 +45,10 @@ services:
       # Removed: ./clickhouse/init:/docker-entrypoint-initdb.d
       # Table creation is now handled by Python script in scraper container
     environment:
+      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
       CLICKHOUSE_DB: fotmob
-      CLICKHOUSE_USER: fotmob_user
-      CLICKHOUSE_PASSWORD: fotmob_pass
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ulimits:
       nofile:
@@ -85,6 +89,7 @@ services:
       # Python settings
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
+      - DEPTHMARK_ENV=${DEPTHMARK_ENV:-local}
       # Chrome/Selenium settings
       - HEADLESS=true
       - CHROME_BIN=/usr/bin/chromium
@@ -92,8 +97,8 @@ services:
       # ClickHouse connection
       - CLICKHOUSE_HOST=clickhouse
       - CLICKHOUSE_PORT=8123
-      - CLICKHOUSE_USER=fotmob_user
-      - CLICKHOUSE_PASSWORD=fotmob_pass
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-fotmob_user}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-fotmob_pass}
       - CLICKHOUSE_DB_FOTMOB=fotmob
       # Logging
       - LOG_LEVEL=INFO
@@ -138,11 +143,12 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
+      - DEPTHMARK_ENV=${DEPTHMARK_ENV:-local}
       - HEADLESS=true
       - CLICKHOUSE_HOST=clickhouse
       - CLICKHOUSE_PORT=8123
-      - CLICKHOUSE_USER=fotmob_user
-      - CLICKHOUSE_PASSWORD=fotmob_pass
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-fotmob_user}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-fotmob_pass}
     env_file:
       - ../.env
     depends_on:

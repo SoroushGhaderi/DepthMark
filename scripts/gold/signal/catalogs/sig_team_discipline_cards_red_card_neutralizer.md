@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_red_card_neutralizer
+  table: gold_signals.sig_team_discipline_cards_red_card_neutralizer
   sql: clickhouse/gold/signal/sig_team_discipline_cards_red_card_neutralizer.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_red_card_neutralizer.py
 ---
@@ -34,7 +34,7 @@ Flags team-match performances where a side scores within five effective minutes 
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_red_card_neutralizer.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_red_card_neutralizer.py`
-- Target table: `gold.sig_team_discipline_cards_red_card_neutralizer`
+- Target table: `gold_signals.sig_team_discipline_cards_red_card_neutralizer`
 
 ## Example Execution
 

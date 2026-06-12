@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_xg_accumulator_midfielder
+  table: gold_signals.sig_player_shooting_goals_xg_accumulator_midfielder
   sql: clickhouse/gold/signal/sig_player_shooting_goals_xg_accumulator_midfielder.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_xg_accumulator_midfielder.py
 ---
@@ -37,7 +37,7 @@ Flags high-chance midfield shooting loads (`expected_goals > 0.80`) while exclud
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_xg_accumulator_midfielder.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_xg_accumulator_midfielder.py`
-- Target table: `gold.sig_player_shooting_goals_xg_accumulator_midfielder`
+- Target table: `gold_signals.sig_player_shooting_goals_xg_accumulator_midfielder`
 
 ## Example Execution
 

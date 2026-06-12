@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_total_fluidity
+  table: gold_signals.sig_team_creativity_playmaking_total_fluidity
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_total_fluidity.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_total_fluidity.py
 ---
@@ -41,7 +41,7 @@ Detect team-level distributed playmaking performances where chance creation is s
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_total_fluidity.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_total_fluidity.py`
-- Target table: `gold.sig_team_creativity_playmaking_total_fluidity`
+- Target table: `gold_signals.sig_team_creativity_playmaking_total_fluidity`
 
 ## Example Execution
 

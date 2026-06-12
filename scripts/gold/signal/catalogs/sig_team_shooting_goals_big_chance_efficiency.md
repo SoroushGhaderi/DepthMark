@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_big_chance_efficiency
+  table: gold_signals.sig_team_shooting_goals_big_chance_efficiency
   sql: clickhouse/gold/signal/sig_team_shooting_goals_big_chance_efficiency.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_big_chance_efficiency.py
 ---
@@ -36,7 +36,7 @@ Detect team matches where all created big chances are converted (no big-chance m
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_big_chance_efficiency.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_big_chance_efficiency.py`
-- Target table: `gold.sig_team_shooting_goals_big_chance_efficiency`
+- Target table: `gold_signals.sig_team_shooting_goals_big_chance_efficiency`
 
 ## Example Execution
 

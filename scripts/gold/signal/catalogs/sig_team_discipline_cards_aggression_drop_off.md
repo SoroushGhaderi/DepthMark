@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_aggression_drop_off
+  table: gold_signals.sig_team_discipline_cards_aggression_drop_off
   sql: clickhouse/gold/signal/sig_team_discipline_cards_aggression_drop_off.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_aggression_drop_off.py
 ---
@@ -33,7 +33,7 @@ Flags team-match performances where a side is highly foul-heavy before halftime 
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_aggression_drop_off.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_aggression_drop_off.py`
-- Target table: `gold.sig_team_discipline_cards_aggression_drop_off`
+- Target table: `gold_signals.sig_team_discipline_cards_aggression_drop_off`
 
 ## Example Execution
 

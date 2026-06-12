@@ -11,7 +11,7 @@ DepthMark is a FotMob-only medallion pipeline:
 1. Bronze stores raw FotMob payloads on disk and loads raw tables into ClickHouse.
 2. Silver builds cleaned, typed, reusable analytical tables in ClickHouse.
 3. Gold materializes scenario and signal outputs in ClickHouse for product and BI
-   use.
+   use, plus shared activation metadata for product consumption.
 
 ```text
 FotMob API
@@ -20,6 +20,7 @@ FotMob API
   -> silver.*              cleaned analytical tables
   -> gold_scenarios.*      scenario outputs
   -> gold_signals.*        signal outputs
+  -> gold.*                shared Gold metadata and activation tables
 ```
 
 ## Layer Boundaries
@@ -29,8 +30,37 @@ FotMob API
 3. Bronze preserves source fidelity with minimal transformation.
 4. Silver standardizes keys, types, and reusable entities.
 5. Gold produces downstream-ready scenario and signal tables.
-6. Warehouse tables must be schema-qualified as `bronze.*`, `silver.*`, or
-   `gold_scenarios.*` and `gold_signals.*`.
+6. Warehouse tables must be schema-qualified as `bronze.*`, `silver.*`,
+   `gold_scenarios.*`, `gold_signals.*`, or shared Gold metadata tables in
+   `gold.*`.
+
+## Gold Namespaces
+
+DepthMark uses separate Gold ClickHouse databases for separate ownership
+boundaries:
+
+- `gold_scenarios.*`: scenario output tables.
+- `gold_signals.*`: signal output tables.
+- `gold.*`: shared Gold metadata, activation, and reference tables such as
+  `gold.signal_activations`, `gold.signal_activations_match`, and
+  `gold.match_reference`.
+
+Scenario SQL targets `gold_scenarios.scenario_*`. Scenario bulk execution
+remains disabled until generic scenario execution is validated and re-enabled
+intentionally. See
+`docs/adr/0003-split-gold-clickhouse-namespaces.md`.
+
+## Credential Policy
+
+The tracked Docker Compose files are local-development manifests. They may keep
+local defaults for fast bootstrap, but production deployments must use separate
+deployment configuration, non-default secrets, and `DEPTHMARK_ENV=production`.
+
+Use `DEPTHMARK_ENV=local` only for local Docker development. ClickHouse setup
+rejects empty, placeholder, or known local-development passwords outside local
+development and limits the empty-password `default` user bootstrap path to local
+development. See
+`docs/adr/0005-local-dev-credentials-vs-production-policy.md`.
 
 ## Canonical Command Surface
 
@@ -182,7 +212,9 @@ scripts/                  operational CLI entry points
 ## MongoDB Content Catalog
 
 Signal metadata is authored in markdown frontmatter under
-`scripts/gold/signal/catalogs/*.md`. The sync script stores:
+`scripts/gold/signal/catalogs/*.md`. These markdown catalogs are the source of
+truth for signal metadata; MongoDB is a synchronized serving/query copy. The sync
+script stores:
 
 1. flattened metadata fields for fast querying;
 2. the full `frontmatter` object for full-fidelity reuse;
@@ -201,6 +233,10 @@ Current required frontmatter keys:
 - `grain`
 - `row_identity`
 - `asset_paths`
+
+Catalog `asset_paths.table` values must use the signal output namespace
+`gold_signals.<signal_id>`. Shared signal activation metadata remains under
+`gold.*`.
 
 `row_identity` is the stable identity contract for one activated signal row and
 is used to build deterministic activation IDs:
@@ -234,6 +270,13 @@ Creation flow:
 6. `scripts/gold/load_clickhouse_gold.py` runs both activation scripts after
    successful signal execution (`--part signals` or `--part all`).
 
+`signal_id_version` versions the activation identity scheme, not the authored
+signal definition. Keep it stable across reruns and ordinary signal SQL/catalog
+changes when `signal_id` and `row_identity` values are unchanged. Change the
+version only for deliberate activation identity contract migrations, such as
+hash serialization, null handling, required identity fields, or the meaning of
+one activation row.
+
 ## Operational Guarantees
 
 1. Bronze loading includes DLQ fallback via `src/storage/dlq.py` for failed
@@ -241,7 +284,9 @@ Creation flow:
 2. Layer contracts are enforced at runtime by the Bronze, Silver, and Gold
    contract assertions.
 3. Silver and Gold loaders support `--dry-run` planning mode.
-4. Gold bulk loading supports `--part all|signals`; scenario bulk execution is disabled until re-enabled intentionally.
+4. Gold bulk loading supports `--part all|signals`; scenario bulk execution is
+   disabled until generic scenario execution is validated and re-enabled
+   intentionally.
 5. Standardized layer completion alerts are sent through
    `send_layer_completion_alert`.
 6. Bronze runtime supports turnstile refresh automation through

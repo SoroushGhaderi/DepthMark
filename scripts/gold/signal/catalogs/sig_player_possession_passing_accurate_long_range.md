@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_accurate_long_range
+  table: gold_signals.sig_player_possession_passing_accurate_long_range
   sql: clickhouse/gold/signal/sig_player_possession_passing_accurate_long_range.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_accurate_long_range.py
 ---
@@ -35,7 +35,7 @@ Triggers when a player completes at least 10 accurate long balls with more than 
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_accurate_long_range.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_accurate_long_range.py`
-- Target table: `gold.sig_player_possession_passing_accurate_long_range`
+- Target table: `gold_signals.sig_player_possession_passing_accurate_long_range`
 
 ## Example Execution
 

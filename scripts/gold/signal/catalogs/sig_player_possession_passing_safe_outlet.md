@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_safe_outlet
+  table: gold_signals.sig_player_possession_passing_safe_outlet
   sql: clickhouse/gold/signal/sig_player_possession_passing_safe_outlet.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_safe_outlet.py
 ---
@@ -35,7 +35,7 @@ Triggers when a player attempts more than 50 passes and completes all of them (1
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_safe_outlet.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_safe_outlet.py`
-- Target table: `gold.sig_player_possession_passing_safe_outlet`
+- Target table: `gold_signals.sig_player_possession_passing_safe_outlet`
 
 ## Example Execution
 

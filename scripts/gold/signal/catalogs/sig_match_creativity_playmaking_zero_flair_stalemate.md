@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_zero_flair_stalemate
+  table: gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_zero_flair_stalemate.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_zero_flair_stalemate.py
 ---
@@ -46,7 +46,7 @@ extreme low-flair, low-separation creative stalemate.
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_zero_flair_stalemate.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_zero_flair_stalemate.py`
-- Target table: `gold.sig_match_creativity_playmaking_zero_flair_stalemate`
+- Target table: `gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate`
 
 ## Example Execution
 

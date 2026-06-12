@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_recovery_engine
+  table: gold_signals.sig_player_goalkeeping_defense_recovery_engine
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_recovery_engine.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_recovery_engine.py
 ---
@@ -41,7 +41,7 @@ Flags defender and midfielder performances with elite ball-recovery volume (`>= 
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_recovery_engine.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_recovery_engine.py`
-- Target table: `gold.sig_player_goalkeeping_defense_recovery_engine`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_recovery_engine`
 
 ## Example Execution
 

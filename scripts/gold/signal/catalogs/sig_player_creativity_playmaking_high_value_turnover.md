@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_creativity_playmaking_high_value_turnover
+  table: gold_signals.sig_player_creativity_playmaking_high_value_turnover
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_high_value_turnover.sql
   runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_high_value_turnover.py
 ---
@@ -43,7 +43,7 @@ Detect high-volume key-pass creators whose output was not converted into assists
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_high_value_turnover.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_high_value_turnover.py`
-- Target table: `gold.sig_player_creativity_playmaking_high_value_turnover`
+- Target table: `gold_signals.sig_player_creativity_playmaking_high_value_turnover`
 
 ## Example Execution
 

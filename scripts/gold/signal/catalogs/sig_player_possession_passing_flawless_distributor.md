@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_flawless_distributor
+  table: gold_signals.sig_player_possession_passing_flawless_distributor
   sql: clickhouse/gold/signal/sig_player_possession_passing_flawless_distributor.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_flawless_distributor.py
 ---
@@ -35,7 +35,7 @@ Triggers when a player attempts at least 40 passes and completes every pass, ide
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_flawless_distributor.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_flawless_distributor.py`
-- Target table: `gold.sig_player_possession_passing_flawless_distributor`
+- Target table: `gold_signals.sig_player_possession_passing_flawless_distributor`
 
 ## Example Execution
 

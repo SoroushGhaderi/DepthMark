@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_unbeatable_duelist
+  table: gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_unbeatable_duelist.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_unbeatable_duelist.py
 ---
@@ -43,7 +43,7 @@ Flags defender performances with high-volume and high-efficiency combined duel o
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_unbeatable_duelist.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_unbeatable_duelist.py`
-- Target table: `gold.sig_player_goalkeeping_defense_unbeatable_duelist`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist`
 
 ## Example Execution
 

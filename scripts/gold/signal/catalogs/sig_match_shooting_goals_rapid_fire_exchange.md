@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_rapid_fire_exchange
+  table: gold_signals.sig_match_shooting_goals_rapid_fire_exchange
   sql: clickhouse/gold/signal/sig_match_shooting_goals_rapid_fire_exchange.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_rapid_fire_exchange.py
 ---
@@ -33,7 +33,7 @@ Flag matches with immediate bilateral goal trading (3-minute exchange windows), 
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_rapid_fire_exchange.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_rapid_fire_exchange.py`
-- Target table: `gold.sig_match_shooting_goals_rapid_fire_exchange`
+- Target table: `gold_signals.sig_match_shooting_goals_rapid_fire_exchange`
 
 ## Example Execution
 

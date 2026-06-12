@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_back_pass_heavy
+  table: gold_signals.sig_player_possession_passing_back_pass_heavy
   sql: clickhouse/gold/signal/sig_player_possession_passing_back_pass_heavy.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_back_pass_heavy.py
 ---
@@ -38,7 +38,7 @@ Triggers when a defender or midfielder has more than 70% of passes classified as
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_back_pass_heavy.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_back_pass_heavy.py`
-- Target table: `gold.sig_player_possession_passing_back_pass_heavy`
+- Target table: `gold_signals.sig_player_possession_passing_back_pass_heavy`
 
 ## Example Execution
 

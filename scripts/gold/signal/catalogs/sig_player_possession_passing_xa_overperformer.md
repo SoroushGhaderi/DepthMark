@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_xa_overperformer
+  table: gold_signals.sig_player_possession_passing_xa_overperformer
   sql: clickhouse/gold/signal/sig_player_possession_passing_xa_overperformer.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_xa_overperformer.py
 ---
@@ -36,7 +36,7 @@ Triggers when a player records at least 2 assists with less than 0.5 expected as
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_xa_overperformer.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_xa_overperformer.py`
-- Target table: `gold.sig_player_possession_passing_xa_overperformer`
+- Target table: `gold_signals.sig_player_possession_passing_xa_overperformer`
 
 ## Example Execution
 

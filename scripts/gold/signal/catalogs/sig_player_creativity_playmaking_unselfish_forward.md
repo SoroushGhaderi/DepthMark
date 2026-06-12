@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_creativity_playmaking_unselfish_forward
+  table: gold_signals.sig_player_creativity_playmaking_unselfish_forward
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_unselfish_forward.sql
   runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_unselfish_forward.py
 ---
@@ -41,7 +41,7 @@ Detects forward-led playmaking performances where a striker proxy creates at lea
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_unselfish_forward.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_unselfish_forward.py`
-- Target table: `gold.sig_player_creativity_playmaking_unselfish_forward`
+- Target table: `gold_signals.sig_player_creativity_playmaking_unselfish_forward`
 
 ## Example Execution
 

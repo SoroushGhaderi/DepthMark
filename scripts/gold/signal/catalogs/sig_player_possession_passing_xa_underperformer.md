@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_xa_underperformer
+  table: gold_signals.sig_player_possession_passing_xa_underperformer
   sql: clickhouse/gold/signal/sig_player_possession_passing_xa_underperformer.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_xa_underperformer.py
 ---
@@ -36,7 +36,7 @@ Triggers when a player records more than 1.0 expected assists with 0 actual assi
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_xa_underperformer.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_xa_underperformer.py`
-- Target table: `gold.sig_player_possession_passing_xa_underperformer`
+- Target table: `gold_signals.sig_player_possession_passing_xa_underperformer`
 
 ## Example Execution
 

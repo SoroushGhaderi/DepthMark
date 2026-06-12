@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_shot_per_possession
+  table: gold_signals.sig_team_possession_passing_shot_per_possession
   sql: clickhouse/gold/signal/sig_team_possession_passing_shot_per_possession.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_shot_per_possession.py
 ---
@@ -31,7 +31,7 @@ Detect teams that convert completed passing volume into shooting quickly, define
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_shot_per_possession.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_shot_per_possession.py`
-- Target table: `gold.sig_team_possession_passing_shot_per_possession`
+- Target table: `gold_signals.sig_team_possession_passing_shot_per_possession`
 
 ## Example Execution
 

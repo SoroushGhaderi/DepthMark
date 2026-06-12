@@ -1,5 +1,5 @@
 -- scenario_russian_roulette: matches with heavy penalty-event volatility
-INSERT INTO gold.scenario_russian_roulette
+INSERT INTO gold_scenarios.scenario_russian_roulette
 (
     match_id,
     home_team_id,

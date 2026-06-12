@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_woodwork_frustration_team
+  table: gold_signals.sig_team_shooting_goals_woodwork_frustration_team
   sql: clickhouse/gold/signal/sig_team_shooting_goals_woodwork_frustration_team.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_woodwork_frustration_team.py
 ---
@@ -33,7 +33,7 @@ Detect team matches where one side repeatedly hits the post/crossbar (`>= 3` woo
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_woodwork_frustration_team.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_woodwork_frustration_team.py`
-- Target table: `gold.sig_team_shooting_goals_woodwork_frustration_team`
+- Target table: `gold_signals.sig_team_shooting_goals_woodwork_frustration_team`
 
 ## Example Execution
 

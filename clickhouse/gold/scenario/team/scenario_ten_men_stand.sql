@@ -1,5 +1,5 @@
 -- scenario_ten_men_stand: teams that avoid defeat after going down to ten men
-INSERT INTO gold.scenario_ten_men_stand
+INSERT INTO gold_scenarios.scenario_ten_men_stand
 (
     match_id,
     home_team_id,

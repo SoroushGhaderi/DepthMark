@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_physical_duels_peak
+  table: gold_signals.sig_match_goalkeeping_defense_physical_duels_peak
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_physical_duels_peak.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_physical_duels_peak.py
 ---
@@ -37,7 +37,7 @@ Detects finished matches where total physical duel volume is extreme and emits b
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_physical_duels_peak.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_physical_duels_peak.py`
-- Target table: `gold.sig_match_goalkeeping_defense_physical_duels_peak`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_physical_duels_peak`
 
 ## Example Execution
 

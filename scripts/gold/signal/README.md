@@ -15,6 +15,16 @@ DepthMark also materializes match-grain signal activations into:
 
 - `gold.signal_activations_match`
 
+Row-level activation IDs live in `gold.signal_activations` and use the current
+activation identity scheme:
+
+- `signal_instance_id = SHA256("v1|signal_id|<row_identity values>")`
+- `signal_id_version = 'v1'`
+
+The `v1` value versions the activation identity scheme only. It is not a signal
+definition version and should not change for ordinary SQL, threshold, or catalog
+text edits when `signal_id` and `row_identity` values remain stable.
+
 Assets:
 
 - DDL: `clickhouse/gold/create_table_signal_activations.sql`

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_creativity_playmaking_the_quarterback
+  table: gold_signals.sig_player_creativity_playmaking_the_quarterback
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_the_quarterback.sql
   runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_the_quarterback.py
 ---
@@ -42,7 +42,7 @@ Detect center-back playmakers who drive long-range distribution by completing at
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_the_quarterback.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_the_quarterback.py`
-- Target table: `gold.sig_player_creativity_playmaking_the_quarterback`
+- Target table: `gold_signals.sig_player_creativity_playmaking_the_quarterback`
 
 ## Example Execution
 

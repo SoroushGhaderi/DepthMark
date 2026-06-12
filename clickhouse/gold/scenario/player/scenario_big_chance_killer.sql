@@ -1,5 +1,5 @@
 -- scenario_big_chance_killer: goalkeepers denying multiple big chances in finished matches
-INSERT INTO gold.scenario_big_chance_killer
+INSERT INTO gold_scenarios.scenario_big_chance_killer
 (
     match_id,
     home_team_id,

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_possession_efficiency
+  table: gold_signals.sig_team_possession_passing_possession_efficiency
   sql: clickhouse/gold/signal/sig_team_possession_passing_possession_efficiency.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_possession_efficiency.py
 ---
@@ -31,7 +31,7 @@ Detect teams that score at least 3 goals while holding 40% possession or less, h
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_possession_efficiency.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_possession_efficiency.py`
-- Target table: `gold.sig_team_possession_passing_possession_efficiency`
+- Target table: `gold_signals.sig_team_possession_passing_possession_efficiency`
 
 ## Example Execution
 

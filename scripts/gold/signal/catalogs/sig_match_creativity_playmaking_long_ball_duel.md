@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_long_ball_duel
+  table: gold_signals.sig_match_creativity_playmaking_long_ball_duel
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_long_ball_duel.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_long_ball_duel.py
 ---
@@ -48,7 +48,7 @@ then preserve side-by-side execution and chance-creation context.
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_long_ball_duel.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_long_ball_duel.py`
-- Target table: `gold.sig_match_creativity_playmaking_long_ball_duel`
+- Target table: `gold_signals.sig_match_creativity_playmaking_long_ball_duel`
 
 ## Example Execution
 

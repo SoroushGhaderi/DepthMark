@@ -1,5 +1,5 @@
 -- scenario_lead_by_example: captains leading winning teams with above-average impact
-INSERT INTO gold.scenario_lead_by_example
+INSERT INTO gold_scenarios.scenario_lead_by_example
 (
     -- 1. Match Identity
     match_id,

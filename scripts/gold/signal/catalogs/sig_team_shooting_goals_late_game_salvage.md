@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_late_game_salvage
+  table: gold_signals.sig_team_shooting_goals_late_game_salvage
   sql: clickhouse/gold/signal/sig_team_shooting_goals_late_game_salvage.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_late_game_salvage.py
 ---
@@ -42,7 +42,7 @@ Detect team-level late-game salvage moments where a side scores a tying or winni
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_late_game_salvage.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_late_game_salvage.py`
-- Target table: `gold.sig_team_shooting_goals_late_game_salvage`
+- Target table: `gold_signals.sig_team_shooting_goals_late_game_salvage`
 
 ## Example Execution
 

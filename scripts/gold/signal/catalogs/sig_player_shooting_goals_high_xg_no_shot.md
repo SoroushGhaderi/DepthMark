@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_high_xg_no_shot
+  table: gold_signals.sig_player_shooting_goals_high_xg_no_shot
   sql: clickhouse/gold/signal/sig_player_shooting_goals_high_xg_no_shot.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_high_xg_no_shot.py
 ---
@@ -36,7 +36,7 @@ Flags rare player events where penalty-area occupation is high (`>= 10` oppositi
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_high_xg_no_shot.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_high_xg_no_shot.py`
-- Target table: `gold.sig_player_shooting_goals_high_xg_no_shot`
+- Target table: `gold_signals.sig_player_shooting_goals_high_xg_no_shot`
 
 ## Example Execution
 

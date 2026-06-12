@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_box_siege_survival
+  table: gold_signals.sig_match_goalkeeping_defense_box_siege_survival
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_box_siege_survival.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_box_siege_survival.py
 ---
@@ -40,7 +40,7 @@ box) while keeping a clean sheet.
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_box_siege_survival.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_box_siege_survival.py`
-- Target table: `gold.sig_match_goalkeeping_defense_box_siege_survival`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_box_siege_survival`
 
 ## Example Execution
 

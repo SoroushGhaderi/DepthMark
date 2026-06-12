@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_clearance_machine
+  table: gold_signals.sig_player_goalkeeping_defense_clearance_machine
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_clearance_machine.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_clearance_machine.py
 ---
@@ -41,7 +41,7 @@ box-protection and pressure-release performances.
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_clearance_machine.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_clearance_machine.py`
-- Target table: `gold.sig_player_goalkeeping_defense_clearance_machine`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_clearance_machine`
 
 ## Example Execution
 

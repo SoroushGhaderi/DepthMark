@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_progressive_warfare
+  table: gold_signals.sig_match_creativity_playmaking_progressive_warfare
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_progressive_warfare.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_progressive_warfare.py
 ---
@@ -45,7 +45,7 @@ proxy metrics when explicit progressive-pass counts are not available in current
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_progressive_warfare.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_progressive_warfare.py`
-- Target table: `gold.sig_match_creativity_playmaking_progressive_warfare`
+- Target table: `gold_signals.sig_match_creativity_playmaking_progressive_warfare`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_set_piece_creative_duel
+  table: gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_set_piece_creative_duel.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_set_piece_creative_duel.py
 ---
@@ -48,7 +48,7 @@ Detect finished matches where both teams convert set-piece delivery into direct 
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_set_piece_creative_duel.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_set_piece_creative_duel.py`
-- Target table: `gold.sig_match_creativity_playmaking_set_piece_creative_duel`
+- Target table: `gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel`
 
 ## Example Execution
 

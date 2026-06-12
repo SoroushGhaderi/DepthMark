@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_shot_magnet
+  table: gold_signals.sig_player_shooting_goals_shot_magnet
   sql: clickhouse/gold/signal/sig_player_shooting_goals_shot_magnet.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_shot_magnet.py
 ---
@@ -36,7 +36,7 @@ Flags extreme shot-concentration events where one player takes more than 60% of 
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_shot_magnet.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_shot_magnet.py`
-- Target table: `gold.sig_player_shooting_goals_shot_magnet`
+- Target table: `gold_signals.sig_player_shooting_goals_shot_magnet`
 
 ## Example Execution
 

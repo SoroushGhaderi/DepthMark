@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_high_volume_zero_test
+  table: gold_signals.sig_player_shooting_goals_high_volume_zero_test
   sql: clickhouse/gold/signal/sig_player_shooting_goals_high_volume_zero_test.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_high_volume_zero_test.py
 ---
@@ -38,7 +38,7 @@ Flags high-volume, completely off-frame shooting matches (`total_shots >= 5`, `s
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_high_volume_zero_test.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_high_volume_zero_test.py`
-- Target table: `gold.sig_player_shooting_goals_high_volume_zero_test`
+- Target table: `gold_signals.sig_player_shooting_goals_high_volume_zero_test`
 
 ## Example Execution
 

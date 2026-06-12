@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_long_range_barrage
+  table: gold_signals.sig_team_shooting_goals_long_range_barrage
   sql: clickhouse/gold/signal/sig_team_shooting_goals_long_range_barrage.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_long_range_barrage.py
 ---
@@ -34,7 +34,7 @@ Detect team-level long-range shooting overloads where a side relies heavily on o
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_long_range_barrage.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_long_range_barrage.py`
-- Target table: `gold.sig_team_shooting_goals_long_range_barrage`
+- Target table: `gold_signals.sig_team_shooting_goals_long_range_barrage`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_away_hostility
+  table: gold_signals.sig_team_discipline_cards_away_hostility
   sql: clickhouse/gold/signal/sig_team_discipline_cards_away_hostility.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_away_hostility.py
 ---
@@ -33,7 +33,7 @@ Flags matches where the away side's discipline burden is materially heavier than
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_away_hostility.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_away_hostility.py`
-- Target table: `gold.sig_team_discipline_cards_away_hostility`
+- Target table: `gold_signals.sig_team_discipline_cards_away_hostility`
 
 ## Example Execution
 

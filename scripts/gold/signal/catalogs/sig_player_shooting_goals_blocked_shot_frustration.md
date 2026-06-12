@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_blocked_shot_frustration
+  table: gold_signals.sig_player_shooting_goals_blocked_shot_frustration
   sql: clickhouse/gold/signal/sig_player_shooting_goals_blocked_shot_frustration.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_blocked_shot_frustration.py
 ---
@@ -43,7 +43,7 @@ frustration patterns where finishing opportunities are neutralized before reachi
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_blocked_shot_frustration.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_blocked_shot_frustration.py`
-- Target table: `gold.sig_player_shooting_goals_blocked_shot_frustration`
+- Target table: `gold_signals.sig_player_shooting_goals_blocked_shot_frustration`
 
 ## Example Execution
 

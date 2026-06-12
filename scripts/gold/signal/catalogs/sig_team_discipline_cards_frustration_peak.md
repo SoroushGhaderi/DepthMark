@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_frustration_peak
+  table: gold_signals.sig_team_discipline_cards_frustration_peak
   sql: clickhouse/gold/signal/sig_team_discipline_cards_frustration_peak.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_frustration_peak.py
 ---
@@ -35,7 +35,7 @@ Flags team-match performances where late-game scoreboard pressure (trailing stat
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_frustration_peak.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_frustration_peak.py`
-- Target table: `gold.sig_team_discipline_cards_frustration_peak`
+- Target table: `gold_signals.sig_team_discipline_cards_frustration_peak`
 
 ## Example Execution
 

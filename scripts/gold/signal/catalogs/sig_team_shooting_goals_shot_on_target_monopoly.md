@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_shot_on_target_monopoly
+  table: gold_signals.sig_team_shooting_goals_shot_on_target_monopoly
   sql: clickhouse/gold/signal/sig_team_shooting_goals_shot_on_target_monopoly.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_shot_on_target_monopoly.py
 ---
@@ -34,7 +34,7 @@ Detect team-level matches where one side completely monopolizes on-target shot e
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_shot_on_target_monopoly.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_shot_on_target_monopoly.py`
-- Target table: `gold.sig_team_shooting_goals_shot_on_target_monopoly`
+- Target table: `gold_signals.sig_team_shooting_goals_shot_on_target_monopoly`
 
 ## Example Execution
 

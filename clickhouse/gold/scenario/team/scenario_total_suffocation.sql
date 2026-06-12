@@ -1,5 +1,5 @@
 -- scenario_total_suffocation: extreme territorial control with complete opponent chance suppression
-INSERT INTO gold.scenario_total_suffocation
+INSERT INTO gold_scenarios.scenario_total_suffocation
 (
     match_id,
     home_team_id,

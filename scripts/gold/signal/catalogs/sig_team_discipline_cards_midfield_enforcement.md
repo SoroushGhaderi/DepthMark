@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_midfield_enforcement
+  table: gold_signals.sig_team_discipline_cards_midfield_enforcement
   sql: clickhouse/gold/signal/sig_team_discipline_cards_midfield_enforcement.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_midfield_enforcement.py
 ---
@@ -33,7 +33,7 @@ Flags match-team cases where the central-midfield unit drives a high share of th
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_midfield_enforcement.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_midfield_enforcement.py`
-- Target table: `gold.sig_team_discipline_cards_midfield_enforcement`
+- Target table: `gold_signals.sig_team_discipline_cards_midfield_enforcement`
 
 ## Example Execution
 

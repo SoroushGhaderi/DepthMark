@@ -1,5 +1,5 @@
 -- scenario_clinical_pivot: deep distributors with elite passing volume/precision and controlled final-third progression
-INSERT INTO gold.scenario_clinical_pivot
+INSERT INTO gold_scenarios.scenario_clinical_pivot
 (
     match_id,
     home_team_id,

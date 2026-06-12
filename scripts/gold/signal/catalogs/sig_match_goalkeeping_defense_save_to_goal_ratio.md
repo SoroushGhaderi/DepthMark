@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_save_to_goal_ratio
+  table: gold_signals.sig_match_goalkeeping_defense_save_to_goal_ratio
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_save_to_goal_ratio.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_save_to_goal_ratio.py
 ---
@@ -45,7 +45,7 @@ pressure absorption, and control-state interpretation.
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_save_to_goal_ratio.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_save_to_goal_ratio.py`
-- Target table: `gold.sig_match_goalkeeping_defense_save_to_goal_ratio`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_save_to_goal_ratio`
 
 ## Example Execution
 

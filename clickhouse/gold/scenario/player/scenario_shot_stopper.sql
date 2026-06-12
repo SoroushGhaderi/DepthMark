@@ -1,5 +1,5 @@
 -- scenario_shot_stopper: goalkeepers with high expected-goals prevented
-INSERT INTO gold.scenario_shot_stopper
+INSERT INTO gold_scenarios.scenario_shot_stopper
 (
     -- 1. Match Identity
     match_id,

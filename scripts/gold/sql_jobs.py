@@ -145,7 +145,13 @@ def execute_gold_sql_job(
 
     started_at = time.perf_counter()
     insert_query = job.sql_file.read_text(encoding="utf-8").strip().rstrip(";")
-    insert_query = insert_query.replace("gold.", f"{job.target_db}.")
+    if job.kind == "scenario":
+        insert_query = insert_query.replace(f"{gold_scenarios_db()}.", f"{job.target_db}.")
+        insert_query = insert_query.replace("gold.scenario_", f"{job.target_db}.scenario_")
+    else:
+        insert_query = insert_query.replace(f"{gold_signals_db()}.", f"{job.target_db}.")
+        insert_query = insert_query.replace("gold.sig_", f"{job.target_db}.sig_")
+        insert_query = insert_query.replace("gold.signal_", f"{job.target_db}.signal_")
 
     client.execute(insert_query)
     log.info("Gold %s SQL job completed: %s", job.kind, job.job_id)

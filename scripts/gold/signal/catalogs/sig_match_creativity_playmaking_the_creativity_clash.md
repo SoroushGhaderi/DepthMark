@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_the_creativity_clash
+  table: gold_signals.sig_match_creativity_playmaking_the_creativity_clash
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_the_creativity_clash.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_the_creativity_clash.py
 ---
@@ -47,7 +47,7 @@ capturing bilateral playmaking clashes rather than one-sided chance creation.
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_the_creativity_clash.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_the_creativity_clash.py`
-- Target table: `gold.sig_match_creativity_playmaking_the_creativity_clash`
+- Target table: `gold_signals.sig_match_creativity_playmaking_the_creativity_clash`
 
 ## Example Execution
 

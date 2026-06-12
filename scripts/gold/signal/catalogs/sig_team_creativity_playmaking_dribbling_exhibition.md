@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_dribbling_exhibition
+  table: gold_signals.sig_team_creativity_playmaking_dribbling_exhibition
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_dribbling_exhibition.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_dribbling_exhibition.py
 ---
@@ -51,7 +51,7 @@ a finished match.
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_dribbling_exhibition.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_dribbling_exhibition.py`
-- Target table: `gold.sig_team_creativity_playmaking_dribbling_exhibition`
+- Target table: `gold_signals.sig_team_creativity_playmaking_dribbling_exhibition`
 
 ## Example Execution
 

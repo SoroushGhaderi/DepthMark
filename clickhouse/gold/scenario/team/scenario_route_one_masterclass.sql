@@ -1,5 +1,5 @@
 -- scenario_route_one_masterclass: low-possession teams using direct long-ball routes to generate threat and avoid defeat
-INSERT INTO gold.scenario_route_one_masterclass
+INSERT INTO gold_scenarios.scenario_route_one_masterclass
 (
     match_id,
     home_team_id,

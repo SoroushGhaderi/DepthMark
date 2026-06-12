@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_offside_trap_mastery
+  table: gold_signals.sig_team_goalkeeping_defense_offside_trap_mastery
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_offside_trap_mastery.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_offside_trap_mastery.py
 ---
@@ -36,7 +36,7 @@ Detects team-level high-line defensive execution where a side repeatedly catches
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_offside_trap_mastery.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_offside_trap_mastery.py`
-- Target table: `gold.sig_team_goalkeeping_defense_offside_trap_mastery`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_offside_trap_mastery`
 
 ## Example Execution
 

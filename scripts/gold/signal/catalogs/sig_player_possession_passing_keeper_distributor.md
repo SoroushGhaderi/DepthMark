@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_keeper_distributor
+  table: gold_signals.sig_player_possession_passing_keeper_distributor
   sql: clickhouse/gold/signal/sig_player_possession_passing_keeper_distributor.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_keeper_distributor.py
 ---
@@ -35,7 +35,7 @@ Triggers when a goalkeeper records high short-distribution completion volume (`>
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_keeper_distributor.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_keeper_distributor.py`
-- Target table: `gold.sig_player_possession_passing_keeper_distributor`
+- Target table: `gold_signals.sig_player_possession_passing_keeper_distributor`
 
 ## Example Execution
 

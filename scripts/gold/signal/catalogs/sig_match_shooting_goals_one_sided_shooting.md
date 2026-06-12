@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_one_sided_shooting
+  table: gold_signals.sig_match_shooting_goals_one_sided_shooting
   sql: clickhouse/gold/signal/sig_match_shooting_goals_one_sided_shooting.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_one_sided_shooting.py
 ---
@@ -35,7 +35,7 @@ Detect finished matches where one side owns every on-target attempt (`> 0` vs `0
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_one_sided_shooting.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_one_sided_shooting.py`
-- Target table: `gold.sig_match_shooting_goals_one_sided_shooting`
+- Target table: `gold_signals.sig_match_shooting_goals_one_sided_shooting`
 
 ## Example Execution
 

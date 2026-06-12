@@ -1,5 +1,5 @@
 -- scenario_great_escape: winner was losing at minute 60 and still won
-INSERT INTO gold.scenario_great_escape
+INSERT INTO gold_scenarios.scenario_great_escape
 (
     -- 1. Match Identity
     match_id,

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_dirty_half_dozen
+  table: gold_signals.sig_player_discipline_cards_dirty_half_dozen
   sql: clickhouse/gold/signal/sig_player_discipline_cards_dirty_half_dozen.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_dirty_half_dozen.py
 ---
@@ -35,7 +35,7 @@ Flags players with extreme foul volume and zero tackle wins, surfacing high-cont
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_dirty_half_dozen.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_dirty_half_dozen.py`
-- Target table: `gold.sig_player_discipline_cards_dirty_half_dozen`
+- Target table: `gold_signals.sig_player_discipline_cards_dirty_half_dozen`
 
 ## Example Execution
 

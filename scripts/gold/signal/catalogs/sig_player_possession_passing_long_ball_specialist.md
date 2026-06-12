@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_long_ball_specialist
+  table: gold_signals.sig_player_possession_passing_long_ball_specialist
   sql: clickhouse/gold/signal/sig_player_possession_passing_long_ball_specialist.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_long_ball_specialist.py
 ---
@@ -35,7 +35,7 @@ Triggers when a player completes more than 8 accurate long balls with more than 
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_long_ball_specialist.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_long_ball_specialist.py`
-- Target table: `gold.sig_player_possession_passing_long_ball_specialist`
+- Target table: `gold_signals.sig_player_possession_passing_long_ball_specialist`
 
 ## Example Execution
 

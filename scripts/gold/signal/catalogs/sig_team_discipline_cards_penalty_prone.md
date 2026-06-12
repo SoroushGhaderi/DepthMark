@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_penalty_prone
+  table: gold_signals.sig_team_discipline_cards_penalty_prone
   sql: clickhouse/gold/signal/sig_team_discipline_cards_penalty_prone.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_penalty_prone.py
 ---
@@ -33,7 +33,7 @@ Flags team-match performances where a team concedes at least two penalties, surf
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_penalty_prone.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_penalty_prone.py`
-- Target table: `gold.sig_team_discipline_cards_penalty_prone`
+- Target table: `gold_signals.sig_team_discipline_cards_penalty_prone`
 
 ## Example Execution
 

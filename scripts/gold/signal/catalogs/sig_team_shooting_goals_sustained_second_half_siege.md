@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_sustained_second_half_siege
+  table: gold_signals.sig_team_shooting_goals_sustained_second_half_siege
   sql: clickhouse/gold/signal/sig_team_shooting_goals_sustained_second_half_siege.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_sustained_second_half_siege.py
 ---
@@ -48,7 +48,7 @@ Detect team matches where post-halftime pressure escalates into extreme second-h
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_sustained_second_half_siege.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_sustained_second_half_siege.py`
-- Target table: `gold.sig_team_shooting_goals_sustained_second_half_siege`
+- Target table: `gold_signals.sig_team_shooting_goals_sustained_second_half_siege`
 
 ## Example Execution
 

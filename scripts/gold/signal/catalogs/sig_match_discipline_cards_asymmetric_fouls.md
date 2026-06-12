@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_asymmetric_fouls
+  table: gold_signals.sig_match_discipline_cards_asymmetric_fouls
   sql: clickhouse/gold/signal/sig_match_discipline_cards_asymmetric_fouls.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_asymmetric_fouls.py
 ---
@@ -33,7 +33,7 @@ Flags matches where foul burden is highly concentrated on one side (at least 70%
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_asymmetric_fouls.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_asymmetric_fouls.py`
-- Target table: `gold.sig_match_discipline_cards_asymmetric_fouls`
+- Target table: `gold_signals.sig_match_discipline_cards_asymmetric_fouls`
 
 ## Example Execution
 

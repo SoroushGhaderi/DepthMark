@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_parking_the_bus
+  table: gold_signals.sig_team_goalkeeping_defense_parking_the_bus
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_parking_the_bus.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_parking_the_bus.py
 ---
@@ -39,7 +39,7 @@ Flags low-possession wins built on extreme clearance volume, surfacing compact, 
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_parking_the_bus.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_parking_the_bus.py`
-- Target table: `gold.sig_team_goalkeeping_defense_parking_the_bus`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_parking_the_bus`
 
 ## Example Execution
 

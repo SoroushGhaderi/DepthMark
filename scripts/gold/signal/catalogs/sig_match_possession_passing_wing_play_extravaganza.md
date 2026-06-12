@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_wing_play_extravaganza
+  table: gold_signals.sig_match_possession_passing_wing_play_extravaganza
   sql: clickhouse/gold/signal/sig_match_possession_passing_wing_play_extravaganza.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_wing_play_extravaganza.py
 ---
@@ -32,7 +32,7 @@ Triggers when both teams combine for extreme crossing volume, surfacing wing-dom
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_wing_play_extravaganza.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_wing_play_extravaganza.py`
-- Target table: `gold.sig_match_possession_passing_wing_play_extravaganza`
+- Target table: `gold_signals.sig_match_possession_passing_wing_play_extravaganza`
 
 ## Example Execution
 

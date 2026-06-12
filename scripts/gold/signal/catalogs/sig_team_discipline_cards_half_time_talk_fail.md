@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_half_time_talk_fail
+  table: gold_signals.sig_team_discipline_cards_half_time_talk_fail
   sql: clickhouse/gold/signal/sig_team_discipline_cards_half_time_talk_fail.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_half_time_talk_fail.py
 ---
@@ -34,7 +34,7 @@ Flags team-match performances where a team collects three or more yellow cards i
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_half_time_talk_fail.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_half_time_talk_fail.py`
-- Target table: `gold.sig_team_discipline_cards_half_time_talk_fail`
+- Target table: `gold_signals.sig_team_discipline_cards_half_time_talk_fail`
 
 ## Example Execution
 

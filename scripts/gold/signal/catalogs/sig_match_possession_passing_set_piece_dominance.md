@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_set_piece_dominance
+  table: gold_signals.sig_match_possession_passing_set_piece_dominance
   sql: clickhouse/gold/signal/sig_match_possession_passing_set_piece_dominance.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_set_piece_dominance.py
 ---
@@ -34,7 +34,7 @@ Triggers when restart-led passing volume dominates the match, flagging games whe
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_set_piece_dominance.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_set_piece_dominance.py`
-- Target table: `gold.sig_match_possession_passing_set_piece_dominance`
+- Target table: `gold_signals.sig_match_possession_passing_set_piece_dominance`
 
 ## Example Execution
 

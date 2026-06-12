@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_the_tap_in_merchant
+  table: gold_signals.sig_player_shooting_goals_the_tap_in_merchant
   sql: clickhouse/gold/signal/sig_player_shooting_goals_the_tap_in_merchant.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_the_tap_in_merchant.py
 ---
@@ -36,7 +36,7 @@ Flags multi-goal player outputs (`goals >= 2`) built on high individual chance q
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_the_tap_in_merchant.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_the_tap_in_merchant.py`
-- Target table: `gold.sig_player_shooting_goals_the_tap_in_merchant`
+- Target table: `gold_signals.sig_player_shooting_goals_the_tap_in_merchant`
 
 ## Example Execution
 

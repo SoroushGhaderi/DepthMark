@@ -14,7 +14,7 @@ DepthMark has a clear medallion architecture and strong documentation contracts,
    - Evidence: `import scrape_fotmob` at `[scripts/orchestration/pipeline.py:405]`.
    - Evidence: only `scripts/bronze/scrape_fotmob.py` exists.
    - Impact: orchestration can fail at runtime due to `ModuleNotFoundError`.
-   - Recommended fix: import `scripts.bronze.scrape_fotmob`, `scripts.bronze.load_clickhouse`, `scripts.silver.load_clickhouse`, and `scripts.gold.load_clickhouse_scenarios` (or invoke explicit subprocess paths).
+   - Status update 2026-06-12: resolved by invoking documented layer CLI entry points through subprocesses; see `docs/adr/0002-orchestrate-layer-entrypoints-via-cli.md`.
 
 2. Routine full-table compaction pattern in runtime jobs.
    - Evidence: `[scripts/silver/load_clickhouse.py:108]` runs `OPTIMIZE TABLE ... FINAL DEDUPLICATE`.

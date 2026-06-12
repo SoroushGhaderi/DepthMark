@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_set_piece_threat_volume
+  table: gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_set_piece_threat_volume.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_set_piece_threat_volume.py
 ---
@@ -45,7 +45,7 @@ set-piece chances in a finished match.
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_set_piece_threat_volume.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_set_piece_threat_volume.py`
-- Target table: `gold.sig_team_creativity_playmaking_set_piece_threat_volume`
+- Target table: `gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume`
 
 ## Example Execution
 

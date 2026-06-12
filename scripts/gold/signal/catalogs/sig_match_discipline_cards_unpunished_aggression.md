@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_unpunished_aggression
+  table: gold_signals.sig_match_discipline_cards_unpunished_aggression
   sql: clickhouse/gold/signal/sig_match_discipline_cards_unpunished_aggression.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_unpunished_aggression.py
 ---
@@ -34,7 +34,7 @@ Flags high-event matches where chance quality is strong and whistle volume is hi
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_unpunished_aggression.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_unpunished_aggression.py`
-- Target table: `gold.sig_match_discipline_cards_unpunished_aggression`
+- Target table: `gold_signals.sig_match_discipline_cards_unpunished_aggression`
 
 ## Example Execution
 

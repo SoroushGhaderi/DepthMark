@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_own_goal_drama
+  table: gold_signals.sig_match_shooting_goals_own_goal_drama
   sql: clickhouse/gold/signal/sig_match_shooting_goals_own_goal_drama.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_own_goal_drama.py
 ---
@@ -33,7 +33,7 @@ Detect finished matches with at least one own goal and expose side-oriented scor
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_own_goal_drama.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_own_goal_drama.py`
-- Target table: `gold.sig_match_shooting_goals_own_goal_drama`
+- Target table: `gold_signals.sig_match_shooting_goals_own_goal_drama`
 
 ## Example Execution
 

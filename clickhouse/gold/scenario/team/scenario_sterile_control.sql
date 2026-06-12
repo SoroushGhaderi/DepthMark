@@ -1,5 +1,5 @@
 -- scenario_sterile_control: high-control teams with sterile attacking output
-INSERT INTO gold.scenario_sterile_control
+INSERT INTO gold_scenarios.scenario_sterile_control
 (
     match_id,
     home_team_id,

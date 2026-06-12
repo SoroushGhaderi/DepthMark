@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_defensive_discipline
+  table: gold_signals.sig_team_goalkeeping_defense_defensive_discipline
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_defensive_discipline.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_defensive_discipline.py
 ---
@@ -38,7 +38,7 @@ Detect clean-sheet performances delivered with strong defensive discipline, wher
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_defensive_discipline.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_defensive_discipline.py`
-- Target table: `gold.sig_team_goalkeeping_defense_defensive_discipline`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_defensive_discipline`
 
 ## Example Execution
 

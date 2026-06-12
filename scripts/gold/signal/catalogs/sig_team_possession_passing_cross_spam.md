@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_cross_spam
+  table: gold_signals.sig_team_possession_passing_cross_spam
   sql: clickhouse/gold/signal/sig_team_possession_passing_cross_spam.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_cross_spam.py
 ---
@@ -32,7 +32,7 @@ Detect teams that repeatedly force wide delivery routes through extreme crossing
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_cross_spam.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_cross_spam.py`
-- Target table: `gold.sig_team_possession_passing_cross_spam`
+- Target table: `gold_signals.sig_team_possession_passing_cross_spam`
 
 ## Example Execution
 

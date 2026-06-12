@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_sub_defensive_stability
+  table: gold_signals.sig_player_goalkeeping_defense_sub_defensive_stability
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_sub_defensive_stability.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_sub_defensive_stability.py
 ---
@@ -46,7 +46,7 @@ stability through both clearance volume (`>= 3`) and tackle-winning output (`>= 
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_sub_defensive_stability.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_sub_defensive_stability.py`
-- Target table: `gold.sig_player_goalkeeping_defense_sub_defensive_stability`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_sub_defensive_stability`
 
 ## Example Execution
 

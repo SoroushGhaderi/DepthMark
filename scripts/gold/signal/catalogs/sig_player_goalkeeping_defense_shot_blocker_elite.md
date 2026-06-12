@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_shot_blocker_elite
+  table: gold_signals.sig_player_goalkeeping_defense_shot_blocker_elite
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_shot_blocker_elite.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_shot_blocker_elite.py
 ---
@@ -40,7 +40,7 @@ Flags defenders with elite match-level shot-block volume (`>= 4`), capturing fro
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_shot_blocker_elite.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_shot_blocker_elite.py`
-- Target table: `gold.sig_player_goalkeeping_defense_shot_blocker_elite`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_shot_blocker_elite`
 
 ## Example Execution
 

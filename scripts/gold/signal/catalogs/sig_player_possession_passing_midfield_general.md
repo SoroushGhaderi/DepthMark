@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_midfield_general
+  table: gold_signals.sig_player_possession_passing_midfield_general
   sql: clickhouse/gold/signal/sig_player_possession_passing_midfield_general.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_midfield_general.py
 ---
@@ -36,7 +36,7 @@ Triggers when a player records more than 100 touches in the middle third, identi
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_midfield_general.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_midfield_general.py`
-- Target table: `gold.sig_player_possession_passing_midfield_general`
+- Target table: `gold_signals.sig_player_possession_passing_midfield_general`
 
 ## Example Execution
 

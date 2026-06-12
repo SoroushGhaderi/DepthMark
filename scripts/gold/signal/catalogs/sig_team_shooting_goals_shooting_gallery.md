@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_shooting_gallery
+  table: gold_signals.sig_team_shooting_goals_shooting_gallery
   sql: clickhouse/gold/signal/sig_team_shooting_goals_shooting_gallery.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_shooting_gallery.py
 ---
@@ -32,7 +32,7 @@ Detect extreme shot-volume team matches (25+ attempts) and quantify whether the 
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_shooting_gallery.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_shooting_gallery.py`
-- Target table: `gold.sig_team_shooting_goals_shooting_gallery`
+- Target table: `gold_signals.sig_team_shooting_goals_shooting_gallery`
 
 ## Example Execution
 

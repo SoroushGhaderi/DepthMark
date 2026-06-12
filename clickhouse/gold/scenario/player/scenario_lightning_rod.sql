@@ -1,5 +1,5 @@
 -- scenario_lightning_rod: high-foul-drawing attackers who absorb contact and destabilize defenses
-INSERT INTO gold.scenario_lightning_rod
+INSERT INTO gold_scenarios.scenario_lightning_rod
 (
     -- 1. Match Identity
     match_id,

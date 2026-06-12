@@ -1,5 +1,5 @@
 -- scenario_war_zone: high-discipline-intensity matches
-INSERT INTO gold.scenario_war_zone
+INSERT INTO gold_scenarios.scenario_war_zone
 (
     match_id,
     home_team_id,

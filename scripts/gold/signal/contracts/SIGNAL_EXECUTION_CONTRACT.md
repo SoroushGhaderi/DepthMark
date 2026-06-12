@@ -45,7 +45,7 @@ Operational compatibility:
 Each signal MUST ship as one 4-part package:
 
 1. SQL transform: `clickhouse/gold/signal/sig_<name>.sql`
-2. Target table: `gold.sig_<name>`
+2. Target table: `gold_signals.sig_<name>`
 3. Catalog: `scripts/gold/signal/catalogs/sig_<name>.md`
 4. Catalog index entry in `scripts/gold/signal/catalogs/README.md`
 
@@ -56,7 +56,7 @@ No package is complete unless all 4 parts are present and consistent.
 1. Signal IDs MUST follow `sig_<name>` in `snake_case`.
 2. Prefix MUST be `sig_` only for new work.
 3. SQL filename and table suffix MUST match exactly by `<name>`.
-4. Generic SQL job resolution MUST deterministically map signal id to SQL file (`sig_<name>` -> `sig_<name>.sql`) and target table (`gold.sig_<name>`).
+4. Generic SQL job resolution MUST deterministically map signal id to SQL file (`sig_<name>` -> `sig_<name>.sql`) and target table (`gold_signals.sig_<name>`).
 5. Catalog filename MUST be `catalogs/sig_<name>.md`.
 
 ## Runner Contract
@@ -125,7 +125,7 @@ If the commit cannot be created (for example permissions, conflicts, or policy c
 feat(signal): add sig_<name>
 
 - SQL: clickhouse/gold/signal/sig_<name>.sql
-- Table: gold.sig_<name>
+- Table: gold_signals.sig_<name>
 - Runner: scripts/gold/signal/runners/sig_<name>.py
 - Catalog: scripts/gold/signal/catalogs/sig_<name>.md
 ```
@@ -147,7 +147,7 @@ See `docs/DEVELOPMENT_ARCHITECTURE.md` for migration notes.
 Changed:
 - clickhouse/gold/signal/sig_<old_name>.sql → sig_<new_name>.sql
 - runners/sig_<old_name>.py → runners/sig_<new_name>.py
-- gold.sig_<old_name> → gold.sig_<new_name>
+- gold_signals.sig_<old_name> → gold_signals.sig_<new_name>
 - catalogs/sig_<old_name>.md → catalogs/sig_<new_name>.md
 ```
 

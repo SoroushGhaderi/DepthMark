@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_discipline_meltdown
+  table: gold_signals.sig_team_discipline_cards_discipline_meltdown
   sql: clickhouse/gold/signal/sig_team_discipline_cards_discipline_meltdown.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_discipline_meltdown.py
 ---
@@ -32,7 +32,7 @@ Flags team-match performances with multiple dismissals (two or more red cards), 
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_discipline_meltdown.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_discipline_meltdown.py`
-- Target table: `gold.sig_team_discipline_cards_discipline_meltdown`
+- Target table: `gold_signals.sig_team_discipline_cards_discipline_meltdown`
 
 ## Example Execution
 

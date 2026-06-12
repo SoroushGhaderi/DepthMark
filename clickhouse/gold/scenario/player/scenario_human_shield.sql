@@ -1,5 +1,5 @@
 -- scenario_human_shield: outfield defenders absorbing heavy fire via blocks, clearances, and defensive volume
-INSERT INTO gold.scenario_human_shield
+INSERT INTO gold_scenarios.scenario_human_shield
 (
     match_id,
     home_team_id,

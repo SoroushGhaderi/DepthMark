@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_captain_reprimand
+  table: gold_signals.sig_player_discipline_cards_captain_reprimand
   sql: clickhouse/gold/signal/sig_player_discipline_cards_captain_reprimand.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_captain_reprimand.py
 ---
@@ -36,7 +36,7 @@ Flags matches where the on-field captain is cautioned for dissent/reprimand, pre
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_captain_reprimand.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_captain_reprimand.py`
-- Target table: `gold.sig_player_discipline_cards_captain_reprimand`
+- Target table: `gold_signals.sig_player_discipline_cards_captain_reprimand`
 
 ## Example Execution
 

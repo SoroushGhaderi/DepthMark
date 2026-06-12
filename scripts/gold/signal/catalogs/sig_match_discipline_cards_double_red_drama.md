@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_double_red_drama
+  table: gold_signals.sig_match_discipline_cards_double_red_drama
   sql: clickhouse/gold/signal/sig_match_discipline_cards_double_red_drama.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_double_red_drama.py
 ---
@@ -32,7 +32,7 @@ Flags bilateral dismissal matches where both teams lose at least one player to a
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_double_red_drama.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_double_red_drama.py`
-- Target table: `gold.sig_match_discipline_cards_double_red_drama`
+- Target table: `gold_signals.sig_match_discipline_cards_double_red_drama`
 
 ## Example Execution
 

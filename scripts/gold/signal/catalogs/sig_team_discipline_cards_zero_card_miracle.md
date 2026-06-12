@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_zero_card_miracle
+  table: gold_signals.sig_team_discipline_cards_zero_card_miracle
   sql: clickhouse/gold/signal/sig_team_discipline_cards_zero_card_miracle.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_zero_card_miracle.py
 ---
@@ -33,7 +33,7 @@ Flags team-match performances where foul volume is extreme (20 or more fouls) wh
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_zero_card_miracle.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_zero_card_miracle.py`
-- Target table: `gold.sig_team_discipline_cards_zero_card_miracle`
+- Target table: `gold_signals.sig_team_discipline_cards_zero_card_miracle`
 
 ## Example Execution
 

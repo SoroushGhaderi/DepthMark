@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_cb_playmaker_defense
+  table: gold_signals.sig_player_goalkeeping_defense_cb_playmaker_defense
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_cb_playmaker_defense.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_cb_playmaker_defense.py
 ---
@@ -43,7 +43,7 @@ Flag center-back performances that combine high anticipation output and high dis
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_cb_playmaker_defense.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_cb_playmaker_defense.py`
-- Target table: `gold.sig_player_goalkeeping_defense_cb_playmaker_defense`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_cb_playmaker_defense`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_defensive_masterclass_match
+  table: gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_defensive_masterclass_match.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_defensive_masterclass_match.py
 ---
@@ -38,7 +38,7 @@ symmetrically.
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_defensive_masterclass_match.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_defensive_masterclass_match.py`
-- Target table: `gold.sig_match_goalkeeping_defense_defensive_masterclass_match`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match`
 
 ## Example Execution
 

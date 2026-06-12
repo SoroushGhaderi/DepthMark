@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_brick_wall
+  table: gold_signals.sig_player_goalkeeping_defense_brick_wall
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_brick_wall.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_brick_wall.py
 ---
@@ -44,7 +44,7 @@ control context so analysts can separate elite shot-stopping from low-quality-vo
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_brick_wall.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_brick_wall.py`
-- Target table: `gold.sig_player_goalkeeping_defense_brick_wall`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_brick_wall`
 
 ## Example Execution
 

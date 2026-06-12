@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_goal_fest
+  table: gold_signals.sig_match_shooting_goals_goal_fest
   sql: clickhouse/gold/signal/sig_match_shooting_goals_goal_fest.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_goal_fest.py
 ---
@@ -32,7 +32,7 @@ Flag extreme high-scoring matches (6+ total goals) and expose side-oriented shoo
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_goal_fest.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_goal_fest.py`
-- Target table: `gold.sig_match_shooting_goals_goal_fest`
+- Target table: `gold_signals.sig_match_shooting_goals_goal_fest`
 
 ## Example Execution
 

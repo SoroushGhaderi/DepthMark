@@ -1,5 +1,5 @@
 -- scenario_high_line_trap: teams repeatedly catching opponents offside while suppressing threat and final-third access
-INSERT INTO gold.scenario_high_line_trap
+INSERT INTO gold_scenarios.scenario_high_line_trap
 (
     match_id,
     home_team_id,

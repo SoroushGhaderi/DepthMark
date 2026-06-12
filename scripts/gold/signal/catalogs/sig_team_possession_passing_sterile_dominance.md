@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_sterile_dominance
+  table: gold_signals.sig_team_possession_passing_sterile_dominance
   sql: clickhouse/gold/signal/sig_team_possession_passing_sterile_dominance.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_sterile_dominance.py
 ---
@@ -31,7 +31,7 @@ Detect teams that dominate possession (`>70%`) but create zero big chances, sign
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_sterile_dominance.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_sterile_dominance.py`
-- Target table: `gold.sig_team_possession_passing_sterile_dominance`
+- Target table: `gold_signals.sig_team_possession_passing_sterile_dominance`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_unlikely_creative_source
+  table: gold_signals.sig_team_creativity_playmaking_unlikely_creative_source
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_unlikely_creative_source.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_unlikely_creative_source.py
 ---
@@ -44,7 +44,7 @@ combining for at least two assists in a finished match.
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_unlikely_creative_source.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_unlikely_creative_source.py`
-- Target table: `gold.sig_team_creativity_playmaking_unlikely_creative_source`
+- Target table: `gold_signals.sig_team_creativity_playmaking_unlikely_creative_source`
 
 ## Example Execution
 

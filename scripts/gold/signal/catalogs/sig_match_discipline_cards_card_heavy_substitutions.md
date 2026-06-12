@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_card_heavy_substitutions
+  table: gold_signals.sig_match_discipline_cards_card_heavy_substitutions
   sql: clickhouse/gold/signal/sig_match_discipline_cards_card_heavy_substitutions.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_card_heavy_substitutions.py
 ---
@@ -34,7 +34,7 @@ Flags matches where bench usage is strongly associated with discipline risk, def
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_card_heavy_substitutions.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_card_heavy_substitutions.py`
-- Target table: `gold.sig_match_discipline_cards_card_heavy_substitutions`
+- Target table: `gold_signals.sig_match_discipline_cards_card_heavy_substitutions`
 
 ## Example Execution
 

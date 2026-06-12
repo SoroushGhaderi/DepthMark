@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_crossing_clinic
+  table: gold_signals.sig_team_creativity_playmaking_crossing_clinic
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_crossing_clinic.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_crossing_clinic.py
 ---
@@ -37,7 +37,7 @@ Detect team-level crossing clinics where a side records at least 10 successful c
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_crossing_clinic.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_crossing_clinic.py`
-- Target table: `gold.sig_team_creativity_playmaking_crossing_clinic`
+- Target table: `gold_signals.sig_team_creativity_playmaking_crossing_clinic`
 
 ## Example Execution
 

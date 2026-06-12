@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_one_sided_discipline
+  table: gold_signals.sig_match_discipline_cards_one_sided_discipline
   sql: clickhouse/gold/signal/sig_match_discipline_cards_one_sided_discipline.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_one_sided_discipline.py
 ---
@@ -34,7 +34,7 @@ Flags matches with extreme disciplinary asymmetry, where one side accumulates at
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_one_sided_discipline.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_one_sided_discipline.py`
-- Target table: `gold.sig_match_discipline_cards_one_sided_discipline`
+- Target table: `gold_signals.sig_match_discipline_cards_one_sided_discipline`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_big_chance_fest
+  table: gold_signals.sig_match_creativity_playmaking_big_chance_fest
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_big_chance_fest.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_big_chance_fest.py
 ---
@@ -44,7 +44,7 @@ playmaking-heavy games where both sides repeatedly generate high-value opportuni
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_big_chance_fest.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_big_chance_fest.py`
-- Target table: `gold.sig_match_creativity_playmaking_big_chance_fest`
+- Target table: `gold_signals.sig_match_creativity_playmaking_big_chance_fest`
 
 ## Example Execution
 

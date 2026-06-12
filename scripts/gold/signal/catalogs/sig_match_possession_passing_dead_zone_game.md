@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_dead_zone_game
+  table: gold_signals.sig_match_possession_passing_dead_zone_game
   sql: clickhouse/gold/signal/sig_match_possession_passing_dead_zone_game.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_dead_zone_game.py
 ---
@@ -32,7 +32,7 @@ Triggers matches where both teams fail to generate any opposition-box touches, s
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_dead_zone_game.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_dead_zone_game.py`
-- Target table: `gold.sig_match_possession_passing_dead_zone_game`
+- Target table: `gold_signals.sig_match_possession_passing_dead_zone_game`
 
 ## Example Execution
 

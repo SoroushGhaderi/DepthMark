@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_late_winner_clutch
+  table: gold_signals.sig_player_shooting_goals_late_winner_clutch
   sql: clickhouse/gold/signal/sig_player_shooting_goals_late_winner_clutch.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_late_winner_clutch.py
 ---
@@ -42,7 +42,7 @@ Detects player-level clutch finishing where a player scores the decisive match-w
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_late_winner_clutch.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_late_winner_clutch.py`
-- Target table: `gold.sig_player_shooting_goals_late_winner_clutch`
+- Target table: `gold_signals.sig_player_shooting_goals_late_winner_clutch`
 
 ## Example Execution
 

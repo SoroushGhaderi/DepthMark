@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_heavy_hitter
+  table: gold_signals.sig_player_discipline_cards_heavy_hitter
   sql: clickhouse/gold/signal/sig_player_discipline_cards_heavy_hitter.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_heavy_hitter.py
 ---
@@ -36,7 +36,7 @@ Flags players who combine low tackle efficiency with high foul volume, surfacing
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_heavy_hitter.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_heavy_hitter.py`
-- Target table: `gold.sig_player_discipline_cards_heavy_hitter`
+- Target table: `gold_signals.sig_player_discipline_cards_heavy_hitter`
 
 ## Example Execution
 

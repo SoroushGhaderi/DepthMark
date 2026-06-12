@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_high_press_victim
+  table: gold_signals.sig_team_possession_passing_high_press_victim
   sql: clickhouse/gold/signal/sig_team_possession_passing_high_press_victim.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_high_press_victim.py
 ---
@@ -31,7 +31,7 @@ Triggers when a team's pass accuracy drops below 70% as a proxy for defensive-th
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_high_press_victim.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_high_press_victim.py`
-- Target table: `gold.sig_team_possession_passing_high_press_victim`
+- Target table: `gold_signals.sig_team_possession_passing_high_press_victim`
 
 ## Example Execution
 

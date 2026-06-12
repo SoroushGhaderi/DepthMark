@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_heavy_rotation
+  table: gold_signals.sig_match_possession_passing_heavy_rotation
   sql: clickhouse/gold/signal/sig_match_possession_passing_heavy_rotation.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_heavy_rotation.py
 ---
@@ -32,7 +32,7 @@ Triggers when a match has very high total touch volume but no individual touch m
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_heavy_rotation.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_heavy_rotation.py`
-- Target table: `gold.sig_match_possession_passing_heavy_rotation`
+- Target table: `gold_signals.sig_match_possession_passing_heavy_rotation`
 
 ## Example Execution
 

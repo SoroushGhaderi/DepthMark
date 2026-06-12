@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_no_penetration_match
+  table: gold_signals.sig_match_goalkeeping_defense_no_penetration_match
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_no_penetration_match.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_no_penetration_match.py
 ---
@@ -37,7 +37,7 @@ side-oriented rows to profile defensive denial, box protection workload, and mat
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_no_penetration_match.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_no_penetration_match.py`
-- Target table: `gold.sig_match_goalkeeping_defense_no_penetration_match`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_no_penetration_match`
 
 ## Example Execution
 

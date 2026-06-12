@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_physical_showdown
+  table: gold_signals.sig_match_discipline_cards_physical_showdown
   sql: clickhouse/gold/signal/sig_match_discipline_cards_physical_showdown.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_physical_showdown.py
 ---
@@ -34,7 +34,7 @@ Flags match-team cases where card pressure is fully distributed across a side's 
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_physical_showdown.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_physical_showdown.py`
-- Target table: `gold.sig_match_discipline_cards_physical_showdown`
+- Target table: `gold_signals.sig_match_discipline_cards_physical_showdown`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_substituted_scoring_fest
+  table: gold_signals.sig_match_shooting_goals_substituted_scoring_fest
   sql: clickhouse/gold/signal/sig_match_shooting_goals_substituted_scoring_fest.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_substituted_scoring_fest.py
 ---
@@ -34,7 +34,7 @@ Detect matches where at least three different substitutes score non-own goals, t
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_substituted_scoring_fest.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_substituted_scoring_fest.py`
-- Target table: `gold.sig_match_shooting_goals_substituted_scoring_fest`
+- Target table: `gold_signals.sig_match_shooting_goals_substituted_scoring_fest`
 
 ## Example Execution
 

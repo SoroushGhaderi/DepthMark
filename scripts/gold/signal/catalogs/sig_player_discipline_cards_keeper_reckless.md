@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_keeper_reckless
+  table: gold_signals.sig_player_discipline_cards_keeper_reckless
   sql: clickhouse/gold/signal/sig_player_discipline_cards_keeper_reckless.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_keeper_reckless.py
 ---
@@ -36,7 +36,7 @@ Flags goalkeeper bookings (yellow/red) to surface discipline breakdowns in the l
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_keeper_reckless.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_keeper_reckless.py`
-- Target table: `gold.sig_player_discipline_cards_keeper_reckless`
+- Target table: `gold_signals.sig_player_discipline_cards_keeper_reckless`
 
 ## Example Execution
 

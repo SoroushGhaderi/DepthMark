@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_unbroken_structure
+  table: gold_signals.sig_team_goalkeeping_defense_unbroken_structure
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_unbroken_structure.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_unbroken_structure.py
 ---
@@ -49,7 +49,7 @@ scoreline context.
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_unbroken_structure.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_unbroken_structure.py`
-- Target table: `gold.sig_team_goalkeeping_defense_unbroken_structure`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_unbroken_structure`
 
 ## Example Execution
 

@@ -1,5 +1,5 @@
 -- scenario_against_the_grain: high-control passing performances delivered under adverse possession contexts
-INSERT INTO gold.scenario_against_the_grain
+INSERT INTO gold_scenarios.scenario_against_the_grain
 (
     match_id,
     home_team_id,

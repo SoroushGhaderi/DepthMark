@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_complete_dominance
+  table: gold_signals.sig_match_shooting_goals_complete_dominance
   sql: clickhouse/gold/signal/sig_match_shooting_goals_complete_dominance.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_complete_dominance.py
 ---
@@ -35,7 +35,7 @@ Detect extreme one-sided chance-quality control where one team generates at leas
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_complete_dominance.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_complete_dominance.py`
-- Target table: `gold.sig_match_shooting_goals_complete_dominance`
+- Target table: `gold_signals.sig_match_shooting_goals_complete_dominance`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_late_surge_goals
+  table: gold_signals.sig_team_shooting_goals_late_surge_goals
   sql: clickhouse/gold/signal/sig_team_shooting_goals_late_surge_goals.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_late_surge_goals.py
 ---
@@ -33,7 +33,7 @@ Detect team-level late-match scoring bursts where a side scores at least two non
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_late_surge_goals.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_late_surge_goals.py`
-- Target table: `gold.sig_team_shooting_goals_late_surge_goals`
+- Target table: `gold_signals.sig_team_shooting_goals_late_surge_goals`
 
 ## Example Execution
 

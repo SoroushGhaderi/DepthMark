@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_shot_shy
+  table: gold_signals.sig_team_shooting_goals_shot_shy
   sql: clickhouse/gold/signal/sig_team_shooting_goals_shot_shy.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_shot_shy.py
 ---
@@ -34,7 +34,7 @@ Detect team-level half-game attacking droughts where a side fails to take a sing
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_shot_shy.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_shot_shy.py`
-- Target table: `gold.sig_team_shooting_goals_shot_shy`
+- Target table: `gold_signals.sig_team_shooting_goals_shot_shy`
 
 ## Example Execution
 

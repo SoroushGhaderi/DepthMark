@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_penalty_stopper
+  table: gold_signals.sig_player_goalkeeping_defense_penalty_stopper
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_penalty_stopper.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_penalty_stopper.py
 ---
@@ -45,7 +45,7 @@ Flags goalkeepers who save at least one penalty in a finished match, then enrich
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_penalty_stopper.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_penalty_stopper.py`
-- Target table: `gold.sig_player_goalkeeping_defense_penalty_stopper`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_penalty_stopper`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_total_implosion
+  table: gold_signals.sig_team_discipline_cards_total_implosion
   sql: clickhouse/gold/signal/sig_team_discipline_cards_total_implosion.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_total_implosion.py
 ---
@@ -34,7 +34,7 @@ Flags team-match rows where dismissal concentration reaches two or more red card
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_total_implosion.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_total_implosion.py`
-- Target table: `gold.sig_team_discipline_cards_total_implosion`
+- Target table: `gold_signals.sig_team_discipline_cards_total_implosion`
 
 ## Example Execution
 

@@ -1,5 +1,5 @@
 -- scenario_elite_shot_stopper: primary goalkeepers with elite save volume and high xG faced in clean sheets
-INSERT INTO gold.scenario_elite_shot_stopper
+INSERT INTO gold_scenarios.scenario_elite_shot_stopper
 (
     -- 1. Match Identity
     match_id,

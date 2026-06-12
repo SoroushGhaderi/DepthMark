@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_blood_and_thunder
+  table: gold_signals.sig_match_discipline_cards_blood_and_thunder
   sql: clickhouse/gold/signal/sig_match_discipline_cards_blood_and_thunder.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_blood_and_thunder.py
 ---
@@ -34,7 +34,7 @@ Flags matches with sustained physical contest volume and elevated whistle pressu
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_blood_and_thunder.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_blood_and_thunder.py`
-- Target table: `gold.sig_match_discipline_cards_blood_and_thunder`
+- Target table: `gold_signals.sig_match_discipline_cards_blood_and_thunder`
 
 ## Example Execution
 

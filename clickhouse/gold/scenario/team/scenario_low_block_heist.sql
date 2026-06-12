@@ -1,5 +1,5 @@
 -- scenario_low_block_heist: low-possession winner takes the match
-INSERT INTO gold.scenario_low_block_heist
+INSERT INTO gold_scenarios.scenario_low_block_heist
 (
     -- 1. Match Identity
     match_id,

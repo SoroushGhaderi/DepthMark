@@ -5,7 +5,9 @@ architecture:
 
 - Bronze: raw FotMob API responses on disk plus raw ClickHouse `bronze.*` tables
 - Silver: cleaned and conformed ClickHouse `silver.*` tables
-- Gold: scenario tables in ClickHouse `gold_scenarios.*` and signal tables in `gold_signals.*` for product and analytics use
+- Gold: scenario tables in ClickHouse `gold_scenarios.*`, signal tables in
+  `gold_signals.*`, and shared activation metadata in `gold.*` for product and
+  analytics use
 
 ```text
 FotMob API
@@ -14,10 +16,16 @@ FotMob API
   -> silver.*              cleaned analytical tables
   -> gold_scenarios.*      scenario outputs
   -> gold_signals.*        signal outputs
+  -> gold.*                shared Gold metadata and activation tables
 ```
 
 Bronze is the only filesystem-backed data layer. Silver and Gold exist only in
 ClickHouse.
+
+Gold uses separate ClickHouse namespaces for scenario outputs, signal outputs,
+and shared metadata. Scenario SQL targets `gold_scenarios.scenario_*`; scenario
+bulk execution remains disabled until generic scenario execution is validated
+and re-enabled intentionally.
 
 ## Prerequisites
 
@@ -34,6 +42,7 @@ git clone <repository-url>
 cd depthmark
 cp .env.example .env
 # edit .env and set FOTMOB_X_MAS_TOKEN, ClickHouse, and MongoDB values
+# keep DEPTHMARK_ENV=local only for the tracked local Docker workflow
 
 docker-compose -f docker/docker-compose.yml up -d
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/orchestration/setup_clickhouse.py
@@ -49,14 +58,25 @@ docker-compose -f docker/docker-compose.clickhouse.yml exec clickhouse clickhous
 
 ## Configuration
 
+The tracked Docker Compose files are local-development manifests. They expose
+database ports and keep local bootstrap defaults for convenience; do not use
+them as production deployment manifests.
+
+Use `DEPTHMARK_ENV=local` for local Docker development. Outside local
+development, set `DEPTHMARK_ENV=production` and provide non-empty, non-default
+database credentials. ClickHouse setup rejects empty, placeholder, or known
+local-dev passwords outside local development and does not use the empty-password
+`default` user bootstrap path.
+
 Minimum useful `.env` values:
 
 ```bash
 FOTMOB_X_MAS_TOKEN=your_token_here
+DEPTHMARK_ENV=local
 CLICKHOUSE_HOST=clickhouse
 CLICKHOUSE_PORT=8123
 CLICKHOUSE_USER=fotmob_user
-CLICKHOUSE_PASSWORD=fotmob_pass
+CLICKHOUSE_PASSWORD=your_clickhouse_password_here
 MONGODB_HOST=mongodb
 MONGODB_PORT=27017
 MONGODB_USER=orbit_admin
@@ -120,7 +140,9 @@ docker-compose -f docker/docker-compose.yml exec scraper python scripts/quality/
 ## MongoDB Signal Catalog
 
 Signal metadata is authored in markdown frontmatter under
-`scripts/gold/signal/catalogs/*.md`. Sync it into MongoDB with:
+`scripts/gold/signal/catalogs/*.md`. These markdown catalogs are the source of
+truth; MongoDB is a synchronized serving/query copy. Sync catalogs into MongoDB
+with:
 
 ```bash
 python scripts/mongodb/init_indexes.py
@@ -128,9 +150,10 @@ python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/mongodb/sync_signal_catalogs.py
 ```
 
-The sync stores queryable metadata fields, the full frontmatter object, the
-markdown body, the relative source path, and embedded SQL/runner asset contents
-with hashes for integrity checks.
+The sync validates required frontmatter, including `asset_paths.table` values in
+the `gold_signals.<signal_id>` namespace. It stores queryable metadata fields,
+the full frontmatter object, the markdown body, the relative source path, and
+embedded SQL/runner asset contents with hashes for integrity checks.
 
 `row_identity` in each signal catalog is the canonical per-row identity used for
 deterministic activation IDs. Typical values are:
@@ -142,7 +165,10 @@ DepthMark also materializes per-match signal activations in
 `gold.signal_activations` using a deterministic hash key:
 
 - `signal_instance_id = SHA256(\"v1|signal_id|<row_identity values>\")`
-- version prefix (`v1`) keeps IDs stable and enables future controlled upgrades
+- version prefix (`v1`) is the activation identity scheme version, not the
+  signal-definition version
+- IDs stay stable across reruns and ordinary signal SQL/catalog changes when
+  `signal_id` and `row_identity` values are unchanged
 - Parsed `signal_id` structure is also stored:
   - `signal_prefix` (for example `sig`)
   - `signal_entity` (for example `match`, `team`, `player`)

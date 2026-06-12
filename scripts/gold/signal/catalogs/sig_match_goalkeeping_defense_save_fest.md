@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_save_fest
+  table: gold_signals.sig_match_goalkeeping_defense_save_fest
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_save_fest.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_save_fest.py
 ---
@@ -32,7 +32,7 @@ Detect matches with extreme combined shot-stopping load and emit bilateral, side
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_save_fest.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_save_fest.py`
-- Target table: `gold.sig_match_goalkeeping_defense_save_fest`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_save_fest`
 
 ## Example Execution
 

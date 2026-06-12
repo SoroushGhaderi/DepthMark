@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_creativity_playmaking_cross_perfection
+  table: gold_signals.sig_player_creativity_playmaking_cross_perfection
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_cross_perfection.sql
   runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_cross_perfection.py
 ---
@@ -48,7 +48,7 @@ least five accurate crosses with no failed crosses.
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_cross_perfection.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_cross_perfection.py`
-- Target table: `gold.sig_player_creativity_playmaking_cross_perfection`
+- Target table: `gold_signals.sig_player_creativity_playmaking_cross_perfection`
 
 ## Example Execution
 

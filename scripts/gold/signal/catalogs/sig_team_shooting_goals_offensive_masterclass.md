@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_offensive_masterclass
+  table: gold_signals.sig_team_shooting_goals_offensive_masterclass
   sql: clickhouse/gold/signal/sig_team_shooting_goals_offensive_masterclass.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_offensive_masterclass.py
 ---
@@ -33,7 +33,7 @@ Detect team matches where average chance quality per shot is elite (`xG per shot
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_offensive_masterclass.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_offensive_masterclass.py`
-- Target table: `gold.sig_team_shooting_goals_offensive_masterclass`
+- Target table: `gold_signals.sig_team_shooting_goals_offensive_masterclass`
 
 ## Example Execution
 

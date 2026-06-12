@@ -40,7 +40,7 @@ def main(argv=None) -> int:
 
     insert_query = SQL_FILE.read_text(encoding="utf-8").strip().rstrip(";")
     target_db = os.getenv("CLICKHOUSE_GOLD_TARGET_DB", gold_scenarios_db())
-    insert_query = insert_query.replace("gold.", f"{target_db}.")
+    insert_query = insert_query.replace(f"{gold_scenarios_db()}.", f"{target_db}.")
     target_table = TARGET_TABLE.replace(gold_scenarios_db(), target_db)
 
     client = ClickHouseClient(

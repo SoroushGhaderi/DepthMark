@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_dribble_fest
+  table: gold_signals.sig_match_possession_passing_dribble_fest
   sql: clickhouse/gold/signal/sig_match_possession_passing_dribble_fest.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_dribble_fest.py
 ---
@@ -31,7 +31,7 @@ Triggers matches with very high combined successful dribble volume, identifying 
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_dribble_fest.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_dribble_fest.py`
-- Target table: `gold.sig_match_possession_passing_dribble_fest`
+- Target table: `gold_signals.sig_match_possession_passing_dribble_fest`
 
 ## Example Execution
 

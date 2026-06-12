@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_man_down_resilience
+  table: gold_signals.sig_team_discipline_cards_man_down_resilience
   sql: clickhouse/gold/signal/sig_team_discipline_cards_man_down_resilience.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_man_down_resilience.py
 ---
@@ -33,7 +33,7 @@ Flags team-match performances where a side suffers an early red card (minute <= 
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_man_down_resilience.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_man_down_resilience.py`
-- Target table: `gold.sig_team_discipline_cards_man_down_resilience`
+- Target table: `gold_signals.sig_team_discipline_cards_man_down_resilience`
 
 ## Example Execution
 

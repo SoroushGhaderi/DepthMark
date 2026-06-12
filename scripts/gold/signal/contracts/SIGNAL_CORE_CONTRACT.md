@@ -93,7 +93,10 @@ All assets produced under this contract MUST conform to those rules.
 
 File: `clickhouse/gold/signal/sig_<name>.sql`
 
-1. SQL MUST be `INSERT INTO gold.sig_<name> (...) SELECT ...`.
+1. SQL MUST target `gold_signals.sig_<name>` for signal output tables.
+   Legacy `INSERT INTO gold.sig_<name>` files are translated by the generic
+   runner during migration, but new signal work SHOULD use the canonical
+   `gold_signals` namespace.
 2. SQL MUST NOT include DDL (`CREATE`, `ALTER`, `DROP`).
 3. All source tables MUST be schema-qualified (`bronze.*`, `silver.*`, `gold.*`).
 4. `match_id` MUST be present in final rows and MUST be valid (`NOT NULL`, `> 0`).
@@ -176,7 +179,7 @@ Additional rules:
      - match_id
      - triggered_side
    asset_paths:
-     table: gold.sig_<name>
+     table: gold_signals.sig_<name>
      sql: clickhouse/gold/signal/sig_<name>.sql
      runner: scripts/gold/signal/runners/sig_<name>.py
    ---
@@ -201,8 +204,10 @@ Additional rules:
 4. `row_identity` MUST list stable deduplication identity for final rows:
    - Team-triggered signals SHOULD use `match_id` and `triggered_side`.
    - Player-triggered signals SHOULD use `match_id`, `triggered_player_id`, and `triggered_team_id`.
+   - Changing `row_identity` for an existing signal changes activation identity
+     and MUST be treated as an explicit migration decision.
 5. Asset paths SHOULD follow convention and MUST match actual package files:
-   - table: `gold.<signal_id>`
+   - table: `gold_signals.<signal_id>`
    - SQL path: `clickhouse/gold/signal/<signal_id>.sql`
    - runner path: `scripts/gold/run_sql_job.py`
 6. Catalogs MUST reference SQL by path and MUST NOT embed full SQL bodies.

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_referee_showdown
+  table: gold_signals.sig_match_discipline_cards_referee_showdown
   sql: clickhouse/gold/signal/sig_match_discipline_cards_referee_showdown.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_referee_showdown.py
 ---
@@ -33,7 +33,7 @@ Flags matches where both captains are carded, surfacing leadership-level discipl
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_referee_showdown.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_referee_showdown.py`
-- Target table: `gold.sig_match_discipline_cards_referee_showdown`
+- Target table: `gold_signals.sig_match_discipline_cards_referee_showdown`
 
 ## Example Execution
 

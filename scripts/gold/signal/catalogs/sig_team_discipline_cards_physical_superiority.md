@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_physical_superiority
+  table: gold_signals.sig_team_discipline_cards_physical_superiority
   sql: clickhouse/gold/signal/sig_team_discipline_cards_physical_superiority.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_physical_superiority.py
 ---
@@ -33,7 +33,7 @@ Flags team-match cases where a side controls the duel battle (at least 65% duel-
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_physical_superiority.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_physical_superiority.py`
-- Target table: `gold.sig_team_discipline_cards_physical_superiority`
+- Target table: `gold_signals.sig_team_discipline_cards_physical_superiority`
 
 ## Example Execution
 

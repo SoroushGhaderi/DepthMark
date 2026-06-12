@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_playmaker_to_striker_connection
+  table: gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_playmaker_to_striker_connection.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_playmaker_to_striker_connection.py
 ---
@@ -49,7 +49,7 @@ with repeated direct goal-link connection to a specific teammate.
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_playmaker_to_striker_connection.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_playmaker_to_striker_connection.py`
-- Target table: `gold.sig_match_creativity_playmaking_playmaker_to_striker_connection`
+- Target table: `gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection`
 
 ## Example Execution
 

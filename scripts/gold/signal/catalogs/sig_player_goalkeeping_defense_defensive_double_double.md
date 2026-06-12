@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_defensive_double_double
+  table: gold_signals.sig_player_goalkeeping_defense_defensive_double_double
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_defensive_double_double.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_defensive_double_double.py
 ---
@@ -41,7 +41,7 @@ Flags outfield players who deliver a dual defensive peak in both tackling and in
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_defensive_double_double.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_defensive_double_double.py`
-- Target table: `gold.sig_player_goalkeeping_defense_defensive_double_double`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_defensive_double_double`
 
 ## Example Execution
 

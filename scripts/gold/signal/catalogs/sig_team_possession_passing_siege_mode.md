@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_siege_mode
+  table: gold_signals.sig_team_possession_passing_siege_mode
   sql: clickhouse/gold/signal/sig_team_possession_passing_siege_mode.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_siege_mode.py
 ---
@@ -31,7 +31,7 @@ Triggers when a team sustains more than 80% full-match possession, indicating to
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_siege_mode.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_siege_mode.py`
-- Target table: `gold.sig_team_possession_passing_siege_mode`
+- Target table: `gold_signals.sig_team_possession_passing_siege_mode`
 
 ## Example Execution
 

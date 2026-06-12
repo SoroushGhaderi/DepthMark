@@ -1,5 +1,6 @@
 # DepthMark - ClickHouse only Docker Compose
 # Standalone database service without scraper/scheduler containers
+# Local development only: do not use this compose file as a production manifest.
 
 name: depthmark-clickhouse
 
@@ -14,9 +15,10 @@ services:
       - clickhouse_data:/var/lib/clickhouse
       - clickhouse_logs:/var/log/clickhouse-server
     environment:
+      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
       CLICKHOUSE_DB: fotmob
-      CLICKHOUSE_USER: fotmob_user
-      CLICKHOUSE_PASSWORD: fotmob_pass
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ulimits:
       nofile:

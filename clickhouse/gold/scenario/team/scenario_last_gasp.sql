@@ -1,5 +1,5 @@
 -- scenario_last_gasp: late winner after minute 85 from draw/losing state
-INSERT INTO gold.scenario_last_gasp
+INSERT INTO gold_scenarios.scenario_last_gasp
 (
     -- 1. Match Identity
     match_id,

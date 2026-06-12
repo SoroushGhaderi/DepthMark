@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_territorial_dominance
+  table: gold_signals.sig_team_possession_passing_territorial_dominance
   sql: clickhouse/gold/signal/sig_team_possession_passing_territorial_dominance.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_territorial_dominance.py
 ---
@@ -32,7 +32,7 @@ Detect team-level territorial dominance where repeated opposition-box occupation
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_territorial_dominance.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_territorial_dominance.py`
-- Target table: `gold.sig_team_possession_passing_territorial_dominance`
+- Target table: `gold_signals.sig_team_possession_passing_territorial_dominance`
 
 ## Example Execution
 

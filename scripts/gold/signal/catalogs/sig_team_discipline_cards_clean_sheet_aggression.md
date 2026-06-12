@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_clean_sheet_aggression
+  table: gold_signals.sig_team_discipline_cards_clean_sheet_aggression
   sql: clickhouse/gold/signal/sig_team_discipline_cards_clean_sheet_aggression.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_clean_sheet_aggression.py
 ---
@@ -34,7 +34,7 @@ Flags team-match performances where a side wins to nil while accumulating a heav
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_clean_sheet_aggression.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_clean_sheet_aggression.py`
-- Target table: `gold.sig_team_discipline_cards_clean_sheet_aggression`
+- Target table: `gold_signals.sig_team_discipline_cards_clean_sheet_aggression`
 
 ## Example Execution
 

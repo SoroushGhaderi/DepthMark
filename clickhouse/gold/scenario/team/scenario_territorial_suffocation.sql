@@ -1,5 +1,5 @@
 -- scenario_territorial_suffocation: possession-led territorial domination that suppresses opponent box access and on-target threat
-INSERT INTO gold.scenario_territorial_suffocation
+INSERT INTO gold_scenarios.scenario_territorial_suffocation
 (
     match_id,
     home_team_id,

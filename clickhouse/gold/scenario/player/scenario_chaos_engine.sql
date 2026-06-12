@@ -1,5 +1,5 @@
 -- scenario_chaos_engine: disruptor profiles with defensive aggression, attacking-zone presence, and team shot context
-INSERT INTO gold.scenario_chaos_engine
+INSERT INTO gold_scenarios.scenario_chaos_engine
 (
     match_id,
     home_team_id,

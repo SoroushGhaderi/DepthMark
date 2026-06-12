@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_possession_stalemate
+  table: gold_signals.sig_match_possession_passing_possession_stalemate
   sql: clickhouse/gold/signal/sig_match_possession_passing_possession_stalemate.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_possession_stalemate.py
 ---
@@ -31,7 +31,7 @@ Triggers when both teams finish the match with exactly 50% possession, flagging 
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_possession_stalemate.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_possession_stalemate.py`
-- Target table: `gold.sig_match_possession_passing_possession_stalemate`
+- Target table: `gold_signals.sig_match_possession_passing_possession_stalemate`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_set_piece_focus
+  table: gold_signals.sig_team_possession_passing_set_piece_focus
   sql: clickhouse/gold/signal/sig_team_possession_passing_set_piece_focus.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_set_piece_focus.py
 ---
@@ -33,7 +33,7 @@ Detect teams that concentrate match attacking pressure into repeated corner-winn
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_set_piece_focus.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_set_piece_focus.py`
-- Target table: `gold.sig_team_possession_passing_set_piece_focus`
+- Target table: `gold_signals.sig_team_possession_passing_set_piece_focus`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_high_velocity_finisher
+  table: gold_signals.sig_player_shooting_goals_high_velocity_finisher
   sql: clickhouse/gold/signal/sig_player_shooting_goals_high_velocity_finisher.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_high_velocity_finisher.py
 ---
@@ -36,7 +36,7 @@ Flags players who score at least two goals in fewer than 30 played minutes, isol
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_high_velocity_finisher.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_high_velocity_finisher.py`
-- Target table: `gold.sig_player_shooting_goals_high_velocity_finisher`
+- Target table: `gold_signals.sig_player_shooting_goals_high_velocity_finisher`
 
 ## Example Execution
 

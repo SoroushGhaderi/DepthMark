@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_walking_tightrope
+  table: gold_signals.sig_player_discipline_cards_walking_tightrope
   sql: clickhouse/gold/signal/sig_player_discipline_cards_walking_tightrope.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_walking_tightrope.py
 ---
@@ -39,7 +39,7 @@ Flags players who are booked early (before minute 20), indicating immediate disc
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_walking_tightrope.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_walking_tightrope.py`
-- Target table: `gold.sig_player_discipline_cards_walking_tightrope`
+- Target table: `gold_signals.sig_player_discipline_cards_walking_tightrope`
 
 ## Example Execution
 

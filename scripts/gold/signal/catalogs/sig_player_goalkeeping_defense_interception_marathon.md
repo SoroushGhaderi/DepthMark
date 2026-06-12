@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_interception_marathon
+  table: gold_signals.sig_player_goalkeeping_defense_interception_marathon
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_interception_marathon.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_interception_marathon.py
 ---
@@ -46,7 +46,7 @@ defensive context, while making source-grain proxy assumptions explicit for repr
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_interception_marathon.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_interception_marathon.py`
-- Target table: `gold.sig_player_goalkeeping_defense_interception_marathon`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_interception_marathon`
 
 ## Example Execution
 

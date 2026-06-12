@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_first_half_frenzy
+  table: gold_signals.sig_team_discipline_cards_first_half_frenzy
   sql: clickhouse/gold/signal/sig_team_discipline_cards_first_half_frenzy.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_first_half_frenzy.py
 ---
@@ -35,7 +35,7 @@ Flags team-match performances where a side accumulates four or more yellow/red c
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_first_half_frenzy.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_first_half_frenzy.py`
-- Target table: `gold.sig_team_discipline_cards_first_half_frenzy`
+- Target table: `gold_signals.sig_team_discipline_cards_first_half_frenzy`
 
 ## Example Execution
 

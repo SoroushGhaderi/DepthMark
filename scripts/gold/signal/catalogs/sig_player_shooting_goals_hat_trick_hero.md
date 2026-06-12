@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_hat_trick_hero
+  table: gold_signals.sig_player_shooting_goals_hat_trick_hero
   sql: clickhouse/gold/signal/sig_player_shooting_goals_hat_trick_hero.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_hat_trick_hero.py
 ---
@@ -40,7 +40,7 @@ Detects player-level hat-trick performances (`>= 3` goals) and preserves bilater
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_hat_trick_hero.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_hat_trick_hero.py`
-- Target table: `gold.sig_player_shooting_goals_hat_trick_hero`
+- Target table: `gold_signals.sig_player_shooting_goals_hat_trick_hero`
 
 ## Example Execution
 

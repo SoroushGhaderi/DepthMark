@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_failed_penetration
+  table: gold_signals.sig_team_possession_passing_failed_penetration
   sql: clickhouse/gold/signal/sig_team_possession_passing_failed_penetration.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_failed_penetration.py
 ---
@@ -31,7 +31,7 @@ Detects matches where a team records high opponent-box touch volume without conv
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_failed_penetration.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_failed_penetration.py`
-- Target table: `gold.sig_team_possession_passing_failed_penetration`
+- Target table: `gold_signals.sig_team_possession_passing_failed_penetration`
 
 ## Example Execution
 

@@ -1,5 +1,5 @@
 -- scenario_young_gun: high-impact young starters with above-average ratings
-INSERT INTO gold.scenario_young_gun
+INSERT INTO gold_scenarios.scenario_young_gun
 (
     match_id,
     home_team_id,

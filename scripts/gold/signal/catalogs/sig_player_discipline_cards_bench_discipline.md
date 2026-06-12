@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_bench_discipline
+  table: gold_signals.sig_player_discipline_cards_bench_discipline
   sql: clickhouse/gold/signal/sig_player_discipline_cards_bench_discipline.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_bench_discipline.py
 ---
@@ -37,7 +37,7 @@ Flags disciplinary incidents involving non-playing bench personnel (unused subst
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_bench_discipline.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_bench_discipline.py`
-- Target table: `gold.sig_player_discipline_cards_bench_discipline`
+- Target table: `gold_signals.sig_player_discipline_cards_bench_discipline`
 
 ## Example Execution
 

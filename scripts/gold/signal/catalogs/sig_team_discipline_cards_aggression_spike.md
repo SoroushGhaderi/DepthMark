@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_aggression_spike
+  table: gold_signals.sig_team_discipline_cards_aggression_spike
   sql: clickhouse/gold/signal/sig_team_discipline_cards_aggression_spike.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_aggression_spike.py
 ---
@@ -33,7 +33,7 @@ Flags team-match performances where a side's foul count jumps sharply after half
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_aggression_spike.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_aggression_spike.py`
-- Target table: `gold.sig_team_discipline_cards_aggression_spike`
+- Target table: `gold_signals.sig_team_discipline_cards_aggression_spike`
 
 ## Example Execution
 

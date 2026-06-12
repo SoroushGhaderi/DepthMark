@@ -1,5 +1,5 @@
 -- scenario_wildcard: substitutes with immediate attacking impact
-INSERT INTO gold.scenario_wildcard
+INSERT INTO gold_scenarios.scenario_wildcard
 (
     match_id,
     home_team_id,

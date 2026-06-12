@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_one_sided_vision
+  table: gold_signals.sig_team_creativity_playmaking_one_sided_vision
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_one_sided_vision.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_one_sided_vision.py
 ---
@@ -48,7 +48,7 @@ producing at least 10 key passes while the opponent produces none.
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_one_sided_vision.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_one_sided_vision.py`
-- Target table: `gold.sig_team_creativity_playmaking_one_sided_vision`
+- Target table: `gold_signals.sig_team_creativity_playmaking_one_sided_vision`
 
 ## Example Execution
 

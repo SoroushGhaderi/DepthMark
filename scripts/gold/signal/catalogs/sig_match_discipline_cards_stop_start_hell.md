@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_stop_start_hell
+  table: gold_signals.sig_match_discipline_cards_stop_start_hell
   sql: clickhouse/gold/signal/sig_match_discipline_cards_stop_start_hell.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_stop_start_hell.py
 ---
@@ -33,7 +33,7 @@ Flags matches with relentless interruption tempo, where whistle proxy events (fo
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_stop_start_hell.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_stop_start_hell.py`
-- Target table: `gold.sig_match_discipline_cards_stop_start_hell`
+- Target table: `gold_signals.sig_match_discipline_cards_stop_start_hell`
 
 ## Example Execution
 

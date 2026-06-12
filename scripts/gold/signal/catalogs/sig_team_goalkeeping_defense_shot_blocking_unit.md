@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_shot_blocking_unit
+  table: gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_shot_blocking_unit.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_shot_blocking_unit.py
 ---
@@ -36,7 +36,7 @@ Detect team-level defensive units that post extreme shot-block volume (`>= 10`) 
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_shot_blocking_unit.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_shot_blocking_unit.py`
-- Target table: `gold.sig_team_goalkeeping_defense_shot_blocking_unit`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit`
 
 ## Example Execution
 

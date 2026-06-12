@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_creativity_playmaking_box_penetrator
+  table: gold_signals.sig_player_creativity_playmaking_box_penetrator
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_box_penetrator.sql
   runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_box_penetrator.py
 ---
@@ -42,7 +42,7 @@ Detect player-level playmakers who repeatedly penetrate advanced attacking zones
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_box_penetrator.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_box_penetrator.py`
-- Target table: `gold.sig_player_creativity_playmaking_box_penetrator`
+- Target table: `gold_signals.sig_player_creativity_playmaking_box_penetrator`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_pass_marathon
+  table: gold_signals.sig_team_possession_passing_pass_marathon
   sql: clickhouse/gold/signal/sig_team_possession_passing_pass_marathon.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_pass_marathon.py
 ---
@@ -31,7 +31,7 @@ Triggers when a team reaches extreme full-match passing volume (`>= 800` complet
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_pass_marathon.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_pass_marathon.py`
-- Target table: `gold.sig_team_possession_passing_pass_marathon`
+- Target table: `gold_signals.sig_team_possession_passing_pass_marathon`
 
 ## Example Execution
 

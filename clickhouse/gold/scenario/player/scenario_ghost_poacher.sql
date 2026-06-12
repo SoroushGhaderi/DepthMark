@@ -1,5 +1,5 @@
 -- scenario_ghost_poacher: low-touch starters with extreme box-touch concentration and high scoring threat
-INSERT INTO gold.scenario_ghost_poacher
+INSERT INTO gold_scenarios.scenario_ghost_poacher
 (
     match_id,
     home_team_id,

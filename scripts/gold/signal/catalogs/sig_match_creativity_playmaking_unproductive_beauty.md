@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_unproductive_beauty
+  table: gold_signals.sig_match_creativity_playmaking_unproductive_beauty
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_unproductive_beauty.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_unproductive_beauty.py
 ---
@@ -49,7 +49,7 @@ nil (0 total goals), surfacing aesthetically rich yet unproductive attacking con
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_unproductive_beauty.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_unproductive_beauty.py`
-- Target table: `gold.sig_match_creativity_playmaking_unproductive_beauty`
+- Target table: `gold_signals.sig_match_creativity_playmaking_unproductive_beauty`
 
 ## Example Execution
 

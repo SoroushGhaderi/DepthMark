@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_unproductive_flair
+  table: gold_signals.sig_team_creativity_playmaking_unproductive_flair
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_unproductive_flair.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_unproductive_flair.py
 ---
@@ -49,7 +49,7 @@ completes at least 25 successful dribbles while finishing with zero goals.
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_unproductive_flair.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_unproductive_flair.py`
-- Target table: `gold.sig_team_creativity_playmaking_unproductive_flair`
+- Target table: `gold_signals.sig_team_creativity_playmaking_unproductive_flair`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_impact_sub_passing
+  table: gold_signals.sig_player_possession_passing_impact_sub_passing
   sql: clickhouse/gold/signal/sig_player_possession_passing_impact_sub_passing.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_impact_sub_passing.py
 ---
@@ -37,7 +37,7 @@ Identifies substitute appearances where a player contributes unusually high comp
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_impact_sub_passing.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_impact_sub_passing.py`
-- Target table: `gold.sig_player_possession_passing_impact_sub_passing`
+- Target table: `gold_signals.sig_player_possession_passing_impact_sub_passing`
 
 ## Example Execution
 

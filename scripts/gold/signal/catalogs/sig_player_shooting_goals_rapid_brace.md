@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_rapid_brace
+  table: gold_signals.sig_player_shooting_goals_rapid_brace
   sql: clickhouse/gold/signal/sig_player_shooting_goals_rapid_brace.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_rapid_brace.py
 ---
@@ -36,7 +36,7 @@ Flags players who produce a rapid brace by scoring two non-own goals within ten 
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_rapid_brace.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_rapid_brace.py`
-- Target table: `gold.sig_player_shooting_goals_rapid_brace`
+- Target table: `gold_signals.sig_player_shooting_goals_rapid_brace`
 
 ## Example Execution
 

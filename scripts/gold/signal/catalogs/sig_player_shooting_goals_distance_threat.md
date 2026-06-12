@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_distance_threat
+  table: gold_signals.sig_player_shooting_goals_distance_threat
   sql: clickhouse/gold/signal/sig_player_shooting_goals_distance_threat.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_distance_threat.py
 ---
@@ -42,7 +42,7 @@ Detects match-player events where a player produces heavy outside-box shot volum
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_distance_threat.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_distance_threat.py`
-- Target table: `gold.sig_player_shooting_goals_distance_threat`
+- Target table: `gold_signals.sig_player_shooting_goals_distance_threat`
 
 ## Example Execution
 

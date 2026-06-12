@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_systematic_fouling
+  table: gold_signals.sig_team_discipline_cards_systematic_fouling
   sql: clickhouse/gold/signal/sig_team_discipline_cards_systematic_fouling.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_systematic_fouling.py
 ---
@@ -34,7 +34,7 @@ Flags match-team cases where caution pressure is spread across the entire starti
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_systematic_fouling.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_systematic_fouling.py`
-- Target table: `gold.sig_team_discipline_cards_systematic_fouling`
+- Target table: `gold_signals.sig_team_discipline_cards_systematic_fouling`
 
 ## Example Execution
 

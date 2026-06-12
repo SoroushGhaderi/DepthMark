@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_bench_goals_impact
+  table: gold_signals.sig_team_shooting_goals_bench_goals_impact
   sql: clickhouse/gold/signal/sig_team_shooting_goals_bench_goals_impact.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_bench_goals_impact.py
 ---
@@ -35,7 +35,7 @@ Detect team scoring performances where the bench contributes at least two non-ow
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_bench_goals_impact.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_bench_goals_impact.py`
-- Target table: `gold.sig_team_shooting_goals_bench_goals_impact`
+- Target table: `gold_signals.sig_team_shooting_goals_bench_goals_impact`
 
 ## Example Execution
 

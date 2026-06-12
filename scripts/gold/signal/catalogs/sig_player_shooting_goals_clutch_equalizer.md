@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_clutch_equalizer
+  table: gold_signals.sig_player_shooting_goals_clutch_equalizer
   sql: clickhouse/gold/signal/sig_player_shooting_goals_clutch_equalizer.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_clutch_equalizer.py
 ---
@@ -41,7 +41,7 @@ Detects player-level clutch scoring moments where a player restores parity late 
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_clutch_equalizer.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_clutch_equalizer.py`
-- Target table: `gold.sig_player_shooting_goals_clutch_equalizer`
+- Target table: `gold_signals.sig_player_shooting_goals_clutch_equalizer`
 
 ## Example Execution
 

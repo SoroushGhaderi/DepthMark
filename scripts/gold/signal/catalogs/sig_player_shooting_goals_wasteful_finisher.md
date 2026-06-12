@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_wasteful_finisher
+  table: gold_signals.sig_player_shooting_goals_wasteful_finisher
   sql: clickhouse/gold/signal/sig_player_shooting_goals_wasteful_finisher.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_wasteful_finisher.py
 ---
@@ -36,7 +36,7 @@ Flags high-chance non-scoring player performances (`xG > 1.20`, `goals = 0`) to 
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_wasteful_finisher.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_wasteful_finisher.py`
-- Target table: `gold.sig_player_shooting_goals_wasteful_finisher`
+- Target table: `gold_signals.sig_player_shooting_goals_wasteful_finisher`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_short_pass_philosophy
+  table: gold_signals.sig_team_possession_passing_short_pass_philosophy
   sql: clickhouse/gold/signal/sig_team_possession_passing_short_pass_philosophy.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_short_pass_philosophy.py
 ---
@@ -31,7 +31,7 @@ Triggers when a team keeps long-ball usage at `<= 5%` of pass attempts, indicati
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_short_pass_philosophy.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_short_pass_philosophy.py`
-- Target table: `gold.sig_team_possession_passing_short_pass_philosophy`
+- Target table: `gold_signals.sig_team_possession_passing_short_pass_philosophy`
 
 ## Example Execution
 

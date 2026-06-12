@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_unassisted_goals
+  table: gold_signals.sig_team_creativity_playmaking_unassisted_goals
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_unassisted_goals.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_unassisted_goals.py
 ---
@@ -44,7 +44,7 @@ Detect team-level matches where finishing comes from self-created solo actions r
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_unassisted_goals.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_unassisted_goals.py`
-- Target table: `gold.sig_team_creativity_playmaking_unassisted_goals`
+- Target table: `gold_signals.sig_team_creativity_playmaking_unassisted_goals`
 
 ## Example Execution
 

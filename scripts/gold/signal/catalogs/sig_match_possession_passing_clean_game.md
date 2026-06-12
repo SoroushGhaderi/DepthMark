@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_clean_game
+  table: gold_signals.sig_match_possession_passing_clean_game
   sql: clickhouse/gold/signal/sig_match_possession_passing_clean_game.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_clean_game.py
 ---
@@ -32,7 +32,7 @@ Triggers for matches with very low combined turnover volume, surfacing clean pos
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_clean_game.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_clean_game.py`
-- Target table: `gold.sig_match_possession_passing_clean_game`
+- Target table: `gold_signals.sig_match_possession_passing_clean_game`
 
 ## Example Execution
 

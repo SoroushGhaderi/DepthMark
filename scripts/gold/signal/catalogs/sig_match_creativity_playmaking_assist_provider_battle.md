@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_creativity_playmaking_assist_provider_battle
+  table: gold_signals.sig_match_creativity_playmaking_assist_provider_battle
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_assist_provider_battle.sql
   runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_assist_provider_battle.py
 ---
@@ -47,7 +47,7 @@ requiring at least two distinct players across the match to each record `2+` ass
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_assist_provider_battle.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_assist_provider_battle.py`
-- Target table: `gold.sig_match_creativity_playmaking_assist_provider_battle`
+- Target table: `gold_signals.sig_match_creativity_playmaking_assist_provider_battle`
 
 ## Example Execution
 

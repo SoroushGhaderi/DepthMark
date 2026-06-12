@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_volume_over_quality
+  table: gold_signals.sig_player_shooting_goals_volume_over_quality
   sql: clickhouse/gold/signal/sig_player_shooting_goals_volume_over_quality.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_volume_over_quality.py
 ---
@@ -36,7 +36,7 @@ Flags high-volume but consistently low-per-shot-quality shooting performances (`
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_volume_over_quality.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_volume_over_quality.py`
-- Target table: `gold.sig_player_shooting_goals_volume_over_quality`
+- Target table: `gold_signals.sig_player_shooting_goals_volume_over_quality`
 
 ## Example Execution
 

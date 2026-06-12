@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_one_sided_passing
+  table: gold_signals.sig_team_possession_passing_one_sided_passing
   sql: clickhouse/gold/signal/sig_team_possession_passing_one_sided_passing.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_one_sided_passing.py
 ---
@@ -32,7 +32,7 @@ Flags matches where one team completes more than three times as many passes as t
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_one_sided_passing.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_one_sided_passing.py`
-- Target table: `gold.sig_team_possession_passing_one_sided_passing`
+- Target table: `gold_signals.sig_team_possession_passing_one_sided_passing`
 
 ## Example Execution
 

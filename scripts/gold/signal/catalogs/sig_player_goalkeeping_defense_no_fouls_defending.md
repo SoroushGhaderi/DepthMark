@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_no_fouls_defending
+  table: gold_signals.sig_player_goalkeeping_defense_no_fouls_defending
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_no_fouls_defending.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_no_fouls_defending.py
 ---
@@ -46,7 +46,7 @@ while foul count remains zero, capturing clean defensive aggression.
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_no_fouls_defending.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_no_fouls_defending.py`
-- Target table: `gold.sig_player_goalkeeping_defense_no_fouls_defending`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_no_fouls_defending`
 
 ## Example Execution
 

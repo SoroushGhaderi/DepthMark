@@ -1,5 +1,5 @@
 -- scenario_efficiency_machine: winners with low shot volume but high shot quality
-INSERT INTO gold.scenario_efficiency_machine
+INSERT INTO gold_scenarios.scenario_efficiency_machine
 (
     -- 1. Match Identity
     match_id,

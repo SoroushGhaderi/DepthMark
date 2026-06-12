@@ -14,7 +14,9 @@ DepthMark is a Python data pipeline for FotMob football data.
 
 - Bronze: raw FotMob API payloads on disk under `data/fotmob/`, plus raw ClickHouse tables in `bronze.*`.
 - Silver: cleaned and conformed analytical tables in ClickHouse `silver.*`.
-- Gold: analytics and product-ready scenario/signal tables in ClickHouse `gold.*`.
+- Gold: analytics and product-ready scenario tables in ClickHouse
+  `gold_scenarios.*`, signal tables in `gold_signals.*`, and shared metadata in
+  `gold.*`.
 - MongoDB stores content/catalog metadata, including signal catalog entries authored from markdown frontmatter.
 
 DepthMark currently supports FotMob only. Do not add generic multi-provider abstractions unless explicitly requested.
@@ -50,7 +52,7 @@ python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/load_clickhouse.py --date 20251208
 python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_scenarios.py --dry-run
+python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 python scripts/quality/check_logging_style.py
 python scripts/orchestration/pipeline.py 20251208
@@ -64,7 +66,8 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 - Silver and Gold are ClickHouse-only layers.
 - Keep source fidelity in Bronze; standardize keys and types in Silver; materialize business-facing outputs in Gold.
 - SQL should hold transformation and business logic. Python should orchestrate, execute, validate, and report.
-- Use schema-qualified ClickHouse table names: `bronze.*`, `silver.*`, and `gold.*`.
+- Use schema-qualified ClickHouse table names: `bronze.*`, `silver.*`,
+  `gold_scenarios.*`, `gold_signals.*`, and Gold metadata tables in `gold.*`.
 - Keep SQL deterministic and rerunnable.
 - Preserve script entry points and CLI behavior unless the task explicitly asks for a breaking change.
 
@@ -94,6 +97,8 @@ For files under `scripts/` and script-oriented helpers under `src/`, follow `doc
 - Silver SQL lives under `clickhouse/silver/ddl` and `clickhouse/silver/dml`.
 - Gold scenario/signal SQL lives under `clickhouse/gold/`.
 - New or changed scenario work should update SQL, runner code, DDL/contracts, and the relevant catalog docs.
+- Scenario SQL targets `gold_scenarios.scenario_*`; do not add legacy
+  `gold.scenario_*` targets.
 - Signal metadata source of truth is markdown frontmatter under `scripts/gold/signal/catalogs/*.md`.
 - Required signal frontmatter keys include `signal_id`, `status`, `entity`, `family`, `subfamily`, `grain`, `row_identity`, and `asset_paths`.
 
@@ -106,7 +111,7 @@ pytest
 python scripts/quality/check_logging_style.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_scenarios.py --dry-run
+python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 ```
 

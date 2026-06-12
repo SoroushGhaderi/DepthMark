@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_midfield_sniper
+  table: gold_signals.sig_player_shooting_goals_midfield_sniper
   sql: clickhouse/gold/signal/sig_player_shooting_goals_midfield_sniper.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_midfield_sniper.py
 ---
@@ -44,7 +44,7 @@ Detects rare match-player events where a central-midfielder proxy delivers a lon
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_midfield_sniper.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_midfield_sniper.py`
-- Target table: `gold.sig_player_shooting_goals_midfield_sniper`
+- Target table: `gold_signals.sig_player_shooting_goals_midfield_sniper`
 
 ## Example Execution
 

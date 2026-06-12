@@ -1,5 +1,5 @@
 -- scenario_one_man_army: high individual output in finished matches
-INSERT INTO gold.scenario_one_man_army
+INSERT INTO gold_scenarios.scenario_one_man_army
 (
     -- 1. Match Identity
     match_id,

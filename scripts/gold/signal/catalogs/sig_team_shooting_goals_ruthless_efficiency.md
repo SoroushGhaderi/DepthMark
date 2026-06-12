@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_ruthless_efficiency
+  table: gold_signals.sig_team_shooting_goals_ruthless_efficiency
   sql: clickhouse/gold/signal/sig_team_shooting_goals_ruthless_efficiency.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_ruthless_efficiency.py
 ---
@@ -34,7 +34,7 @@ Flags teams that produce high goal output from a very low on-target shot volume,
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_ruthless_efficiency.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_ruthless_efficiency.py`
-- Target table: `gold.sig_team_shooting_goals_ruthless_efficiency`
+- Target table: `gold_signals.sig_team_shooting_goals_ruthless_efficiency`
 
 ## Example Execution
 

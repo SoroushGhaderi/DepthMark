@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_clean_sheet_contributor
+  table: gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_contributor.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_contributor.py
 ---
@@ -54,7 +54,7 @@ capturing clean-sheet contribution through direct defensive contests.
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_contributor.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_contributor.py`
-- Target table: `gold.sig_player_goalkeeping_defense_clean_sheet_contributor`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor`
 
 ## Example Execution
 

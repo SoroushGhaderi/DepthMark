@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_unproductive_dominance
+  table: gold_signals.sig_match_shooting_goals_unproductive_dominance
   sql: clickhouse/gold/signal/sig_match_shooting_goals_unproductive_dominance.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_unproductive_dominance.py
 ---
@@ -32,7 +32,7 @@ Detect finished matches where a side generates very high shot volume but fails t
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_unproductive_dominance.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_unproductive_dominance.py`
-- Target table: `gold.sig_match_shooting_goals_unproductive_dominance`
+- Target table: `gold_signals.sig_match_shooting_goals_unproductive_dominance`
 
 ## Example Execution
 

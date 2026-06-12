@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_chance_barrage
+  table: gold_signals.sig_team_creativity_playmaking_chance_barrage
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_chance_barrage.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_chance_barrage.py
 ---
@@ -38,7 +38,7 @@ Detects team-level playmaking barrages where a side creates at least 15 key pass
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_chance_barrage.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_chance_barrage.py`
-- Target table: `gold.sig_team_creativity_playmaking_chance_barrage`
+- Target table: `gold_signals.sig_team_creativity_playmaking_chance_barrage`
 
 ## Example Execution
 

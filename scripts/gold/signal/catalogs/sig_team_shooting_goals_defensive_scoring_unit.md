@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_defensive_scoring_unit
+  table: gold_signals.sig_team_shooting_goals_defensive_scoring_unit
   sql: clickhouse/gold/signal/sig_team_shooting_goals_defensive_scoring_unit.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_defensive_scoring_unit.py
 ---
@@ -34,7 +34,7 @@ Detect team-level matches where defensive players provide distributed scoring ou
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_defensive_scoring_unit.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_defensive_scoring_unit.py`
-- Target table: `gold.sig_team_shooting_goals_defensive_scoring_unit`
+- Target table: `gold_signals.sig_team_shooting_goals_defensive_scoring_unit`
 
 ## Example Execution
 

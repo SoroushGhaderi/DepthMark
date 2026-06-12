@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_battle_of_attrition
+  table: gold_signals.sig_match_discipline_cards_battle_of_attrition
   sql: clickhouse/gold/signal/sig_match_discipline_cards_battle_of_attrition.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_battle_of_attrition.py
 ---
@@ -32,7 +32,7 @@ Flags high-friction matches where total whistle volume is extreme (35+ combined 
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_battle_of_attrition.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_battle_of_attrition.py`
-- Target table: `gold.sig_match_discipline_cards_battle_of_attrition`
+- Target table: `gold_signals.sig_match_discipline_cards_battle_of_attrition`
 
 ## Example Execution
 

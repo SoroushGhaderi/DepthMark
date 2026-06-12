@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_no_shots_allowed
+  table: gold_signals.sig_team_shooting_goals_no_shots_allowed
   sql: clickhouse/gold/signal/sig_team_shooting_goals_no_shots_allowed.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_no_shots_allowed.py
 ---
@@ -32,7 +32,7 @@ Detect team-level defensive suppression events where the opponent fails to regis
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_no_shots_allowed.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_no_shots_allowed.py`
-- Target table: `gold.sig_team_shooting_goals_no_shots_allowed`
+- Target table: `gold_signals.sig_team_shooting_goals_no_shots_allowed`
 
 ## Example Execution
 

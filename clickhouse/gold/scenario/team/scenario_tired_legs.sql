@@ -1,5 +1,5 @@
 -- scenario_tired_legs: late-match chaos signatures driven by fatigue, shot surges, and substitution swings
-INSERT INTO gold.scenario_tired_legs
+INSERT INTO gold_scenarios.scenario_tired_legs
 (
     -- 1. Match Identity
     match_id,

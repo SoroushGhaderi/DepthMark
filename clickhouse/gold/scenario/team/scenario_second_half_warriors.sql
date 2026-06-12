@@ -1,5 +1,5 @@
 -- scenario_second_half_warriors: teams recovering from halftime deficits
-INSERT INTO gold.scenario_second_half_warriors
+INSERT INTO gold_scenarios.scenario_second_half_warriors
 (
     match_id,
     home_team_id,

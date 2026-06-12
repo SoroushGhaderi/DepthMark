@@ -1,5 +1,5 @@
 -- scenario_progressive_powerhouse: high-accuracy progressors with end-product carrying
-INSERT INTO gold.scenario_progressive_powerhouse
+INSERT INTO gold_scenarios.scenario_progressive_powerhouse
 (
     match_id,
     player_id,

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_card_frenzy
+  table: gold_signals.sig_match_discipline_cards_card_frenzy
   sql: clickhouse/gold/signal/sig_match_discipline_cards_card_frenzy.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_card_frenzy.py
 ---
@@ -32,7 +32,7 @@ Flags matches with extreme disciplinary volume (10+ combined cards), capturing c
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_card_frenzy.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_card_frenzy.py`
-- Target table: `gold.sig_match_discipline_cards_card_frenzy`
+- Target table: `gold_signals.sig_match_discipline_cards_card_frenzy`
 
 ## Example Execution
 

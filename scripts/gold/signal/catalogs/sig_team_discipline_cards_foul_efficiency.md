@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_foul_efficiency
+  table: gold_signals.sig_team_discipline_cards_foul_efficiency
   sql: clickhouse/gold/signal/sig_team_discipline_cards_foul_efficiency.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_foul_efficiency.py
 ---
@@ -33,7 +33,7 @@ Flags team-match performances where foul volume is high (15 or more fouls) but t
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_foul_efficiency.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_foul_efficiency.py`
-- Target table: `gold.sig_team_discipline_cards_foul_efficiency`
+- Target table: `gold_signals.sig_team_discipline_cards_foul_efficiency`
 
 ## Example Execution
 

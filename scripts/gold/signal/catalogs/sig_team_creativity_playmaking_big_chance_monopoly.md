@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_big_chance_monopoly
+  table: gold_signals.sig_team_creativity_playmaking_big_chance_monopoly
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_big_chance_monopoly.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_big_chance_monopoly.py
 ---
@@ -46,7 +46,7 @@ five big chances while allowing the opponent none.
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_big_chance_monopoly.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_big_chance_monopoly.py`
-- Target table: `gold.sig_team_creativity_playmaking_big_chance_monopoly`
+- Target table: `gold_signals.sig_team_creativity_playmaking_big_chance_monopoly`
 
 ## Example Execution
 

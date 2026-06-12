@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match
+  table: gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_goalkeeper_man_of_the_match.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_goalkeeper_man_of_the_match.py
 ---
@@ -39,7 +39,7 @@ then preserve bilateral side-oriented workload, control, and score context for i
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_goalkeeper_man_of_the_match.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_goalkeeper_man_of_the_match.py`
-- Target table: `gold.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match`
 
 ## Example Execution
 

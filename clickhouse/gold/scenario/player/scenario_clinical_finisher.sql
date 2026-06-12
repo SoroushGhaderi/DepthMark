@@ -1,5 +1,5 @@
 -- scenario_clinical_finisher: multi-goal output from low shot/xG volume
-INSERT INTO gold.scenario_clinical_finisher
+INSERT INTO gold_scenarios.scenario_clinical_finisher
 (
     -- 1. Match Identity
     match_id,

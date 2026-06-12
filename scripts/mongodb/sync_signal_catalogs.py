@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
+from src.utils.gold_databases import gold_signals_db
 from src.utils.logging_utils import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -19,6 +20,7 @@ logger = get_logger(__name__)
 DEFAULT_CATALOG_DIR = project_root / "scripts" / "gold" / "signal" / "catalogs"
 FRONTMATTER_DELIMITER = "\n---\n"
 CONTENT_ASSET_KEYS = ("sql", "runner")
+SIGNAL_TABLE_ASSET_KEY = "table"
 
 
 def load_environment() -> None:
@@ -122,6 +124,18 @@ def build_asset_documents(asset_paths: Dict[str, Any], source_path: Path) -> Dic
     return assets
 
 
+def validate_signal_asset_paths(
+    signal_id: str, asset_paths: Dict[str, Any], source_path: Path
+) -> None:
+    """Validate signal asset path metadata before building the Mongo document."""
+    expected_table = f"{gold_signals_db()}.{signal_id}"
+    table_path = asset_paths.get(SIGNAL_TABLE_ASSET_KEY)
+    if table_path != expected_table:
+        raise ValueError(
+            f"asset_paths.table must be '{expected_table}' in {source_path}; got {table_path!r}"
+        )
+
+
 def build_signal_document(
     frontmatter: Dict[str, Any], body: str, source_path: Path
 ) -> Dict[str, Any]:
@@ -157,6 +171,9 @@ def build_signal_document(
     for asset_key in CONTENT_ASSET_KEYS:
         if asset_key not in asset_paths:
             raise ValueError(f"asset_paths.{asset_key} is required in {source_path}")
+    if SIGNAL_TABLE_ASSET_KEY not in asset_paths:
+        raise ValueError(f"asset_paths.{SIGNAL_TABLE_ASSET_KEY} is required in {source_path}")
+    validate_signal_asset_paths(signal_id, asset_paths, source_path)
 
     assets = build_asset_documents(asset_paths, source_path)
 

@@ -1,5 +1,5 @@
 -- scenario_key_pass_king: elite chance creators in finished matches
-INSERT INTO gold.scenario_key_pass_king
+INSERT INTO gold_scenarios.scenario_key_pass_king
 (
     -- 1. Match Identity
     match_id,

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_shot_conversion_peak
+  table: gold_signals.sig_player_shooting_goals_shot_conversion_peak
   sql: clickhouse/gold/signal/sig_player_shooting_goals_shot_conversion_peak.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_shot_conversion_peak.py
 ---
@@ -35,7 +35,7 @@ Flags players who deliver a perfect two-from-two finishing match, isolating high
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_shot_conversion_peak.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_shot_conversion_peak.py`
-- Target table: `gold.sig_player_shooting_goals_shot_conversion_peak`
+- Target table: `gold_signals.sig_player_shooting_goals_shot_conversion_peak`
 
 ## Example Execution
 

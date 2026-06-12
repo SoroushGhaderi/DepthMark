@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_tackle_war
+  table: gold_signals.sig_match_goalkeeping_defense_tackle_war
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_tackle_war.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_tackle_war.py
 ---
@@ -36,7 +36,7 @@ Detects finished matches with extreme combined successful tackle volume and emit
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_tackle_war.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_tackle_war.py`
-- Target table: `gold.sig_match_goalkeeping_defense_tackle_war`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_tackle_war`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_clinical_showdown
+  table: gold_signals.sig_match_shooting_goals_clinical_showdown
   sql: clickhouse/gold/signal/sig_match_shooting_goals_clinical_showdown.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_clinical_showdown.py
 ---
@@ -32,7 +32,7 @@ Detect matches where finishing output is extremely clinical relative to chance q
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_clinical_showdown.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_clinical_showdown.py`
-- Target table: `gold.sig_match_shooting_goals_clinical_showdown`
+- Target table: `gold_signals.sig_match_shooting_goals_clinical_showdown`
 
 ## Example Execution
 

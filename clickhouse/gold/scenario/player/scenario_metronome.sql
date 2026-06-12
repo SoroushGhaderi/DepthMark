@@ -1,5 +1,5 @@
 -- scenario_metronome: high-touch, high-precision orchestrators with no dispossession impact
-INSERT INTO gold.scenario_metronome
+INSERT INTO gold_scenarios.scenario_metronome
 (
     match_id,
     home_team_id,

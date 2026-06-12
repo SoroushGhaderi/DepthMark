@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_set_piece_masterclass
+  table: gold_signals.sig_team_shooting_goals_set_piece_masterclass
   sql: clickhouse/gold/signal/sig_team_shooting_goals_set_piece_masterclass.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_set_piece_masterclass.py
 ---
@@ -44,7 +44,7 @@ Detect teams that complete a three-channel set-piece scoring profile in one matc
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_set_piece_masterclass.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_set_piece_masterclass.py`
-- Target table: `gold.sig_team_shooting_goals_set_piece_masterclass`
+- Target table: `gold_signals.sig_team_shooting_goals_set_piece_masterclass`
 
 ## Example Execution
 

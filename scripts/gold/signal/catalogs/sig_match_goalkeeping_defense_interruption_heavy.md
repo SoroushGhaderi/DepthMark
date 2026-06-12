@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_interruption_heavy
+  table: gold_signals.sig_match_goalkeeping_defense_interruption_heavy
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_interruption_heavy.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_interruption_heavy.py
 ---
@@ -37,7 +37,7 @@ Detect finished matches where whistle-driven fragmentation is extreme, using a j
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_interruption_heavy.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_interruption_heavy.py`
-- Target table: `gold.sig_match_goalkeeping_defense_interruption_heavy`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_interruption_heavy`
 
 ## Example Execution
 

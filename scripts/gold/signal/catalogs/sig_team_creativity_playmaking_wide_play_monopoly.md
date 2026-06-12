@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_creativity_playmaking_wide_play_monopoly
+  table: gold_signals.sig_team_creativity_playmaking_wide_play_monopoly
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_wide_play_monopoly.sql
   runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_wide_play_monopoly.py
 ---
@@ -45,7 +45,7 @@ with at least 70% of created chances attributed to a cross-derived wide-play pro
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_wide_play_monopoly.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_wide_play_monopoly.py`
-- Target table: `gold.sig_team_creativity_playmaking_wide_play_monopoly`
+- Target table: `gold_signals.sig_team_creativity_playmaking_wide_play_monopoly`
 
 ## Example Execution
 

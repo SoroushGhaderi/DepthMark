@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_foul_heavy_stalemate
+  table: gold_signals.sig_match_discipline_cards_foul_heavy_stalemate
   sql: clickhouse/gold/signal/sig_match_discipline_cards_foul_heavy_stalemate.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_foul_heavy_stalemate.py
 ---
@@ -34,7 +34,7 @@ Flags goalless draws that were still physically intense, surfacing 0-0 matches w
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_foul_heavy_stalemate.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_foul_heavy_stalemate.py`
-- Target table: `gold.sig_match_discipline_cards_foul_heavy_stalemate`
+- Target table: `gold_signals.sig_match_discipline_cards_foul_heavy_stalemate`
 
 ## Example Execution
 

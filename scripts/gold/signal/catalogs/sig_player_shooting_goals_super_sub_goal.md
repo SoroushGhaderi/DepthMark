@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_super_sub_goal
+  table: gold_signals.sig_player_shooting_goals_super_sub_goal
   sql: clickhouse/gold/signal/sig_player_shooting_goals_super_sub_goal.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_super_sub_goal.py
 ---
@@ -37,7 +37,7 @@ Detects immediate substitute scoring impact by flagging players who score a non-
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_super_sub_goal.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_super_sub_goal.py`
-- Target table: `gold.sig_player_shooting_goals_super_sub_goal`
+- Target table: `gold_signals.sig_player_shooting_goals_super_sub_goal`
 
 ## Example Execution
 

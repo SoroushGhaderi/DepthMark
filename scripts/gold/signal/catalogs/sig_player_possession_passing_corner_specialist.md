@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_corner_specialist
+  table: gold_signals.sig_player_possession_passing_corner_specialist
   sql: clickhouse/gold/signal/sig_player_possession_passing_corner_specialist.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_corner_specialist.py
 ---
@@ -34,7 +34,7 @@ Triggers when a player creates more than 1 chance from corner-kick deliveries in
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_corner_specialist.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_corner_specialist.py`
-- Target table: `gold.sig_player_possession_passing_corner_specialist`
+- Target table: `gold_signals.sig_player_possession_passing_corner_specialist`
 
 ## Example Execution
 

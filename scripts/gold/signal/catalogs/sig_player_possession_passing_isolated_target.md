@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_possession_passing_isolated_target
+  table: gold_signals.sig_player_possession_passing_isolated_target
   sql: clickhouse/gold/signal/sig_player_possession_passing_isolated_target.sql
   runner: scripts/gold/signal/runners/sig_player_possession_passing_isolated_target.py
 ---
@@ -37,7 +37,7 @@ Triggers when a forward records fewer than 5 touches while playing more than 45 
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_isolated_target.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_possession_passing_isolated_target.py`
-- Target table: `gold.sig_player_possession_passing_isolated_target`
+- Target table: `gold_signals.sig_player_possession_passing_isolated_target`
 
 ## Example Execution
 

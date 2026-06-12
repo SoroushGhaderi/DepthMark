@@ -21,6 +21,7 @@ Usage:
 """
 import argparse
 import logging
+import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
@@ -48,6 +49,15 @@ RESULT_CATEGORIES = {
     "fotmob_silver": "FotMob Silver",
     "fotmob_gold": "FotMob Gold",
 }
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _run_script(script_path: Path, args: List[str]) -> int:
+    """Run a canonical script entry point and return its exit code."""
+    command = [sys.executable, str(script_path), *args]
+    result = subprocess.run(command, cwd=PROJECT_ROOT)
+    return result.returncode
 
 
 @dataclass
@@ -402,8 +412,7 @@ def _send_step_failure_alert(result: StepResult) -> None:
 
 def run_fotmob_bronze(date_str: str, config: PipelineConfig) -> StepResult:
     """Run FotMob bronze scraping for a date."""
-    import scrape_fotmob
-
+    script_path = PROJECT_ROOT / "scripts" / "bronze" / "scrape_fotmob.py"
     argv = [date_str]
     if config.force:
         argv.append("--force")
@@ -411,8 +420,8 @@ def run_fotmob_bronze(date_str: str, config: PipelineConfig) -> StepResult:
         argv.append("--debug")
     return run_step(
         f"FotMob Bronze - {date_str}",
-        f"scrape_fotmob.main({' '.join(argv)})",
-        lambda: scrape_fotmob.main(argv),
+        f"{script_path} {' '.join(argv)}",
+        lambda: _run_script(script_path, argv),
         continue_on_error=True,
         date_str=date_str,
     )
@@ -424,15 +433,14 @@ def run_clickhouse_load(
     config: PipelineConfig,
 ) -> StepResult:
     """Load data to ClickHouse for a scraper and date."""
-    import load_clickhouse
-
-    argv = ["--scraper", scraper, "--date", date_str]
+    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_clickhouse.py"
+    argv = ["--date", date_str]
     if config.force:
         argv.append("--force")
     return run_step(
         f"ClickHouse Load - {scraper} - {date_str}",
-        f"load_clickhouse.main({' '.join(argv)})",
-        lambda: load_clickhouse.main(argv),
+        f"{script_path} {' '.join(argv)}",
+        lambda: _run_script(script_path, argv),
         continue_on_error=True,
         date_str=date_str,
     )
@@ -444,15 +452,14 @@ def run_clickhouse_load_month(
     config: PipelineConfig,
 ) -> StepResult:
     """Load data to ClickHouse for a scraper and month."""
-    import load_clickhouse
-
-    argv = ["--scraper", scraper, "--month", month_str]
+    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_clickhouse.py"
+    argv = ["--month", month_str]
     if config.force:
         argv.append("--force")
     return run_step(
         f"ClickHouse Load - {scraper} - Month {month_str}",
-        f"load_clickhouse.main({' '.join(argv)})",
-        lambda: load_clickhouse.main(argv),
+        f"{script_path} {' '.join(argv)}",
+        lambda: _run_script(script_path, argv),
         continue_on_error=True,
         date_str=month_str,
     )
@@ -462,13 +469,12 @@ def run_silver_process(
     date_str: str,
 ) -> StepResult:
     """Run silver processing for a date."""
-    import process_silver
-
-    argv = ["--date", date_str]
+    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
+    argv: List[str] = []
     return run_step(
         f"Silver Process - {date_str}",
-        f"process_silver.main({' '.join(argv)})",
-        lambda: process_silver.main(argv),
+        str(script_path),
+        lambda: _run_script(script_path, argv),
         continue_on_error=True,
         date_str=date_str,
     )
@@ -478,13 +484,12 @@ def run_silver_process_month(
     month_str: str,
 ) -> StepResult:
     """Run silver processing for a month."""
-    import process_silver
-
-    argv = ["--month", month_str]
+    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
+    argv: List[str] = []
     return run_step(
         f"Silver Process - Month {month_str}",
-        f"process_silver.main({' '.join(argv)})",
-        lambda: process_silver.main(argv),
+        str(script_path),
+        lambda: _run_script(script_path, argv),
         continue_on_error=True,
         date_str=month_str,
     )
@@ -494,12 +499,12 @@ def run_gold_process(
     date_str: str,
 ) -> StepResult:
     """Run gold processing for a date."""
-    import process_gold
-
+    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
+    argv: List[str] = []
     return run_step(
         f"Gold Process - {date_str}",
-        "process_gold.main()",
-        process_gold.main,
+        str(script_path),
+        lambda: _run_script(script_path, argv),
         continue_on_error=True,
         date_str=date_str,
     )
@@ -509,12 +514,12 @@ def run_gold_process_month(
     month_str: str,
 ) -> StepResult:
     """Run gold processing for a month."""
-    import process_gold
-
+    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
+    argv: List[str] = []
     return run_step(
         f"Gold Process - Month {month_str}",
-        "process_gold.main()",
-        process_gold.main,
+        str(script_path),
+        lambda: _run_script(script_path, argv),
         continue_on_error=True,
         date_str=month_str,
     )

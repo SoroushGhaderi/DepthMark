@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_clutch_brace_winning
+  table: gold_signals.sig_player_shooting_goals_clutch_brace_winning
   sql: clickhouse/gold/signal/sig_player_shooting_goals_clutch_brace_winning.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_clutch_brace_winning.py
 ---
@@ -43,7 +43,7 @@ Detects high-leverage player brace patterns where the same player first restores
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_clutch_brace_winning.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_clutch_brace_winning.py`
-- Target table: `gold.sig_player_shooting_goals_clutch_brace_winning`
+- Target table: `gold_signals.sig_player_shooting_goals_clutch_brace_winning`
 
 ## Example Execution
 

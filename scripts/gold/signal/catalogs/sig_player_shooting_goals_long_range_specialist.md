@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_long_range_specialist
+  table: gold_signals.sig_player_shooting_goals_long_range_specialist
   sql: clickhouse/gold/signal/sig_player_shooting_goals_long_range_specialist.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_long_range_specialist.py
 ---
@@ -42,7 +42,7 @@ Detects match-player events where a player converts at least one outside-box sho
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_long_range_specialist.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_long_range_specialist.py`
-- Target table: `gold.sig_player_shooting_goals_long_range_specialist`
+- Target table: `gold_signals.sig_player_shooting_goals_long_range_specialist`
 
 ## Example Execution
 

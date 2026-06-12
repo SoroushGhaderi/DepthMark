@@ -1,5 +1,5 @@
 -- scenario_demolition: finished matches with a 3+ goal winning margin
-INSERT INTO gold.scenario_demolition
+INSERT INTO gold_scenarios.scenario_demolition
 (
     -- 1. Match Identity
     match_id,

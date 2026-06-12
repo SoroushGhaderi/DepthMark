@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_rapid_double_salvo
+  table: gold_signals.sig_team_shooting_goals_rapid_double_salvo
   sql: clickhouse/gold/signal/sig_team_shooting_goals_rapid_double_salvo.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_rapid_double_salvo.py
 ---
@@ -43,7 +43,7 @@ capturing momentum spikes and conversion surges.
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_rapid_double_salvo.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_rapid_double_salvo.py`
-- Target table: `gold.sig_team_shooting_goals_rapid_double_salvo`
+- Target table: `gold_signals.sig_team_shooting_goals_rapid_double_salvo`
 
 ## Example Execution
 

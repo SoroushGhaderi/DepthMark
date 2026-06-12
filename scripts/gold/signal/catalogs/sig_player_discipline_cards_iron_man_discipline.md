@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_iron_man_discipline
+  table: gold_signals.sig_player_discipline_cards_iron_man_discipline
   sql: clickhouse/gold/signal/sig_player_discipline_cards_iron_man_discipline.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_iron_man_discipline.py
 ---
@@ -38,7 +38,7 @@ Flags defensive players who complete the full 90 with high tackle output but zer
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_iron_man_discipline.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_iron_man_discipline.py`
-- Target table: `gold.sig_player_discipline_cards_iron_man_discipline`
+- Target table: `gold_signals.sig_player_discipline_cards_iron_man_discipline`
 
 ## Example Execution
 

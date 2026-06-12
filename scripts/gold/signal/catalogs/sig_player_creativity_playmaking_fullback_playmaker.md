@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_creativity_playmaking_fullback_playmaker
+  table: gold_signals.sig_player_creativity_playmaking_fullback_playmaker
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_fullback_playmaker.sql
   runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_fullback_playmaker.py
 ---
@@ -53,7 +53,7 @@ into advanced box-access zones during finished matches.
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_fullback_playmaker.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_fullback_playmaker.py`
-- Target table: `gold.sig_player_creativity_playmaking_fullback_playmaker`
+- Target table: `gold_signals.sig_player_creativity_playmaking_fullback_playmaker`
 
 ## Example Execution
 

@@ -1,5 +1,5 @@
 -- scenario_box_to_box_general: complete outfield performances across attack and defense
-INSERT INTO gold.scenario_box_to_box_general
+INSERT INTO gold_scenarios.scenario_box_to_box_general
 (
     match_id,
     home_team_id,

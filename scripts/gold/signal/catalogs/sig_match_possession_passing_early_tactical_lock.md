@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_possession_passing_early_tactical_lock
+  table: gold_signals.sig_match_possession_passing_early_tactical_lock
   sql: clickhouse/gold/signal/sig_match_possession_passing_early_tactical_lock.sql
   runner: scripts/gold/signal/runners/sig_match_possession_passing_early_tactical_lock.py
 ---
@@ -32,7 +32,7 @@ Triggers matches where both teams fail to register a shot on target in the openi
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_early_tactical_lock.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_possession_passing_early_tactical_lock.py`
-- Target table: `gold.sig_match_possession_passing_early_tactical_lock`
+- Target table: `gold_signals.sig_match_possession_passing_early_tactical_lock`
 
 ## Example Execution
 

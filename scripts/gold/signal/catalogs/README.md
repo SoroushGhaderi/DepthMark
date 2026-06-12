@@ -19,7 +19,7 @@ The sync script currently requires these top-level fields:
 Common optional fields include `headline` and `trigger`.
 Asset paths are explicit in each catalog:
 
-- Target table: `gold.{signal_id}`
+- Target table: `gold_signals.{signal_id}`
 - SQL path: `clickhouse/gold/signal/{signal_id}.sql`
 - Runner path: `scripts/gold/signal/runners/{signal_id}.py`
 

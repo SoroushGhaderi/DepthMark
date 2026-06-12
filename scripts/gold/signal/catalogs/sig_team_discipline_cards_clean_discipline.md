@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_clean_discipline
+  table: gold_signals.sig_team_discipline_cards_clean_discipline
   sql: clickhouse/gold/signal/sig_team_discipline_cards_clean_discipline.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_clean_discipline.py
 ---
@@ -33,7 +33,7 @@ Flags team-match performances with both zero total cards and low foul volume (se
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_clean_discipline.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_clean_discipline.py`
-- Target table: `gold.sig_team_discipline_cards_clean_discipline`
+- Target table: `gold_signals.sig_team_discipline_cards_clean_discipline`
 
 ## Example Execution
 

@@ -1,5 +1,5 @@
 -- scenario_high_intensity_engine: high-work-rate outfield players with elite defensive volume and event density
-INSERT INTO gold.scenario_high_intensity_engine
+INSERT INTO gold_scenarios.scenario_high_intensity_engine
 (
     match_id,
     home_team_id,

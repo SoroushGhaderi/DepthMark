@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_discipline_cards_heated_derby_stats
+  table: gold_signals.sig_match_discipline_cards_heated_derby_stats
   sql: clickhouse/gold/signal/sig_match_discipline_cards_heated_derby_stats.sql
   runner: scripts/gold/signal/runners/sig_match_discipline_cards_heated_derby_stats.py
 ---
@@ -34,7 +34,7 @@ Flags matches with jointly high sanction volume and contact pressure, capturing 
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_heated_derby_stats.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_heated_derby_stats.py`
-- Target table: `gold.sig_match_discipline_cards_heated_derby_stats`
+- Target table: `gold_signals.sig_match_discipline_cards_heated_derby_stats`
 
 ## Example Execution
 

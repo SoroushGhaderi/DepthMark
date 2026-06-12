@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_goalkeeping_defense_coordinated_trap_match
+  table: gold_signals.sig_match_goalkeeping_defense_coordinated_trap_match
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_coordinated_trap_match.sql
   runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_coordinated_trap_match.py
 ---
@@ -37,7 +37,7 @@ offside burden, defensive workload, control context, and outcomes remain symmetr
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_coordinated_trap_match.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_coordinated_trap_match.py`
-- Target table: `gold.sig_match_goalkeeping_defense_coordinated_trap_match`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_coordinated_trap_match`
 
 ## Example Execution
 

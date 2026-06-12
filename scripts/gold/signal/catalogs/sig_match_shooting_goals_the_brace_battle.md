@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_match_shooting_goals_the_brace_battle
+  table: gold_signals.sig_match_shooting_goals_the_brace_battle
   sql: clickhouse/gold/signal/sig_match_shooting_goals_the_brace_battle.sql
   runner: scripts/gold/signal/runners/sig_match_shooting_goals_the_brace_battle.py
 ---
@@ -36,7 +36,7 @@ Detect finished matches where each team has a different brace scorer, then emit 
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_the_brace_battle.sql`
 - Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_the_brace_battle.py`
-- Target table: `gold.sig_match_shooting_goals_the_brace_battle`
+- Target table: `gold_signals.sig_match_shooting_goals_the_brace_battle`
 
 ## Example Execution
 

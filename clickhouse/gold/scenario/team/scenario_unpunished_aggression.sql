@@ -1,5 +1,5 @@
 -- scenario_unpunished_aggression: high-foul matches with unusually low yellow-card punishment
-INSERT INTO gold.scenario_unpunished_aggression
+INSERT INTO gold_scenarios.scenario_unpunished_aggression
 (
     -- 1. Match Identity
     match_id,

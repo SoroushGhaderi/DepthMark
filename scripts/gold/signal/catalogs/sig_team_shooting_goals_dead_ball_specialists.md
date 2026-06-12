@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_shooting_goals_dead_ball_specialists
+  table: gold_signals.sig_team_shooting_goals_dead_ball_specialists
   sql: clickhouse/gold/signal/sig_team_shooting_goals_dead_ball_specialists.sql
   runner: scripts/gold/signal/runners/sig_team_shooting_goals_dead_ball_specialists.py
 ---
@@ -34,7 +34,7 @@ Detect teams that produce at least two goals from dead-ball shooting situations,
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_dead_ball_specialists.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_dead_ball_specialists.py`
-- Target table: `gold.sig_team_shooting_goals_dead_ball_specialists`
+- Target table: `gold_signals.sig_team_shooting_goals_dead_ball_specialists`
 
 ## Example Execution
 

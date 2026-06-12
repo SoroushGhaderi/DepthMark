@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_discipline_cards_hostile_territory
+  table: gold_signals.sig_team_discipline_cards_hostile_territory
   sql: clickhouse/gold/signal/sig_team_discipline_cards_hostile_territory.sql
   runner: scripts/gold/signal/runners/sig_team_discipline_cards_hostile_territory.py
 ---
@@ -34,7 +34,7 @@ Flags team-match performances where disciplinary events outnumber on-target shot
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_hostile_territory.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_hostile_territory.py`
-- Target table: `gold.sig_team_discipline_cards_hostile_territory`
+- Target table: `gold_signals.sig_team_discipline_cards_hostile_territory`
 
 ## Example Execution
 

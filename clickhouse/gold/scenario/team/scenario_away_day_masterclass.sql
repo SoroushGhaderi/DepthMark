@@ -1,5 +1,5 @@
 -- scenario_away_day_masterclass: away wins with strong possession and xG edge
-INSERT INTO gold.scenario_away_day_masterclass
+INSERT INTO gold_scenarios.scenario_away_day_masterclass
 (
     -- 1. Match Identity
     match_id,

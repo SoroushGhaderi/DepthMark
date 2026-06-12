@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_shooting_goals_headers_only
+  table: gold_signals.sig_player_shooting_goals_headers_only
   sql: clickhouse/gold/signal/sig_player_shooting_goals_headers_only.sql
   runner: scripts/gold/signal/runners/sig_player_shooting_goals_headers_only.py
 ---
@@ -36,7 +36,7 @@ Flags players who score two or more goals in a match where every scored goal is 
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_headers_only.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_headers_only.py`
-- Target table: `gold.sig_player_shooting_goals_headers_only`
+- Target table: `gold_signals.sig_player_shooting_goals_headers_only`
 
 ## Example Execution
 

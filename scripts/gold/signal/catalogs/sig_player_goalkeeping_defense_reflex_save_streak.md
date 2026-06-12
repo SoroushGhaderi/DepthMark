@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_goalkeeping_defense_reflex_save_streak
+  table: gold_signals.sig_player_goalkeeping_defense_reflex_save_streak
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_reflex_save_streak.sql
   runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_reflex_save_streak.py
 ---
@@ -41,7 +41,7 @@ five-minute rolling window, surfacing reflex-heavy defensive moments rather than
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_reflex_save_streak.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_reflex_save_streak.py`
-- Target table: `gold.sig_player_goalkeeping_defense_reflex_save_streak`
+- Target table: `gold_signals.sig_player_goalkeeping_defense_reflex_save_streak`
 
 ## Example Execution
 

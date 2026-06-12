@@ -7,7 +7,7 @@ Each scenario is documented with tactical rationale, threshold justification, an
 
 ## Shared DDL For Scenario Tables
 
-- Table DDL file: `clickhouse/gold/02_create_scenario_tables.sql`
+- Table DDL file: `clickhouse/gold/01_create_scenario_tables.sql`
 
 ---
 
@@ -27,7 +27,7 @@ Identifies finished matches decided by a dominant 3+ goal margin, capturing fixt
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_demolition.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_demolition.py`
-- **Target Table:** `gold.scenario_demolition`
+- **Target Table:** `gold_scenarios.scenario_demolition`
 
 ### 🚀 Execution
 ```bash
@@ -52,7 +52,7 @@ Finds wins built on elite defensive suppression, where the winning side concedes
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_defensive_shutdown_win.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_defensive_shutdown_win.py`
-- **Target Table:** `gold.scenario_defensive_shutdown_win`
+- **Target Table:** `gold_scenarios.scenario_defensive_shutdown_win`
 
 ### 🚀 Execution
 ```bash
@@ -77,7 +77,7 @@ Captures wins where the victor generated little attacking volume and still took 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_underdog_heist.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_underdog_heist.py`
-- **Target Table:** `gold.scenario_underdog_heist`
+- **Target Table:** `gold_scenarios.scenario_underdog_heist`
 
 ### 🚀 Execution
 ```bash
@@ -102,7 +102,7 @@ Identifies winning teams whose victories were powered by set-piece execution —
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_dead_ball_dominance.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_dead_ball_dominance.py`
-- **Target Table:** `gold.scenario_dead_ball_dominance`
+- **Target Table:** `gold_scenarios.scenario_dead_ball_dominance`
 
 ### 🚀 Execution
 ```bash
@@ -127,7 +127,7 @@ Finds wins achieved with very low possession share — capturing results where a
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_low_block_heist.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_low_block_heist.py`
-- **Target Table:** `gold.scenario_low_block_heist`
+- **Target Table:** `gold_scenarios.scenario_low_block_heist`
 
 ### 🚀 Execution
 ```bash
@@ -152,7 +152,7 @@ Highlights matches with minimal chance creation from both sides — contests def
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_tactical_stalemate.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_tactical_stalemate.py`
-- **Target Table:** `gold.scenario_tactical_stalemate`
+- **Target Table:** `gold_scenarios.scenario_tactical_stalemate`
 
 ### 🚀 Execution
 ```bash
@@ -177,7 +177,7 @@ Identifies full comebacks where the eventual match winner was actively losing at
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_great_escape.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_great_escape.py`
-- **Target Table:** `gold.scenario_great_escape`
+- **Target Table:** `gold_scenarios.scenario_great_escape`
 
 ### 🚀 Execution
 ```bash
@@ -202,7 +202,7 @@ Finds individual carrying performances where a single player delivered extreme d
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_one_man_army.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_one_man_army.py`
-- **Target Table:** `gold.scenario_one_man_army`
+- **Target Table:** `gold_scenarios.scenario_one_man_army`
 
 ### 🚀 Execution
 ```bash
@@ -227,7 +227,7 @@ Detects wins decided by a late goal that fundamentally altered the match state �
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_last_gasp.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_last_gasp.py`
-- **Target Table:** `gold.scenario_last_gasp`
+- **Target Table:** `gold_scenarios.scenario_last_gasp`
 
 ### 🚀 Execution
 ```bash
@@ -252,7 +252,7 @@ Surfaces goalkeepers who produced major shot-stopping value in finished matches 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_shot_stopper.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_shot_stopper.py`
-- **Target Table:** `gold.scenario_shot_stopper`
+- **Target Table:** `gold_scenarios.scenario_shot_stopper`
 
 ### 🚀 Execution
 ```bash
@@ -281,7 +281,7 @@ Flags finished matches with extreme physical or disciplinary intensity — conte
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_war_zone.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_war_zone.py`
-- **Target Table:** `gold.scenario_war_zone`
+- **Target Table:** `gold_scenarios.scenario_war_zone`
 
 ### 🚀 Execution
 ```bash
@@ -308,7 +308,7 @@ Finds elite finishing spikes where a player scored multiple goals from minimal s
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_clinical_finisher.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_clinical_finisher.py`
-- **Target Table:** `gold.scenario_clinical_finisher`
+- **Target Table:** `gold_scenarios.scenario_clinical_finisher`
 
 ### 🚀 Execution
 ```bash
@@ -333,7 +333,7 @@ Tracks penalty-heavy matches with multiple high-variance pressure moments — co
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_russian_roulette.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_russian_roulette.py`
-- **Target Table:** `gold.scenario_russian_roulette`
+- **Target Table:** `gold_scenarios.scenario_russian_roulette`
 
 ### 🚀 Execution
 ```bash
@@ -358,7 +358,7 @@ Identifies winning teams who paired a very low shot volume with an exceptionally
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_efficiency_machine.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_efficiency_machine.py`
-- **Target Table:** `gold.scenario_efficiency_machine`
+- **Target Table:** `gold_scenarios.scenario_efficiency_machine`
 
 ### 🚀 Execution
 ```bash
@@ -383,7 +383,7 @@ Highlights goalkeepers who repeatedly denied high-quality on-target chances with
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_big_chance_killer.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_big_chance_killer.py`
-- **Target Table:** `gold.scenario_big_chance_killer`
+- **Target Table:** `gold_scenarios.scenario_big_chance_killer`
 
 ### 🚀 Execution
 ```bash
@@ -408,7 +408,7 @@ Finds teams that avoided defeat despite receiving a red card during the match �
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_ten_men_stand.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_ten_men_stand.py`
-- **Target Table:** `gold.scenario_ten_men_stand`
+- **Target Table:** `gold_scenarios.scenario_ten_men_stand`
 
 ### 🚀 Execution
 ```bash
@@ -435,7 +435,7 @@ Identifies outfield players who combined safe ball circulation with meaningful f
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_progressive_powerhouse.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_progressive_powerhouse.py`
-- **Target Table:** `gold.scenario_progressive_powerhouse`
+- **Target Table:** `gold_scenarios.scenario_progressive_powerhouse`
 
 ### 🚀 Execution
 ```bash
@@ -460,7 +460,7 @@ Finds matches where one side dominated control metrics — possession and passin
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_sterile_control.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_sterile_control.py`
-- **Target Table:** `gold.scenario_sterile_control`
+- **Target Table:** `gold_scenarios.scenario_sterile_control`
 
 ### 🚀 Execution
 ```bash
@@ -487,7 +487,7 @@ Captures dominant individual defensive displays characterised by elite aerial do
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_defensive_masterclass.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_defensive_masterclass.py`
-- **Target Table:** `gold.scenario_defensive_masterclass`
+- **Target Table:** `gold_scenarios.scenario_defensive_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -512,7 +512,7 @@ Identifies tempo controllers who combined elite touch volume with passing precis
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_metronome.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_metronome.py`
-- **Target Table:** `gold.scenario_metronome`
+- **Target Table:** `gold_scenarios.scenario_metronome`
 
 ### 🚀 Execution
 ```bash
@@ -541,7 +541,7 @@ Finds non-goalkeeper, non-center-back outfield players sustaining elite two-way 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_high_intensity_engine.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_high_intensity_engine.py`
-- **Target Table:** `gold.scenario_high_intensity_engine`
+- **Target Table:** `gold_scenarios.scenario_high_intensity_engine`
 
 ### 🚀 Execution
 ```bash
@@ -568,7 +568,7 @@ Surfaces balanced outfield performances where a single player contributed meanin
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_box_to_box_general.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_box_to_box_general.py`
-- **Target Table:** `gold.scenario_box_to_box_general`
+- **Target Table:** `gold_scenarios.scenario_box_to_box_general`
 
 ### 🚀 Execution
 ```bash
@@ -593,7 +593,7 @@ Finds away wins defined by territorial and chance-quality superiority — captur
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_away_day_masterclass.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_away_day_masterclass.py`
-- **Target Table:** `gold.scenario_away_day_masterclass`
+- **Target Table:** `gold_scenarios.scenario_away_day_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -618,7 +618,7 @@ Identifies elite individual creators who combined high chance-creation volume wi
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_key_pass_king.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_key_pass_king.py`
-- **Target Table:** `gold.scenario_key_pass_king`
+- **Target Table:** `gold_scenarios.scenario_key_pass_king`
 
 ### 🚀 Execution
 ```bash
@@ -643,7 +643,7 @@ Finds substitutes who made immediate direct attacking impact after coming off th
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_wildcard.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_wildcard.py`
-- **Target Table:** `gold.scenario_wildcard`
+- **Target Table:** `gold_scenarios.scenario_wildcard`
 
 ### 🚀 Execution
 ```bash
@@ -668,7 +668,7 @@ Highlights captains on winning teams who delivered above-average individual impa
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_lead_by_example.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_lead_by_example.py`
-- **Target Table:** `gold.scenario_lead_by_example`
+- **Target Table:** `gold_scenarios.scenario_lead_by_example`
 
 ### 🚀 Execution
 ```bash
@@ -695,7 +695,7 @@ Finds high-impact young starters who delivered outright attacking contributions 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_young_gun.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_young_gun.py`
-- **Target Table:** `gold.scenario_young_gun`
+- **Target Table:** `gold_scenarios.scenario_young_gun`
 
 ### 🚀 Execution
 ```bash
@@ -720,7 +720,7 @@ Detects teams that were trailing at half-time but recovered to avoid defeat — 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_second_half_warriors.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_second_half_warriors.py`
-- **Target Table:** `gold.scenario_second_half_warriors`
+- **Target Table:** `gold_scenarios.scenario_second_half_warriors`
 
 ### 🚀 Execution
 ```bash
@@ -745,7 +745,7 @@ Find elite passing-control performances delivered under adverse possession conte
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_against_the_grain.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_against_the_grain.py`
-- **Target Table:** `gold.scenario_against_the_grain`
+- **Target Table:** `gold_scenarios.scenario_against_the_grain`
 
 ### 🚀 Execution
 ```bash
@@ -770,7 +770,7 @@ Flags matches with heavy combined foul counts but unusually light disciplinary p
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_unpunished_aggression.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_unpunished_aggression.py`
-- **Target Table:** `gold.scenario_unpunished_aggression`
+- **Target Table:** `gold_scenarios.scenario_unpunished_aggression`
 
 ### 🚀 Execution
 ```bash
@@ -795,7 +795,7 @@ Finds wins built on elite team-level ball-winning intensity — matches where th
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_pressing_masterclass.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_pressing_masterclass.py`
-- **Target Table:** `gold.scenario_pressing_masterclass`
+- **Target Table:** `gold_scenarios.scenario_pressing_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -820,7 +820,7 @@ Identifies primary goalkeepers who have delivered match-defining performances ch
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_elite_shot_stopper.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_elite_shot_stopper.py`
-- **Target Table:** `gold.scenario_elite_shot_stopper`
+- **Target Table:** `gold_scenarios.scenario_elite_shot_stopper`
 
 ### 🚀 Execution
 ```bash
@@ -845,7 +845,7 @@ Find matches where one side lays siege with elite shot and xG volume, but still 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_hollow_dominance.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_hollow_dominance.py`
-- **Target Table:** `gold.scenario_hollow_dominance`
+- **Target Table:** `gold_scenarios.scenario_hollow_dominance`
 
 ### 🚀 Execution
 ```bash
@@ -868,7 +868,7 @@ Find outfield isolation specialists who combine high dribble volume, efficient t
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_touchline_terror.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_touchline_terror.py`
-- **Target Table:** `gold.scenario_touchline_terror`
+- **Target Table:** `gold_scenarios.scenario_touchline_terror`
 
 ### 🚀 Execution
 ```bash
@@ -891,7 +891,7 @@ Find deep distributors who repeatedly break lines through accurate long progress
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_line_breaker.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_line_breaker.py`
-- **Target Table:** `gold.scenario_line_breaker`
+- **Target Table:** `gold_scenarios.scenario_line_breaker`
 
 ### 🚀 Execution
 ```bash
@@ -916,7 +916,7 @@ Find end-to-end shootouts where both teams produce elite attacking volume, then 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_basketball_match.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_basketball_match.py`
-- **Target Table:** `gold.scenario_basketball_match`
+- **Target Table:** `gold_scenarios.scenario_basketball_match`
 
 ### 🚀 Execution
 ```bash
@@ -939,7 +939,7 @@ Find attackers who repeatedly draw fouls while actively carrying the ball or rec
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_lightning_rod.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_lightning_rod.py`
-- **Target Table:** `gold.scenario_lightning_rod`
+- **Target Table:** `gold_scenarios.scenario_lightning_rod`
 
 ### 🚀 Execution
 ```bash
@@ -964,7 +964,7 @@ Find outfield defenders who protect their box under heavy shot pressure, combini
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_human_shield.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_human_shield.py`
-- **Target Table:** `gold.scenario_human_shield`
+- **Target Table:** `gold_scenarios.scenario_human_shield`
 
 ### 🚀 Execution
 ```bash
@@ -989,7 +989,7 @@ Find late substitutes who deliver direct scoreline impact on very low touch volu
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_golden_touch.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_golden_touch.py`
-- **Target Table:** `gold.scenario_golden_touch`
+- **Target Table:** `gold_scenarios.scenario_golden_touch`
 
 ### 🚀 Execution
 ```bash
@@ -1014,7 +1014,7 @@ Find high-intensity disruptors who blend defensive action volume, tactical aggre
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_chaos_engine.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_chaos_engine.py`
-- **Target Table:** `gold.scenario_chaos_engine`
+- **Target Table:** `gold_scenarios.scenario_chaos_engine`
 
 ### 🚀 Execution
 ```bash
@@ -1037,7 +1037,7 @@ Find late-match collapses driven by goal surges, shot escalation, and aggressive
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_tired_legs.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_tired_legs.py`
-- **Target Table:** `gold.scenario_tired_legs`
+- **Target Table:** `gold_scenarios.scenario_tired_legs`
 
 ### 🚀 Execution
 ```bash
@@ -1062,7 +1062,7 @@ Find high-volume shooters who absorb a very large share of their team's attempts
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_black_hole.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_black_hole.py`
-- **Target Table:** `gold.scenario_black_hole`
+- **Target Table:** `gold_scenarios.scenario_black_hole`
 
 ### 🚀 Execution
 ```bash
@@ -1087,7 +1087,7 @@ Find teams whose defensive line repeatedly catches opponents offside while still
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_high_line_trap.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_high_line_trap.py`
-- **Target Table:** `gold.scenario_high_line_trap`
+- **Target Table:** `gold_scenarios.scenario_high_line_trap`
 
 ### 🚀 Execution
 ```bash
@@ -1112,7 +1112,7 @@ Find starting attackers with very low overall involvement but extreme penalty-bo
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_ghost_poacher.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_ghost_poacher.py`
-- **Target Table:** `gold.scenario_ghost_poacher`
+- **Target Table:** `gold_scenarios.scenario_ghost_poacher`
 
 ### 🚀 Execution
 ```bash
@@ -1137,7 +1137,7 @@ Find low-possession teams that leaned heavily on direct long-ball progression, s
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_route_one_masterclass.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_route_one_masterclass.py`
-- **Target Table:** `gold.scenario_route_one_masterclass`
+- **Target Table:** `gold_scenarios.scenario_route_one_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -1162,7 +1162,7 @@ Find matches where one side imposed extreme territorial control and almost compl
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_total_suffocation.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_total_suffocation.py`
-- **Target Table:** `gold.scenario_total_suffocation`
+- **Target Table:** `gold_scenarios.scenario_total_suffocation`
 
 ### 🚀 Execution
 ```bash
@@ -1187,7 +1187,7 @@ Find matches where one side weaponized possession to keep the opponent out of da
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_territorial_suffocation.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_territorial_suffocation.py`
-- **Target Table:** `gold.scenario_territorial_suffocation`
+- **Target Table:** `gold_scenarios.scenario_territorial_suffocation`
 
 ### 🚀 Execution
 ```bash
@@ -1212,7 +1212,7 @@ Find deep-lying distribution hubs who combine elite passing volume and accuracy 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_clinical_pivot.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_clinical_pivot.py`
-- **Target Table:** `gold.scenario_clinical_pivot`
+- **Target Table:** `gold_scenarios.scenario_clinical_pivot`
 
 ### 🚀 Execution
 ```bash
@@ -1240,7 +1240,7 @@ python3 scripts/gold/scenario/scenario_clinical_pivot.py
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/scenario/scenario_<name>.sql`
 - **Python Runner:** `scripts/gold/scenario/scenario_<name>.py`
-- **Target Table:** `gold.scenario_<name>`
+- **Target Table:** `gold_scenarios.scenario_<name>`
 
 ### 🚀 Execution
 \`\`\`bash

@@ -1,5 +1,5 @@
 -- scenario_pressing_masterclass: team-level pressing dominance converted into wins
-INSERT INTO gold.scenario_pressing_masterclass
+INSERT INTO gold_scenarios.scenario_pressing_masterclass
 (
     -- 1. Match Identity
     match_id,

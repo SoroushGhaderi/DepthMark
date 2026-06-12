@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_goalkeeping_defense_wing_lockdown_collective
+  table: gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_wing_lockdown_collective.sql
   runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_wing_lockdown_collective.py
 ---
@@ -41,7 +41,7 @@ Detect team-level wing-lane defensive intensity matches where fullback and winge
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_wing_lockdown_collective.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_wing_lockdown_collective.py`
-- Target table: `gold.sig_team_goalkeeping_defense_wing_lockdown_collective`
+- Target table: `gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective`
 
 ## Example Execution
 

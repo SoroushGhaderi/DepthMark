@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold.sig_player_discipline_cards_late_red_drama
+  table: gold_signals.sig_player_discipline_cards_late_red_drama
   sql: clickhouse/gold/signal/sig_player_discipline_cards_late_red_drama.sql
   runner: scripts/gold/signal/runners/sig_player_discipline_cards_late_red_drama.py
 ---
@@ -35,7 +35,7 @@ Flags players sent off after the 85th minute, preserving endgame dismissal timin
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_late_red_drama.sql`
 - Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_late_red_drama.py`
-- Target table: `gold.sig_player_discipline_cards_late_red_drama`
+- Target table: `gold_signals.sig_player_discipline_cards_late_red_drama`
 
 ## Example Execution
 

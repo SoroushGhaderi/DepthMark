@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold.sig_team_possession_passing_long_ball_desperation
+  table: gold_signals.sig_team_possession_passing_long_ball_desperation
   sql: clickhouse/gold/signal/sig_team_possession_passing_long_ball_desperation.sql
   runner: scripts/gold/signal/runners/sig_team_possession_passing_long_ball_desperation.py
 ---
@@ -31,7 +31,7 @@ Triggers when the losing side attempts an extreme long-ball volume (`>60`), indi
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_long_ball_desperation.sql`
 - Runner: `scripts/gold/signal/runners/sig_team_possession_passing_long_ball_desperation.py`
-- Target table: `gold.sig_team_possession_passing_long_ball_desperation`
+- Target table: `gold_signals.sig_team_possession_passing_long_ball_desperation`
 
 ## Example Execution
 
