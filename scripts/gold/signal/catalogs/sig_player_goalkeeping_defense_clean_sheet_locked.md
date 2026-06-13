@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_locked.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_locked.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_clean_sheet_locked
 
@@ -45,13 +45,13 @@ Flags goalkeepers who keep a clean sheet despite facing high expected-goals-on-t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_locked.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_locked.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_locked.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_clean_sheet_locked
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_keeper_masterclass_duel.sql
-  runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_keeper_masterclass_duel.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_goalkeeping_defense_keeper_masterclass_duel
 
@@ -41,13 +41,13 @@ Detect finished matches where both goalkeepers overperform simultaneously by pre
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_keeper_masterclass_duel.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_keeper_masterclass_duel.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_goalkeeping_defense_keeper_masterclass_duel.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_goalkeeping_defense_keeper_masterclass_duel
 ```
 
 ## Output Schema

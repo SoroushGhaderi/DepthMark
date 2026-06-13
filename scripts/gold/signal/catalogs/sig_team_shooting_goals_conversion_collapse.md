@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_conversion_collapse
   sql: clickhouse/gold/signal/sig_team_shooting_goals_conversion_collapse.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_conversion_collapse.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_conversion_collapse
 
@@ -33,13 +33,13 @@ Flag team matches with extreme on-target volume but only one goal, surfacing sev
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_conversion_collapse.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_conversion_collapse.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_conversion_collapse`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_conversion_collapse.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_conversion_collapse
 ```
 
 ## Output Schema

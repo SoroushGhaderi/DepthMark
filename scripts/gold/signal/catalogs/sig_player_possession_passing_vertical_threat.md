@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_vertical_threat
   sql: clickhouse/gold/signal/sig_player_possession_passing_vertical_threat.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_vertical_threat.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_vertical_threat
 
@@ -36,13 +36,13 @@ Triggers when more than 50% of a player's successful passes are directed forward
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_vertical_threat.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_vertical_threat.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_vertical_threat`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_vertical_threat.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_vertical_threat
 ```
 
 ## Output Schema

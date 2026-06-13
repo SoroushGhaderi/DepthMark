@@ -100,18 +100,18 @@ def discover_gold_sql_jobs(
         raise ValueError("Entity and family filters are only supported for signal SQL jobs")
     if family is not None:
         family = validate_signal_family(family)
-    if entity and not family:
-        raise ValueError("Signal entity filter requires --family")
-    if family and not entity:
-        raise ValueError("Signal family filter requires --entity")
+    if entity and family:
+        raise ValueError("Use --entity or --family as separate signal selectors, not both")
 
     search_dir = GOLD_SQL_DIR / "scenario" if kind == "scenario" else GOLD_SQL_DIR / "signal"
     if kind == "scenario":
         pattern = "scenario_*.sql"
-    elif entity and family:
-        pattern = f"sig_{entity}_{family}_*.sql"
+    elif entity:
+        pattern = f"sig_{entity}_*.sql"
+    elif family:
+        pattern = f"sig_*_{family}_*.sql"
     else:
-        pattern = "sig*.sql"
+        pattern = "sig_*.sql"
     return [
         resolve_gold_sql_job(kind, path.stem, target_db=target_db)
         for path in sorted(search_dir.rglob(pattern))

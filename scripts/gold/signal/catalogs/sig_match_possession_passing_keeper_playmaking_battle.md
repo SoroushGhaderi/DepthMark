@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_possession_passing_keeper_playmaking_battle
   sql: clickhouse/gold/signal/sig_match_possession_passing_keeper_playmaking_battle.sql
-  runner: scripts/gold/signal/runners/sig_match_possession_passing_keeper_playmaking_battle.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_keeper_playmaking_battle
 
@@ -31,13 +31,13 @@ Triggers when both sides’ goalkeepers exceed high pass volume in the same matc
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_keeper_playmaking_battle.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_possession_passing_keeper_playmaking_battle.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_keeper_playmaking_battle`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_possession_passing_keeper_playmaking_battle.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_possession_passing_keeper_playmaking_battle
 ```
 
 ## Output Schema

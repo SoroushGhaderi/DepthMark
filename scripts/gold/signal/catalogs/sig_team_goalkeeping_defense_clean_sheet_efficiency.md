@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_clean_sheet_efficiency.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_clean_sheet_efficiency
 
@@ -44,13 +44,13 @@ faced), then retain bilateral defensive workload and control context for interpr
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_clean_sheet_efficiency.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_clean_sheet_efficiency.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_clean_sheet_efficiency
 ```
 
 ## Output Schema

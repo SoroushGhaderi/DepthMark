@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_line_breaker
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_line_breaker.sql
-  runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_line_breaker.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_line_breaker
 
@@ -47,13 +47,13 @@ Detect player-level line-breaking playmaking performances using directional prog
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_line_breaker.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_line_breaker.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_line_breaker`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_creativity_playmaking_line_breaker.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_creativity_playmaking_line_breaker
 ```
 
 ## Output Schema

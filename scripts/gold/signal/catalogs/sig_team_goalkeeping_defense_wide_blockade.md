@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_wide_blockade
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_wide_blockade.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_wide_blockade.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_wide_blockade
 
@@ -42,13 +42,13 @@ Detect team-level wide defensive suppression performances where a side faces hea
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_wide_blockade.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_wide_blockade.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_wide_blockade`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_wide_blockade.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_wide_blockade
 ```
 
 ## Output Schema

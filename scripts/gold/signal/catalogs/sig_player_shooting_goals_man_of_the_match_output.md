@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_man_of_the_match_output
   sql: clickhouse/gold/signal/sig_player_shooting_goals_man_of_the_match_output.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_man_of_the_match_output.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_man_of_the_match_output
 
@@ -37,13 +37,13 @@ Flags elite single-match attacking outputs where a player simultaneously clears 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_man_of_the_match_output.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_man_of_the_match_output.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_man_of_the_match_output`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_man_of_the_match_output.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_man_of_the_match_output
 ```
 
 ## Output Schema

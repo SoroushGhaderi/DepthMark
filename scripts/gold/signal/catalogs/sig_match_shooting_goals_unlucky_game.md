@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_unlucky_game
   sql: clickhouse/gold/signal/sig_match_shooting_goals_unlucky_game.sql
-  runner: scripts/gold/signal/runners/sig_match_shooting_goals_unlucky_game.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_unlucky_game
 
@@ -31,13 +31,13 @@ Flag matches where finishing repeatedly strikes the post or crossbar (combined w
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_unlucky_game.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_unlucky_game.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_unlucky_game`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_shooting_goals_unlucky_game.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_unlucky_game
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_early_blitz
   sql: clickhouse/gold/signal/sig_team_shooting_goals_early_blitz.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_early_blitz.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_early_blitz
 
@@ -32,13 +32,13 @@ Detect team-level explosive starts where a side produces an early two-goal burst
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_early_blitz.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_early_blitz.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_early_blitz`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_early_blitz.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_early_blitz
 ```
 
 ## Output Schema

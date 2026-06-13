@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_shot_suppression_mastery.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_shot_suppression_mastery.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_shot_suppression_mastery
 
@@ -47,13 +47,13 @@ pressure, duel, control, and scoreline context.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_shot_suppression_mastery.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_shot_suppression_mastery.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_shot_suppression_mastery.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_shot_suppression_mastery
 ```
 
 ## Output Schema

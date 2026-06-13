@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_the_creativity_clash
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_the_creativity_clash.sql
-  runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_the_creativity_clash.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_creativity_playmaking_the_creativity_clash
 
@@ -46,13 +46,13 @@ capturing bilateral playmaking clashes rather than one-sided chance creation.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_the_creativity_clash.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_the_creativity_clash.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_the_creativity_clash`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_creativity_playmaking_the_creativity_clash.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_creativity_playmaking_the_creativity_clash
 ```
 
 ## Output Schema

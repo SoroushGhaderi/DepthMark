@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_chaos_90_plus
   sql: clickhouse/gold/signal/sig_match_discipline_cards_chaos_90_plus.sql
-  runner: scripts/gold/signal/runners/sig_match_discipline_cards_chaos_90_plus.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_chaos_90_plus
 
@@ -31,13 +31,13 @@ Flags match-team rows for fixtures where late-game control collapses into severe
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_chaos_90_plus.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_chaos_90_plus.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_chaos_90_plus`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_discipline_cards_chaos_90_plus.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_discipline_cards_chaos_90_plus
 ```
 
 ## Output Schema

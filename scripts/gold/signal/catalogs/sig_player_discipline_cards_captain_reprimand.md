@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_captain_reprimand
   sql: clickhouse/gold/signal/sig_player_discipline_cards_captain_reprimand.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_captain_reprimand.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_captain_reprimand
 
@@ -35,13 +35,13 @@ Flags matches where the on-field captain is cautioned for dissent/reprimand, pre
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_captain_reprimand.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_captain_reprimand.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_captain_reprimand`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_captain_reprimand.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_captain_reprimand
 ```
 
 ## Output Schema

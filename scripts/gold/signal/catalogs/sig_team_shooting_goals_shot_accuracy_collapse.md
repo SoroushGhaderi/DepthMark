@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_shot_accuracy_collapse
   sql: clickhouse/gold/signal/sig_team_shooting_goals_shot_accuracy_collapse.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_shot_accuracy_collapse.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_shot_accuracy_collapse
 
@@ -36,13 +36,13 @@ Detect high-volume team shooting performances where execution collapses, measure
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_shot_accuracy_collapse.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_shot_accuracy_collapse.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_shot_accuracy_collapse`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_shot_accuracy_collapse.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_shot_accuracy_collapse
 ```
 
 ## Output Schema

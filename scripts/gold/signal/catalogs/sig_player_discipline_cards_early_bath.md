@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_early_bath
   sql: clickhouse/gold/signal/sig_player_discipline_cards_early_bath.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_early_bath.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_early_bath
 
@@ -34,13 +34,13 @@ Triggers when a player is sent off in the opening 20 minutes, flagging severe ea
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_early_bath.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_early_bath.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_early_bath`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_early_bath.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_early_bath
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_box_entry_chaos
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_box_entry_chaos.sql
-  runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_box_entry_chaos.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_creativity_playmaking_box_entry_chaos
 
@@ -43,13 +43,13 @@ repeatedly move possession into advanced threat zones.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_box_entry_chaos.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_box_entry_chaos.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_box_entry_chaos`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_creativity_playmaking_box_entry_chaos.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_creativity_playmaking_box_entry_chaos
 ```
 
 ## Output Schema

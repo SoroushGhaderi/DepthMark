@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_foul_efficiency
   sql: clickhouse/gold/signal/sig_team_discipline_cards_foul_efficiency.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_foul_efficiency.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_foul_efficiency
 
@@ -32,13 +32,13 @@ Flags team-match performances where foul volume is high (15 or more fouls) but t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_foul_efficiency.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_foul_efficiency.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_foul_efficiency`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_foul_efficiency.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_foul_efficiency
 ```
 
 ## Output Schema

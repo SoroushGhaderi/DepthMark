@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_high_turnover_risk
   sql: clickhouse/gold/signal/sig_player_possession_passing_high_turnover_risk.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_high_turnover_risk.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_high_turnover_risk
 
@@ -37,13 +37,13 @@ Triggers when a player loses possession more than 25 times in a single match, fl
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_high_turnover_risk.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_high_turnover_risk.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_high_turnover_risk`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_high_turnover_risk.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_high_turnover_risk
 ```
 
 ## Output Schema

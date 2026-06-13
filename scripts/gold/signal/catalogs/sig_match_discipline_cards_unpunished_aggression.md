@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_unpunished_aggression
   sql: clickhouse/gold/signal/sig_match_discipline_cards_unpunished_aggression.sql
-  runner: scripts/gold/signal/runners/sig_match_discipline_cards_unpunished_aggression.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_unpunished_aggression
 
@@ -33,13 +33,13 @@ Flags high-event matches where chance quality is strong and whistle volume is hi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_unpunished_aggression.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_unpunished_aggression.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_unpunished_aggression`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_discipline_cards_unpunished_aggression.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_discipline_cards_unpunished_aggression
 ```
 
 ## Output Schema

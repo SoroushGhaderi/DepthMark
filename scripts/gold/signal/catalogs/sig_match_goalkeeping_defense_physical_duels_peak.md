@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_physical_duels_peak
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_physical_duels_peak.sql
-  runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_physical_duels_peak.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_goalkeeping_defense_physical_duels_peak
 
@@ -36,13 +36,13 @@ Detects finished matches where total physical duel volume is extreme and emits b
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_physical_duels_peak.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_physical_duels_peak.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_physical_duels_peak`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_goalkeeping_defense_physical_duels_peak.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_goalkeeping_defense_physical_duels_peak
 ```
 
 ## Output Schema

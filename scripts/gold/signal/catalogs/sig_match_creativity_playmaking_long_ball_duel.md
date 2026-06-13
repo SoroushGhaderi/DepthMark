@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_long_ball_duel
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_long_ball_duel.sql
-  runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_long_ball_duel.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_creativity_playmaking_long_ball_duel
 
@@ -47,13 +47,13 @@ then preserve side-by-side execution and chance-creation context.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_long_ball_duel.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_long_ball_duel.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_long_ball_duel`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_creativity_playmaking_long_ball_duel.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_creativity_playmaking_long_ball_duel
 ```
 
 ## Output Schema

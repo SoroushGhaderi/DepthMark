@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_bench_goals_impact
   sql: clickhouse/gold/signal/sig_team_shooting_goals_bench_goals_impact.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_bench_goals_impact.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_bench_goals_impact
 
@@ -34,13 +34,13 @@ Detect team scoring performances where the bench contributes at least two non-ow
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_bench_goals_impact.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_bench_goals_impact.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_bench_goals_impact`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_bench_goals_impact.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_bench_goals_impact
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_clinical_showdown
   sql: clickhouse/gold/signal/sig_match_shooting_goals_clinical_showdown.sql
-  runner: scripts/gold/signal/runners/sig_match_shooting_goals_clinical_showdown.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_clinical_showdown
 
@@ -31,13 +31,13 @@ Detect matches where finishing output is extremely clinical relative to chance q
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_clinical_showdown.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_clinical_showdown.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_clinical_showdown`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_shooting_goals_clinical_showdown.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_clinical_showdown
 ```
 
 ## Output Schema

@@ -21,11 +21,11 @@ Asset paths are explicit in each catalog:
 
 - Target table: `gold_signals.{signal_id}`
 - SQL path: `clickhouse/gold/signal/{signal_id}.sql`
-- Runner path: `scripts/gold/signal/runners/{signal_id}.py`
+- Runner path: `scripts/gold/run_sql_job.py`
 
-The MongoDB sync embeds the referenced SQL and runner file contents under
-`assets.sql.content` and `assets.runner.content`, along with each asset path,
-SHA-256 hash, and byte count.
+The MongoDB sync embeds the referenced SQL and shared generic runner file
+contents under `assets.sql.content` and `assets.runner.content`, along with each
+asset path, SHA-256 hash, and byte count.
 
 Keep this index aligned with active catalog files when adding, renaming, or deleting a signal.
 

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_no_fouls_defending
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_no_fouls_defending.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_no_fouls_defending.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_no_fouls_defending
 
@@ -45,13 +45,13 @@ while foul count remains zero, capturing clean defensive aggression.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_no_fouls_defending.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_no_fouls_defending.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_no_fouls_defending`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_no_fouls_defending.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_no_fouls_defending
 ```
 
 ## Output Schema

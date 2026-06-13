@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_heated_derby_stats
   sql: clickhouse/gold/signal/sig_match_discipline_cards_heated_derby_stats.sql
-  runner: scripts/gold/signal/runners/sig_match_discipline_cards_heated_derby_stats.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_heated_derby_stats
 
@@ -33,13 +33,13 @@ Flags matches with jointly high sanction volume and contact pressure, capturing 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_heated_derby_stats.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_heated_derby_stats.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_heated_derby_stats`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_discipline_cards_heated_derby_stats.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_discipline_cards_heated_derby_stats
 ```
 
 ## Output Schema

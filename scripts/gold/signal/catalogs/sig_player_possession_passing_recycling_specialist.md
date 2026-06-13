@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_recycling_specialist
   sql: clickhouse/gold/signal/sig_player_possession_passing_recycling_specialist.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_recycling_specialist.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_recycling_specialist
 
@@ -38,13 +38,13 @@ Triggers when a midfielder records elite pass retention from deep circulation zo
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_recycling_specialist.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_recycling_specialist.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_recycling_specialist`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_recycling_specialist.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_recycling_specialist
 ```
 
 ## Output Schema

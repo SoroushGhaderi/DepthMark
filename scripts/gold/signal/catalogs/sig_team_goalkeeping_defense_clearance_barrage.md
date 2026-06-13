@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_clearance_barrage
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_clearance_barrage.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_clearance_barrage.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_clearance_barrage
 
@@ -34,13 +34,13 @@ Detect team-level defensive overload matches where a side produces extreme clear
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_clearance_barrage.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_clearance_barrage.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_clearance_barrage`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_clearance_barrage.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_clearance_barrage
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_foul_heavy_stalemate
   sql: clickhouse/gold/signal/sig_match_discipline_cards_foul_heavy_stalemate.sql
-  runner: scripts/gold/signal/runners/sig_match_discipline_cards_foul_heavy_stalemate.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_foul_heavy_stalemate
 
@@ -33,13 +33,13 @@ Flags goalless draws that were still physically intense, surfacing 0-0 matches w
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_foul_heavy_stalemate.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_foul_heavy_stalemate.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_foul_heavy_stalemate`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_discipline_cards_foul_heavy_stalemate.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_discipline_cards_foul_heavy_stalemate
 ```
 
 ## Output Schema

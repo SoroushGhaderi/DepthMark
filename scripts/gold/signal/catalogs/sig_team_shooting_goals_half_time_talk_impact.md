@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_half_time_talk_impact
   sql: clickhouse/gold/signal/sig_team_shooting_goals_half_time_talk_impact.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_half_time_talk_impact.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_half_time_talk_impact
 
@@ -32,13 +32,13 @@ Detect team-level post-halftime attacking bursts where a side scores at least tw
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_half_time_talk_impact.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_half_time_talk_impact.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_half_time_talk_impact`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_half_time_talk_impact.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_half_time_talk_impact
 ```
 
 ## Output Schema

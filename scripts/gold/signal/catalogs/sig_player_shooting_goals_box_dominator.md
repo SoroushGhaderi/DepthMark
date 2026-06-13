@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_box_dominator
   sql: clickhouse/gold/signal/sig_player_shooting_goals_box_dominator.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_box_dominator.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_box_dominator
 
@@ -35,13 +35,13 @@ Flags match-player events where a player combines elite penalty-area presence (`
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_box_dominator.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_box_dominator.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_box_dominator`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_box_dominator.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_box_dominator
 ```
 
 ## Output Schema

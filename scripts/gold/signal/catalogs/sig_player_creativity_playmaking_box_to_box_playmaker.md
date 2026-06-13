@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_box_to_box_playmaker.sql
-  runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_box_to_box_playmaker.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_box_to_box_playmaker
 
@@ -55,13 +55,13 @@ ball-winning in the same finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_box_to_box_playmaker.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_box_to_box_playmaker.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_creativity_playmaking_box_to_box_playmaker.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_creativity_playmaking_box_to_box_playmaker
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_long_range_barrage
   sql: clickhouse/gold/signal/sig_team_shooting_goals_long_range_barrage.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_long_range_barrage.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_long_range_barrage
 
@@ -33,13 +33,13 @@ Detect team-level long-range shooting overloads where a side relies heavily on o
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_long_range_barrage.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_long_range_barrage.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_long_range_barrage`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_long_range_barrage.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_long_range_barrage
 ```
 
 ## Output Schema

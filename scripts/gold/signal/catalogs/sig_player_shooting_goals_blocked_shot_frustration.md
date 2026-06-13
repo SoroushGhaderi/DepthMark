@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_blocked_shot_frustration
   sql: clickhouse/gold/signal/sig_player_shooting_goals_blocked_shot_frustration.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_blocked_shot_frustration.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_blocked_shot_frustration
 
@@ -42,13 +42,13 @@ frustration patterns where finishing opportunities are neutralized before reachi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_blocked_shot_frustration.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_blocked_shot_frustration.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_blocked_shot_frustration`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_blocked_shot_frustration.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_blocked_shot_frustration
 ```
 
 ## Output Schema

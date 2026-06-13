@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_xg_overperformance_team
   sql: clickhouse/gold/signal/sig_team_shooting_goals_xg_overperformance_team.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_xg_overperformance_team.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_xg_overperformance_team
 
@@ -34,13 +34,13 @@ Detect rare team matches where very high scoring output (4+ goals) is produced f
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_xg_overperformance_team.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_xg_overperformance_team.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_xg_overperformance_team`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_xg_overperformance_team.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_xg_overperformance_team
 ```
 
 ## Output Schema

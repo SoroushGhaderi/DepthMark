@@ -36,6 +36,10 @@ python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominanc
 python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance
 ```
 
+ADR 0009 later expands the generic runner so `--kind scenario` can run all
+scenario SQL jobs on demand. That does not re-enable scenario execution inside
+the default Gold layer loader.
+
 Bulk scenario execution may be re-enabled only after a change validates:
 
 - `clickhouse/gold/00_create_database.sql` creates `gold_scenarios`;
@@ -53,8 +57,9 @@ The default Gold loader remains safer during the namespace migration and signal
 runner consolidation work.
 
 The tradeoff is that scenario backfills are not part of the default Gold bulk
-run yet. Operators must run individual scenarios through `run_sql_job.py` or use
-an intentionally validated follow-up change to restore bulk execution.
+run yet. Operators must run selected scenario jobs through `run_sql_job.py` or
+use an intentionally validated follow-up change to restore bulk execution in
+the Gold layer loader.
 
 Documentation and runbooks should describe scenario bulk as disabled rather
 than partially implemented. Future work that re-enables it must update this ADR,

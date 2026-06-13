@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_game_of_two_halves
   sql: clickhouse/gold/signal/sig_match_shooting_goals_game_of_two_halves.sql
-  runner: scripts/gold/signal/runners/sig_match_shooting_goals_game_of_two_halves.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_game_of_two_halves
 
@@ -34,13 +34,13 @@ Flag matches that are scoreless before halftime but turn into high-scoring secon
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_game_of_two_halves.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_game_of_two_halves.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_game_of_two_halves`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_shooting_goals_game_of_two_halves.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_game_of_two_halves
 ```
 
 ## Output Schema

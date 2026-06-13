@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_shot_magnet
   sql: clickhouse/gold/signal/sig_player_shooting_goals_shot_magnet.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_shot_magnet.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_shot_magnet
 
@@ -35,13 +35,13 @@ Flags extreme shot-concentration events where one player takes more than 60% of 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_shot_magnet.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_shot_magnet.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_shot_magnet`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_shot_magnet.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_magnet
 ```
 
 ## Output Schema

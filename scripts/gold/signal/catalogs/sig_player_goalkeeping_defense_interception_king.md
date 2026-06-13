@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_interception_king
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_interception_king.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_interception_king.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_interception_king
 
@@ -45,13 +45,13 @@ and control context for anticipation-driven defensive profiling.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_interception_king.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_interception_king.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_interception_king`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_interception_king.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_interception_king
 ```
 
 ## Output Schema

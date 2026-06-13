@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_the_great_wall
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_the_great_wall.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_the_great_wall.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_the_great_wall
 
@@ -38,13 +38,13 @@ Detect matches where a team blocks at least half of opposition shot attempts, th
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_the_great_wall.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_the_great_wall.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_the_great_wall`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_the_great_wall.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_the_great_wall
 ```
 
 ## Output Schema

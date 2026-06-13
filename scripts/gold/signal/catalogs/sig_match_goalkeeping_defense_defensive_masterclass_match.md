@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_defensive_masterclass_match.sql
-  runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_defensive_masterclass_match.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_goalkeeping_defense_defensive_masterclass_match
 
@@ -37,13 +37,13 @@ symmetrically.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_defensive_masterclass_match.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_defensive_masterclass_match.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_goalkeeping_defense_defensive_masterclass_match.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_goalkeeping_defense_defensive_masterclass_match
 ```
 
 ## Output Schema

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_keeper_launch_heavy
   sql: clickhouse/gold/signal/sig_player_possession_passing_keeper_launch_heavy.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_keeper_launch_heavy.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_keeper_launch_heavy
 
@@ -34,13 +34,13 @@ Triggers when a goalkeeper attempts at least 20 long balls, highlighting matches
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_keeper_launch_heavy.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_keeper_launch_heavy.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_keeper_launch_heavy`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_keeper_launch_heavy.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_keeper_launch_heavy
 ```
 
 ## Output Schema

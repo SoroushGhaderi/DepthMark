@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_possession_passing_wing_play_extravaganza
   sql: clickhouse/gold/signal/sig_match_possession_passing_wing_play_extravaganza.sql
-  runner: scripts/gold/signal/runners/sig_match_possession_passing_wing_play_extravaganza.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_wing_play_extravaganza
 
@@ -31,13 +31,13 @@ Triggers when both teams combine for extreme crossing volume, surfacing wing-dom
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_wing_play_extravaganza.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_possession_passing_wing_play_extravaganza.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_wing_play_extravaganza`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_possession_passing_wing_play_extravaganza.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_possession_passing_wing_play_extravaganza
 ```
 
 ## Output Schema

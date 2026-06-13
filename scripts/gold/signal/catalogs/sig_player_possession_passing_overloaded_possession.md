@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_overloaded_possession
   sql: clickhouse/gold/signal/sig_player_possession_passing_overloaded_possession.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_overloaded_possession.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_overloaded_possession
 
@@ -33,13 +33,13 @@ Triggers when a player records more than 120 touches in a single match, identify
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_overloaded_possession.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_overloaded_possession.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_overloaded_possession`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_overloaded_possession.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_overloaded_possession
 ```
 
 ## Output Schema

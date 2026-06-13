@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_parking_the_bus
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_parking_the_bus.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_parking_the_bus.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_parking_the_bus
 
@@ -38,13 +38,13 @@ Flags low-possession wins built on extreme clearance volume, surfacing compact, 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_parking_the_bus.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_parking_the_bus.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_parking_the_bus`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_parking_the_bus.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_parking_the_bus
 ```
 
 ## Output Schema

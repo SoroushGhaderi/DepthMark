@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_aerial_stronghold
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_aerial_stronghold.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_aerial_stronghold.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_aerial_stronghold
 
@@ -37,13 +37,13 @@ back-line aerial control with bilateral defensive and possession context.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_aerial_stronghold.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_aerial_stronghold.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_aerial_stronghold`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_aerial_stronghold.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_aerial_stronghold
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_crossing_clinic
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_crossing_clinic.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_crossing_clinic.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_crossing_clinic
 
@@ -36,13 +36,13 @@ Detect team-level crossing clinics where a side records at least 10 successful c
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_crossing_clinic.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_crossing_clinic.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_crossing_clinic`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_crossing_clinic.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_crossing_clinic
 ```
 
 ## Output Schema

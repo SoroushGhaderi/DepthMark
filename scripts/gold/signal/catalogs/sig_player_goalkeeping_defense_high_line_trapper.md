@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_high_line_trapper
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_high_line_trapper.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_high_line_trapper.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_high_line_trapper
 
@@ -44,13 +44,13 @@ Flags defenders in matches where their team's defensive line repeatedly catches 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_high_line_trapper.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_high_line_trapper.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_high_line_trapper`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_high_line_trapper.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_high_line_trapper
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_referee_strictness
   sql: clickhouse/gold/signal/sig_match_discipline_cards_referee_strictness.sql
-  runner: scripts/gold/signal/runners/sig_match_discipline_cards_referee_strictness.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_referee_strictness
 
@@ -31,13 +31,13 @@ Flags matches where a yellow card arrives very early, a practical proxy for stri
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_referee_strictness.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_referee_strictness.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_referee_strictness`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_discipline_cards_referee_strictness.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_discipline_cards_referee_strictness
 ```
 
 ## Output Schema

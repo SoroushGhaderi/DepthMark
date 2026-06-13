@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_flawless_distributor
   sql: clickhouse/gold/signal/sig_player_possession_passing_flawless_distributor.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_flawless_distributor.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_flawless_distributor
 
@@ -34,13 +34,13 @@ Triggers when a player attempts at least 40 passes and completes every pass, ide
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_flawless_distributor.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_flawless_distributor.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_flawless_distributor`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_flawless_distributor.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_flawless_distributor
 ```
 
 ## Output Schema

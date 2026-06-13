@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_first_minute_goal
   sql: clickhouse/gold/signal/sig_player_shooting_goals_first_minute_goal.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_first_minute_goal.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_first_minute_goal
 
@@ -43,13 +43,13 @@ instant attacking impact and changes game state in the opening minute.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_first_minute_goal.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_first_minute_goal.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_first_minute_goal`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_first_minute_goal.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_first_minute_goal
 ```
 
 ## Output Schema

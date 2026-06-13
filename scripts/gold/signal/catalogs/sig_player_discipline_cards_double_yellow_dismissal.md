@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_double_yellow_dismissal
   sql: clickhouse/gold/signal/sig_player_discipline_cards_double_yellow_dismissal.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_double_yellow_dismissal.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_double_yellow_dismissal
 
@@ -35,13 +35,13 @@ Flags players dismissed via second-yellow dynamics, preserving trigger timing an
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_double_yellow_dismissal.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_double_yellow_dismissal.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_double_yellow_dismissal`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_double_yellow_dismissal.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_double_yellow_dismissal
 ```
 
 ## Output Schema

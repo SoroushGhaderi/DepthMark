@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_deep_playmaker
   sql: clickhouse/gold/signal/sig_player_possession_passing_deep_playmaker.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_deep_playmaker.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_deep_playmaker
 
@@ -35,13 +35,13 @@ Triggers when a center back records at least 80 accurate passes, highlighting de
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_deep_playmaker.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_deep_playmaker.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_deep_playmaker`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_deep_playmaker.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_deep_playmaker
 ```
 
 ## Output Schema

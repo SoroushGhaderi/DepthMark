@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_complete_dominance
   sql: clickhouse/gold/signal/sig_match_shooting_goals_complete_dominance.sql
-  runner: scripts/gold/signal/runners/sig_match_shooting_goals_complete_dominance.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_complete_dominance
 
@@ -34,13 +34,13 @@ Detect extreme one-sided chance-quality control where one team generates at leas
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_complete_dominance.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_complete_dominance.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_complete_dominance`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_shooting_goals_complete_dominance.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_complete_dominance
 ```
 
 ## Output Schema

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_cross_heavy
   sql: clickhouse/gold/signal/sig_player_possession_passing_cross_heavy.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_cross_heavy.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_cross_heavy
 
@@ -33,13 +33,13 @@ Triggers when a player attempts more than 12 crosses in a single match, identify
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_cross_heavy.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_cross_heavy.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_cross_heavy`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_cross_heavy.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_cross_heavy
 ```
 
 ## Output Schema

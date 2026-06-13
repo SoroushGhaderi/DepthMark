@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_unbeatable_duelist.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_unbeatable_duelist.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_unbeatable_duelist
 
@@ -42,13 +42,13 @@ Flags defender performances with high-volume and high-efficiency combined duel o
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_unbeatable_duelist.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_unbeatable_duelist.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_unbeatable_duelist.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_unbeatable_duelist
 ```
 
 ## Output Schema

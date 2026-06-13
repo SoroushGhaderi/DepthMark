@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_man_down_resilience
   sql: clickhouse/gold/signal/sig_team_discipline_cards_man_down_resilience.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_man_down_resilience.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_man_down_resilience
 
@@ -32,13 +32,13 @@ Flags team-match performances where a side suffers an early red card (minute <= 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_man_down_resilience.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_man_down_resilience.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_man_down_resilience`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_man_down_resilience.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_man_down_resilience
 ```
 
 ## Output Schema

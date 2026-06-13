@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_dribbled_past_heavy.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_dribbled_past_heavy.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_dribbled_past_heavy
 
@@ -39,13 +39,13 @@ Flags players repeatedly bypassed in one-on-one actions (`dribbled past >= 5`) t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_dribbled_past_heavy.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_dribbled_past_heavy.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_dribbled_past_heavy.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_dribbled_past_heavy
 ```
 
 ## Output Schema

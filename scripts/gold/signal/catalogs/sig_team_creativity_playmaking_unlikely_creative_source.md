@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_unlikely_creative_source
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_unlikely_creative_source.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_unlikely_creative_source.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_unlikely_creative_source
 
@@ -43,13 +43,13 @@ combining for at least two assists in a finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_unlikely_creative_source.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_unlikely_creative_source.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_unlikely_creative_source`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_unlikely_creative_source.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_unlikely_creative_source
 ```
 
 ## Output Schema

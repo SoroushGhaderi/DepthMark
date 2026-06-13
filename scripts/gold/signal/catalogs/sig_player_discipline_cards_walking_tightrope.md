@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_walking_tightrope
   sql: clickhouse/gold/signal/sig_player_discipline_cards_walking_tightrope.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_walking_tightrope.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_walking_tightrope
 
@@ -38,13 +38,13 @@ Flags players who are booked early (before minute 20), indicating immediate disc
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_walking_tightrope.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_walking_tightrope.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_walking_tightrope`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_walking_tightrope.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_walking_tightrope
 ```
 
 ## Output Schema

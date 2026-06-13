@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_first_half_dominator
   sql: clickhouse/gold/signal/sig_player_shooting_goals_first_half_dominator.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_first_half_dominator.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_first_half_dominator
 
@@ -41,13 +41,13 @@ Flags players who score at least two non-own goals in the first half, isolating 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_first_half_dominator.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_first_half_dominator.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_first_half_dominator`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_first_half_dominator.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_first_half_dominator
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_unbroken_structure
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_unbroken_structure.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_unbroken_structure.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_unbroken_structure
 
@@ -48,13 +48,13 @@ scoreline context.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_unbroken_structure.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_unbroken_structure.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_unbroken_structure`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_unbroken_structure.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_unbroken_structure
 ```
 
 ## Output Schema

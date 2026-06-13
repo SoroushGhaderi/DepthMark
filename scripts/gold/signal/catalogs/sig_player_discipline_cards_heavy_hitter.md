@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_heavy_hitter
   sql: clickhouse/gold/signal/sig_player_discipline_cards_heavy_hitter.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_heavy_hitter.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_heavy_hitter
 
@@ -35,13 +35,13 @@ Flags players who combine low tackle efficiency with high foul volume, surfacing
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_heavy_hitter.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_heavy_hitter.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_heavy_hitter`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_heavy_hitter.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_heavy_hitter
 ```
 
 ## Output Schema

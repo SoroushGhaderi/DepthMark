@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_man_advantage_collapse
   sql: clickhouse/gold/signal/sig_team_discipline_cards_man_advantage_collapse.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_man_advantage_collapse.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_man_advantage_collapse
 
@@ -32,13 +32,13 @@ Flags team-match performances where a side loses even though the opponent is sen
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_man_advantage_collapse.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_man_advantage_collapse.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_man_advantage_collapse`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_man_advantage_collapse.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_man_advantage_collapse
 ```
 
 ## Output Schema

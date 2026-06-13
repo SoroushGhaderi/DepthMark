@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_possession_passing_high_press_victim
   sql: clickhouse/gold/signal/sig_team_possession_passing_high_press_victim.sql
-  runner: scripts/gold/signal/runners/sig_team_possession_passing_high_press_victim.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_high_press_victim
 
@@ -30,13 +30,13 @@ Triggers when a team's pass accuracy drops below 70% as a proxy for defensive-th
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_high_press_victim.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_possession_passing_high_press_victim.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_high_press_victim`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_possession_passing_high_press_victim.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_possession_passing_high_press_victim
 ```
 
 ## Output Schema

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_persistent_threat
   sql: clickhouse/gold/signal/sig_player_shooting_goals_persistent_threat.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_persistent_threat.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_persistent_threat
 
@@ -40,13 +40,13 @@ Flags players who sustain shooting presence across the full match by producing a
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_persistent_threat.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_persistent_threat.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_persistent_threat`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_persistent_threat.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_persistent_threat
 ```
 
 ## Output Schema

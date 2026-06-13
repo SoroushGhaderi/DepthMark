@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_goalless_siege_match
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_goalless_siege_match.sql
-  runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_goalless_siege_match.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_goalkeeping_defense_goalless_siege_match
 
@@ -38,13 +38,13 @@ Detects goalkeeper-driven 0-0 stalemates where at least one side produces elite 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_goalless_siege_match.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_goalless_siege_match.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_goalless_siege_match`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_goalkeeping_defense_goalless_siege_match.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_goalkeeping_defense_goalless_siege_match
 ```
 
 ## Output Schema

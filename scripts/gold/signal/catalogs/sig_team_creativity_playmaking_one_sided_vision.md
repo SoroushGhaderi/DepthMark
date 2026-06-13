@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_one_sided_vision
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_one_sided_vision.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_one_sided_vision.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_one_sided_vision
 
@@ -47,13 +47,13 @@ producing at least 10 key passes while the opponent produces none.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_one_sided_vision.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_one_sided_vision.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_one_sided_vision`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_one_sided_vision.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_one_sided_vision
 ```
 
 ## Output Schema

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_clearance_machine
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_clearance_machine.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_clearance_machine.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_clearance_machine
 
@@ -40,13 +40,13 @@ box-protection and pressure-release performances.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_clearance_machine.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_clearance_machine.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_clearance_machine`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_clearance_machine.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_clearance_machine
 ```
 
 ## Output Schema

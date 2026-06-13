@@ -1,4 +1,4 @@
-"""Run one Gold scenario or signal SQL job through the generic executor."""
+"""Run selected Gold scenario and signal SQL jobs through the generic executor."""
 
 import argparse
 import sys
@@ -12,6 +12,7 @@ if str(project_root) not in sys.path:
 
 from config.settings import settings
 from scripts.gold.sql_jobs import (
+    GoldJobKind,
     discover_gold_sql_jobs,
     execute_gold_sql_job,
     resolve_gold_sql_job,
@@ -24,12 +25,11 @@ logger = get_logger(__name__)
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     """Parse CLI arguments."""
-    parser = argparse.ArgumentParser(description="Run one Gold SQL job in ClickHouse")
+    parser = argparse.ArgumentParser(description="Run selected Gold SQL jobs in ClickHouse")
     parser.add_argument(
         "--kind",
         choices=("scenario", "signal"),
-        required=True,
-        help="Gold SQL job kind to run",
+        help="Gold SQL job kind to run. Omit to select both scenarios and signals.",
     )
     parser.add_argument(
         "--id",
@@ -47,9 +47,20 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Preview the selected SQL job without connecting to ClickHouse or executing SQL",
+        help="Preview selected SQL jobs without connecting to ClickHouse or executing SQL",
     )
     return parser.parse_args(argv)
+
+
+def _kind_from_job_id(job_id: str) -> GoldJobKind:
+    """Infer the Gold job kind from a job id prefix."""
+    if job_id.startswith("scenario_"):
+        return "scenario"
+    if job_id.startswith(("sig_", "signal_")):
+        return "signal"
+    raise ValueError(
+        "Gold SQL job id must start with scenario_, sig_, or signal_ when --kind is omitted"
+    )
 
 
 def _validate_selection(args: argparse.Namespace) -> int:
@@ -58,14 +69,11 @@ def _validate_selection(args: argparse.Namespace) -> int:
     if args.id and has_filter:
         logger.error("Use either --id or --entity/--family filters, not both")
         return 2
-    if not args.id and not has_filter:
-        logger.error("Provide --id or both --entity and --family")
+    if args.entity and args.family:
+        logger.error("Use either --entity or --family as a signal selector, not both")
         return 2
-    if has_filter and args.kind != "signal":
-        logger.error("--entity and --family filters are only supported with --kind signal")
-        return 2
-    if has_filter and not (args.entity and args.family):
-        logger.error("Signal batch execution requires both --entity and --family")
+    if has_filter and args.kind not in (None, "signal"):
+        logger.error("--entity and --family filters are only supported for signal jobs")
         return 2
     return 0
 
@@ -73,8 +81,20 @@ def _validate_selection(args: argparse.Namespace) -> int:
 def _selected_jobs(args: argparse.Namespace):
     """Resolve selected Gold SQL jobs from CLI arguments."""
     if args.id:
-        return [resolve_gold_sql_job(args.kind, args.id)]
-    return discover_gold_sql_jobs(args.kind, entity=args.entity, family=args.family)
+        inferred_kind = _kind_from_job_id(args.id)
+        if args.kind and args.kind != inferred_kind:
+            raise ValueError(f"--kind {args.kind} does not match Gold SQL job id: {args.id}")
+        return [resolve_gold_sql_job(inferred_kind, args.id)]
+
+    if args.kind:
+        return discover_gold_sql_jobs(args.kind, entity=args.entity, family=args.family)
+
+    if args.entity or args.family:
+        return discover_gold_sql_jobs("signal", entity=args.entity, family=args.family)
+
+    scenario_jobs = discover_gold_sql_jobs("scenario")
+    signal_jobs = discover_gold_sql_jobs("signal")
+    return [*scenario_jobs, *signal_jobs]
 
 
 def _run_jobs(client: Optional[ClickHouseClient], jobs, *, dry_run: bool) -> tuple[int, int]:
@@ -119,7 +139,7 @@ def _run_jobs(client: Optional[ClickHouseClient], jobs, *, dry_run: bool) -> tup
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    """Run one selected Gold SQL job."""
+    """Run selected Gold SQL jobs."""
     global logger
     args = parse_args(argv)
     logger = setup_logging(

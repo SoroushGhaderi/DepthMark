@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_possession_passing_passing_fatigue_index
   sql: clickhouse/gold/signal/sig_team_possession_passing_passing_fatigue_index.sql
-  runner: scripts/gold/signal/runners/sig_team_possession_passing_passing_fatigue_index.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_passing_fatigue_index
 
@@ -30,13 +30,13 @@ Triggers when a team's second-half pass volume is at least 30% lower than its fi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_passing_fatigue_index.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_possession_passing_passing_fatigue_index.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_passing_fatigue_index`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_possession_passing_passing_fatigue_index.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_possession_passing_passing_fatigue_index
 ```
 
 ## Output Schema

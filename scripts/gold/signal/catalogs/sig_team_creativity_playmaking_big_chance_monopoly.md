@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_big_chance_monopoly
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_big_chance_monopoly.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_big_chance_monopoly.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_big_chance_monopoly
 
@@ -45,13 +45,13 @@ five big chances while allowing the opponent none.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_big_chance_monopoly.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_big_chance_monopoly.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_big_chance_monopoly`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_big_chance_monopoly.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_big_chance_monopoly
 ```
 
 ## Output Schema

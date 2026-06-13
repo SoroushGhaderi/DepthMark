@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_physical_superiority
   sql: clickhouse/gold/signal/sig_team_discipline_cards_physical_superiority.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_physical_superiority.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_physical_superiority
 
@@ -32,13 +32,13 @@ Flags team-match cases where a side controls the duel battle (at least 65% duel-
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_physical_superiority.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_physical_superiority.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_physical_superiority`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_physical_superiority.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_physical_superiority
 ```
 
 ## Output Schema

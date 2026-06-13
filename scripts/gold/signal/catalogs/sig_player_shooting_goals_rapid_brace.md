@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_rapid_brace
   sql: clickhouse/gold/signal/sig_player_shooting_goals_rapid_brace.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_rapid_brace.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_rapid_brace
 
@@ -35,13 +35,13 @@ Flags players who produce a rapid brace by scoring two non-own goals within ten 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_rapid_brace.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_rapid_brace.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_rapid_brace`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_rapid_brace.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_rapid_brace
 ```
 
 ## Output Schema

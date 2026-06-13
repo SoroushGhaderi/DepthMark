@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_penalty_prone
   sql: clickhouse/gold/signal/sig_team_discipline_cards_penalty_prone.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_penalty_prone.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_penalty_prone
 
@@ -32,13 +32,13 @@ Flags team-match performances where a team concedes at least two penalties, surf
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_penalty_prone.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_penalty_prone.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_penalty_prone`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_penalty_prone.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_penalty_prone
 ```
 
 ## Output Schema

@@ -51,11 +51,14 @@ All three parts are required for a production-ready scenario.
    - run `OPTIMIZE TABLE <target> FINAL DEDUPLICATE`
    - return non-zero on failure
 2. Runner should not embed business SQL in Python strings.
-3. Individual scenario execution must remain available through `scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>`.
+3. Individual scenario execution must remain available through
+   `scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>`.
+4. Scenario-kind execution must remain available through
+   `scripts/gold/run_sql_job.py --kind scenario`.
 
 ## Bulk Execution Contract
 
-`scripts/gold/load_clickhouse_gold.py` is the canonical bulk runner.
+`scripts/gold/load_clickhouse_gold.py` is the canonical layer runner.
 
 1. Executes base gold SQL files from `clickhouse/gold/*.sql`.
 2. Scenario bulk execution may remain disabled until re-enabled intentionally.
@@ -80,7 +83,8 @@ Minimum operational checks:
 1. `python scripts/gold/load_clickhouse_gold.py --dry-run`
 2. `python scripts/gold/load_clickhouse_gold.py`
 3. `python scripts/gold/run_sql_job.py --kind scenario --id <scenario_id> --dry-run`
-4. Verify no gold contract failures (`invalid match_id`, missing scenario tables).
+4. `python scripts/gold/run_sql_job.py --kind scenario --dry-run`
+5. Verify no gold contract failures (`invalid match_id`, missing scenario tables).
 
 ## Change Management Rules
 

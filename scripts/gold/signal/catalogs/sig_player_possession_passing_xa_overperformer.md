@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_xa_overperformer
   sql: clickhouse/gold/signal/sig_player_possession_passing_xa_overperformer.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_xa_overperformer.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_xa_overperformer
 
@@ -35,13 +35,13 @@ Triggers when a player records at least 2 assists with less than 0.5 expected as
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_xa_overperformer.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_xa_overperformer.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_xa_overperformer`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_xa_overperformer.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_xa_overperformer
 ```
 
 ## Output Schema

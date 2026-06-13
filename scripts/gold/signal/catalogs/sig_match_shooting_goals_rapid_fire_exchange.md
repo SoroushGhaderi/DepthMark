@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_rapid_fire_exchange
   sql: clickhouse/gold/signal/sig_match_shooting_goals_rapid_fire_exchange.sql
-  runner: scripts/gold/signal/runners/sig_match_shooting_goals_rapid_fire_exchange.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_rapid_fire_exchange
 
@@ -32,13 +32,13 @@ Flag matches with immediate bilateral goal trading (3-minute exchange windows), 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_rapid_fire_exchange.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_rapid_fire_exchange.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_rapid_fire_exchange`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_shooting_goals_rapid_fire_exchange.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_rapid_fire_exchange
 ```
 
 ## Output Schema

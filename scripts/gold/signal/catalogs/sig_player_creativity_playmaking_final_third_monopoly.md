@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_final_third_monopoly
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_final_third_monopoly.sql
-  runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_final_third_monopoly.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_final_third_monopoly
 
@@ -47,13 +47,13 @@ volume (`>= 30`) in a single finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_final_third_monopoly.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_final_third_monopoly.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_final_third_monopoly`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_creativity_playmaking_final_third_monopoly.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_creativity_playmaking_final_third_monopoly
 ```
 
 ## Output Schema

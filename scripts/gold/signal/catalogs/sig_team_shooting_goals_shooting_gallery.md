@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_shooting_gallery
   sql: clickhouse/gold/signal/sig_team_shooting_goals_shooting_gallery.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_shooting_gallery.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_shooting_gallery
 
@@ -31,13 +31,13 @@ Detect extreme shot-volume team matches (25+ attempts) and quantify whether the 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_shooting_gallery.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_shooting_gallery.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_shooting_gallery`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_shooting_gallery.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_shooting_gallery
 ```
 
 ## Output Schema

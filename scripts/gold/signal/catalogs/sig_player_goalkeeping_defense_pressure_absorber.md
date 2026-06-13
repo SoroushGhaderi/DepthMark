@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_pressure_absorber
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_pressure_absorber.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_pressure_absorber.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_pressure_absorber
 
@@ -49,13 +49,13 @@ on the ball (`touches > 50`), and avoids possession losses via a conservative tu
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_pressure_absorber.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_pressure_absorber.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_pressure_absorber`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_pressure_absorber.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_pressure_absorber
 ```
 
 ## Output Schema

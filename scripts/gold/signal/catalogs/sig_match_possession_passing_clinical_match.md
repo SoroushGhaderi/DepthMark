@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_possession_passing_clinical_match
   sql: clickhouse/gold/signal/sig_match_possession_passing_clinical_match.sql
-  runner: scripts/gold/signal/runners/sig_match_possession_passing_clinical_match.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_clinical_match
 
@@ -30,13 +30,13 @@ Flags extreme finishing matches where total scoring is high despite low underlyi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_clinical_match.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_possession_passing_clinical_match.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_clinical_match`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_possession_passing_clinical_match.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_possession_passing_clinical_match
 ```
 
 ## Output Schema

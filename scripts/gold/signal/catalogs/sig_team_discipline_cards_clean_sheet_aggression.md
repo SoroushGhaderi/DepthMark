@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_clean_sheet_aggression
   sql: clickhouse/gold/signal/sig_team_discipline_cards_clean_sheet_aggression.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_clean_sheet_aggression.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_clean_sheet_aggression
 
@@ -33,13 +33,13 @@ Flags team-match performances where a side wins to nil while accumulating a heav
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_clean_sheet_aggression.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_clean_sheet_aggression.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_clean_sheet_aggression`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_clean_sheet_aggression.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_clean_sheet_aggression
 ```
 
 ## Output Schema

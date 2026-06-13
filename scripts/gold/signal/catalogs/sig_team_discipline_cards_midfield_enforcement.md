@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_midfield_enforcement
   sql: clickhouse/gold/signal/sig_team_discipline_cards_midfield_enforcement.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_midfield_enforcement.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_midfield_enforcement
 
@@ -32,13 +32,13 @@ Flags match-team cases where the central-midfield unit drives a high share of th
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_midfield_enforcement.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_midfield_enforcement.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_midfield_enforcement`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_midfield_enforcement.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_midfield_enforcement
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_possession_passing_momentum_swing
   sql: clickhouse/gold/signal/sig_match_possession_passing_momentum_swing.sql
-  runner: scripts/gold/signal/runners/sig_match_possession_passing_momentum_swing.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_momentum_swing
 
@@ -30,13 +30,13 @@ Triggers when a team flips from dominant first-half possession (>=70%) to second
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_momentum_swing.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_possession_passing_momentum_swing.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_momentum_swing`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_possession_passing_momentum_swing.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_possession_passing_momentum_swing
 ```
 
 ## Output Schema

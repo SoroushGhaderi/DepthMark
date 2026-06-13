@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_target_man_aerials
   sql: clickhouse/gold/signal/sig_player_possession_passing_target_man_aerials.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_target_man_aerials.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_target_man_aerials
 
@@ -35,13 +35,13 @@ Triggers when a forward wins at least 10 aerial duels, flagging target-man behav
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_target_man_aerials.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_target_man_aerials.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_target_man_aerials`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_target_man_aerials.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_target_man_aerials
 ```
 
 ## Output Schema

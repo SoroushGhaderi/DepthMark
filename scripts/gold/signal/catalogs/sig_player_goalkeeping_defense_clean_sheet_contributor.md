@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_contributor.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_contributor.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_clean_sheet_contributor
 
@@ -53,13 +53,13 @@ capturing clean-sheet contribution through direct defensive contests.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_clean_sheet_contributor.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_contributor.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_clean_sheet_contributor.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_clean_sheet_contributor
 ```
 
 ## Output Schema

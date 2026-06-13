@@ -126,7 +126,7 @@ feat(signal): add sig_<name>
 
 - SQL: clickhouse/gold/signal/sig_<name>.sql
 - Table: gold_signals.sig_<name>
-- Runner: scripts/gold/signal/runners/sig_<name>.py
+- Runner: scripts/gold/run_sql_job.py
 - Catalog: scripts/gold/signal/catalogs/sig_<name>.md
 ```
 

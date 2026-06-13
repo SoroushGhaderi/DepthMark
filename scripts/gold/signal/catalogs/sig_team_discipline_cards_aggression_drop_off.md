@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_aggression_drop_off
   sql: clickhouse/gold/signal/sig_team_discipline_cards_aggression_drop_off.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_aggression_drop_off.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_aggression_drop_off
 
@@ -32,13 +32,13 @@ Flags team-match performances where a side is highly foul-heavy before halftime 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_aggression_drop_off.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_aggression_drop_off.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_aggression_drop_off`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_aggression_drop_off.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_aggression_drop_off
 ```
 
 ## Output Schema

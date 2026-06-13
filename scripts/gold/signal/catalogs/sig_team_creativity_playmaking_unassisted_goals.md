@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_unassisted_goals
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_unassisted_goals.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_unassisted_goals.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_unassisted_goals
 
@@ -43,13 +43,13 @@ Detect team-level matches where finishing comes from self-created solo actions r
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_unassisted_goals.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_unassisted_goals.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_unassisted_goals`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_unassisted_goals.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_unassisted_goals
 ```
 
 ## Output Schema

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_unsuccessful_crosser
   sql: clickhouse/gold/signal/sig_player_possession_passing_unsuccessful_crosser.sql
-  runner: scripts/gold/signal/runners/sig_player_possession_passing_unsuccessful_crosser.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_unsuccessful_crosser
 
@@ -34,13 +34,13 @@ Triggers when a player attempts more than 8 crosses in a single match but record
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_possession_passing_unsuccessful_crosser.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_possession_passing_unsuccessful_crosser.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_unsuccessful_crosser`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_possession_passing_unsuccessful_crosser.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_unsuccessful_crosser
 ```
 
 ## Output Schema

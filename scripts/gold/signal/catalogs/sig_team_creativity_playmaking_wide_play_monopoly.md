@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_wide_play_monopoly
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_wide_play_monopoly.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_wide_play_monopoly.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_wide_play_monopoly
 
@@ -44,13 +44,13 @@ with at least 70% of created chances attributed to a cross-derived wide-play pro
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_wide_play_monopoly.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_wide_play_monopoly.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_wide_play_monopoly`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_wide_play_monopoly.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_wide_play_monopoly
 ```
 
 ## Output Schema

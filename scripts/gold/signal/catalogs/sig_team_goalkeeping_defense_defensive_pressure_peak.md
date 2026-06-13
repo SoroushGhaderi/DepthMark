@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak
   sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_defensive_pressure_peak.sql
-  runner: scripts/gold/signal/runners/sig_team_goalkeeping_defense_defensive_pressure_peak.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_defensive_pressure_peak
 
@@ -39,13 +39,13 @@ Detect team-level defensive pressure spells where one side forces very high oppo
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_defensive_pressure_peak.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_goalkeeping_defense_defensive_pressure_peak.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_goalkeeping_defense_defensive_pressure_peak.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_defensive_pressure_peak
 ```
 
 ## Output Schema

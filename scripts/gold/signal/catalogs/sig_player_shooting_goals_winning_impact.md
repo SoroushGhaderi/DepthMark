@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_winning_impact
   sql: clickhouse/gold/signal/sig_player_shooting_goals_winning_impact.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_winning_impact.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_winning_impact
 
@@ -40,13 +40,13 @@ Detects player-level match-winning finishing events where the triggered player s
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_winning_impact.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_winning_impact.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_winning_impact`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_winning_impact.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_winning_impact
 ```
 
 ## Output Schema

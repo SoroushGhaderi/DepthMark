@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_half_time_talk_fail
   sql: clickhouse/gold/signal/sig_team_discipline_cards_half_time_talk_fail.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_half_time_talk_fail.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_half_time_talk_fail
 
@@ -33,13 +33,13 @@ Flags team-match performances where a team collects three or more yellow cards i
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_half_time_talk_fail.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_half_time_talk_fail.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_half_time_talk_fail`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_half_time_talk_fail.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_half_time_talk_fail
 ```
 
 ## Output Schema

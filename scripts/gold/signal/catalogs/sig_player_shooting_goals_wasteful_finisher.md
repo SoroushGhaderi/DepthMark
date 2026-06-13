@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_wasteful_finisher
   sql: clickhouse/gold/signal/sig_player_shooting_goals_wasteful_finisher.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_wasteful_finisher.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_wasteful_finisher
 
@@ -35,13 +35,13 @@ Flags high-chance non-scoring player performances (`xG > 1.20`, `goals = 0`) to 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_wasteful_finisher.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_wasteful_finisher.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_wasteful_finisher`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_wasteful_finisher.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_wasteful_finisher
 ```
 
 ## Output Schema

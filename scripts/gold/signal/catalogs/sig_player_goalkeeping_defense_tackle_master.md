@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_tackle_master
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_tackle_master.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_tackle_master.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_tackle_master
 
@@ -40,13 +40,13 @@ Flags defender performances with high-volume perfect tackling (`>= 6` wins and `
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_tackle_master.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_tackle_master.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_tackle_master`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_tackle_master.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_tackle_master
 ```
 
 ## Output Schema

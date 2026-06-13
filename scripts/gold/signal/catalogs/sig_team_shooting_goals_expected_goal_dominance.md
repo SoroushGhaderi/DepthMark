@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_expected_goal_dominance
   sql: clickhouse/gold/signal/sig_team_shooting_goals_expected_goal_dominance.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_expected_goal_dominance.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_expected_goal_dominance
 
@@ -34,13 +34,13 @@ Detect rare team-level matches with extreme bilateral xG imbalance, where one si
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_expected_goal_dominance.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_expected_goal_dominance.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_expected_goal_dominance`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_expected_goal_dominance.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_expected_goal_dominance
 ```
 
 ## Output Schema

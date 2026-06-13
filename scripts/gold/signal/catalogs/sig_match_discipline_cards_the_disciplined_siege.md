@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_the_disciplined_siege
   sql: clickhouse/gold/signal/sig_match_discipline_cards_the_disciplined_siege.sql
-  runner: scripts/gold/signal/runners/sig_match_discipline_cards_the_disciplined_siege.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_the_disciplined_siege
 
@@ -32,13 +32,13 @@ Flags match-team cases where one side dominates the ball (at least 75% possessio
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_discipline_cards_the_disciplined_siege.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_discipline_cards_the_disciplined_siege.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_the_disciplined_siege`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_discipline_cards_the_disciplined_siege.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_discipline_cards_the_disciplined_siege
 ```
 
 ## Output Schema

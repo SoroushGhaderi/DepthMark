@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_basketball_match
   sql: clickhouse/gold/signal/sig_match_shooting_goals_basketball_match.sql
-  runner: scripts/gold/signal/runners/sig_match_shooting_goals_basketball_match.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_basketball_match
 
@@ -31,13 +31,13 @@ Flag end-to-end matches where both sides sustain very high shot volume (20+ each
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_basketball_match.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_basketball_match.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_basketball_match`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_shooting_goals_basketball_match.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_basketball_match
 ```
 
 ## Output Schema

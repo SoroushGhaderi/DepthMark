@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_set_piece_threat_volume.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_set_piece_threat_volume.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_set_piece_threat_volume
 
@@ -44,13 +44,13 @@ set-piece chances in a finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_set_piece_threat_volume.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_set_piece_threat_volume.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_set_piece_threat_volume.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_set_piece_threat_volume
 ```
 
 ## Output Schema

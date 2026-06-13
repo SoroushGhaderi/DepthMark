@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_sub_card_speedrun
   sql: clickhouse/gold/signal/sig_player_discipline_cards_sub_card_speedrun.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_sub_card_speedrun.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_sub_card_speedrun
 
@@ -35,13 +35,13 @@ Flags substitute players who are booked almost immediately after coming on, surf
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_sub_card_speedrun.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_sub_card_speedrun.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_sub_card_speedrun`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_sub_card_speedrun.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_sub_card_speedrun
 ```
 
 ## Output Schema

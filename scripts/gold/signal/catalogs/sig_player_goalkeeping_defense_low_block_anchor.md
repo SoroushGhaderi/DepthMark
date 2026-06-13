@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_low_block_anchor
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_low_block_anchor.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_low_block_anchor.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_low_block_anchor
 
@@ -47,13 +47,13 @@ individual discipline (`0` fouls) while their team plays under low-possession st
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_low_block_anchor.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_low_block_anchor.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_low_block_anchor`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_low_block_anchor.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_low_block_anchor
 ```
 
 ## Output Schema

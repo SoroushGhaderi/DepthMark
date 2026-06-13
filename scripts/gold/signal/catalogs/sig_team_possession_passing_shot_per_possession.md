@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_possession_passing_shot_per_possession
   sql: clickhouse/gold/signal/sig_team_possession_passing_shot_per_possession.sql
-  runner: scripts/gold/signal/runners/sig_team_possession_passing_shot_per_possession.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_shot_per_possession
 
@@ -30,13 +30,13 @@ Detect teams that convert completed passing volume into shooting quickly, define
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_possession_passing_shot_per_possession.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_possession_passing_shot_per_possession.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_shot_per_possession`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_possession_passing_shot_per_possession.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_possession_passing_shot_per_possession
 ```
 
 ## Output Schema

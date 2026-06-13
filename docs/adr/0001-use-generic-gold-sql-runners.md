@@ -41,6 +41,10 @@ python scripts/gold/run_sql_job.py --kind signal --entity player --family shooti
 python scripts/gold/run_sql_job.py --kind signal --entity team --family creativity_playmaking
 ```
 
+ADR 0009 later supersedes the combined entity+family selector examples above:
+`--entity` and `--family` are separate signal batch selectors and should not be
+combined in one command.
+
 Bulk Gold loading should reuse the same generic execution path where practical.
 New Gold work should add or update SQL and catalog/contract documentation rather
 than adding new handwritten per-output Python wrappers.

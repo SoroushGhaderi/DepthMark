@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_possession_passing_dead_zone_game
   sql: clickhouse/gold/signal/sig_match_possession_passing_dead_zone_game.sql
-  runner: scripts/gold/signal/runners/sig_match_possession_passing_dead_zone_game.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_dead_zone_game
 
@@ -31,13 +31,13 @@ Triggers matches where both teams fail to generate any opposition-box touches, s
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_possession_passing_dead_zone_game.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_possession_passing_dead_zone_game.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_dead_zone_game`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_possession_passing_dead_zone_game.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_possession_passing_dead_zone_game
 ```
 
 ## Output Schema

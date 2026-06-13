@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_keeper_save_efficiency
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_keeper_save_efficiency.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_keeper_save_efficiency.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_keeper_save_efficiency
 
@@ -43,13 +43,13 @@ while enforcing a minimum pressure floor (`>= 4` shots on target faced).
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_keeper_save_efficiency.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_keeper_save_efficiency.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_keeper_save_efficiency`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_keeper_save_efficiency.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_keeper_save_efficiency
 ```
 
 ## Output Schema

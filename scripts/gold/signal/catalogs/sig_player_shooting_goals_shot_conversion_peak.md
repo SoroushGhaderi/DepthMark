@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_shot_conversion_peak
   sql: clickhouse/gold/signal/sig_player_shooting_goals_shot_conversion_peak.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_shot_conversion_peak.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_shot_conversion_peak
 
@@ -34,13 +34,13 @@ Flags players who deliver a perfect two-from-two finishing match, isolating high
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_shot_conversion_peak.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_shot_conversion_peak.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_shot_conversion_peak`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_shot_conversion_peak.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
 ```
 
 ## Output Schema

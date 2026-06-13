@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_box_siege
   sql: clickhouse/gold/signal/sig_team_shooting_goals_box_siege.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_box_siege.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_box_siege
 
@@ -33,13 +33,13 @@ Detect team-level penalty-area shot sieges where one side generates extreme insi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_box_siege.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_box_siege.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_box_siege`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_box_siege.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_box_siege
 ```
 
 ## Output Schema

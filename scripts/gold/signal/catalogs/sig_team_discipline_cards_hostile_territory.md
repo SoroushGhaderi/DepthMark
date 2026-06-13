@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_hostile_territory
   sql: clickhouse/gold/signal/sig_team_discipline_cards_hostile_territory.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_hostile_territory.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_hostile_territory
 
@@ -33,13 +33,13 @@ Flags team-match performances where disciplinary events outnumber on-target shot
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_hostile_territory.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_hostile_territory.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_hostile_territory`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_hostile_territory.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_hostile_territory
 ```
 
 ## Output Schema

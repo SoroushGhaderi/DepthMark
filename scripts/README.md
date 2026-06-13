@@ -27,8 +27,11 @@ Use these paths for new automation and daily runs:
 - `scripts/silver/load_clickhouse.py --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --part signals --dry-run`
+- `scripts/gold/run_sql_job.py --dry-run`
+- `scripts/gold/run_sql_job.py --kind signal --dry-run`
 - `scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run`
-- `scripts/gold/run_sql_job.py --kind signal --entity player --family shooting_goals --dry-run`
+- `scripts/gold/run_sql_job.py --kind signal --entity player --dry-run`
+- `scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run`
 - `scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run`
 
 ## Operational Utility Scripts
@@ -48,7 +51,7 @@ Use these paths for new automation and daily runs:
 ## Scenario Scripts
 
 Scenario SQL jobs are executed by `scripts/gold/run_sql_job.py`.
-Legacy `scripts/gold/scenario/scenario_*.py` runners may exist during migration, but new scenario work should not add handwritten Python runner files.
+Do not add handwritten `scripts/gold/scenario/scenario_*.py` runner files.
 Scenario standards are defined in `scripts/gold/scenario/SCENARIOS_CONTRACT.md`.
 
 Current inventory: 48 matching SQL transforms.
@@ -59,10 +62,10 @@ Current inventory: 48 matching SQL transforms.
 ## Signal Scripts
 
 Signal SQL jobs are discovered and executed through `scripts/gold/run_sql_job.py`
-and shared helpers in `scripts/gold/sql_jobs.py`. Legacy per-signal runner files may
-exist during migration, but new signal work should not add handwritten Python runner files.
-Use `--id` for one exact signal, or `--entity` and `--family` for a DDL-grouped batch such as
-`--entity player --family shooting_goals`.
+and shared helpers in `scripts/gold/sql_jobs.py`. Do not add handwritten
+per-signal runner files. Use `--id` for one exact signal; use `--entity` or
+`--family` as separate signal batch selectors such as `--entity player` or
+`--family shooting_goals`.
 After successful signal SQL execution, the loader runs `scripts/gold/activations/build_signal_activations.py`
 to populate deterministic per-match activation IDs in `gold.signal_activations`.
 The activation ID key uses each signal catalog `row_identity` definition.

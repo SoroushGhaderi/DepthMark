@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_headers_only
   sql: clickhouse/gold/signal/sig_player_shooting_goals_headers_only.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_headers_only.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_headers_only
 
@@ -35,13 +35,13 @@ Flags players who score two or more goals in a match where every scored goal is 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_headers_only.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_headers_only.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_headers_only`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_headers_only.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_headers_only
 ```
 
 ## Output Schema

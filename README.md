@@ -115,8 +115,10 @@ docker-compose -f docker/docker-compose.yml exec scraper python scripts/bronze/s
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/bronze/load_clickhouse.py --date 20251208
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/silver/load_clickhouse.py
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/load_clickhouse_gold.py
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
-docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --entity player --family shooting_goals
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --entity player
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --family shooting_goals
 ```
 
 Preview non-destructive work:
@@ -125,8 +127,11 @@ Preview non-destructive work:
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/silver/load_clickhouse.py --dry-run
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/load_clickhouse_gold.py --dry-run
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --dry-run
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --dry-run
 docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
-docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --entity player --family shooting_goals --dry-run
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --entity player --dry-run
+docker-compose -f docker/docker-compose.yml exec scraper python scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run
 ```
 
 Run health and quality checks:

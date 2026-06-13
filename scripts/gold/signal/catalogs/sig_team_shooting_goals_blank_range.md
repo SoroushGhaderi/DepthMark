@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_blank_range
   sql: clickhouse/gold/signal/sig_team_shooting_goals_blank_range.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_blank_range.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_blank_range
 
@@ -33,13 +33,13 @@ Detect team-level finishing collapses where chance creation was strong (xG > 2.5
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_blank_range.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_blank_range.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_blank_range`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_blank_range.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_blank_range
 ```
 
 ## Output Schema

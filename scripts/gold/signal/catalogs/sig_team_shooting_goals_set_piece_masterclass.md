@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_set_piece_masterclass
   sql: clickhouse/gold/signal/sig_team_shooting_goals_set_piece_masterclass.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_set_piece_masterclass.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_set_piece_masterclass
 
@@ -43,13 +43,13 @@ Detect teams that complete a three-channel set-piece scoring profile in one matc
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_set_piece_masterclass.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_set_piece_masterclass.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_set_piece_masterclass`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_set_piece_masterclass.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_set_piece_masterclass
 ```
 
 ## Output Schema

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_late_red_drama
   sql: clickhouse/gold/signal/sig_player_discipline_cards_late_red_drama.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_late_red_drama.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_late_red_drama
 
@@ -34,13 +34,13 @@ Flags players sent off after the 85th minute, preserving endgame dismissal timin
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_late_red_drama.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_late_red_drama.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_late_red_drama`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_late_red_drama.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_late_red_drama
 ```
 
 ## Output Schema

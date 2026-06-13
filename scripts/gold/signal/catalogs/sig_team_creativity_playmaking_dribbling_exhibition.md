@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_dribbling_exhibition
   sql: clickhouse/gold/signal/sig_team_creativity_playmaking_dribbling_exhibition.sql
-  runner: scripts/gold/signal/runners/sig_team_creativity_playmaking_dribbling_exhibition.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_dribbling_exhibition
 
@@ -50,13 +50,13 @@ a finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_dribbling_exhibition.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_creativity_playmaking_dribbling_exhibition.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_dribbling_exhibition`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_creativity_playmaking_dribbling_exhibition.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_dribbling_exhibition
 ```
 
 ## Output Schema

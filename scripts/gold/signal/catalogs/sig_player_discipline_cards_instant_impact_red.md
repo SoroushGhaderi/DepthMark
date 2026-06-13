@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_instant_impact_red
   sql: clickhouse/gold/signal/sig_player_discipline_cards_instant_impact_red.sql
-  runner: scripts/gold/signal/runners/sig_player_discipline_cards_instant_impact_red.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_instant_impact_red
 
@@ -35,13 +35,13 @@ Flags substitute players dismissed within 10 minutes of entering, surfacing imme
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_discipline_cards_instant_impact_red.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_discipline_cards_instant_impact_red.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_instant_impact_red`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_discipline_cards_instant_impact_red.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_instant_impact_red
 ```
 
 ## Output Schema

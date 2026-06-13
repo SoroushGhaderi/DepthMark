@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_shot_block_fest
   sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_shot_block_fest.sql
-  runner: scripts/gold/signal/runners/sig_match_goalkeeping_defense_shot_block_fest.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_goalkeeping_defense_shot_block_fest
 
@@ -34,13 +34,13 @@ Detects finished matches with extreme combined shot-block volume and emits bilat
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_shot_block_fest.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_goalkeeping_defense_shot_block_fest.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_shot_block_fest`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_goalkeeping_defense_shot_block_fest.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_goalkeeping_defense_shot_block_fest
 ```
 
 ## Output Schema

@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_wasteful_box_presence
   sql: clickhouse/gold/signal/sig_team_shooting_goals_wasteful_box_presence.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_wasteful_box_presence.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_wasteful_box_presence
 
@@ -34,13 +34,13 @@ Detect team-level matches where penalty-area territorial penetration is extreme 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_wasteful_box_presence.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_wasteful_box_presence.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_wasteful_box_presence`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_wasteful_box_presence.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_wasteful_box_presence
 ```
 
 ## Output Schema

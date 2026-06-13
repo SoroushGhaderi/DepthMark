@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_efficiency_peak
   sql: clickhouse/gold/signal/sig_team_shooting_goals_efficiency_peak.sql
-  runner: scripts/gold/signal/runners/sig_team_shooting_goals_efficiency_peak.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_efficiency_peak
 
@@ -34,13 +34,13 @@ Detect extreme team-level shot economy matches where a side reaches 4+ goals fro
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_shooting_goals_efficiency_peak.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_shooting_goals_efficiency_peak.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_efficiency_peak`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_shooting_goals_efficiency_peak.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_efficiency_peak
 ```
 
 ## Output Schema

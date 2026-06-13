@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_fullback_playmaker
   sql: clickhouse/gold/signal/sig_player_creativity_playmaking_fullback_playmaker.sql
-  runner: scripts/gold/signal/runners/sig_player_creativity_playmaking_fullback_playmaker.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_fullback_playmaker
 
@@ -52,13 +52,13 @@ into advanced box-access zones during finished matches.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_fullback_playmaker.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_creativity_playmaking_fullback_playmaker.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_fullback_playmaker`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_creativity_playmaking_fullback_playmaker.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_creativity_playmaking_fullback_playmaker
 ```
 
 ## Output Schema

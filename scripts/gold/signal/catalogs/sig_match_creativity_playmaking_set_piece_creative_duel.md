@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel
   sql: clickhouse/gold/signal/sig_match_creativity_playmaking_set_piece_creative_duel.sql
-  runner: scripts/gold/signal/runners/sig_match_creativity_playmaking_set_piece_creative_duel.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_creativity_playmaking_set_piece_creative_duel
 
@@ -47,13 +47,13 @@ Detect finished matches where both teams convert set-piece delivery into direct 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_set_piece_creative_duel.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_creativity_playmaking_set_piece_creative_duel.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_creativity_playmaking_set_piece_creative_duel.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_creativity_playmaking_set_piece_creative_duel
 ```
 
 ## Output Schema

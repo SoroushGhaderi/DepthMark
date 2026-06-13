@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_recovery_engine
   sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_recovery_engine.sql
-  runner: scripts/gold/signal/runners/sig_player_goalkeeping_defense_recovery_engine.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_recovery_engine
 
@@ -40,13 +40,13 @@ Flags defender and midfielder performances with elite ball-recovery volume (`>= 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_recovery_engine.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_goalkeeping_defense_recovery_engine.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_recovery_engine`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_goalkeeping_defense_recovery_engine.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_recovery_engine
 ```
 
 ## Output Schema

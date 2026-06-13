@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_early_goal_late_goal
   sql: clickhouse/gold/signal/sig_match_shooting_goals_early_goal_late_goal.sql
-  runner: scripts/gold/signal/runners/sig_match_shooting_goals_early_goal_late_goal.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_early_goal_late_goal
 
@@ -34,13 +34,13 @@ Flag finished matches that feature both an opening-phase breakthrough and an end
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_match_shooting_goals_early_goal_late_goal.sql`
-- Runner: `scripts/gold/signal/runners/sig_match_shooting_goals_early_goal_late_goal.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_early_goal_late_goal`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_match_shooting_goals_early_goal_late_goal.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_early_goal_late_goal
 ```
 
 ## Output Schema

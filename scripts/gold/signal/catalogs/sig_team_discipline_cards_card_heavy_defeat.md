@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_card_heavy_defeat
   sql: clickhouse/gold/signal/sig_team_discipline_cards_card_heavy_defeat.sql
-  runner: scripts/gold/signal/runners/sig_team_discipline_cards_card_heavy_defeat.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_card_heavy_defeat
 
@@ -32,13 +32,13 @@ Flags team-match performances where a side receives a red card and still loses b
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_team_discipline_cards_card_heavy_defeat.sql`
-- Runner: `scripts/gold/signal/runners/sig_team_discipline_cards_card_heavy_defeat.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_card_heavy_defeat`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_team_discipline_cards_card_heavy_defeat.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_card_heavy_defeat
 ```
 
 ## Output Schema

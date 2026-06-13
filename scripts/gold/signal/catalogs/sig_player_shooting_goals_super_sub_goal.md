@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_super_sub_goal
   sql: clickhouse/gold/signal/sig_player_shooting_goals_super_sub_goal.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_super_sub_goal.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_super_sub_goal
 
@@ -36,13 +36,13 @@ Detects immediate substitute scoring impact by flagging players who score a non-
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_super_sub_goal.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_super_sub_goal.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_super_sub_goal`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_super_sub_goal.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_super_sub_goal
 ```
 
 ## Output Schema

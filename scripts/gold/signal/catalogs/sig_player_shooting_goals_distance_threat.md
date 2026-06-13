@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_distance_threat
   sql: clickhouse/gold/signal/sig_player_shooting_goals_distance_threat.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_distance_threat.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_distance_threat
 
@@ -41,13 +41,13 @@ Detects match-player events where a player produces heavy outside-box shot volum
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_distance_threat.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_distance_threat.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_distance_threat`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_distance_threat.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_distance_threat
 ```
 
 ## Output Schema

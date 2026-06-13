@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_defensive_scorer
   sql: clickhouse/gold/signal/sig_player_shooting_goals_defensive_scorer.sql
-  runner: scripts/gold/signal/runners/sig_player_shooting_goals_defensive_scorer.py
+  runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_defensive_scorer
 
@@ -36,13 +36,13 @@ Flags center backs who score from dead-ball attacking phases (corner or set-piec
 ## Technical Assets
 
 - SQL: `clickhouse/gold/signal/sig_player_shooting_goals_defensive_scorer.sql`
-- Runner: `scripts/gold/signal/runners/sig_player_shooting_goals_defensive_scorer.py`
+- Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_defensive_scorer`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/signal/runners/sig_player_shooting_goals_defensive_scorer.py
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_defensive_scorer
 ```
 
 ## Output Schema

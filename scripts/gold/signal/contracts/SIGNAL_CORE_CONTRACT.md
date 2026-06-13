@@ -181,7 +181,7 @@ Additional rules:
    asset_paths:
      table: gold_signals.sig_<name>
      sql: clickhouse/gold/signal/sig_<name>.sql
-     runner: scripts/gold/signal/runners/sig_<name>.py
+     runner: scripts/gold/run_sql_job.py
    ---
    ```
 
