@@ -201,6 +201,7 @@ selected exactly by `--id`; signal jobs can also be filtered by
 
 ```text
 src/
+  application/            stable workflow services behind script entry points
   scrapers/fotmob/        FotMob API fetchers and request behavior
   processors/bronze/      Bronze transformation wiring
   processors/silver/      Silver transformation wiring
@@ -212,6 +213,14 @@ src/
   utils/                  logging, contracts, alerts, metrics, health checks
 scripts/                  operational CLI entry points
 ```
+
+Scripts remain the documented operational boundary, but reusable workflow
+coordination may be extracted into layer-specific application services under
+`src/` behind the same CLI entry points. Scripts keep CLI parsing, environment
+bootstrap, command compatibility, and exit-code translation. Application
+services may coordinate SQL discovery/execution, client setup, contract checks,
+validation, alerts, and deterministic summaries. They must not become a home for
+Silver or Gold analytical logic, which remains in ClickHouse SQL.
 
 ## MongoDB Content Catalog
 
@@ -274,6 +283,13 @@ Creation flow:
 6. `scripts/gold/load_clickhouse_gold.py` runs both activation scripts after
    successful signal execution (`--part signals` or `--part all`).
 
+Activation rebuilds are full-table rebuilds: rebuild
+`gold.signal_activations` from all active signal catalogs and signal output
+tables, then rebuild `gold.signal_activations_match` from those activation rows.
+Do not add incremental, date-scoped, or partition-scoped activation rebuilds
+until a later ADR defines partition-safe replacement semantics for upstream
+signal outputs and match-level activation aggregates.
+
 `signal_id_version` versions the activation identity scheme, not the authored
 signal definition. Keep it stable across reruns and ordinary signal SQL/catalog
 changes when `signal_id` and `row_identity` values are unchanged. Change the
@@ -303,13 +319,15 @@ one activation row.
 1. SQL contains transformation and business logic; Python handles orchestration,
    execution, and reporting.
 2. SQL files should be deterministic and rerunnable.
-3. Keep naming stable: Silver SQL uses `NN_<entity>.sql`, Gold scenarios use
+3. Stable application services under `src/` sit behind script entry points and
+   preserve the existing command surface.
+4. Keep naming stable: Silver SQL uses `NN_<entity>.sql`, Gold scenarios use
    `scenario_<name>.sql`, and Gold signals use `sig_<name>.sql`.
    Gold signal table DDL files use
    `create_table_{entity}_{family}_{subfamily}.sql`.
-4. New or changed scenario work must update SQL, Gold scenario DDL, and
+5. New or changed scenario work must update SQL, Gold scenario DDL, and
    `scripts/gold/scenario/SCENARIOS_CATALOG.md` when relevant.
-5. New or changed signal work must update SQL, signal DDL, catalog
+6. New or changed signal work must update SQL, signal DDL, catalog
    markdown, and `scripts/gold/signal/catalogs/README.md` when relevant.
 
 ## Incident Handling

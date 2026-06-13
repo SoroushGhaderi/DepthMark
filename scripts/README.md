@@ -4,6 +4,10 @@ This file is a compact inventory of script locations and supported entry points.
 For the project-wide command surface and runbook, use `../docs/DEVELOPMENT_ARCHITECTURE.md`.
 For script behavior rules, naming/style handwriting, function design, and update policy, use `../docs/SCRIPTS_CONTRACT.md`.
 
+Scripts are the supported operational entry points. They may delegate reusable
+workflow coordination to stable services under `src/`, but they must preserve
+their CLI behavior, dry-run semantics, and exit-code contract.
+
 ## Supported Entry Points
 
 Use these paths for new automation and daily runs:

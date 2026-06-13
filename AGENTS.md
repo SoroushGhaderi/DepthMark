@@ -25,7 +25,7 @@ DepthMark currently supports FotMob only. Do not add generic multi-provider abst
 
 - `README.md`: quick start, required configuration, and runbook.
 - `docs/DEVELOPMENT_ARCHITECTURE.md`: current architecture and canonical entry points.
-- `docs/SCRIPTS_CONTRACT.md`: authoritative rules for scripts and script-oriented helper modules.
+- `docs/SCRIPTS_CONTRACT.md`: authoritative rules for scripts, script-oriented helpers, and application services behind script entry points.
 - `scripts/README.md`: script layout and command surface.
 - `clickhouse/gold/signal/README.md` and `scripts/gold/signal/catalogs/README.md`: signal SQL/catalog guidance.
 
@@ -66,6 +66,7 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 - Silver and Gold are ClickHouse-only layers.
 - Keep source fidelity in Bronze; standardize keys and types in Silver; materialize business-facing outputs in Gold.
 - SQL should hold transformation and business logic. Python should orchestrate, execute, validate, and report.
+- Stable application services may live under `src/` behind script entry points to coordinate reusable workflows, but they must not own Silver or Gold analytical logic.
 - Use schema-qualified ClickHouse table names: `bronze.*`, `silver.*`,
   `gold_scenarios.*`, `gold_signals.*`, and Gold metadata tables in `gold.*`.
 - Keep SQL deterministic and rerunnable.
@@ -84,9 +85,10 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 
 ## Scripts Contract
 
-For files under `scripts/` and script-oriented helpers under `src/`, follow `docs/SCRIPTS_CONTRACT.md`.
+For files under `scripts/`, script-oriented helpers under `src/`, and application-service code behind script entry points, follow `docs/SCRIPTS_CONTRACT.md`.
 
 - Keep CLI parsing, execution, reporting, and shared helpers separated.
+- Keep script entry points thin and backward-compatible when extracting reusable workflow coordination into `src/`.
 - `--dry-run` must not mutate state.
 - Exit code `0` means success; non-zero means failure.
 - Root-level utility scripts are allowed, but new layer scripts should live under `scripts/bronze`, `scripts/silver`, `scripts/gold`, `scripts/orchestration`, `scripts/quality`, or `scripts/mongodb`.

@@ -11,7 +11,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from config.settings import settings
-from scripts.gold.sql_jobs import (
+from src.services.gold.sql_jobs import (
     GoldJobKind,
     discover_gold_sql_jobs,
     execute_gold_sql_job,

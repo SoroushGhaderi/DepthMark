@@ -49,6 +49,18 @@ Subprocess execution has some overhead and keeps structured step details at the
 process boundary, but that is acceptable for operational batch jobs where
 clarity and CLI compatibility matter more than in-process composition.
 
+The orchestrator signals success or failure through exit codes only. Layer scripts
+log their own details to files and send alerts on failure, but the orchestrator
+does not capture stdout, stderr, or structured step results. Debugging a layer
+failure requires finding the layer script's log file separately. This is an
+accepted trade-off for CLI boundary clarity.
+
+Subprocess nesting occurs naturally: the pipeline calls layer scripts via
+subprocess, and the Gold loader itself calls activation builders via subprocess
+(`load_clickhouse_gold.py:160-188`). This two-level chain is a consequence of
+ADR 0001 (generic runner) and ADR 0009 (activation builders as separate scripts),
+not an architectural deficiency.
+
 Command-surface changes must update the orchestrator, `README.md`,
 `docs/DEVELOPMENT_ARCHITECTURE.md`, `scripts/README.md`, and `AGENTS.md` in the
 same change.

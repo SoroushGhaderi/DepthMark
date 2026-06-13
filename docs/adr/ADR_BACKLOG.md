@@ -39,6 +39,8 @@ trade-off.
 | `0007-sql-owns-analytical-transformations.md` | Silver and Gold analytical logic belongs in ClickHouse SQL; Python owns orchestration and validation. | Python exceptions for reusable analytical logic need a later ADR. |
 | `0008-author-signal-catalogs-in-markdown.md` | Signal markdown frontmatter is the source of truth; MongoDB is a synchronized serving copy. | Catalog changes originate in Git and must sync to MongoDB through the catalog sync script. |
 | `0009-retire-legacy-gold-per-output-runners.md` | Legacy Gold per-output Python runner files are removed; `scripts/gold/run_sql_job.py` is the only supported selected-job runner. | Omitted selectors mean all, while signal `--entity` and `--family` are separate batch selectors. |
+| `0010-introduce-src-application-services-behind-script-entrypoints.md` | Stable, layer-specific application services may live under `src/` behind existing script entry points. | Scripts keep CLI compatibility and exit-code semantics; services coordinate workflows but not Silver/Gold analytical logic. |
+| `0011-use-full-table-gold-activation-rebuilds.md` | Gold activation metadata is rebuilt with full-table rebuilds, not incremental or scoped activation patches. | Scoped rebuilds need a later ADR defining partition-safe replacement semantics for upstream signal outputs and match-level aggregates. |
 
 ## Queue
 
@@ -47,48 +49,36 @@ trade-off.
 | P0 | Retire legacy Gold per-output Python runners | Accepted in `0009-retire-legacy-gold-per-output-runners.md` | `scripts/gold/signal/runners/` contained hundreds of generated wrapper files and `scripts/gold/scenario/` contained legacy scenario wrappers, while ADR 0001 says new Gold work should use generic SQL runners. Keeping or deleting them affects command compatibility, review surface, and repo structure. | ADR deciding deprecation/removal policy, compatibility window, and docs updates. |
 | P0 | Re-enable or permanently keep disabled Gold scenario bulk loading | Accepted as disabled in `0004-keep-gold-scenario-bulk-disabled-until-validated.md`; validation decision unresolved | The Gold loader currently runs signals and activation builders, but scenario jobs are deliberately omitted. Re-enabling affects default Gold runs, failure blast radius, backfills, and runbook expectations. | ADR update or new ADR after representative scenario validation, plus loader/docs changes if accepted. |
 | P1 | FotMob-only provider scope and abstraction boundary | Unresolved | The repo is FotMob-only by docs and naming, but there are generic-looking layers under `src/processors`, `src/storage`, and pipeline flags such as `--skip-fotmob`. A provider abstraction would be hard to reverse once introduced. | ADR confirming FotMob-only scope and the minimum evidence required before adding another provider abstraction. |
-| P1 | `src/` application-service boundary behind script entry points | Unresolved | ADR 0002 keeps CLI subprocesses as the orchestration boundary for now, while script-oriented helpers and storage/processors under `src/` already carry reusable behavior. Extracting stable services changes testing, imports, and failure handling. | ADR deciding whether scripts remain the application boundary or whether stable service APIs should be introduced behind the same CLI entry points. |
-| P2 | Gold activation rebuild strategy | Unresolved | Activation builders currently run after signal execution and rebuild deterministic activation metadata. Incremental rebuilds, full rebuilds, and partition/date-scoped rebuilds have different correctness and operational recovery trade-offs. | ADR defining full-table versus scoped rebuild policy, required idempotency guarantees, and verification commands. |
+| P1 | `src/` application-service boundary behind script entry points | Accepted in `0010-introduce-src-application-services-behind-script-entrypoints.md` | ADR 0002 keeps CLI subprocesses as the orchestration boundary for now, while script-oriented helpers and storage/processors under `src/` already carry reusable behavior. Extracting stable services changes testing, imports, and failure handling. | ADR deciding whether scripts remain the application boundary or whether stable service APIs should be introduced behind the same CLI entry points. |
+| P2 | Gold activation rebuild strategy | Accepted in `0011-use-full-table-gold-activation-rebuilds.md` | Activation builders currently run after signal execution and rebuild deterministic activation metadata. Incremental rebuilds, full rebuilds, and partition/date-scoped rebuilds have different correctness and operational recovery trade-offs. | ADR defining full-table versus scoped rebuild policy, required idempotency guarantees, and verification commands. |
 | P2 | Signal definition versioning separate from activation identity | Deferred: needs product/audit requirement | ADR 0006 explicitly leaves signal-definition versioning for the future. Adding it would affect catalog frontmatter, MongoDB schema, downstream semantics, and migration policy. | ADR only if DepthMark needs historical signal logic audits, comparisons, or consumer-facing version semantics. |
-| P3 | Bronze filesystem retention and DLQ replay policy | Unresolved | Bronze is the only filesystem-backed layer, and DLQ fallback exists under `src/storage/dlq.py`, but retention and replay contracts are not documented as an architectural decision. | ADR defining local/raw payload retention, DLQ replay ownership, and safe cleanup constraints. |
+| P3 | Bronze filesystem retention and DLQ replay policy | Accepted in `0012-bronze-filesystem-retention-and-dlq-replay-policy.md` | Bronze is the only filesystem-backed layer, and DLQ fallback exists under `src/storage/dlq.py`, but retention and replay contracts are not documented as an architectural decision. | ADR defining local/raw payload retention, DLQ replay ownership, and safe cleanup constraints. |
 
 ## Recommended Next Session
 
-Start with **P0: Re-enable or permanently keep disabled Gold scenario bulk loading**.
+Start with **P1: FotMob-only provider scope and abstraction boundary**.
 
-Recommended default decision: keep scenario execution disabled in
-`scripts/gold/load_clickhouse_gold.py` until representative scenario validation
-proves default Gold loader parity for DDL coverage, failure reporting, reruns,
-and contract checks.
+Recommended default decision: confirm FotMob-only scope and defer any provider
+abstraction until there is a concrete second provider to support.
 
 Decision question to ask:
 
-> Should DepthMark re-enable scenario execution inside
-> `scripts/gold/load_clickhouse_gold.py`, or keep the loader signal-only until
-> scenario validation proves the bulk path? My recommendation is keep it
-> disabled for now because `run_sql_job.py` already supports selected scenario
-> runs, while the default loader has a larger operational blast radius.
+> Should DepthMark confirm FotMob-only scope and remove or document the
+> generic-looking layers under `src/processors`, `src/storage`, and pipeline
+> flags such as `--skip-fotmob` as FotMob-specific? My recommendation is confirm
+> FotMob-only scope because adding a provider abstraction without a second
+> provider to validate against would be speculative and hard to reverse.
 
 Key files to inspect:
 
-- `docs/adr/0004-keep-gold-scenario-bulk-disabled-until-validated.md`
 - `docs/DEVELOPMENT_ARCHITECTURE.md`
-- `scripts/README.md`
-- `scripts/gold/run_sql_job.py`
-- `scripts/gold/sql_jobs.py`
-- `scripts/gold/load_clickhouse_gold.py`
-- `scripts/gold/scenario/`
-- `clickhouse/gold/signal/`
-- `clickhouse/gold/scenario/`
+- `src/processors/`
+- `src/storage/`
+- `scripts/bronze/scrape_fotmob.py`
+- `config.yaml`
 
 Suggested verification:
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
-python scripts/gold/run_sql_job.py --kind signal --entity player --dry-run
-python scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run
-python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run
-python scripts/gold/run_sql_job.py --kind scenario --dry-run
-python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/quality/check_logging_style.py
 ```

@@ -9,6 +9,16 @@ team, or player occurrence.
 
 Related terms: Signal, Signal Catalog, Signal Activation ID.
 
+### Gold Activation Rebuild
+
+The process that regenerates Gold activation metadata from active signal
+catalogs and `gold_signals.sig_*` output tables. The canonical rebuild strategy
+is full-table: rebuild `gold.signal_activations`, then rebuild
+`gold.signal_activations_match` from those activation rows.
+
+Avoid saying: incremental activation patch, scoped activation patch.
+Related terms: Signal Activation, Signal Activation ID.
+
 ### Signal Activation ID
 
 A deterministic identifier for one signal activation. It is derived from the
@@ -53,3 +63,36 @@ to the MongoDB `signals` collection for serving and querying.
 
 Avoid saying: Mongo catalog authoring.
 Related terms: Signal Catalog.
+
+### Bronze Retention
+
+Bronze filesystem files (`data/fotmob/`) are retained indefinitely by default.
+Cleanup of raw match files, daily listings, and compressed archives is
+operator-initiated and manual only. No automated deletion scripts or TTL
+mechanisms apply to Bronze filesystem artifacts. Before deleting, the operator
+queries ClickHouse `bronze.*` tables directly to verify the data is loaded — no
+filesystem-side load-confirmation marker is used because it would go stale on
+re-runs, truncates, or table drops.
+
+Avoid saying: automatic cleanup, TTL-based expiry, retention policy, load
+marker, loaded lock.
+Related terms: Bronze Layer, DLQ.
+
+### DLQ Replay
+
+Dead Letter Queue replay is a manual operator workflow. When ClickHouse
+insertion failures produce DLQ files under `data/dlq/`, the operator inspects
+the JSONL records, fixes the root cause, and re-runs the Bronze loader for the
+affected date. No automated retry or reprocessing script exists or is planned.
+
+Avoid saying: automated replay, DLQ retry, reprocessing pipeline.
+Related terms: Dead Letter Queue, Bronze Retention.
+
+### DLQ Retention
+
+DLQ files (`data/dlq/`) follow the same retention rule as Bronze filesystem
+files: indefinitely retained, manual cleanup only. DLQ files are small and
+infrequent, created only on ClickHouse insertion failure, and carry audit value.
+
+Avoid saying: DLQ TTL, DLQ rotation, automatic DLQ cleanup.
+Related terms: Dead Letter Queue, Bronze Retention, DLQ Replay.

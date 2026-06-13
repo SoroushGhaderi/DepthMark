@@ -7,7 +7,8 @@ stability rules in DepthMark. The canonical command list lives in
 ## Scope
 
 1. This contract applies to Python files under `scripts/`.
-2. It also applies to script-oriented helper modules under `src/`.
+2. It also applies to script-oriented helper modules under `src/` and
+   application services behind script entry points.
 3. Refactors must preserve behavior unless a functional change is explicitly
    requested.
 4. If a file already follows this contract and is clean, leave it alone.
@@ -33,6 +34,22 @@ stability rules in DepthMark. The canonical command list lives in
 4. Separate orchestration from logic: CLI parsing, execution, reporting, and
    shared helpers should be isolated.
 5. Avoid clever one-liners in operational code.
+
+## Script And Application-Service Boundary
+
+1. Scripts are the documented operational command surface.
+2. Scripts own CLI parsing, `.env` loading, import-path bootstrap, help text,
+   backward-compatible arguments, dry-run flags, and process exit codes.
+3. Reusable workflow coordination may live in stable layer-specific application
+   services under `src/`.
+4. Application services may coordinate SQL discovery and execution, client
+   setup, contract checks, validation, alerts, reports, and deterministic
+   summaries.
+5. Application services must not contain reusable Silver or Gold analytical
+   logic; those transformations belong in ClickHouse SQL.
+6. Refactors that introduce application services must preserve the script entry
+   point and CLI behavior unless a breaking change is explicitly requested and
+   documented.
 
 ## Naming Conventions
 

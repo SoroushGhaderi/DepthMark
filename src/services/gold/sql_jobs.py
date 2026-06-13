@@ -13,7 +13,7 @@ from src.utils.gold_databases import gold_scenarios_db, gold_signals_db
 GoldJobKind = Literal["scenario", "signal"]
 SignalEntity = Literal["match", "player", "team"]
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 GOLD_SQL_DIR = PROJECT_ROOT / "clickhouse" / "gold"
 JOB_ID_RE = re.compile(r"^(scenario|sig|signal)_[a-z0-9_]+$")
 SIGNAL_FAMILY_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")

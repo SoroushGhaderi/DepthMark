@@ -174,6 +174,8 @@ DepthMark also materializes per-match signal activations in
   signal-definition version
 - IDs stay stable across reruns and ordinary signal SQL/catalog changes when
   `signal_id` and `row_identity` values are unchanged
+- activation metadata is rebuilt with full-table rebuilds: first
+  `gold.signal_activations`, then `gold.signal_activations_match`
 - Parsed `signal_id` structure is also stored:
   - `signal_prefix` (for example `sig`)
   - `signal_entity` (for example `match`, `team`, `player`)
@@ -204,8 +206,13 @@ depthmark/
   docker/                 local service definitions
   docs/                   project-wide architecture and contracts
   scripts/                operational entry points
-  src/                    scraper, processor, storage, and utility code
+  src/                    application services, scraper, storage, and utility code
 ```
+
+Scripts are the supported operational entry points. Reusable workflow
+coordination may live behind those scripts in layer-specific `src/application/`
+services, but Silver and Gold analytical transformations remain in ClickHouse
+SQL.
 
 Key script groups:
 

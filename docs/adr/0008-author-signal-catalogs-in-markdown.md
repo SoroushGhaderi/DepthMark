@@ -70,3 +70,17 @@ ADR 0006.
 
 The catalog namespace now matches ADR 0003: signal output tables live in
 `gold_signals.*`, while shared activation metadata lives in `gold.*`.
+
+Frontmatter validation runs only at sync time (`sync_signal_catalogs.py
+--dry-run`) and activation time (`build_signal_activations.py`). There is no
+pre-commit hook or CI check that validates catalogs before merge. A malformed
+catalog can reach `main` and fail at deploy time. This is accepted risk — the
+sync script catches structural errors, and the current workflow runs dry-run
+before deploying. Adding pre-commit hooks or CI validation is an implementation
+detail, not an architectural boundary change.
+
+The `split_frontmatter` function is duplicated between
+`sync_signal_catalogs.py:60-76` and `build_signal_activations.py:124-140`
+(identical logic, different type hint styles). This is a maintenance cost of
+the markdown-first approach and a candidate for extraction into a shared utility
+module.
