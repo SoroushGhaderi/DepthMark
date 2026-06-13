@@ -41,14 +41,13 @@ boundaries:
 
 - `gold_scenarios.*`: scenario output tables.
 - `gold_signals.*`: signal output tables.
-- `gold.*`: shared Gold metadata, activation, and reference tables such as
-  `gold.signal_activations`, `gold.signal_activations_match`, and
-  `gold.match_reference`.
+- `gold.*`: shared Gold metadata and serving tables such as
+  `gold.signal_activations`.
 
-Scenario SQL targets `gold_scenarios.scenario_*`. Scenario bulk execution
-remains disabled until generic scenario execution is validated and re-enabled
-intentionally. See
-`docs/adr/0003-split-gold-clickhouse-namespaces.md`.
+Scenario SQL targets `gold_scenarios.scenario_*`. Scenario bulk execution is
+enabled in `scripts/gold/load_clickhouse_gold.py` and can be run with
+`--part all` or `--part scenarios`. See
+`docs/adr/0004-keep-gold-scenario-bulk-disabled-until-validated.md`.
 
 ## Credential Policy
 
@@ -97,6 +96,7 @@ python scripts/silver/drop_clickhouse.py --dry-run
 python scripts/gold/load_clickhouse_gold.py
 python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
+python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
 python scripts/gold/run_sql_job.py --dry-run
 python scripts/gold/run_sql_job.py --kind signal --dry-run
 python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
@@ -256,36 +256,45 @@ is used to build deterministic activation IDs:
 
 ## Signal Activation IDs
 
-DepthMark materializes deterministic signal activation IDs into
+DepthMark materializes deterministic signal activation IDs into each
+`gold_signals.sig_*` source table and into the serving table
 `gold.signal_activations`.
 
 Creation flow:
 
 1. DDL creates the activation table from
    `clickhouse/gold/create_table_signal_activations.sql`.
-2. Gold signal SQL jobs populate `gold_signals.sig_*` tables.
+2. Gold signal SQL jobs populate `gold_signals.sig_*` tables. Signal table DDL
+   defines `signal_instance_id` with a deterministic `DEFAULT` expression based
+   on the catalog `row_identity`, so existing signal INSERT SQL keeps its stable
+   column list. Signal DDL drops and recreates derived `gold_signals.sig_*`
+   tables for this contract; do not use `ALTER TABLE` to patch the
+   `signal_instance_id` column in place.
 3. `scripts/gold/activations/build_signal_activations.py` scans active signal
    catalogs and reads each catalog `row_identity`.
-4. The script inserts one activation row per signal output row with:
+4. The script rebuilds one activation serving row per signal output row with:
    - `signal_instance_id = lower(hex(SHA256(concat('v1|', signal_id, '|', ...identity values))))`
    - `signal_id_version = 'v1'`
    - parsed signal metadata from `signal_id` pattern (`signal_prefix`, `signal_entity`,
      `signal_family`, `signal_subfamily`, `signal_name`, `signal_tags`)
-5. `scripts/gold/activations/build_signal_activations_match.py` aggregates
-   row-level activations into `gold.signal_activations_match` with one
-   row per `match_id`, including `activated_signal_instance_ids`,
+   - common fixture/team/player context when available from the source signal
+     table
+   - source signal row details in `source_row_json` and `source_row_columns`
+5. The same `gold.signal_activations` row also carries match-level summary
+   fields that previously lived in `gold.signal_activations_match`, including
+   `match_activation_instance_id`, `activated_signal_instance_ids`,
    `activated_signal_ids`, `activated_signal_entities`,
-   `activated_signal_tags`, `activated_signal_names`,
-   `total_signal_rows`, and `unique_signal_count`.
-6. `scripts/gold/load_clickhouse_gold.py` runs both activation scripts after
+   `activated_signal_tags`, `activated_signal_names`, `total_signal_rows`, and
+   `unique_signal_count`.
+6. `scripts/gold/load_clickhouse_gold.py` runs the activation builder after
    successful signal execution (`--part signals` or `--part all`).
 
 Activation rebuilds are full-table rebuilds: rebuild
 `gold.signal_activations` from all active signal catalogs and signal output
-tables, then rebuild `gold.signal_activations_match` from those activation rows.
+tables.
 Do not add incremental, date-scoped, or partition-scoped activation rebuilds
 until a later ADR defines partition-safe replacement semantics for upstream
-signal outputs and match-level activation aggregates.
+signal outputs and the derived activation serving table.
 
 `signal_id_version` versions the activation identity scheme, not the authored
 signal definition. Keep it stable across reruns and ordinary signal SQL/catalog
@@ -301,9 +310,8 @@ one activation row.
 2. Layer contracts are enforced at runtime by the Bronze, Silver, and Gold
    contract assertions.
 3. Silver and Gold loaders support `--dry-run` planning mode.
-4. Gold bulk loading supports `--part all|signals`; scenario bulk execution is
-   disabled until generic scenario execution is validated and re-enabled
-   intentionally.
+4. Gold bulk loading supports `--part all|signals|scenarios`. Scenario bulk
+   execution is enabled and follows the same failure pattern as signals.
 5. Standardized layer completion alerts are sent through
    `send_layer_completion_alert`.
 6. Bronze runtime supports turnstile refresh automation through

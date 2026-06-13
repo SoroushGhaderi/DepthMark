@@ -1,5 +1,7 @@
 -- Signal tables for entity=team, family=goalkeeping, subfamily=defense
 
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_parking_the_bus;
+
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_parking_the_bus (
     match_id Int32,
     match_date Date,
@@ -62,10 +64,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_parking_the
     opponent_pass_accuracy_pct Float32,
     pass_accuracy_delta_pct Float32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_parking_the_bus', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_discipline;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_discipline (
     match_id Int32,
@@ -127,10 +132,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_d
     triggered_team_pass_accuracy_pct Float32,
     opponent_pass_accuracy_pct Float32,
     pass_accuracy_delta_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_defensive_discipline', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_low_block_success;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_low_block_success (
     match_id Int32,
@@ -194,10 +202,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_low_block_s
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_low_block_success', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_wide_blockade;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_wide_blockade (
     match_id Int32,
@@ -257,10 +268,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_wide_blocka
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_wide_blockade', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_clearance_barrage;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clearance_barrage (
     match_id Int32,
@@ -311,10 +325,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clearance_b
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_clearance_barrage', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_offside_trap_mastery;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_offside_trap_mastery (
     match_id Int32,
@@ -375,10 +392,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_offside_tra
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_offside_trap_mastery', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit (
     match_id Int32,
@@ -433,10 +453,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_blocki
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_shot_blocking_unit', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_the_great_wall;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_the_great_wall (
     match_id Int32,
@@ -498,10 +521,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_the_great_w
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_the_great_wall', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index (
     match_id Int32,
@@ -563,10 +589,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_keeper_reli
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_keeper_reliance_index', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge (
     match_id Int32,
@@ -624,10 +653,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_tackle_volu
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_tackle_volume_surge', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak (
     match_id Int32,
@@ -695,10 +727,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_p
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_defensive_pressure_peak', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_dominance;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_dominance (
     match_id Int32,
@@ -756,10 +791,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_do
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_recovery_dominance', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_marathon;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_marathon (
     match_id Int32,
@@ -817,10 +855,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_ma
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_recovery_marathon', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_box_evacuation;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_box_evacuation (
     match_id Int32,
@@ -895,10 +936,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_box_evacuat
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     touches_opposition_box_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_box_evacuation', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency (
     match_id Int32,
@@ -973,10 +1017,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clean_sheet
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     touches_opposition_box_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_clean_sheet_efficiency', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_early_lockdown;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_early_lockdown (
     match_id Int32,
@@ -1036,10 +1083,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_early_lockd
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_early_lockdown', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_unbroken_structure;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_unbroken_structure (
     match_id Int32,
@@ -1115,10 +1165,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_unbroken_st
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_unbroken_structure', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_aerial_fortress;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_aerial_fortress (
     match_id Int32,
@@ -1180,10 +1233,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_aerial_fort
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_aerial_fortress', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery (
     match_id Int32,
@@ -1250,10 +1306,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_suppre
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_shot_suppression_mastery', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective (
     match_id Int32,
@@ -1331,7 +1390,8 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_wing_lockdo
     opponent_goals Int32,
     goal_delta Int32,
     triggered_team_clean_sheet_flag Int8,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_goalkeeping_defense_wing_lockdown_collective', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);

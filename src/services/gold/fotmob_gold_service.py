@@ -10,8 +10,12 @@ from typing import Optional
 from src.services.gold.sql_jobs import GoldSqlJob, discover_gold_sql_jobs, execute_gold_sql_job
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.clickhouse_sql_executor import execute_sql_script
-from src.utils.gold_databases import gold_db, gold_signals_db
-from src.utils.layer_contracts import LayerContractError, assert_gold_layer_contracts
+from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.utils.layer_contracts import (
+    LayerContractError,
+    assert_gold_activation_contracts,
+    assert_gold_layer_contracts,
+)
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -69,8 +73,7 @@ class GoldService:
         return sorted(
             path
             for path in sql_dir.glob("*.sql")
-            if not path.name.startswith("scenario_")
-            and not _is_ddl(path)
+            if not path.name.startswith("scenario_") and not _is_ddl(path)
         )
 
     def execute_sql_files(self, sql_files: list[Path]) -> None:
@@ -160,7 +163,11 @@ class GoldService:
 
         Returns (scenario_ok, scenario_fail, signal_ok, signal_fail).
         """
-        scenario_jobs: list[GoldSqlJob] = []
+        scenario_jobs = (
+            discover_gold_sql_jobs("scenario", target_db=gold_scenarios_db())
+            if part in ("all", "scenarios")
+            else []
+        )
         signal_jobs = (
             discover_gold_sql_jobs("signal", target_db=gold_signals_db())
             if part in ("all", "signals")
@@ -202,7 +209,6 @@ class GoldService:
         activation_dir = SCRIPTS_DIR / "activations"
         activation_scripts = [
             activation_dir / "build_signal_activations.py",
-            activation_dir / "build_signal_activations_match.py",
         ]
 
         for script_path in activation_scripts:
@@ -212,9 +218,7 @@ class GoldService:
 
         for script_path in activation_scripts:
             if dry_run:
-                logger.info(
-                    "[dry-run] Would execute signal activation script: %s", script_path
-                )
+                logger.info("[dry-run] Would execute signal activation script: %s", script_path)
                 continue
 
             logger.info("Running signal activation script: %s", script_path.name)
@@ -238,6 +242,11 @@ class GoldService:
         assert_gold_layer_contracts(
             self.client,
             database=database or gold_signals_db(),
+            log=logger,
+        )
+        assert_gold_activation_contracts(
+            self.client,
+            database=self.metadata_db,
             log=logger,
         )
 
@@ -274,9 +283,7 @@ class GoldService:
                 dry_run=dry_run
             )
         elif part in ("all", "signals") and result.signal_failed_count > 0:
-            logger.warning(
-                "Skipping signal activation builder because signal scripts had failures"
-            )
+            logger.warning("Skipping signal activation builder because signal scripts had failures")
             result.signal_activation_exit_code = 1
 
         if result.signal_failed_count > 0:

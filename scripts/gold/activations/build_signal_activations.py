@@ -1,4 +1,4 @@
-"""Build deterministic per-match signal activation IDs in ClickHouse."""
+"""Build enriched signal activation serving rows in ClickHouse."""
 
 import argparse
 import re
@@ -23,6 +23,8 @@ logger = get_logger(__name__)
 DEFAULT_CATALOG_DIR = project_root / "scripts" / "gold" / "signal" / "catalogs"
 FRONTMATTER_DELIMITER = "\n---\n"
 SIGNAL_ID_VERSION = "v1"
+MATCH_SUMMARY_ID_VERSION = "v1"
+STAGE_TABLE = "signal_activations_stage"
 SAFE_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
@@ -51,7 +53,7 @@ def load_environment() -> None:
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build deterministic signal activation IDs into gold.signal_activations."
+        description="Build enriched signal activation rows into gold.signal_activations."
     )
     parser.add_argument(
         "--catalog-dir",
@@ -99,9 +101,7 @@ def _sql_array_literal(values: list[str]) -> str:
 def _parse_signal_id_parts(signal_id: str) -> tuple[str, str, str, str, str, list[str]]:
     parts = signal_id.split("_")
     if len(parts) < 5:
-        raise ValueError(
-            f"signal_id '{signal_id}' must have at least 5 underscore-separated parts"
-        )
+        raise ValueError(f"signal_id '{signal_id}' must have at least 5 underscore-separated parts")
     if parts[0] != "sig":
         raise ValueError(f"signal_id '{signal_id}' must start with 'sig_'")
 
@@ -155,14 +155,17 @@ def iter_signal_catalogs(catalog_dir: Path) -> Iterable[SignalCatalog]:
 
         if signal_id != file_path.stem:
             raise ValueError(
-                f"signal_id '{signal_id}' does not match file name '{file_path.stem}' in {file_path}"
+                f"signal_id '{signal_id}' does not match file name '{file_path.stem}' "
+                f"in {file_path}"
             )
 
         if str(frontmatter.get("status", "")).lower() != "active":
             continue
 
         row_identity = frontmatter.get("row_identity")
-        if not isinstance(row_identity, list) or not all(isinstance(v, str) for v in row_identity):
+        if not isinstance(row_identity, list) or not all(
+            isinstance(value, str) for value in row_identity
+        ):
             raise ValueError(f"row_identity must be a list of strings in {file_path}")
 
         (
@@ -254,6 +257,64 @@ def _hash_component_expr(column_name: str) -> str:
     return f"coalesce(toString({safe_col}), '')"
 
 
+def _source_row_json_expr(available_columns: set[str]) -> str:
+    """Return a JSON object expression preserving source column names and JSON values."""
+    json_parts = []
+    for column in sorted(available_columns):
+        safe_col = _validate_identifier(column, "column name")
+        json_key = column.replace("\\", "\\\\").replace('"', '\\"')
+        json_parts.append(
+            f"""concat('"{json_key}":', if(isNull({safe_col}), 'null', toJSONString({safe_col})))"""
+        )
+    return "concat('{', arrayStringConcat([" + ", ".join(json_parts) + "], ','), '}')"
+
+
+def _stage_table_name(target_database: str) -> str:
+    safe_target_database = _validate_identifier(target_database, "target database")
+    return f"{safe_target_database}.{STAGE_TABLE}"
+
+
+def _create_stage_table(client: ClickHouseClient, target_database: str) -> None:
+    stage_table = _stage_table_name(target_database)
+    client.execute(f"DROP TABLE IF EXISTS {stage_table}")
+    client.execute(
+        f"""
+        CREATE TABLE {stage_table} (
+            signal_instance_id String,
+            signal_id String,
+            signal_id_version String,
+            signal_prefix String,
+            signal_entity String,
+            signal_family String,
+            signal_subfamily String,
+            signal_name String,
+            signal_tags Array(String),
+            match_id Int32,
+            match_date Date,
+            home_team_id Nullable(Int32),
+            home_team_name Nullable(String),
+            away_team_id Nullable(Int32),
+            away_team_name Nullable(String),
+            home_score Nullable(Int32),
+            away_score Nullable(Int32),
+            triggered_side Nullable(String),
+            triggered_team_id Nullable(Int32),
+            triggered_team_name Nullable(String),
+            triggered_player_id Nullable(Int32),
+            triggered_player_name Nullable(String),
+            opponent_team_id Nullable(Int32),
+            opponent_team_name Nullable(String),
+            source_table String,
+            source_row_json String,
+            source_row_columns Array(String),
+            inserted_at DateTime
+        ) ENGINE = ReplacingMergeTree(inserted_at)
+        ORDER BY (match_date, match_id, signal_id, signal_instance_id)
+        PARTITION BY toYYYYMM(match_date)
+        """
+    )
+
+
 def _activation_insert_sql(
     source_database: str,
     target_database: str,
@@ -261,8 +322,8 @@ def _activation_insert_sql(
     available_columns: set[str],
 ) -> str:
     safe_source_database = _validate_identifier(source_database, "source database")
-    safe_target_database = _validate_identifier(target_database, "target database")
     safe_signal_table = _validate_identifier(catalog.signal_id, "table")
+    stage_table = _stage_table_name(target_database)
 
     def optional_col(column: str, cast_type: str) -> str:
         safe_col = _validate_identifier(column, "column name")
@@ -274,7 +335,8 @@ def _activation_insert_sql(
     missing_key_fields = [field for field in key_fields if field not in available_columns]
     if missing_key_fields:
         raise ValueError(
-            f"Signal {catalog.signal_id} is missing required row_identity columns: {missing_key_fields}"
+            f"Signal {catalog.signal_id} is missing required row_identity columns: "
+            f"{missing_key_fields}"
         )
 
     key_expr_parts = [
@@ -283,8 +345,82 @@ def _activation_insert_sql(
         *[_hash_component_expr(field) for field in key_fields],
     ]
     key_expr = ", '|', ".join(key_expr_parts)
+    signal_instance_expr = (
+        "signal_instance_id"
+        if "signal_instance_id" in available_columns
+        else f"lower(hex(SHA256(concat({key_expr}))))"
+    )
 
     match_date_expr = optional_col("match_date", "Nullable(Date)")
+    return f"""
+    INSERT INTO {stage_table} (
+        signal_instance_id,
+        signal_id,
+        signal_id_version,
+        signal_prefix,
+        signal_entity,
+        signal_family,
+        signal_subfamily,
+        signal_name,
+        signal_tags,
+        match_id,
+        match_date,
+        home_team_id,
+        home_team_name,
+        away_team_id,
+        away_team_name,
+        home_score,
+        away_score,
+        triggered_side,
+        triggered_team_id,
+        triggered_team_name,
+        triggered_player_id,
+        triggered_player_name,
+        opponent_team_id,
+        opponent_team_name,
+        source_table,
+        source_row_json,
+        source_row_columns,
+        inserted_at
+    )
+    SELECT
+        {signal_instance_expr} AS signal_instance_id,
+        '{catalog.signal_id}' AS signal_id,
+        '{SIGNAL_ID_VERSION}' AS signal_id_version,
+        {_sql_string_literal(catalog.signal_prefix)} AS signal_prefix,
+        {_sql_string_literal(catalog.signal_entity)} AS signal_entity,
+        {_sql_string_literal(catalog.signal_family)} AS signal_family,
+        {_sql_string_literal(catalog.signal_subfamily)} AS signal_subfamily,
+        {_sql_string_literal(catalog.signal_name)} AS signal_name,
+        {_sql_array_literal(catalog.signal_tags)} AS signal_tags,
+        toInt32(match_id) AS match_id,
+        toDate({match_date_expr}) AS match_date,
+        toNullable(toInt32({optional_col('home_team_id', 'Nullable(Int32)')})) AS home_team_id,
+        toNullable(toString({optional_col('home_team_name', 'Nullable(String)')})) AS home_team_name,
+        toNullable(toInt32({optional_col('away_team_id', 'Nullable(Int32)')})) AS away_team_id,
+        toNullable(toString({optional_col('away_team_name', 'Nullable(String)')})) AS away_team_name,
+        toNullable(toInt32({optional_col('home_score', 'Nullable(Int32)')})) AS home_score,
+        toNullable(toInt32({optional_col('away_score', 'Nullable(Int32)')})) AS away_score,
+        toNullable(toString({optional_col('triggered_side', 'Nullable(String)')})) AS triggered_side,
+        toNullable(toInt32({optional_col('triggered_team_id', 'Nullable(Int32)')})) AS triggered_team_id,
+        toNullable(toString({optional_col('triggered_team_name', 'Nullable(String)')})) AS triggered_team_name,
+        toNullable(toInt32({optional_col('triggered_player_id', 'Nullable(Int32)')})) AS triggered_player_id,
+        toNullable(toString({optional_col('triggered_player_name', 'Nullable(String)')})) AS triggered_player_name,
+        toNullable(toInt32({optional_col('opponent_team_id', 'Nullable(Int32)')})) AS opponent_team_id,
+        toNullable(toString({optional_col('opponent_team_name', 'Nullable(String)')})) AS opponent_team_name,
+        '{catalog.signal_id}' AS source_table,
+        {_source_row_json_expr(available_columns)} AS source_row_json,
+        {_sql_array_literal(sorted(available_columns))} AS source_row_columns,
+        now() AS inserted_at
+    FROM {safe_source_database}.{safe_signal_table}
+    WHERE match_id > 0
+      AND {match_date_expr} IS NOT NULL
+    """
+
+
+def _final_activation_insert_sql(target_database: str) -> str:
+    safe_target_database = _validate_identifier(target_database, "target database")
+    stage_table = _stage_table_name(target_database)
     return f"""
     INSERT INTO {safe_target_database}.signal_activations (
         signal_instance_id,
@@ -298,30 +434,89 @@ def _activation_insert_sql(
         signal_tags,
         match_id,
         match_date,
+        match_activation_instance_id,
+        activated_signal_instance_ids,
+        activated_signal_ids,
+        activated_signal_entities,
+        activated_signal_tags,
+        activated_signal_names,
+        total_signal_rows,
+        unique_signal_count,
+        home_team_id,
+        home_team_name,
+        away_team_id,
+        away_team_name,
+        home_score,
+        away_score,
         triggered_side,
         triggered_team_id,
+        triggered_team_name,
         triggered_player_id,
-        source_table
+        triggered_player_name,
+        opponent_team_id,
+        opponent_team_name,
+        source_table,
+        source_row_json,
+        source_row_columns,
+        inserted_at
+    )
+    WITH match_summary AS (
+        SELECT
+            match_id,
+            match_date,
+            lower(hex(SHA256(concat('{MATCH_SUMMARY_ID_VERSION}', '|', toString(match_id)))))
+                AS match_activation_instance_id,
+            arraySort(groupUniqArray(signal_instance_id)) AS activated_signal_instance_ids,
+            arraySort(groupUniqArray(signal_id)) AS activated_signal_ids,
+            arraySort(groupUniqArray(signal_entity)) AS activated_signal_entities,
+            arraySort(arrayDistinct(arrayFlatten(groupArray(signal_tags)))) AS activated_signal_tags,
+            arraySort(groupUniqArray(signal_name)) AS activated_signal_names,
+            toUInt32(count()) AS total_signal_rows,
+            toUInt16(length(groupUniqArray(signal_id))) AS unique_signal_count
+        FROM {stage_table}
+        GROUP BY match_id, match_date
     )
     SELECT
-        lower(hex(SHA256(concat({key_expr})))) AS signal_instance_id,
-        '{catalog.signal_id}' AS signal_id,
-        '{SIGNAL_ID_VERSION}' AS signal_id_version,
-        {_sql_string_literal(catalog.signal_prefix)} AS signal_prefix,
-        {_sql_string_literal(catalog.signal_entity)} AS signal_entity,
-        {_sql_string_literal(catalog.signal_family)} AS signal_family,
-        {_sql_string_literal(catalog.signal_subfamily)} AS signal_subfamily,
-        {_sql_string_literal(catalog.signal_name)} AS signal_name,
-        {_sql_array_literal(catalog.signal_tags)} AS signal_tags,
-        toInt32(match_id) AS match_id,
-        toDate({match_date_expr}) AS match_date,
-        {optional_col('triggered_side', 'Nullable(String)')} AS triggered_side,
-        toNullable(toInt32({optional_col('triggered_team_id', 'Nullable(Int32)')})) AS triggered_team_id,
-        toNullable(toInt32({optional_col('triggered_player_id', 'Nullable(Int32)')})) AS triggered_player_id,
-        '{catalog.signal_id}' AS source_table
-    FROM {safe_source_database}.{safe_signal_table}
-    WHERE match_id > 0
-      AND {match_date_expr} IS NOT NULL
+        stage.signal_instance_id,
+        stage.signal_id,
+        stage.signal_id_version,
+        stage.signal_prefix,
+        stage.signal_entity,
+        stage.signal_family,
+        stage.signal_subfamily,
+        stage.signal_name,
+        stage.signal_tags,
+        stage.match_id,
+        stage.match_date,
+        match_summary.match_activation_instance_id,
+        match_summary.activated_signal_instance_ids,
+        match_summary.activated_signal_ids,
+        match_summary.activated_signal_entities,
+        match_summary.activated_signal_tags,
+        match_summary.activated_signal_names,
+        match_summary.total_signal_rows,
+        match_summary.unique_signal_count,
+        stage.home_team_id,
+        stage.home_team_name,
+        stage.away_team_id,
+        stage.away_team_name,
+        stage.home_score,
+        stage.away_score,
+        stage.triggered_side,
+        stage.triggered_team_id,
+        stage.triggered_team_name,
+        stage.triggered_player_id,
+        stage.triggered_player_name,
+        stage.opponent_team_id,
+        stage.opponent_team_name,
+        stage.source_table,
+        stage.source_row_json,
+        stage.source_row_columns,
+        stage.inserted_at
+    FROM {stage_table} AS stage
+    INNER JOIN match_summary
+        ON match_summary.match_id = stage.match_id
+       AND match_summary.match_date = stage.match_date
     """
 
 
@@ -336,9 +531,7 @@ def build_signal_activations(
     skipped = 0
 
     if not dry_run:
-        client.execute(
-            f"TRUNCATE TABLE {_validate_identifier(target_database, 'database')}.signal_activations"
-        )
+        _create_stage_table(client, target_database)
 
     for catalog in catalogs:
         signal_table = catalog.signal_id
@@ -368,11 +561,20 @@ def build_signal_activations(
         else:
             client.execute(query)
             logger.info(
-                "Signal activation rows inserted",
+                "Signal activation stage rows inserted",
                 signal_id=catalog.signal_id,
                 identity_fields=",".join(_identity_fields(catalog.row_identity)),
             )
         processed += 1
+
+    if not dry_run:
+        safe_target_database = _validate_identifier(target_database, "database")
+        client.execute(f"TRUNCATE TABLE {safe_target_database}.signal_activations")
+        client.execute(_final_activation_insert_sql(target_database))
+        client.execute(
+            f"OPTIMIZE TABLE {safe_target_database}.signal_activations FINAL DEDUPLICATE"
+        )
+        client.execute(f"DROP TABLE IF EXISTS {_stage_table_name(target_database)}")
 
     return processed, skipped
 

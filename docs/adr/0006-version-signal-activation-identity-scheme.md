@@ -8,8 +8,9 @@ Accepted
 
 DepthMark materializes one row per triggered Gold signal output row in
 `gold.signal_activations`. Downstream consumers use `signal_instance_id` to
-refer to a stable activation occurrence, and match-level aggregates store arrays
-of those IDs in `gold.signal_activations_match`.
+refer to a stable activation occurrence. ADR 0014 later retired the separate
+`gold.signal_activations_match` table and moved match-level summary arrays onto
+`gold.signal_activations`.
 
 The current activation builder derives each `signal_instance_id` from:
 

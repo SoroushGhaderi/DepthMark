@@ -85,10 +85,7 @@ def _table_exists(client: ClickHouseClient, database: str, table: str) -> bool:
     """Return True when table exists."""
     db = _safe_identifier(database)
     tbl = _safe_identifier(table)
-    query = (
-        "SELECT count() FROM system.tables "
-        f"WHERE database = '{db}' AND name = '{tbl}'"
-    )
+    query = "SELECT count() FROM system.tables " f"WHERE database = '{db}' AND name = '{tbl}'"
     return _query_scalar(client, query) > 0
 
 
@@ -228,9 +225,7 @@ def assert_silver_layer_contracts(
             )
 
         tuple_expr = ", ".join(keys)
-        uniqueness_query = (
-            f"SELECT count(), uniqExact(tuple({tuple_expr})) FROM {db}.{table}"
-        )
+        uniqueness_query = f"SELECT count(), uniqExact(tuple({tuple_expr})) FROM {db}.{table}"
         result = client.execute(uniqueness_query, log_query=False)
         row_count = int(result.result_rows[0][0]) if result.result_rows else 0
         unique_count = int(result.result_rows[0][1]) if result.result_rows else 0
@@ -262,10 +257,7 @@ def _list_table_columns(client: ClickHouseClient, database: str, table: str) -> 
     """Return table column names from system.columns."""
     db = _safe_identifier(database)
     tbl = _safe_identifier(table)
-    query = (
-        "SELECT name FROM system.columns "
-        f"WHERE database = '{db}' AND table = '{tbl}'"
-    )
+    query = "SELECT name FROM system.columns " f"WHERE database = '{db}' AND table = '{tbl}'"
     result = client.execute(query, log_query=False)
     if hasattr(result, "result_rows") and result.result_rows:
         return [str(row[0]) for row in result.result_rows if row]
@@ -301,8 +293,7 @@ def assert_gold_layer_contracts(
         if "home_score" in columns and "away_score" in columns:
             negative_scores = _query_scalar(
                 client,
-                f"SELECT count() FROM {db}.{table} "
-                "WHERE (home_score < 0) OR (away_score < 0)",
+                f"SELECT count() FROM {db}.{table} " "WHERE (home_score < 0) OR (away_score < 0)",
             )
             if negative_scores > 0:
                 log.warning(
@@ -310,3 +301,68 @@ def assert_gold_layer_contracts(
                     table=f"{db}.{table}",
                     rows=negative_scores,
                 )
+
+
+def assert_gold_activation_contracts(
+    client: ClickHouseClient,
+    database: str = "gold",
+    log=logger,
+) -> None:
+    """Run lightweight post-load assertions for the Gold activation serving table."""
+    db = _safe_identifier(database)
+    table = "signal_activations"
+    if not _table_exists(client, db, table):
+        raise LayerContractError(f"Gold activation contract failed: missing table {db}.{table}")
+
+    rows = _query_scalar(client, f"SELECT count() FROM {db}.{table}")
+    if rows == 0:
+        log.warning("Gold activation serving table is empty after load", table=f"{db}.{table}")
+        return
+
+    required_columns = {
+        "signal_instance_id",
+        "signal_id",
+        "signal_id_version",
+        "match_id",
+        "match_date",
+        "match_activation_instance_id",
+        "activated_signal_instance_ids",
+        "total_signal_rows",
+        "unique_signal_count",
+        "source_table",
+        "source_row_json",
+    }
+    columns = set(_list_table_columns(client, database=db, table=table))
+    missing_columns = sorted(required_columns - columns)
+    if missing_columns:
+        raise LayerContractError(
+            f"Gold activation contract failed for {db}.{table}: "
+            f"missing columns {missing_columns}"
+        )
+
+    invalid_rows = _query_scalar(
+        client,
+        f"SELECT count() FROM {db}.{table} "
+        "WHERE signal_instance_id = '' "
+        "OR signal_id = '' "
+        "OR signal_id_version = '' "
+        "OR isNull(match_id) "
+        "OR match_id <= 0 "
+        "OR source_table = '' "
+        "OR source_row_json = ''",
+    )
+    if invalid_rows > 0:
+        raise LayerContractError(
+            f"Gold activation contract failed for {db}.{table}: "
+            f"{invalid_rows} invalid activation rows"
+        )
+
+    uniqueness_query = f"SELECT count(), uniqExact(signal_instance_id) FROM {db}.{table}"
+    result = client.execute(uniqueness_query, log_query=False)
+    row_count = int(result.result_rows[0][0]) if result.result_rows else 0
+    unique_count = int(result.result_rows[0][1]) if result.result_rows else 0
+    if row_count > unique_count:
+        raise LayerContractError(
+            f"Gold activation contract failed for {db}.{table}: "
+            f"{row_count - unique_count} duplicate signal_instance_id rows"
+        )

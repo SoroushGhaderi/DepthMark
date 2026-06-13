@@ -9,14 +9,14 @@ This directory contains runtime assets for Gold signal execution.
 - `contracts/`: signal engineering contracts
 - Activation builders now live under `scripts/gold/activations/`
 
-## Match-Level Activation Store
+## Signal Activation Serving Store
 
-DepthMark also materializes match-grain signal activations into:
+DepthMark materializes activated signal rows into one serving table:
 
-- `gold.signal_activations_match`
+- `gold.signal_activations`
 
-Row-level activation IDs live in `gold.signal_activations` and use the current
-activation identity scheme:
+Each activation row represents one triggered source row from
+`gold_signals.sig_*` and uses the current activation identity scheme:
 
 - `signal_instance_id = SHA256("v1|signal_id|<row_identity values>")`
 - `signal_id_version = 'v1'`
@@ -25,16 +25,28 @@ The `v1` value versions the activation identity scheme only. It is not a signal
 definition version and should not change for ordinary SQL, threshold, or catalog
 text edits when `signal_id` and `row_identity` values remain stable.
 
+Each `gold_signals.sig_*` table also defines `signal_instance_id` with the same
+deterministic identity expression. Signal INSERT SQL does not need to write the
+column explicitly; ClickHouse fills it from the table DEFAULT expression.
+The grouped signal DDL files drop and recreate derived signal tables for this
+contract. Do not add in-place `ALTER TABLE` migration statements for
+`signal_instance_id`; rerun setup and then repopulate signals.
+
 Assets:
 
 - DDL: `clickhouse/gold/create_table_signal_activations.sql`
-- Runner: `scripts/gold/activations/build_signal_activations_match.py`
+- Runner: `scripts/gold/activations/build_signal_activations.py`
 
-The runner aggregates from `gold.signal_activations` into one row per:
+The activation builder rebuilds `gold.signal_activations` from all active signal
+catalogs and source signal tables. The serving table includes:
 
-- `match_id`
+- stable identity and signal catalog metadata
+- common fixture/team/player context when present
+- `source_row_json`, a JSON copy of the source `gold_signals.sig_*` row
+- `source_row_columns`, the ordered source payload column names
+- match-level summary fields repeated on each activation row
 
-and stores:
+Match-level summary fields include:
 
 - `activated_signal_instance_ids` (array of raw `signal_instance_id` values)
 - `activated_signal_ids` (array of unique active `signal_id` values)
@@ -49,5 +61,5 @@ and stores:
 When running `python scripts/gold/load_clickhouse_gold.py --part signals`:
 
 1. Signal runner scripts write `gold_signals.sig_*` tables
-2. `scripts/gold/activations/build_signal_activations.py` writes `gold.signal_activations`
-3. `scripts/gold/activations/build_signal_activations_match.py` writes `gold.signal_activations_match`
+2. `scripts/gold/activations/build_signal_activations.py` writes the enriched
+   `gold.signal_activations` serving table

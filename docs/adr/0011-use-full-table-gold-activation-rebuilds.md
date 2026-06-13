@@ -7,19 +7,17 @@ Accepted
 ## Context
 
 DepthMark materializes Gold signal activation metadata in
-`gold.signal_activations` and `gold.signal_activations_match`. These tables are
-derived from active signal catalog frontmatter and the current contents of
+`gold.signal_activations`. ADR 0014 later enriched this table and retired the
+separate `gold.signal_activations_match` aggregate. Activation rows are derived
+from active signal catalog frontmatter and the current contents of
 `gold_signals.sig_*` output tables.
 
 The current activation builders rebuild both metadata tables after successful
 signal execution:
 
-- `scripts/gold/activations/build_signal_activations.py` truncates
-  `gold.signal_activations` and inserts one activation row per active signal
-  output row.
-- `scripts/gold/activations/build_signal_activations_match.py` truncates
-  `gold.signal_activations_match` and re-aggregates match-level activation
-  summaries from `gold.signal_activations`.
+- `scripts/gold/activations/build_signal_activations.py` rebuilds
+  `gold.signal_activations` with one activation row per active signal output
+  row.
 
 ADR 0006 already keeps activation IDs deterministic across normal reruns and
 ordinary signal SQL or catalog changes when `signal_id` and `row_identity`
@@ -42,9 +40,7 @@ The supported rebuild flow is:
 1. run Gold signal SQL jobs into `gold_signals.sig_*`;
 2. rebuild all rows in `gold.signal_activations` from all active signal catalogs
    and available signal output tables;
-3. rebuild all rows in `gold.signal_activations_match` from
-   `gold.signal_activations`;
-4. run Gold contracts after the activation builders complete.
+3. run Gold contracts after the activation builder completes.
 
 Activation builders may continue to use `TRUNCATE TABLE` for the activation
 metadata tables before inserting rebuilt rows. They must remain idempotent for a
@@ -68,6 +64,5 @@ be stale or inconsistent, operators should rerun the Gold loader or the two
 activation builders rather than attempting a scoped activation patch.
 
 Future scoped rebuild work must define how changed or removed signal rows are
-deleted from both `gold.signal_activations` and
-`gold.signal_activations_match`, and must include verification that a scoped
-run matches a full-table rebuild for the same source data.
+deleted from `gold.signal_activations` and must include verification that a
+scoped run matches a full-table rebuild for the same source data.

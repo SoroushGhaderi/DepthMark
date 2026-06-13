@@ -166,7 +166,7 @@ deterministic activation IDs. Typical values are:
 - team-grain signal: `match_id`, `triggered_side`
 - player-grain signal: `match_id`, `triggered_player_id`, `triggered_team_id`
 
-DepthMark also materializes per-match signal activations in
+DepthMark also materializes signal activations in the serving table
 `gold.signal_activations` using a deterministic hash key:
 
 - `signal_instance_id = SHA256(\"v1|signal_id|<row_identity values>\")`
@@ -174,8 +174,10 @@ DepthMark also materializes per-match signal activations in
   signal-definition version
 - IDs stay stable across reruns and ordinary signal SQL/catalog changes when
   `signal_id` and `row_identity` values are unchanged
-- activation metadata is rebuilt with full-table rebuilds: first
-  `gold.signal_activations`, then `gold.signal_activations_match`
+- each `gold_signals.sig_*` table also defines `signal_instance_id` with the
+  same deterministic identity expression
+- activation metadata is rebuilt with full-table rebuilds into the single
+  `gold.signal_activations` serving table
 - Parsed `signal_id` structure is also stored:
   - `signal_prefix` (for example `sig`)
   - `signal_entity` (for example `match`, `team`, `player`)
@@ -183,17 +185,17 @@ DepthMark also materializes per-match signal activations in
   - `signal_name` (remaining suffix after taxonomy)
   - `signal_tags` (array form of taxonomy tags)
 
-Signal SQL can also use `gold.match_reference` as a shared
-match-level lookup view (sourced from `bronze.match_reference`).
+Each activation row also carries common fixture/team/player context when present
+in the source signal row, the full source signal row in `source_row_json`, and
+`source_row_columns` for payload discovery. Match-level activation summary
+fields are repeated on each activation row for serving convenience, including:
 
-For match-level aggregation, DepthMark also writes
-`gold.signal_activations_match` with one row per `match_id`, including:
 - `activated_signal_instance_ids` (array of raw `signal_instance_id` values)
 - `activated_signal_ids` (array of unique active `signal_id` values)
 - `activated_signal_entities` (array of entity types such as match/team/player)
 - `activated_signal_tags` (array of unique taxonomy tags from activated signals)
 - `activated_signal_names` (array of unique signal name suffixes)
-- `total_signal_rows` (raw activation row count in that match)
+- `total_signal_rows` (raw activation row count in the match)
 - `unique_signal_count` (distinct active signal IDs)
 
 ## Project Layout

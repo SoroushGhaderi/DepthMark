@@ -50,8 +50,8 @@ Signal catalog `asset_paths.table` must use the actual signal output namespace:
 gold_signals.<signal_id>
 ```
 
-Shared activation metadata remains in `gold.*`, including
-`gold.signal_activations` and `gold.signal_activations_match`.
+Shared activation metadata remains in `gold.*`, including the single enriched
+serving table `gold.signal_activations`.
 
 The sync script validates the table namespace during dry-run and normal sync so
 stale catalog metadata fails before reaching MongoDB.

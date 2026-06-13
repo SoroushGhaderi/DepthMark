@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by re-enablement (scenario bulk loading is now enabled)
 
 ## Context
 
@@ -65,3 +65,24 @@ Documentation and runbooks should describe scenario bulk as disabled rather
 than partially implemented. Future work that re-enables it must update this ADR,
 `README.md`, `docs/DEVELOPMENT_ARCHITECTURE.md`, `AGENTS.md`, and the Gold
 loader help text in the same change.
+
+---
+
+## Re-enablement Notes
+
+Scenario bulk loading was re-enabled after validating:
+
+1. 48 scenario SQL files (24 team, 24 player) discover correctly via
+   `discover_gold_sql_jobs("scenario")`;
+2. All scenario SQL files resolve to `gold_scenarios.scenario_*` targets;
+3. Dry-run execution through `load_clickhouse_gold.py --dry-run` confirms
+   48 scenario jobs + 344 signal jobs are planned correctly;
+4. Scenario failures follow the same pattern as signals: fail the run, skip
+   activation builders, exit code 1.
+
+The `--part` flag now accepts `scenarios` as an explicit selector:
+
+```bash
+python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
+python scripts/gold/load_clickhouse_gold.py --part all --dry-run
+```

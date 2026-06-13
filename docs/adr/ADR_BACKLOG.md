@@ -39,16 +39,17 @@ trade-off.
 | `0007-sql-owns-analytical-transformations.md` | Silver and Gold analytical logic belongs in ClickHouse SQL; Python owns orchestration and validation. | Python exceptions for reusable analytical logic need a later ADR. |
 | `0008-author-signal-catalogs-in-markdown.md` | Signal markdown frontmatter is the source of truth; MongoDB is a synchronized serving copy. | Catalog changes originate in Git and must sync to MongoDB through the catalog sync script. |
 | `0009-retire-legacy-gold-per-output-runners.md` | Legacy Gold per-output Python runner files are removed; `scripts/gold/run_sql_job.py` is the only supported selected-job runner. | Omitted selectors mean all, while signal `--entity` and `--family` are separate batch selectors. |
-| `0010-introduce-src-application-services-behind-script-entrypoints.md` | Stable, layer-specific application services may live under `src/` behind existing script entry points. | Scripts keep CLI compatibility and exit-code semantics; services coordinate workflows but not Silver/Gold analytical logic. |
-| `0011-use-full-table-gold-activation-rebuilds.md` | Gold activation metadata is rebuilt with full-table rebuilds, not incremental or scoped activation patches. | Scoped rebuilds need a later ADR defining partition-safe replacement semantics for upstream signal outputs and match-level aggregates. |
+| `0010-introduce-src-application-services-behind-script-entrypoints.md` | Stable, layer-specific application services may live under `src/` behind existing script entry points. | Scripts keep CLI compatibility and exit-code semantics; services coordinate workflows but not Silver/Gold analytical logic. Bronze service extraction is a follow-up implementation task. |
+| `0011-use-full-table-gold-activation-rebuilds.md` | Gold activation metadata is rebuilt with full-table rebuilds, not incremental or scoped activation patches. | Scoped rebuilds need a later ADR defining partition-safe replacement semantics for upstream signal outputs and the activation serving table. |
+| `0014-use-single-enriched-signal-activation-serving-table.md` | Gold activations use one enriched serving table, not a thin index plus separate match aggregate. | `gold_signals.sig_*` tables expose `signal_instance_id`; downstream services read details from `gold.signal_activations` before reaching for typed source tables. |
 
 ## Queue
 
 | Priority | Topic | Current status | Why this is ADR-worthy | Expected output |
 | --- | --- | --- | --- | --- |
 | P0 | Retire legacy Gold per-output Python runners | Accepted in `0009-retire-legacy-gold-per-output-runners.md` | `scripts/gold/signal/runners/` contained hundreds of generated wrapper files and `scripts/gold/scenario/` contained legacy scenario wrappers, while ADR 0001 says new Gold work should use generic SQL runners. Keeping or deleting them affects command compatibility, review surface, and repo structure. | ADR deciding deprecation/removal policy, compatibility window, and docs updates. |
-| P0 | Re-enable or permanently keep disabled Gold scenario bulk loading | Accepted as disabled in `0004-keep-gold-scenario-bulk-disabled-until-validated.md`; validation decision unresolved | The Gold loader currently runs signals and activation builders, but scenario jobs are deliberately omitted. Re-enabling affects default Gold runs, failure blast radius, backfills, and runbook expectations. | ADR update or new ADR after representative scenario validation, plus loader/docs changes if accepted. |
-| P1 | FotMob-only provider scope and abstraction boundary | Unresolved | The repo is FotMob-only by docs and naming, but there are generic-looking layers under `src/processors`, `src/storage`, and pipeline flags such as `--skip-fotmob`. A provider abstraction would be hard to reverse once introduced. | ADR confirming FotMob-only scope and the minimum evidence required before adding another provider abstraction. |
+| P0 | Re-enable or permanently keep disabled Gold scenario bulk loading | Accepted as disabled in `0004-keep-gold-scenario-bulk-disabled-until-validated.md`; re-enabled in same ADR | The Gold loader currently runs signals and activation builders, but scenario jobs are deliberately omitted. Re-enabling affects default Gold runs, failure blast radius, backfills, and runbook expectations. | ADR update or new ADR after representative scenario validation, plus loader/docs changes if accepted. |
+| P1 | FotMob-only provider scope and abstraction boundary | Accepted in `0013-fotmob-only-provider-scope.md` | The repo is FotMob-only by docs and naming, but there are generic-looking layers under `src/processors`, `src/storage`, and pipeline flags such as `--skip-fotmob`. A provider abstraction would be hard to reverse once introduced. | ADR confirming FotMob-only scope and the minimum evidence required before adding another provider abstraction. |
 | P1 | `src/` application-service boundary behind script entry points | Accepted in `0010-introduce-src-application-services-behind-script-entrypoints.md` | ADR 0002 keeps CLI subprocesses as the orchestration boundary for now, while script-oriented helpers and storage/processors under `src/` already carry reusable behavior. Extracting stable services changes testing, imports, and failure handling. | ADR deciding whether scripts remain the application boundary or whether stable service APIs should be introduced behind the same CLI entry points. |
 | P2 | Gold activation rebuild strategy | Accepted in `0011-use-full-table-gold-activation-rebuilds.md` | Activation builders currently run after signal execution and rebuild deterministic activation metadata. Incremental rebuilds, full rebuilds, and partition/date-scoped rebuilds have different correctness and operational recovery trade-offs. | ADR defining full-table versus scoped rebuild policy, required idempotency guarantees, and verification commands. |
 | P2 | Signal definition versioning separate from activation identity | Deferred: needs product/audit requirement | ADR 0006 explicitly leaves signal-definition versioning for the future. Adding it would affect catalog frontmatter, MongoDB schema, downstream semantics, and migration policy. | ADR only if DepthMark needs historical signal logic audits, comparisons, or consumer-facing version semantics. |
@@ -56,29 +57,17 @@ trade-off.
 
 ## Recommended Next Session
 
-Start with **P1: FotMob-only provider scope and abstraction boundary**.
+All P0 and P1 items are now resolved. The remaining unresolved items are:
 
-Recommended default decision: confirm FotMob-only scope and defer any provider
-abstraction until there is a concrete second provider to support.
+- **P2: Signal definition versioning** — Deferred: needs product/audit requirement
+- **P3: Bronze filesystem retention** — Accepted in `0012-bronze-filesystem-retention-and-dlq-replay-policy.md`
 
-Decision question to ask:
+No further grill sessions are required unless new architectural decisions arise.
 
-> Should DepthMark confirm FotMob-only scope and remove or document the
-> generic-looking layers under `src/processors`, `src/storage`, and pipeline
-> flags such as `--skip-fotmob` as FotMob-specific? My recommendation is confirm
-> FotMob-only scope because adding a provider abstraction without a second
-> provider to validate against would be speculative and hard to reverse.
+## Completed Sessions
 
-Key files to inspect:
-
-- `docs/DEVELOPMENT_ARCHITECTURE.md`
-- `src/processors/`
-- `src/storage/`
-- `scripts/bronze/scrape_fotmob.py`
-- `config.yaml`
-
-Suggested verification:
-
-```bash
-python scripts/quality/check_logging_style.py
-```
+| Session | Item | Outcome |
+| --- | --- | --- |
+| 1 | FotMob-only provider scope | Accepted in `0013-fotmob-only-provider-scope.md` |
+| 2 | `src/` application-service boundary | Accepted in `0010`; BronzeService extraction confirmed as follow-up |
+| 3 | Gold scenario bulk loading | Re-enabled in `0004`; 48 scenarios + 344 signals in default Gold run |

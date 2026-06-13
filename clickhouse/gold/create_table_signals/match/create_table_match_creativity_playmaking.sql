@@ -1,5 +1,7 @@
 -- Signal tables for entity=match, family=creativity, subfamily=playmaking
 
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_the_creativity_clash;
+
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_the_creativity_clash (
     match_id Int32,
     match_date Date,
@@ -57,10 +59,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_the_crea
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_the_creativity_clash', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection (
     match_id Int32,
@@ -141,10 +146,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_playmake
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_playmaker_to_striker_connection', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate (
     match_id Int32,
@@ -214,10 +222,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_zero_fla
     triggered_team_long_ball_attempts Int32,
     opponent_long_ball_attempts Int32,
     long_ball_attempts_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_zero_flair_stalemate', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_big_chance_fest;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_big_chance_fest (
     match_id Int32,
@@ -280,10 +291,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_big_chan
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_big_chance_fest', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel (
     match_id Int32,
@@ -355,10 +369,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_set_piec
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_set_piece_creative_duel', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_shot_creation_peak;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_shot_creation_peak (
     match_id Int32,
@@ -425,10 +442,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_shot_cre
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_shot_creation_peak', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_unproductive_beauty;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_unproductive_beauty (
     match_id Int32,
@@ -497,10 +517,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_unproduc
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_unproductive_beauty', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_dribbling_battle;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_dribbling_battle (
     match_id Int32,
@@ -565,10 +588,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_dribblin
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_dribbling_battle', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_progressive_warfare;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_progressive_warfare (
     match_id Int32,
@@ -633,10 +659,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_progress
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_progressive_warfare', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_playmaker_showdown;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_playmaker_showdown (
     match_id Int32,
@@ -714,10 +743,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_playmake
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_playmaker_showdown', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_long_ball_duel;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_long_ball_duel (
     match_id Int32,
@@ -779,10 +811,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_long_bal
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_long_ball_duel', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match (
     match_id Int32,
@@ -847,10 +882,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_the_cros
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_the_cross_heavy_match', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_box_entry_chaos;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_box_entry_chaos (
     match_id Int32,
@@ -910,10 +948,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_box_entr
     triggered_team_long_ball_attempts Int32,
     opponent_long_ball_attempts Int32,
     long_ball_attempts_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_box_entry_chaos', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_creativity_playmaking_assist_provider_battle;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_assist_provider_battle (
     match_id Int32,
@@ -990,7 +1031,8 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_creativity_playmaking_assist_p
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
     opposition_box_touches_delta Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_creativity_playmaking_assist_provider_battle', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);

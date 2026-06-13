@@ -15,7 +15,7 @@ for candidate in (str(project_root), str(scripts_dir)):
 from config.settings import settings
 from src.services.gold.fotmob_gold_service import GoldService, GoldRunResult
 from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.gold_databases import gold_db, gold_signals_db
+from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
 from src.utils.layer_completion_alerts import send_layer_completion_alert
 from src.utils.layer_contracts import LayerContractError
 from src.utils.logging_utils import get_logger, setup_logging
@@ -27,9 +27,9 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process FotMob gold layer in ClickHouse")
     parser.add_argument(
         "--part",
-        choices=("all", "signals"),
+        choices=("all", "signals", "scenarios"),
         default="all",
-        help="Which signal job groups to run. Scenario execution is disabled for now.",
+        help="Which job groups to run: all, signals only, or scenarios only.",
     )
     parser.add_argument(
         "--dry-run",
@@ -48,7 +48,7 @@ def main(argv=None) -> int:
         log_dir=settings.log_dir,
         log_level=settings.log_level,
     )
-    scenario_db = "disabled"
+    scenario_db = gold_scenarios_db()
     signal_db = gold_signals_db()
     metadata_db = gold_db()
 
@@ -78,7 +78,8 @@ def main(argv=None) -> int:
             duration_seconds=time.perf_counter() - stage_start,
             detail_lines=[
                 f"SQL files planned: <b>{result.sql_file_count}</b>",
-                "Scenario failures: <b>0</b>",
+                f"Scenarios succeeded: <b>{result.scenario_success_count}</b>",
+                f"Scenario failures: <b>{result.scenario_failed_count}</b>",
                 f"Signal failures: <b>{result.signal_failed_count}</b>",
                 f"Signal activation builder exit code: <b>{result.signal_activation_exit_code}</b>",
             ],
@@ -110,7 +111,9 @@ def main(argv=None) -> int:
             duration_seconds=time.perf_counter() - stage_start,
             detail_lines=[
                 "SQL files executed: <b>0</b>",
+                "Scenarios succeeded: <b>0</b>",
                 "Scenario failures: <b>0</b>",
+                "Signals succeeded: <b>0</b>",
                 "Signal failures: <b>0</b>",
                 "Contract checks: <b>not run</b>",
             ],
@@ -149,8 +152,8 @@ def main(argv=None) -> int:
             duration_seconds=time.perf_counter() - stage_start,
             detail_lines=[
                 f"SQL files executed: <b>{result.sql_file_count}</b>",
-                "Scenarios succeeded: <b>0</b>",
-                "Scenario failures: <b>0</b>",
+                f"Scenarios succeeded: <b>{result.scenario_success_count}</b>",
+                f"Scenario failures: <b>{result.scenario_failed_count}</b>",
                 f"Signals succeeded: <b>{result.signal_success_count}</b>",
                 f"Signal failures: <b>{result.signal_failed_count}</b>",
                 f"Signal activation builder exit code: <b>{result.signal_activation_exit_code}</b>",

@@ -4,8 +4,11 @@
 
 ### Signal Activation
 
-A Gold metadata row that records one triggered signal output row for one match,
-team, or player occurrence.
+A Gold serving fact row that records one triggered signal output row for one
+match, team, or player occurrence. It includes stable activation identity,
+signal catalog metadata, common fixture/team/player context, match-level
+activation summary fields, and a JSON payload copied from the source
+`gold_signals.sig_*` row.
 
 Related terms: Signal, Signal Catalog, Signal Activation ID.
 
@@ -13,8 +16,8 @@ Related terms: Signal, Signal Catalog, Signal Activation ID.
 
 The process that regenerates Gold activation metadata from active signal
 catalogs and `gold_signals.sig_*` output tables. The canonical rebuild strategy
-is full-table: rebuild `gold.signal_activations`, then rebuild
-`gold.signal_activations_match` from those activation rows.
+is full-table: rebuild the single serving table `gold.signal_activations` from
+all active signal output rows.
 
 Avoid saying: incremental activation patch, scoped activation patch.
 Related terms: Signal Activation, Signal Activation ID.
@@ -87,6 +90,39 @@ affected date. No automated retry or reprocessing script exists or is planned.
 
 Avoid saying: automated replay, DLQ retry, reprocessing pipeline.
 Related terms: Dead Letter Queue, Bronze Retention.
+
+### Application Service
+
+A stable, layer-specific coordination module under `src/services/` that sits
+behind a script entry point. Application services own reusable workflow
+coordination: SQL job discovery and execution, client setup, contract checks,
+validation, alerts, and deterministic summaries. They must not own Silver or Gold
+analytical logic, which belongs in ClickHouse SQL.
+
+Avoid saying: business logic, analytical service, domain service.
+Related terms: Script Entry Point, Layer.
+
+### Gold Scenario Bulk Loading
+
+The execution of all scenario SQL jobs through the bulk Gold loader
+(`scripts/gold/load_clickhouse_gold.py`). Scenarios follow the same failure
+pattern as signals: a scenario failure blocks signal activation builders and
+produces a non-zero exit code. The `--part` flag accepts `scenarios` as an
+explicit selector.
+
+Avoid saying: scenario bulk disabled, scenario opt-in, scenario validation pending.
+Related terms: Gold Bulk Loading, Gold Service, Scenario SQL Job.
+
+### FotMob Provider Scope
+
+DepthMark currently supports FotMob only. There is no provider abstraction
+boundary. Code that looks generic (e.g., `BaseBronzeStorage` ABC, `--skip-fotmob`
+flag) is a FotMob-specific implementation detail, not an invitation to add new
+providers. A second provider abstraction will be added only when a concrete
+second provider needs to be supported.
+
+Avoid saying: multi-provider pipeline, provider plugin, provider abstraction.
+Related terms: Bronze Layer, FotMob API.
 
 ### DLQ Retention
 

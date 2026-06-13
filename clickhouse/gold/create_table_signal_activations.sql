@@ -1,3 +1,7 @@
+DROP TABLE IF EXISTS gold.signal_activations_match;
+DROP TABLE IF EXISTS gold.match_reference;
+DROP TABLE IF EXISTS gold.signal_activations;
+
 CREATE TABLE IF NOT EXISTS gold.signal_activations (
     signal_instance_id String,
     signal_id LowCardinality(String),
@@ -10,19 +14,7 @@ CREATE TABLE IF NOT EXISTS gold.signal_activations (
     signal_tags Array(String),
     match_id Int32,
     match_date Date,
-    triggered_side LowCardinality(Nullable(String)),
-    triggered_team_id Nullable(Int32),
-    triggered_player_id Nullable(Int32),
-    source_table LowCardinality(String),
-    inserted_at DateTime DEFAULT now()
-) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (signal_id, match_id, signal_instance_id)
-PARTITION BY toYYYYMM(match_date);
-
-CREATE TABLE IF NOT EXISTS gold.signal_activations_match (
     match_activation_instance_id String,
-    match_id Int32,
-    match_date Date,
     activated_signal_instance_ids Array(String),
     activated_signal_ids Array(String),
     activated_signal_entities Array(String),
@@ -30,35 +22,23 @@ CREATE TABLE IF NOT EXISTS gold.signal_activations_match (
     activated_signal_names Array(String),
     total_signal_rows UInt32,
     unique_signal_count UInt16,
+    home_team_id Nullable(Int32),
+    home_team_name Nullable(String),
+    away_team_id Nullable(Int32),
+    away_team_name Nullable(String),
+    home_score Nullable(Int32),
+    away_score Nullable(Int32),
+    triggered_side LowCardinality(Nullable(String)),
+    triggered_team_id Nullable(Int32),
+    triggered_team_name Nullable(String),
+    triggered_player_id Nullable(Int32),
+    triggered_player_name Nullable(String),
+    opponent_team_id Nullable(Int32),
+    opponent_team_name Nullable(String),
+    source_table LowCardinality(String),
+    source_row_json String CODEC(ZSTD(3)),
+    source_row_columns Array(String),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_date, match_id, match_activation_instance_id)
+ORDER BY (match_date, match_id, signal_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-CREATE VIEW IF NOT EXISTS gold.match_reference AS
-SELECT
-    match_id,
-    match_date,
-    match_time_utc,
-    match_time_utc_date,
-    match_round,
-    coverage_level,
-    league_id,
-    league_name,
-    league_round_name,
-    parent_league_id,
-    parent_league_name,
-    parent_league_season,
-    parent_league_tournament_id,
-    country_code,
-    home_team_id,
-    home_team_name,
-    away_team_id,
-    away_team_name,
-    match_started,
-    match_finished,
-    full_score,
-    home_score,
-    away_score,
-    inserted_at
-FROM bronze.match_reference FINAL;

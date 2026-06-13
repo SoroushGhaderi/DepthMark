@@ -1,5 +1,7 @@
 -- Signal tables for entity=match, family=possession, subfamily=passing
 
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_momentum_swing;
+
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_momentum_swing (
     match_id Int32,
     match_date Date,
@@ -39,10 +41,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_momentum_sw
     opponent_xg_first_half Float32,
     opponent_xg_second_half Float32,
     xg_swing_delta Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_momentum_swing', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_dribble_fest;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_dribble_fest (
     match_id Int32,
@@ -83,10 +88,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_dribble_fes
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_dribble_fest', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_dead_zone_game;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_dead_zone_game (
     match_id Int32,
@@ -121,10 +129,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_dead_zone_g
     opponent_xg Float32,
     match_total_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_dead_zone_game', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_passing_clinic;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_passing_clinic (
     match_id Int32,
@@ -166,10 +177,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_passing_cli
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_passing_clinic', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_clinical_match;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_clinical_match (
     match_id Int32,
@@ -213,10 +227,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_clinical_ma
     opponent_opposition_half_passes Int32,
     triggered_team_touches_opposition_box Int32,
     opponent_touches_opposition_box Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_clinical_match', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_heavy_rotation;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_heavy_rotation (
     match_id Int32,
@@ -265,10 +282,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_heavy_rotat
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_heavy_rotation', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_possession_stalemate;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_possession_stalemate (
     match_id Int32,
@@ -300,10 +320,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_possession_
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_possession_stalemate', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_unproductive_game;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_unproductive_game (
     match_id Int32,
@@ -340,10 +363,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_unproductiv
     opponent_xg Float32,
     match_total_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_unproductive_game', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_clean_game;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_clean_game (
     match_id Int32,
@@ -383,10 +409,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_clean_game 
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_clean_game', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_high_turnover_affair;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_high_turnover_affair (
     match_id Int32,
@@ -426,10 +455,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_high_turnov
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_high_turnover_affair', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_early_tactical_lock;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_early_tactical_lock (
     match_id Int32,
@@ -472,10 +504,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_early_tacti
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_early_tactical_lock', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_set_piece_dominance;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_set_piece_dominance (
     match_id Int32,
@@ -519,10 +554,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_set_piece_d
     opponent_total_shots Int32,
     triggered_team_possession_pct Float32,
     opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_set_piece_dominance', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_wing_play_extravaganza;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_wing_play_extravaganza (
     match_id Int32,
@@ -560,10 +598,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_wing_play_e
     triggered_team_xg Float32,
     opponent_xg Float32,
     xg_gap Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_wing_play_extravaganza', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_keeper_playmaking_battle;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_keeper_playmaking_battle (
     match_id Int32,
@@ -605,10 +646,13 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_keeper_play
     opponent_long_ball_attempts Int32,
     triggered_team_possession_pct Float32,
     opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_keeper_playmaking_battle', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+DROP TABLE IF EXISTS gold_signals.sig_match_possession_passing_counter_vs_bus;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_counter_vs_bus (
     match_id Int32,
@@ -651,7 +695,8 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_match_possession_passing_counter_vs_
     xg_delta Float32,
     possession_gap_pct Float32,
     counter_attack_gap_proxy Int32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_match_possession_passing_counter_vs_bus', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
     inserted_at DateTime DEFAULT now()
 ) ENGINE = ReplacingMergeTree(inserted_at)
-ORDER BY (match_id, triggered_side)
+ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);

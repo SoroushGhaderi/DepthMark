@@ -53,6 +53,7 @@ python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/load_clickhouse.py --date 20251208
 python scripts/silver/load_clickhouse.py --dry-run
 python scripts/gold/load_clickhouse_gold.py --dry-run
+python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 python scripts/quality/check_logging_style.py
 python scripts/orchestration/pipeline.py 20251208
