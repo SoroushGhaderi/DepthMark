@@ -210,9 +210,8 @@ depthmark/
 ```
 
 Scripts are the supported operational entry points. Reusable workflow
-coordination may live behind those scripts in layer-specific `src/application/`
-services, but Silver and Gold analytical transformations remain in ClickHouse
-SQL.
+coordination lives in layer-specific `src/services/` behind those scripts, but
+Silver and Gold analytical transformations remain in ClickHouse SQL.
 
 Key script groups:
 

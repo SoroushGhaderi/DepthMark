@@ -8,7 +8,7 @@ This contract applies to:
 
 - `clickhouse/gold/scenario/scenario_*.sql`
 - `scripts/gold/run_sql_job.py`
-- `scripts/gold/sql_jobs.py`
+- `src/services/gold/sql_jobs.py`
 - `scripts/gold/load_clickhouse_gold.py`
 - `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 

@@ -36,7 +36,9 @@ Resolve the highest-risk issues first (P0/P1), then close medium-risk improvemen
 ## Phase 1 - P0 Stabilization
 
 1. Fix orchestration imports/calls to canonical `scripts/*` entry points.
+   - Status: Resolved by ADR 0002 (subprocess CLI orchestration).
 2. Remove/relocate routine `OPTIMIZE ... FINAL` from normal load flow.
+   - Status: Legacy per-output runners removed by ADR 0009; generic runner still applies pattern.
 3. Create initial automated tests:
    - Orchestrator smoke path (argument and routing behavior)
    - SQL loader behavior tests (dry-run + execution selection)
@@ -76,13 +78,13 @@ Definition of done:
 
 ## Work Tracking Checklist
 
-- [ ] P0.1 Fix orchestration import/call wiring
+- [x] P0.1 Fix orchestration import/call wiring (resolved by ADR 0002)
 - [ ] P0.2 Remove routine `OPTIMIZE ... FINAL` from runtime jobs
 - [ ] P0.3 Add baseline test suite and validate discovery
 - [ ] P1.1 Remove insecure ClickHouse default-user fallback
 - [ ] P1.2 Refactor grants toward least privilege
 - [ ] P1.3 Harden SQL composition in setup code
-- [ ] P2.1 Define/apply TTL policies
+- [x] P2.1 Define/apply TTL policies (documented as manual-only retention by ADR 0012)
 - [ ] P2.2 Add dry-run for truncate path
 - [ ] P2.3 Add scheduler overlap protection + docs
 - [ ] P3.1 Add query resource controls

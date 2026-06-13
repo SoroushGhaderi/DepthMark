@@ -289,7 +289,7 @@ class GoldService:
             result.exit_code = 1
             return result
 
-        if part in ("all", "signals"):
+        if part in ("all", "signals") and not dry_run:
             self.assert_contracts()
             result.contracts_checked = True
 

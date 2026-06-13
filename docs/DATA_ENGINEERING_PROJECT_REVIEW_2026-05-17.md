@@ -21,6 +21,7 @@ DepthMark has a clear medallion architecture and strong documentation contracts,
    - Evidence: scenario/signal runners also run the same pattern, e.g. `[scripts/gold/scenario/scenario_hollow_dominance.py:57]` and `[scripts/gold/signal/runners/sig_match_discipline_cards_referee_showdown.py:57]`.
    - Impact: high CPU/IO load, long merges, potential cluster instability at scale.
    - Recommended fix: remove `FINAL` from normal flow and move heavy compaction to controlled maintenance windows.
+   - Status update 2026-06-13: legacy per-signal and per-scenario runner files removed by ADR 0009; `scripts/gold/run_sql_job.py` is the only supported runner. Compaction pattern still applies to the generic runner.
 
 3. No automated test files discovered.
    - Evidence: pytest configured at `[pyproject.toml:132]` and `[pytest.ini:1]`, but repository scan found zero `test_*.py` files.

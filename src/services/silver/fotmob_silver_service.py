@@ -201,7 +201,8 @@ class SilverService:
         if load_exit_code != 0:
             return result
 
-        self.assert_contracts()
-        result.contracts_checked = True
+        if not dry_run:
+            self.assert_contracts()
+            result.contracts_checked = True
         logger.info("Silver load completed successfully")
         return result

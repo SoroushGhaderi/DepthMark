@@ -189,34 +189,31 @@ Current Gold inventory:
 - 344 signal catalog markdown files in `scripts/gold/signal/catalogs/`
 
 Gold SQL jobs are executed through the generic runner in
-`scripts/gold/run_sql_job.py` and shared helpers in `scripts/gold/sql_jobs.py`.
-Do not add handwritten per-signal or per-scenario runner files. Omit `--kind`
-to run all scenario and signal SQL jobs through the generic runner, or use
-`--kind scenario` / `--kind signal` to select one Gold output kind. Jobs can be
-selected exactly by `--id`; signal jobs can also be filtered by
-`--entity {match,player,team}` or by `--family`. Do not combine `--entity` and
-`--family`; treat them as separate signal batch selectors.
+`scripts/gold/run_sql_job.py` and shared helpers in
+`src/services/gold/sql_jobs.py`. Do not add handwritten per-signal or
+per-scenario runner files. Omit `--kind` to run all scenario and signal SQL jobs
+through the generic runner, or use `--kind scenario` / `--kind signal` to select
+one Gold output kind. Jobs can be selected exactly by `--id`; signal jobs can
+also be filtered by `--entity {match,player,team}` or by `--family`. Do not
+combine `--entity` and `--family`; treat them as separate signal batch selectors.
 
 ## Python Layout
 
 ```text
 src/
-  application/            stable workflow services behind script entry points
+  services/gold/          Gold application service and shared SQL job helpers
+  services/silver/        Silver application service
   scrapers/fotmob/        FotMob API fetchers and request behavior
   processors/bronze/      Bronze transformation wiring
-  processors/silver/      Silver transformation wiring
-  processors/gold/        Gold transformation wiring
   storage/bronze/         Bronze persistence
-  storage/silver/         Silver persistence
-  storage/gold/           Gold persistence
   storage/mongodb/        content catalog client/repositories
   utils/                  logging, contracts, alerts, metrics, health checks
 scripts/                  operational CLI entry points
 ```
 
 Scripts remain the documented operational boundary, but reusable workflow
-coordination may be extracted into layer-specific application services under
-`src/` behind the same CLI entry points. Scripts keep CLI parsing, environment
+coordination lives in layer-specific application services under `src/services/`
+behind the same CLI entry points. Scripts keep CLI parsing, environment
 bootstrap, command compatibility, and exit-code translation. Application
 services may coordinate SQL discovery/execution, client setup, contract checks,
 validation, alerts, and deterministic summaries. They must not become a home for
