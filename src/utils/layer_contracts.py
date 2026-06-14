@@ -238,13 +238,20 @@ def assert_silver_layer_contracts(
             )
 
 
-def _list_gold_analytics_tables(client: ClickHouseClient, database: str = "gold") -> List[str]:
-    """Return all scenario_* and signal_* gold tables."""
+def _list_gold_analytics_tables(
+    client: ClickHouseClient,
+    database: str,
+    table_prefix: str,
+) -> List[str]:
+    """Return gold analytics tables in one namespace matching a table prefix."""
     db = _safe_identifier(database)
+    prefix = table_prefix.replace("'", "")
+    if not prefix:
+        raise LayerContractError("Gold contract query requires a non-empty table prefix")
     query = (
         "SELECT name FROM system.tables "
         f"WHERE database = '{db}' "
-        "AND (startsWith(name, 'scenario_') OR startsWith(name, 'signal_')) "
+        f"AND startsWith(name, '{prefix}') "
         "ORDER BY name"
     )
     result = client.execute(query, log_query=False)
@@ -253,27 +260,23 @@ def _list_gold_analytics_tables(client: ClickHouseClient, database: str = "gold"
     return []
 
 
-def _list_table_columns(client: ClickHouseClient, database: str, table: str) -> List[str]:
-    """Return table column names from system.columns."""
-    db = _safe_identifier(database)
-    tbl = _safe_identifier(table)
-    query = "SELECT name FROM system.columns " f"WHERE database = '{db}' AND table = '{tbl}'"
-    result = client.execute(query, log_query=False)
-    if hasattr(result, "result_rows") and result.result_rows:
-        return [str(row[0]) for row in result.result_rows if row]
-    return []
-
-
-def assert_gold_layer_contracts(
+def _assert_gold_analytics_tables(
     client: ClickHouseClient,
-    database: str = "gold",
+    database: str,
+    table_prefix: str,
     log=logger,
 ) -> None:
-    """Run lightweight post-load assertions for gold analytics outputs."""
+    """Run post-load assertions for one Gold analytics namespace."""
     db = _safe_identifier(database)
-    analytics_tables = _list_gold_analytics_tables(client, database=db)
+    analytics_tables = _list_gold_analytics_tables(
+        client,
+        database=db,
+        table_prefix=table_prefix,
+    )
     if not analytics_tables:
-        raise LayerContractError("Gold contract failed: no scenario/signal tables found")
+        raise LayerContractError(
+            f"Gold contract failed: no {table_prefix}* tables found in {db}"
+        )
 
     for table_name in analytics_tables:
         table = _safe_identifier(table_name)
@@ -301,6 +304,42 @@ def assert_gold_layer_contracts(
                     table=f"{db}.{table}",
                     rows=negative_scores,
                 )
+
+
+def _list_table_columns(client: ClickHouseClient, database: str, table: str) -> List[str]:
+    """Return table column names from system.columns."""
+    db = _safe_identifier(database)
+    tbl = _safe_identifier(table)
+    query = "SELECT name FROM system.columns " f"WHERE database = '{db}' AND table = '{tbl}'"
+    result = client.execute(query, log_query=False)
+    if hasattr(result, "result_rows") and result.result_rows:
+        return [str(row[0]) for row in result.result_rows if row]
+    return []
+
+
+def assert_gold_layer_contracts(
+    client: ClickHouseClient,
+    scenario_database: str = "gold_scenarios",
+    signal_database: str = "gold_signals",
+    check_scenarios: bool = True,
+    check_signals: bool = True,
+    log=logger,
+) -> None:
+    """Run lightweight post-load assertions for Gold scenario and signal outputs."""
+    if check_scenarios:
+        _assert_gold_analytics_tables(
+            client,
+            database=scenario_database,
+            table_prefix="scenario_",
+            log=log,
+        )
+    if check_signals:
+        _assert_gold_analytics_tables(
+            client,
+            database=signal_database,
+            table_prefix="sig_",
+            log=log,
+        )
 
 
 def assert_gold_activation_contracts(

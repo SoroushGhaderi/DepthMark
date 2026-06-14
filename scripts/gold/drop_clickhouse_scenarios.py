@@ -10,7 +10,7 @@ sys.path.insert(0, str(project_root))
 
 from config.settings import settings
 from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.gold_databases import gold_scenarios_db, gold_signals_db
+from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
 from src.utils.logging_utils import get_logger
 
 logger = get_logger()
@@ -36,16 +36,16 @@ def parse_args(argv=None) -> argparse.Namespace:
 
 def _find_tables(client: ClickHouseClient, database: str, part: str) -> list[str]:
     prefixes = []
-    if part in ("all", "scenarios"):
+    if part == "scenarios":
         prefixes.append("scenario_")
-    if part in ("all", "signals"):
-        prefixes.append("signal_")
+    elif part == "signals":
+        prefixes.append("sig_")
+    elif part == "metadata":
+        return ["signal_activations"]
     if not prefixes:
         return []
 
-    prefix_filter = " OR ".join(
-        f"startsWith(name, '{prefix}')" for prefix in prefixes
-    )
+    prefix_filter = " OR ".join(f"startsWith(name, '{prefix}')" for prefix in prefixes)
     query = """
         SELECT name
         FROM system.tables
@@ -76,11 +76,11 @@ def main(argv=None) -> int:
         find_start = time.perf_counter()
         db_targets = []
         if args.part in ("all", "scenarios"):
-            db_targets.append(("scenarios", gold_scenarios_db()))
+            db_targets.append(("scenarios", gold_scenarios_db(), "scenarios"))
         if args.part in ("all", "signals"):
-            db_targets.append(("signals", gold_signals_db()))
-        if args.part == "all":
-            db_targets = [("scenarios", gold_scenarios_db()), ("signals", gold_signals_db())]
+            db_targets.append(("signals", gold_signals_db(), "signals"))
+        if args.part in ("all", "signals"):
+            db_targets.append(("metadata", gold_db(), "metadata"))
 
         find_elapsed_seconds = time.perf_counter() - find_start
         logger.info(
@@ -90,8 +90,8 @@ def main(argv=None) -> int:
         )
 
         dropped_any = False
-        for group_name, database in db_targets:
-            tables = _find_tables(client, database, group_name)
+        for group_name, database, lookup_part in db_targets:
+            tables = _find_tables(client, database, lookup_part)
             if not tables:
                 logger.info("No %s tables found in %s", group_name, database)
                 continue

@@ -1,0 +1,1846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DepthMark — System Design & Data Flow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg:        #0a0e14;
+            --surface:   #111520;
+            --surface-2: #171d2b;
+            --surface-3: #1c2438;
+            --border:    #242d3d;
+            --border-2:  #2e3a50;
+            --text:      #dde4f0;
+            --text-muted:#6b7a99;
+            --text-dim:  #4a5570;
+            --accent:    #4d9fff;
+            --accent-dim:rgba(77,159,255,0.12);
+            --bronze:    #e5a623;
+            --bronze-dim:rgba(229,166,35,0.12);
+            --silver:    #3ecf73;
+            --silver-dim:rgba(62,207,115,0.10);
+            --gold:      #b47bff;
+            --gold-dim:  rgba(180,123,255,0.12);
+            --red:       #f05f5a;
+            --red-dim:   rgba(240,95,90,0.10);
+            --yellow:    #e5a623;
+            --radius:    6px;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.65;
+            font-size: 15px;
+        }
+
+        code {
+            font-family: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.82em;
+            background: rgba(77,159,255,0.1);
+            color: var(--accent);
+            padding: 0.12em 0.42em;
+            border-radius: 4px;
+            border: 1px solid rgba(77,159,255,0.18);
+        }
+
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        /* ── HEADER ── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1.4rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .header-logo {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--bronze) 0%, var(--silver) 50%, var(--gold) 100%);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800; color: #000; letter-spacing: 0;
+            flex-shrink: 0;
+        }
+        .header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.02em; }
+        .header-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Search */
+        .search-wrap {
+            position: relative;
+        }
+        .search-input {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.4rem 0.75rem 0.4rem 2rem;
+            color: var(--text);
+            font-size: 0.8rem;
+            width: 200px;
+            outline: none;
+            transition: border-color 0.15s, width 0.2s;
+        }
+        .search-input::placeholder { color: var(--text-dim); }
+        .search-input:focus { border-color: var(--accent); width: 250px; }
+        .search-icon {
+            position: absolute;
+            left: 0.6rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            pointer-events: none;
+        }
+        .search-results {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: var(--surface-2);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            display: none;
+            z-index: 200;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .search-results.show { display: block; }
+        .search-result-item {
+            padding: 0.55rem 0.85rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+        }
+        .search-result-item:last-child { border-bottom: none; }
+        .search-result-item:hover { background: var(--surface-3); }
+        .search-result-title { color: var(--text); font-weight: 500; }
+        .search-result-section { color: var(--text-muted); font-size: 0.72rem; }
+        .search-result-item mark { background: rgba(77,159,255,0.25); color: var(--accent); border-radius: 2px; }
+
+        .header-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
+        }
+        .header-links a {
+            padding: 0.35rem 0.7rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface-2);
+            color: var(--text-muted);
+        }
+        .header-links a:hover { border-color: var(--accent); color: var(--text); text-decoration: none; }
+
+        /* ── PIPELINE PROGRESS BAR ── */
+        .pipeline-nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0;
+            position: sticky;
+            top: 70px;
+            z-index: 99;
+            overflow-x: auto;
+        }
+        .pipeline-steps {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: stretch;
+            padding: 0 1.5rem;
+        }
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 0;
+        }
+        .pipeline-step-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+            padding: 0.8rem 1.1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8rem;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: color 0.15s, border-color 0.15s;
+            position: relative;
+        }
+        .pipeline-step-btn:hover { color: var(--text); }
+        .pipeline-step-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+        .pipeline-step-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--border-2);
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .pipeline-step-btn.active .pipeline-step-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+        .pipeline-step-btn[data-tab="bronze"] .pipeline-step-dot { background: var(--bronze); opacity: 0.5; }
+        .pipeline-step-btn[data-tab="bronze"].active .pipeline-step-dot { opacity: 1; box-shadow: 0 0 6px var(--bronze); }
+        .pipeline-step-btn[data-tab="silver"] .pipeline-step-dot { background: var(--silver); opacity: 0.5; }
+        .pipeline-step-btn[data-tab="silver"].active .pipeline-step-dot { opacity: 1; box-shadow: 0 0 6px var(--silver); }
+        .pipeline-step-btn[data-tab="gold"] .pipeline-step-dot,
+        .pipeline-step-btn[data-tab="signals"] .pipeline-step-dot { background: var(--gold); opacity: 0.5; }
+        .pipeline-step-btn[data-tab="gold"].active .pipeline-step-dot,
+        .pipeline-step-btn[data-tab="signals"].active .pipeline-step-dot { opacity: 1; box-shadow: 0 0 6px var(--gold); }
+        .pipeline-step-btn[data-tab="orchestration"] .pipeline-step-dot { background: var(--accent); opacity: 0.5; }
+        .pipeline-step-btn[data-tab="orchestration"].active .pipeline-step-dot { opacity: 1; }
+
+        .pipeline-arrow {
+            color: var(--text-dim);
+            font-size: 0.65rem;
+            padding: 0 0.1rem;
+            flex-shrink: 0;
+        }
+        /* hide arrow after last visible nav item before section dividers */
+        .pipeline-step:last-child .pipeline-arrow { display: none; }
+
+        .pipeline-divider {
+            width: 1px;
+            background: var(--border);
+            margin: 0.5rem 0.5rem;
+            align-self: stretch;
+        }
+
+        /* ── CONTENT ── */
+        .content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .diagram-section { display: none; animation: fadeIn 0.2s ease; }
+        .diagram-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+
+        .section-lead {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .section-lead-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .section-lead h2 { font-size: 1.3rem; font-weight: 700; letter-spacing: -0.02em; }
+        .section-lead p { color: var(--text-muted); font-size: 0.9rem; max-width: 54rem; line-height: 1.7; }
+        .section-lead .doc-link { margin-top: 0.65rem; font-size: 0.82rem; }
+
+        /* ── CARDS ── */
+        .diagram-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .diagram-card:hover { border-color: var(--border-2); }
+        .card-header { margin-bottom: 1.25rem; }
+        .diagram-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .diagram-card .subtitle { color: var(--text-muted); font-size: 0.82rem; }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            min-height: 2rem;
+        }
+        .mermaid svg { max-width: 100%; height: auto; }
+
+        /* ── STATS BAR ── */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.65rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--accent);
+        }
+        .stat-card.bronze::before { background: var(--bronze); }
+        .stat-card.silver::before { background: var(--silver); }
+        .stat-card.gold::before { background: var(--gold); }
+        .stat-card.meta::before { background: var(--red); }
+        .stat-card .number { font-size: 1.85rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
+        .stat-card.bronze .number { color: var(--bronze); }
+        .stat-card.silver .number { color: var(--silver); }
+        .stat-card.gold .number { color: var(--gold); }
+        .stat-card.meta .number { color: var(--red); }
+        .stat-card .label { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.3; }
+
+        /* ── PIPELINE VISUAL (overview) ── */
+        .pipeline-visual {
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .pipe-stage {
+            flex: 1;
+            padding: 1.1rem 1.25rem;
+            border-right: 1px solid var(--border);
+            position: relative;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .pipe-stage:last-child { border-right: none; }
+        .pipe-stage:hover { background: var(--surface-2); }
+        .pipe-stage::after {
+            content: '→';
+            position: absolute;
+            right: -0.55rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            z-index: 1;
+            background: var(--surface);
+        }
+        .pipe-stage:last-child::after { display: none; }
+        .pipe-stage:hover::after { background: var(--surface-2); }
+        .pipe-stage-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.35rem;
+        }
+        .pipe-stage.s-raw .pipe-stage-label { color: var(--accent); }
+        .pipe-stage.s-bronze .pipe-stage-label { color: var(--bronze); }
+        .pipe-stage.s-silver .pipe-stage-label { color: var(--silver); }
+        .pipe-stage.s-gold .pipe-stage-label { color: var(--gold); }
+        .pipe-stage.s-serve .pipe-stage-label { color: var(--red); }
+        .pipe-stage-title { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .pipe-stage-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.5; }
+        .pipe-stage-count {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-top: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+        .pipe-stage.s-raw .pipe-stage-count { color: var(--accent); }
+        .pipe-stage.s-bronze .pipe-stage-count { color: var(--bronze); }
+        .pipe-stage.s-silver .pipe-stage-count { color: var(--silver); }
+        .pipe-stage.s-gold .pipe-stage-count { color: var(--gold); }
+        .pipe-stage.s-serve .pipe-stage-count { color: var(--red); }
+
+        /* ── PRINCIPLES GRID ── */
+        .principles {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 0.65rem;
+            margin-bottom: 1.5rem;
+        }
+        .principle {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.1rem 1.25rem;
+        }
+        .principle .eyebrow {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-bottom: 0.4rem;
+        }
+        .principle h4 { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.35rem; }
+        .principle p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.55; }
+
+        /* ── CALLOUTS ── */
+        .callout {
+            border-radius: var(--radius);
+            padding: 0.85rem 1.1rem;
+            font-size: 0.83rem;
+            margin-top: 1rem;
+            line-height: 1.6;
+            display: flex;
+            gap: 0.65rem;
+            align-items: flex-start;
+        }
+        .callout-icon { flex-shrink: 0; font-size: 0.85rem; margin-top: 0.05rem; }
+        .callout.note    { background: rgba(77,159,255,0.07); border: 1px solid rgba(77,159,255,0.2); }
+        .callout.insight { background: rgba(180,123,255,0.07); border: 1px solid rgba(180,123,255,0.2); }
+        .callout.warning { background: rgba(229,166,35,0.07); border: 1px solid rgba(229,166,35,0.2); }
+        .callout.success { background: rgba(62,207,115,0.07); border: 1px solid rgba(62,207,115,0.2); }
+        .callout.note strong    { color: var(--accent); }
+        .callout.insight strong { color: var(--gold); }
+        .callout.warning strong { color: var(--yellow); }
+        .callout.success strong { color: var(--silver); }
+
+        /* ── LEGEND ── */
+        .legend {
+            display: flex;
+            gap: 1.1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .legend-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+
+        /* ── TWO-COL ── */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 820px) { .two-col { grid-template-columns: 1fr; } }
+
+        /* ── TABLE ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            margin-top: 0.75rem;
+        }
+        .data-table th, .data-table td {
+            text-align: left;
+            padding: 0.55rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .data-table th {
+            color: var(--text-dim);
+            font-weight: 600;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: var(--surface-2);
+        }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table td:first-child { font-family: 'SF Mono', ui-monospace, monospace; font-size: 0.78rem; color: var(--accent); }
+        .data-table tbody tr:hover { background: var(--surface-2); }
+
+        /* ── COMMANDS ── */
+        details.cmd-block {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-top: 1rem;
+        }
+        details.cmd-block summary {
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        details.cmd-block summary::marker { display: none; }
+        details.cmd-block summary::-webkit-details-marker { display: none; }
+        details.cmd-block[open] summary { border-bottom: 1px solid var(--border); color: var(--text); }
+        details.cmd-block pre {
+            padding: 0.85rem 1rem;
+            overflow-x: auto;
+            font-size: 0.77rem;
+            line-height: 1.7;
+            color: var(--silver);
+            font-family: 'SF Mono', ui-monospace, monospace;
+        }
+
+        /* ── LAYER BADGE ── */
+        .layer-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        .layer-badge.bronze { background: var(--bronze-dim); color: var(--bronze); border: 1px solid rgba(229,166,35,0.25); }
+        .layer-badge.silver { background: var(--silver-dim); color: var(--silver); border: 1px solid rgba(62,207,115,0.25); }
+        .layer-badge.gold   { background: var(--gold-dim);   color: var(--gold);   border: 1px solid rgba(180,123,255,0.25); }
+
+        /* ── ADR REFERENCE ── */
+        .adr-ref {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.1rem 0.45rem;
+            font-family: 'SF Mono', monospace;
+        }
+
+        /* ── SEARCH HIGHLIGHT ── */
+        .search-highlight {
+            outline: 2px solid var(--accent);
+            outline-offset: 3px;
+            border-radius: var(--radius);
+            animation: pulseHighlight 1.5s ease;
+        }
+        @keyframes pulseHighlight {
+            0% { outline-color: var(--accent); }
+            50% { outline-color: transparent; }
+            100% { outline-color: var(--accent); }
+        }
+
+        /* ── SECTION PROGRESS INDICATOR (overview) ── */
+        .layer-flow-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            padding: 0.9rem 1.1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+        .layer-flow-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.3rem 0.7rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .layer-flow-step:hover { background: var(--surface-2); }
+        .layer-flow-step .dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+        }
+        .layer-flow-arrow { color: var(--text-dim); }
+
+        /* ── GRID 3 ── */
+        .three-col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.65rem;
+            margin-bottom: 1.25rem;
+        }
+        @media (max-width: 900px) { .three-col { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 560px) { .three-col { grid-template-columns: 1fr; } }
+
+        .mini-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem 1.15rem;
+        }
+        .mini-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
+        .mini-card p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 640px) {
+            .header-inner { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            .search-input { width: 160px; }
+            .search-input:focus { width: 200px; }
+            .content { padding: 1rem; }
+            .pipeline-visual { flex-direction: column; }
+            .pipe-stage { border-right: none; border-bottom: 1px solid var(--border); }
+            .pipe-stage::after { display: none; }
+        }
+
+        /* ── TOOLTIP ── */
+        [data-tip] {
+            position: relative;
+        }
+        [data-tip]:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-3);
+            border: 1px solid var(--border-2);
+            color: var(--text);
+            font-size: 0.72rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════ HEADER ══════════════════ -->
+<div class="header">
+    <div class="header-inner">
+        <div class="header-brand">
+            <div class="header-logo">DM</div>
+            <div>
+                <h1>DepthMark — System Design &amp; Data Flow</h1>
+                <div class="header-meta">FotMob medallion pipeline · Bronze → Silver → Gold → Product</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="search-wrap">
+                <span class="search-icon">⌕</span>
+                <input class="search-input" id="searchInput" type="text" placeholder="Search tables, scripts…" autocomplete="off" spellcheck="false">
+                <div class="search-results" id="searchResults"></div>
+            </div>
+            <div class="header-links">
+                <a href="README.md">Docs</a>
+                <a href="../DEVELOPMENT_ARCHITECTURE.md">Architecture</a>
+                <a href="../SCRIPTS_CONTRACT.md">Contract</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════ PIPELINE NAV ══════════════════ -->
+<nav class="pipeline-nav" role="navigation" aria-label="Pipeline stages">
+    <div class="pipeline-steps" role="tablist">
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn active" role="tab" data-tab="overview" aria-selected="true" aria-controls="overview">
+                <span class="pipeline-step-dot"></span>Overview
+            </button>
+            <span class="pipeline-arrow">›</span>
+        </div>
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn" role="tab" data-tab="bronze" aria-selected="false" aria-controls="bronze">
+                <span class="pipeline-step-dot"></span>Bronze
+            </button>
+            <span class="pipeline-arrow">›</span>
+        </div>
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn" role="tab" data-tab="silver" aria-selected="false" aria-controls="silver">
+                <span class="pipeline-step-dot"></span>Silver
+            </button>
+            <span class="pipeline-arrow">›</span>
+        </div>
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn" role="tab" data-tab="gold" aria-selected="false" aria-controls="gold">
+                <span class="pipeline-step-dot"></span>Gold
+            </button>
+            <span class="pipeline-arrow">›</span>
+        </div>
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn" role="tab" data-tab="signals" aria-selected="false" aria-controls="signals">
+                <span class="pipeline-step-dot"></span>Signals
+            </button>
+        </div>
+        <div class="pipeline-divider"></div>
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn" role="tab" data-tab="orchestration" aria-selected="false" aria-controls="orchestration">
+                <span class="pipeline-step-dot"></span>Orchestration
+            </button>
+        </div>
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn" role="tab" data-tab="infrastructure" aria-selected="false" aria-controls="infrastructure">
+                <span class="pipeline-step-dot"></span>Infrastructure
+            </button>
+        </div>
+        <div class="pipeline-step">
+            <button type="button" class="pipeline-step-btn" role="tab" data-tab="mongodb" aria-selected="false" aria-controls="mongodb">
+                <span class="pipeline-step-dot"></span>MongoDB
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="content">
+
+<!-- ══════════════════ OVERVIEW ══════════════════ -->
+<div class="diagram-section active" id="overview" role="tabpanel" aria-hidden="false">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2>System at a glance</h2>
+        </div>
+        <p>
+            DepthMark follows a strict medallion architecture. Bronze is the only filesystem-backed layer — it preserves FotMob
+            API payloads exactly as received. Silver and Gold live entirely in ClickHouse. Gold splits into three
+            independent namespaces so scenarios, signals, and shared serving metadata evolve without coupling.
+            SQL owns all analytical logic; Python discovers jobs, executes, validates, and reports.
+        </p>
+    </div>
+
+    <!-- Clickable pipeline swimlane -->
+    <div class="pipeline-visual">
+        <div class="pipe-stage s-raw" onclick="showTab('bronze')" data-tip="Click to explore Bronze">
+            <div class="pipe-stage-label">Ingest</div>
+            <div class="pipe-stage-title">FotMob API</div>
+            <div class="pipe-stage-desc">Raw JSON per match, written to disk by parallel scrapers</div>
+            <div class="pipe-stage-count">∞</div>
+        </div>
+        <div class="pipe-stage s-bronze" onclick="showTab('bronze')" data-tip="Click to explore Bronze">
+            <div class="pipe-stage-label">Bronze</div>
+            <div class="pipe-stage-title">Source fidelity</div>
+            <div class="pipe-stage-desc">No typing, no joins — parse and preserve</div>
+            <div class="pipe-stage-count">15</div>
+        </div>
+        <div class="pipe-stage s-silver" onclick="showTab('silver')" data-tip="Click to explore Silver">
+            <div class="pipe-stage-label">Silver</div>
+            <div class="pipe-stage-title">Conformed analytics</div>
+            <div class="pipe-stage-desc">Standardize keys, types, entities. Full-table reload from Bronze</div>
+            <div class="pipe-stage-count">8</div>
+        </div>
+        <div class="pipe-stage s-gold" onclick="showTab('gold')" data-tip="Click to explore Gold">
+            <div class="pipe-stage-label">Gold</div>
+            <div class="pipe-stage-title">Product outputs</div>
+            <div class="pipe-stage-desc">392 materialized tables across scenarios + signals</div>
+            <div class="pipe-stage-count">392</div>
+        </div>
+        <div class="pipe-stage s-serve" onclick="showTab('mongodb')" data-tip="Click to explore MongoDB">
+            <div class="pipe-stage-label">Serve</div>
+            <div class="pipe-stage-title">Product &amp; BI</div>
+            <div class="pipe-stage-desc">signal_activations + MongoDB catalogs for product APIs</div>
+            <div class="pipe-stage-count">1+5</div>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card bronze"><div class="number">15</div><div class="label">Bronze tables</div></div>
+        <div class="stat-card silver"><div class="number">8</div><div class="label">Silver tables</div></div>
+        <div class="stat-card gold"><div class="number">48</div><div class="label">Scenario tables</div></div>
+        <div class="stat-card gold"><div class="number">344</div><div class="label">Signal tables</div></div>
+        <div class="stat-card meta"><div class="number">1</div><div class="label">Activation serving table</div></div>
+        <div class="stat-card"><div class="number">5</div><div class="label">MongoDB collections</div></div>
+    </div>
+
+    <div class="principles">
+        <div class="principle">
+            <div class="eyebrow">Boundary 1</div>
+            <h4>Bronze = source fidelity</h4>
+            <p>Preserve FotMob payloads as-is on disk and in <code>bronze.*</code>. No business logic, no typing, no joins.</p>
+        </div>
+        <div class="principle">
+            <div class="eyebrow">Boundary 2</div>
+            <h4>Silver = conformed analytics</h4>
+            <p>Standardize keys, types, and entities. Full-table SQL reloads from the complete Bronze dataset — no incremental watermarks.</p>
+        </div>
+        <div class="principle">
+            <div class="eyebrow">Boundary 3</div>
+            <h4>Gold = product outputs</h4>
+            <p>Scenarios and signals materialize business-facing tables. One activation serving table unifies all signals into a single queryable surface.</p>
+        </div>
+        <div class="principle">
+            <div class="eyebrow">Ownership</div>
+            <h4>SQL transforms, Python runs</h4>
+            <p>All analytical logic lives in <code>.sql</code> files. Python discovers jobs, executes, validates, and reports. No per-signal Python wrappers.</p>
+        </div>
+        <div class="principle">
+            <div class="eyebrow">Idempotency</div>
+            <h4>Safe reruns everywhere</h4>
+            <p><code>ReplacingMergeTree</code> on Bronze, Silver, Gold signals, and activations. Re-run any stage without manual cleanup or rollback.</p>
+        </div>
+        <div class="principle">
+            <div class="eyebrow">Catalogs</div>
+            <h4>Git is truth for metadata</h4>
+            <p>Signal catalogs are markdown frontmatter in Git. MongoDB is a synchronized serving copy — product APIs read from MongoDB, never ClickHouse.</p>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>End-to-end pipeline</h3>
+            <div class="subtitle">From FotMob API to warehouse tables and product consumption surfaces</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph LR
+    API["FotMob API"] -->|scrape| RAW["data/fotmob/raw/<br/>JSON per match"]
+    RAW -->|load| BRONZE["bronze.*<br/>15 tables"]
+    BRONZE -->|SQL transforms| SILVER["silver.*<br/>8 tables"]
+    SILVER -->|signal SQL| SIG["gold_signals.*<br/>344 tables"]
+    SILVER -->|scenario SQL| SCEN["gold_scenarios.*<br/>48 tables"]
+    SIG -->|activation rebuild| ACT["gold.signal_activations"]
+    SCEN -.->|context only| ACT
+    CATALOG["signal catalogs<br/>*.md frontmatter"] -->|sync| MONGO["MongoDB<br/>orbit_content"]
+    ACT -->|query| PRODUCT["Product / BI<br/>consumers"]
+
+    style API fill:#1f6feb,stroke:#388bfd,color:#fff
+    style RAW fill:#1f6feb,stroke:#388bfd,color:#fff
+    style BRONZE fill:#c17e1a,stroke:#e5a623,color:#fff
+    style SILVER fill:#2a8c50,stroke:#3ecf73,color:#fff
+    style SIG fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style SCEN fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style ACT fill:#b83030,stroke:#f05f5a,color:#fff
+    style CATALOG fill:#4a5570,stroke:#6b7a99,color:#fff
+    style MONGO fill:#2a8c50,stroke:#3ecf73,color:#fff
+    style PRODUCT fill:#1f6feb,stroke:#388bfd,color:#fff
+        </div>
+        <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Scrape / API</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--bronze)"></div>Bronze</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--silver)"></div>Silver</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Gold</div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Serving / Activation</div>
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>SQL vs Python ownership</h3>
+                <div class="subtitle">Where logic lives vs where orchestration lives</div>
+            </div>
+            <div class="mermaid" data-rendered="false">
+graph LR
+    subgraph SQL["SQL owns — analytical logic"]
+        S1["Bronze → Silver DML"]
+        S2["Gold scenario SQL"]
+        S3["Gold signal SQL"]
+    end
+    subgraph PY["Python owns — execution & glue"]
+        P1["Scraping & parsing"]
+        P2["Job discovery & execution"]
+        P3["Contract assertions"]
+        P4["Activation rebuild"]
+        P5["Catalog sync"]
+    end
+    SQL --> CH["ClickHouse"]
+    PY --> CH
+    PY --> FS["Filesystem / MongoDB"]
+
+    style SQL fill:#b47bff1f,stroke:#b47bff
+    style PY fill:#1f6feb1f,stroke:#1f6feb
+            </div>
+            <div class="callout note">
+                <span class="callout-icon">📋</span>
+                <span><strong>ADR 0001, 0009:</strong> No per-signal or per-scenario Python wrappers. Generic runners discover and execute all Gold SQL jobs via file-system convention.</span>
+            </div>
+        </div>
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>Layer responsibilities</h3>
+                <div class="subtitle">What each layer does — and explicitly does not do</div>
+            </div>
+            <div class="mermaid" data-rendered="false">
+graph TB
+    subgraph BRONZE_LAYER["Bronze — preserve & load"]
+        B1["Raw JSON on disk"]
+        B2["15 ClickHouse tables"]
+        B3["DLQ for failed inserts"]
+        B4["No typing / no joins"]
+    end
+    subgraph SILVER_LAYER["Silver — conform & clean"]
+        S1["Standardize keys & types"]
+        S2["8 analytical tables"]
+        S3["Full-table reload"]
+        S4["Pure SQL INSERT...SELECT"]
+    end
+    subgraph GOLD_LAYER["Gold — materialize & serve"]
+        G1["48 scenario tables"]
+        G2["344 signal tables"]
+        G3["Activation serving table"]
+        G4["Business-facing outputs"]
+    end
+    BRONZE_LAYER --> SILVER_LAYER --> GOLD_LAYER
+
+    style BRONZE_LAYER fill:#e5a6231a,stroke:#e5a623
+    style SILVER_LAYER fill:#3ecf731a,stroke:#3ecf73
+    style GOLD_LAYER fill:#b47bff1a,stroke:#b47bff
+            </div>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Quality gates &amp; preflight</h3>
+            <div class="subtitle">Checks that run before and after each pipeline stage</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph LR
+    HC["health_check.py"] --> PREFLIGHT["Preflight OK?"]
+    PREFLIGHT --> PIPE["pipeline.py"]
+    PIPE --> BRONZE_C["Bronze contract<br/>assert_bronze_dataframe_contract"]
+    PIPE --> SILVER_C["Silver contract<br/>assert_silver_layer_contracts"]
+    BRONZE_C --> RECON["Bronze→Silver<br/>reconciliation check"]
+    SILVER_C --> RECON
+    RECON --> DONE["Validated warehouse"]
+
+    style HC fill:#1f6feb,stroke:#388bfd,color:#fff
+    style RECON fill:#c17e1a,stroke:#e5a623,color:#fff
+    style DONE fill:#2a8c50,stroke:#3ecf73,color:#000
+        </div>
+        <details class="cmd-block">
+            <summary>▸ Canonical preflight commands</summary>
+            <pre>python scripts/health_check.py --json
+python scripts/silver/load_clickhouse.py --dry-run
+python scripts/gold/load_clickhouse_gold.py --dry-run
+python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
+        </details>
+    </div>
+</div>
+
+<!-- ══════════════════ BRONZE ══════════════════ -->
+<div class="diagram-section" id="bronze" role="tabpanel" aria-hidden="true">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2><span class="layer-badge bronze">Bronze</span> Source fidelity</h2>
+        </div>
+        <p>
+            The only filesystem-backed layer. Scrapes FotMob API payloads to disk in parallel, then
+            parses them into 15 raw ClickHouse tables via Pydantic extraction. Failed inserts land in a
+            dead-letter queue — no data is silently dropped. Bronze has no business logic, typing, or joins;
+            those belong in Silver.
+        </p>
+        <p class="doc-link">Deep dive: <a href="bronze.md">bronze.md</a></p>
+    </div>
+
+    <div class="three-col">
+        <div class="mini-card">
+            <h4>🌐 Source</h4>
+            <p>FotMob API — one JSON payload per match, fetched in parallel via <code>ThreadPoolExecutor</code></p>
+        </div>
+        <div class="mini-card">
+            <h4>💾 Storage</h4>
+            <p>Raw files at <code>data/fotmob/raw/YYYYMMDD/match_id.json</code>. Failed ClickHouse inserts → <code>data/dlq/</code></p>
+        </div>
+        <div class="mini-card">
+            <h4>♻️ Idempotency</h4>
+            <p><code>ReplacingMergeTree(inserted_at)</code> — re-running a date safely overwrites via version column</p>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Scraping flow</h3>
+            <div class="subtitle">FotMob API → raw JSON files on disk (parallel per match)</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+sequenceDiagram
+    participant P as pipeline.py
+    participant S as scrape_fotmob.py
+    participant O as FotMobOrchestrator
+    participant DS as DailyScraper
+    participant MS as MatchScraper
+    participant API as FotMob API
+    participant FS as Filesystem
+
+    P->>S: subprocess
+    S->>O: orchestrate(date)
+    O->>DS: fetch daily listing
+    DS->>API: GET /matches?date=YYYYMMDD
+    API-->>DS: match IDs
+    loop For each match (parallel ThreadPoolExecutor)
+        O->>MS: fetch match details
+        MS->>API: GET /matchDetails?id=...
+        API-->>MS: full JSON payload
+        O->>FS: write data/fotmob/raw/YYYYMMDD/match_id.json
+    end
+        </div>
+        <div class="callout note">
+            <span class="callout-icon">🔄</span>
+            <span><strong>Turnstile:</strong> <code>scripts/refresh_turnstile.py</code> handles token/cookie rotation when the API blocks requests. The orchestrator runs health checks before scraping begins.</span>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>ClickHouse loading</h3>
+            <div class="subtitle">Raw JSON → 15 Bronze tables via Pydantic extraction</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    RAW["data/fotmob/raw/<br/>JSON files"] --> PROC["FotMobBronzeMatchProcessor"]
+    PROC --> EXTRACT["14 entity DataFrames<br/>Pydantic + SafeFieldExtractor"]
+    EXTRACT --> VALIDATE["assert_bronze_dataframe_contract()"]
+    VALIDATE --> INSERT["ClickHouseClient.upsert()"]
+    INSERT --> BT["bronze.*<br/>15 tables"]
+    INSERT -->|failures| DLQ["data/dlq/<br/>JSONL files"]
+
+    style RAW fill:#1f6feb,stroke:#388bfd,color:#fff
+    style BT fill:#c17e1a,stroke:#e5a623,color:#fff
+    style DLQ fill:#b83030,stroke:#f05f5a,color:#fff
+        </div>
+        <div class="callout warning">
+            <span class="callout-icon">⚠️</span>
+            <span><strong>Idempotency:</strong> Bronze uses <code>ReplacingMergeTree(inserted_at)</code>. Re-running a date overwrites via version column. Compaction runs via <code>99_optimize_tables.sql</code>.</span>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Bronze table inventory</h3>
+            <div class="subtitle">One table per FotMob entity — primary keys enforced at load time</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Table</th><th>Primary key</th><th>Source entity</th></tr></thead>
+            <tbody>
+                <tr><td>general</td><td>match_id</td><td>Match metadata, league, season</td></tr>
+                <tr><td>timeline</td><td>match_id</td><td>Event timeline</td></tr>
+                <tr><td>venue</td><td>match_id</td><td>Stadium information</td></tr>
+                <tr><td>player</td><td>match_id, player_id</td><td>Player profiles</td></tr>
+                <tr><td>shotmap</td><td>match_id, shot_id</td><td>Shot locations &amp; xG</td></tr>
+                <tr><td>goal</td><td>match_id, event_id</td><td>Goal events</td></tr>
+                <tr><td>cards</td><td>match_id, event_id</td><td>Yellow / red card events</td></tr>
+                <tr><td>red_card</td><td>match_id, event_id</td><td>Red card details</td></tr>
+                <tr><td>period</td><td>match_id, period</td><td>Period-level stats</td></tr>
+                <tr><td>momentum</td><td>match_id, minute</td><td>Momentum tracking per minute</td></tr>
+                <tr><td>starters</td><td>match_id, player_id</td><td>Starting lineups</td></tr>
+                <tr><td>substitutes</td><td>match_id, player_id</td><td>Substitutions</td></tr>
+                <tr><td>coaches</td><td>match_id, coach_id</td><td>Manager information</td></tr>
+                <tr><td>team_form</td><td>match_id, team_id, form_position</td><td>Team form streak data</td></tr>
+                <tr><td>match_reference</td><td>match_id</td><td>Derived lookup / join helper</td></tr>
+            </tbody>
+        </table>
+        <details class="cmd-block">
+            <summary>▸ Bronze commands</summary>
+            <pre>python scripts/bronze/scrape_fotmob.py 20251208
+python scripts/bronze/load_clickhouse.py --date 20251208
+python scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
+        </details>
+    </div>
+</div>
+
+<!-- ══════════════════ SILVER ══════════════════ -->
+<div class="diagram-section" id="silver" role="tabpanel" aria-hidden="true">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2><span class="layer-badge silver">Silver</span> Conformed analytics</h2>
+        </div>
+        <p>
+            Bronze tables are joined, typed, and cleaned into 8 reusable analytical tables. Silver always
+            reloads from the complete Bronze dataset — there is no incremental watermark. Every Silver run is
+            deterministic and safe to re-run. All 344 signals and 48 scenarios read exclusively from these
+            8 tables, never directly from Bronze.
+        </p>
+        <p class="doc-link">Deep dive: <a href="silver.md">silver.md</a></p>
+    </div>
+
+    <div class="callout insight">
+        <span class="callout-icon">💡</span>
+        <span><strong>Design rationale:</strong> Silver is the stable analytical foundation. Keeping Gold SQL focused on business logic — not source parsing — means you can change FotMob payload structure without touching any of your 392 Gold tables.</span>
+    </div>
+
+    <div class="diagram-card" style="margin-top:1.25rem">
+        <div class="card-header">
+            <h3>Bronze → Silver lineage</h3>
+            <div class="subtitle">Which Bronze tables feed each Silver table</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    subgraph BRONZE_IN["Bronze input (11 of 15 tables)"]
+        B_GEN["bronze.general"]
+        B_TIM["bronze.timeline"]
+        B_VEN["bronze.venue"]
+        B_PLA["bronze.player"]
+        B_SHO["bronze.shotmap"]
+        B_CAR["bronze.cards"]
+        B_COA["bronze.coaches"]
+        B_SUB["bronze.substitutes"]
+        B_PER["bronze.period"]
+        B_MOM["bronze.momentum"]
+        B_FOR["bronze.team_form"]
+    end
+    subgraph SILVER_OUT["Silver output (8 tables)"]
+        S_MAT["silver.match"]
+        S_PST["silver.period_stat"]
+        S_PMS["silver.player_match_stat"]
+        S_MOM["silver.momentum"]
+        S_SHO["silver.shot"]
+        S_CAR["silver.card"]
+        S_MPE["silver.match_personnel"]
+        S_TF["silver.team_form"]
+    end
+    B_GEN --> S_MAT
+    B_TIM --> S_MAT
+    B_VEN --> S_MAT
+    B_PER --> S_PST
+    B_PLA --> S_PMS
+    B_SHO --> S_SHO
+    B_CAR --> S_CAR
+    B_COA --> S_MPE
+    B_SUB --> S_MPE
+    B_MOM --> S_MOM
+    B_FOR --> S_TF
+
+    style BRONZE_IN fill:#e5a6231a,stroke:#e5a623
+    style SILVER_OUT fill:#3ecf731a,stroke:#3ecf73
+        </div>
+        <div class="callout note" style="margin-top:1rem">
+            <span class="callout-icon">📌</span>
+            <span>4 Bronze tables (<code>goal</code>, <code>red_card</code>, <code>starters</code>, <code>match_reference</code>) feed Silver indirectly or are not Silver inputs — they're available for Gold SQL to join directly if needed.</span>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Silver execution flow</h3>
+            <div class="subtitle">Ordered DML scripts with post-load contract checks</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+sequenceDiagram
+    participant P as pipeline.py
+    participant S as silver/load_clickhouse.py
+    participant SVC as SilverService
+    participant CH as ClickHouse
+
+    P->>S: subprocess
+    S->>SVC: discover DML scripts
+    SVC->>SVC: 01_*.sql through 08_*.sql
+    loop For each DML script (ordered)
+        SVC->>CH: INSERT...SELECT from bronze.*
+        CH-->>SVC: rows inserted
+    end
+    SVC->>SVC: assert_silver_layer_contracts()
+    SVC-->>S: summary report
+        </div>
+        <div class="callout success">
+            <span class="callout-icon">✓</span>
+            <span><strong>Full reload:</strong> Every Silver run processes the entire Bronze dataset. There is no incremental watermark — reruns are deterministic and safe. Scripts run in numeric filename order (<code>01_</code> → <code>08_</code>).</span>
+        </div>
+        <details class="cmd-block">
+            <summary>▸ Silver commands</summary>
+            <pre>python scripts/silver/load_clickhouse.py --dry-run
+python scripts/silver/load_clickhouse.py</pre>
+        </details>
+    </div>
+</div>
+
+<!-- ══════════════════ GOLD ══════════════════ -->
+<div class="diagram-section" id="gold" role="tabpanel" aria-hidden="true">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2><span class="layer-badge gold">Gold</span> Product outputs</h2>
+        </div>
+        <p>
+            Three ClickHouse namespaces with deliberate independence: <code>gold_scenarios.*</code> for narrative analysis,
+            <code>gold_signals.*</code> for granular detections, and <code>gold.*</code> for shared serving metadata.
+            A single activation table (<code>gold.signal_activations</code>) unifies all active signals into one
+            queryable surface for product and BI consumers.
+        </p>
+        <p class="doc-link">Deep dive: <a href="gold.md">gold.md</a></p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Three Gold namespaces</h3>
+            <div class="subtitle">Separate databases enforce separate ownership boundaries</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    subgraph SILVER["Silver — 8 tables (foundation)"]
+        SL["silver.*"]
+    end
+    subgraph GOLD_SCEN["gold_scenarios.* — 48 tables"]
+        SC1["scenario_demolition"]
+        SC2["scenario_underdog_heist"]
+        SC3["23 team + 25 player grain"]
+    end
+    subgraph GOLD_SIG["gold_signals.* — 344 tables"]
+        SIG1["sig_match_shooting_goals_*"]
+        SIG2["sig_player_shooting_goals_*"]
+        SIG3["sig_team_discipline_cards_*"]
+    end
+    subgraph GOLD_META["gold.* — shared serving metadata"]
+        ACT["signal_activations<br/>ReplacingMergeTree"]
+    end
+    SL --> GOLD_SCEN
+    SL --> GOLD_SIG
+    GOLD_SIG --> ACT
+
+    style SILVER fill:#3ecf731a,stroke:#3ecf73
+    style GOLD_SCEN fill:#b47bff1a,stroke:#b47bff
+    style GOLD_SIG fill:#b47bff1a,stroke:#b47bff
+    style GOLD_META fill:#f05f5a1a,stroke:#f05f5a
+        </div>
+        <div class="callout insight">
+            <span class="callout-icon">💡</span>
+            <span><strong>Why three namespaces?</strong> Scenarios evolve as narrative products; signals evolve on analytical cadence; the activation table is consumer-facing. Keeping them separate means schema changes in one namespace can't break the others.</span>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Gold SQL job execution</h3>
+            <div class="subtitle">Generic runner discovers and executes all scenario and signal jobs via file-system convention</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+sequenceDiagram
+    participant P as pipeline.py
+    participant G as load_clickhouse_gold.py
+    participant R as run_sql_job.py
+    participant J as GoldSqlJob
+    participant CH as ClickHouse
+
+    P->>G: subprocess
+    G->>R: scenario jobs
+    R->>J: discover scenario_*.sql
+    loop Each scenario (48 files)
+        J->>CH: execute SQL
+    end
+    G->>R: signal jobs
+    R->>J: discover sig_*.sql
+    loop Each signal (344 files)
+        J->>CH: execute SQL
+    end
+    G->>G: build_signal_activations.py
+    G->>CH: rebuild gold.signal_activations
+        </div>
+        <details class="cmd-block">
+            <summary>▸ Gold commands</summary>
+            <pre>python scripts/gold/load_clickhouse_gold.py --dry-run
+python scripts/gold/load_clickhouse_gold.py --part scenarios
+python scripts/gold/load_clickhouse_gold.py --part signals
+python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
+python scripts/gold/setup_clickhouse_gold.py --part signals</pre>
+        </details>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Activation rebuild</h3>
+            <div class="subtitle">Full-table rebuild of the unified signal serving table — always a complete replacement</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    CATALOGS["Active signal catalogs<br/>scripts/gold/signal/catalogs/*.md"] --> SCAN["Scan catalogs for active signals"]
+    SCAN --> READ["Read row_identity fields per signal"]
+    READ --> SIG_TABLES["gold_signals.sig_*<br/>344 tables"]
+    SIG_TABLES --> HASH["signal_instance_id<br/>SHA256(v1|signal_id|identity)"]
+    HASH --> PARSE["Parse entity / family / subfamily"]
+    PARSE --> CONTEXT["Copy fixture context fields"]
+    CONTEXT --> REBUILD["Full-table rebuild"]
+    REBUILD --> SERVE["gold.signal_activations"]
+
+    style CATALOGS fill:#4a5570,stroke:#6b7a99,color:#fff
+    style SIG_TABLES fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style SERVE fill:#b83030,stroke:#f05f5a,color:#fff
+        </div>
+        <div class="callout note">
+            <span class="callout-icon">🔑</span>
+            <span><strong>ADR 0006, 0011:</strong> Activation identity uses version prefix <code>v1</code> in the SHA-256 hash — this is a scheme version, not a signal definition version. Rebuilds are always full-table; there are no incremental or date-scoped activation loads.</span>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════ SIGNALS ══════════════════ -->
+<div class="diagram-section" id="signals" role="tabpanel" aria-hidden="true">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2>Signal system</h2>
+        </div>
+        <p>
+            Each signal is four co-located artifacts: a SQL transformation, a table DDL, a markdown catalog
+            (YAML frontmatter + documentation), and the resulting ClickHouse table in <code>gold_signals.*</code>.
+            Git is the source of truth for catalog metadata; MongoDB is a synchronized read replica for product APIs.
+        </p>
+        <p class="doc-link">Deep dive: <a href="gold.md#signal-system">gold.md</a> (Signal System)</p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Signal lifecycle</h3>
+            <div class="subtitle">Four artifacts per signal — from SQL file to product activation</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph LR
+    SQL["sig_*.sql<br/>transformation"] --> TABLE["gold_signals.*<br/>ClickHouse table"]
+    DDL["sig_*_ddl.sql<br/>table DDL"] --> TABLE
+    CATALOG["sig_*.md<br/>YAML frontmatter"] --> SYNC["sync_signal_catalogs.py"]
+    TABLE --> ACT["gold.signal_activations"]
+    SYNC --> MONGO["MongoDB signals collection"]
+
+    style SQL fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style CATALOG fill:#4a5570,stroke:#6b7a99,color:#fff
+    style DDL fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style TABLE fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style ACT fill:#b83030,stroke:#f05f5a,color:#fff
+    style MONGO fill:#2a8c50,stroke:#3ecf73,color:#000
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>Signal taxonomy</h3>
+                <div class="subtitle">Naming: <code>sig_{entity}_{family}_{subfamily}_{name}</code></div>
+            </div>
+            <div class="mermaid" data-rendered="false">
+graph TB
+    ROOT["sig_*"] --> ENT["Entity"]
+    ROOT --> FAM["Family"]
+    ROOT --> SUB["Subfamily"]
+    ENT --> E1["match"]
+    ENT --> E2["player"]
+    ENT --> E3["team"]
+    FAM --> F1["shooting"]
+    FAM --> F2["creativity"]
+    FAM --> F3["possession"]
+    FAM --> F4["discipline"]
+    FAM --> F5["goalkeeping"]
+    SUB --> S1["goals"]
+    SUB --> S2["playmaking"]
+    SUB --> S3["passing"]
+    SUB --> S4["cards"]
+    SUB --> S5["defense"]
+
+    style ROOT fill:#7d4fd4,stroke:#b47bff,color:#fff
+            </div>
+        </div>
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>Signal identity hash</h3>
+                <div class="subtitle">Deterministic activation IDs — stable across full rebuilds</div>
+            </div>
+            <div class="mermaid" data-rendered="false">
+graph LR
+    V["v1<br/>(scheme ver)"] --> HASH["SHA-256"]
+    SID["signal_id"] --> HASH
+    RI["row_identity<br/>column values"] --> HASH
+    HASH --> SII["signal_instance_id"]
+
+    style V fill:#c17e1a,stroke:#e5a623,color:#fff
+    style SID fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style RI fill:#4a5570,stroke:#6b7a99,color:#fff
+    style HASH fill:#1f6feb,stroke:#388bfd,color:#fff
+    style SII fill:#b83030,stroke:#f05f5a,color:#fff
+            </div>
+            <div class="callout note" style="margin-top:0.75rem">
+                <span class="callout-icon">🔑</span>
+                <div>
+                    <code>signal_instance_id = lower(hex(SHA256("v1|signal_id|val1|val2|...")))</code>
+                    <br><br>
+                    <strong>Team grain:</strong> <code>v1|sig_team_...|match_id|triggered_side</code><br>
+                    <strong>Player grain:</strong> <code>v1|sig_player_...|match_id|triggered_player_id|triggered_team_id</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Required catalog frontmatter</h3>
+            <div class="subtitle">Keys validated before MongoDB sync — missing any will fail the sync step</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Key</th><th>Purpose</th><th>Notes</th></tr></thead>
+            <tbody>
+                <tr><td>signal_id</td><td>Unique identifier matching SQL file and table name</td><td>Must match filename exactly</td></tr>
+                <tr><td>status</td><td>active / draft — only active signals enter activations</td><td>Draft signals are skipped during rebuild</td></tr>
+                <tr><td>entity, family, subfamily</td><td>Taxonomy for discovery and filtering</td><td>Used in signal_activations columns</td></tr>
+                <tr><td>grain</td><td>match_team or match_player — defines row shape</td><td>Determines identity hash columns</td></tr>
+                <tr><td>row_identity</td><td>Column names used in signal_instance_id hash</td><td>Order matters — part of hash input</td></tr>
+                <tr><td>asset_paths</td><td>Paths to SQL, DDL, and table</td><td>Must use <code>gold_signals.*</code> namespace</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ══════════════════ ORCHESTRATION ══════════════════ -->
+<div class="diagram-section" id="orchestration" role="tabpanel" aria-hidden="true">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2>Pipeline orchestration</h2>
+        </div>
+        <p>
+            <code>pipeline.py</code> coordinates all layers via subprocess calls (ADR 0002). Any non-zero exit halts the run
+            immediately — there is no partial-success state. Skip and partial-run flags support fast iterative
+            development without rerunning the full pipeline.
+        </p>
+        <p class="doc-link">Deep dive: <a href="orchestration.md">orchestration.md</a></p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Pipeline execution flow</h3>
+            <div class="subtitle">Sequential stages with optional skip paths shown as dashed lines</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    START["pipeline.py<br/>date argument"] --> BRONZE["1. Scrape<br/>scrape_fotmob.py"]
+    BRONZE --> LOAD["2. Bronze load<br/>load_clickhouse.py"]
+    LOAD --> SILVER["3. Silver<br/>load_clickhouse.py"]
+    SILVER --> GOLD["4. Gold<br/>load_clickhouse_gold.py"]
+    GOLD --> SCEN["4a. Scenario SQL<br/>48 jobs"]
+    GOLD --> SIG["4b. Signal SQL<br/>344 jobs"]
+    SIG --> ACT["4c. Activation rebuild<br/>build_signal_activations.py"]
+    ACT --> DONE["Exit 0 ✓"]
+
+    BRONZE -.->|--skip-bronze| LOAD
+    BRONZE -.->|--skip-fotmob| DONE
+    LOAD -.->|--skip-clickhouse| SILVER
+    SILVER -.->|--skip-silver| GOLD
+    GOLD -.->|--skip-gold| DONE
+
+    style START fill:#1f6feb,stroke:#388bfd,color:#fff
+    style BRONZE fill:#c17e1a,stroke:#e5a623,color:#fff
+    style LOAD fill:#c17e1a,stroke:#e5a623,color:#fff
+    style SILVER fill:#2a8c50,stroke:#3ecf73,color:#000
+    style GOLD fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style ACT fill:#b83030,stroke:#f05f5a,color:#fff
+    style DONE fill:#2a8c50,stroke:#3ecf73,color:#000
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>Pipeline modes</h3>
+                <div class="subtitle">Full, ranged, and layer-only runs</div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Mode</th><th>Command</th></tr></thead>
+                <tbody>
+                    <tr><td>Single date</td><td><code>pipeline.py 20251208</code></td></tr>
+                    <tr><td>Date range</td><td><code>--start-date 20251201 --end-date 20251207</code></td></tr>
+                    <tr><td>Full month</td><td><code>--month 202512</code></td></tr>
+                    <tr><td>Bronze only</td><td><code>--bronze-only</code></td></tr>
+                    <tr><td>Silver only</td><td><code>--silver-only</code></td></tr>
+                    <tr><td>Gold only</td><td><code>--gold-only</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>Skip flags</h3>
+                <div class="subtitle">Bypass stages without changing scripts or touching data</div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th>Flag</th><th>Effect</th></tr></thead>
+                <tbody>
+                    <tr><td>--skip-fotmob</td><td>Skip scraping entirely; halt after preflight</td></tr>
+                    <tr><td>--skip-bronze</td><td>Skip scrape + load; start at Silver</td></tr>
+                    <tr><td>--skip-clickhouse</td><td>Skip Bronze ClickHouse load; keep scrape</td></tr>
+                    <tr><td>--skip-silver</td><td>Skip Silver processing</td></tr>
+                    <tr><td>--skip-gold</td><td>Skip Gold materialization</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Failure recovery</h3>
+            <div class="subtitle">Re-run the narrowest script that failed — all stages are idempotent</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Failure point</th><th>Recovery command</th></tr></thead>
+            <tbody>
+                <tr><td>Scraping (API block / turnstile)</td><td><code>scrape_fotmob.py</code> for affected dates</td></tr>
+                <tr><td>Bronze ClickHouse load</td><td><code>load_clickhouse.py --date &lt;date&gt;</code></td></tr>
+                <tr><td>Silver SQL error</td><td>Fix SQL → re-run <code>silver/load_clickhouse.py</code></td></tr>
+                <tr><td>Single signal failure</td><td><code>run_sql_job.py --kind signal --id &lt;id&gt;</code></td></tr>
+                <tr><td>Single scenario failure</td><td><code>run_sql_job.py --kind scenario --id &lt;id&gt;</code></td></tr>
+                <tr><td>Activation rebuild</td><td><code>build_signal_activations.py</code></td></tr>
+                <tr><td>Catalog sync</td><td><code>sync_signal_catalogs.py</code></td></tr>
+            </tbody>
+        </table>
+        <div class="callout success">
+            <span class="callout-icon">✓</span>
+            <span><strong>All stages are idempotent.</strong> You never need to manually clean data before a re-run. <code>ReplacingMergeTree</code> handles version collisions; full-table reloads handle correctness.</span>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Parallel scraping</h3>
+            <div class="subtitle">FotMobOrchestrator with ThreadPoolExecutor — all matches fetched concurrently</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+sequenceDiagram
+    participant O as FotMobOrchestrator
+    participant DS as DailyScraper
+    participant MS1 as MatchScraper 1
+    participant MS2 as MatchScraper 2
+    participant MSN as MatchScraper N
+    participant API as FotMob API
+
+    O->>DS: fetch daily listing
+    DS->>API: GET /matches
+    API-->>DS: match IDs [id1, id2, …, idN]
+    par Parallel fetch (ThreadPoolExecutor)
+        O->>MS1: match id1
+        MS1->>API: GET /matchDetails
+    and
+        O->>MS2: match id2
+        MS2->>API: GET /matchDetails
+    and
+        O->>MSN: match idN
+        MSN->>API: GET /matchDetails
+    end
+    O->>O: write all to filesystem
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════ INFRASTRUCTURE ══════════════════ -->
+<div class="diagram-section" id="infrastructure" role="tabpanel" aria-hidden="true">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2>Infrastructure</h2>
+        </div>
+        <p>
+            Local development runs via Docker Compose. ClickHouse holds all warehouse layers (<code>bronze</code>,
+            <code>silver</code>, <code>gold_scenarios</code>, <code>gold_signals</code>, <code>gold</code>). MongoDB
+            holds content catalogs in the <code>orbit_content</code> database. Credential policy differs
+            significantly between local and production — never expose ports in production.
+        </p>
+        <p class="doc-link">Deep dive: <a href="infrastructure.md">infrastructure.md</a></p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Service layout</h3>
+            <div class="subtitle">Docker Compose services, ports, and host configuration</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    subgraph DOCKER["Docker Compose"]
+        subgraph CH["ClickHouse"]
+            CH_HTTP[":8123 HTTP"]
+            CH_NATIVE[":9000 native"]
+            CH_DB["bronze + silver<br/>gold_scenarios + gold_signals + gold"]
+        end
+        subgraph MONGO["MongoDB"]
+            M_PORT[":27017"]
+            M_DB["orbit_content<br/>5 collections"]
+        end
+        subgraph SCRAPER["Scraper container"]
+            S_SCRIPTS["Python scripts"]
+            S_DATA["data/fotmob/"]
+            S_DLQ["data/dlq/"]
+        end
+    end
+    subgraph HOST["Host"]
+        ENV[".env credentials"]
+        CFG["config.yaml"]
+    end
+    ENV --> CH
+    ENV --> MONGO
+    ENV --> SCRAPER
+    CFG --> SCRAPER
+
+    style DOCKER fill:#1f6feb14,stroke:#1f6feb
+    style CH fill:#e5a6231a,stroke:#e5a623
+    style MONGO fill:#3ecf731a,stroke:#3ecf73
+        </div>
+    </div>
+
+    <div class="two-col">
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>Bootstrap sequence</h3>
+                <div class="subtitle">First-time setup — run in this exact order</div>
+            </div>
+            <div class="mermaid" data-rendered="false">
+graph LR
+    DC["docker-compose up -d"] --> SETUP["setup_clickhouse.py"]
+    SETUP --> BDDL["Bronze DDL"]
+    SETUP --> SDDL["Silver DDL"]
+    SETUP --> GDDL["Gold DDL"]
+    SETUP --> MIDX["init_indexes.py"]
+
+    style DC fill:#1f6feb,stroke:#388bfd,color:#fff
+    style SETUP fill:#c17e1a,stroke:#e5a623,color:#fff
+    style MIDX fill:#2a8c50,stroke:#3ecf73,color:#000
+            </div>
+            <details class="cmd-block">
+                <summary>▸ Setup commands</summary>
+                <pre>cp .env.example .env
+docker-compose -f docker/docker-compose.yml up -d
+python scripts/orchestration/setup_clickhouse.py
+python scripts/mongodb/init_indexes.py</pre>
+            </details>
+        </div>
+        <div class="diagram-card" style="margin-bottom:0">
+            <div class="card-header">
+                <h3>Credential policy</h3>
+                <div class="subtitle"><span class="adr-ref">ADR 0005</span> local defaults vs production secrets</div>
+            </div>
+            <table class="data-table">
+                <thead><tr><th></th><th>Local</th><th>Production</th></tr></thead>
+                <tbody>
+                    <tr><td>Env var</td><td><code>DEPTHMARK_ENV=local</code></td><td><code>DEPTHMARK_ENV=production</code></td></tr>
+                    <tr><td>Passwords</td><td>Defaults allowed</td><td>Non-default required</td></tr>
+                    <tr><td>Ports</td><td>Exposed on host</td><td>Not exposed</td></tr>
+                    <tr><td>Secrets</td><td><code>.env</code> file</td><td>Secrets management</td></tr>
+                </tbody>
+            </table>
+            <div class="callout warning">
+                <span class="callout-icon">⚠️</span>
+                <span>Never run local credentials in production. <code>DEPTHMARK_ENV</code> gates all credential validation logic.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════ MONGODB ══════════════════ -->
+<div class="diagram-section" id="mongodb" role="tabpanel" aria-hidden="true">
+    <div class="section-lead">
+        <div class="section-lead-title">
+            <h2>MongoDB — content serving</h2>
+        </div>
+        <p>
+            MongoDB stores synchronized copies of signal and scenario catalogs for product APIs.
+            Git markdown frontmatter is the single source of truth; MongoDB is never authored
+            directly. The sync script validates required frontmatter keys, checks <code>gold_signals.*</code>
+            namespace compliance, and uses SHA-256 content hashing to make upserts idempotent.
+        </p>
+        <p class="doc-link">Deep dive: <a href="mongodb.md">mongodb.md</a></p>
+    </div>
+
+    <div class="callout insight">
+        <span class="callout-icon">💡</span>
+        <span><strong>Key design constraint:</strong> Product APIs read from MongoDB, not from ClickHouse. This decouples product query patterns (flexible document queries) from warehouse query patterns (analytical SQL). Never query ClickHouse catalogs from product APIs.</span>
+    </div>
+
+    <div class="diagram-card" style="margin-top:1.25rem">
+        <div class="card-header">
+            <h3>Catalog sync flow</h3>
+            <div class="subtitle">Markdown frontmatter → validated upsert into MongoDB</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    MD["catalogs/*.md<br/>YAML frontmatter + body"] --> PARSE["sync_signal_catalogs.py"]
+    PARSE --> VALIDATE["Validate required keys<br/>(signal_id, status, grain, etc.)"]
+    VALIDATE --> CHECK["Check gold_signals.* namespace<br/>in asset_paths"]
+    CHECK --> HASH["SHA-256 content hashes<br/>(idempotent upserts)"]
+    HASH --> UPSERT["Upsert with content hashing"]
+    UPSERT --> SIG_COL["signals collection"]
+    UPSERT --> SCEN_COL["scenarios collection"]
+    UPSERT --> TPL_COL["channel_templates collection"]
+
+    style MD fill:#4a5570,stroke:#6b7a99,color:#fff
+    style SIG_COL fill:#2a8c50,stroke:#3ecf73,color:#000
+    style SCEN_COL fill:#2a8c50,stroke:#3ecf73,color:#000
+    style TPL_COL fill:#2a8c50,stroke:#3ecf73,color:#000
+        </div>
+        <div class="callout success">
+            <span class="callout-icon">✓</span>
+            <span><strong>Workflow:</strong> Author catalog changes in Git → run <code>sync_signal_catalogs.py --dry-run</code> to preview changes → sync to MongoDB. The <code>--dry-run</code> flag is safe to run at any time; it touches nothing.</span>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Collections &amp; indexes</h3>
+            <div class="subtitle">orbit_content database — 5 collections</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Collection</th><th>Unique key</th><th>Purpose</th></tr></thead>
+            <tbody>
+                <tr><td>signals</td><td>signal_id</td><td>Signal metadata, SQL hashes, taxonomy — product API reads from here</td></tr>
+                <tr><td>scenarios</td><td>scenario_id</td><td>Scenario metadata and documentation</td></tr>
+                <tr><td>channel_templates</td><td>template_id</td><td>Content delivery templates for channels</td></tr>
+                <tr><td>content_versions</td><td>—</td><td>Audit trail: version history for all catalog changes</td></tr>
+                <tr><td>scenario_signal_map</td><td>—</td><td>Relationship map — links scenarios to related signals</td></tr>
+            </tbody>
+        </table>
+        <details class="cmd-block">
+            <summary>▸ MongoDB commands</summary>
+            <pre>python scripts/mongodb/init_indexes.py
+python scripts/mongodb/sync_signal_catalogs.py --dry-run
+python scripts/mongodb/sync_signal_catalogs.py</pre>
+        </details>
+    </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+    // ── Mermaid init ──
+    mermaid.initialize({
+        startOnLoad: false,
+        theme: 'dark',
+        themeVariables: {
+            primaryColor: '#1f6feb',
+            primaryTextColor: '#dde4f0',
+            primaryBorderColor: '#388bfd',
+            lineColor: '#6b7a99',
+            secondaryColor: '#111520',
+            tertiaryColor: '#0a0e14',
+            fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif',
+        },
+        flowchart: { curve: 'basis', padding: 20 },
+        sequence: { mirrorActors: false, messageMargin: 40 },
+    });
+
+    const TAB_IDS = ['overview', 'bronze', 'silver', 'gold', 'signals', 'orchestration', 'infrastructure', 'mongodb'];
+
+    function renderMermaidInSection(section) {
+        section.querySelectorAll('.mermaid[data-rendered="false"]').forEach(async (el) => {
+            if (!el.dataset.mermaidSrc) {
+                el.dataset.mermaidSrc = el.textContent.trim();
+            }
+            const src = el.dataset.mermaidSrc;
+            el.removeAttribute('data-processed');
+            try {
+                const { svg } = await mermaid.render('mmd-' + Math.random().toString(36).slice(2), src);
+                el.innerHTML = svg;
+                el.setAttribute('data-rendered', 'true');
+            } catch (e) {
+                el.innerHTML = '<pre style="color:#f05f5a;font-size:0.78rem;padding:0.5rem">Diagram render error: ' + e.message + '</pre>';
+                el.setAttribute('data-rendered', 'true');
+            }
+        });
+    }
+
+    function showTab(id, pushState = true) {
+        if (!TAB_IDS.includes(id)) id = 'overview';
+        document.querySelectorAll('.diagram-section').forEach(s => {
+            s.classList.remove('active');
+            s.setAttribute('aria-hidden', 'true');
+        });
+        document.querySelectorAll('.pipeline-step-btn').forEach(t => {
+            const active = t.dataset.tab === id;
+            t.classList.toggle('active', active);
+            t.setAttribute('aria-selected', active);
+        });
+        const section = document.getElementById(id);
+        if (!section) return;
+        section.classList.add('active');
+        section.setAttribute('aria-hidden', 'false');
+        renderMermaidInSection(section);
+        if (pushState) history.replaceState(null, '', '#' + id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('.pipeline-step-btn').forEach(tab => {
+        tab.addEventListener('click', () => showTab(tab.dataset.tab));
+    });
+
+    const hash = location.hash.replace('#', '');
+    showTab(TAB_IDS.includes(hash) ? hash : 'overview', false);
+    window.addEventListener('hashchange', () => {
+        const h = location.hash.replace('#', '');
+        if (TAB_IDS.includes(h)) showTab(h, false);
+    });
+
+    // ── Search index ──
+    const SEARCH_INDEX = [
+        // Overview
+        { title: 'End-to-end pipeline', section: 'overview', sectionLabel: 'Overview', keywords: 'pipeline fotmob bronze silver gold activation product' },
+        { title: 'Quality gates & preflight', section: 'overview', sectionLabel: 'Overview', keywords: 'health_check preflight contract reconciliation validated' },
+        { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python ownership adr 0001 0009 generic runner' },
+        // Bronze
+        { title: 'Scraping flow', section: 'bronze', sectionLabel: 'Bronze', keywords: 'scrape_fotmob fotmorchestrator dailyscraper matchscraper api json' },
+        { title: 'ClickHouse loading', section: 'bronze', sectionLabel: 'Bronze', keywords: 'load clickhouse pydantic safeFieldExtractor contract dlq dead letter queue' },
+        { title: 'Bronze table inventory', section: 'bronze', sectionLabel: 'Bronze', keywords: 'general timeline venue player shotmap goal cards red_card period momentum starters substitutes coaches team_form match_reference' },
+        { title: 'ReplacingMergeTree (Bronze)', section: 'bronze', sectionLabel: 'Bronze', keywords: 'replacingmergetree idempotent optimize inserted_at' },
+        // Silver
+        { title: 'Bronze → Silver lineage', section: 'silver', sectionLabel: 'Silver', keywords: 'lineage match period_stat player_match_stat momentum shot card match_personnel team_form' },
+        { title: 'Silver execution flow', section: 'silver', sectionLabel: 'Silver', keywords: 'dml script 01 08 ordered insert select assert_silver_layer_contracts' },
+        // Gold
+        { title: 'Three Gold namespaces', section: 'gold', sectionLabel: 'Gold', keywords: 'gold_scenarios gold_signals gold signal_activations namespace' },
+        { title: 'Gold SQL job execution', section: 'gold', sectionLabel: 'Gold', keywords: 'load_clickhouse_gold run_sql_job goldsqljob discover scenario signal' },
+        { title: 'Activation rebuild', section: 'gold', sectionLabel: 'Gold', keywords: 'build_signal_activations sha256 full table rebuild row_identity' },
+        // Signals
+        { title: 'Signal lifecycle', section: 'signals', sectionLabel: 'Signals', keywords: 'sql ddl catalog md sync lifecycle four artifacts' },
+        { title: 'Signal taxonomy', section: 'signals', sectionLabel: 'Signals', keywords: 'entity family subfamily match player team shooting creativity possession discipline goalkeeping' },
+        { title: 'Signal identity hash', section: 'signals', sectionLabel: 'Signals', keywords: 'sha256 signal_instance_id v1 hash deterministic identity' },
+        { title: 'Required catalog frontmatter', section: 'signals', sectionLabel: 'Signals', keywords: 'signal_id status grain row_identity asset_paths entity family subfamily' },
+        // Orchestration
+        { title: 'Pipeline execution flow', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'pipeline sequential stages skip exit 0 subprocess adr 0002' },
+        { title: 'Pipeline modes', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'single date range month bronze-only silver-only gold-only' },
+        { title: 'Skip flags', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'skip-fotmob skip-bronze skip-clickhouse skip-silver skip-gold' },
+        { title: 'Failure recovery', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'recovery failure scraping bronze silver signal scenario activation catalog sync' },
+        { title: 'Parallel scraping', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'threadpoolexecutor parallel fotmorchestrator concurrent matchscraper' },
+        // Infrastructure
+        { title: 'Service layout', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'docker compose clickhouse mongodb scraper 8123 9000 27017' },
+        { title: 'Bootstrap sequence', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'setup_clickhouse init_indexes docker-compose first time setup ddl' },
+        { title: 'Credential policy', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'adr 0005 depthmark_env local production passwords secrets ports' },
+        // MongoDB
+        { title: 'Catalog sync flow', section: 'mongodb', sectionLabel: 'MongoDB', keywords: 'sync_signal_catalogs validate upsert sha256 frontmatter yaml' },
+        { title: 'MongoDB collections', section: 'mongodb', sectionLabel: 'MongoDB', keywords: 'signals scenarios channel_templates content_versions scenario_signal_map orbit_content' },
+    ];
+
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+
+    function doSearch(q) {
+        if (!q || q.length < 2) { searchResults.classList.remove('show'); return; }
+        const ql = q.toLowerCase();
+        const matches = SEARCH_INDEX.filter(item =>
+            item.title.toLowerCase().includes(ql) || item.keywords.toLowerCase().includes(ql)
+        ).slice(0, 8);
+
+        if (!matches.length) {
+            searchResults.innerHTML = '<div class="search-result-item"><span class="search-result-title" style="color:var(--text-muted)">No results</span></div>';
+        } else {
+            searchResults.innerHTML = matches.map(item => {
+                const hl = item.title.replace(new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'), '<mark>$1</mark>');
+                return `<div class="search-result-item" onclick="searchGoto('${item.section}')">
+                    <span class="search-result-title">${hl}</span>
+                    <span class="search-result-section">${item.sectionLabel}</span>
+                </div>`;
+            }).join('');
+        }
+        searchResults.classList.add('show');
+    }
+
+    function searchGoto(section) {
+        searchResults.classList.remove('show');
+        searchInput.value = '';
+        showTab(section);
+    }
+
+    searchInput.addEventListener('input', e => doSearch(e.target.value.trim()));
+    searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { searchResults.classList.remove('show'); searchInput.blur(); }
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.search-wrap')) searchResults.classList.remove('show');
+    });
+</script>
+</body>
+</html>

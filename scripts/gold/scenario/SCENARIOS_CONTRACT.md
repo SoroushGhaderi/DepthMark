@@ -6,22 +6,22 @@ This document defines the stable contract for Gold scenario jobs in DepthMark.
 
 This contract applies to:
 
-- `clickhouse/gold/scenario/scenario_*.sql`
+- `clickhouse/gold/scenario/{team,player}/scenario_*.sql`
 - `scripts/gold/run_sql_job.py`
 - `src/services/gold/sql_jobs.py`
 - `scripts/gold/load_clickhouse_gold.py`
-- `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+- `scripts/gold/scenario/scenarios_catalog.md`
 
 ## Scenario Unit Contract
 
 Each scenario is a 3-part unit:
 
 1. SQL transformation file  
-   `clickhouse/gold/scenario/scenario_<name>.sql`
+   `clickhouse/gold/scenario/{team,player}/scenario_<name>.sql`
 2. Target table  
    `gold_scenarios.scenario_<name>`
 3. Catalog entry in  
-   `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+   `scripts/gold/scenario/scenarios_catalog.md`
 
 All three parts are required for a production-ready scenario.
 
@@ -61,13 +61,13 @@ All three parts are required for a production-ready scenario.
 `scripts/gold/load_clickhouse_gold.py` is the canonical layer runner.
 
 1. Executes base gold SQL files from `clickhouse/gold/*.sql`.
-2. Scenario bulk execution may remain disabled until re-enabled intentionally.
+2. Scenario bulk execution is enabled through `--part scenarios` or `--part all`.
 3. Supports `--dry-run` for plan/preview mode.
-4. Runs `assert_gold_layer_contracts` after scenario and signal execution.
+4. Runs `assert_gold_layer_contracts` after scenario and/or signal execution.
 
 ## Catalog Contract
 
-Each scenario entry in `SCENARIOS_CATALOG.md` must include:
+Each scenario entry in `scenarios_catalog.md` must include:
 
 1. Purpose
 2. Tactical/statistical logic (threshold rationale)
@@ -90,7 +90,7 @@ Minimum operational checks:
 
 1. Any new scenario must update:
    - `clickhouse/gold/01_create_scenario_tables.sql` (or active DDL file set)
-   - `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+   - `scripts/gold/scenario/scenarios_catalog.md`
 2. Renaming/deleting a scenario requires coordinated changes to:
    - SQL file
    - target table DDL

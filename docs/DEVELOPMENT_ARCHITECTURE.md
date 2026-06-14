@@ -72,6 +72,8 @@ python scripts/orchestration/setup_clickhouse.py
 python scripts/bronze/setup_clickhouse.py
 python scripts/silver/setup_clickhouse.py
 python scripts/gold/setup_clickhouse_gold.py
+python scripts/gold/setup_clickhouse_gold.py --part scenarios
+python scripts/gold/setup_clickhouse_gold.py --part signals
 ```
 
 ### Bronze
@@ -185,8 +187,10 @@ clickhouse/
 Current Gold inventory:
 
 - 48 scenario SQL transforms in `clickhouse/gold/scenario/{team,player}/`
+  (23 team/match-grain, 25 player-grain)
 - 344 signal SQL transforms in `clickhouse/gold/signal/`
 - 344 signal catalog markdown files in `scripts/gold/signal/catalogs/`
+- 1 shared activation serving table in `gold.signal_activations`
 
 Gold SQL jobs are executed through the generic runner in
 `scripts/gold/run_sql_job.py` and shared helpers in
@@ -331,7 +335,7 @@ one activation row.
    Gold signal table DDL files use
    `create_table_{entity}_{family}_{subfamily}.sql`.
 5. New or changed scenario work must update SQL, Gold scenario DDL, and
-   `scripts/gold/scenario/SCENARIOS_CATALOG.md` when relevant.
+   `scripts/gold/scenario/scenarios_catalog.md` when relevant.
 6. New or changed signal work must update SQL, signal DDL, catalog
    markdown, and `scripts/gold/signal/catalogs/README.md` when relevant.
 
@@ -351,6 +355,9 @@ one activation row.
 4. Keep subsystem contracts next to the code they govern, such as
    `scripts/gold/scenario/SCENARIOS_CONTRACT.md` and
    `scripts/gold/signal/contracts/`.
+5. Keep the source of truth for data flow and system diagrams in
+   `docs/data-flow/`. Update `data-flow/` in the same change when layer
+   boundaries, scripts, SQL jobs, or infrastructure change.
 
 When architecture boundaries, commands, or layer ownership change, update this
 file in the same change.

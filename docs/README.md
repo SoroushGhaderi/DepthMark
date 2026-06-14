@@ -7,6 +7,9 @@ focused on onboarding.
   runbook, operations, and documentation ownership.
 - `SCRIPTS_CONTRACT.md`: standards for script behavior, style, CLI semantics,
   logging, safety, and command-surface changes.
+- `data-flow/`: source of truth for system data flow, layer diagrams, and
+  interactive wireframes. Start with `data-flow/index.html` for a visual
+  overview.
 - `PRODUCTION_READINESS_REVIEW.md`: full DE review report with evidence-based
   findings, remediation plan, and work tracking checklist.
 

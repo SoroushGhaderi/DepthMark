@@ -235,20 +235,24 @@ class GoldService:
 
         return 0
 
-    def assert_contracts(self, database: Optional[str] = None) -> None:
+    def assert_contracts(self, part: str = "all", database: Optional[str] = None) -> None:
         """Run gold layer contract assertions. Raises LayerContractError on failure."""
         if self.client is None:
             raise RuntimeError("ClickHouse client is required for contract checks")
         assert_gold_layer_contracts(
             self.client,
-            database=database or gold_signals_db(),
+            scenario_database=gold_scenarios_db(),
+            signal_database=gold_signals_db(),
+            check_scenarios=part in ("all", "scenarios"),
+            check_signals=part in ("all", "signals"),
             log=logger,
         )
-        assert_gold_activation_contracts(
-            self.client,
-            database=self.metadata_db,
-            log=logger,
-        )
+        if part in ("all", "signals"):
+            assert_gold_activation_contracts(
+                self.client,
+                database=database or self.metadata_db,
+                log=logger,
+            )
 
     def run(self, *, part: str = "all", dry_run: bool = False) -> GoldRunResult:
         """Execute the full Gold layer pipeline and return a structured result.
@@ -297,7 +301,10 @@ class GoldService:
             return result
 
         if part in ("all", "signals") and not dry_run:
-            self.assert_contracts()
+            self.assert_contracts(part=part)
+            result.contracts_checked = True
+        elif part == "scenarios" and not dry_run:
+            self.assert_contracts(part=part)
             result.contracts_checked = True
 
         logger.info("Gold processing completed successfully")

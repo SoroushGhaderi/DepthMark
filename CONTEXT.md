@@ -1,5 +1,52 @@
 # Context
 
+## Layer Inventory
+
+DepthMark's medallion layers are FotMob-only and ClickHouse-backed from Silver
+upward.
+
+### Silver (`silver.*`)
+
+Eight cleaned analytical tables with paired DDL and DML:
+
+- `match`
+- `period_stat`
+- `player_match_stat`
+- `momentum`
+- `shot`
+- `card`
+- `match_personnel`
+- `team_form`
+
+Runtime contracts are enforced through `assert_silver_layer_contracts` in
+`src/utils/layer_contracts.py`.
+
+### Gold
+
+Gold materializes product-facing scenario and signal outputs across three
+ClickHouse namespaces:
+
+| Namespace | Purpose | Current inventory |
+| --- | --- | --- |
+| `gold_scenarios.*` | Scenario outputs at team/match or player grain | 48 tables (23 team, 25 player) |
+| `gold_signals.*` | Signal outputs at match, team, or player grain | 344 `sig_*` tables |
+| `gold.*` | Shared activation serving metadata | `signal_activations` |
+
+Gold setup DDL lives under `clickhouse/gold/`:
+
+- `00_create_database.sql`
+- `01_create_scenario_tables.sql`
+- `create_table_{entity}_{family}_{subfamily}.sql`
+- `create_table_signal_activations.sql`
+
+Gold transforms live under:
+
+- `clickhouse/gold/scenario/{team,player}/scenario_*.sql`
+- `clickhouse/gold/signal/sig_*.sql`
+
+Signal metadata is authored in `scripts/gold/signal/catalogs/*.md`. Scenario
+narrative docs live in `scripts/gold/scenario/scenarios_catalog.md`.
+
 ## Glossary
 
 ### Signal Activation

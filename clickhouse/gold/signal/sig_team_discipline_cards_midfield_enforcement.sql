@@ -84,11 +84,11 @@ midfielder_fouls AS (
 ),
 team_midfield_foul_rollup AS (
     SELECT
-        cm.match_id,
-        cm.triggered_side,
-        count() AS triggered_team_central_midfielders,
-        countIf(coalesce(mf.triggered_player_fouls_committed, 0) > 0) AS triggered_team_central_midfielders_with_fouls,
-        sum(coalesce(mf.triggered_player_fouls_committed, 0)) AS triggered_team_central_midfielder_fouls_committed
+        cm.match_id AS match_id,
+        cm.triggered_side AS triggered_side,
+        count() AS rollup_central_midfielders,
+        countIf(coalesce(mf.triggered_player_fouls_committed, 0) > 0) AS rollup_central_midfielders_with_fouls,
+        sum(coalesce(mf.triggered_player_fouls_committed, 0)) AS rollup_central_midfielder_fouls_committed
     FROM central_midfielders AS cm
     LEFT JOIN midfielder_fouls AS mf
         ON mf.match_id = cm.match_id
@@ -115,24 +115,24 @@ SELECT
     if(tmr.triggered_side = 'home', m.away_team_name, m.home_team_name) AS opponent_team_name,
 
     toInt32(10) AS trigger_threshold_min_central_midfielder_fouls_committed,
-    toInt32(tmr.triggered_team_central_midfielders) AS triggered_team_central_midfielders,
-    toInt32(coalesce(omr.triggered_team_central_midfielders, 0)) AS opponent_central_midfielders,
-    toInt32(tmr.triggered_team_central_midfielders - coalesce(omr.triggered_team_central_midfielders, 0)) AS central_midfielders_delta,
-    toInt32(tmr.triggered_team_central_midfielders_with_fouls) AS triggered_team_central_midfielders_with_fouls,
-    toInt32(coalesce(omr.triggered_team_central_midfielders_with_fouls, 0)) AS opponent_central_midfielders_with_fouls,
+    toInt32(tmr.rollup_central_midfielders) AS triggered_team_central_midfielders,
+    toInt32(coalesce(omr.rollup_central_midfielders, 0)) AS opponent_central_midfielders,
+    toInt32(tmr.rollup_central_midfielders - coalesce(omr.rollup_central_midfielders, 0)) AS central_midfielders_delta,
+    toInt32(tmr.rollup_central_midfielders_with_fouls) AS triggered_team_central_midfielders_with_fouls,
+    toInt32(coalesce(omr.rollup_central_midfielders_with_fouls, 0)) AS opponent_central_midfielders_with_fouls,
     toInt32(
-        tmr.triggered_team_central_midfielders_with_fouls
-        - coalesce(omr.triggered_team_central_midfielders_with_fouls, 0)
+        tmr.rollup_central_midfielders_with_fouls
+        - coalesce(omr.rollup_central_midfielders_with_fouls, 0)
     ) AS central_midfielders_with_fouls_delta,
-    toInt32(tmr.triggered_team_central_midfielder_fouls_committed) AS triggered_team_central_midfielder_fouls_committed,
-    toInt32(coalesce(omr.triggered_team_central_midfielder_fouls_committed, 0)) AS opponent_central_midfielder_fouls_committed,
+    toInt32(tmr.rollup_central_midfielder_fouls_committed) AS triggered_team_central_midfielder_fouls_committed,
+    toInt32(coalesce(omr.rollup_central_midfielder_fouls_committed, 0)) AS opponent_central_midfielder_fouls_committed,
     toInt32(
-        tmr.triggered_team_central_midfielder_fouls_committed
-        - coalesce(omr.triggered_team_central_midfielder_fouls_committed, 0)
+        tmr.rollup_central_midfielder_fouls_committed
+        - coalesce(omr.rollup_central_midfielder_fouls_committed, 0)
     ) AS central_midfielder_fouls_committed_delta,
-    toInt32(tmr.triggered_team_central_midfielder_fouls_committed - 10) AS triggered_team_central_midfielder_fouls_above_threshold,
+    toInt32(tmr.rollup_central_midfielder_fouls_committed - 10) AS triggered_team_central_midfielder_fouls_above_threshold,
     toFloat32(round(
-        100.0 * tmr.triggered_team_central_midfielder_fouls_committed
+        100.0 * tmr.rollup_central_midfielder_fouls_committed
         / nullIf(multiIf(
             tmr.triggered_side = 'home', coalesce(ps.fouls_home, 0),
             tmr.triggered_side = 'away', coalesce(ps.fouls_away, 0),
@@ -141,7 +141,7 @@ SELECT
         1
     )) AS triggered_team_central_midfielder_fouls_share_of_team_fouls_pct,
     toNullable(toFloat32(round(
-        100.0 * coalesce(omr.triggered_team_central_midfielder_fouls_committed, 0)
+        100.0 * coalesce(omr.rollup_central_midfielder_fouls_committed, 0)
         / nullIf(multiIf(
             tmr.triggered_side = 'home', coalesce(ps.fouls_away, 0),
             tmr.triggered_side = 'away', coalesce(ps.fouls_home, 0),
@@ -151,7 +151,7 @@ SELECT
     ))) AS opponent_central_midfielder_fouls_share_of_team_fouls_pct,
     toFloat32(round(
         (
-            100.0 * tmr.triggered_team_central_midfielder_fouls_committed
+            100.0 * tmr.rollup_central_midfielder_fouls_committed
             / nullIf(multiIf(
                 tmr.triggered_side = 'home', coalesce(ps.fouls_home, 0),
                 tmr.triggered_side = 'away', coalesce(ps.fouls_away, 0),
@@ -159,7 +159,7 @@ SELECT
             ), 0)
         ) - coalesce(
             (
-                100.0 * coalesce(omr.triggered_team_central_midfielder_fouls_committed, 0)
+                100.0 * coalesce(omr.rollup_central_midfielder_fouls_committed, 0)
                 / nullIf(multiIf(
                     tmr.triggered_side = 'home', coalesce(ps.fouls_away, 0),
                     tmr.triggered_side = 'away', coalesce(ps.fouls_home, 0),
@@ -308,7 +308,7 @@ LEFT JOIN team_midfield_foul_rollup AS omr
    AND omr.triggered_side = if(tmr.triggered_side = 'home', 'away', 'home')
 WHERE m.match_finished = 1
   AND m.match_id > 0
-  AND tmr.triggered_team_central_midfielder_fouls_committed >= 10
+  AND tmr.rollup_central_midfielder_fouls_committed >= 10
 ORDER BY
     triggered_team_central_midfielder_fouls_committed DESC,
     triggered_team_central_midfielder_fouls_share_of_team_fouls_pct DESC,
