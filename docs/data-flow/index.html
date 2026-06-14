@@ -798,6 +798,118 @@
         </div>
     </div>
 
+    <div class="diagram-card" id="full-warehouse-route">
+        <div class="card-header">
+            <h3>Complete warehouse route</h3>
+            <div class="subtitle">Create empty tables in every layer, then fill them with data — commands from first setup through validation</div>
+        </div>
+        <div class="mermaid" data-rendered="false">
+graph TB
+    subgraph P0["0 · Prerequisites"]
+        ENV["cp .env.example .env<br/>docker compose up -d"]
+        HC["health_check.py"]
+    end
+    subgraph P1["1 · Create empty tables (DDL)"]
+        SETUP["setup_clickhouse.py<br/>bronze · silver · gold"]
+        MIDX["mongodb/init_indexes.py"]
+    end
+    subgraph P2["2 · Fill warehouse data"]
+        SCRAPE["scrape_fotmob.py"]
+        BLOAD["bronze/load_clickhouse.py"]
+        SLOAD["silver/load_clickhouse.py"]
+        GLOAD["gold/load_clickhouse_gold.py<br/>scenarios + signals + activations"]
+    end
+    subgraph P3["3 · Validate &amp; serve"]
+        RECON["check_bronze_to_silver_reconciliation"]
+        SYNC["sync_signal_catalogs.py"]
+    end
+    PIPE["pipeline.py<br/>(steps 2 in one command)"] -.->|shortcut| SCRAPE
+    ENV --> HC --> SETUP --> MIDX --> SCRAPE --> BLOAD --> SLOAD --> GLOAD --> RECON --> SYNC
+
+    style P0 fill:#1f6feb14,stroke:#1f6feb
+    style P1 fill:#e5a6231a,stroke:#e5a623
+    style P2 fill:#3ecf731a,stroke:#3ecf73
+    style P3 fill:#b47bff1a,stroke:#b47bff
+    style PIPE fill:#1f6feb,stroke:#388bfd,color:#fff
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Step</th><th>Layer</th><th>Tables / collections</th><th>Command</th></tr></thead>
+            <tbody>
+                <tr><td>0</td><td>Infra</td><td>Docker services</td><td><code>docker compose up -d</code></td></tr>
+                <tr><td>1</td><td>All ClickHouse</td><td>15 bronze + 8 silver + 48 scenarios + 344 signals + <code>gold.signal_activations</code></td><td><code>python scripts/orchestration/setup_clickhouse.py</code></td></tr>
+                <tr><td>2</td><td>MongoDB</td><td>5 collections (empty indexes)</td><td><code>python scripts/mongodb/init_indexes.py</code></td></tr>
+                <tr><td>3</td><td>Bronze (disk)</td><td>Raw JSON per match</td><td><code>python scripts/bronze/scrape_fotmob.py &lt;YYYYMMDD&gt;</code></td></tr>
+                <tr><td>4</td><td>Bronze (CH)</td><td>15 <code>bronze.*</code> tables</td><td><code>python scripts/bronze/load_clickhouse.py --date &lt;YYYYMMDD&gt;</code></td></tr>
+                <tr><td>5</td><td>Silver</td><td>8 <code>silver.*</code> tables (full reload)</td><td><code>python scripts/silver/load_clickhouse.py</code></td></tr>
+                <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python scripts/gold/load_clickhouse_gold.py</code></td></tr>
+                <tr><td>7</td><td>Quality</td><td>Bronze→Silver row counts</td><td><code>python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</code></td></tr>
+                <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
+            </tbody>
+        </table>
+        <div class="callout note">
+            <span class="callout-icon">📋</span>
+            <span><strong>Shortcut:</strong> After steps 0–2, <code>python scripts/orchestration/pipeline.py &lt;YYYYMMDD&gt;</code> runs scrape → bronze load → silver → gold (including activation rebuild) in one pass. Repeat scrape + bronze load per date; silver and gold always reload from the <em>complete</em> bronze dataset.</span>
+        </div>
+        <details class="cmd-block">
+            <summary>▸ Phase 1 — first-time setup (create all empty tables)</summary>
+            <pre># From project root. In Docker: prefix with `docker compose exec scraper`
+cp .env.example .env
+# Edit .env: FOTMOB_X_MAS_TOKEN, ClickHouse, MongoDB credentials
+
+docker compose up -d
+python scripts/health_check.py --json
+
+# Creates bronze (15) + silver (8) + gold (48 scenarios + 344 signals + activations DDL)
+python scripts/orchestration/setup_clickhouse.py
+
+# MongoDB collection indexes (catalog serving layer)
+python scripts/mongodb/init_indexes.py</pre>
+        </details>
+        <details class="cmd-block">
+            <summary>▸ Phase 2 — fill all layers (one command)</summary>
+            <pre># Scrape → bronze.* → silver.* → gold_scenarios.* + gold_signals.* + gold.signal_activations
+python scripts/orchestration/pipeline.py 20251208
+
+# Multiple dates (scrape + bronze load per day; silver + gold run once at the end)
+python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
+python scripts/orchestration/pipeline.py --month 202512</pre>
+        </details>
+        <details class="cmd-block">
+            <summary>▸ Phase 2 — fill all layers (step by step)</summary>
+            <pre># Bronze: ingest raw FotMob payloads
+python scripts/bronze/scrape_fotmob.py 20251208
+python scripts/bronze/load_clickhouse.py --date 20251208
+
+# Silver: full-table reload from all bronze data (8 tables)
+python scripts/silver/load_clickhouse.py
+
+# Gold: all scenario SQL (48) + signal SQL (344) + activation rebuild
+python scripts/gold/load_clickhouse_gold.py
+
+# Or run gold parts individually:
+python scripts/gold/load_clickhouse_gold.py --part scenarios
+python scripts/gold/load_clickhouse_gold.py --part signals</pre>
+        </details>
+        <details class="cmd-block">
+            <summary>▸ Phase 3 — validate and sync serving catalogs</summary>
+            <pre># Preflight (safe — no mutations)
+python scripts/silver/load_clickhouse.py --dry-run
+python scripts/gold/load_clickhouse_gold.py --dry-run
+
+# Post-load quality gate
+python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python scripts/quality/check_logging_style.py
+
+# Sync signal/scenario catalogs from Git → MongoDB (product APIs)
+python scripts/mongodb/sync_signal_catalogs.py --dry-run
+python scripts/mongodb/sync_signal_catalogs.py</pre>
+        </details>
+        <div class="callout success">
+            <span class="callout-icon">✓</span>
+            <span><strong>Done when:</strong> <code>bronze.*</code> (15), <code>silver.*</code> (8), <code>gold_scenarios.*</code> (48), <code>gold_signals.*</code> (344), and <code>gold.signal_activations</code> all contain rows; reconciliation passes; MongoDB catalogs are synced.</span>
+        </div>
+    </div>
+
     <div class="diagram-card">
         <div class="card-header">
             <h3>End-to-end pipeline</h3>
@@ -1769,6 +1881,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
     // ── Search index ──
     const SEARCH_INDEX = [
         // Overview
+        { title: 'Complete warehouse route', section: 'overview', sectionLabel: 'Overview', keywords: 'setup fill all tables layers create ddl pipeline scrape load bronze silver gold validation sync catalogs start end runbook' },
         { title: 'End-to-end pipeline', section: 'overview', sectionLabel: 'Overview', keywords: 'pipeline fotmob bronze silver gold activation product' },
         { title: 'Quality gates & preflight', section: 'overview', sectionLabel: 'Overview', keywords: 'health_check preflight contract reconciliation validated' },
         { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python ownership adr 0001 0009 generic runner' },
