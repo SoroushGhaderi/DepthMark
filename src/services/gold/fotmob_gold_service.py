@@ -7,7 +7,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-from src.services.gold.sql_jobs import GoldSqlJob, discover_gold_sql_jobs, execute_gold_sql_job
+from src.services.gold.gold_dml_runner import (
+    GoldSqlJob,
+    discover_gold_sql_jobs,
+    execute_gold_sql_job,
+)
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.clickhouse_sql_executor import execute_sql_script
 from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db

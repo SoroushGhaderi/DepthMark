@@ -211,7 +211,7 @@ Current Gold inventory:
 
 Gold SQL jobs are executed through the generic runner in
 `scripts/gold/run_sql_job.py` and shared helpers in
-`src/services/gold/sql_jobs.py`. Do not add handwritten per-signal or
+`src/services/gold/gold_dml_runner.py`. Do not add handwritten per-signal or
 per-scenario runner files. Omit `--kind` to run all scenario and signal SQL jobs
 through the generic runner, or use `--kind scenario` / `--kind signal` to select
 one Gold output kind. Jobs can be selected exactly by `--id`; signal jobs can

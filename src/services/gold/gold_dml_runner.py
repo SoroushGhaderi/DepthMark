@@ -1,4 +1,4 @@
-"""Shared execution helpers for Gold scenario and signal SQL jobs."""
+"""Discover and execute Gold scenario and signal DML SQL in ClickHouse."""
 
 import os
 import re
