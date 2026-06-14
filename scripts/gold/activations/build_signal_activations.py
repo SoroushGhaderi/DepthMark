@@ -21,11 +21,14 @@ from src.utils.logging_utils import get_logger, setup_logging
 logger = get_logger(__name__)
 
 DEFAULT_CATALOG_DIR = project_root / "scripts" / "gold" / "signal" / "catalogs"
+GOLD_SQL_DIR = project_root / "clickhouse" / "gold"
 FRONTMATTER_DELIMITER = "\n---\n"
 SIGNAL_ID_VERSION = "v1"
 MATCH_SUMMARY_ID_VERSION = "v1"
 STAGE_TABLE = "signal_activations_stage"
 SAFE_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+STAGE_TABLE_SQL_FILE = GOLD_SQL_DIR / "activations" / "create_table_signal_activations_stage.sql"
+FINAL_INSERT_SQL_FILE = GOLD_SQL_DIR / "activations" / "signal_activation_final_insert.sql"
 
 
 @dataclass(frozen=True)
@@ -269,61 +272,26 @@ def _source_row_json_expr(available_columns: set[str]) -> str:
     return "concat('{', arrayStringConcat([" + ", ".join(json_parts) + "], ','), '}')"
 
 
-def _stage_table_name(target_database: str) -> str:
-    safe_target_database = _validate_identifier(target_database, "target database")
-    return f"{safe_target_database}.{STAGE_TABLE}"
+def _stage_table_name() -> str:
+    return f"gold.{STAGE_TABLE}"
 
 
-def _create_stage_table(client: ClickHouseClient, target_database: str) -> None:
-    stage_table = _stage_table_name(target_database)
-    client.execute(f"DROP TABLE IF EXISTS {stage_table}")
-    client.execute(
-        f"""
-        CREATE TABLE {stage_table} (
-            signal_instance_id String,
-            signal_id String,
-            signal_id_version String,
-            signal_prefix String,
-            signal_entity String,
-            signal_family String,
-            signal_subfamily String,
-            signal_name String,
-            signal_tags Array(String),
-            match_id Int32,
-            match_date Date,
-            home_team_id Nullable(Int32),
-            home_team_name Nullable(String),
-            away_team_id Nullable(Int32),
-            away_team_name Nullable(String),
-            home_score Nullable(Int32),
-            away_score Nullable(Int32),
-            triggered_side Nullable(String),
-            triggered_team_id Nullable(Int32),
-            triggered_team_name Nullable(String),
-            triggered_player_id Nullable(Int32),
-            triggered_player_name Nullable(String),
-            opponent_team_id Nullable(Int32),
-            opponent_team_name Nullable(String),
-            source_table String,
-            source_row_json String,
-            source_row_columns Array(String),
-            inserted_at DateTime
-        ) ENGINE = ReplacingMergeTree(inserted_at)
-        ORDER BY (match_date, match_id, signal_id, signal_instance_id)
-        PARTITION BY toYYYYMM(match_date)
-        """
-    )
+def _create_stage_table(client: ClickHouseClient) -> None:
+    sql = STAGE_TABLE_SQL_FILE.read_text(encoding="utf-8")
+    for statement in sql.split(";"):
+        statement = statement.strip()
+        if statement:
+            client.execute(statement)
 
 
 def _activation_insert_sql(
     source_database: str,
-    target_database: str,
     catalog: SignalCatalog,
     available_columns: set[str],
 ) -> str:
     safe_source_database = _validate_identifier(source_database, "source database")
     safe_signal_table = _validate_identifier(catalog.signal_id, "table")
-    stage_table = _stage_table_name(target_database)
+    stage_table = _stage_table_name()
 
     def optional_col(column: str, cast_type: str) -> str:
         safe_col = _validate_identifier(column, "column name")
@@ -418,106 +386,8 @@ def _activation_insert_sql(
     """
 
 
-def _final_activation_insert_sql(target_database: str) -> str:
-    safe_target_database = _validate_identifier(target_database, "target database")
-    stage_table = _stage_table_name(target_database)
-    return f"""
-    INSERT INTO {safe_target_database}.signal_activations (
-        signal_instance_id,
-        signal_id,
-        signal_id_version,
-        signal_prefix,
-        signal_entity,
-        signal_family,
-        signal_subfamily,
-        signal_name,
-        signal_tags,
-        match_id,
-        match_date,
-        match_activation_instance_id,
-        activated_signal_instance_ids,
-        activated_signal_ids,
-        activated_signal_entities,
-        activated_signal_tags,
-        activated_signal_names,
-        total_signal_rows,
-        unique_signal_count,
-        home_team_id,
-        home_team_name,
-        away_team_id,
-        away_team_name,
-        home_score,
-        away_score,
-        triggered_side,
-        triggered_team_id,
-        triggered_team_name,
-        triggered_player_id,
-        triggered_player_name,
-        opponent_team_id,
-        opponent_team_name,
-        source_table,
-        source_row_json,
-        source_row_columns,
-        inserted_at
-    )
-    WITH match_summary AS (
-        SELECT
-            match_id,
-            match_date,
-            lower(hex(SHA256(concat('{MATCH_SUMMARY_ID_VERSION}', '|', toString(match_id)))))
-                AS match_activation_instance_id,
-            arraySort(groupUniqArray(signal_instance_id)) AS activated_signal_instance_ids,
-            arraySort(groupUniqArray(signal_id)) AS activated_signal_ids,
-            arraySort(groupUniqArray(signal_entity)) AS activated_signal_entities,
-            arraySort(arrayDistinct(arrayFlatten(groupArray(signal_tags)))) AS activated_signal_tags,
-            arraySort(groupUniqArray(signal_name)) AS activated_signal_names,
-            toUInt32(count()) AS total_signal_rows,
-            toUInt16(length(groupUniqArray(signal_id))) AS unique_signal_count
-        FROM {stage_table}
-        GROUP BY match_id, match_date
-    )
-    SELECT
-        stage.signal_instance_id,
-        stage.signal_id,
-        stage.signal_id_version,
-        stage.signal_prefix,
-        stage.signal_entity,
-        stage.signal_family,
-        stage.signal_subfamily,
-        stage.signal_name,
-        stage.signal_tags,
-        stage.match_id,
-        stage.match_date,
-        match_summary.match_activation_instance_id,
-        match_summary.activated_signal_instance_ids,
-        match_summary.activated_signal_ids,
-        match_summary.activated_signal_entities,
-        match_summary.activated_signal_tags,
-        match_summary.activated_signal_names,
-        match_summary.total_signal_rows,
-        match_summary.unique_signal_count,
-        stage.home_team_id,
-        stage.home_team_name,
-        stage.away_team_id,
-        stage.away_team_name,
-        stage.home_score,
-        stage.away_score,
-        stage.triggered_side,
-        stage.triggered_team_id,
-        stage.triggered_team_name,
-        stage.triggered_player_id,
-        stage.triggered_player_name,
-        stage.opponent_team_id,
-        stage.opponent_team_name,
-        stage.source_table,
-        stage.source_row_json,
-        stage.source_row_columns,
-        stage.inserted_at
-    FROM {stage_table} AS stage
-    INNER JOIN match_summary
-        ON match_summary.match_id = stage.match_id
-       AND match_summary.match_date = stage.match_date
-    """
+def _final_activation_insert_sql() -> str:
+    return FINAL_INSERT_SQL_FILE.read_text(encoding="utf-8").rstrip(";")
 
 
 def build_signal_activations(
@@ -531,7 +401,7 @@ def build_signal_activations(
     skipped = 0
 
     if not dry_run:
-        _create_stage_table(client, target_database)
+        _create_stage_table(client)
 
     for catalog in catalogs:
         signal_table = catalog.signal_id
@@ -547,7 +417,6 @@ def build_signal_activations(
         columns = _column_names(client, source_database, signal_table)
         query = _activation_insert_sql(
             source_database=source_database,
-            target_database=target_database,
             catalog=catalog,
             available_columns=columns,
         )
@@ -568,13 +437,10 @@ def build_signal_activations(
         processed += 1
 
     if not dry_run:
-        safe_target_database = _validate_identifier(target_database, "database")
-        client.execute(f"TRUNCATE TABLE {safe_target_database}.signal_activations")
-        client.execute(_final_activation_insert_sql(target_database))
-        client.execute(
-            f"OPTIMIZE TABLE {safe_target_database}.signal_activations FINAL DEDUPLICATE"
-        )
-        client.execute(f"DROP TABLE IF EXISTS {_stage_table_name(target_database)}")
+        client.execute("TRUNCATE TABLE gold.signal_activations")
+        client.execute(_final_activation_insert_sql())
+        client.execute("OPTIMIZE TABLE gold.signal_activations FINAL DEDUPLICATE")
+        client.execute("DROP TABLE IF EXISTS gold.signal_activations_stage")
 
     return processed, skipped
 
