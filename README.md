@@ -38,7 +38,7 @@ through the bulk Gold loader with `--part scenarios` or `--part all`.
 
 ```bash
 git clone <repository-url>
-cd depthmark
+cd DepthMark
 cp .env.example .env
 # edit .env and set FOTMOB_X_MAS_TOKEN, ClickHouse, and MongoDB values
 # keep DEPTHMARK_ENV=local only for the tracked local Docker workflow
@@ -239,7 +239,7 @@ fields are repeated on each activation row for serving convenience, including:
 ## Project Layout
 
 ```text
-depthmark/
+DepthMark/
   clickhouse/             ClickHouse DDL/DML by layer
   config/                 Python configuration modules
   data/fotmob/            raw Bronze files
