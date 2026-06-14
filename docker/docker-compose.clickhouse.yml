@@ -5,9 +5,9 @@
 name: depthmark-clickhouse
 
 services:
-  clickhouse:
+  depthmark-clickhouse:
     image: clickhouse/clickhouse-server:24
-    container_name: depthmark_clickhouse
+    container_name: depthmark-clickhouse
     ports:
       - "8123:8123"  # HTTP interface
       - "9000:9000"  # Native TCP interface

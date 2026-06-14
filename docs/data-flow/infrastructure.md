@@ -7,9 +7,9 @@ scraper container.
 
 | Service | Image | Port | Purpose |
 | --- | --- | --- | --- |
-| clickhouse | `clickhouse/clickhouse-server:24` | 8123 (HTTP), 9000 (native) | Data warehouse |
-| mongodb | `mongo:8.0` | 27017 | Content catalog |
-| scraper | Custom Python image | — | Runs pipeline scripts |
+| depthmark-clickhouse | `clickhouse/clickhouse-server:24` | 8123 (HTTP), 9000 (native) | Data warehouse |
+| depthmark-mongodb | `mongo:8.0` | 27017 | Content catalog |
+| depthmark-scraper | Custom Python image | — | Runs pipeline scripts |
 
 ## Docker Compose Files
 
@@ -30,11 +30,11 @@ scraper container.
 ```bash
 FOTMOB_X_MAS_TOKEN=your_token_here
 DEPTHMARK_ENV=local
-CLICKHOUSE_HOST=clickhouse
+CLICKHOUSE_HOST=depthmark-clickhouse
 CLICKHOUSE_PORT=8123
 CLICKHOUSE_USER=fotmob_user
 CLICKHOUSE_PASSWORD=your_clickhouse_password_here
-MONGODB_HOST=mongodb
+MONGODB_HOST=depthmark-mongodb
 MONGODB_PORT=27017
 MONGODB_USER=orbit_admin
 MONGODB_PASSWORD=your_mongodb_password_here
