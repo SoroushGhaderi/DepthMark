@@ -33,7 +33,7 @@ python scripts/gold/run_sql_job.py --kind scenario --id scenario_team_shooting_g
 ```
 
 Signal jobs should also support DDL-grouped batch selection by entity and family,
-matching the grouping used by `clickhouse/gold/create_table_signals/`. For
+matching the grouping used by `clickhouse/gold/ddl/signals/`. For
 example:
 
 ```bash

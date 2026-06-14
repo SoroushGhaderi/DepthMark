@@ -28,8 +28,8 @@ Each signal consists of 4 artifacts:
 
 | Artifact | Location | Purpose |
 | --- | --- | --- |
-| SQL | `clickhouse/gold/signal/sig_<name>.sql` | Transformation logic |
-| Table DDL | `clickhouse/gold/create_table_signals/` | Output table schema |
+| SQL | `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql` | Transformation logic |
+| Table DDL | `clickhouse/gold/ddl/signals/{match,team,player}/` | Output table schema |
 | Catalog | `scripts/gold/signal/catalogs/sig_<name>.md` | Metadata + documentation |
 | Index | `scripts/gold/signal/catalogs/README.md` | Signal inventory |
 
@@ -56,8 +56,8 @@ Example: `sig_player_shooting_goals_shot_conversion_peak`
 ## Scenario System
 
 Scenarios are narrative-driven analysis outputs:
-- 23 team/match-grain scenarios in `clickhouse/gold/scenario/team/`
-- 25 player-grain scenarios in `clickhouse/gold/scenario/player/`
+- 23 team/match-grain scenarios in `clickhouse/gold/dml/scenarios/team/`
+- 25 player-grain scenarios in `clickhouse/gold/dml/scenarios/player/`
 
 Catalog: `scripts/gold/scenario/scenarios_catalog.md`
 
@@ -106,7 +106,16 @@ Execution order:
 
 ### 4. Activation Rebuild (`scripts/gold/activations/build_signal_activations.py`)
 
-Rebuilds `gold.signal_activations` from all active signal catalogs:
+Rebuilds `gold.signal_activations` from all active signal catalogs in two phases:
+
+1. **Stage** — insert one enriched row per `gold_signals.sig_*` output into ephemeral
+   `gold.signal_activations_stage` (created from
+   `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`).
+2. **Serve** — truncate `gold.signal_activations`, run
+   `clickhouse/gold/dml/activations/signal_activation_final_insert.sql` to join staged
+   rows with per-match summary aggregates, optimize, and drop the stage table.
+
+Per-row enrichment in the stage pass:
 
 1. Scans active signal catalogs in `scripts/gold/signal/catalogs/`.
 2. Reads each catalog's `row_identity` fields.
@@ -115,7 +124,21 @@ Rebuilds `gold.signal_activations` from all active signal catalogs:
    - Parses signal metadata from the `signal_id` pattern
    - Copies common fixture/team/player context
    - Stores full source row in `source_row_json`
-4. Rebuilds match-level summary fields per activation row.
+
+The final insert adds match-level summary fields on every activation row
+(`match_activation_instance_id`, `activated_signal_ids`, `total_signal_rows`,
+and related arrays).
+
+```bash
+python scripts/gold/activations/build_signal_activations.py
+python scripts/gold/activations/build_signal_activations.py --dry-run
+```
+
+Serving-table DDL: `clickhouse/gold/ddl/create_table_signal_activations.sql`
+
+`load_clickhouse_gold.py` invokes the builder after successful signal runs.
+If any signal SQL job fails, activation rebuild is skipped until signals succeed
+or you rerun the builder manually.
 
 Key fields in `gold.signal_activations`:
 - `signal_instance_id` — deterministic identity hash
@@ -153,6 +176,7 @@ python scripts/gold/drop_clickhouse_scenarios.py --part all
 | --- | ---|
 | Signal SQL fails | Re-run `run_sql_job.py --kind signal --id <signal>` |
 | Scenario SQL fails | Re-run `run_sql_job.py --kind scenario --id <scenario>` |
-| Activation rebuild fails | Re-run `build_signal_activations.py` |
+| Activation rebuild fails | Re-run `build_signal_activations.py` (requires populated `gold_signals.sig_*` tables) |
+| Signal SQL failures block activations | Fix failing signals, rerun signal load, then `build_signal_activations.py` |
 | DDL mismatch | Re-run `setup_clickhouse_gold.py` |
 | ClickHouse connection | Non-zero exit, re-run |

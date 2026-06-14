@@ -1,6 +1,6 @@
 # Gold Scenario Query Contexts
 
-Scenarios are grouped by query context:
+Scenarios are grouped by query context under `clickhouse/gold/dml/scenarios/`:
 
 - `team/`: team-centric and match-context scenarios (team-level outcomes, tactical profiles, and match dynamics)
 - `player/`: player-centric scenarios (individual impact, roles, and performance signatures)

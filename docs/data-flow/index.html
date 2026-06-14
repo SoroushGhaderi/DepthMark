@@ -888,7 +888,10 @@ python scripts/gold/load_clickhouse_gold.py
 
 # Or run gold parts individually:
 python scripts/gold/load_clickhouse_gold.py --part scenarios
-python scripts/gold/load_clickhouse_gold.py --part signals</pre>
+python scripts/gold/load_clickhouse_gold.py --part signals
+
+# Rebuild activations only (after signals are populated)
+python scripts/gold/activations/build_signal_activations.py</pre>
         </details>
         <details class="cmd-block">
             <summary>▸ Phase 3 — validate and sync serving catalogs</summary>
@@ -1353,6 +1356,7 @@ sequenceDiagram
             <pre>python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/gold/load_clickhouse_gold.py --part scenarios
 python scripts/gold/load_clickhouse_gold.py --part signals
+python scripts/gold/activations/build_signal_activations.py
 python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
 python scripts/gold/setup_clickhouse_gold.py --part signals</pre>
         </details>
@@ -1368,20 +1372,28 @@ graph TB
     CATALOGS["Active signal catalogs<br/>scripts/gold/signal/catalogs/*.md"] --> SCAN["Scan catalogs for active signals"]
     SCAN --> READ["Read row_identity fields per signal"]
     READ --> SIG_TABLES["gold_signals.sig_*<br/>344 tables"]
-    SIG_TABLES --> HASH["signal_instance_id<br/>SHA256(v1|signal_id|identity)"]
-    HASH --> PARSE["Parse entity / family / subfamily"]
-    PARSE --> CONTEXT["Copy fixture context fields"]
-    CONTEXT --> REBUILD["Full-table rebuild"]
-    REBUILD --> SERVE["gold.signal_activations"]
+    SIG_TABLES --> STAGE["gold.signal_activations_stage<br/>ephemeral build buffer"]
+    STAGE --> FINAL["signal_activation_final_insert.sql<br/>match-level summaries"]
+    FINAL --> SERVE["gold.signal_activations<br/>serving table"]
 
     style CATALOGS fill:#4a5570,stroke:#6b7a99,color:#fff
     style SIG_TABLES fill:#7d4fd4,stroke:#b47bff,color:#fff
+    style STAGE fill:#4a5570,stroke:#6b7a99,color:#fff
     style SERVE fill:#b83030,stroke:#f05f5a,color:#fff
         </div>
         <div class="callout note">
             <span class="callout-icon">🔑</span>
-            <span><strong>ADR 0006, 0011:</strong> Activation identity uses version prefix <code>v1</code> in the SHA-256 hash — this is a scheme version, not a signal definition version. Rebuilds are always full-table; there are no incremental or date-scoped activation loads.</span>
+            <span><strong>ADR 0006, 0011:</strong> Activation identity uses version prefix <code>v1</code> in the SHA-256 hash — this is a scheme version, not a signal definition version. Rebuilds are always full-table via <code>build_signal_activations.py</code>: stage rows in <code>gold.signal_activations_stage</code>, final insert from <code>clickhouse/gold/dml/activations/signal_activation_final_insert.sql</code>, then drop the stage table. <code>load_clickhouse_gold.py</code> skips activation rebuild when any signal SQL job fails.</span>
         </div>
+        <details class="cmd-block">
+            <summary>▸ Activation rebuild commands</summary>
+            <pre># After signals are loaded (or standalone)
+python scripts/gold/activations/build_signal_activations.py
+
+# Drop + recreate serving DDL, then rebuild
+clickhouse-client --multiquery &lt; clickhouse/gold/ddl/create_table_signal_activations.sql
+python scripts/gold/activations/build_signal_activations.py</pre>
+        </details>
     </div>
 </div>
 
@@ -1658,16 +1670,16 @@ sequenceDiagram
         <div class="mermaid" data-rendered="false">
 graph TB
     subgraph DOCKER["Docker Compose"]
-        subgraph CH["ClickHouse"]
+        subgraph CH["depthmark-clickhouse"]
             CH_HTTP[":8123 HTTP"]
             CH_NATIVE[":9000 native"]
             CH_DB["bronze + silver<br/>gold_scenarios + gold_signals + gold"]
         end
-        subgraph MONGO["MongoDB"]
+        subgraph MONGO["depthmark-mongodb"]
             M_PORT[":27017"]
             M_DB["orbit_content<br/>5 collections"]
         end
-        subgraph SCRAPER["Scraper container"]
+        subgraph SCRAPER["depthmark-scraper"]
             S_SCRIPTS["Python scripts"]
             S_DATA["data/fotmob/"]
             S_DLQ["data/dlq/"]
@@ -1709,9 +1721,9 @@ graph LR
             <details class="cmd-block">
                 <summary>▸ Setup commands</summary>
                 <pre>cp .env.example .env
-docker-compose -f docker/docker-compose.yml up -d
-python scripts/orchestration/setup_clickhouse.py
-python scripts/mongodb/init_indexes.py</pre>
+docker compose up -d
+docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py
+docker compose exec depthmark-scraper python scripts/mongodb/init_indexes.py</pre>
             </details>
         </div>
         <div class="diagram-card" style="margin-bottom:0">
@@ -1896,7 +1908,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         // Gold
         { title: 'Three Gold namespaces', section: 'gold', sectionLabel: 'Gold', keywords: 'gold_scenarios gold_signals gold signal_activations namespace' },
         { title: 'Gold SQL job execution', section: 'gold', sectionLabel: 'Gold', keywords: 'load_clickhouse_gold run_sql_job goldsqljob discover scenario signal' },
-        { title: 'Activation rebuild', section: 'gold', sectionLabel: 'Gold', keywords: 'build_signal_activations sha256 full table rebuild row_identity' },
+        { title: 'Activation rebuild', section: 'gold', sectionLabel: 'Gold', keywords: 'build_signal_activations signal_activations_stage signal_activation_final_insert sha256 full table rebuild row_identity' },
         // Signals
         { title: 'Signal lifecycle', section: 'signals', sectionLabel: 'Signals', keywords: 'sql ddl catalog md sync lifecycle four artifacts' },
         { title: 'Signal taxonomy', section: 'signals', sectionLabel: 'Signals', keywords: 'entity family subfamily match player team shooting creativity possession discipline goalkeeping' },
@@ -1909,7 +1921,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         { title: 'Failure recovery', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'recovery failure scraping bronze silver signal scenario activation catalog sync' },
         { title: 'Parallel scraping', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'threadpoolexecutor parallel fotmorchestrator concurrent matchscraper' },
         // Infrastructure
-        { title: 'Service layout', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'docker compose clickhouse mongodb scraper 8123 9000 27017' },
+        { title: 'Service layout', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'docker compose depthmark-clickhouse depthmark-mongodb depthmark-scraper depthmark_network 8123 9000 27017' },
         { title: 'Bootstrap sequence', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'setup_clickhouse init_indexes docker-compose first time setup ddl' },
         { title: 'Credential policy', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'adr 0005 depthmark_env local production passwords secrets ports' },
         // MongoDB

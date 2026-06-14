@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_possession_passing_passing_clinic
-  sql: clickhouse/gold/signal/sig_match_possession_passing_passing_clinic.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_passing_clinic.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_passing_clinic
@@ -29,7 +29,7 @@ Triggers when both sides sustain elite pass completion for the entire game, flag
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_possession_passing_passing_clinic.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_passing_clinic.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_passing_clinic`
 

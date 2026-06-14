@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_possession_passing_efficient_directness
-  sql: clickhouse/gold/signal/sig_team_possession_passing_efficient_directness.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_efficient_directness.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_efficient_directness
@@ -29,7 +29,7 @@ Triggers when a team generates high shot volume with low possession, indicating 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_possession_passing_efficient_directness.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_efficient_directness.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_efficient_directness`
 

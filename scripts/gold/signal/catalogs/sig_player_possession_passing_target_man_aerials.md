@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_target_man_aerials
-  sql: clickhouse/gold/signal/sig_player_possession_passing_target_man_aerials.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_target_man_aerials.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_target_man_aerials
@@ -34,7 +34,7 @@ Triggers when a forward wins at least 10 aerial duels, flagging target-man behav
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_target_man_aerials.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_target_man_aerials.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_target_man_aerials`
 

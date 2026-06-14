@@ -14,7 +14,7 @@ This document is intended for deep tactical/analytical reasoning work where desi
 
 This contract applies to:
 
-- `clickhouse/gold/signal/sig_*.sql`
+- `clickhouse/gold/dml/signals/*/sig_*.sql`
 - `scripts/gold/signal/catalogs/sig_*.md`
 - `scripts/gold/signal/catalogs/README.md`
 
@@ -91,7 +91,7 @@ All assets produced under this contract MUST conform to those rules.
 
 ## Production SQL Contract
 
-File: `clickhouse/gold/signal/sig_<name>.sql`
+File: `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql`
 
 1. SQL MUST target `gold_signals.sig_<name>` for signal output tables.
    Legacy `INSERT INTO gold.sig_<name>` files are translated by the generic
@@ -180,7 +180,7 @@ Additional rules:
      - triggered_side
    asset_paths:
      table: gold_signals.sig_<name>
-     sql: clickhouse/gold/signal/sig_<name>.sql
+     sql: clickhouse/gold/dml/signals/<entity>/sig_<name>.sql
      runner: scripts/gold/run_sql_job.py
    ---
    ```
@@ -208,7 +208,7 @@ Additional rules:
      and MUST be treated as an explicit migration decision.
 5. Asset paths SHOULD follow convention and MUST match actual package files:
    - table: `gold_signals.<signal_id>`
-   - SQL path: `clickhouse/gold/signal/<signal_id>.sql`
+   - SQL path: `clickhouse/gold/dml/signals/<entity>/<signal_id>.sql`
    - runner path: `scripts/gold/run_sql_job.py`
 6. Catalogs MUST reference SQL by path and MUST NOT embed full SQL bodies.
 7. `Reason` entries MUST explain analytical value (diagnostics, tactical interpretation, feature engineering, QA, or downstream modeling impact).

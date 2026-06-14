@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_clinical_bench_impact
-  sql: clickhouse/gold/signal/sig_team_shooting_goals_clinical_bench_impact.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_clinical_bench_impact.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_clinical_bench_impact
@@ -35,7 +35,7 @@ Detect matches where every triggered-team goal is scored by substitutes, isolati
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_shooting_goals_clinical_bench_impact.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_clinical_bench_impact.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_clinical_bench_impact`
 

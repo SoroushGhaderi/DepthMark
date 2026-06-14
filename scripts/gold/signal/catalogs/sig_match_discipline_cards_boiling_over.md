@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_boiling_over
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_boiling_over.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_boiling_over.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_boiling_over
@@ -31,7 +31,7 @@ Flags matches where discipline breaks down late, with at least four cards issued
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_boiling_over.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_boiling_over.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_boiling_over`
 

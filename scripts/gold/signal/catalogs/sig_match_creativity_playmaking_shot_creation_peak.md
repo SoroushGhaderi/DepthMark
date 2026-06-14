@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_shot_creation_peak
-  sql: clickhouse/gold/signal/sig_match_creativity_playmaking_shot_creation_peak.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_shot_creation_peak.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_creativity_playmaking_shot_creation_peak
@@ -42,7 +42,7 @@ then preserve bilateral playmaking and execution context per side.
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_shot_creation_peak.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_shot_creation_peak.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_shot_creation_peak`
 

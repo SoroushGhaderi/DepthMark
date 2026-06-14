@@ -267,9 +267,10 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
     if layer_name == "gold":
         candidate_dirs.extend(
             [
-                layer_dir / "create_table_signals" / "match",
-                layer_dir / "create_table_signals" / "player",
-                layer_dir / "create_table_signals" / "team",
+                layer_dir / "ddl" / "activations",
+                layer_dir / "ddl" / "signals" / "match",
+                layer_dir / "ddl" / "signals" / "player",
+                layer_dir / "ddl" / "signals" / "team",
             ]
         )
     sql_by_name: dict[str, Path] = {}

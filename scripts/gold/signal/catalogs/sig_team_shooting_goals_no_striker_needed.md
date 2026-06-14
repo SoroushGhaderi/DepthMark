@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_no_striker_needed
-  sql: clickhouse/gold/signal/sig_team_shooting_goals_no_striker_needed.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_no_striker_needed.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_no_striker_needed
@@ -35,7 +35,7 @@ Detect team-level high-scoring outputs where forwards are not required for finis
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_shooting_goals_no_striker_needed.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_no_striker_needed.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_no_striker_needed`
 

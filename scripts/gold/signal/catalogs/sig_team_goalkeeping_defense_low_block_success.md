@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_low_block_success
-  sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_low_block_success.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_low_block_success.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_low_block_success
@@ -38,7 +38,7 @@ Detect team-level low-block success profiles via very high interception volume i
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_low_block_success.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_low_block_success.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_low_block_success`
 

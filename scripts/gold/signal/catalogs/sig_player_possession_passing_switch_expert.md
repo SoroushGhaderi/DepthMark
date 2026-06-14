@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_switch_expert
-  sql: clickhouse/gold/signal/sig_player_possession_passing_switch_expert.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_switch_expert.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_switch_expert
@@ -33,7 +33,7 @@ Triggers when a player completes more than 5 successful switches of play, using 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_switch_expert.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_switch_expert.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_switch_expert`
 

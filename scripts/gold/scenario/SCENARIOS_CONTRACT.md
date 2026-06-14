@@ -6,7 +6,7 @@ This document defines the stable contract for Gold scenario jobs in DepthMark.
 
 This contract applies to:
 
-- `clickhouse/gold/scenario/{team,player}/scenario_*.sql`
+- `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
 - `scripts/gold/run_sql_job.py`
 - `src/services/gold/sql_jobs.py`
 - `scripts/gold/load_clickhouse_gold.py`
@@ -17,7 +17,7 @@ This contract applies to:
 Each scenario is a 3-part unit:
 
 1. SQL transformation file  
-   `clickhouse/gold/scenario/{team,player}/scenario_<name>.sql`
+   `clickhouse/gold/dml/scenarios/{team,player}/scenario_<name>.sql`
 2. Target table  
    `gold_scenarios.scenario_<name>`
 3. Catalog entry in  
@@ -60,7 +60,7 @@ All three parts are required for a production-ready scenario.
 
 `scripts/gold/load_clickhouse_gold.py` is the canonical layer runner.
 
-1. Executes base gold SQL files from `clickhouse/gold/*.sql`.
+1. Executes base gold DDL files from `clickhouse/gold/ddl/`.
 2. Scenario bulk execution is enabled through `--part scenarios` or `--part all`.
 3. Supports `--dry-run` for plan/preview mode.
 4. Runs `assert_gold_layer_contracts` after scenario and/or signal execution.
@@ -89,7 +89,7 @@ Minimum operational checks:
 ## Change Management Rules
 
 1. Any new scenario must update:
-   - `clickhouse/gold/01_create_scenario_tables.sql` (or active DDL file set)
+   - `clickhouse/gold/ddl/01_create_scenario_tables.sql` (or active DDL file set)
    - `scripts/gold/scenario/scenarios_catalog.md`
 2. Renaming/deleting a scenario requires coordinated changes to:
    - SQL file

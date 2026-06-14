@@ -14,8 +14,8 @@ This document is intended for routine implementation work where structure and co
 
 This contract applies to:
 
-- `clickhouse/gold/create_table_{entity}_{family}_{subfamily}.sql` (or active signal DDL set)
-- `clickhouse/gold/signal/sig_*.sql`
+- `clickhouse/gold/ddl/signals/{match,team,player}/create_table_{entity}_{family}_{subfamily}.sql` (or active signal DDL set)
+- `clickhouse/gold/dml/signals/*/sig_*.sql`
 - `scripts/gold/run_sql_job.py`
 - `src/services/gold/sql_jobs.py`
 - `scripts/gold/load_clickhouse_gold.py`
@@ -44,7 +44,7 @@ Operational compatibility:
 
 Each signal MUST ship as one 4-part package:
 
-1. SQL transform: `clickhouse/gold/signal/sig_<name>.sql`
+1. SQL transform: `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql`
 2. Target table: `gold_signals.sig_<name>`
 3. Catalog: `scripts/gold/signal/catalogs/sig_<name>.md`
 4. Catalog index entry in `scripts/gold/signal/catalogs/README.md`
@@ -77,7 +77,7 @@ No package is complete unless all 4 parts are present and consistent.
 
 `scripts/gold/load_clickhouse_gold.py` is the canonical orchestrator.
 
-1. MUST execute base Gold SQL from `clickhouse/gold/*.sql`.
+1. MUST execute base Gold DDL from `clickhouse/gold/ddl/`.
 2. MUST use the generic Gold SQL runner path for signal SQL jobs in sorted order.
 3. MUST NOT require one Python runner file per new signal.
 4. MUST support `--dry-run` plan mode.
@@ -111,8 +111,8 @@ If the commit cannot be created (for example permissions, conflicts, or policy c
 
 ### Completion Checklist (verify before committing)
 
-- [ ] `clickhouse/gold/signal/sig_<name>.sql` present and correct
-- [ ] `clickhouse/gold/create_table_{entity}_{family}_{subfamily}.sql` set updated with new table DDL
+- [ ] `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql` present and correct
+- [ ] `clickhouse/gold/ddl/signals/{match,team,player}/create_table_{entity}_{family}_{subfamily}.sql` set updated with new table DDL
 - [ ] `scripts/gold/signal/catalogs/sig_<name>.md` present and accurate
 - [ ] `scripts/gold/signal/catalogs/README.md` updated with new catalog entry
 - [ ] Validation gate passed (`--part signals` dry-run and full run)
@@ -124,7 +124,7 @@ If the commit cannot be created (for example permissions, conflicts, or policy c
 ```
 feat(signal): add sig_<name>
 
-- SQL: clickhouse/gold/signal/sig_<name>.sql
+- SQL: clickhouse/gold/dml/signals/<entity>/sig_<name>.sql
 - Table: gold_signals.sig_<name>
 - Runner: scripts/gold/run_sql_job.py
 - Catalog: scripts/gold/signal/catalogs/sig_<name>.md
@@ -145,7 +145,7 @@ Breaking: all downstream references to sig_<old_name> must be updated.
 See `docs/DEVELOPMENT_ARCHITECTURE.md` for migration notes.
 
 Changed:
-- clickhouse/gold/signal/sig_<old_name>.sql → sig_<new_name>.sql
+- clickhouse/gold/dml/signals/sig_<old_name>.sql → sig_<new_name>.sql
 - runners/sig_<old_name>.py → runners/sig_<new_name>.py
 - gold_signals.sig_<old_name> → gold_signals.sig_<new_name>
 - catalogs/sig_<old_name>.md → catalogs/sig_<new_name>.md

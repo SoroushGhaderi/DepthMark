@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_high_pressure_finish
-  sql: clickhouse/gold/signal/sig_match_shooting_goals_high_pressure_finish.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_pressure_finish.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_high_pressure_finish
@@ -31,7 +31,7 @@ Detect matches that turn into late two-sided shot pressure (10+ combined attempt
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_shooting_goals_high_pressure_finish.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_pressure_finish.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_high_pressure_finish`
 

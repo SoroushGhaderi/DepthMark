@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_possession_passing_vertical_imbalance
-  sql: clickhouse/gold/signal/sig_team_possession_passing_vertical_imbalance.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_vertical_imbalance.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_vertical_imbalance
@@ -29,7 +29,7 @@ Capture matches where a trailing team goes heavily direct (`>=60` long-ball atte
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_possession_passing_vertical_imbalance.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_vertical_imbalance.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_vertical_imbalance`
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_possession_passing_passing_fatigue_index
-  sql: clickhouse/gold/signal/sig_team_possession_passing_passing_fatigue_index.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_passing_fatigue_index.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_passing_fatigue_index
@@ -29,7 +29,7 @@ Triggers when a team's second-half pass volume is at least 30% lower than its fi
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_possession_passing_passing_fatigue_index.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_passing_fatigue_index.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_passing_fatigue_index`
 

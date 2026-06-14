@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_aerial_battleground
-  sql: clickhouse/gold/signal/sig_match_goalkeeping_defense_aerial_battleground.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_aerial_battleground.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_goalkeeping_defense_aerial_battleground
@@ -35,7 +35,7 @@ Detect finished matches where aerial contest intensity is extreme, then emit sid
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_goalkeeping_defense_aerial_battleground.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_aerial_battleground.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_aerial_battleground`
 

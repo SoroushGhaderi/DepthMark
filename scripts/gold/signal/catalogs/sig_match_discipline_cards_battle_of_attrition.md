@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_battle_of_attrition
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_battle_of_attrition.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_battle_of_attrition.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_battle_of_attrition
@@ -30,7 +30,7 @@ Flags high-friction matches where total whistle volume is extreme (35+ combined 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_battle_of_attrition.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_battle_of_attrition.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_battle_of_attrition`
 

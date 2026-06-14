@@ -3,6 +3,76 @@
 DepthMark runs on Docker Compose with ClickHouse, MongoDB, and an optional
 scraper container.
 
+## Quick Start
+
+```bash
+git clone <repository-url>
+cd DepthMark
+cp .env.example .env
+# edit .env and set FOTMOB_X_MAS_TOKEN, ClickHouse, and MongoDB values
+# keep DEPTHMARK_ENV=local only for the tracked local Docker workflow
+
+docker compose up -d
+docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
+```
+
+Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
+outside Docker, a valid `FOTMOB_X_MAS_TOKEN`, and ClickHouse and MongoDB
+credentials in `.env`.
+
+To start only ClickHouse:
+
+```bash
+docker compose -f docker/docker-compose.clickhouse.yml up -d
+docker compose -f docker/docker-compose.clickhouse.yml exec depthmark-clickhouse clickhouse-client
+```
+
+`docker/docker-compose.yml` is a compatibility shim that includes the root
+`docker-compose.yml`.
+
+## Docker Lifecycle
+
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose ps
+docker compose down
+docker compose down -v   # also removes volumes (destructive)
+```
+
+Optional scheduler profile:
+
+```bash
+docker compose --profile scheduler up -d
+```
+
+Run pipeline commands inside the scraper service (see
+[`orchestration.md`](orchestration.md) and
+[`../DEVELOPMENT_ARCHITECTURE.md`](../DEVELOPMENT_ARCHITECTURE.md) for the full
+command surface):
+
+```bash
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
+```
+
+## TouchDesk Integration
+
+TouchDesk (separate repo) connects to this stack read-only. Start DepthMark
+first, then run TouchDesk from its own `docker-compose.yml`:
+
+```bash
+cd ../DepthMark && docker compose up -d --build
+cd ../TouchDesk && docker compose up -d --build
+```
+
+TouchDesk `docker-compose.override.yml` joins `depthmark_network` for
+service-name access (`depthmark-clickhouse`, `depthmark-mongodb`). See the
+TouchDesk README for remote-host options.
+
+DepthMark does not call TouchDesk. TouchDesk reads `gold.*` / `gold_signals.*`
+from ClickHouse and the signal catalog from MongoDB.
+
 ## Services
 
 | Service | Image | Port | Purpose |
@@ -11,12 +81,16 @@ scraper container.
 | depthmark-mongodb | `mongo:8.0` | 27017 | Content catalog |
 | depthmark-scraper | Custom Python image | — | Runs pipeline scripts |
 
+**Network:** creates Docker network `depthmark_network` (fixed name). TouchDesk
+can join it optionally via `docker-compose.override.yml`.
+
 ## Docker Compose Files
 
 | File | Purpose |
 | --- | --- |
-| `docker/docker-compose.yml` | Full local stack (ClickHouse + MongoDB + scraper) |
-| `docker/docker-compose.clickhouse.yml` | ClickHouse only |
+| `docker-compose.yml` (repo root) | Canonical local stack (`depthmark-clickhouse`, `depthmark-mongodb`, `depthmark-scraper`) |
+| `docker/docker-compose.yml` | Compatibility shim that includes the root manifest |
+| `docker/docker-compose.clickhouse.yml` | ClickHouse only (`depthmark-clickhouse`) |
 
 ## Environment Configuration
 
@@ -56,7 +130,10 @@ python scripts/orchestration/setup_clickhouse.py
 Runs DDL in layer order:
 1. `clickhouse/bronze/00_create_database.sql` + 15 table DDLs
 2. `clickhouse/silver/ddl/00_create_database.sql` + 8 table DDLs
-3. `clickhouse/gold/00_create_database.sql` + scenario/signal/activation DDLs
+3. `clickhouse/gold/ddl/` — databases, scenario tables, signal table DDL under
+   `ddl/signals/{match,team,player}/`, and `ddl/create_table_signal_activations.sql`
+4. Activation stage DDL (`ddl/activations/`) is applied during activation rebuilds,
+   not during `setup_clickhouse.py`
 
 ## MongoDB Setup
 

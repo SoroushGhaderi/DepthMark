@@ -23,11 +23,13 @@ DepthMark currently supports FotMob only. Do not add generic multi-provider abst
 
 ## Important References
 
-- `README.md`: quick start, required configuration, and runbook.
-- `docs/DEVELOPMENT_ARCHITECTURE.md`: current architecture and canonical entry points.
+- `README.md`: project overview and documentation index.
+- `docs/README.md`: documentation map.
+- `docs/DEVELOPMENT_ARCHITECTURE.md`: architecture, canonical entry points, and runbook.
+- `docs/data-flow/infrastructure.md`: Docker setup, quick start, and environment configuration.
 - `docs/SCRIPTS_CONTRACT.md`: authoritative rules for scripts, script-oriented helpers, and application services behind script entry points.
 - `scripts/README.md`: script layout and command surface.
-- `clickhouse/gold/signal/README.md` and `scripts/gold/signal/catalogs/README.md`: signal SQL/catalog guidance.
+- `clickhouse/gold/dml/signals/README.md` and `scripts/gold/signal/catalogs/README.md`: signal SQL/catalog guidance.
 
 If these files conflict with code, resolve the mismatch intentionally and mention it in the change summary.
 
@@ -98,7 +100,7 @@ For files under `scripts/`, script-oriented helpers under `src/`, and applicatio
 ## SQL And Catalog Work
 
 - Silver SQL lives under `clickhouse/silver/ddl` and `clickhouse/silver/dml`.
-- Gold scenario/signal SQL lives under `clickhouse/gold/`.
+- Gold scenario/signal SQL lives under `clickhouse/gold/dml/`; Gold DDL under `clickhouse/gold/ddl/`.
 - New or changed scenario work should update SQL, runner code, DDL/contracts, and the relevant catalog docs.
 - Scenario SQL targets `gold_scenarios.scenario_*`; do not add legacy
   `gold.scenario_*` targets.

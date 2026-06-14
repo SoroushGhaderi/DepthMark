@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_creative_hub
-  sql: clickhouse/gold/signal/sig_player_possession_passing_creative_hub.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_hub.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_creative_hub
@@ -32,7 +32,7 @@ Triggers when a player creates more than 5 chances (key passes) in a single matc
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_creative_hub.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_hub.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_creative_hub`
 

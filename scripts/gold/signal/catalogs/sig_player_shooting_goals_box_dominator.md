@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_box_dominator
-  sql: clickhouse/gold/signal/sig_player_shooting_goals_box_dominator.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_box_dominator.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_box_dominator
@@ -34,7 +34,7 @@ Flags match-player events where a player combines elite penalty-area presence (`
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_shooting_goals_box_dominator.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_box_dominator.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_box_dominator`
 

@@ -42,8 +42,8 @@ the default Gold layer loader.
 
 Bulk scenario execution may be re-enabled only after a change validates:
 
-- `clickhouse/gold/00_create_database.sql` creates `gold_scenarios`;
-- `clickhouse/gold/01_create_scenario_tables.sql` creates every target table;
+- `clickhouse/gold/ddl/00_create_database.sql` creates `gold_scenarios`;
+- `clickhouse/gold/ddl/01_create_scenario_tables.sql` creates every target table;
 - every discovered scenario SQL file resolves to a `gold_scenarios.scenario_*`
   target;
 - at least one representative team scenario and one representative player

@@ -27,8 +27,12 @@ SIGNAL_ID_VERSION = "v1"
 MATCH_SUMMARY_ID_VERSION = "v1"
 STAGE_TABLE = "signal_activations_stage"
 SAFE_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
-STAGE_TABLE_SQL_FILE = GOLD_SQL_DIR / "activations" / "create_table_signal_activations_stage.sql"
-FINAL_INSERT_SQL_FILE = GOLD_SQL_DIR / "activations" / "signal_activation_final_insert.sql"
+STAGE_TABLE_SQL_FILE = (
+    GOLD_SQL_DIR / "ddl" / "activations" / "create_table_signal_activations_stage.sql"
+)
+FINAL_INSERT_SQL_FILE = (
+    GOLD_SQL_DIR / "dml" / "activations" / "signal_activation_final_insert.sql"
+)
 
 
 @dataclass(frozen=True)

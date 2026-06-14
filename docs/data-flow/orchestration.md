@@ -130,5 +130,6 @@ python scripts/health_check.py --json
 | Bronze load fails | Re-run `load_clickhouse.py --date <date>` |
 | Silver SQL fails | Fix SQL, re-run `silver/load_clickhouse.py` |
 | Gold SQL fails | Re-run `run_sql_job.py --kind signal --id <id>` |
-| Activation fails | Re-run `build_signal_activations.py` |
+| Activation fails | Re-run `build_signal_activations.py` (requires populated `gold_signals.sig_*`) |
+| Signal failures skipped activations | Fix signals, rerun `load_clickhouse_gold.py --part signals`, or run `build_signal_activations.py` |
 | MongoDB sync fails | Re-run `sync_signal_catalogs.py` |

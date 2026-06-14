@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_one_sided_discipline
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_one_sided_discipline.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_one_sided_discipline.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_one_sided_discipline
@@ -32,7 +32,7 @@ Flags matches with extreme disciplinary asymmetry, where one side accumulates at
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_one_sided_discipline.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_one_sided_discipline.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_one_sided_discipline`
 

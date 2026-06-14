@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_possession_passing_press_resistance
-  sql: clickhouse/gold/signal/sig_team_possession_passing_press_resistance.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_press_resistance.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_press_resistance
@@ -34,7 +34,7 @@ Triggers when a team keeps pass accuracy above 85% under a high-press proxy from
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_possession_passing_press_resistance.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_press_resistance.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_press_resistance`
 

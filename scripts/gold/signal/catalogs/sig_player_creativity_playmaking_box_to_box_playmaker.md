@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker
-  sql: clickhouse/gold/signal/sig_player_creativity_playmaking_box_to_box_playmaker.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_box_to_box_playmaker.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_box_to_box_playmaker
@@ -54,7 +54,7 @@ ball-winning in the same finished match.
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_box_to_box_playmaker.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_box_to_box_playmaker.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker`
 

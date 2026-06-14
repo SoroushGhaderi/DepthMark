@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_double_red_drama
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_double_red_drama.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_double_red_drama.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_double_red_drama
@@ -30,7 +30,7 @@ Flags bilateral dismissal matches where both teams lose at least one player to a
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_double_red_drama.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_double_red_drama.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_double_red_drama`
 

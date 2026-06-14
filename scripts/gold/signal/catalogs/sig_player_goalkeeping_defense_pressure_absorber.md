@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_pressure_absorber
-  sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_pressure_absorber.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_pressure_absorber.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_pressure_absorber
@@ -48,7 +48,7 @@ on the ball (`touches > 50`), and avoids possession losses via a conservative tu
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_pressure_absorber.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_pressure_absorber.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_pressure_absorber`
 

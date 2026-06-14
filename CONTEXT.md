@@ -32,17 +32,17 @@ ClickHouse namespaces:
 | `gold_signals.*` | Signal outputs at match, team, or player grain | 344 `sig_*` tables |
 | `gold.*` | Shared activation serving metadata | `signal_activations` |
 
-Gold setup DDL lives under `clickhouse/gold/`:
+Gold setup DDL lives under `clickhouse/gold/ddl/`; transforms live under
+`clickhouse/gold/dml/`:
 
-- `00_create_database.sql`
-- `01_create_scenario_tables.sql`
-- `create_table_{entity}_{family}_{subfamily}.sql`
-- `create_table_signal_activations.sql`
-
-Gold transforms live under:
-
-- `clickhouse/gold/scenario/{team,player}/scenario_*.sql`
-- `clickhouse/gold/signal/sig_*.sql`
+- `ddl/00_create_database.sql`
+- `ddl/01_create_scenario_tables.sql`
+- `ddl/create_table_signal_activations.sql`
+- `ddl/signals/{match,team,player}/create_table_{entity}_{family}_{subfamily}.sql`
+- `ddl/activations/create_table_signal_activations_stage.sql`
+- `dml/scenarios/{team,player}/scenario_*.sql`
+- `dml/signals/{match,team,player}/sig_*.sql`
+- `dml/activations/signal_activation_final_insert.sql`
 
 Signal metadata is authored in `scripts/gold/signal/catalogs/*.md`. Scenario
 narrative docs live in `scripts/gold/scenario/scenarios_catalog.md`.

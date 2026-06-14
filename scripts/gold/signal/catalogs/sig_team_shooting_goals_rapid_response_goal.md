@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_rapid_response_goal
-  sql: clickhouse/gold/signal/sig_team_shooting_goals_rapid_response_goal.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_rapid_response_goal.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_shooting_goals_rapid_response_goal
@@ -33,7 +33,7 @@ Detect team-level bounce-back scoring where a side responds immediately after co
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_shooting_goals_rapid_response_goal.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_rapid_response_goal.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_shooting_goals_rapid_response_goal`
 

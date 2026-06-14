@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_foul_parity
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_foul_parity.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_foul_parity.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_foul_parity
@@ -29,7 +29,7 @@ Flags finished matches where foul volume is perfectly balanced between sides, th
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_foul_parity.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_foul_parity.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_foul_parity`
 

@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_early_bath
-  sql: clickhouse/gold/signal/sig_player_discipline_cards_early_bath.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_early_bath.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_early_bath
@@ -33,7 +33,7 @@ Triggers when a player is sent off in the opening 20 minutes, flagging severe ea
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_discipline_cards_early_bath.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_early_bath.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_early_bath`
 

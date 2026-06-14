@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_volume_crosser
-  sql: clickhouse/gold/signal/sig_player_possession_passing_volume_crosser.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_volume_crosser.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_volume_crosser
@@ -32,7 +32,7 @@ Triggers when a player attempts at least 15 crosses in a single match, identifyi
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_volume_crosser.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_volume_crosser.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_volume_crosser`
 

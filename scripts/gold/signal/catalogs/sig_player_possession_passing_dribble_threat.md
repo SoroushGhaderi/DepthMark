@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_dribble_threat
-  sql: clickhouse/gold/signal/sig_player_possession_passing_dribble_threat.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_dribble_threat.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_dribble_threat
@@ -33,7 +33,7 @@ Triggers when a player completes more than 5 successful dribbles in a single mat
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_dribble_threat.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_dribble_threat.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_dribble_threat`
 

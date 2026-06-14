@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_final_third_engine
-  sql: clickhouse/gold/signal/sig_player_possession_passing_final_third_engine.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_final_third_engine.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_final_third_engine
@@ -33,7 +33,7 @@ Triggers when a player records at least 20 passes into the final third in a sing
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_final_third_engine.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_final_third_engine.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_final_third_engine`
 

@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_midfield_workhorse
-  sql: clickhouse/gold/signal/sig_player_possession_passing_midfield_workhorse.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_midfield_workhorse.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_midfield_workhorse
@@ -35,7 +35,7 @@ Triggers when a midfielder combines high-volume on-ball involvement with strong 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_midfield_workhorse.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_midfield_workhorse.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_midfield_workhorse`
 

@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_assist_hat_trick
-  sql: clickhouse/gold/signal/sig_player_creativity_playmaking_assist_hat_trick.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_assist_hat_trick.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_assist_hat_trick
@@ -41,7 +41,7 @@ Detect player-level playmaking performances where a single player records an ass
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_assist_hat_trick.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_assist_hat_trick.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_assist_hat_trick`
 

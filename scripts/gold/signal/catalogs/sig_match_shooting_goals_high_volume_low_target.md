@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_high_volume_low_target
-  sql: clickhouse/gold/signal/sig_match_shooting_goals_high_volume_low_target.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_volume_low_target.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_high_volume_low_target
@@ -30,7 +30,7 @@ Identify chaotic, low-precision matches where total shooting volume is very high
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_shooting_goals_high_volume_low_target.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_volume_low_target.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_high_volume_low_target`
 

@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_penalty_conceder
-  sql: clickhouse/gold/signal/sig_player_discipline_cards_penalty_conceder.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_penalty_conceder.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_penalty_conceder
@@ -34,7 +34,7 @@ Flags players whose foul-related card events align with opponent penalty awards,
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_discipline_cards_penalty_conceder.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_penalty_conceder.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_penalty_conceder`
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency
-  sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_clean_sheet_efficiency
@@ -43,7 +43,7 @@ faced), then retain bilateral defensive workload and control context for interpr
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency`
 

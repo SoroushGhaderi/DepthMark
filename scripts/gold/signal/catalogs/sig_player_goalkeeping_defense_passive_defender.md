@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_passive_defender
-  sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_passive_defender.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_passive_defender.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_passive_defender
@@ -42,7 +42,7 @@ Flags full-match defender appearances with no tackles won and no interceptions u
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_passive_defender.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_passive_defender.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_passive_defender`
 

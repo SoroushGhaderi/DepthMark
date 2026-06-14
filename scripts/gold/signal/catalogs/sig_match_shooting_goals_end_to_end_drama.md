@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_end_to_end_drama
-  sql: clickhouse/gold/signal/sig_match_shooting_goals_end_to_end_drama.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_end_to_end_drama.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_end_to_end_drama
@@ -35,7 +35,7 @@ Flag high-volatility matches where each side scores in both halves, then expose 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_shooting_goals_end_to_end_drama.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_end_to_end_drama.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_end_to_end_drama`
 

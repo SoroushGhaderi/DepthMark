@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_creative_monopoly
-  sql: clickhouse/gold/signal/sig_player_possession_passing_creative_monopoly.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_monopoly.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_creative_monopoly
@@ -33,7 +33,7 @@ Triggers when a player creates at least 50% of their team's total chances in a s
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_creative_monopoly.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_monopoly.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_creative_monopoly`
 
