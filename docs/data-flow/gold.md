@@ -84,7 +84,7 @@ python scripts/gold/run_sql_job.py --kind signal --family shooting_goals
 python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance
 ```
 
-Job discovery uses `GoldSqlJob` in `src/services/gold/sql_jobs.py`:
+Job discovery uses `GoldSqlJob` in `src/services/gold/gold_dml_runner.py`:
 - Files prefixed `sig_*.sql` → signal jobs
 - Files prefixed `scenario_*.sql` → scenario jobs
 - Selection by `--id`, `--entity`, `--family`, or `--kind`

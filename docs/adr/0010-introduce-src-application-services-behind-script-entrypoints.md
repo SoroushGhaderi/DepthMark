@@ -53,7 +53,7 @@ table derivations. Those remain in versioned ClickHouse SQL unless a later ADR
 grants a narrow exception.
 
 Shared execution infrastructure (job discovery, resolution, execution) lives in
-`src/services/gold/sql_jobs.py`, extracted from the former
+`src/services/gold/gold_dml_runner.py`, extracted from the former
 `scripts/gold/sql_jobs.py`. This module is imported by both `GoldService` and the
 standalone `run_sql_job.py` entry point.
 
@@ -81,7 +81,7 @@ test friction while preserving SQL ownership for analytical transformations.
 |---------|------|---------|
 | `GoldService` | `src/services/gold/fotmob_gold_service.py` | `FotMobGoldProcessor`, `FotMobGoldStorage`, `_selected_job_groups`, `_run_sql_jobs`, `_run_selected_jobs`, `_run_signal_activation_builder` |
 | `SilverService` | `src/services/silver/fotmob_silver_service.py` | `_load_sql_dirs`, `_load_jobs`, `_run_load_sql`, `_run_load_jobs` |
-| `sql_jobs` | `src/services/gold/sql_jobs.py` | Moved from `scripts/gold/sql_jobs.py` |
+| `gold_dml_runner` | `src/services/gold/gold_dml_runner.py` | Moved from `scripts/gold/sql_jobs.py` |
 
 Service result dataclasses (`GoldRunResult`, `SilverRunResult`) replace ad-hoc
 tuple returns and give scripts structured data for alerting and exit-code

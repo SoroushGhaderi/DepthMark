@@ -66,7 +66,7 @@ Current inventory: 48 matching SQL transforms.
 ## Signal Scripts
 
 Signal SQL jobs are discovered and executed through `scripts/gold/run_sql_job.py`
-and shared helpers in `src/services/gold/sql_jobs.py`. Do not add handwritten
+and shared helpers in `src/services/gold/gold_dml_runner.py`. Do not add handwritten
 per-signal runner files. Use `--id` for one exact signal; use `--entity` or
 `--family` as separate signal batch selectors such as `--entity player` or
 `--family shooting_goals`.
