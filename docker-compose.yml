@@ -1,0 +1,165 @@
+# DepthMark — standalone local development stack.
+# TouchDesk (separate repo) reads ClickHouse/MongoDB via published host ports or a shared Docker network.
+# Production: deploy this stack on the DepthMark server; expose ClickHouse/MongoDB to TouchDesk over the network.
+
+name: depthmark
+
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: depthmark_mongodb
+    ports:
+      - "${MONGODB_PUBLISH_PORT:-27017}:27017"
+    environment:
+      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-orbit_admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-orbit_pass}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-orbit_content}
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--username",
+          "${MONGODB_USER:-orbit_admin}",
+          "--password",
+          "${MONGODB_PASSWORD:-orbit_pass}",
+          "--authenticationDatabase",
+          "admin",
+          "--eval",
+          "db.adminCommand('ping').ok",
+        ]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - depthmark_network
+    restart: unless-stopped
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24
+    container_name: depthmark_clickhouse
+    ports:
+      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
+      - "${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    environment:
+      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-fotmob}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - depthmark_network
+    restart: unless-stopped
+
+  scraper:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: depthmark_scraper
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config.yaml:/app/config.yaml:ro
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts
+      - ./src:/app/src
+      - ./credentials.json:/app/credentials.json:ro
+      - ./clickhouse:/app/clickhouse:ro
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: /app
+      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
+      HEADLESS: "true"
+      CHROME_BIN: /usr/bin/chromium
+      CHROMEDRIVER_PATH: /usr/bin/chromedriver
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
+      CLICKHOUSE_DB_FOTMOB: ${CLICKHOUSE_DB:-fotmob}
+      MONGODB_HOST: mongodb
+      MONGODB_PORT: "27017"
+      MONGODB_USER: ${MONGODB_USER:-orbit_admin}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD:-orbit_pass}
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-orbit_content}
+      MONGODB_AUTH_SOURCE: ${MONGODB_AUTH_SOURCE:-admin}
+      LOG_LEVEL: INFO
+      LOG_DIR: /app/logs
+    env_file:
+      - .env
+    networks:
+      - depthmark_network
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 4G
+        reservations:
+          cpus: "2.0"
+          memory: 2G
+    restart: unless-stopped
+    command: ["tail", "-f", "/dev/null"]
+    user: appuser
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: depthmark_scheduler
+    profiles:
+      - scheduler
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./config:/app/config:ro
+      - ./scripts:/app/scripts
+      - ./crontab:/etc/cron.d/scraper-cron:ro
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: /app
+      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
+      HEADLESS: "true"
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
+    env_file:
+      - .env
+    networks:
+      - depthmark_network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+  clickhouse_data:
+  clickhouse_logs:
+
+networks:
+  depthmark_network:
+    name: depthmark_network
+    driver: bridge
