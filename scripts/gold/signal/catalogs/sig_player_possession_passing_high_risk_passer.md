@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_possession_passing_high_risk_passer
-  sql: clickhouse/gold/signal/sig_player_possession_passing_high_risk_passer.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_high_risk_passer.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_possession_passing_high_risk_passer
@@ -37,7 +37,7 @@ Triggers when a player combines low passing efficiency with elite chance quality
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_possession_passing_high_risk_passer.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_high_risk_passer.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_possession_passing_high_risk_passer`
 

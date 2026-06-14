@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge
-  sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_tackle_volume_surge.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_tackle_volume_surge.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_tackle_volume_surge
@@ -33,7 +33,7 @@ Detects team-level defensive intensity matches where a side produces extreme suc
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_tackle_volume_surge.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_tackle_volume_surge.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge`
 

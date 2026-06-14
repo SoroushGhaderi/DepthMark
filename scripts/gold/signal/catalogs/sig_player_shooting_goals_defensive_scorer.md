@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_defensive_scorer
-  sql: clickhouse/gold/signal/sig_player_shooting_goals_defensive_scorer.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_defensive_scorer.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_defensive_scorer
@@ -35,7 +35,7 @@ Flags center backs who score from dead-ball attacking phases (corner or set-piec
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_shooting_goals_defensive_scorer.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_defensive_scorer.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_defensive_scorer`
 

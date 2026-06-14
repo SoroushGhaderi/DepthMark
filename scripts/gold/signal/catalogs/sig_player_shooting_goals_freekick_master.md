@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_freekick_master
-  sql: clickhouse/gold/signal/sig_player_shooting_goals_freekick_master.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_freekick_master.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_freekick_master
@@ -39,7 +39,7 @@ Detects match-player performances where a player scores directly from a free kic
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_shooting_goals_freekick_master.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_freekick_master.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_freekick_master`
 

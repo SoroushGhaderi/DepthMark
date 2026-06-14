@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_possession_passing_counter_vs_bus
-  sql: clickhouse/gold/signal/sig_match_possession_passing_counter_vs_bus.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_counter_vs_bus.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_counter_vs_bus
@@ -31,7 +31,7 @@ Triggers when a match shows an extreme territorial split: one side monopolizes p
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_possession_passing_counter_vs_bus.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_counter_vs_bus.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_counter_vs_bus`
 

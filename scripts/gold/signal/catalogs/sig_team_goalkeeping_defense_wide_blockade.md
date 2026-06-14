@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_wide_blockade
-  sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_wide_blockade.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_wide_blockade.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_wide_blockade
@@ -41,7 +41,7 @@ Detect team-level wide defensive suppression performances where a side faces hea
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_wide_blockade.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_wide_blockade.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_wide_blockade`
 

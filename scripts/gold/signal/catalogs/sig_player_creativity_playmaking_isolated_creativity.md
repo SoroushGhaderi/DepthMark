@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_isolated_creativity
-  sql: clickhouse/gold/signal/sig_player_creativity_playmaking_isolated_creativity.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_isolated_creativity.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_isolated_creativity
@@ -37,7 +37,7 @@ Detect player performances where one creator carries at least half of a team's k
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_isolated_creativity.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_isolated_creativity.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_isolated_creativity`
 

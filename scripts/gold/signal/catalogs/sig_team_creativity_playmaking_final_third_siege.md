@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_final_third_siege
-  sql: clickhouse/gold/signal/sig_team_creativity_playmaking_final_third_siege.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_final_third_siege.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_final_third_siege
@@ -46,7 +46,7 @@ final third in a single finished match.
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_final_third_siege.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_final_third_siege.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_final_third_siege`
 

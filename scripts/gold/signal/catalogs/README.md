@@ -20,7 +20,7 @@ Common optional fields include `headline` and `trigger`.
 Asset paths are explicit in each catalog:
 
 - Target table: `gold_signals.{signal_id}`
-- SQL path: `clickhouse/gold/signal/{signal_id}.sql`
+- SQL path: `clickhouse/gold/dml/signals/{entity}/{signal_id}.sql`
 - Runner path: `scripts/gold/run_sql_job.py`
 
 The MongoDB sync embeds the referenced SQL and shared generic runner file

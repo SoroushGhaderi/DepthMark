@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_possession_passing_possession_without_purpose
-  sql: clickhouse/gold/signal/sig_team_possession_passing_possession_without_purpose.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_possession_without_purpose.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_possession_passing_possession_without_purpose
@@ -29,7 +29,7 @@ A team dominates possession (>65%) yet generates fewer than 2 shots on target ac
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_possession_passing_possession_without_purpose.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_possession_without_purpose.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_possession_passing_possession_without_purpose`
 

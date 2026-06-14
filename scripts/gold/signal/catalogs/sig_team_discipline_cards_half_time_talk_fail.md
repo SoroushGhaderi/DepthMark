@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_half_time_talk_fail
-  sql: clickhouse/gold/signal/sig_team_discipline_cards_half_time_talk_fail.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_half_time_talk_fail
@@ -32,7 +32,7 @@ Flags team-match performances where a team collects three or more yellow cards i
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_discipline_cards_half_time_talk_fail.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_half_time_talk_fail`
 

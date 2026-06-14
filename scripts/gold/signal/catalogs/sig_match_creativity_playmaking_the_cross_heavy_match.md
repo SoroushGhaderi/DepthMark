@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match
-  sql: clickhouse/gold/signal/sig_match_creativity_playmaking_the_cross_heavy_match.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_the_cross_heavy_match.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_creativity_playmaking_the_cross_heavy_match
@@ -45,7 +45,7 @@ then preserve bilateral crossing quality and creation context at match-team grai
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_creativity_playmaking_the_cross_heavy_match.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_the_cross_heavy_match.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match`
 

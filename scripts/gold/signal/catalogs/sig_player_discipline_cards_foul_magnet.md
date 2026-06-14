@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_foul_magnet
-  sql: clickhouse/gold/signal/sig_player_discipline_cards_foul_magnet.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_foul_magnet.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_foul_magnet
@@ -33,7 +33,7 @@ Flags players who are fouled six or more times in a match, surfacing high-contac
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_discipline_cards_foul_magnet.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_foul_magnet.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_foul_magnet`
 

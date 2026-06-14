@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_midfield_engine_vision
-  sql: clickhouse/gold/signal/sig_team_creativity_playmaking_midfield_engine_vision.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_midfield_engine_vision.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_creativity_playmaking_midfield_engine_vision
@@ -44,7 +44,7 @@ then preserve bilateral context for chance quality, passing execution, and attac
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_creativity_playmaking_midfield_engine_vision.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_midfield_engine_vision.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_midfield_engine_vision`
 

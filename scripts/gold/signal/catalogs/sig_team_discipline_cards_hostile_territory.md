@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_hostile_territory
-  sql: clickhouse/gold/signal/sig_team_discipline_cards_hostile_territory.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_hostile_territory.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_hostile_territory
@@ -32,7 +32,7 @@ Flags team-match performances where disciplinary events outnumber on-target shot
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_discipline_cards_hostile_territory.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_hostile_territory.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_hostile_territory`
 

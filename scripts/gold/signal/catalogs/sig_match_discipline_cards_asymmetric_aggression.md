@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_asymmetric_aggression
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_asymmetric_aggression.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_asymmetric_aggression.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_asymmetric_aggression
@@ -33,7 +33,7 @@ Flags matches where physical contact burden is heavily one-sided, but disciplina
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_asymmetric_aggression.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_asymmetric_aggression.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_asymmetric_aggression`
 

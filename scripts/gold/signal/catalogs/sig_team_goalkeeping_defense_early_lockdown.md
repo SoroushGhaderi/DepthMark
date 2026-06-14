@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_early_lockdown
-  sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_early_lockdown.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_early_lockdown.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_early_lockdown
@@ -43,7 +43,7 @@ through minute 20, then preserve bilateral early-window, defending, control, and
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_early_lockdown.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_early_lockdown.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_early_lockdown`
 

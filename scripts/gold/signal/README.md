@@ -36,11 +36,15 @@ contract. Do not add in-place `ALTER TABLE` migration statements for
 
 Assets:
 
-- DDL: `clickhouse/gold/create_table_signal_activations.sql`
+- Serving DDL: `clickhouse/gold/ddl/create_table_signal_activations.sql`
+- Stage DDL: `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`
+- Final insert SQL: `clickhouse/gold/dml/activations/signal_activation_final_insert.sql`
 - Runner: `scripts/gold/activations/build_signal_activations.py`
 
 The activation builder rebuilds `gold.signal_activations` from all active signal
-catalogs and source signal tables. The serving table includes:
+catalogs and source signal tables. During the rebuild it briefly materializes
+ephemeral `gold.signal_activations_stage`, then drops that table after the
+serving table is populated. The serving table includes:
 
 - stable identity and signal catalog metadata
 - common fixture/team/player context when present

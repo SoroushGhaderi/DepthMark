@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_basketball_match
-  sql: clickhouse/gold/signal/sig_match_shooting_goals_basketball_match.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_basketball_match.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_basketball_match
@@ -30,7 +30,7 @@ Flag end-to-end matches where both sides sustain very high shot volume (20+ each
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_shooting_goals_basketball_match.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_basketball_match.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_basketball_match`
 

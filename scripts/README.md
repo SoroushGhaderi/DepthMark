@@ -60,7 +60,7 @@ Scenario standards are defined in `scripts/gold/scenario/SCENARIOS_CONTRACT.md`.
 
 Current inventory: 48 matching SQL transforms.
 
-- SQL files: `clickhouse/gold/scenario/{team,player}/scenario_*.sql`
+- SQL files: `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
 - Catalog: `scripts/gold/scenario/scenarios_catalog.md`
 
 ## Signal Scripts
@@ -72,11 +72,15 @@ per-signal runner files. Use `--id` for one exact signal; use `--entity` or
 `--family shooting_goals`.
 After successful signal SQL execution, the loader runs `scripts/gold/activations/build_signal_activations.py`
 to populate deterministic per-match activation IDs in `gold.signal_activations`.
-The activation ID key uses each signal catalog `row_identity` definition.
+The builder stages rows in ephemeral `gold.signal_activations_stage`, then runs
+`clickhouse/gold/dml/activations/signal_activation_final_insert.sql` to write the
+serving table. Signal SQL failures skip activation rebuild until signals succeed
+or the builder is rerun manually. The activation ID key uses each signal catalog
+`row_identity` definition.
 
 Current inventory: 344 matching SQL transforms and 344 matching markdown catalogs.
 
-- SQL files: `clickhouse/gold/signal/sig_*.sql`
+- SQL files: `clickhouse/gold/dml/signals/*/sig_*.sql`
 - Contracts: `scripts/gold/signal/contracts/`
 
 ## Signal Catalogs

@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_instant_impact_red
-  sql: clickhouse/gold/signal/sig_player_discipline_cards_instant_impact_red.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_instant_impact_red.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_discipline_cards_instant_impact_red
@@ -34,7 +34,7 @@ Flags substitute players dismissed within 10 minutes of entering, surfacing imme
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_discipline_cards_instant_impact_red.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_instant_impact_red.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_discipline_cards_instant_impact_red`
 

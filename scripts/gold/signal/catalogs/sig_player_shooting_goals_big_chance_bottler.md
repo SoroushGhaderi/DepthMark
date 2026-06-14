@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_big_chance_bottler
-  sql: clickhouse/gold/signal/sig_player_shooting_goals_big_chance_bottler.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_big_chance_bottler.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_big_chance_bottler
@@ -35,7 +35,7 @@ Flags players who miss at least three big chances in one finished match, surfaci
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_shooting_goals_big_chance_bottler.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_big_chance_bottler.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_big_chance_bottler`
 

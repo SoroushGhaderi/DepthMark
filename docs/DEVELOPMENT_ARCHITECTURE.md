@@ -63,7 +63,10 @@ development. See
 
 ## Canonical Command Surface
 
-Use these paths for documentation, automation, and daily operations.
+Use these paths for documentation, automation, and daily operations. When using
+the local Docker stack, prefix commands with
+`docker compose exec depthmark-scraper` (see
+`docs/data-flow/infrastructure.md` for setup and lifecycle).
 
 ### Setup
 
@@ -99,6 +102,8 @@ python scripts/gold/load_clickhouse_gold.py
 python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
 python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
+python scripts/gold/activations/build_signal_activations.py
+python scripts/gold/activations/build_signal_activations.py --dry-run
 python scripts/gold/run_sql_job.py --dry-run
 python scripts/gold/run_sql_job.py --kind signal --dry-run
 python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
@@ -174,21 +179,33 @@ clickhouse/
     dml/
       01_*.sql ... 08_*.sql
   gold/
-    00_create_database.sql
-    01_create_scenario_tables.sql
-    create_table_{entity}_{family}_{subfamily}.sql
-    scenario/
-      team/scenario_*.sql
-      player/scenario_*.sql
-    signal/
-      sig_*.sql
+    ddl/
+      00_create_database.sql
+      01_create_scenario_tables.sql
+      create_table_signal_activations.sql
+      signals/
+        match/create_table_match_*.sql
+        team/create_table_team_*.sql
+        player/create_table_player_*.sql
+      activations/
+        create_table_signal_activations_stage.sql
+    dml/
+      scenarios/
+        team/scenario_*.sql
+        player/scenario_*.sql
+      signals/
+        match/sig_match_*.sql
+        team/sig_team_*.sql
+        player/sig_player_*.sql
+      activations/
+        signal_activation_final_insert.sql
 ```
 
 Current Gold inventory:
 
-- 48 scenario SQL transforms in `clickhouse/gold/scenario/{team,player}/`
+- 48 scenario SQL transforms in `clickhouse/gold/dml/scenarios/{team,player}/`
   (23 team/match-grain, 25 player-grain)
-- 344 signal SQL transforms in `clickhouse/gold/signal/`
+- 344 signal SQL transforms in `clickhouse/gold/dml/signals/{match,team,player}/`
 - 344 signal catalog markdown files in `scripts/gold/signal/catalogs/`
 - 1 shared activation serving table in `gold.signal_activations`
 
@@ -266,8 +283,8 @@ DepthMark materializes deterministic signal activation IDs into each
 
 Creation flow:
 
-1. DDL creates the activation table from
-   `clickhouse/gold/create_table_signal_activations.sql`.
+1. DDL creates the activation serving table from
+   `clickhouse/gold/ddl/create_table_signal_activations.sql`.
 2. Gold signal SQL jobs populate `gold_signals.sig_*` tables. Signal table DDL
    defines `signal_instance_id` with a deterministic `DEFAULT` expression based
    on the catalog `row_identity`, so existing signal INSERT SQL keeps its stable
@@ -276,7 +293,12 @@ Creation flow:
    `signal_instance_id` column in place.
 3. `scripts/gold/activations/build_signal_activations.py` scans active signal
    catalogs and reads each catalog `row_identity`.
-4. The script rebuilds one activation serving row per signal output row with:
+4. The builder stages one row per signal output in ephemeral
+   `gold.signal_activations_stage` (DDL:
+   `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`),
+   then truncates and repopulates `gold.signal_activations` using
+   `clickhouse/gold/dml/activations/signal_activation_final_insert.sql`.
+5. Each staged/serving row carries:
    - `signal_instance_id = lower(hex(SHA256(concat('v1|', signal_id, '|', ...identity values))))`
    - `signal_id_version = 'v1'`
    - parsed signal metadata from `signal_id` pattern (`signal_prefix`, `signal_entity`,
@@ -284,14 +306,23 @@ Creation flow:
    - common fixture/team/player context when available from the source signal
      table
    - source signal row details in `source_row_json` and `source_row_columns`
-5. The same `gold.signal_activations` row also carries match-level summary
+6. The same `gold.signal_activations` row also carries match-level summary
    fields that previously lived in `gold.signal_activations_match`, including
    `match_activation_instance_id`, `activated_signal_instance_ids`,
    `activated_signal_ids`, `activated_signal_entities`,
    `activated_signal_tags`, `activated_signal_names`, `total_signal_rows`, and
    `unique_signal_count`.
-6. `scripts/gold/load_clickhouse_gold.py` runs the activation builder after
-   successful signal execution (`--part signals` or `--part all`).
+7. `scripts/gold/load_clickhouse_gold.py` runs the activation builder after
+   successful signal execution (`--part signals` or `--part all`). Signal SQL
+   failures skip activation rebuild until signals succeed or the builder is
+   rerun manually.
+
+To drop, recreate, and repopulate `gold.signal_activations` from scratch:
+
+```bash
+clickhouse-client --multiquery < clickhouse/gold/ddl/create_table_signal_activations.sql
+python scripts/gold/activations/build_signal_activations.py
+```
 
 Activation rebuilds are full-table rebuilds: rebuild
 `gold.signal_activations` from all active signal catalogs and signal output
@@ -349,8 +380,9 @@ one activation row.
 
 ## Documentation Ownership
 
-1. Keep `README.md` and `AGENTS.md` in the repository root.
-2. Keep project-wide references in `docs/`.
+1. Keep `README.md` (project overview and documentation index) and `AGENTS.md`
+   in the repository root.
+2. Keep project-wide references, runbooks, and operational guidance in `docs/`.
 3. Keep script layout and inventory in `scripts/README.md`.
 4. Keep subsystem contracts next to the code they govern, such as
    `scripts/gold/scenario/SCENARIOS_CONTRACT.md` and

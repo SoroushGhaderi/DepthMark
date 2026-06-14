@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_distance_shooting_duel
-  sql: clickhouse/gold/signal/sig_match_shooting_goals_distance_shooting_duel.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_distance_shooting_duel.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_shooting_goals_distance_shooting_duel
@@ -32,7 +32,7 @@ Detect finished matches where both sides convert at least one outside-box goal, 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_shooting_goals_distance_shooting_duel.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_distance_shooting_duel.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_shooting_goals_distance_shooting_duel`
 

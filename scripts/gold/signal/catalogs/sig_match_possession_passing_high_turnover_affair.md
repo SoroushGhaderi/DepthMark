@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_possession_passing_high_turnover_affair
-  sql: clickhouse/gold/signal/sig_match_possession_passing_high_turnover_affair.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_high_turnover_affair.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_possession_passing_high_turnover_affair
@@ -30,7 +30,7 @@ Triggers for matches with very high combined dispossession/turnover volume, surf
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_possession_passing_high_turnover_affair.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_high_turnover_affair.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_possession_passing_high_turnover_affair`
 

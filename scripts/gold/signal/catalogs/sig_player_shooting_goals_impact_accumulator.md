@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_impact_accumulator
-  sql: clickhouse/gold/signal/sig_player_shooting_goals_impact_accumulator.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impact_accumulator.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_shooting_goals_impact_accumulator
@@ -34,7 +34,7 @@ Flags high on-target shot volume with zero goals (`shots_on_target >= 5`, `goals
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_shooting_goals_impact_accumulator.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impact_accumulator.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_shooting_goals_impact_accumulator`
 

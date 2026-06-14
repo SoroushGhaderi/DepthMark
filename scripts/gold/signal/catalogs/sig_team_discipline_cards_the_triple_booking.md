@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_the_triple_booking
-  sql: clickhouse/gold/signal/sig_team_discipline_cards_the_triple_booking.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_the_triple_booking.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_the_triple_booking
@@ -33,7 +33,7 @@ Flags teams hit by a compact wave of cautions across multiple players, isolating
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_discipline_cards_the_triple_booking.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_the_triple_booking.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_the_triple_booking`
 

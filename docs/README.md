@@ -1,10 +1,12 @@
 # DepthMark Docs
 
-Project-wide documentation lives in this folder so the repository root can stay
-focused on onboarding.
+Project-wide documentation lives in this folder. The root `README.md` stays a
+short project overview; use this folder for setup, commands, and operations.
 
 - `DEVELOPMENT_ARCHITECTURE.md`: architecture, layer boundaries, command surface,
   runbook, operations, and documentation ownership.
+- `data-flow/infrastructure.md`: Docker Compose setup, quick start, environment
+  configuration, and TouchDesk integration.
 - `SCRIPTS_CONTRACT.md`: standards for script behavior, style, CLI semantics,
   logging, safety, and command-surface changes.
 - `data-flow/`: source of truth for system data flow, layer diagrams, and

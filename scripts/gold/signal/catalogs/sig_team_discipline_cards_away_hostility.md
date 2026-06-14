@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_away_hostility
-  sql: clickhouse/gold/signal/sig_team_discipline_cards_away_hostility.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_away_hostility.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_away_hostility
@@ -31,7 +31,7 @@ Flags matches where the away side's discipline burden is materially heavier than
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_discipline_cards_away_hostility.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_away_hostility.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_away_hostility`
 

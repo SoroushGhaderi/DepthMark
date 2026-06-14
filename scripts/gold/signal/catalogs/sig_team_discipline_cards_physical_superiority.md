@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_physical_superiority
-  sql: clickhouse/gold/signal/sig_team_discipline_cards_physical_superiority.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_physical_superiority.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_physical_superiority
@@ -31,7 +31,7 @@ Flags team-match cases where a side controls the duel battle (at least 65% duel-
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_discipline_cards_physical_superiority.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_physical_superiority.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_physical_superiority`
 

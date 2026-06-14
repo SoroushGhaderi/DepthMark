@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_early_warning
-  sql: clickhouse/gold/signal/sig_team_discipline_cards_early_warning.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_early_warning.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_discipline_cards_early_warning
@@ -32,7 +32,7 @@ Flags teams that spread early cautions across multiple players, a practical indi
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_discipline_cards_early_warning.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_early_warning.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_discipline_cards_early_warning`
 

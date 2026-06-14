@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_final_third_monopoly
-  sql: clickhouse/gold/signal/sig_player_creativity_playmaking_final_third_monopoly.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_final_third_monopoly.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_final_third_monopoly
@@ -46,7 +46,7 @@ volume (`>= 30`) in a single finished match.
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_final_third_monopoly.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_final_third_monopoly.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_final_third_monopoly`
 

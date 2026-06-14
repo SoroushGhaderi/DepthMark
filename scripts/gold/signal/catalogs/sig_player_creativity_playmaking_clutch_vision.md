@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_clutch_vision
-  sql: clickhouse/gold/signal/sig_player_creativity_playmaking_clutch_vision.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_clutch_vision.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_creativity_playmaking_clutch_vision
@@ -41,7 +41,7 @@ Detects player-level clutch playmaking where a player supplies the assist for a 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_creativity_playmaking_clutch_vision.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_clutch_vision.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_clutch_vision`
 

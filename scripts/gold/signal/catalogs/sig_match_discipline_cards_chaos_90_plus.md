@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_chaos_90_plus
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_chaos_90_plus.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_chaos_90_plus.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_chaos_90_plus
@@ -30,7 +30,7 @@ Flags match-team rows for fixtures where late-game control collapses into severe
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_chaos_90_plus.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_chaos_90_plus.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_chaos_90_plus`
 

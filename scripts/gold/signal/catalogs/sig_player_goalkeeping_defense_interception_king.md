@@ -13,7 +13,7 @@ row_identity:
   - triggered_team_id
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_interception_king
-  sql: clickhouse/gold/signal/sig_player_goalkeeping_defense_interception_king.sql
+  sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_interception_king.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_player_goalkeeping_defense_interception_king
@@ -44,7 +44,7 @@ and control context for anticipation-driven defensive profiling.
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_player_goalkeeping_defense_interception_king.sql`
+- SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_interception_king.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_interception_king`
 

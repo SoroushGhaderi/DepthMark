@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_box_evacuation
-  sql: clickhouse/gold/signal/sig_team_goalkeeping_defense_box_evacuation.sql
+  sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_box_evacuation.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_team_goalkeeping_defense_box_evacuation
@@ -37,7 +37,7 @@ Detects clean-sheet escapes where a team absorbs extreme opposition penalty-box 
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_team_goalkeeping_defense_box_evacuation.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_box_evacuation.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_box_evacuation`
 

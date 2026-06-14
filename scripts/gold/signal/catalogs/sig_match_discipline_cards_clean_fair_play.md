@@ -12,7 +12,7 @@ row_identity:
   - triggered_side
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_clean_fair_play
-  sql: clickhouse/gold/signal/sig_match_discipline_cards_clean_fair_play.sql
+  sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_clean_fair_play.sql
   runner: scripts/gold/run_sql_job.py
 ---
 # sig_match_discipline_cards_clean_fair_play
@@ -31,7 +31,7 @@ Flags low-contact matches with no cards at all, isolating clean fair-play profil
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/signal/sig_match_discipline_cards_clean_fair_play.sql`
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_clean_fair_play.sql`
 - Runner: `scripts/gold/run_sql_job.py`
 - Target table: `gold_signals.sig_match_discipline_cards_clean_fair_play`
 

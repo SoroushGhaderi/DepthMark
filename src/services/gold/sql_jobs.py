@@ -15,7 +15,9 @@ SignalEntity = Literal["match", "player", "team"]
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 GOLD_SQL_DIR = PROJECT_ROOT / "clickhouse" / "gold"
+GOLD_DML_DIR = GOLD_SQL_DIR / "dml"
 JOB_ID_RE = re.compile(r"^(scenario|sig|signal)_[a-z0-9_]+$")
+SIGNAL_ENTITIES: tuple[SignalEntity, ...] = ("match", "player", "team")
 SIGNAL_FAMILY_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
 
 
@@ -53,6 +55,26 @@ def validate_job_id(kind: GoldJobKind, job_id: str) -> str:
     return job_id
 
 
+def signal_entity_from_job_id(job_id: str) -> Optional[SignalEntity]:
+    """Infer signal entity subdirectory from a signal job id."""
+    if job_id.startswith("sig_match_"):
+        return "match"
+    if job_id.startswith("sig_player_"):
+        return "player"
+    if job_id.startswith("sig_team_"):
+        return "team"
+    return None
+
+
+def _dml_search_dir(kind: GoldJobKind, entity: Optional[SignalEntity] = None) -> Path:
+    """Return the DML directory root for scenario or signal SQL discovery."""
+    if kind == "scenario":
+        return GOLD_DML_DIR / "scenarios"
+    if entity:
+        return GOLD_DML_DIR / "signals" / entity
+    return GOLD_DML_DIR / "signals"
+
+
 def validate_signal_family(family: str) -> str:
     """Validate a signal family filter."""
     if not SIGNAL_FAMILY_RE.match(family):
@@ -71,10 +93,22 @@ def resolve_gold_sql_job(
 ) -> GoldSqlJob:
     """Resolve a Gold SQL job id to SQL path and target table metadata."""
     job_id = validate_job_id(kind, job_id)
-    search_dir = GOLD_SQL_DIR / "scenario" if kind == "scenario" else GOLD_SQL_DIR / "signal"
+    entity = signal_entity_from_job_id(job_id) if kind == "signal" else None
+    search_dirs = (
+        [_dml_search_dir(kind, entity)]
+        if entity
+        else [_dml_search_dir(kind)]
+        if kind == "scenario"
+        else [_dml_search_dir(kind, signal_entity) for signal_entity in SIGNAL_ENTITIES]
+    )
     sql_file = next(
-        (path for path in search_dir.rglob(f"{job_id}.sql") if path.is_file()),
-        search_dir / f"{job_id}.sql",
+        (
+            path
+            for search_dir in search_dirs
+            for path in search_dir.rglob(f"{job_id}.sql")
+            if path.is_file()
+        ),
+        _dml_search_dir(kind, entity) / f"{job_id}.sql",
     )
     resolved_target_db = (
         target_db or os.getenv("CLICKHOUSE_GOLD_TARGET_DB") or default_target_db(kind)
@@ -103,20 +137,28 @@ def discover_gold_sql_jobs(
     if entity and family:
         raise ValueError("Use --entity or --family as separate signal selectors, not both")
 
-    search_dir = GOLD_SQL_DIR / "scenario" if kind == "scenario" else GOLD_SQL_DIR / "signal"
     if kind == "scenario":
         pattern = "scenario_*.sql"
+        search_dirs = [_dml_search_dir(kind)]
     elif entity:
         pattern = f"sig_{entity}_*.sql"
+        search_dirs = [_dml_search_dir(kind, entity)]
     elif family:
         pattern = f"sig_*_{family}_*.sql"
+        search_dirs = [_dml_search_dir(kind)]
     else:
         pattern = "sig_*.sql"
-    return [
-        resolve_gold_sql_job(kind, path.stem, target_db=target_db)
-        for path in sorted(search_dir.rglob(pattern))
-        if path.is_file()
-    ]
+        search_dirs = [_dml_search_dir(kind, signal_entity) for signal_entity in SIGNAL_ENTITIES]
+
+    jobs: list[GoldSqlJob] = []
+    seen_job_ids: set[str] = set()
+    for search_dir in search_dirs:
+        for path in sorted(search_dir.rglob(pattern)):
+            if not path.is_file() or path.stem in seen_job_ids:
+                continue
+            seen_job_ids.add(path.stem)
+            jobs.append(resolve_gold_sql_job(kind, path.stem, target_db=target_db))
+    return jobs
 
 
 def execute_gold_sql_job(
