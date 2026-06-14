@@ -121,8 +121,8 @@ rapid_double_salvo_pairs AS (
 ),
 rapid_double_salvo_rollup_base AS (
     SELECT
-        rdsp.match_id,
-        rdsp.triggered_side,
+        rdsp.match_id AS match_id,
+        rdsp.triggered_side AS triggered_side,
         toInt32(count()) AS triggered_team_rapid_double_salvo_pairs,
         toInt32(min(rdsp.salvo_gap_minutes)) AS triggered_team_smallest_salvo_gap_minutes,
         toFloat32(round(avg(toFloat32(rdsp.salvo_gap_minutes)), 2))
@@ -143,30 +143,30 @@ rapid_double_salvo_rollup_base AS (
 ),
 rapid_double_salvo_rollup AS (
     SELECT
-        rdsrb.match_id,
-        rdsrb.triggered_side,
-        rdsrb.triggered_team_rapid_double_salvo_pairs,
-        rdsrb.triggered_team_smallest_salvo_gap_minutes,
-        rdsrb.triggered_team_average_salvo_gap_minutes,
-        toInt32(tupleElement(arrayElement(rdsrb.ordered_salvo_tuples, 1), 2))
+        rollup_base.match_id AS match_id,
+        rollup_base.triggered_side AS triggered_side,
+        rollup_base.rollup_rapid_double_salvo_pairs,
+        rollup_base.rollup_smallest_salvo_gap_minutes,
+        rollup_base.rollup_average_salvo_gap_minutes,
+        toInt32(tupleElement(arrayElement(rollup_base.ordered_salvo_tuples, 1), 2))
             AS triggered_team_first_salvo_first_goal_minute,
-        toInt32(tupleElement(arrayElement(rdsrb.ordered_salvo_tuples, 1), 3))
+        toInt32(tupleElement(arrayElement(rollup_base.ordered_salvo_tuples, 1), 3))
             AS triggered_team_first_salvo_first_goal_added_time,
-        toInt32(tupleElement(arrayElement(rdsrb.ordered_salvo_tuples, 1), 1))
+        toInt32(tupleElement(arrayElement(rollup_base.ordered_salvo_tuples, 1), 1))
             AS triggered_team_first_salvo_first_goal_effective_minute,
-        toInt32(tupleElement(arrayElement(rdsrb.ordered_salvo_tuples, 1), 5))
+        toInt32(tupleElement(arrayElement(rollup_base.ordered_salvo_tuples, 1), 5))
             AS triggered_team_first_salvo_second_goal_minute,
-        toInt32(tupleElement(arrayElement(rdsrb.ordered_salvo_tuples, 1), 6))
+        toInt32(tupleElement(arrayElement(rollup_base.ordered_salvo_tuples, 1), 6))
             AS triggered_team_first_salvo_second_goal_added_time,
-        toInt32(tupleElement(arrayElement(rdsrb.ordered_salvo_tuples, 1), 4))
+        toInt32(tupleElement(arrayElement(rollup_base.ordered_salvo_tuples, 1), 4))
             AS triggered_team_first_salvo_second_goal_effective_minute,
-        toInt32(tupleElement(arrayElement(rdsrb.ordered_salvo_tuples, 1), 7))
+        toInt32(tupleElement(arrayElement(rollup_base.ordered_salvo_tuples, 1), 7))
             AS minutes_between_first_salvo_goals,
         toInt32(tupleElement(arrayElement(
-            rdsrb.ordered_salvo_tuples,
-            length(rdsrb.ordered_salvo_tuples)
+            rollup_base.ordered_salvo_tuples,
+            length(rollup_base.ordered_salvo_tuples)
         ), 4)) AS triggered_team_last_salvo_second_goal_effective_minute
-    FROM rapid_double_salvo_rollup_base AS rdsrb
+    FROM rapid_double_salvo_rollup_base AS rollup_base
 )
 SELECT
     m.match_id,
@@ -178,92 +178,92 @@ SELECT
     m.home_score,
     m.away_score,
 
-    rdsr.triggered_side,
-    if(rdsr.triggered_side = 'home', m.home_team_id, m.away_team_id) AS triggered_team_id,
-    if(rdsr.triggered_side = 'home', m.home_team_name, m.away_team_name) AS triggered_team_name,
-    if(rdsr.triggered_side = 'home', m.away_team_id, m.home_team_id) AS opponent_team_id,
-    if(rdsr.triggered_side = 'home', m.away_team_name, m.home_team_name) AS opponent_team_name,
+    salvo_rollup.triggered_side,
+    if(salvo_rollup.triggered_side = 'home', m.home_team_id, m.away_team_id) AS triggered_team_id,
+    if(salvo_rollup.triggered_side = 'home', m.home_team_name, m.away_team_name) AS triggered_team_name,
+    if(salvo_rollup.triggered_side = 'home', m.away_team_id, m.home_team_id) AS opponent_team_id,
+    if(salvo_rollup.triggered_side = 'home', m.away_team_name, m.home_team_name) AS opponent_team_name,
 
     toInt32(2) AS trigger_threshold_max_double_salvo_window_minutes,
     toInt32(1) AS trigger_threshold_min_rapid_double_salvo_pairs,
-    rdsr.triggered_team_rapid_double_salvo_pairs,
-    toInt32(coalesce(opp_rdsr.triggered_team_rapid_double_salvo_pairs, 0))
+    toInt32(salvo_rollup.rollup_rapid_double_salvo_pairs) AS triggered_team_rapid_double_salvo_pairs,
+    toInt32(coalesce(opp_salvo_rollup.rollup_rapid_double_salvo_pairs, 0))
         AS opponent_rapid_double_salvo_pairs,
     toInt32(
-        rdsr.triggered_team_rapid_double_salvo_pairs
-      - coalesce(opp_rdsr.triggered_team_rapid_double_salvo_pairs, 0)
+        salvo_rollup.rollup_rapid_double_salvo_pairs
+      - coalesce(opp_salvo_rollup.rollup_rapid_double_salvo_pairs, 0)
     ) AS rapid_double_salvo_pairs_delta,
-    rdsr.triggered_team_first_salvo_first_goal_minute,
-    rdsr.triggered_team_first_salvo_first_goal_added_time,
-    rdsr.triggered_team_first_salvo_first_goal_effective_minute,
-    rdsr.triggered_team_first_salvo_second_goal_minute,
-    rdsr.triggered_team_first_salvo_second_goal_added_time,
-    rdsr.triggered_team_first_salvo_second_goal_effective_minute,
-    rdsr.minutes_between_first_salvo_goals,
-    rdsr.triggered_team_smallest_salvo_gap_minutes,
-    toFloat32(rdsr.triggered_team_average_salvo_gap_minutes)
+    toInt32(salvo_rollup.rollup_first_salvo_first_goal_minute) AS triggered_team_first_salvo_first_goal_minute,
+    toInt32(salvo_rollup.rollup_first_salvo_first_goal_added_time) AS triggered_team_first_salvo_first_goal_added_time,
+    toInt32(salvo_rollup.rollup_first_salvo_first_goal_effective_minute) AS triggered_team_first_salvo_first_goal_effective_minute,
+    toInt32(salvo_rollup.rollup_first_salvo_second_goal_minute) AS triggered_team_first_salvo_second_goal_minute,
+    toInt32(salvo_rollup.rollup_first_salvo_second_goal_added_time) AS triggered_team_first_salvo_second_goal_added_time,
+    toInt32(salvo_rollup.rollup_first_salvo_second_goal_effective_minute) AS triggered_team_first_salvo_second_goal_effective_minute,
+    toInt32(salvo_rollup.minutes_between_first_salvo_goals) AS minutes_between_first_salvo_goals,
+    toInt32(salvo_rollup.rollup_smallest_salvo_gap_minutes) AS triggered_team_smallest_salvo_gap_minutes,
+    toFloat32(salvo_rollup.rollup_average_salvo_gap_minutes)
         AS triggered_team_average_salvo_gap_minutes,
-    toFloat32(coalesce(opp_rdsr.triggered_team_average_salvo_gap_minutes, 0.0))
+    toFloat32(coalesce(opp_salvo_rollup.rollup_average_salvo_gap_minutes, 0.0))
         AS opponent_average_salvo_gap_minutes,
     toFloat32(round(
-        rdsr.triggered_team_average_salvo_gap_minutes
-      - coalesce(opp_rdsr.triggered_team_average_salvo_gap_minutes, 0.0),
+        salvo_rollup.rollup_average_salvo_gap_minutes
+      - coalesce(opp_salvo_rollup.rollup_average_salvo_gap_minutes, 0.0),
         2
     )) AS average_salvo_gap_delta_minutes,
-    rdsr.triggered_team_last_salvo_second_goal_effective_minute,
-    toInt32(2 - rdsr.minutes_between_first_salvo_goals) AS rapid_double_salvo_window_margin_minutes,
-    toInt32(rdsr.triggered_team_rapid_double_salvo_pairs - 1)
+    toInt32(salvo_rollup.rollup_last_salvo_second_goal_effective_minute) AS triggered_team_last_salvo_second_goal_effective_minute,
+    toInt32(2 - salvo_rollup.minutes_between_first_salvo_goals) AS rapid_double_salvo_window_margin_minutes,
+    toInt32(salvo_rollup.rollup_rapid_double_salvo_pairs - 1)
         AS triggered_team_rapid_double_salvo_pairs_above_threshold,
 
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(m.home_score, 0),
         coalesce(m.away_score, 0)
     )) AS triggered_team_goals_final,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(m.away_score, 0),
         coalesce(m.home_score, 0)
     )) AS opponent_goals_final,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(m.home_score, 0) - coalesce(m.away_score, 0),
         coalesce(m.away_score, 0) - coalesce(m.home_score, 0)
     )) AS goal_delta_final,
 
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.total_shots_home, 0),
         coalesce(ps.total_shots_away, 0)
     )) AS triggered_team_total_shots,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.total_shots_away, 0),
         coalesce(ps.total_shots_home, 0)
     )) AS opponent_total_shots,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.total_shots_home, 0) - coalesce(ps.total_shots_away, 0),
         coalesce(ps.total_shots_away, 0) - coalesce(ps.total_shots_home, 0)
     )) AS total_shots_delta,
 
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.shots_on_target_home, 0),
         coalesce(ps.shots_on_target_away, 0)
     )) AS triggered_team_shots_on_target,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.shots_on_target_away, 0),
         coalesce(ps.shots_on_target_home, 0)
     )) AS opponent_shots_on_target,
     toFloat32(coalesce(round(
         100.0 * if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.shots_on_target_home, 0),
             coalesce(ps.shots_on_target_away, 0)
         ) / nullIf(if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.total_shots_home, 0),
             coalesce(ps.total_shots_away, 0)
         ), 0),
@@ -271,11 +271,11 @@ SELECT
     ), 0.0)) AS triggered_team_on_target_ratio_pct,
     toFloat32(coalesce(round(
         100.0 * if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.shots_on_target_away, 0),
             coalesce(ps.shots_on_target_home, 0)
         ) / nullIf(if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.total_shots_away, 0),
             coalesce(ps.total_shots_home, 0)
         ), 0),
@@ -284,11 +284,11 @@ SELECT
     toFloat32(round(
         coalesce(round(
             100.0 * if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.shots_on_target_home, 0),
                 coalesce(ps.shots_on_target_away, 0)
             ) / nullIf(if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.total_shots_home, 0),
                 coalesce(ps.total_shots_away, 0)
             ), 0),
@@ -296,11 +296,11 @@ SELECT
         ), 0.0)
       - coalesce(round(
             100.0 * if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.shots_on_target_away, 0),
                 coalesce(ps.shots_on_target_home, 0)
             ) / nullIf(if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.total_shots_away, 0),
                 coalesce(ps.total_shots_home, 0)
             ), 0),
@@ -310,18 +310,18 @@ SELECT
     )) AS on_target_ratio_delta_pct,
 
     toFloat32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.expected_goals_home, 0.0),
         coalesce(ps.expected_goals_away, 0.0)
     )) AS triggered_team_xg,
     toFloat32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.expected_goals_away, 0.0),
         coalesce(ps.expected_goals_home, 0.0)
     )) AS opponent_xg,
     toFloat32(round(
         if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.expected_goals_home, 0.0) - coalesce(ps.expected_goals_away, 0.0),
             coalesce(ps.expected_goals_away, 0.0) - coalesce(ps.expected_goals_home, 0.0)
         ),
@@ -329,39 +329,39 @@ SELECT
     )) AS xg_delta,
 
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.big_chances_home, 0),
         coalesce(ps.big_chances_away, 0)
     )) AS triggered_team_big_chances,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.big_chances_away, 0),
         coalesce(ps.big_chances_home, 0)
     )) AS opponent_big_chances,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.big_chances_missed_home, 0),
         coalesce(ps.big_chances_missed_away, 0)
     )) AS triggered_team_big_chances_missed,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.big_chances_missed_away, 0),
         coalesce(ps.big_chances_missed_home, 0)
     )) AS opponent_big_chances_missed,
 
     toFloat32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.ball_possession_home, 0.0),
         coalesce(ps.ball_possession_away, 0.0)
     )) AS triggered_team_possession_pct,
     toFloat32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.ball_possession_away, 0.0),
         coalesce(ps.ball_possession_home, 0.0)
     )) AS opponent_possession_pct,
     toFloat32(round(
         if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.ball_possession_home, 0.0) - coalesce(ps.ball_possession_away, 0.0),
             coalesce(ps.ball_possession_away, 0.0) - coalesce(ps.ball_possession_home, 0.0)
         ),
@@ -369,22 +369,22 @@ SELECT
     )) AS possession_delta_pct,
 
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.pass_attempts_home, 0),
         coalesce(ps.pass_attempts_away, 0)
     )) AS triggered_team_pass_attempts,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.pass_attempts_away, 0),
         coalesce(ps.pass_attempts_home, 0)
     )) AS opponent_pass_attempts,
     toFloat32(coalesce(round(
         100.0 * if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.accurate_passes_home, 0),
             coalesce(ps.accurate_passes_away, 0)
         ) / nullIf(if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.pass_attempts_home, 0),
             coalesce(ps.pass_attempts_away, 0)
         ), 0),
@@ -392,11 +392,11 @@ SELECT
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
         100.0 * if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.accurate_passes_away, 0),
             coalesce(ps.accurate_passes_home, 0)
         ) / nullIf(if(
-            rdsr.triggered_side = 'home',
+            salvo_rollup.triggered_side = 'home',
             coalesce(ps.pass_attempts_away, 0),
             coalesce(ps.pass_attempts_home, 0)
         ), 0),
@@ -405,11 +405,11 @@ SELECT
     toFloat32(round(
         coalesce(round(
             100.0 * if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.accurate_passes_home, 0),
                 coalesce(ps.accurate_passes_away, 0)
             ) / nullIf(if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.pass_attempts_home, 0),
                 coalesce(ps.pass_attempts_away, 0)
             ), 0),
@@ -417,11 +417,11 @@ SELECT
         ), 0.0)
       - coalesce(round(
             100.0 * if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.accurate_passes_away, 0),
                 coalesce(ps.accurate_passes_home, 0)
             ) / nullIf(if(
-                rdsr.triggered_side = 'home',
+                salvo_rollup.triggered_side = 'home',
                 coalesce(ps.pass_attempts_away, 0),
                 coalesce(ps.pass_attempts_home, 0)
             ), 0),
@@ -431,25 +431,25 @@ SELECT
     )) AS pass_accuracy_delta_pct,
 
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.corners_home, 0),
         coalesce(ps.corners_away, 0)
     )) AS triggered_team_corners,
     toInt32(if(
-        rdsr.triggered_side = 'home',
+        salvo_rollup.triggered_side = 'home',
         coalesce(ps.corners_away, 0),
         coalesce(ps.corners_home, 0)
     )) AS opponent_corners
 
-FROM rapid_double_salvo_rollup AS rdsr
+FROM rapid_double_salvo_rollup AS salvo_rollup
 INNER JOIN silver.match AS m
-    ON m.match_id = rdsr.match_id
+    ON m.match_id = salvo_rollup.match_id
 INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
-LEFT JOIN rapid_double_salvo_rollup AS opp_rdsr
-    ON opp_rdsr.match_id = rdsr.match_id
-   AND opp_rdsr.triggered_side = if(rdsr.triggered_side = 'home', 'away', 'home')
+LEFT JOIN rapid_double_salvo_rollup AS opp_salvo_rollup
+    ON opp_salvo_rollup.match_id = salvo_rollup.match_id
+   AND opp_salvo_rollup.triggered_side = if(salvo_rollup.triggered_side = 'home', 'away', 'home')
 WHERE m.match_finished = 1
   AND m.match_id > 0;

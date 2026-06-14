@@ -25,7 +25,7 @@ Identifies finished matches decided by a dominant 3+ goal margin, capturing fixt
 - **Final-State Integrity:** The filter `match_finished = 1` is mandatory. Mid-match scores can temporarily show large margins that are later partially reversed. Only completed scorelines are meaningful for demolition classification.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_demolition.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_demolition.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_demolition`
 
@@ -50,7 +50,7 @@ Finds wins built on elite defensive suppression, where the winning side concedes
 - **Winner-Only Context:** Draws are excluded (`home_score != away_score`) because a team that concedes 0.2 xG but fails to score has not converted their defensive control into a result. Only finished matches where the low-concession side actually wins qualify, ensuring the suppression produced a tangible outcome.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_defensive_shutdown_win.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_defensive_shutdown_win.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_defensive_shutdown_win`
 
@@ -75,7 +75,7 @@ Captures wins where the victor generated little attacking volume and still took 
 - **Outcome Scope:** Only finished non-draw matches qualify. A draw where a side generates 0.6 xG and outperforms their opponent's 1.2 xG is a resilient performance but not a heist — there must be a definitive three-point winner to meet the scenario definition.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_underdog_heist.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_underdog_heist.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_underdog_heist`
 
@@ -100,7 +100,7 @@ Identifies winning teams whose victories were powered by set-piece execution —
 - **Result Integrity:** Only finished, non-draw matches are included to preserve winner attribution. A team scoring two corners goals in a draw cannot be credited with "dead ball dominance" as an outcome driver — only wins confirm that the dead-ball approach was the decisive tactical lever.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_dead_ball_dominance.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_dead_ball_dominance.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_dead_ball_dominance`
 
@@ -125,7 +125,7 @@ Finds wins achieved with very low possession share — capturing results where a
 - **Clean Outcome Scope:** Only finished non-draw matches are kept. A low-possession draw demonstrates resilience but does not confirm that the low-block strategy was outcome-decisive. Only a win fully validates the approach.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_low_block_heist.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_low_block_heist.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_low_block_heist`
 
@@ -150,7 +150,7 @@ Highlights matches with minimal chance creation from both sides — contests def
 - **Full-Match Validity:** The filter uses `period = 'All'` and finished matches only. Half-time data would skew results for tight matches that open up late, and unfinished matches may have curtailed the tactical picture before the stalemate fully resolved.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_tactical_stalemate.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_tactical_stalemate.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_tactical_stalemate`
 
@@ -175,7 +175,7 @@ Identifies full comebacks where the eventual match winner was actively losing at
 - **True Comeback Constraint:** The query requires that the team trailing at minute 60 ultimately wins the match (not merely draws). A draw after trailing is a positive but different narrative. The "great escape" framing requires a complete result reversal — from losing to winning — making it the most demanding comeback definition in the scenario library.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_great_escape.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_great_escape.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_great_escape`
 
@@ -200,7 +200,7 @@ Finds individual carrying performances where a single player delivered extreme d
 - **Finished-Match Scope:** Only completed matches are included. A player with two goals at minute 60 before injury or abandonment represents a partial performance — the scenario is designed to capture full-match carrying performances where the individual output ultimately contributed to a final result.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_one_man_army.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_one_man_army.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_one_man_army`
 
@@ -225,7 +225,7 @@ Detects wins decided by a late goal that fundamentally altered the match state �
 - **Why Score State Reconstruction?:** Relying solely on final scoreline would not reveal whether the winning goal was decisive or merely cosmetic. The CTE reconstructing score state before each goal is essential to validating that the late goal changed the match outcome rather than simply adding to an existing lead.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_last_gasp.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_last_gasp.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_last_gasp`
 
@@ -250,7 +250,7 @@ Surfaces goalkeepers who produced major shot-stopping value in finished matches 
 - **Keeper Attribution by Match:** Goalkeepers are grouped by match and team to attribute the xGOT correctly. In most matches only one keeper plays the full game, but the grouping is necessary to handle substitution edge cases where two keepers share minutes in the same match.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_shot_stopper.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_shot_stopper.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_shot_stopper`
 
@@ -279,7 +279,7 @@ Flags finished matches with extreme physical or disciplinary intensity — conte
 - **Full-Match Aggregate Integrity:** All filters use `period = 'All'` team aggregates with null-safe aggregation to ensure consistency against incomplete period-level data.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_war_zone.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_war_zone.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_war_zone`
 
@@ -306,7 +306,7 @@ Finds elite finishing spikes where a player scored multiple goals from minimal s
 - **Shot Data Hygiene:** Own goals and shots with null xG are excluded. Own goals are not finishing events. Null xG shots cannot be evaluated for clinical efficiency and would distort the combined xG calculation.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_clinical_finisher.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_clinical_finisher.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_clinical_finisher`
 
@@ -331,7 +331,7 @@ Tracks penalty-heavy matches with multiple high-variance pressure moments — co
 - **Finished-Match Filter:** Only completed matches are included. A match abandoned after a penalty is awarded but before full time does not represent a complete penalty-shaped contest. The `match_finished = 1` constraint ensures the full narrative arc — including the eventual outcome — is intact.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_russian_roulette.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_russian_roulette.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_russian_roulette`
 
@@ -356,7 +356,7 @@ Identifies winning teams who paired a very low shot volume with an exceptionally
 - **Quality-Controlled Shot Set:** Own goals and null xG shots are excluded from the per-shot quality calculation. Own goals are not the result of shooting decisions and would artificially distort average xG. Null xG shots cannot be evaluated and are excluded to prevent denominator inflation.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_efficiency_machine.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_efficiency_machine.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_efficiency_machine`
 
@@ -381,7 +381,7 @@ Highlights goalkeepers who repeatedly denied high-quality on-target chances with
 - **Event Purity Filters:** Only on-target, non-goal, non-own-goal shots with valid xGOT values are counted. On-goal shots that resulted in goals cannot be credited as saves. Own goals involve no keeper intervention. Null xGOT shots cannot be validated against the threshold. Together these filters ensure only genuine goalkeeper saves against measurably dangerous attempts are counted.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_big_chance_killer.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_big_chance_killer.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_big_chance_killer`
 
@@ -406,7 +406,7 @@ Finds teams that avoided defeat despite receiving a red card during the match �
 - **Home/Away Attribution Integrity:** The `is_home` flag on each red card event is used to correctly map the dismissed team to their final score (`home_score` or `away_score`), ensuring the result check is applied to the correct team rather than the match as a whole.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_ten_men_stand.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_ten_men_stand.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_ten_men_stand`
 
@@ -433,7 +433,7 @@ Identifies outfield players who combined safe ball circulation with meaningful f
 - **Role Integrity:** Goalkeepers are excluded. A goalkeeper can post high pass accuracy and even high pass counts, but their progressive value through dribbling and final-third passing is not the outfield role this scenario targets.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_progressive_powerhouse.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_progressive_powerhouse.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_progressive_powerhouse`
 
@@ -458,7 +458,7 @@ Finds matches where one side dominated control metrics — possession and passin
 - **Why Combine Passes with Possession?:** Possession percentage alone can be inflated by a single team's deliberate slowing of the game late in a half. The 600-pass floor ensures the control was active and sustained throughout the match, not a product of time-wasting.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_sterile_control.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_sterile_control.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_sterile_control`
 
@@ -485,7 +485,7 @@ Captures dominant individual defensive displays characterised by elite aerial do
 - **Outfield Player Restriction:** Goalkeepers are excluded because their aerial involvement (claiming crosses) and clearances are governed by different positional logic. The scenario targets the elite defensive outfield profile.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_defensive_masterclass.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_defensive_masterclass.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_defensive_masterclass`
 
@@ -510,7 +510,7 @@ Identifies tempo controllers who combined elite touch volume with passing precis
 - **Ball Security (Not Dribbled Past, 100% Dribble Success or No Dribble Attempts):** The metronome cannot be a liability when pressed. The ball security layer requires the player was never successfully dribbled past in the match. Additionally, if they attempted any dribbles, they must have completed all of them. A player receiving 100 touches who is regularly dispossessed is not a metronome — they are a ball-magnet who loses it. Zero losses under pressure is the defining security requirement.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_metronome.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_metronome.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_metronome`
 
@@ -539,7 +539,7 @@ Finds non-goalkeeper, non-center-back outfield players sustaining elite two-way 
 - **Context-Rich Output Fields:** The scenario includes match context (`league_name`, teams, scoreline, match time), player identity (`player_id`, `team_id`, starter position fields), and supporting duel/passing/xG metrics for downstream interpretation.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_high_intensity_engine.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_high_intensity_engine.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_high_intensity_engine`
 
@@ -566,7 +566,7 @@ Surfaces balanced outfield performances where a single player contributed meanin
 - **Why These Three Together?:** Each condition in isolation is insufficient. A player can score and tackle but be a poor passer. A high-pass-accuracy player who tackles but never enters the box is a deep midfielder. Only the conjunction of all three captures the true two-way, full-pitch contribution the scenario intends to identify.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_box_to_box_general.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_box_to_box_general.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_box_to_box_general`
 
@@ -591,7 +591,7 @@ Finds away wins defined by territorial and chance-quality superiority — captur
 - **Result Confirmation:** Only away wins are included. A dominant away display that ends in a draw — however impressive statistically — does not constitute an "away day masterclass" in the result sense. The win is the final validation that the territorial and chance quality superiority was ultimately decisive.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_away_day_masterclass.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_away_day_masterclass.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_away_day_masterclass`
 
@@ -616,7 +616,7 @@ Identifies elite individual creators who combined high chance-creation volume wi
 - **Why Volume AND Quality?:** xA alone could be met by a single exceptional through-ball (e.g., one chance at 0.85 xA). Combining volume with quality ensures the scenario captures sustained creative dominance — multiple dangerous opportunities generated, not one fortunate delivery. The joint condition defines elite-level playmaking rather than single-moment brilliance.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_key_pass_king.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_key_pass_king.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_key_pass_king`
 
@@ -641,7 +641,7 @@ Finds substitutes who made immediate direct attacking impact after coming off th
 - **Why Not Shots or xG?:** Substitutes who arrive, take two shots, and miss both contribute positively to xG but have not changed the game's outcome. Restricting to goals and assists ensures only decisive direct contributions qualify, separating the genuine super-sub from the well-intentioned but ultimately ineffective late cameo.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_wildcard.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_wildcard.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_wildcard`
 
@@ -666,7 +666,7 @@ Highlights captains on winning teams who delivered above-average individual impa
 - **Why Win Required?:** Captains who deliver goals or assists in losing matches demonstrate individual quality but not the leadership dimension of carrying their team. The win condition links the captain's output to a team outcome, framing their contribution as consequential leadership rather than consolation impact.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_lead_by_example.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_lead_by_example.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_lead_by_example`
 
@@ -693,7 +693,7 @@ Finds high-impact young starters who delivered outright attacking contributions 
 - **Above-Average Quality (Rating Above Overall Average):** The rating condition mirrors the Lead By Example scenario — the player must rate above the global average from `bronze.player`. This distinguishes a quality breakthrough from a young player who happened to score with their only meaningful touch while otherwise performing below par.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_young_gun.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_young_gun.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_young_gun`
 
@@ -718,7 +718,7 @@ Detects teams that were trailing at half-time but recovered to avoid defeat — 
 - **Draw and Win Both Qualify:** Unlike scenarios that require a win for full classification, a draw after trailing at half-time counts here. Drawing after being behind at the break requires sustained second-half pressure and demonstrates genuine recovery capacity, even without taking all three points.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_second_half_warriors.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_second_half_warriors.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_second_half_warriors`
 
@@ -743,7 +743,7 @@ Find elite passing-control performances delivered under adverse possession conte
 - **Contextual Productivity Layer:** Adds passes-per-possession unit, touches, dribbling, goals/assists, and xG/xA to profile broader contribution.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_against_the_grain.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_against_the_grain.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_against_the_grain`
 
@@ -768,7 +768,7 @@ Flags matches with heavy combined foul counts but unusually light disciplinary p
 - **Full-Match Aggregate Integrity:** All filters use `period = 'All'` team aggregates with null-safe coalescing. Using period-level sub-aggregates risks missing fouls or cards that may be attributed to individual half records rather than the full match total, particularly in leagues with inconsistent period-level data coverage.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_unpunished_aggression.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_unpunished_aggression.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_unpunished_aggression`
 
@@ -793,7 +793,7 @@ Finds wins built on elite team-level ball-winning intensity — matches where th
 - **Outcome Coupling — Pressing Side Must Win:** The thresholds only qualify if the same side that meets the pressing metrics is also the match winner. This is the critical coupling condition. High pressing that ends in a loss or draw demonstrates intensity but not effectiveness. Linking the metric to the winning team confirms that the pressing translated into the result — a direct causal link between the intensity of the pressing and the match outcome.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_pressing_masterclass.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_pressing_masterclass.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_pressing_masterclass`
 
@@ -818,7 +818,7 @@ Identifies primary goalkeepers who have delivered match-defining performances ch
 - **Primary Goalkeeper Integrity:** The query restricts to keeper rows with `minutes_played >= 80` in `bronze.player` to identify the primary custodian. Save totals are pulled from `bronze.period` team-level fields (`keeper_saves_home` / `keeper_saves_away`) for the `period = 'All'` aggregate, ensuring full-match accuracy. This combination prevents partial-game keepers or backup appearances from distorting the match-level attribution.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_elite_shot_stopper.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_elite_shot_stopper.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_elite_shot_stopper`
 
@@ -843,7 +843,7 @@ Find matches where one side lays siege with elite shot and xG volume, but still 
 - **Chance-Profile Context:** Includes on-target shots, inside-box shots, blocked shots, open-play xG, and non-penalty xG splits.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_hollow_dominance.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_hollow_dominance.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_hollow_dominance`
 
@@ -866,7 +866,7 @@ Find outfield isolation specialists who combine high dribble volume, efficient t
 - **Danger-Zone Presence (≥ 4 touches in opp box):** Confirms that wide progression translated into real final-third penetration.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_touchline_terror.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_touchline_terror.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_touchline_terror`
 
@@ -889,7 +889,7 @@ Find deep distributors who repeatedly break lines through accurate long progress
 - **Deep-Role Confirmation (≤ 1 touch in opp box):** Filters out advanced attackers and keeps the profile anchored to deep build-up zones.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_line_breaker.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_line_breaker.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_line_breaker`
 
@@ -914,7 +914,7 @@ Find end-to-end shootouts where both teams produce elite attacking volume, then 
 - **Context Enrichment:** Adds on-target volume, inside-box shots, possession split, and open-play xG split for tactical interpretation.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_basketball_match.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_basketball_match.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_basketball_match`
 
@@ -937,7 +937,7 @@ Find attackers who repeatedly draw fouls while actively carrying the ball or rec
 - **Minutes Floor (≥ 45):** Ensures the profile represents stable match influence rather than brief substitute volatility.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_lightning_rod.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_lightning_rod.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_lightning_rod`
 
@@ -962,7 +962,7 @@ Find outfield defenders who protect their box under heavy shot pressure, combini
 - **Opposition xG Faced:** Adds opponent expected-goals context from full-match period data (`period = 'All'`).
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_human_shield.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_human_shield.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_human_shield`
 
@@ -987,7 +987,7 @@ Find late substitutes who deliver direct scoreline impact on very low touch volu
 - **Chance Quality Context:** Adds xG, xA, xG+xA, and xG-per-shot for quality-adjusted impact profiling.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_golden_touch.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_golden_touch.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_golden_touch`
 
@@ -1012,7 +1012,7 @@ Find high-intensity disruptors who blend defensive action volume, tactical aggre
 - **Finished Match Integrity:** Includes only completed matches for stable outcome labeling (`home_win`, `away_win`, `draw`).
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_chaos_engine.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_chaos_engine.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_chaos_engine`
 
@@ -1035,7 +1035,7 @@ Find late-match collapses driven by goal surges, shot escalation, and aggressive
 - **Composite Chaos Score:** Ranks matches by weighted late goals, shot escalation, substitution pressure, and late xG.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_tired_legs.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_tired_legs.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_tired_legs`
 
@@ -1060,7 +1060,7 @@ Find high-volume shooters who absorb a very large share of their team's attempts
 - **Outfield + Finished Match Integrity:** Excludes goalkeepers and limits to completed fixtures to maintain stable match context.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_black_hole.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_black_hole.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_black_hole`
 
@@ -1085,7 +1085,7 @@ Find teams whose defensive line repeatedly catches opponents offside while still
 - **Shot Quality Context:** Adds opponent xG-per-shot and shot profile fields to separate low-volume threat from truly low-quality attacking output.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_high_line_trap.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_high_line_trap.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_high_line_trap`
 
@@ -1110,7 +1110,7 @@ Find starting attackers with very low overall involvement but extreme penalty-bo
 - **Finishing Context:** Adds xG per shot, non-penalty xG, and supporting creation fields (xA, assists, chances created, xg_plus_xa).
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_ghost_poacher.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_ghost_poacher.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_ghost_poacher`
 
@@ -1135,7 +1135,7 @@ Find low-possession teams that leaned heavily on direct long-ball progression, s
 - **All-Period Match Frame:** Uses full-match period aggregates (`period = 'All'`) in finished matches only.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_route_one_masterclass.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_route_one_masterclass.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_route_one_masterclass`
 
@@ -1160,7 +1160,7 @@ Find matches where one side imposed extreme territorial control and almost compl
 - **All-Period Finished-Match Scope:** Uses full-match period aggregates (`period = 'All'`) and only completed fixtures.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_total_suffocation.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_total_suffocation.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_total_suffocation`
 
@@ -1185,7 +1185,7 @@ Find matches where one side weaponized possession to keep the opponent out of da
 - **Full-Match Integrity:** Uses `period = 'All'` and finished matches only for stable full-game context.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_territorial_suffocation.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/team/scenario_territorial_suffocation.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_territorial_suffocation`
 
@@ -1210,7 +1210,7 @@ Find deep-lying distribution hubs who combine elite passing volume and accuracy 
 - **Context Enrichment:** Includes xG/xA, chance creation, recoveries, interceptions, and defensive actions for two-way interpretation.
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_clinical_pivot.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/player/scenario_clinical_pivot.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_clinical_pivot`
 
@@ -1238,7 +1238,7 @@ python scripts/gold/run_sql_job.py --kind scenario --id scenario_clinical_pivot
 - **[Integrity/Scope Rule]:** [Explain any data integrity filter — finished matches, period filters, position exclusions — and why it is necessary for correct attribution.]
 
 ### 📂 Technical Assets
-- **SQL Transformation:** `clickhouse/gold/scenario/scenario_<name>.sql`
+- **SQL Transformation:** `clickhouse/gold/scenario/{team,player}/scenario_<name>.sql`
 - **Runner:** `scripts/gold/run_sql_job.py`
 - **Target Table:** `gold_scenarios.scenario_<name>`
 

@@ -23,9 +23,8 @@ Bronze is the only filesystem-backed data layer. Silver and Gold exist only in
 ClickHouse.
 
 Gold uses separate ClickHouse namespaces for scenario outputs, signal outputs,
-and shared metadata. Scenario SQL targets `gold_scenarios.scenario_*`; scenario
-bulk execution remains disabled until generic scenario execution is validated
-and re-enabled intentionally.
+and shared metadata. Scenario SQL targets `gold_scenarios.scenario_*` and runs
+through the bulk Gold loader with `--part scenarios` or `--part all`.
 
 ## Prerequisites
 
@@ -228,6 +227,7 @@ Key script groups:
 
 - `docs/DEVELOPMENT_ARCHITECTURE.md`: architecture, command surface, runbook, and operational guidance
 - `docs/SCRIPTS_CONTRACT.md`: script behavior, style, CLI, and stability rules
+- `docs/data-flow/`: **source of truth** for system data flow, layer diagrams, and interactive wireframes
 - `docs/README.md`: documentation map
 - `scripts/README.md`: script layout and inventory reference
 

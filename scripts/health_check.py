@@ -30,11 +30,36 @@ Examples:
   python scripts/health_check.py --json
         """,
     )
-    parser.add_argument("--clickhouse-host", type=str, default=None)
-    parser.add_argument("--clickhouse-port", type=int, default=8123)
-    parser.add_argument("--clickhouse-username", type=str, default="default")
-    parser.add_argument("--clickhouse-password", type=str, default="")
-    parser.add_argument("--clickhouse-database", type=str, default="default")
+    parser.add_argument(
+        "--clickhouse-host",
+        type=str,
+        default=None,
+        help="ClickHouse host (default: CLICKHOUSE_HOST env var or 'localhost')",
+    )
+    parser.add_argument(
+        "--clickhouse-port",
+        type=int,
+        default=8123,
+        help="ClickHouse HTTP port (default: 8123)",
+    )
+    parser.add_argument(
+        "--clickhouse-username",
+        type=str,
+        default="default",
+        help="ClickHouse username (default: CLICKHOUSE_USER env var or 'default')",
+    )
+    parser.add_argument(
+        "--clickhouse-password",
+        type=str,
+        default="",
+        help="ClickHouse password (default: CLICKHOUSE_PASSWORD env var or empty)",
+    )
+    parser.add_argument(
+        "--clickhouse-database",
+        type=str,
+        default="default",
+        help="ClickHouse database to check (default: 'default')",
+    )
     parser.add_argument("--no-clickhouse", action="store_true", help="Skip ClickHouse health check")
     parser.add_argument("--storage", nargs="+", default=None, help="Storage paths to check")
     parser.add_argument(
@@ -42,8 +67,18 @@ Examples:
         action="store_true",
         help="Skip ClickHouse and use only storage/disk checks",
     )
-    parser.add_argument("--disk-path", type=str, default=".")
-    parser.add_argument("--disk-threshold", type=float, default=1.0)
+    parser.add_argument(
+        "--disk-path",
+        type=str,
+        default=".",
+        help="Directory path to check disk usage (default: current directory)",
+    )
+    parser.add_argument(
+        "--disk-threshold",
+        type=float,
+        default=1.0,
+        help="Free disk space threshold in GB (default: 1.0)",
+    )
     parser.add_argument("--json", action="store_true", help="Output JSON")
     parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
     return parser.parse_args()

@@ -57,9 +57,9 @@ INSERT INTO gold.sig_team_goalkeeping_defense_recovery_marathon (
 )
 WITH team_recoveries AS (
     SELECT
-        p.match_id,
-        p.match_date,
-        p.team_id,
+        p.match_id AS match_id,
+        p.match_date AS match_date,
+        p.team_id AS team_id,
         toInt32(sum(coalesce(p.recoveries, 0))) AS team_total_recoveries
     FROM silver.player_match_stat AS p
     WHERE p.match_id > 0
@@ -67,6 +67,24 @@ WITH team_recoveries AS (
         p.match_id,
         p.match_date,
         p.team_id
+),
+match_recovery_pivot AS (
+    SELECT
+        m2.match_id AS match_id,
+        m2.match_date AS match_date,
+        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
+        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
+    FROM silver.match AS m2
+    LEFT JOIN team_recoveries AS home_recovery
+        ON home_recovery.match_id = m2.match_id
+       AND home_recovery.match_date = m2.match_date
+       AND home_recovery.team_id = m2.home_team_id
+    LEFT JOIN team_recoveries AS away_recovery
+        ON away_recovery.match_id = m2.match_id
+       AND away_recovery.match_date = m2.match_date
+       AND away_recovery.team_id = m2.away_team_id
+    WHERE m2.match_finished = 1
+      AND m2.match_id > 0
 )
 -- Signal: sig_team_goalkeeping_defense_recovery_marathon
 -- Intent: detect team-level ball-recovery peaks and preserve bilateral defensive, control,
@@ -91,10 +109,10 @@ SELECT
     m.away_team_name AS opponent_team_name,
 
     toInt32(80) AS trigger_threshold_min_recoveries,
-    toInt32(mrp.home_team_recoveries) AS triggered_team_recoveries,
-    toInt32(mrp.away_team_recoveries) AS opponent_recoveries,
-    toInt32(mrp.home_team_recoveries - mrp.away_team_recoveries) AS recoveries_delta,
-    toInt32(mrp.home_team_recoveries - 80) AS triggered_team_recoveries_above_threshold,
+    toInt32(recovery_pivot.home_team_recoveries) AS triggered_team_recoveries,
+    toInt32(recovery_pivot.away_team_recoveries) AS opponent_recoveries,
+    toInt32(recovery_pivot.home_team_recoveries - recovery_pivot.away_team_recoveries) AS recoveries_delta,
+    toInt32(recovery_pivot.home_team_recoveries - 80) AS triggered_team_recoveries_above_threshold,
 
     toInt32(coalesce(ps.interceptions_home, 0)) AS triggered_team_interceptions,
     toInt32(coalesce(ps.interceptions_away, 0)) AS opponent_interceptions,
@@ -172,29 +190,12 @@ INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
-INNER JOIN (
-    SELECT
-        m2.match_id,
-        m2.match_date,
-        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
-        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
-    FROM silver.match AS m2
-    LEFT JOIN team_recoveries AS home_recovery
-        ON home_recovery.match_id = m2.match_id
-       AND home_recovery.match_date = m2.match_date
-       AND home_recovery.team_id = m2.home_team_id
-    LEFT JOIN team_recoveries AS away_recovery
-        ON away_recovery.match_id = m2.match_id
-       AND away_recovery.match_date = m2.match_date
-       AND away_recovery.team_id = m2.away_team_id
-    WHERE m2.match_finished = 1
-      AND m2.match_id > 0
-) AS mrp
-    ON mrp.match_id = m.match_id
-   AND mrp.match_date = m.match_date
+INNER JOIN match_recovery_pivot AS recovery_pivot
+    ON recovery_pivot.match_id = m.match_id
+   AND recovery_pivot.match_date = m.match_date
 WHERE m.match_finished = 1
   AND m.match_id > 0
-  AND mrp.home_team_recoveries >= 80
+  AND recovery_pivot.home_team_recoveries >= 80
 
 UNION ALL
 
@@ -216,10 +217,10 @@ SELECT
     m.home_team_name AS opponent_team_name,
 
     toInt32(80) AS trigger_threshold_min_recoveries,
-    toInt32(mrp.away_team_recoveries) AS triggered_team_recoveries,
-    toInt32(mrp.home_team_recoveries) AS opponent_recoveries,
-    toInt32(mrp.away_team_recoveries - mrp.home_team_recoveries) AS recoveries_delta,
-    toInt32(mrp.away_team_recoveries - 80) AS triggered_team_recoveries_above_threshold,
+    toInt32(recovery_pivot.away_team_recoveries) AS triggered_team_recoveries,
+    toInt32(recovery_pivot.home_team_recoveries) AS opponent_recoveries,
+    toInt32(recovery_pivot.away_team_recoveries - recovery_pivot.home_team_recoveries) AS recoveries_delta,
+    toInt32(recovery_pivot.away_team_recoveries - 80) AS triggered_team_recoveries_above_threshold,
 
     toInt32(coalesce(ps.interceptions_away, 0)) AS triggered_team_interceptions,
     toInt32(coalesce(ps.interceptions_home, 0)) AS opponent_interceptions,
@@ -297,29 +298,12 @@ INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
-INNER JOIN (
-    SELECT
-        m2.match_id,
-        m2.match_date,
-        toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
-        toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
-    FROM silver.match AS m2
-    LEFT JOIN team_recoveries AS home_recovery
-        ON home_recovery.match_id = m2.match_id
-       AND home_recovery.match_date = m2.match_date
-       AND home_recovery.team_id = m2.home_team_id
-    LEFT JOIN team_recoveries AS away_recovery
-        ON away_recovery.match_id = m2.match_id
-       AND away_recovery.match_date = m2.match_date
-       AND away_recovery.team_id = m2.away_team_id
-    WHERE m2.match_finished = 1
-      AND m2.match_id > 0
-) AS mrp
-    ON mrp.match_id = m.match_id
-   AND mrp.match_date = m.match_date
+INNER JOIN match_recovery_pivot AS recovery_pivot
+    ON recovery_pivot.match_id = m.match_id
+   AND recovery_pivot.match_date = m.match_date
 WHERE m.match_finished = 1
   AND m.match_id > 0
-  AND mrp.away_team_recoveries >= 80
+  AND recovery_pivot.away_team_recoveries >= 80
 
 ORDER BY
     triggered_team_recoveries_above_threshold DESC,

@@ -4,10 +4,12 @@ This directory contains runtime assets for Gold signal execution.
 
 ## Structure
 
-- `runners/`: executable signal jobs (`sig_*.py`)
 - `catalogs/`: per-signal metadata and frontmatter contracts (`sig_*.md`)
 - `contracts/`: signal engineering contracts
-- Activation builders now live under `scripts/gold/activations/`
+- Activation builders live under `scripts/gold/activations/`
+
+Signal SQL jobs are discovered and executed through `scripts/gold/run_sql_job.py`
+and shared helpers in `src/services/gold/sql_jobs.py`.
 
 ## Signal Activation Serving Store
 
@@ -60,6 +62,6 @@ Match-level summary fields include:
 
 When running `python scripts/gold/load_clickhouse_gold.py --part signals`:
 
-1. Signal runner scripts write `gold_signals.sig_*` tables
+1. Signal SQL jobs write `gold_signals.sig_*` tables
 2. `scripts/gold/activations/build_signal_activations.py` writes the enriched
    `gold.signal_activations` serving table

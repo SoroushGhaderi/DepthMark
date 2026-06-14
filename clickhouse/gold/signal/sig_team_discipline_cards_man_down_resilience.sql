@@ -63,10 +63,10 @@ WITH early_red_events AS (
 ),
 early_red_rollup AS (
     SELECT
-        ere.match_id,
-        ere.triggered_side,
-        count() AS triggered_team_red_cards_before_60,
-        min(ere.card_minute) AS triggered_team_first_red_card_minute,
+        ere.match_id AS match_id,
+        ere.triggered_side AS triggered_side,
+        count() AS rollup_red_cards_before_60,
+        min(ere.card_minute) AS rollup_first_red_card_minute,
         argMin(ere.score_home_at_red, tuple(ere.card_minute, ere.event_id)) AS score_home_at_first_red,
         argMin(ere.score_away_at_red, tuple(ere.card_minute, ere.event_id)) AS score_away_at_first_red
     FROM early_red_events AS ere
@@ -92,24 +92,24 @@ SELECT
     m.away_team_name AS opponent_team_name,
 
     toInt32(59) AS trigger_threshold_max_red_card_minute,
-    toInt32(coalesce(home_err.triggered_team_first_red_card_minute, 0)) AS triggered_team_first_red_card_minute,
-    toInt32(coalesce(home_err.triggered_team_red_cards_before_60, 0)) AS triggered_team_red_cards_before_60,
-    toInt32(coalesce(away_err.triggered_team_red_cards_before_60, 0)) AS opponent_red_cards_before_60,
+    toInt32(coalesce(home_early_red_rollup.rollup_first_red_card_minute, 0)) AS triggered_team_first_red_card_minute,
+    toInt32(coalesce(home_early_red_rollup.rollup_red_cards_before_60, 0)) AS triggered_team_red_cards_before_60,
+    toInt32(coalesce(away_early_red_rollup.rollup_red_cards_before_60, 0)) AS opponent_red_cards_before_60,
     toInt32(
-        coalesce(home_err.triggered_team_red_cards_before_60, 0)
-        - coalesce(away_err.triggered_team_red_cards_before_60, 0)
+        coalesce(home_early_red_rollup.rollup_red_cards_before_60, 0)
+        - coalesce(away_early_red_rollup.rollup_red_cards_before_60, 0)
     ) AS red_cards_before_60_delta,
-    toInt32(coalesce(home_err.score_home_at_first_red, 0)) AS triggered_team_score_at_first_red,
-    toInt32(coalesce(home_err.score_away_at_first_red, 0)) AS opponent_score_at_first_red,
+    toInt32(coalesce(home_early_red_rollup.score_home_at_first_red, 0)) AS triggered_team_score_at_first_red,
+    toInt32(coalesce(home_early_red_rollup.score_away_at_first_red, 0)) AS opponent_score_at_first_red,
     toInt32(
-        coalesce(home_err.score_home_at_first_red, 0)
-        - coalesce(home_err.score_away_at_first_red, 0)
+        coalesce(home_early_red_rollup.score_home_at_first_red, 0)
+        - coalesce(home_early_red_rollup.score_away_at_first_red, 0)
     ) AS score_margin_at_first_red,
-    toInt32(coalesce(m.home_score, 0) - coalesce(home_err.score_home_at_first_red, 0)) AS triggered_team_goals_after_first_red,
-    toInt32(coalesce(m.away_score, 0) - coalesce(home_err.score_away_at_first_red, 0)) AS opponent_goals_after_first_red,
+    toInt32(coalesce(m.home_score, 0) - coalesce(home_early_red_rollup.score_home_at_first_red, 0)) AS triggered_team_goals_after_first_red,
+    toInt32(coalesce(m.away_score, 0) - coalesce(home_early_red_rollup.score_away_at_first_red, 0)) AS opponent_goals_after_first_red,
     toInt32(
-        (coalesce(m.home_score, 0) - coalesce(home_err.score_home_at_first_red, 0))
-        - (coalesce(m.away_score, 0) - coalesce(home_err.score_away_at_first_red, 0))
+        (coalesce(m.home_score, 0) - coalesce(home_early_red_rollup.score_home_at_first_red, 0))
+        - (coalesce(m.away_score, 0) - coalesce(home_early_red_rollup.score_away_at_first_red, 0))
     ) AS goals_after_first_red_delta,
     toInt32(coalesce(m.home_score, 0) - coalesce(m.away_score, 0)) AS triggered_team_win_margin,
 
@@ -143,12 +143,12 @@ FROM silver.match AS m
 INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
-INNER JOIN early_red_rollup AS home_err
-    ON home_err.match_id = m.match_id
-   AND home_err.triggered_side = 'home'
-LEFT JOIN early_red_rollup AS away_err
-    ON away_err.match_id = m.match_id
-   AND away_err.triggered_side = 'away'
+INNER JOIN early_red_rollup AS home_early_red_rollup
+    ON home_early_red_rollup.match_id = m.match_id
+   AND home_early_red_rollup.triggered_side = 'home'
+LEFT JOIN early_red_rollup AS away_early_red_rollup
+    ON away_early_red_rollup.match_id = m.match_id
+   AND away_early_red_rollup.triggered_side = 'away'
 WHERE m.match_finished = 1
   AND m.match_id > 0
   AND coalesce(m.home_score, 0) > coalesce(m.away_score, 0)
@@ -172,24 +172,24 @@ SELECT
     m.home_team_name AS opponent_team_name,
 
     toInt32(59) AS trigger_threshold_max_red_card_minute,
-    toInt32(coalesce(away_err.triggered_team_first_red_card_minute, 0)) AS triggered_team_first_red_card_minute,
-    toInt32(coalesce(away_err.triggered_team_red_cards_before_60, 0)) AS triggered_team_red_cards_before_60,
-    toInt32(coalesce(home_err.triggered_team_red_cards_before_60, 0)) AS opponent_red_cards_before_60,
+    toInt32(coalesce(away_early_red_rollup.rollup_first_red_card_minute, 0)) AS triggered_team_first_red_card_minute,
+    toInt32(coalesce(away_early_red_rollup.rollup_red_cards_before_60, 0)) AS triggered_team_red_cards_before_60,
+    toInt32(coalesce(home_early_red_rollup.rollup_red_cards_before_60, 0)) AS opponent_red_cards_before_60,
     toInt32(
-        coalesce(away_err.triggered_team_red_cards_before_60, 0)
-        - coalesce(home_err.triggered_team_red_cards_before_60, 0)
+        coalesce(away_early_red_rollup.rollup_red_cards_before_60, 0)
+        - coalesce(home_early_red_rollup.rollup_red_cards_before_60, 0)
     ) AS red_cards_before_60_delta,
-    toInt32(coalesce(away_err.score_away_at_first_red, 0)) AS triggered_team_score_at_first_red,
-    toInt32(coalesce(away_err.score_home_at_first_red, 0)) AS opponent_score_at_first_red,
+    toInt32(coalesce(away_early_red_rollup.score_away_at_first_red, 0)) AS triggered_team_score_at_first_red,
+    toInt32(coalesce(away_early_red_rollup.score_home_at_first_red, 0)) AS opponent_score_at_first_red,
     toInt32(
-        coalesce(away_err.score_away_at_first_red, 0)
-        - coalesce(away_err.score_home_at_first_red, 0)
+        coalesce(away_early_red_rollup.score_away_at_first_red, 0)
+        - coalesce(away_early_red_rollup.score_home_at_first_red, 0)
     ) AS score_margin_at_first_red,
-    toInt32(coalesce(m.away_score, 0) - coalesce(away_err.score_away_at_first_red, 0)) AS triggered_team_goals_after_first_red,
-    toInt32(coalesce(m.home_score, 0) - coalesce(away_err.score_home_at_first_red, 0)) AS opponent_goals_after_first_red,
+    toInt32(coalesce(m.away_score, 0) - coalesce(away_early_red_rollup.score_away_at_first_red, 0)) AS triggered_team_goals_after_first_red,
+    toInt32(coalesce(m.home_score, 0) - coalesce(away_early_red_rollup.score_home_at_first_red, 0)) AS opponent_goals_after_first_red,
     toInt32(
-        (coalesce(m.away_score, 0) - coalesce(away_err.score_away_at_first_red, 0))
-        - (coalesce(m.home_score, 0) - coalesce(away_err.score_home_at_first_red, 0))
+        (coalesce(m.away_score, 0) - coalesce(away_early_red_rollup.score_away_at_first_red, 0))
+        - (coalesce(m.home_score, 0) - coalesce(away_early_red_rollup.score_home_at_first_red, 0))
     ) AS goals_after_first_red_delta,
     toInt32(coalesce(m.away_score, 0) - coalesce(m.home_score, 0)) AS triggered_team_win_margin,
 
@@ -223,12 +223,12 @@ FROM silver.match AS m
 INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
-INNER JOIN early_red_rollup AS away_err
-    ON away_err.match_id = m.match_id
-   AND away_err.triggered_side = 'away'
-LEFT JOIN early_red_rollup AS home_err
-    ON home_err.match_id = m.match_id
-   AND home_err.triggered_side = 'home'
+INNER JOIN early_red_rollup AS away_early_red_rollup
+    ON away_early_red_rollup.match_id = m.match_id
+   AND away_early_red_rollup.triggered_side = 'away'
+LEFT JOIN early_red_rollup AS home_early_red_rollup
+    ON home_early_red_rollup.match_id = m.match_id
+   AND home_early_red_rollup.triggered_side = 'home'
 WHERE m.match_finished = 1
   AND m.match_id > 0
   AND coalesce(m.away_score, 0) > coalesce(m.home_score, 0)
@@ -237,5 +237,5 @@ ORDER BY
     triggered_team_win_margin DESC,
     goals_after_first_red_delta DESC,
     red_cards_before_60_delta DESC,
-    m.match_date DESC,
-    m.match_id DESC;
+    match_date DESC,
+    match_id DESC;

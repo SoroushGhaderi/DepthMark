@@ -2,7 +2,10 @@
 
 Signals are tactical/statistical triggers with focused single-condition logic.
 
-- `clickhouse/gold/signal/sig_*.sql`: signal SQL definitions executed by `scripts/gold/signal/runners/sig_*.py` runners.
-- The bulk loader also supports legacy `signal_*.py` runner names during migration.
+- `clickhouse/gold/signal/sig_*.sql`: signal SQL definitions executed through
+  `scripts/gold/run_sql_job.py`
+- `scripts/gold/signal/catalogs/sig_*.md`: markdown catalogs with frontmatter
+  metadata and output schema documentation
 
-All signal runner scripts in `scripts/gold/signal/runners/` resolve SQL files from this directory.
+Signal SQL jobs populate `gold_signals.sig_*` tables. Active catalogs sync to
+MongoDB through `scripts/mongodb/sync_signal_catalogs.py`.

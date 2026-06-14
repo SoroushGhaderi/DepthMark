@@ -31,7 +31,7 @@ INSERT INTO gold.sig_team_goalkeeping_defense_wing_lockdown_collective (
     opponent_fullbacks_and_wingers_tackles_won,
     fullbacks_and_wingers_tackles_won_delta,
     triggered_team_fullbacks_and_wingers_tackles_won_above_threshold,
-    triggered_team_fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
+    fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
     opponent_fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
     fullbacks_and_wingers_tackles_share_of_team_tackles_delta_pct,
     triggered_team_tackles_won,
@@ -137,17 +137,17 @@ fullback_and_winger_tackles AS (
 ),
 team_role_tackle_rollup AS (
     SELECT
-        rt.match_id,
-        rt.triggered_side,
-        rt.triggered_team_id,
-        toInt32(count()) AS triggered_team_fullbacks_and_wingers,
+        rt.match_id AS match_id,
+        rt.triggered_side AS triggered_side,
+        rt.triggered_team_id AS triggered_team_id,
+        toInt32(count()) AS rollup_fullbacks_and_wingers,
         toInt32(countIf(rt.triggered_player_tackles_won > 0))
-            AS triggered_team_fullbacks_and_wingers_with_tackles,
-        toInt32(sum(rt.triggered_player_tackles_won)) AS triggered_team_fullbacks_and_wingers_tackles_won,
+            AS rollup_fullbacks_and_wingers_with_tackles,
+        toInt32(sum(rt.triggered_player_tackles_won)) AS rollup_fullbacks_and_wingers_tackles_won,
         toInt32(sumIf(rt.triggered_player_tackles_won, rt.is_fullback_proxy = 1))
-            AS triggered_team_fullbacks_tackles_won,
+            AS rollup_fullbacks_tackles_won,
         toInt32(sumIf(rt.triggered_player_tackles_won, rt.is_winger_proxy = 1))
-            AS triggered_team_wingers_tackles_won
+            AS rollup_wingers_tackles_won
     FROM fullback_and_winger_tackles AS rt
     GROUP BY
         rt.match_id,
@@ -174,58 +174,58 @@ SELECT
     '[2,5]' AS trigger_fullback_position_ids,
     '[2,4]' AS trigger_winger_position_ids,
 
-    toInt32(ttr.triggered_team_fullbacks_and_wingers) AS triggered_team_fullbacks_and_wingers,
-    toInt32(coalesce(otr.triggered_team_fullbacks_and_wingers, 0)) AS opponent_fullbacks_and_wingers,
+    toInt32(ttr.rollup_fullbacks_and_wingers) AS triggered_team_fullbacks_and_wingers,
+    toInt32(coalesce(otr.rollup_fullbacks_and_wingers, 0)) AS opponent_fullbacks_and_wingers,
     toInt32(
-        ttr.triggered_team_fullbacks_and_wingers
-        - coalesce(otr.triggered_team_fullbacks_and_wingers, 0)
+        ttr.rollup_fullbacks_and_wingers
+        - coalesce(otr.rollup_fullbacks_and_wingers, 0)
     ) AS fullbacks_and_wingers_count_delta,
 
-    toInt32(ttr.triggered_team_fullbacks_and_wingers_with_tackles)
+    toInt32(ttr.rollup_fullbacks_and_wingers_with_tackles)
         AS triggered_team_fullbacks_and_wingers_with_tackles,
-    toInt32(coalesce(otr.triggered_team_fullbacks_and_wingers_with_tackles, 0))
+    toInt32(coalesce(otr.rollup_fullbacks_and_wingers_with_tackles, 0))
         AS opponent_fullbacks_and_wingers_with_tackles,
     toInt32(
-        ttr.triggered_team_fullbacks_and_wingers_with_tackles
-      - coalesce(otr.triggered_team_fullbacks_and_wingers_with_tackles, 0)
+        ttr.rollup_fullbacks_and_wingers_with_tackles
+      - coalesce(otr.rollup_fullbacks_and_wingers_with_tackles, 0)
     ) AS fullbacks_and_wingers_with_tackles_delta,
 
-    toInt32(ttr.triggered_team_fullbacks_tackles_won) AS triggered_team_fullbacks_tackles_won,
-    toInt32(coalesce(otr.triggered_team_fullbacks_tackles_won, 0)) AS opponent_fullbacks_tackles_won,
+    toInt32(ttr.rollup_fullbacks_tackles_won) AS triggered_team_fullbacks_tackles_won,
+    toInt32(coalesce(otr.rollup_fullbacks_tackles_won, 0)) AS opponent_fullbacks_tackles_won,
     toInt32(
-        ttr.triggered_team_fullbacks_tackles_won
-      - coalesce(otr.triggered_team_fullbacks_tackles_won, 0)
+        ttr.rollup_fullbacks_tackles_won
+      - coalesce(otr.rollup_fullbacks_tackles_won, 0)
     ) AS fullbacks_tackles_won_delta,
 
-    toInt32(ttr.triggered_team_wingers_tackles_won) AS triggered_team_wingers_tackles_won,
-    toInt32(coalesce(otr.triggered_team_wingers_tackles_won, 0)) AS opponent_wingers_tackles_won,
+    toInt32(ttr.rollup_wingers_tackles_won) AS triggered_team_wingers_tackles_won,
+    toInt32(coalesce(otr.rollup_wingers_tackles_won, 0)) AS opponent_wingers_tackles_won,
     toInt32(
-        ttr.triggered_team_wingers_tackles_won
-      - coalesce(otr.triggered_team_wingers_tackles_won, 0)
+        ttr.rollup_wingers_tackles_won
+      - coalesce(otr.rollup_wingers_tackles_won, 0)
     ) AS wingers_tackles_won_delta,
 
-    toInt32(ttr.triggered_team_fullbacks_and_wingers_tackles_won)
+    toInt32(ttr.rollup_fullbacks_and_wingers_tackles_won)
         AS triggered_team_fullbacks_and_wingers_tackles_won,
-    toInt32(coalesce(otr.triggered_team_fullbacks_and_wingers_tackles_won, 0))
+    toInt32(coalesce(otr.rollup_fullbacks_and_wingers_tackles_won, 0))
         AS opponent_fullbacks_and_wingers_tackles_won,
     toInt32(
-        ttr.triggered_team_fullbacks_and_wingers_tackles_won
-      - coalesce(otr.triggered_team_fullbacks_and_wingers_tackles_won, 0)
+        ttr.rollup_fullbacks_and_wingers_tackles_won
+      - coalesce(otr.rollup_fullbacks_and_wingers_tackles_won, 0)
     ) AS fullbacks_and_wingers_tackles_won_delta,
-    toInt32(ttr.triggered_team_fullbacks_and_wingers_tackles_won - 15)
+    toInt32(ttr.rollup_fullbacks_and_wingers_tackles_won - 15)
         AS triggered_team_fullbacks_and_wingers_tackles_won_above_threshold,
 
     toFloat32(coalesce(round(
-        100.0 * ttr.triggered_team_fullbacks_and_wingers_tackles_won
+        100.0 * ttr.rollup_fullbacks_and_wingers_tackles_won
         / nullIf(toFloat64(multiIf(
             ttr.triggered_side = 'home', coalesce(ps.tackles_succeeded_home, 0),
             ttr.triggered_side = 'away', coalesce(ps.tackles_succeeded_away, 0),
             0
         )), 0),
         1
-    ), 0.0)) AS triggered_team_fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
+    ), 0.0)) AS fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
     toFloat32(coalesce(round(
-        100.0 * coalesce(otr.triggered_team_fullbacks_and_wingers_tackles_won, 0)
+        100.0 * coalesce(otr.rollup_fullbacks_and_wingers_tackles_won, 0)
         / nullIf(toFloat64(multiIf(
             ttr.triggered_side = 'home', coalesce(ps.tackles_succeeded_away, 0),
             ttr.triggered_side = 'away', coalesce(ps.tackles_succeeded_home, 0),
@@ -235,7 +235,7 @@ SELECT
     ), 0.0)) AS opponent_fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * ttr.triggered_team_fullbacks_and_wingers_tackles_won
+            100.0 * ttr.rollup_fullbacks_and_wingers_tackles_won
             / nullIf(toFloat64(multiIf(
                 ttr.triggered_side = 'home', coalesce(ps.tackles_succeeded_home, 0),
                 ttr.triggered_side = 'away', coalesce(ps.tackles_succeeded_away, 0),
@@ -244,7 +244,7 @@ SELECT
             1
         ), 0.0)
       - coalesce(round(
-            100.0 * coalesce(otr.triggered_team_fullbacks_and_wingers_tackles_won, 0)
+            100.0 * coalesce(otr.rollup_fullbacks_and_wingers_tackles_won, 0)
             / nullIf(toFloat64(multiIf(
                 ttr.triggered_side = 'home', coalesce(ps.tackles_succeeded_away, 0),
                 ttr.triggered_side = 'away', coalesce(ps.tackles_succeeded_home, 0),
@@ -593,10 +593,10 @@ LEFT JOIN team_role_tackle_rollup AS otr
 WHERE m.match_finished = 1
   AND m.match_id > 0
   AND ttr.triggered_team_id = if(ttr.triggered_side = 'home', m.home_team_id, m.away_team_id)
-  AND ttr.triggered_team_fullbacks_and_wingers_tackles_won >= 15
+  AND ttr.rollup_fullbacks_and_wingers_tackles_won >= 15
 ORDER BY
-    triggered_team_fullbacks_and_wingers_tackles_won_above_threshold DESC,
+    rollup_fullbacks_and_wingers_tackles_won_above_threshold DESC,
     fullbacks_and_wingers_tackles_won_delta DESC,
     m.match_date DESC,
     m.match_id DESC,
-    triggered_side;
+    ttr.triggered_side;

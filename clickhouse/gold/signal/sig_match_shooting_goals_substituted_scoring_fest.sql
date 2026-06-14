@@ -65,14 +65,14 @@ INSERT INTO gold.sig_match_shooting_goals_substituted_scoring_fest (
 -- Trigger: combined distinct substitute goal scorers >= 3 in one finished match.
 WITH match_ext AS (
     SELECT
-        m.match_id,
-        m.match_date,
-        m.home_team_id,
-        m.home_team_name,
-        m.away_team_id,
-        m.away_team_name,
-        m.home_score,
-        m.away_score,
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.home_team_id AS home_team_id,
+        m.home_team_name AS home_team_name,
+        m.away_team_id AS away_team_id,
+        m.away_team_name AS away_team_name,
+        m.home_score AS home_score,
+        m.away_score AS away_score,
         m.match_finished,
         ps.total_shots_home,
         ps.total_shots_away,
@@ -180,14 +180,14 @@ team_non_own_goal_rollup AS (
 ),
 base_stats AS (
     SELECT
-        m.match_id,
-        m.match_date,
-        m.home_team_id,
-        m.home_team_name,
-        m.away_team_id,
-        m.away_team_name,
-        m.home_score,
-        m.away_score,
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.home_team_id AS home_team_id,
+        m.home_team_name AS home_team_name,
+        m.away_team_id AS away_team_id,
+        m.away_team_name AS away_team_name,
+        m.home_score AS home_score,
+        m.away_score AS away_score,
         toInt32(coalesce(m.home_score, 0)) AS home_goals,
         toInt32(coalesce(m.away_score, 0)) AS away_goals,
 
@@ -264,156 +264,156 @@ base_stats AS (
 
 
 SELECT
-    bs.match_id,
-    bs.match_date,
-    bs.home_team_id,
-    bs.home_team_name,
-    bs.away_team_id,
-    bs.away_team_name,
-    bs.home_score,
-    bs.away_score,
+    b.match_id,
+    b.match_date,
+    b.home_team_id,
+    b.home_team_name,
+    b.away_team_id,
+    b.away_team_name,
+    b.home_score,
+    b.away_score,
     side.triggered_side,
-    if(side.triggered_side = 'home', bs.home_team_id, bs.away_team_id) AS triggered_team_id,
-    if(side.triggered_side = 'home', bs.home_team_name, bs.away_team_name) AS triggered_team_name,
-    if(side.triggered_side = 'home', bs.away_team_id, bs.home_team_id) AS opponent_team_id,
-    if(side.triggered_side = 'home', bs.away_team_name, bs.home_team_name) AS opponent_team_name,
+    if(side.triggered_side = 'home', home_team_id, away_team_id) AS triggered_team_id,
+    if(side.triggered_side = 'home', home_team_name, away_team_name) AS triggered_team_name,
+    if(side.triggered_side = 'home', away_team_id, home_team_id) AS opponent_team_id,
+    if(side.triggered_side = 'home', away_team_name, home_team_name) AS opponent_team_name,
     toInt32(3) AS trigger_threshold_match_distinct_substitute_goal_scorers_min,
-    bs.match_distinct_substitute_goal_scorers,
-    bs.match_substitute_non_own_goals,
-    bs.match_total_non_own_goals,
+    match_distinct_substitute_goal_scorers,
+    match_substitute_non_own_goals,
+    match_total_non_own_goals,
     toFloat32(coalesce(round(
-        100.0 * bs.match_substitute_non_own_goals / nullIf(toFloat64(bs.match_total_non_own_goals), 0),
+        100.0 * match_substitute_non_own_goals / nullIf(toFloat64(match_total_non_own_goals), 0),
         1
     ), 0.0)) AS match_substitute_goal_share_pct,
-    bs.home_substitute_non_own_goals,
-    bs.away_substitute_non_own_goals,
-    bs.home_distinct_substitute_goal_scorers,
-    bs.away_distinct_substitute_goal_scorers,
+    home_substitute_non_own_goals,
+    away_substitute_non_own_goals,
+    home_distinct_substitute_goal_scorers,
+    away_distinct_substitute_goal_scorers,
 
-    if(side.triggered_side = 'home', bs.home_substitute_non_own_goals, bs.away_substitute_non_own_goals)
+    if(side.triggered_side = 'home', home_substitute_non_own_goals, away_substitute_non_own_goals)
         AS triggered_team_substitute_non_own_goals,
-    if(side.triggered_side = 'home', bs.away_substitute_non_own_goals, bs.home_substitute_non_own_goals)
+    if(side.triggered_side = 'home', away_substitute_non_own_goals, home_substitute_non_own_goals)
         AS opponent_substitute_non_own_goals,
     if(side.triggered_side = 'home',
-        bs.home_substitute_non_own_goals - bs.away_substitute_non_own_goals,
-        bs.away_substitute_non_own_goals - bs.home_substitute_non_own_goals
+        home_substitute_non_own_goals - away_substitute_non_own_goals,
+        away_substitute_non_own_goals - home_substitute_non_own_goals
     ) AS substitute_non_own_goals_delta,
     if(side.triggered_side = 'home',
-        bs.home_distinct_substitute_goal_scorers,
-        bs.away_distinct_substitute_goal_scorers
+        home_distinct_substitute_goal_scorers,
+        away_distinct_substitute_goal_scorers
     ) AS triggered_team_distinct_substitute_goal_scorers,
     if(side.triggered_side = 'home',
-        bs.away_distinct_substitute_goal_scorers,
-        bs.home_distinct_substitute_goal_scorers
+        away_distinct_substitute_goal_scorers,
+        home_distinct_substitute_goal_scorers
     ) AS opponent_distinct_substitute_goal_scorers,
     if(side.triggered_side = 'home',
-        bs.home_distinct_substitute_goal_scorers - bs.away_distinct_substitute_goal_scorers,
-        bs.away_distinct_substitute_goal_scorers - bs.home_distinct_substitute_goal_scorers
+        home_distinct_substitute_goal_scorers - away_distinct_substitute_goal_scorers,
+        away_distinct_substitute_goal_scorers - home_distinct_substitute_goal_scorers
     ) AS distinct_substitute_goal_scorers_delta,
-    if(side.triggered_side = 'home', bs.home_top_substitute_scorer_goals, bs.away_top_substitute_scorer_goals)
+    if(side.triggered_side = 'home', home_top_substitute_scorer_goals, away_top_substitute_scorer_goals)
         AS triggered_team_top_substitute_scorer_goals,
-    if(side.triggered_side = 'home', bs.away_top_substitute_scorer_goals, bs.home_top_substitute_scorer_goals)
+    if(side.triggered_side = 'home', away_top_substitute_scorer_goals, home_top_substitute_scorer_goals)
         AS opponent_top_substitute_scorer_goals,
     if(side.triggered_side = 'home',
-        bs.home_top_substitute_scorer_goals - bs.away_top_substitute_scorer_goals,
-        bs.away_top_substitute_scorer_goals - bs.home_top_substitute_scorer_goals
+        home_top_substitute_scorer_goals - away_top_substitute_scorer_goals,
+        away_top_substitute_scorer_goals - home_top_substitute_scorer_goals
     ) AS top_substitute_scorer_goals_delta,
     if(side.triggered_side = 'home',
-        bs.home_first_substitute_goal_effective_minute,
-        bs.away_first_substitute_goal_effective_minute
+        home_first_substitute_goal_effective_minute,
+        away_first_substitute_goal_effective_minute
     ) AS triggered_team_first_substitute_goal_effective_minute,
     if(side.triggered_side = 'home',
-        bs.away_first_substitute_goal_effective_minute,
-        bs.home_first_substitute_goal_effective_minute
+        away_first_substitute_goal_effective_minute,
+        home_first_substitute_goal_effective_minute
     ) AS opponent_first_substitute_goal_effective_minute,
     if(side.triggered_side = 'home',
-        bs.home_last_substitute_goal_effective_minute,
-        bs.away_last_substitute_goal_effective_minute
+        home_last_substitute_goal_effective_minute,
+        away_last_substitute_goal_effective_minute
     ) AS triggered_team_last_substitute_goal_effective_minute,
     if(side.triggered_side = 'home',
-        bs.away_last_substitute_goal_effective_minute,
-        bs.home_last_substitute_goal_effective_minute
+        away_last_substitute_goal_effective_minute,
+        home_last_substitute_goal_effective_minute
     ) AS opponent_last_substitute_goal_effective_minute,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', bs.home_substitute_non_own_goals, bs.away_substitute_non_own_goals)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', bs.home_non_own_goals, bs.away_non_own_goals)), 0),
+        100.0 * if(side.triggered_side = 'home', home_substitute_non_own_goals, away_substitute_non_own_goals)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', home_non_own_goals, away_non_own_goals)), 0),
         1
     ), 0.0)) AS triggered_team_substitute_goal_share_pct,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', bs.away_substitute_non_own_goals, bs.home_substitute_non_own_goals)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', bs.away_non_own_goals, bs.home_non_own_goals)), 0),
+        100.0 * if(side.triggered_side = 'home', away_substitute_non_own_goals, home_substitute_non_own_goals)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', away_non_own_goals, home_non_own_goals)), 0),
         1
     ), 0.0)) AS opponent_substitute_goal_share_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * if(side.triggered_side = 'home', bs.home_substitute_non_own_goals, bs.away_substitute_non_own_goals)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', bs.home_non_own_goals, bs.away_non_own_goals)), 0),
+            100.0 * if(side.triggered_side = 'home', home_substitute_non_own_goals, away_substitute_non_own_goals)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', home_non_own_goals, away_non_own_goals)), 0),
             1
         ), 0.0)
       - coalesce(round(
-            100.0 * if(side.triggered_side = 'home', bs.away_substitute_non_own_goals, bs.home_substitute_non_own_goals)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', bs.away_non_own_goals, bs.home_non_own_goals)), 0),
+            100.0 * if(side.triggered_side = 'home', away_substitute_non_own_goals, home_substitute_non_own_goals)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', away_non_own_goals, home_non_own_goals)), 0),
             1
         ), 0.0),
         1
     )) AS substitute_goal_share_delta_pct,
-    if(side.triggered_side = 'home', bs.home_non_own_goals, bs.away_non_own_goals) AS triggered_team_non_own_goals,
-    if(side.triggered_side = 'home', bs.away_non_own_goals, bs.home_non_own_goals) AS opponent_non_own_goals,
+    if(side.triggered_side = 'home', home_non_own_goals, away_non_own_goals) AS triggered_team_non_own_goals,
+    if(side.triggered_side = 'home', away_non_own_goals, home_non_own_goals) AS opponent_non_own_goals,
     if(side.triggered_side = 'home',
-        bs.home_non_own_goals - bs.away_non_own_goals,
-        bs.away_non_own_goals - bs.home_non_own_goals
+        home_non_own_goals - away_non_own_goals,
+        away_non_own_goals - home_non_own_goals
     ) AS non_own_goals_delta,
-    if(side.triggered_side = 'home', bs.home_goals, bs.away_goals) AS triggered_team_goals,
-    if(side.triggered_side = 'home', bs.away_goals, bs.home_goals) AS opponent_goals,
-    if(side.triggered_side = 'home', bs.home_goals - bs.away_goals, bs.away_goals - bs.home_goals) AS goal_delta,
-    if(side.triggered_side = 'home', bs.total_shots_home, bs.total_shots_away) AS triggered_team_total_shots,
-    if(side.triggered_side = 'home', bs.total_shots_away, bs.total_shots_home) AS opponent_total_shots,
-    if(side.triggered_side = 'home', bs.shots_on_target_home, bs.shots_on_target_away) AS triggered_team_shots_on_target,
-    if(side.triggered_side = 'home', bs.shots_on_target_away, bs.shots_on_target_home) AS opponent_shots_on_target,
-    if(side.triggered_side = 'home', bs.expected_goals_home, bs.expected_goals_away) AS triggered_team_xg,
-    if(side.triggered_side = 'home', bs.expected_goals_away, bs.expected_goals_home) AS opponent_xg,
+    if(side.triggered_side = 'home', home_goals, away_goals) AS triggered_team_goals,
+    if(side.triggered_side = 'home', away_goals, home_goals) AS opponent_goals,
+    if(side.triggered_side = 'home', home_goals - away_goals, away_goals - home_goals) AS goal_delta,
+    if(side.triggered_side = 'home', total_shots_home, total_shots_away) AS triggered_team_total_shots,
+    if(side.triggered_side = 'home', total_shots_away, total_shots_home) AS opponent_total_shots,
+    if(side.triggered_side = 'home', shots_on_target_home, shots_on_target_away) AS triggered_team_shots_on_target,
+    if(side.triggered_side = 'home', shots_on_target_away, shots_on_target_home) AS opponent_shots_on_target,
+    if(side.triggered_side = 'home', expected_goals_home, expected_goals_away) AS triggered_team_xg,
+    if(side.triggered_side = 'home', expected_goals_away, expected_goals_home) AS opponent_xg,
     toFloat32(round(
         if(side.triggered_side = 'home',
-            bs.expected_goals_home - bs.expected_goals_away,
-            bs.expected_goals_away - bs.expected_goals_home
+            expected_goals_home - expected_goals_away,
+            expected_goals_away - expected_goals_home
         ),
         3
     )) AS xg_delta,
-    if(side.triggered_side = 'home', bs.big_chances_home, bs.big_chances_away) AS triggered_team_big_chances,
-    if(side.triggered_side = 'home', bs.big_chances_away, bs.big_chances_home) AS opponent_big_chances,
-    if(side.triggered_side = 'home', bs.possession_home_pct, bs.possession_away_pct) AS triggered_team_possession_pct,
-    if(side.triggered_side = 'home', bs.possession_away_pct, bs.possession_home_pct) AS opponent_possession_pct,
+    if(side.triggered_side = 'home', big_chances_home, big_chances_away) AS triggered_team_big_chances,
+    if(side.triggered_side = 'home', big_chances_away, big_chances_home) AS opponent_big_chances,
+    if(side.triggered_side = 'home', possession_home_pct, possession_away_pct) AS triggered_team_possession_pct,
+    if(side.triggered_side = 'home', possession_away_pct, possession_home_pct) AS opponent_possession_pct,
     toFloat32(round(
         if(side.triggered_side = 'home',
-            bs.possession_home_pct - bs.possession_away_pct,
-            bs.possession_away_pct - bs.possession_home_pct
+            possession_home_pct - possession_away_pct,
+            possession_away_pct - possession_home_pct
         ),
         1
     )) AS possession_delta_pct,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', bs.accurate_passes_home, bs.accurate_passes_away)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', bs.pass_attempts_home, bs.pass_attempts_away)), 0),
+        100.0 * if(side.triggered_side = 'home', accurate_passes_home, accurate_passes_away)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_home, pass_attempts_away)), 0),
         1
     ), 0.0)) AS triggered_team_pass_accuracy_pct,
     toFloat32(coalesce(round(
-        100.0 * if(side.triggered_side = 'home', bs.accurate_passes_away, bs.accurate_passes_home)
-        / nullIf(toFloat64(if(side.triggered_side = 'home', bs.pass_attempts_away, bs.pass_attempts_home)), 0),
+        100.0 * if(side.triggered_side = 'home', accurate_passes_away, accurate_passes_home)
+        / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_away, pass_attempts_home)), 0),
         1
     ), 0.0)) AS opponent_pass_accuracy_pct,
     toFloat32(round(
         coalesce(round(
-            100.0 * if(side.triggered_side = 'home', bs.accurate_passes_home, bs.accurate_passes_away)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', bs.pass_attempts_home, bs.pass_attempts_away)), 0),
+            100.0 * if(side.triggered_side = 'home', accurate_passes_home, accurate_passes_away)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_home, pass_attempts_away)), 0),
             1
         ), 0.0)
       - coalesce(round(
-            100.0 * if(side.triggered_side = 'home', bs.accurate_passes_away, bs.accurate_passes_home)
-            / nullIf(toFloat64(if(side.triggered_side = 'home', bs.pass_attempts_away, bs.pass_attempts_home)), 0),
+            100.0 * if(side.triggered_side = 'home', accurate_passes_away, accurate_passes_home)
+            / nullIf(toFloat64(if(side.triggered_side = 'home', pass_attempts_away, pass_attempts_home)), 0),
             1
         ), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM base_stats AS bs
+FROM base_stats AS b
 CROSS JOIN (
     SELECT arrayJoin(['home', 'away']) AS triggered_side
 ) AS side

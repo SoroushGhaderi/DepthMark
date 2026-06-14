@@ -80,11 +80,11 @@ yellow_window_ranked AS (
 ),
 yellow_window_rollup AS (
     SELECT
-        ywr.match_id,
-        ywr.triggered_side,
-        count() AS triggered_team_yellow_cards_window,
-        min(ywr.card_minute) AS triggered_team_first_yellow_card_window_minute,
-        minIf(ywr.card_minute, ywr.yellow_card_sequence_in_window = 3) AS triggered_team_third_yellow_card_window_minute,
+        ywr.match_id AS match_id,
+        ywr.triggered_side AS triggered_side,
+        count() AS rollup_yellow_cards_window,
+        min(ywr.card_minute) AS rollup_first_yellow_card_window_minute,
+        minIf(ywr.card_minute, ywr.yellow_card_sequence_in_window = 3) AS rollup_third_yellow_card_window_minute,
         argMinIf(
             ywr.score_home_at_card,
             tuple(ywr.card_minute, ywr.event_id),
@@ -101,6 +101,7 @@ yellow_window_rollup AS (
         ywr.triggered_side
 )
 
+SELECT * FROM (
 SELECT
     m.match_id,
     m.match_date,
@@ -120,18 +121,18 @@ SELECT
     toInt32(3) AS trigger_threshold_min_yellow_cards,
     toInt32(46) AS trigger_window_start_minute,
     toInt32(60) AS trigger_window_end_minute,
-    toInt32(coalesce(home_ywr.triggered_team_yellow_cards_window, 0)) AS triggered_team_yellow_cards_window,
-    toInt32(coalesce(away_ywr.triggered_team_yellow_cards_window, 0)) AS opponent_yellow_cards_window,
+    toInt32(coalesce(home_yellow_window_rollup.rollup_yellow_cards_window, 0)) AS triggered_team_yellow_cards_window,
+    toInt32(coalesce(away_yellow_window_rollup.rollup_yellow_cards_window, 0)) AS opponent_yellow_cards_window,
     toInt32(
-        coalesce(home_ywr.triggered_team_yellow_cards_window, 0)
-        - coalesce(away_ywr.triggered_team_yellow_cards_window, 0)
+        coalesce(home_yellow_window_rollup.rollup_yellow_cards_window, 0)
+        - coalesce(away_yellow_window_rollup.rollup_yellow_cards_window, 0)
     ) AS yellow_cards_window_delta,
-    toInt32(coalesce(home_ywr.triggered_team_first_yellow_card_window_minute, 0)) AS triggered_team_first_yellow_card_window_minute,
-    toInt32(coalesce(home_ywr.triggered_team_third_yellow_card_window_minute, 0)) AS triggered_team_third_yellow_card_window_minute,
-    toInt32(coalesce(home_ywr.triggered_team_third_yellow_card_window_minute, 0) - 45) AS minutes_from_second_half_start_to_third_yellow,
-    toInt32(coalesce(home_ywr.score_home_at_third_yellow, 0)) AS triggered_team_score_at_third_yellow,
-    toInt32(coalesce(home_ywr.score_away_at_third_yellow, 0)) AS opponent_score_at_third_yellow,
-    toInt32(coalesce(home_ywr.score_home_at_third_yellow, 0) - coalesce(home_ywr.score_away_at_third_yellow, 0)) AS score_margin_at_third_yellow,
+    toInt32(coalesce(home_yellow_window_rollup.rollup_first_yellow_card_window_minute, 0)) AS triggered_team_first_yellow_card_window_minute,
+    toInt32(coalesce(home_yellow_window_rollup.rollup_third_yellow_card_window_minute, 0)) AS triggered_team_third_yellow_card_window_minute,
+    toInt32(coalesce(home_yellow_window_rollup.rollup_third_yellow_card_window_minute, 0) - 45) AS minutes_from_second_half_start_to_third_yellow,
+    toInt32(coalesce(home_yellow_window_rollup.score_home_at_third_yellow, 0)) AS triggered_team_score_at_third_yellow,
+    toInt32(coalesce(home_yellow_window_rollup.score_away_at_third_yellow, 0)) AS opponent_score_at_third_yellow,
+    toInt32(coalesce(home_yellow_window_rollup.score_home_at_third_yellow, 0) - coalesce(home_yellow_window_rollup.score_away_at_third_yellow, 0)) AS score_margin_at_third_yellow,
 
     toInt32(coalesce(ps.yellow_cards_home, 0)) AS triggered_team_yellow_cards_match,
     toInt32(coalesce(ps.yellow_cards_away, 0)) AS opponent_yellow_cards_match,
@@ -163,15 +164,15 @@ FROM silver.match AS m
 INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
-INNER JOIN yellow_window_rollup AS home_ywr
-    ON home_ywr.match_id = m.match_id
-   AND home_ywr.triggered_side = 'home'
-LEFT JOIN yellow_window_rollup AS away_ywr
-    ON away_ywr.match_id = m.match_id
-   AND away_ywr.triggered_side = 'away'
+INNER JOIN yellow_window_rollup AS home_yellow_window_rollup
+    ON home_yellow_window_rollup.match_id = m.match_id
+   AND home_yellow_window_rollup.triggered_side = 'home'
+LEFT JOIN yellow_window_rollup AS away_yellow_window_rollup
+    ON away_yellow_window_rollup.match_id = m.match_id
+   AND away_yellow_window_rollup.triggered_side = 'away'
 WHERE m.match_finished = 1
   AND m.match_id > 0
-  AND home_ywr.triggered_team_yellow_cards_window >= 3
+  AND home_yellow_window_rollup.rollup_yellow_cards_window >= 3
 
 UNION ALL
 
@@ -194,18 +195,18 @@ SELECT
     toInt32(3) AS trigger_threshold_min_yellow_cards,
     toInt32(46) AS trigger_window_start_minute,
     toInt32(60) AS trigger_window_end_minute,
-    toInt32(coalesce(away_ywr.triggered_team_yellow_cards_window, 0)) AS triggered_team_yellow_cards_window,
-    toInt32(coalesce(home_ywr.triggered_team_yellow_cards_window, 0)) AS opponent_yellow_cards_window,
+    toInt32(coalesce(away_yellow_window_rollup.rollup_yellow_cards_window, 0)) AS triggered_team_yellow_cards_window,
+    toInt32(coalesce(home_yellow_window_rollup.rollup_yellow_cards_window, 0)) AS opponent_yellow_cards_window,
     toInt32(
-        coalesce(away_ywr.triggered_team_yellow_cards_window, 0)
-        - coalesce(home_ywr.triggered_team_yellow_cards_window, 0)
+        coalesce(away_yellow_window_rollup.rollup_yellow_cards_window, 0)
+        - coalesce(home_yellow_window_rollup.rollup_yellow_cards_window, 0)
     ) AS yellow_cards_window_delta,
-    toInt32(coalesce(away_ywr.triggered_team_first_yellow_card_window_minute, 0)) AS triggered_team_first_yellow_card_window_minute,
-    toInt32(coalesce(away_ywr.triggered_team_third_yellow_card_window_minute, 0)) AS triggered_team_third_yellow_card_window_minute,
-    toInt32(coalesce(away_ywr.triggered_team_third_yellow_card_window_minute, 0) - 45) AS minutes_from_second_half_start_to_third_yellow,
-    toInt32(coalesce(away_ywr.score_away_at_third_yellow, 0)) AS triggered_team_score_at_third_yellow,
-    toInt32(coalesce(away_ywr.score_home_at_third_yellow, 0)) AS opponent_score_at_third_yellow,
-    toInt32(coalesce(away_ywr.score_away_at_third_yellow, 0) - coalesce(away_ywr.score_home_at_third_yellow, 0)) AS score_margin_at_third_yellow,
+    toInt32(coalesce(away_yellow_window_rollup.rollup_first_yellow_card_window_minute, 0)) AS triggered_team_first_yellow_card_window_minute,
+    toInt32(coalesce(away_yellow_window_rollup.rollup_third_yellow_card_window_minute, 0)) AS triggered_team_third_yellow_card_window_minute,
+    toInt32(coalesce(away_yellow_window_rollup.rollup_third_yellow_card_window_minute, 0) - 45) AS minutes_from_second_half_start_to_third_yellow,
+    toInt32(coalesce(away_yellow_window_rollup.score_away_at_third_yellow, 0)) AS triggered_team_score_at_third_yellow,
+    toInt32(coalesce(away_yellow_window_rollup.score_home_at_third_yellow, 0)) AS opponent_score_at_third_yellow,
+    toInt32(coalesce(away_yellow_window_rollup.score_away_at_third_yellow, 0) - coalesce(away_yellow_window_rollup.score_home_at_third_yellow, 0)) AS score_margin_at_third_yellow,
 
     toInt32(coalesce(ps.yellow_cards_away, 0)) AS triggered_team_yellow_cards_match,
     toInt32(coalesce(ps.yellow_cards_home, 0)) AS opponent_yellow_cards_match,
@@ -237,19 +238,20 @@ FROM silver.match AS m
 INNER JOIN silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
-INNER JOIN yellow_window_rollup AS away_ywr
-    ON away_ywr.match_id = m.match_id
-   AND away_ywr.triggered_side = 'away'
-LEFT JOIN yellow_window_rollup AS home_ywr
-    ON home_ywr.match_id = m.match_id
-   AND home_ywr.triggered_side = 'home'
+INNER JOIN yellow_window_rollup AS away_yellow_window_rollup
+    ON away_yellow_window_rollup.match_id = m.match_id
+   AND away_yellow_window_rollup.triggered_side = 'away'
+LEFT JOIN yellow_window_rollup AS home_yellow_window_rollup
+    ON home_yellow_window_rollup.match_id = m.match_id
+   AND home_yellow_window_rollup.triggered_side = 'home'
 WHERE m.match_finished = 1
   AND m.match_id > 0
-  AND away_ywr.triggered_team_yellow_cards_window >= 3
+  AND away_yellow_window_rollup.rollup_yellow_cards_window >= 3
+) AS combined
 
 ORDER BY
     triggered_team_yellow_cards_window DESC,
     triggered_team_third_yellow_card_window_minute ASC,
     yellow_cards_window_delta DESC,
-    m.match_date DESC,
-    m.match_id DESC;
+    match_date DESC,
+    match_id DESC;

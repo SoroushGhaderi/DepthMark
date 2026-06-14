@@ -61,7 +61,7 @@ Scenario standards are defined in `scripts/gold/scenario/SCENARIOS_CONTRACT.md`.
 Current inventory: 48 matching SQL transforms.
 
 - SQL files: `clickhouse/gold/scenario/{team,player}/scenario_*.sql`
-- Catalog: `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+- Catalog: `scripts/gold/scenario/scenarios_catalog.md`
 
 ## Signal Scripts
 
