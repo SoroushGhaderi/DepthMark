@@ -44,17 +44,24 @@ cp .env.example .env
 # keep DEPTHMARK_ENV=local only for the tracked local Docker workflow
 
 docker compose up -d
-docker compose exec scraper python scripts/orchestration/setup_clickhouse.py
-docker compose exec scraper python scripts/orchestration/pipeline.py 20251208
+docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
 ```
 
-TouchDesk (separate repo) connects to this stack read-only. Start DepthMark first, then run TouchDesk from its own `docker-compose.yml`. See TouchDesk README for connectivity options (`host.docker.internal` or shared `depthmark_network`).
+TouchDesk (separate repo) connects to this stack read-only. Start DepthMark first, then run TouchDesk from its own `docker-compose.yml`:
+
+```bash
+cd ../DepthMark && docker compose up -d --build
+cd ../TouchDesk && docker compose up -d --build
+```
+
+TouchDesk `docker-compose.override.yml` joins `depthmark_network` for service-name access (`depthmark-clickhouse`, `depthmark-mongodb`). See TouchDesk README for remote-host options.
 
 To start only ClickHouse:
 
 ```bash
 docker compose -f docker/docker-compose.clickhouse.yml up -d
-docker compose -f docker/docker-compose.clickhouse.yml exec clickhouse clickhouse-client
+docker compose -f docker/docker-compose.clickhouse.yml exec depthmark-clickhouse clickhouse-client
 ```
 
 `docker/docker-compose.yml` is a compatibility shim that includes the root `docker-compose.yml`.
@@ -76,11 +83,11 @@ Minimum useful `.env` values:
 ```bash
 FOTMOB_X_MAS_TOKEN=your_token_here
 DEPTHMARK_ENV=local
-CLICKHOUSE_HOST=clickhouse
+CLICKHOUSE_HOST=depthmark-clickhouse
 CLICKHOUSE_PORT=8123
 CLICKHOUSE_USER=fotmob_user
 CLICKHOUSE_PASSWORD=your_clickhouse_password_here
-MONGODB_HOST=mongodb
+MONGODB_HOST=depthmark-mongodb
 MONGODB_PORT=27017
 MONGODB_USER=orbit_admin
 MONGODB_PASSWORD=your_mongodb_password_here
@@ -101,9 +108,9 @@ docker compose ps
 
 | Service | Port |
 |---------|------|
-| ClickHouse HTTP | `8123` |
-| ClickHouse native | `9000` |
-| MongoDB | `27017` |
+| `depthmark-clickhouse` HTTP | `8123` |
+| `depthmark-clickhouse` native | `9000` |
+| `depthmark-mongodb` | `27017` |
 
 **Network:** creates Docker network `depthmark_network` (fixed name). TouchDesk can join it optionally via `docker-compose.override.yml` (see TouchDesk repo).
 
@@ -136,48 +143,48 @@ fotmob:
 Run the standard pipeline for one date:
 
 ```bash
-docker compose exec scraper python scripts/orchestration/pipeline.py 20251208
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
 ```
 
 Run a date range or month:
 
 ```bash
-docker compose exec scraper python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
-docker compose exec scraper python scripts/orchestration/pipeline.py --month 202512
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py --month 202512
 ```
 
 Run individual layers:
 
 ```bash
-docker compose exec scraper python scripts/bronze/scrape_fotmob.py 20251208
-docker compose exec scraper python scripts/bronze/load_clickhouse.py --date 20251208
-docker compose exec scraper python scripts/silver/load_clickhouse.py
-docker compose exec scraper python scripts/gold/load_clickhouse_gold.py
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal --entity player
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal --family shooting_goals
+docker compose exec depthmark-scraper python scripts/bronze/scrape_fotmob.py 20251208
+docker compose exec depthmark-scraper python scripts/bronze/load_clickhouse.py --date 20251208
+docker compose exec depthmark-scraper python scripts/silver/load_clickhouse.py
+docker compose exec depthmark-scraper python scripts/gold/load_clickhouse_gold.py
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal --entity player
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal --family shooting_goals
 ```
 
 Preview non-destructive work:
 
 ```bash
-docker compose exec scraper python scripts/silver/load_clickhouse.py --dry-run
-docker compose exec scraper python scripts/gold/load_clickhouse_gold.py --dry-run
-docker compose exec scraper python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
-docker compose exec scraper python scripts/gold/run_sql_job.py --dry-run
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal --dry-run
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal --entity player --dry-run
-docker compose exec scraper python scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run
+docker compose exec depthmark-scraper python scripts/silver/load_clickhouse.py --dry-run
+docker compose exec depthmark-scraper python scripts/gold/load_clickhouse_gold.py --dry-run
+docker compose exec depthmark-scraper python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --dry-run
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal --dry-run
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal --entity player --dry-run
+docker compose exec depthmark-scraper python scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run
 ```
 
 Run health and quality checks:
 
 ```bash
-docker compose exec scraper python scripts/health_check.py --json
-docker compose exec scraper python scripts/quality/check_logging_style.py
-docker compose exec scraper python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+docker compose exec depthmark-scraper python scripts/health_check.py --json
+docker compose exec depthmark-scraper python scripts/quality/check_logging_style.py
+docker compose exec depthmark-scraper python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 ```
 
 ## MongoDB Signal Catalog
