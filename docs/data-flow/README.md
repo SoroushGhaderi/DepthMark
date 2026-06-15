@@ -8,7 +8,7 @@ infrastructure change.
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Interactive system design reference with Mermaid diagrams, architecture principles, consumption paths, and command cheat sheets. Open locally in a browser; tabs support `#hash` deep links (e.g. `index.html#gold`). |
+| `warehouse-pipeline-reference.html` | Interactive warehouse pipeline reference: medallion layer flows, architecture principles, consumption paths, and click-to-reveal script/command panels. Open locally in a browser; tabs support `#hash` deep links (e.g. `warehouse-pipeline-reference.html#gold`). |
 | `bronze.md` | Bronze layer: FotMob scraping, raw JSON storage, ClickHouse loading, DLQ handling. |
 | `silver.md` | Silver layer: SQL-driven cleaning, typing, and conformation of Bronze into analytical tables. |
 | `gold.md` | Gold layer: scenario outputs, signal outputs, activation rebuilds, and the generic SQL runner. |
@@ -18,7 +18,7 @@ infrastructure change.
 
 ## How To Use
 
-1. Start with `index.html` for a visual overview of the entire system.
+1. Start with `warehouse-pipeline-reference.html` for a visual overview of the entire system.
 2. Read the layer-specific `.md` files for detailed flow, scripts, tables, and
    edge cases.
 3. Cross-reference `docs/DEVELOPMENT_ARCHITECTURE.md` for canonical commands
@@ -30,8 +30,8 @@ infrastructure change.
    layer script, SQL job, ClickHouse table, or MongoDB collection.
 2. **Keep diagrams accurate.** If the code and a diagram disagree, the code
    wins — update the diagram in the same change.
-3. **Run `index.html` locally** after editing to verify Mermaid.js renders
-   correctly.
+3. **Open `warehouse-pipeline-reference.html` locally** after editing to verify
+   flow diagrams and click-to-command panels render correctly.
 4. **No stale inventory counts.** Update table counts in `bronze.md`,
    `silver.md`, and `gold.md` when the inventory changes.
 
