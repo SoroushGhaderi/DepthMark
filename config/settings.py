@@ -70,6 +70,7 @@ class Settings(BaseSettings):
     enable_metrics: bool = True
     enable_health_checks: bool = True
     
+    telegram_enabled: bool = True
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     

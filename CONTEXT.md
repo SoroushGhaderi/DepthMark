@@ -179,3 +179,43 @@ infrequent, created only on ClickHouse insertion failure, and carry audit value.
 
 Avoid saying: DLQ TTL, DLQ rotation, automatic DLQ cleanup.
 Related terms: Dead Letter Queue, Bronze Retention, DLQ Replay.
+
+### Telegram Client
+
+A thin transport layer under `src/services/telegram/client.py` that handles
+Bot API communication. All Telegram message sending goes through this single
+client. It reads configuration from `config.settings` (Pydantic, reads `.env`).
+
+Avoid saying: TelegramMetricsReporter, AlertManager, TelegramChannel,
+send_raw_telegram_message.
+Related terms: Telegram Message Template, Telegram Message Data.
+
+### Telegram Message Template
+
+A Jinja2 `.html.j2` file under `src/services/telegram/templates/` that defines
+the HTML structure of one message family. Templates render to HTML for
+Telegram's `parse_mode="HTML"`. Five families exist: daily report, monthly
+report, layer alert, pipeline summary, and error alert.
+
+Avoid saying: inline f-string formatting, HTML string concatenation.
+Related terms: Telegram Client, Telegram Message Data.
+
+### Telegram Message Data
+
+A Python dataclass under `src/services/telegram/messages.py` that carries the
+typed payload for one message family. Callers construct a dataclass instance and
+pass it to `TelegramClient.render_and_send()`. Five dataclasses exist:
+`DailyReportData`, `MonthlyReportData`, `LayerAlertData`,
+`PipelineSummaryData`, `ErrorAlertData`.
+
+Avoid saying: kwargs dict, **kwargs, send_daily_report parameters.
+Related terms: Telegram Client, Telegram Message Template.
+
+### Pipeline Summary
+
+A Telegram message family (currently missing) that reports per-step status,
+duration, and success/failure for the full pipeline run. Emitted by
+`scripts/orchestration/pipeline.py` after all steps complete.
+
+Avoid saying: pipeline completion alert, pipeline final message.
+Related terms: Telegram Message Template, Layer Alert.

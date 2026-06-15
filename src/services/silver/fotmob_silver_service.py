@@ -188,7 +188,7 @@ class SilverService:
 
         The caller (script) is responsible for:
         - ClickHouse client creation and teardown
-        - send_layer_completion_alert()
+        - Telegram notification via TelegramClient
         - Mapping the result to an exit code
         """
         result = SilverRunResult(exit_code=0)

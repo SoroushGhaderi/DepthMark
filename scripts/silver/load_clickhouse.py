@@ -14,8 +14,8 @@ for candidate in (str(project_root), str(scripts_dir)):
 
 from config.settings import settings
 from src.services.silver.fotmob_silver_service import SilverService, SilverRunResult
+from src.services.telegram import LayerAlertData, TelegramClient
 from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.layer_completion_alerts import send_layer_completion_alert
 from src.utils.layer_contracts import LayerContractError
 from src.utils.logging_utils import get_logger, setup_logging
 
@@ -48,20 +48,23 @@ def main(argv=None) -> int:
         completion_rate = (
             (result.completed_jobs / result.total_jobs * 100) if result.total_jobs > 0 else 0
         )
-        send_layer_completion_alert(
-            layer="silver",
-            summary_message="Silver transformations dry-run finished.",
-            scope="dry-run",
-            success=result.exit_code == 0,
-            duration_seconds=time.perf_counter() - stage_start,
-            detail_lines=[
-                f"Jobs planned: <b>{result.total_jobs}</b>",
-                f"Jobs completed: <b>{result.completed_jobs}</b>",
-            ],
-            insight_lines=[
-                f"Transformation completion rate: <b>{completion_rate:.1f}%</b>",
-                "Dry-run mode: <b>no writes performed</b>",
-            ],
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "layer_alert.html.j2",
+            LayerAlertData(
+                layer="silver",
+                success=result.exit_code == 0,
+                scope="dry-run",
+                duration_seconds=time.perf_counter() - stage_start,
+                details={
+                    "Jobs planned": str(result.total_jobs),
+                    "Jobs completed": str(result.completed_jobs),
+                },
+                insights={
+                    "Completion rate": f"{completion_rate:.1f}%",
+                    "Mode": "dry-run (no writes)",
+                },
+            ),
         )
         if result.exit_code == 0:
             logger.info("Silver dry-run completed successfully")
@@ -76,17 +79,20 @@ def main(argv=None) -> int:
     )
     if not client.connect():
         logger.error("Failed to connect to ClickHouse")
-        send_layer_completion_alert(
-            layer="silver",
-            summary_message="Silver transformations finished with connection failure.",
-            scope="runtime",
-            success=False,
-            duration_seconds=time.perf_counter() - stage_start,
-            detail_lines=[
-                "Jobs planned: <b>0</b>",
-                "Jobs completed: <b>0</b>",
-                "Contract checks: <b>not run</b>",
-            ],
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "layer_alert.html.j2",
+            LayerAlertData(
+                layer="silver",
+                success=False,
+                scope="runtime",
+                duration_seconds=time.perf_counter() - stage_start,
+                details={
+                    "Jobs planned": "0",
+                    "Jobs completed": "0",
+                    "Contract checks": "not run",
+                },
+            ),
         )
         return 1
 
@@ -105,25 +111,24 @@ def main(argv=None) -> int:
         completion_rate = (
             (result.completed_jobs / result.total_jobs * 100) if result.total_jobs > 0 else 0
         )
-        send_layer_completion_alert(
-            layer="silver",
-            summary_message="Silver transformations and validations finished.",
-            scope="runtime",
-            success=exit_code == 0,
-            duration_seconds=time.perf_counter() - stage_start,
-            detail_lines=[
-                f"Jobs planned: <b>{result.total_jobs}</b>",
-                f"Jobs completed: <b>{result.completed_jobs}</b>",
-                f"Contract checks: <b>{'passed' if result.contracts_checked else 'failed or skipped'}</b>",
-            ],
-            insight_lines=[
-                f"Transformation completion rate: <b>{completion_rate:.1f}%</b>",
-                (
-                    "Data quality signal: <b>contracts passed</b>"
-                    if result.contracts_checked
-                    else "Data quality signal: <b>contract check failed or was skipped</b>"
-                ),
-            ],
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "layer_alert.html.j2",
+            LayerAlertData(
+                layer="silver",
+                success=exit_code == 0,
+                scope="runtime",
+                duration_seconds=time.perf_counter() - stage_start,
+                details={
+                    "Jobs planned": str(result.total_jobs),
+                    "Jobs completed": str(result.completed_jobs),
+                    "Contract checks": "passed" if result.contracts_checked else "failed or skipped",
+                },
+                insights={
+                    "Completion rate": f"{completion_rate:.1f}%",
+                    "Quality signal": "contracts passed" if result.contracts_checked else "contract check failed",
+                },
+            ),
         )
 
 

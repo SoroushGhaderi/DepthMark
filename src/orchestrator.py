@@ -21,8 +21,8 @@ from .core.constants import Defaults
 from .processors import FotMobBronzeMatchProcessor
 from .scrapers import DailyScraper, MatchScraper
 from .storage import FotMobBronzeStorage, get_s3_uploader
-from .utils import DataQualityChecker, ScraperMetrics, get_alert_manager, get_logger
-from .utils.alerting import AlertLevel
+from .utils import DataQualityChecker, ScraperMetrics, get_logger
+from .services.telegram import ErrorAlertData, TelegramClient
 
 logger = get_logger(__name__)
 
@@ -48,7 +48,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
         self.config = config or FotMobConfig()
         self.logger = logger
         self.bronze_only = bronze_only
-        self.alert_manager = get_alert_manager()
+        self.telegram_client = TelegramClient()
 
         # Safety: FotMob can rate-limit/ban aggressive clients. Force sequential scraping
         # unless you intentionally re-enable parallelism in code.
@@ -219,18 +219,20 @@ class FotMobOrchestrator(OrchestratorProtocol):
                     extra={"date": date_str, "missing_reason": missing_reason},
                 )
 
-                alert_manager = get_alert_manager()
-                alert_manager.send_alert(
-                    level=AlertLevel.WARNING,
-                    title=f"FotMob Partial Scraping - {date_str}",
-                    message=f"Only {metrics.successful_matches}/{metrics.total_matches} matches scraped. Compression and S3 backup skipped.\n\nReason: {missing_reason}",
-                    context={
-                        "date": date_str,
-                        "total_matches": metrics.total_matches,
-                        "successful": metrics.successful_matches,
-                        "failed": metrics.failed_matches,
-                        "skipped": metrics.skipped_matches,
-                    },
+                self.telegram_client.render_and_send(
+                    "error_alert.html.j2",
+                    ErrorAlertData(
+                        level="WARNING",
+                        title=f"FotMob Partial Scraping — {date_str}",
+                        message=f"Only {metrics.successful_matches}/{metrics.total_matches} matches scraped. Compression and S3 backup skipped.\n\nReason: {missing_reason}",
+                        context={
+                            "date": date_str,
+                            "total_matches": str(metrics.total_matches),
+                            "successful": str(metrics.successful_matches),
+                            "failed": str(metrics.failed_matches),
+                            "skipped": str(metrics.skipped_matches),
+                        },
+                    ),
                 )
             else:
                 try:
@@ -444,8 +446,18 @@ class FotMobOrchestrator(OrchestratorProtocol):
 
                     if quality_issues:
                         metrics.record_data_quality_issue(match_id, quality_issues)
-                        self.alert_manager.alert_data_quality_issue(
-                            match_id=match_id, issues=quality_issues, context={"date": date_str}
+                        self.telegram_client.render_and_send(
+                            "error_alert.html.j2",
+                            ErrorAlertData(
+                                level="WARNING",
+                                title=f"Data Quality Issue: Match {match_id}",
+                                message=f"Data quality issues detected for match {match_id}: {', '.join(quality_issues[:3])}",
+                                context={
+                                    "match_id": match_id,
+                                    "issues": ", ".join(quality_issues),
+                                    "date": date_str,
+                                },
+                            ),
                         )
 
                     metrics.record_success(match_id)
@@ -457,29 +469,40 @@ class FotMobOrchestrator(OrchestratorProtocol):
                     metrics.record_failure(
                         match_id, error_msg or "Unknown error", "ProcessingError"
                     )
-                    self.alert_manager.alert_failed_scrape(
-                        match_id=match_id,
-                        error=error_msg or "Unknown error",
-                        error_type="ProcessingError",
-                        context={"date": date_str},
+                    self.telegram_client.render_and_send(
+                        "error_alert.html.j2",
+                        ErrorAlertData(
+                            level="ERROR",
+                            title=f"Scrape Failed: Match {match_id}",
+                            message=f"Failed to scrape match {match_id}: {error_msg or 'Unknown error'}",
+                            context={
+                                "match_id": match_id,
+                                "error": error_msg or "Unknown error",
+                                "error_type": "ProcessingError",
+                                "date": date_str,
+                            },
+                        ),
                     )
                     consecutive_errors += 1
 
                     if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
                         error_msg_critical = f"CRITICAL: {MAX_CONSECUTIVE_ERRORS} consecutive errors detected. Interrupting scrape."
                         self.logger.error(error_msg_critical)
-                        self.alert_manager.send_alert(
-                            level=AlertLevel.CRITICAL,
-                            title=f"FotMob Scraping Interrupted - {date_str}",
-                            message=f"{error_msg_critical}\n\nLast error: {error_msg}\nLast match ID: {match_id}\nCompleted: {completed_count}/{len(match_ids)}",
-                            context={
-                                "date": date_str,
-                                "consecutive_errors": consecutive_errors,
-                                "last_error": error_msg or "Unknown error",
-                                "last_match_id": match_id,
-                                "completed": completed_count,
-                                "total": len(match_ids),
-                            },
+                        self.telegram_client.render_and_send(
+                            "error_alert.html.j2",
+                            ErrorAlertData(
+                                level="CRITICAL",
+                                title=f"FotMob Scraping Interrupted — {date_str}",
+                                message=f"{error_msg_critical}\n\nLast error: {error_msg}\nLast match ID: {match_id}\nCompleted: {completed_count}/{len(match_ids)}",
+                                context={
+                                    "date": date_str,
+                                    "consecutive_errors": str(consecutive_errors),
+                                    "last_error": error_msg or "Unknown error",
+                                    "last_match_id": match_id,
+                                    "completed": str(completed_count),
+                                    "total": str(len(match_ids)),
+                                },
+                            ),
                         )
                         raise OrchestratorError(error_msg_critical)
 
@@ -709,8 +732,18 @@ class FotMobOrchestrator(OrchestratorProtocol):
 
             if quality_issues:
                 metrics.record_data_quality_issue(match_id, quality_issues)
-                self.alert_manager.alert_data_quality_issue(
-                    match_id=match_id, issues=quality_issues, context={"date": date_str}
+                self.telegram_client.render_and_send(
+                    "error_alert.html.j2",
+                    ErrorAlertData(
+                        level="WARNING",
+                        title=f"Data Quality Issue: Match {match_id}",
+                        message=f"Data quality issues detected for match {match_id}: {', '.join(quality_issues[:3])}",
+                        context={
+                            "match_id": match_id,
+                            "issues": ", ".join(quality_issues),
+                            "date": date_str,
+                        },
+                    ),
                 )
 
             metrics.record_success(match_id)
@@ -720,11 +753,19 @@ class FotMobOrchestrator(OrchestratorProtocol):
             )
         else:
             metrics.record_failure(match_id, error_msg or "Unknown error", "ProcessingError")
-            self.alert_manager.alert_failed_scrape(
-                match_id=match_id,
-                error=error_msg or "Unknown error",
-                error_type="ProcessingError",
-                context={"date": date_str},
+            self.telegram_client.render_and_send(
+                "error_alert.html.j2",
+                ErrorAlertData(
+                    level="ERROR",
+                    title=f"Scrape Failed: Match {match_id}",
+                    message=f"Failed to scrape match {match_id}: {error_msg or 'Unknown error'}",
+                    context={
+                        "match_id": match_id,
+                        "error": error_msg or "Unknown error",
+                        "error_type": "ProcessingError",
+                        "date": date_str,
+                    },
+                ),
             )
 
     def get_match_data(self, match_id: int, date_str: str) -> Optional[Dict[str, Any]]:

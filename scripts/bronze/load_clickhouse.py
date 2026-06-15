@@ -47,7 +47,7 @@ from src.processors.bronze.match_processor import FotMobBronzeMatchProcessor
 from src.storage.bronze.fotmob import FotMobBronzeStorage
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.dlq import DeadLetterQueue
-from src.utils.alerting import AlertLevel, get_alert_manager
+from src.services.telegram import ErrorAlertData, TelegramClient
 from src.utils.date_utils import (
     DATE_FORMAT_COMPACT,
     extract_year_month,
@@ -1273,18 +1273,21 @@ def main(argv: Optional[List[str]] = None) -> int:
                     extra={"database": database, "date": date_str, "error": str(e)},
                     exc_info=True,
                 )
-                alert_manager = get_alert_manager()
-                alert_manager.send_alert(
-                    level=AlertLevel.ERROR,
-                    title=f"ClickHouse Loading Failed - FOTMOB - {date_str}",
-                    message=f"Failed to load fotmob data to ClickHouse for date {date_str}.\n\nError: {str(e)}",
-                    context={
-                        "date": date_str,
-                        "scraper": "fotmob",
-                        "database": database,
-                        "step": "ClickHouse Loading - fotmob",
-                        "error": str(e),
-                    },
+                telegram_client = TelegramClient()
+                telegram_client.render_and_send(
+                    "error_alert.html.j2",
+                    ErrorAlertData(
+                        level="ERROR",
+                        title=f"ClickHouse Loading Failed — FOTMOB — {date_str}",
+                        message=f"Failed to load fotmob data to ClickHouse for date {date_str}.\n\nError: {e}",
+                        context={
+                            "date": date_str,
+                            "scraper": "fotmob",
+                            "database": database,
+                            "step": "ClickHouse Loading — fotmob",
+                            "error": str(e),
+                        },
+                    ),
                 )
 
         # Print summary

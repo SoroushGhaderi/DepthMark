@@ -14,9 +14,9 @@ for candidate in (str(project_root), str(scripts_dir)):
 
 from config.settings import settings
 from src.services.gold.fotmob_gold_service import GoldService, GoldRunResult
+from src.services.telegram import LayerAlertData, TelegramClient
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
-from src.utils.layer_completion_alerts import send_layer_completion_alert
 from src.utils.layer_contracts import LayerContractError
 from src.utils.logging_utils import get_logger, setup_logging
 
@@ -70,23 +70,26 @@ def main(argv=None) -> int:
         )
         successful_jobs = result.scenario_success_count + result.signal_success_count
         scenario_success_rate = (successful_jobs / total_jobs * 100) if total_jobs > 0 else 0
-        send_layer_completion_alert(
-            layer="gold",
-            summary_message="Gold SQL/signal dry-run finished.",
-            scope="dry-run",
-            success=failed_count == 0,
-            duration_seconds=time.perf_counter() - stage_start,
-            detail_lines=[
-                f"SQL files planned: <b>{result.sql_file_count}</b>",
-                f"Scenarios succeeded: <b>{result.scenario_success_count}</b>",
-                f"Scenario failures: <b>{result.scenario_failed_count}</b>",
-                f"Signal failures: <b>{result.signal_failed_count}</b>",
-                f"Signal activation builder exit code: <b>{result.signal_activation_exit_code}</b>",
-            ],
-            insight_lines=[
-                f"Signal pass projection: <b>{scenario_success_rate:.1f}%</b>",
-                "Dry-run mode: <b>no writes performed</b>",
-            ],
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "layer_alert.html.j2",
+            LayerAlertData(
+                layer="gold",
+                success=failed_count == 0,
+                scope="dry-run",
+                duration_seconds=time.perf_counter() - stage_start,
+                details={
+                    "SQL files planned": str(result.sql_file_count),
+                    "Scenarios succeeded": str(result.scenario_success_count),
+                    "Scenario failures": str(result.scenario_failed_count),
+                    "Signal failures": str(result.signal_failed_count),
+                    "Activation exit code": str(result.signal_activation_exit_code),
+                },
+                insights={
+                    "Pass projection": f"{scenario_success_rate:.1f}%",
+                    "Mode": "dry-run (no writes)",
+                },
+            ),
         )
         if failed_count > 0:
             return 1
@@ -103,20 +106,21 @@ def main(argv=None) -> int:
 
     if not client.connect():
         logger.error("Failed to connect to ClickHouse")
-        send_layer_completion_alert(
-            layer="gold",
-            summary_message="Gold processing finished with connection failure.",
-            scope="runtime",
-            success=False,
-            duration_seconds=time.perf_counter() - stage_start,
-            detail_lines=[
-                "SQL files executed: <b>0</b>",
-                "Scenarios succeeded: <b>0</b>",
-                "Scenario failures: <b>0</b>",
-                "Signals succeeded: <b>0</b>",
-                "Signal failures: <b>0</b>",
-                "Contract checks: <b>not run</b>",
-            ],
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "layer_alert.html.j2",
+            LayerAlertData(
+                layer="gold",
+                success=False,
+                scope="runtime",
+                duration_seconds=time.perf_counter() - stage_start,
+                details={
+                    "SQL files executed": "0",
+                    "Scenarios succeeded": "0",
+                    "Signals succeeded": "0",
+                    "Contract checks": "not run",
+                },
+            ),
         )
         return 1
 
@@ -143,30 +147,28 @@ def main(argv=None) -> int:
             if total_jobs > 0
             else 0
         )
-        summary = "Gold SQL + signal processing finished."
-        send_layer_completion_alert(
-            layer="gold",
-            summary_message=summary,
-            scope="runtime",
-            success=exit_code == 0,
-            duration_seconds=time.perf_counter() - stage_start,
-            detail_lines=[
-                f"SQL files executed: <b>{result.sql_file_count}</b>",
-                f"Scenarios succeeded: <b>{result.scenario_success_count}</b>",
-                f"Scenario failures: <b>{result.scenario_failed_count}</b>",
-                f"Signals succeeded: <b>{result.signal_success_count}</b>",
-                f"Signal failures: <b>{result.signal_failed_count}</b>",
-                f"Signal activation builder exit code: <b>{result.signal_activation_exit_code}</b>",
-                f"Contract checks: <b>{'passed' if result.contracts_checked else 'failed or skipped'}</b>",
-            ],
-            insight_lines=[
-                f"Signal success rate: <b>{scenario_success_rate:.1f}%</b>",
-                (
-                    "Analytics quality signal: <b>gold contracts passed</b>"
-                    if result.contracts_checked
-                    else "Analytics quality signal: <b>contract check failed or was skipped</b>"
-                ),
-            ],
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "layer_alert.html.j2",
+            LayerAlertData(
+                layer="gold",
+                success=exit_code == 0,
+                scope="runtime",
+                duration_seconds=time.perf_counter() - stage_start,
+                details={
+                    "SQL files executed": str(result.sql_file_count),
+                    "Scenarios succeeded": str(result.scenario_success_count),
+                    "Scenario failures": str(result.scenario_failed_count),
+                    "Signals succeeded": str(result.signal_success_count),
+                    "Signal failures": str(result.signal_failed_count),
+                    "Activation exit code": str(result.signal_activation_exit_code),
+                    "Contract checks": "passed" if result.contracts_checked else "failed or skipped",
+                },
+                insights={
+                    "Success rate": f"{scenario_success_rate:.1f}%",
+                    "Quality signal": "gold contracts passed" if result.contracts_checked else "contract check failed",
+                },
+            ),
         )
 
 
