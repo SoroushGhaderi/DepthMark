@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Architecture Review - DepthMark</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+  </script>
+  <style>
+    .mermaid { background: #f8fafc; border-radius: 8px; padding: 12px; }
+    .card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .badge-strong { background: #16a34a; color: white; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+    .badge-worth { background: #d97706; color: white; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+    .badge-speculative { background: #6366f1; color: white; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
+    .category-badge { background: #e0e7ff; color: #3730a3; padding: 2px 10px; border-radius: 9999px; font-size: 12px; font-weight: 500; }
+    .before-box { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; }
+    .after-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; }
+    .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+    .problem-text { font-size: 14px; color: #475569; line-height: 1.6; margin-top: 8px; }
+    .solution-text { font-size: 14px; color: #1e293b; font-weight: 500; line-height: 1.6; }
+    .wins-list { font-size: 13px; color: #64748b; line-height: 1.7; }
+    .diagram-container { margin-top: 16px; margin-bottom: 16px; }
+    .top-card { background: linear-gradient(135deg, #0f172a, #1e293b); color: white; border-radius: 12px; padding: 24px; }
+  </style>
+</head>
+<body class="bg-stone-50 text-slate-900 font-sans">
+  <main class="max-w-4xl mx-auto px-6 py-12">
+
+    <!-- Header -->
+    <header style="margin-bottom: 40px;">
+      <h1 style="font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px;">Architecture Review</h1>
+      <p style="font-size: 14px; color: #64748b; margin-bottom: 16px;">DepthMark &middot; FotMob medallion pipeline</p>
+      <div style="display: flex; gap: 20px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+        <span>&#9632; Module</span>
+        <span>&#9644; Seam</span>
+        <span style="color: #dc2626;">&#9654; Leakage</span>
+        <span>&#9608; Deep module</span>
+      </div>
+    </header>
+
+    <!-- ==================== CANDIDATE 1 ==================== -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;">1. Extract Bronze Loading Service</h2>
+        <div style="display: flex; gap: 8px;">
+          <span class="badge-strong">Strong</span>
+          <span class="category-badge">In-process</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+        Files: <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">scripts/bronze/load_clickhouse.py</code> (1312 lines), <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">src/services/</code>
+      </p>
+
+      <!-- Diagram -->
+      <div class="diagram-container">
+        <div class="mermaid">
+graph LR
+  subgraph "BEFORE"
+    A["load_clickhouse.py\n1312 lines"] --> B["DataFrame processing"]
+    A --> C["Schema validation"]
+    A --> D["DLQ fallback"]
+    A --> E["ClickHouse insertion"]
+    A --> F["Contract checks"]
+  end
+  subgraph "AFTER"
+    G["load_clickhouse.py\nthin CLI wrapper"] --> H["BronzeService"]
+    H --> I["match_processor"]
+    H --> J["clickhouse_client"]
+    H --> K["layer_contracts"]
+    H --> L["dlq"]
+  end
+        </div>
+      </div>
+
+      <!-- Before / After -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="before-box">
+          <p class="section-title" style="color: #dc2626;">Before</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>1312-line monolithic script with no service delegation</li>
+            <li>DataFrame processing, schema validation, DLQ fallback, ClickHouse insertion all inline</li>
+            <li>Only layer without a <code>src/services/</code> counterpart</li>
+            <li>Cannot unit test workflow without invoking the full script</li>
+          </ul>
+        </div>
+        <div class="after-box">
+          <p class="section-title" style="color: #16a34a;">After</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li><code>BronzeService</code> owns workflow coordination, contract checks, DLQ, and summary</li>
+            <li>Script becomes a thin CLI wrapper (like Silver/Gold loaders)</li>
+            <li>Consistent service pattern across all three layers</li>
+            <li>Testable through the service interface without subprocess invocation</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <p class="problem-text"><strong>Problem:</strong> Bronze is the only layer where all workflow logic lives in the script, violating ADR 0010's pattern and making the 1312-line script untestable in isolation.</p>
+        <p class="solution-text" style="margin-top: 8px;"><strong>Solution:</strong> Extract a <code>BronzeService</code> following the same pattern as <code>SilverService</code> and <code>GoldService</code>. The script becomes a thin CLI wrapper.</p>
+        <p class="wins-list" style="margin-top: 8px;"><strong>Wins:</strong> Locality (workflow logic in one place), leverage (tests cross the service interface), consistency (all three layers follow the same script&rarr;service pattern).</p>
+        <p class="wins-list" style="margin-top: 4px;"><strong>ADR:</strong> Aligns with ADR 0010. No conflict.</p>
+      </div>
+    </div>
+
+    <!-- ==================== CANDIDATE 2 ==================== -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;">2. Unify Configuration Systems</h2>
+        <div style="display: flex; gap: 8px;">
+          <span class="badge-strong">Strong</span>
+          <span class="category-badge">In-process</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+        Files: <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">config/base.py</code>, <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">config/fotmob.py</code>, <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">config/settings.py</code>
+      </p>
+
+      <!-- Diagram -->
+      <div class="diagram-container">
+        <div class="mermaid">
+graph LR
+  subgraph "BEFORE"
+    A["config.yaml"] --> B["FotMobConfig"]
+    C[".env"] --> B
+    C --> D["Settings singleton"]
+    B -. "duplicated" .-> D
+  end
+  subgraph "AFTER"
+    E[".env + config.yaml"] --> F["Settings\nsingle source"]
+    F --> G["FotMob config"]
+    F --> H["ClickHouse config"]
+    F --> I["Telegram config"]
+  end
+        </div>
+      </div>
+
+      <!-- Before / After -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="before-box">
+          <p class="section-title" style="color: #dc2626;">Before</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Two independent config systems: YAML-based <code>FotMobConfig</code> and pydantic <code>Settings</code></li>
+            <li>Duplicated settings (logging, proxy, metrics) with no reconciliation</li>
+            <li>Module-level side effects: <code>load_dotenv()</code> and <code>Settings()</code> at import time</li>
+            <li>Callers must know which system owns which setting</li>
+          </ul>
+        </div>
+        <div class="after-box">
+          <p class="section-title" style="color: #16a34a;">After</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Single <code>Settings</code> class with FotMob-specific nested config</li>
+            <li>One source of truth for all configuration</li>
+            <li>No import-time side effects; explicit initialization</li>
+            <li>Clean testability with injected config</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <p class="problem-text"><strong>Problem:</strong> Two parallel config systems with duplicated settings, different override mechanisms, and import-time side effects create confusion and fragility.</p>
+        <p class="solution-text" style="margin-top: 8px;"><strong>Solution:</strong> Consolidate into a single pydantic-settings <code>Settings</code> class with nested config groups. Remove the YAML-based <code>FotMobConfig</code> or make it read from <code>Settings</code>.</p>
+        <p class="wins-list" style="margin-top: 8px;"><strong>Wins:</strong> Locality (one place to find any setting), leverage (tests inject one config object), interface clarity (callers don't need to know which system owns what).</p>
+      </div>
+    </div>
+
+    <!-- ==================== CANDIDATE 3 ==================== -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;">3. Introduce Test Infrastructure</h2>
+        <div style="display: flex; gap: 8px;">
+          <span class="badge-strong">Strong</span>
+          <span class="category-badge">Local-substitutable</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+        Files: <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">tests/</code> (absent), <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">pytest.ini</code>, <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">pyproject.toml</code>
+      </p>
+
+      <!-- Diagram -->
+      <div class="diagram-container">
+        <div class="mermaid">
+graph TD
+  subgraph "BEFORE"
+    A["pytest.ini"] -. "points to" .-> B["tests/ directory\nDOES NOT EXIST"]
+    C["pyproject.toml\n[tool.pytest]"] -. "points to" .-> B
+    D["Zero test files"] --> E["Zero test coverage"]
+  end
+  subgraph "AFTER"
+    F["tests/unit/"] --> G["date_utils, validation\nlayer_contracts, metrics"]
+    H["tests/integration/"] --> I["SilverService, GoldService\nwith mock ClickHouse"]
+    J["conftest.py"] --> K["shared fixtures\nmock clients, sample data"]
+  end
+        </div>
+      </div>
+
+      <!-- Before / After -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="before-box">
+          <p class="section-title" style="color: #dc2626;">Before</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li><strong>Zero test files.</strong> Tests deleted in commit <code>afc17fe</code>.</li>
+            <li><code>pytest.ini</code> configured for non-existent <code>tests/</code> dir</li>
+            <li>No CI/CD, no automated quality gates</li>
+            <li>Only validation: manual <code>--dry-run</code> modes</li>
+          </ul>
+        </div>
+        <div class="after-box">
+          <p class="section-title" style="color: #16a34a;">After</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li><code>tests/unit/</code> for pure logic (date_utils, validation, layer_contracts)</li>
+            <li><code>tests/integration/</code> with mock ClickHouse for services</li>
+            <li><code>conftest.py</code> with shared fixtures (mock clients, sample data)</li>
+            <li>Tests cross service interfaces, not implementation details</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <p class="problem-text"><strong>Problem:</strong> Zero test coverage. All validation is manual. No automated quality gates exist.</p>
+        <p class="solution-text" style="margin-top: 8px;"><strong>Solution:</strong> Create <code>tests/</code> with unit tests for pure logic and integration tests with mock ClickHouse for services. Start with the most testable modules (date_utils, validation, layer_contracts) and work outward.</p>
+        <p class="wins-list" style="margin-top: 8px;"><strong>Wins:</strong> Leverage (one test suite catches regressions everywhere), locality (failures pinpoint the broken module), interface discipline (tests enforce module contracts).</p>
+      </div>
+    </div>
+
+    <!-- ==================== CANDIDATE 4 ==================== -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;">4. ClickHouse Client Factory</h2>
+        <div style="display: flex; gap: 8px;">
+          <span class="badge-worth">Worth exploring</span>
+          <span class="category-badge">Remote but owned</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+        Files: <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">src/storage/clickhouse_client.py</code>, 8+ scripts with repeated setup
+      </p>
+
+      <!-- Diagram -->
+      <div class="diagram-container">
+        <div class="mermaid">
+graph LR
+  subgraph "BEFORE"
+    A1["silver/load_clickhouse.py"] --> B1["10-line setup block"]
+    A2["gold/load_clickhouse.py"] --> B2["10-line setup block"]
+    A3["bronze/drop_clickhouse.py"] --> B3["10-line setup block"]
+    A4["quality/check_*.py"] --> B4["10-line setup block"]
+  end
+  subgraph "AFTER"
+    C1["any script"] --> D["create_clickhouse_client()\none function call"]
+    D --> E["ClickHouseClient"]
+    E --> F["connect / try / finally / disconnect"]
+  end
+        </div>
+      </div>
+
+      <!-- Before / After -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="before-box">
+          <p class="section-title" style="color: #dc2626;">Before</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Same 10-line client instantiation pattern repeated in 8+ scripts</li>
+            <li>Same connect/try/finally/disconnect boilerplate everywhere</li>
+            <li><code>clickhouse_setup_common.py</code> has its own <code>connect_clickhouse()</code> with extra logic other scripts don't need</li>
+          </ul>
+        </div>
+        <div class="after-box">
+          <p class="section-title" style="color: #16a34a;">After</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li><code>create_clickhouse_client()</code> factory or context manager</li>
+            <li>Scripts call one function instead of repeating setup</li>
+            <li>Connection pooling and cleanup in one place</li>
+            <li>Tests can inject a mock client at the seam</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <p class="problem-text"><strong>Problem:</strong> ClickHouse client setup boilerplate is copy-pasted across 8+ scripts, creating maintenance friction and inconsistency.</p>
+        <p class="solution-text" style="margin-top: 8px;"><strong>Solution:</strong> Add a <code>create_clickhouse_client()</code> factory function or a context manager to <code>clickhouse_client.py</code>. Scripts call one function instead of 10 lines of setup.</p>
+        <p class="wins-list" style="margin-top: 8px;"><strong>Wins:</strong> Locality (connection logic in one place), leverage (all scripts benefit from fixes), testability (factory returns a mockable seam).</p>
+      </div>
+    </div>
+
+    <!-- ==================== CANDIDATE 5 ==================== -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;">5. Consolidate Drop Scripts</h2>
+        <div style="display: flex; gap: 8px;">
+          <span class="badge-worth">Worth exploring</span>
+          <span class="category-badge">In-process</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+        Files: <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">scripts/bronze/drop_clickhouse.py</code>, <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">scripts/silver/drop_clickhouse.py</code>
+      </p>
+
+      <!-- Diagram -->
+      <div class="diagram-container">
+        <div class="mermaid">
+graph LR
+  subgraph "BEFORE"
+    A["bronze/drop_clickhouse.py\n113 lines"] --> B["_find_tables()"]
+    A --> C["parse_args()"]
+    A --> D["main()"]
+    E["silver/drop_clickhouse.py\n113 lines"] --> F["_find_tables()"]
+    E --> G["parse_args()"]
+    E --> H["main()"]
+  end
+  subgraph "AFTER"
+    I["scripts/drop_clickhouse.py\n--layer bronze|silver|gold"] --> J["drop_layer_tables()\nshared function"]
+  end
+        </div>
+      </div>
+
+      <!-- Before / After -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="before-box">
+          <p class="section-title" style="color: #dc2626;">Before</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Two near-identical 113-line scripts differing only in default database name</li>
+            <li>Same <code>_find_tables()</code>, <code>parse_args()</code>, <code>main()</code> copy-pasted</li>
+            <li>Bug fixes must be applied to both files</li>
+          </ul>
+        </div>
+        <div class="after-box">
+          <p class="section-title" style="color: #16a34a;">After</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Single <code>scripts/drop_clickhouse.py --layer bronze|silver|gold</code></li>
+            <li>Or keep both as thin wrappers calling a shared function</li>
+            <li>One file to maintain, one place for bug fixes</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <p class="problem-text"><strong>Problem:</strong> Bronze and silver drop scripts are near-identical 113-line copies, creating duplication and maintenance risk.</p>
+        <p class="solution-text" style="margin-top: 8px;"><strong>Solution:</strong> Consolidate into a single script with a <code>--layer</code> argument, or extract a shared <code>drop_layer_tables()</code> function that both scripts call.</p>
+        <p class="wins-list" style="margin-top: 8px;"><strong>Wins:</strong> Locality (one implementation), leverage (bug fixes apply everywhere), simplicity (less code to maintain).</p>
+      </div>
+    </div>
+
+    <!-- ==================== CANDIDATE 6 ==================== -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;">6. Telegram Notification Service</h2>
+        <div style="display: flex; gap: 8px;">
+          <span class="badge-worth">Worth exploring</span>
+          <span class="category-badge">True external</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+        Files: <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">src/services/telegram/</code>, 5+ scripts with repeated notification blocks
+      </p>
+
+      <!-- Diagram -->
+      <div class="diagram-container">
+        <div class="mermaid">
+graph LR
+  subgraph "BEFORE"
+    A1["silver/load_clickhouse.py"] --> B1["TelegramClient()\nrender_and_send()"]
+    A2["gold/load_clickhouse.py"] --> B2["TelegramClient()\nrender_and_send()"]
+    A3["bronze/scrape_fotmob.py"] --> B3["TelegramClient()\nrender_and_send()"]
+    A4["health_check.py\n(utils layer)"] -.->|"leaks into services"| B4["TelegramClient"]
+  end
+  subgraph "AFTER"
+    C1["any script"] --> D["send_layer_alert()\nconvenience function"]
+    D --> E["TelegramClient"]
+    F["health_check.py"] --> G["optional callback\nno service import"]
+  end
+        </div>
+      </div>
+
+      <!-- Before / After -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="before-box">
+          <p class="section-title" style="color: #dc2626;">Before</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Same <code>TelegramClient()</code> + <code>render_and_send()</code> pattern repeated in 5+ scripts</li>
+            <li><code>health_check.py</code> (utils) imports Telegram service, creating circular dependency</li>
+            <li>Each script constructs <code>LayerAlertData</code> inline</li>
+          </ul>
+        </div>
+        <div class="after-box">
+          <p class="section-title" style="color: #16a34a;">After</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li><code>send_layer_alert(layer, success, ...)</code> convenience function</li>
+            <li>Health checks use a callback or optional notifier, not direct import</li>
+            <li>Scripts call one function instead of constructing dataclasses</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <p class="problem-text"><strong>Problem:</strong> Telegram notification boilerplate is duplicated across 5+ scripts, and health_check.py imports the Telegram service creating a utils&rarr;services dependency leak.</p>
+        <p class="solution-text" style="margin-top: 8px;"><strong>Solution:</strong> Add a convenience function like <code>send_layer_alert()</code> to the telegram module. Fix health_check.py to accept an optional notifier callback instead of importing Telegram directly.</p>
+        <p class="wins-list" style="margin-top: 8px;"><strong>Wins:</strong> Locality (notification logic in one place), leverage (all scripts benefit), interface cleanliness (health_check.py no longer depends on services).</p>
+      </div>
+    </div>
+
+    <!-- ==================== CANDIDATE 7 ==================== -->
+    <div class="card">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;">7. Remove Empty Placeholder Packages</h2>
+        <div style="display: flex; gap: 8px;">
+          <span class="badge-speculative">Speculative</span>
+          <span class="category-badge">In-process</span>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #94a3b8; margin-bottom: 20px;">
+        Files: <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">processors/silver/</code>, <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">processors/gold/</code>, <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">storage/silver/</code>, <code style="background:#f1f5f9; padding:1px 4px; border-radius:4px;">storage/gold/</code>
+      </p>
+
+      <!-- Before / After -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+        <div class="before-box">
+          <p class="section-title" style="color: #dc2626;">Before</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Four empty <code>__init__.py</code> files with only docstrings</li>
+            <li>Suggests Python processors/storage exist for Silver/Gold (they don't)</li>
+            <li>Misleads contributors about where Silver/Gold logic lives</li>
+          </ul>
+        </div>
+        <div class="after-box">
+          <p class="section-title" style="color: #16a34a;">After</p>
+          <ul class="wins-list" style="list-style: disc; padding-left: 16px;">
+            <li>Remove empty packages or add a README explaining they are intentionally empty</li>
+            <li>Silver/Gold logic lives in <code>clickhouse/</code> SQL, not Python</li>
+            <li>Clearer codebase navigation for new contributors</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Text -->
+      <div style="border-top: 1px solid #f1f5f9; padding-top: 16px;">
+        <p class="problem-text"><strong>Problem:</strong> Empty placeholder packages (<code>processors/silver/</code>, <code>storage/gold/</code>, etc.) create misleading expectations about where Silver/Gold logic lives.</p>
+        <p class="solution-text" style="margin-top: 8px;"><strong>Solution:</strong> Remove the empty packages or add a README.md in each explaining they are intentionally empty because Silver/Gold transformations live in ClickHouse SQL (per ADR 0007).</p>
+        <p class="wins-list" style="margin-top: 8px;"><strong>Wins:</strong> Clarity (new contributors find logic where it actually lives), reduced noise (fewer empty directories to navigate).</p>
+      </div>
+    </div>
+
+    <!-- ==================== TOP RECOMMENDATION ==================== -->
+    <div class="top-card" style="margin-top: 40px;">
+      <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 12px;">Top Recommendation</h2>
+      <p style="font-size: 14px; color: #cbd5e1; margin-bottom: 8px;">
+        <strong>Start with Candidate 1: Extract Bronze Loading Service.</strong>
+      </p>
+      <ul style="font-size: 14px; color: #cbd5e1; list-style: disc; padding-left: 20px; line-height: 1.8;">
+        <li>Follows an established pattern (Silver and Gold already have services)</li>
+        <li>Resolves the largest inconsistency (Bronze is the only layer without service delegation)</li>
+        <li>Unlocks testability for the heaviest script (1312 lines)</li>
+        <li>Aligns with ADR 0010 and requires no architectural decisions</li>
+      </ul>
+      <p style="font-size: 14px; color: #94a3b8; margin-top: 12px;">
+        Once the Bronze service exists, the test infrastructure (Candidate 3) becomes much easier to build because services provide clean test seams.
+      </p>
+    </div>
+
+    <footer style="font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 40px;">
+      Architecture review &middot; DepthMark
+    </footer>
+
+  </main>
+</body>
+</html>
