@@ -20,6 +20,9 @@ class ScraperMetrics:
     errors: List[Dict[str, Any]] = field(default_factory=list)
     warnings: List[Dict[str, Any]] = field(default_factory=list)
     data_quality_issues: List[Dict[str, Any]] = field(default_factory=list)
+    s3_uploaded: bool = False
+    s3_size_mb: float = 0.0
+    s3_already_in_bucket: bool = False
 
     def start(self):
         """Mark the start of scraping."""

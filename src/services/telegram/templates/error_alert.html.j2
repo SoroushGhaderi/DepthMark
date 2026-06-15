@@ -1,18 +1,7 @@
 {% set level_emoji = {"ERROR": "🔴", "CRITICAL": "🚨", "WARNING": "⚠️", "INFO": "ℹ️"} %}
 <b>{{ level_emoji.get(data.level, "📢") }} {{ data.title }}</b>
-{% if data.timestamp %}
-Time: {{ data.timestamp }}
-{% endif %}
-
-{{ data.message }}
-
-{% if data.context %}
-<b>Context</b>
-{% for key, value in data.context.items() %}
-  {{ key }}    {{ value }}
-{% endfor %}
-{% endif %}
-
-{% if data.action_hint %}
-<b>Action:</b> {{ data.action_hint }}
-{% endif %}
+{% if data.timestamp %}{{ data.timestamp }}
+{% endif %}{{ data.message }}
+{% if data.context %}<b>Context</b>
+{% for key, value in data.context.items() %}{{ key }}: {{ value }}{% if not loop.last %} · {% endif %}{% endfor %}
+{% endif %}{% if data.action_hint %}<b>→</b> {{ data.action_hint }}{% endif %}

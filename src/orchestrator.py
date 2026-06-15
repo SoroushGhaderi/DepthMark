@@ -279,18 +279,41 @@ class FotMobOrchestrator(OrchestratorProtocol):
                     )
 
                     if files:
-                        try:
-                            if s3_uploader.upload_bronze_backup(bronze_dir, date_str, "fotmob"):
-                                self.logger.info("S3 backup complete", extra={"date": date_str})
-                            else:
-                                self.logger.error(
-                                    "Failed to upload date to S3", extra={"date": date_str}
-                                )
-                        except Exception as e:
-                            self.logger.error(
-                                "Error uploading to S3",
-                                extra={"date": date_str, "error": str(e)},
+                        year_month = date_str[:6]
+                        s3_key = f"bronze/fotmob/{year_month}/{date_str}.tar.gz"
+                        already_in_bucket = s3_uploader.object_exists(s3_key)
+
+                        if already_in_bucket:
+                            self.logger.info(
+                                "S3 backup already exists in bucket",
+                                extra={"date": date_str, "s3_key": s3_key},
                             )
+                            metrics.s3_already_in_bucket = True
+                            metrics.s3_uploaded = True
+                            obj_size = s3_uploader.get_object_size(s3_key)
+                            if obj_size is not None:
+                                metrics.s3_size_mb = round(obj_size / (1024 * 1024), 1)
+                        else:
+                            try:
+                                if s3_uploader.upload_bronze_backup(bronze_dir, date_str, "fotmob"):
+                                    self.logger.info(
+                                        "S3 backup uploaded", extra={"date": date_str}
+                                    )
+                                    metrics.s3_uploaded = True
+                                    obj_size = s3_uploader.get_object_size(s3_key)
+                                    if obj_size is not None:
+                                        metrics.s3_size_mb = round(
+                                            obj_size / (1024 * 1024), 1
+                                        )
+                                else:
+                                    self.logger.error(
+                                        "Failed to upload date to S3", extra={"date": date_str}
+                                    )
+                            except Exception as e:
+                                self.logger.error(
+                                    "Error uploading to S3",
+                                    extra={"date": date_str, "error": str(e)},
+                                )
                     else:
                         self.logger.warning(
                             "Bronze directory is empty, skipping S3 upload",
