@@ -1,28 +1,7 @@
 {% set status_emoji = "✅" if data.success else "⚠️" %}
-<b>🏁 Pipeline · {{ "Completed" if data.success else "Completed with failures" }}</b>
-Date: {{ data.date }} · Total: {{ format_duration(data.total_duration_seconds) }}
-
-  Step                  Status    Duration
-  ───────────────────────────────────────────
-{% for step in data.steps %}
-  {{ "%-21s" | format(step.name) }} {{ step.status_icon }}       {{ format_duration(step.duration_seconds) }}
-{% endfor %}
-
-  Dates processed   {{ data.dates_processed }}/{{ data.dates_total }}
-{% if data.success %}
-  Success rate      100%
-{% endif %}
-
-{% if data.success %}
-✅ <b>Full pipeline completed successfully.</b>
-{% else %}
-{% for step in data.steps %}
-{% if not step.success %}
-  Failed step: {{ step.name }}
-{% if step.error %}
-  Error: {{ step.error }}
-{% endif %}
-{% endif %}
-{% endfor %}
-⚠️ <b>Pipeline completed with failures.</b>
-{% endif %}
+<b>{{ status_emoji }} Pipeline</b> · {{ data.date }} · {{ format_duration(data.total_duration_seconds) }}
+{% for step in data.steps %}{{ step.status_icon }} {{ step.name }} · {{ format_duration(step.duration_seconds) }}{% if not step.success and step.error %} · <i>{{ step.error[:60] }}</i>{% endif %}
+{% endfor %}Dates: {{ data.dates_processed }}/{{ data.dates_total }}
+{% if data.success %}✅ All steps completed.
+{% else %}{% for step in data.steps %}{% if not step.success %}❌ {{ step.name }} failed.
+{% endif %}{% endfor %}{% endif %}

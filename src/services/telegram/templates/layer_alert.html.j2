@@ -1,36 +1,12 @@
 {% set layer_emoji = {"bronze": "🥉", "silver": "🥈", "gold": "🥇", "quality": "🔍"} %}
 {% set status_emoji = "✅" if data.success else "❌" %}
-{% set layer_title = data.layer | capitalize %}
-<b>{{ status_emoji }} {{ layer_emoji.get(data.layer, "📦") }} {{ layer_title }}</b>
-Scope: {{ data.scope }} · {{ format_duration(data.duration_seconds) }}
-
-{% if data.details %}
-{% for key, value in data.details.items() %}
-  {{ key }}    <b>{{ value }}</b>
-{% endfor %}
-{% endif %}
-
-{% if data.entity_coverage %}
-<b>📋 Coverage</b>
-  Entity         Bronze    Silver    Coverage
-  ─────────────────────────────────────────────
-{% for entity in data.entity_coverage %}
-  {{ "%-14s" | format(entity.name) }} {{ "%-9s" | format(entity.bronze) }} {{ "%-9s" | format(entity.silver) }} {{ "%.1f"|format(entity.coverage) }}%
-{% endfor %}
-
-  Missing        <b>{{ data.missing_count }}</b> entities
-  Coverage       <b>{{ "%.1f"|format(data.avg_coverage) }}%</b> avg · <b>{{ "%.1f"|format(data.min_coverage) }}%</b> min
-{% endif %}
-
-{% if data.insights %}
-<b>💡 Insights</b>
-{% for key, value in data.insights.items() %}
-  {{ key }}   <b>{{ value }}</b>
-{% endfor %}
-{% endif %}
-
-{% if data.success %}
-✅ <b>Completed successfully.</b>
-{% else %}
-⚠️ <b>Completed with issues.</b>
+<b>{{ status_emoji }} {{ layer_emoji.get(data.layer, "📦") }} {{ data.layer | capitalize }}</b> · {{ data.scope }} · {{ format_duration(data.duration_seconds) }}
+{% if data.details %}{% for key, value in data.details.items() %}{{ key }}: <b>{{ value }}</b>{% if not loop.last %} · {% endif %}{% endfor %}{% endif %}
+{% if data.entity_coverage %}<b>📋 Coverage</b>
+{% for entity in data.entity_coverage %}{{ entity.name }}: {{ entity.bronze }}→{{ entity.silver }} ({{ "%.0f"|format(entity.coverage) }}%){% if not loop.last %}
+{% endif %}{% endfor %}
+Missing: {{ data.missing_count }} · Avg: {{ "%.0f"|format(data.avg_coverage) }}% · Min: {{ "%.0f"|format(data.min_coverage) }}%
+{% endif %}{% if data.insights %}<b>💡</b> {% for key, value in data.insights.items() %}{{ key }}: <b>{{ value }}</b>{% if not loop.last %} · {% endif %}{% endfor %}
+{% endif %}{% if data.success %}✅ Done.
+{% else %}⚠️ Issues detected.
 {% endif %}

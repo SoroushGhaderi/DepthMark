@@ -440,6 +440,8 @@ def run_scraping(args: argparse.Namespace) -> int:
                     duration_seconds=duration,
                     bronze_files=bronze_files,
                     bronze_size_mb=bronze_size_mb,
+                    s3_uploaded=metrics.s3_uploaded,
+                    s3_size_mb=metrics.s3_size_mb,
                 ),
             )
 
