@@ -1,0 +1,27 @@
+<b>📅 FotMob Monthly Summary — {{ data.year_month }}</b>
+
+<b>📊 Overview</b>
+  Dates scraped    <b>{{ data.dates_processed }}/{{ data.dates_total }}</b> ({{ "%.1f"|format(data.dates_processed / data.dates_total * 100 if data.dates_total else 0) }}%)
+  Total matches   <b>{{ data.total_matches }}</b>
+  Success rate     <b>{{ "%.1f"|format(data.matches_scraped / data.total_matches * 100 if data.total_matches else 0) }}%</b>
+{% if data.errors > 0 %}
+  Errors           <b>{{ data.errors }}</b>
+{% endif %}
+
+<b>📦 Storage</b>
+  Bronze files    <b>{{ data.bronze_files }}</b> · <b>{{ "%.1f"|format(data.bronze_size_mb) }} MB</b>
+{% if data.s3_archives > 0 %}
+  S3 archives     <b>{{ data.s3_archives }}</b> · <b>{{ "%.1f"|format(data.s3_size_mb) }} MB</b>
+{% endif %}
+
+<b>⏱️ Performance</b>
+  Total duration  <b>{{ format_duration(data.duration_seconds) }}</b>
+{% if data.dates_processed > 0 %}
+  Avg per day     <b>{{ format_duration(data.duration_seconds / data.dates_processed) }}</b>
+{% endif %}
+
+{% if data.errors == 0 %}
+✅ <b>Month completed successfully.</b>
+{% else %}
+⚠️ <b>Month completed with {{ data.errors }} errors.</b>
+{% endif %}

@@ -40,7 +40,7 @@ from utils.script_utils import (
 )
 
 add_project_to_path()
-from src.utils.alerting import AlertLevel, get_alert_manager
+from src.services.telegram import ErrorAlertData, TelegramClient
 from src.utils.logging_utils import get_logger, setup_logging
 
 RESULT_CATEGORIES = {
@@ -391,22 +391,25 @@ def _handle_step_result(
 
 def _send_step_failure_alert(result: StepResult) -> None:
     """Send alert for step failure."""
-    alert_manager = get_alert_manager()
-    alert_manager.send_alert(
-        level=AlertLevel.ERROR,
-        title=f"Pipeline Step Failed: {result.name}",
-        message=(
-            f"Step '{result.name}' failed with exit code "
-            f"{result.exit_code}.\n\nElapsed time: "
-            f"{result.elapsed_time:.1f}s"
+    telegram_client = TelegramClient()
+    telegram_client.render_and_send(
+        "error_alert.html.j2",
+        ErrorAlertData(
+            level="ERROR",
+            title=f"Pipeline Step Failed: {result.name}",
+            message=(
+                f"Step '{result.name}' failed with exit code "
+                f"{result.exit_code}.\n\nElapsed time: "
+                f"{result.elapsed_time:.1f}s"
+            ),
+            context={
+                "step_name": result.name,
+                "exit_code": str(result.exit_code),
+                "elapsed_time": f"{result.elapsed_time:.1f}s",
+                "date": result.date_str or "",
+                "error_output": "Check logs for details",
+            },
         ),
-        context={
-            "step_name": result.name,
-            "exit_code": result.exit_code,
-            "elapsed_time": result.elapsed_time,
-            "date": result.date_str,
-            "error_output": "Check logs for details",
-        },
     )
 
 

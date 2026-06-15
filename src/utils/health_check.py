@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .alerting import get_alert_manager
+from src.services.telegram import ErrorAlertData, TelegramClient
 from .logging_utils import get_logger
 
 
@@ -280,7 +280,7 @@ def health_check(
         results["overall_status"] = "healthy"
     else:
         results["overall_status"] = "unknown"
-    alert_manager = get_alert_manager()
+    telegram_client = TelegramClient()
     for component_name, component_result in results["components"].items():
         if not isinstance(component_result, dict):
             continue
@@ -288,11 +288,14 @@ def health_check(
             status = component_result.get("status")
             if status in ["error", "critical", "warning"]:
                 message = component_result.get("message", "Unknown issue")
-                alert_manager.alert_health_check_failure(
-                    component=component_name,
-                    status=status,
-                    message=message,
-                    context=component_result,
+                telegram_client.render_and_send(
+                    "error_alert.html.j2",
+                    ErrorAlertData(
+                        level="CRITICAL" if status in ("error", "critical") else "WARNING",
+                        title=f"Health Check Failed: {component_name}",
+                        message=f"Health check failed for {component_name}: {message}",
+                        context={"component": component_name, "status": status, **component_result},
+                    ),
                 )
             continue
         for path, path_result in component_result.items():
@@ -301,10 +304,13 @@ def health_check(
             status = path_result.get("status")
             if status in ["error", "critical", "warning"]:
                 message = path_result.get("message", "Unknown issue")
-                alert_manager.alert_health_check_failure(
-                    component=f"{component_name}:{path}",
-                    status=status,
-                    message=message,
-                    context=path_result,
+                telegram_client.render_and_send(
+                    "error_alert.html.j2",
+                    ErrorAlertData(
+                        level="CRITICAL" if status in ("error", "critical") else "WARNING",
+                        title=f"Health Check Failed: {component_name}:{path}",
+                        message=f"Health check failed for {component_name}:{path}: {message}",
+                        context={"component": f"{component_name}:{path}", "status": status, **path_result},
+                    ),
                 )
     return results

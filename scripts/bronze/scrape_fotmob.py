@@ -44,10 +44,14 @@ for _path in (str(SCRIPT_DIR), str(SCRIPTS_ROOT), str(PROJECT_ROOT)):
 from config import FotMobConfig
 from scripts.refresh_turnstile import refresh_if_needed
 from src.orchestrator import FotMobOrchestrator
-from src.utils.alerting import AlertLevel, get_alert_manager
-from src.utils.layer_completion_alerts import send_layer_completion_alert
+from src.services.telegram import (
+    DailyReportData,
+    ErrorAlertData,
+    LayerAlertData,
+    MonthlyReportData,
+    TelegramClient,
+)
 from src.utils.logging_utils import get_logger, setup_logging
-from src.utils.metrics_alerts import send_daily_report, send_monthly_report
 from utils import (
     DateRangeInfo,
     create_date_range_info,
@@ -358,16 +362,19 @@ def process_single_date(
 
 def _send_failure_alert(date_str: str, error: Exception) -> None:
     """Send alert for date processing failure."""
-    alert_manager = get_alert_manager()
-    alert_manager.send_alert(
-        level=AlertLevel.ERROR,
-        title=f"FotMob Bronze Scraping Failed - {date_str}",
-        message=f"Failed to scrape FotMob data for date {date_str}.\n\nError: {str(error)}",
-        context={
-            "date": date_str,
-            "step": "FotMob Bronze Scraping",
-            "error": str(error),
-        },
+    client = TelegramClient()
+    client.render_and_send(
+        "error_alert.html.j2",
+        ErrorAlertData(
+            level="ERROR",
+            title=f"FotMob Bronze Scraping Failed — {date_str}",
+            message=f"Failed to scrape FotMob data for date {date_str}.\n\nError: {error}",
+            context={
+                "date": date_str,
+                "step": "FotMob Bronze Scraping",
+                "error": str(error),
+            },
+        ),
     )
 
 
@@ -420,15 +427,20 @@ def run_scraping(args: argparse.Namespace) -> int:
             print_date_metrics(metrics)
 
             # Send daily Telegram report
-            send_daily_report(
-                scraper="fotmob",
-                date=date_str,
-                matches_scraped=metrics.successful_matches,
-                errors=metrics.failed_matches,
-                skipped=metrics.skipped_matches,
-                duration_seconds=duration,
-                bronze_files=bronze_files,
-                bronze_size_mb=bronze_size_mb,
+            telegram_client = TelegramClient()
+            formatted_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+            telegram_client.render_and_send(
+                "daily_report.html.j2",
+                DailyReportData(
+                    date=formatted_date,
+                    matches_scraped=metrics.successful_matches,
+                    matches_total=metrics.total_matches,
+                    skipped=metrics.skipped_matches,
+                    errors=metrics.failed_matches,
+                    duration_seconds=duration,
+                    bronze_files=bronze_files,
+                    bronze_size_mb=bronze_size_mb,
+                ),
             )
 
             # Check and refresh turnstile if needed (every 30 minutes)
@@ -442,20 +454,22 @@ def run_scraping(args: argparse.Namespace) -> int:
 
     # Send monthly report if scraping multiple dates
     if len(date_info.dates) > 1:
-        # Get month from first date (format: YYYYMMDD)
         month = date_info.dates[0][:6] if date_info.dates else None
-        send_monthly_report(
-            scraper="fotmob",
-            month=month,
-            dates_processed=stats.dates_processed,
-            dates_total=len(date_info.dates),
-            total_matches=stats.total_matches,
-            matches_scraped=stats.total_successful,
-            errors=stats.total_failed,
-            skipped=stats.total_skipped,
-            duration_seconds=stats.total_duration_seconds,
-            bronze_files=stats.bronze_files,
-            bronze_size_mb=stats.bronze_size_mb,
+        formatted_month = f"{month[:4]}-{month[4:]}" if month else ""
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "monthly_report.html.j2",
+            MonthlyReportData(
+                year_month=formatted_month,
+                dates_processed=stats.dates_processed,
+                dates_total=len(date_info.dates),
+                total_matches=stats.total_matches,
+                matches_scraped=stats.total_successful,
+                errors=stats.total_failed,
+                duration_seconds=stats.total_duration_seconds,
+                bronze_files=stats.bronze_files,
+                bronze_size_mb=stats.bronze_size_mb,
+            ),
         )
 
     # Print summary
@@ -470,22 +484,24 @@ def run_scraping(args: argparse.Namespace) -> int:
     scrape_success_rate = (
         (stats.total_successful / matches_attempted * 100) if matches_attempted > 0 else 0
     )
-    send_layer_completion_alert(
-        layer="bronze",
-        summary_message="FotMob raw scraping and bronze storage stage finished.",
-        scope=scope,
-        success=exit_code == 0,
-        duration_seconds=time.time() - pipeline_start,
-        detail_lines=[
-            f"Dates processed: <b>{stats.dates_processed}/{total_dates}</b>",
-            f"Matches scraped: <b>{stats.total_successful}</b>",
-            f"Failures: <b>{stats.total_failed}</b>",
-        ],
-        insight_lines=[
-            f"Date coverage: <b>{date_coverage:.1f}%</b>",
-            f"Match scrape success rate: <b>{scrape_success_rate:.1f}%</b>",
-            f"Bronze files generated: <b>{stats.bronze_files}</b>",
-        ],
+    telegram_client.render_and_send(
+        "layer_alert.html.j2",
+        LayerAlertData(
+            layer="bronze",
+            success=exit_code == 0,
+            scope=scope,
+            duration_seconds=time.time() - pipeline_start,
+            details={
+                "Dates processed": f"{stats.dates_processed}/{total_dates}",
+                "Matches scraped": str(stats.total_successful),
+                "Failures": str(stats.total_failed),
+            },
+            insights={
+                "Date coverage": f"{date_coverage:.1f}%",
+                "Success rate": f"{scrape_success_rate:.1f}%",
+                "Bronze files": str(stats.bronze_files),
+            },
+        ),
     )
 
     return exit_code

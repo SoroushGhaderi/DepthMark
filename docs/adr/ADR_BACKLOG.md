@@ -45,6 +45,7 @@ trade-off.
 | `0012-bronze-filesystem-retention-and-dlq-replay-policy.md`            | Bronze filesystem files and DLQ files are retained indefinitely. Cleanup is operator-initiated and manual.                         | Operators must query ClickHouse before deleting Bronze files. No load-confirmation markers.                                                                                               |
 | `0013-fotmob-only-provider-scope.md`                                   | DepthMark is FotMob-only. No provider abstraction boundary exists or will be added until a concrete second provider needs support. | A second provider abstraction must be introduced alongside a concrete second provider.                                                                                                    |
 | `0014-use-single-enriched-signal-activation-serving-table.md`          | Gold activations use one enriched serving table, not a thin index plus separate match aggregate.                                   | `gold_signals.sig_*` tables expose `signal_instance_id`; downstream services read details from `gold.signal_activations` before reaching for typed source tables.                         |
+| `0015-redesign-telegram-notification-module.md`                       | Telegram module redesigned: thin transport, Jinja2 templates, dataclasses, single config source, clean break from old modules.    | New `src/services/telegram/` package replaces `metrics_alerts.py`, `alerting.py`, `layer_completion_alerts.py`. Callers must migrate.                                                       |
 
 
 ## Queue
@@ -63,11 +64,7 @@ trade-off.
 
 ## Recommended Next Session
 
-All P0 and P1 items are now resolved. The only unresolved item is:
-
 - **P2: Signal definition versioning** — Deferred: needs product/audit requirement
-
-No further grill sessions are required unless new architectural decisions arise.
 
 ## Completed Sessions
 
@@ -77,5 +74,6 @@ No further grill sessions are required unless new architectural decisions arise.
 | 1       | FotMob-only provider scope          | Accepted in `0013-fotmob-only-provider-scope.md`                     |
 | 2       | `src/` application-service boundary | Accepted in `0010`; BronzeService extraction confirmed as follow-up  |
 | 3       | Gold scenario bulk loading          | Re-enabled in `0004`; 48 scenarios + 344 signals in default Gold run |
+| 4       | Telegram module redesign            | Accepted in `0015-redesign-telegram-notification-module.md`          |
 
 

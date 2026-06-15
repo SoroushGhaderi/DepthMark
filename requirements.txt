@@ -44,6 +44,9 @@ tenacity>=8.2.3
 # Structured logging
 structlog>=24.4.0
 
+# Template rendering for Telegram messages
+jinja2>=3.1.0
+
 # Testing (development)
 pytest>=7.4.3
 pytest-cov>=4.1.0

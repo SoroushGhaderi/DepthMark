@@ -18,8 +18,8 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import settings
+from src.services.telegram import LayerAlertData, TelegramClient
 from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.layer_completion_alerts import send_layer_completion_alert
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -357,22 +357,25 @@ def main(argv: Optional[List[str]] = None) -> int:
             else 0.0
         )
         min_coverage = min((item["coverage_pct"] for item in check_summaries), default=0.0)
-        send_layer_completion_alert(
-            layer="quality",
-            summary_message="Bronze-to-silver reconciliation quality check finished.",
-            scope=f"checks={','.join(selected_checks)} | strict={args.strict}",
-            success=failures == 0,
-            duration_seconds=time.perf_counter() - start_time,
-            detail_lines=[
-                f"Checks passed: <b>{passed_checks}/{total_checks}</b>",
-                f"Total missing in silver: <b>{total_missing}</b>",
-                f"Total extras in silver: <b>{total_extra}</b>",
-            ],
-            insight_lines=[
-                f"Average coverage across checks: <b>{avg_coverage:.2f}%</b>",
-                f"Worst check coverage: <b>{min_coverage:.2f}%</b>",
-                f"Strict mode: <b>{'enabled' if args.strict else 'disabled'}</b>",
-            ],
+        telegram_client = TelegramClient()
+        telegram_client.render_and_send(
+            "layer_alert.html.j2",
+            LayerAlertData(
+                layer="quality",
+                success=failures == 0,
+                scope=f"checks={','.join(selected_checks)} | strict={args.strict}",
+                duration_seconds=time.perf_counter() - start_time,
+                details={
+                    "Checks passed": f"{passed_checks}/{total_checks}",
+                    "Total missing": str(total_missing),
+                    "Total extras": str(total_extra),
+                },
+                insights={
+                    "Avg coverage": f"{avg_coverage:.2f}%",
+                    "Min coverage": f"{min_coverage:.2f}%",
+                    "Strict mode": "enabled" if args.strict else "disabled",
+                },
+            ),
         )
 
 

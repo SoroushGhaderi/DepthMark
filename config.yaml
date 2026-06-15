@@ -21,9 +21,6 @@ metrics:
 
 alerting:
   enabled: true
-  telegram_enabled: true
-  slack_enabled: false
-  email_enabled: false
 
 # ============================================================================
 # FOTMOB SCRAPER CONFIGURATION
