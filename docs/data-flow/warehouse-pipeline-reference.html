@@ -2443,10 +2443,10 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['cp .env.example', 'docker compose up'],
             title: 'Environment & Docker',
-            scripts: ['docker/docker-compose.yml', '.env.example'],
+            scripts: ['docker-compose.yml', '.env.example'],
             commands: [
                 'cp .env.example .env',
-                'docker compose -f docker/docker-compose.yml up -d',
+                'docker compose up -d',
             ],
             note: 'Edit .env with FOTMOB_X_MAS_TOKEN, ClickHouse, and MongoDB credentials before running loaders.',
             sectionTab: 'infrastructure',
@@ -2716,9 +2716,9 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['docker-compose up', 'depthmark-clickhouse', 'depthmark-mongodb', 'depthmark-scraper', 'service layout'],
             title: 'Docker Compose services',
-            scripts: ['docker/docker-compose.yml'],
+            scripts: ['docker-compose.yml'],
             commands: [
-                'docker compose -f docker/docker-compose.yml up -d',
+                'docker compose up -d',
                 'docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py',
             ],
             sectionTab: 'infrastructure',
@@ -2830,7 +2830,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'First-time warehouse bootstrap',
             scripts: ['scripts/orchestration/setup_clickhouse.py', 'scripts/mongodb/init_indexes.py'],
             commands: [
-                'docker compose -f docker/docker-compose.yml up -d',
+                'docker compose up -d',
                 'python scripts/orchestration/setup_clickhouse.py',
                 'python scripts/mongodb/init_indexes.py',
             ],

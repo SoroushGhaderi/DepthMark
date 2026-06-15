@@ -1,5 +1,0 @@
-# Backward compatibility: prefer `docker compose` from the DepthMark repo root.
-# This file includes the root compose manifest.
-
-include:
-  - path: ../docker-compose.yml

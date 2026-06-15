@@ -21,16 +21,6 @@ Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
 outside Docker, a valid `FOTMOB_X_MAS_TOKEN`, and ClickHouse and MongoDB
 credentials in `.env`.
 
-To start only ClickHouse:
-
-```bash
-docker compose -f docker/docker-compose.clickhouse.yml up -d
-docker compose -f docker/docker-compose.clickhouse.yml exec depthmark-clickhouse clickhouse-client
-```
-
-`docker/docker-compose.yml` is a compatibility shim that includes the root
-`docker-compose.yml`.
-
 ## Docker Lifecycle
 
 ```bash
@@ -84,13 +74,11 @@ from ClickHouse and the signal catalog from MongoDB.
 **Network:** creates Docker network `depthmark_network` (fixed name). TouchDesk
 can join it optionally via `docker-compose.override.yml`.
 
-## Docker Compose Files
+## Docker Compose
 
-| File | Purpose |
-| --- | --- |
-| `docker-compose.yml` (repo root) | Canonical local stack (`depthmark-clickhouse`, `depthmark-mongodb`, `depthmark-scraper`) |
-| `docker/docker-compose.yml` | Compatibility shim that includes the root manifest |
-| `docker/docker-compose.clickhouse.yml` | ClickHouse only (`depthmark-clickhouse`) |
+Local development uses the root `docker-compose.yml` for `depthmark-clickhouse`,
+`depthmark-mongodb`, and `depthmark-scraper`. Image build assets live under
+`docker/` (`Dockerfile`, `docker-entrypoint.sh`).
 
 ## Environment Configuration
 

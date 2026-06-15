@@ -107,7 +107,7 @@ python scripts/mongodb/sync_signal_catalogs.py
 
 ```bash
 # 1. Infrastructure
-docker-compose -f docker/docker-compose.yml up -d
+docker compose up -d
 python scripts/orchestration/setup_clickhouse.py
 
 # 2. Pipeline
