@@ -37,10 +37,10 @@ If these files conflict with code, resolve the mismatch intentionally and mentio
 
 - Never commit `.env`, credentials, tokens, generated data, logs, or local warehouse artifacts.
 - Use `.env.example` for documenting required configuration.
-- Required local services usually come from Docker Compose files in `docker/`.
+- Required local services come from the root `docker-compose.yml`.
 - A useful local setup starts with:
   - `cp .env.example .env`
-  - `docker-compose -f docker/docker-compose.yml up -d`
+  - `docker compose up -d`
   - `python scripts/orchestration/setup_clickhouse.py`
 
 ## Canonical Commands
