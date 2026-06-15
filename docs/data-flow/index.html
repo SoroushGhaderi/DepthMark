@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DepthMark — System Design & Data Flow</title>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
     <style>
         :root {
             --bg:        #0a0e14;
@@ -278,13 +277,418 @@
         .diagram-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
         .diagram-card .subtitle { color: var(--text-muted); font-size: 0.82rem; }
 
-        .mermaid {
+        /* ── FLOW DIAGRAMS ── */
+        .flow-diagram {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            gap: 0.65rem;
             overflow-x: auto;
-            min-height: 2rem;
+            padding: 0.15rem 0;
         }
-        .mermaid svg { max-width: 100%; height: auto; }
+        .flow-diagram.centered { align-items: center; }
+        .flow-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+        }
+        .flow-row.spread { justify-content: space-between; width: 100%; }
+        .flow-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .flow-split {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .flow-split > .flow-stack { flex: 1; min-width: 8rem; }
+        .flow-group {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.9rem 1rem;
+            background: var(--surface-2);
+            width: 100%;
+        }
+        .flow-group.accent { border-color: rgba(77,159,255,0.35); background: rgba(77,159,255,0.06); }
+        .flow-group.bronze { border-color: rgba(229,166,35,0.35); background: var(--bronze-dim); }
+        .flow-group.silver { border-color: rgba(62,207,115,0.35); background: var(--silver-dim); }
+        .flow-group.gold { border-color: rgba(180,123,255,0.35); background: var(--gold-dim); }
+        .flow-group.red { border-color: rgba(240,95,90,0.35); background: var(--red-dim); }
+        .flow-group.dim { border-color: rgba(107,122,153,0.35); background: rgba(74,85,112,0.12); }
+        .flow-group-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted);
+            margin-bottom: 0.65rem;
+        }
+        .flow-node {
+            display: flex;
+            flex-direction: column;
+            gap: 0.12rem;
+            padding: 0.6rem 0.85rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-2);
+            background: var(--surface-3);
+            font-size: 0.77rem;
+            line-height: 1.45;
+            text-align: center;
+            min-width: 5rem;
+        }
+        .flow-node strong {
+            font-weight: 600;
+            font-size: 0.79rem;
+            display: block;
+            color: var(--text);
+        }
+        .flow-node .sub {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-family: 'SF Mono', ui-monospace, monospace;
+            line-height: 1.4;
+        }
+        .flow-node.accent { background: rgba(77,159,255,0.14); border-color: rgba(77,159,255,0.42); }
+        .flow-node.bronze { background: rgba(229,166,35,0.14); border-color: rgba(229,166,35,0.42); }
+        .flow-node.silver { background: rgba(62,207,115,0.12); border-color: rgba(62,207,115,0.42); }
+        .flow-node.gold { background: rgba(180,123,255,0.14); border-color: rgba(180,123,255,0.42); }
+        .flow-node.red { background: rgba(240,95,90,0.12); border-color: rgba(240,95,90,0.42); }
+        .flow-node.dim { background: rgba(74,85,112,0.18); border-color: rgba(107,122,153,0.38); }
+        .flow-connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            padding: 0 0.2rem;
+            line-height: 1;
+        }
+        .flow-connector.down {
+            flex-direction: column;
+            padding: 0.1rem 0;
+        }
+        .flow-connector.dashed { opacity: 0.55; font-style: italic; }
+        .flow-connector .label {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-top: 0.1rem;
+        }
+        .flow-phases {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .flow-phase {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .flow-phase > .flow-group { flex: 1; }
+        .flow-shortcut {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 0.75rem;
+            border: 1px dashed rgba(77,159,255,0.35);
+            border-radius: var(--radius);
+            background: rgba(77,159,255,0.05);
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .flow-shortcut .flow-connector { font-size: 0.75rem; }
+        .flow-merge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            width: 100%;
+        }
+        .flow-branch {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .flow-branch-arm {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            flex: 1;
+            min-width: 7rem;
+        }
+        .flow-taxonomy {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+        }
+        .flow-taxonomy-level {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        .flow-seq {
+            font-size: 0.76rem;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface-2);
+        }
+        .flow-seq-participants {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(6.5rem, 1fr);
+            gap: 0.4rem;
+            padding: 0.75rem 0.85rem 0.55rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .flow-seq-participant {
+            text-align: center;
+            padding: 0.45rem 0.35rem;
+            background: var(--surface-3);
+            border: 1px solid var(--border-2);
+            border-radius: var(--radius);
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 0.7rem;
+            color: var(--accent);
+        }
+        .flow-seq-body {
+            padding: 0.65rem 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .flow-seq-msg {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            padding: 0.3rem 0;
+            border-bottom: 1px dashed rgba(36,45,61,0.8);
+            flex-wrap: wrap;
+        }
+        .flow-seq-msg:last-child { border-bottom: none; }
+        .flow-seq-actors {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            min-width: 10rem;
+            flex-shrink: 0;
+        }
+        .flow-seq-actors em { color: var(--accent); font-style: normal; }
+        .flow-seq-detail { color: var(--text); font-size: 0.75rem; }
+        .flow-seq-loop, .flow-seq-par {
+            margin: 0.35rem 0 0.35rem 0.5rem;
+            padding: 0.6rem 0.75rem;
+            border-left: 2px solid var(--gold);
+            background: var(--surface-3);
+            border-radius: 0 var(--radius) var(--radius) 0;
+        }
+        .flow-seq-par { border-left-color: var(--accent); }
+        .flow-seq-block-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.35rem;
+        }
+        .flow-seq-par .flow-seq-block-label { color: var(--accent); }
+        .flow-seq-par-cols {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+        @media (max-width: 640px) {
+            .flow-seq-par-cols { grid-template-columns: 1fr; }
+        }
+        .flow-lineage {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 0.75rem;
+            align-items: start;
+            width: 100%;
+        }
+        @media (max-width: 900px) {
+            .flow-lineage { grid-template-columns: 1fr; }
+            .flow-lineage .flow-connector.down { transform: rotate(90deg); }
+        }
+        .flow-lineage-col {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .flow-lineage-links {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.35rem;
+            padding-top: 1.5rem;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+        @media (max-width: 900px) {
+            .flow-lineage-links {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding-top: 0;
+            }
+        }
+
+        /* ── FLOW COMMAND PANEL (click-to-reveal) ── */
+        .diagram-card:has(.flow-diagram) .subtitle::after,
+        .diagram-card:has(.flow-seq) .subtitle::after,
+        .pipeline-visual-wrap .pipeline-hint {
+            font-size: 0.72rem;
+            color: var(--text-dim);
+        }
+        .diagram-card:has(.flow-diagram) .subtitle::after,
+        .diagram-card:has(.flow-seq) .subtitle::after {
+            content: ' · Click any step for scripts & commands';
+        }
+        .pipeline-visual-wrap {
+            margin-bottom: 1.5rem;
+        }
+        .pipeline-visual-wrap .pipeline-hint {
+            margin-top: 0.45rem;
+            text-align: center;
+        }
+        .flow-clickable {
+            cursor: pointer;
+            transition: border-color 0.12s, box-shadow 0.12s, transform 0.1s;
+        }
+        .flow-clickable:hover {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 1px rgba(77,159,255,0.25);
+        }
+        .flow-clickable.active {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 2px rgba(77,159,255,0.35);
+            transform: translateY(-1px);
+        }
+        .pipe-stage.flow-clickable:hover { background: var(--surface-2); }
+        .flow-seq-participant.flow-clickable:hover,
+        .flow-seq-msg.flow-clickable:hover {
+            background: var(--surface-3);
+            border-radius: var(--radius);
+        }
+        .flow-cmd-panel {
+            margin-top: 1rem;
+            padding: 0.9rem 1rem;
+            background: var(--surface-2);
+            border: 1px solid var(--border-2);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+            animation: fadeIn 0.15s ease;
+        }
+        .flow-cmd-panel[hidden] { display: none; }
+        .flow-cmd-panel-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.65rem;
+        }
+        .flow-cmd-panel-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .flow-cmd-panel-close {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            line-height: 1;
+            padding: 0.15rem 0.45rem;
+            flex-shrink: 0;
+        }
+        .flow-cmd-panel-close:hover { border-color: var(--accent); color: var(--text); }
+        .flow-cmd-panel-section {
+            margin-bottom: 0.55rem;
+        }
+        .flow-cmd-panel-label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-dim);
+            margin-bottom: 0.3rem;
+        }
+        .flow-cmd-panel-paths {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin-bottom: 0.5rem;
+        }
+        .flow-cmd-path {
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 0.7rem;
+            color: var(--accent);
+            background: rgba(77,159,255,0.08);
+            border: 1px solid rgba(77,159,255,0.2);
+            border-radius: 4px;
+            padding: 0.15rem 0.45rem;
+        }
+        .flow-cmd-pre {
+            margin: 0;
+            padding: 0.7rem 0.85rem;
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 0.74rem;
+            line-height: 1.65;
+            color: var(--silver);
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .flow-cmd-panel-note {
+            margin-top: 0.55rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.55;
+        }
+        .flow-cmd-panel-actions {
+            margin-top: 0.65rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .flow-cmd-panel-link {
+            font-size: 0.75rem;
+            padding: 0.3rem 0.65rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface-3);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+        .flow-cmd-panel-link:hover { border-color: var(--accent); color: var(--text); text-decoration: none; }
 
         /* ── STATS BAR ── */
         .stats {
@@ -723,37 +1127,41 @@
     </div>
 
     <!-- Clickable pipeline swimlane -->
+    <div class="pipeline-visual-wrap">
     <div class="pipeline-visual">
-        <div class="pipe-stage s-raw" onclick="showTab('bronze')" data-tip="Click to explore Bronze">
+        <div class="pipe-stage s-raw" data-flow-section="bronze">
             <div class="pipe-stage-label">Ingest</div>
             <div class="pipe-stage-title">FotMob API</div>
             <div class="pipe-stage-desc">Raw JSON per match, written to disk by parallel scrapers</div>
             <div class="pipe-stage-count">∞</div>
         </div>
-        <div class="pipe-stage s-bronze" onclick="showTab('bronze')" data-tip="Click to explore Bronze">
+        <div class="pipe-stage s-bronze" data-flow-section="bronze">
             <div class="pipe-stage-label">Bronze</div>
             <div class="pipe-stage-title">Source fidelity</div>
             <div class="pipe-stage-desc">No typing, no joins — parse and preserve</div>
             <div class="pipe-stage-count">15</div>
         </div>
-        <div class="pipe-stage s-silver" onclick="showTab('silver')" data-tip="Click to explore Silver">
+        <div class="pipe-stage s-silver" data-flow-section="silver">
             <div class="pipe-stage-label">Silver</div>
             <div class="pipe-stage-title">Conformed analytics</div>
             <div class="pipe-stage-desc">Standardize keys, types, entities. Full-table reload from Bronze</div>
             <div class="pipe-stage-count">8</div>
         </div>
-        <div class="pipe-stage s-gold" onclick="showTab('gold')" data-tip="Click to explore Gold">
+        <div class="pipe-stage s-gold" data-flow-section="gold">
             <div class="pipe-stage-label">Gold</div>
             <div class="pipe-stage-title">Product outputs</div>
             <div class="pipe-stage-desc">392 materialized tables across scenarios + signals</div>
             <div class="pipe-stage-count">392</div>
         </div>
-        <div class="pipe-stage s-serve" onclick="showTab('mongodb')" data-tip="Click to explore MongoDB">
+        <div class="pipe-stage s-serve" data-flow-section="mongodb">
             <div class="pipe-stage-label">Serve</div>
             <div class="pipe-stage-title">Product &amp; BI</div>
             <div class="pipe-stage-desc">signal_activations + MongoDB catalogs for product APIs</div>
             <div class="pipe-stage-count">1+5</div>
         </div>
+    </div>
+    <div class="pipeline-hint">Click any stage for scripts &amp; commands</div>
+    <div class="flow-cmd-panel" hidden aria-live="polite"></div>
     </div>
 
     <div class="stats">
@@ -803,34 +1211,53 @@
             <h3>Complete warehouse route</h3>
             <div class="subtitle">Create empty tables in every layer, then fill them with data — commands from first setup through validation</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    subgraph P0["0 · Prerequisites"]
-        ENV["cp .env.example .env<br/>docker compose up -d"]
-        HC["health_check.py"]
-    end
-    subgraph P1["1 · Create empty tables (DDL)"]
-        SETUP["setup_clickhouse.py<br/>bronze · silver · gold"]
-        MIDX["mongodb/init_indexes.py"]
-    end
-    subgraph P2["2 · Fill warehouse data"]
-        SCRAPE["scrape_fotmob.py"]
-        BLOAD["bronze/load_clickhouse.py"]
-        SLOAD["silver/load_clickhouse.py"]
-        GLOAD["gold/load_clickhouse_gold.py<br/>scenarios + signals + activations"]
-    end
-    subgraph P3["3 · Validate &amp; serve"]
-        RECON["check_bronze_to_silver_reconciliation"]
-        SYNC["sync_signal_catalogs.py"]
-    end
-    PIPE["pipeline.py<br/>(steps 2 in one command)"] -.->|shortcut| SCRAPE
-    ENV --> HC --> SETUP --> MIDX --> SCRAPE --> BLOAD --> SLOAD --> GLOAD --> RECON --> SYNC
-
-    style P0 fill:#1f6feb14,stroke:#1f6feb
-    style P1 fill:#e5a6231a,stroke:#e5a623
-    style P2 fill:#3ecf731a,stroke:#3ecf73
-    style P3 fill:#b47bff1a,stroke:#b47bff
-    style PIPE fill:#1f6feb,stroke:#388bfd,color:#fff
+        <div class="flow-diagram">
+            <div class="flow-phases">
+                <div class="flow-group accent">
+                    <div class="flow-group-label">0 · Prerequisites</div>
+                    <div class="flow-row">
+                        <div class="flow-node accent"><strong>cp .env.example .env</strong><span class="sub">docker compose up -d</span></div>
+                        <span class="flow-connector">→</span>
+                        <div class="flow-node accent"><strong>health_check.py</strong></div>
+                    </div>
+                </div>
+                <div class="flow-connector down">↓</div>
+                <div class="flow-group bronze">
+                    <div class="flow-group-label">1 · Create empty tables (DDL)</div>
+                    <div class="flow-row">
+                        <div class="flow-node bronze"><strong>setup_clickhouse.py</strong><span class="sub">bronze · silver · gold</span></div>
+                        <span class="flow-connector">→</span>
+                        <div class="flow-node silver"><strong>mongodb/init_indexes.py</strong></div>
+                    </div>
+                </div>
+                <div class="flow-connector down">↓</div>
+                <div class="flow-group silver">
+                    <div class="flow-group-label">2 · Fill warehouse data</div>
+                    <div class="flow-row">
+                        <div class="flow-node accent"><strong>scrape_fotmob.py</strong></div>
+                        <span class="flow-connector">→</span>
+                        <div class="flow-node bronze"><strong>bronze/load_clickhouse.py</strong></div>
+                        <span class="flow-connector">→</span>
+                        <div class="flow-node silver"><strong>silver/load_clickhouse.py</strong></div>
+                        <span class="flow-connector">→</span>
+                        <div class="flow-node gold"><strong>gold/load_clickhouse_gold.py</strong><span class="sub">scenarios + signals + activations</span></div>
+                    </div>
+                </div>
+                <div class="flow-shortcut">
+                    <div class="flow-node accent"><strong>pipeline.py</strong><span class="sub">steps 2 in one command</span></div>
+                    <span class="flow-connector dashed">⇢ shortcut ⇢</span>
+                    <span class="flow-connector">→ scrape_fotmob.py</span>
+                </div>
+                <div class="flow-connector down">↓</div>
+                <div class="flow-group gold">
+                    <div class="flow-group-label">3 · Validate &amp; serve</div>
+                    <div class="flow-row">
+                        <div class="flow-node bronze"><strong>check_bronze_to_silver_reconciliation</strong></div>
+                        <span class="flow-connector">→</span>
+                        <div class="flow-node silver"><strong>sync_signal_catalogs.py</strong></div>
+                    </div>
+                </div>
+            </div>
         </div>
         <table class="data-table">
             <thead><tr><th>Step</th><th>Layer</th><th>Tables / collections</th><th>Command</th></tr></thead>
@@ -918,28 +1345,40 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             <h3>End-to-end pipeline</h3>
             <div class="subtitle">From FotMob API to warehouse tables and product consumption surfaces</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph LR
-    API["FotMob API"] -->|scrape| RAW["data/fotmob/raw/<br/>JSON per match"]
-    RAW -->|load| BRONZE["bronze.*<br/>15 tables"]
-    BRONZE -->|SQL transforms| SILVER["silver.*<br/>8 tables"]
-    SILVER -->|signal SQL| SIG["gold_signals.*<br/>344 tables"]
-    SILVER -->|scenario SQL| SCEN["gold_scenarios.*<br/>48 tables"]
-    SIG -->|activation rebuild| ACT["gold.signal_activations"]
-    SCEN -.->|context only| ACT
-    CATALOG["signal catalogs<br/>*.md frontmatter"] -->|sync| MONGO["MongoDB<br/>orbit_content"]
-    ACT -->|query| PRODUCT["Product / BI<br/>consumers"]
-
-    style API fill:#1f6feb,stroke:#388bfd,color:#fff
-    style RAW fill:#1f6feb,stroke:#388bfd,color:#fff
-    style BRONZE fill:#c17e1a,stroke:#e5a623,color:#fff
-    style SILVER fill:#2a8c50,stroke:#3ecf73,color:#fff
-    style SIG fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style SCEN fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style ACT fill:#b83030,stroke:#f05f5a,color:#fff
-    style CATALOG fill:#4a5570,stroke:#6b7a99,color:#fff
-    style MONGO fill:#2a8c50,stroke:#3ecf73,color:#fff
-    style PRODUCT fill:#1f6feb,stroke:#388bfd,color:#fff
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node accent"><strong>FotMob API</strong></div>
+                <span class="flow-connector"><span class="label">scrape</span>→</span>
+                <div class="flow-node accent"><strong>data/fotmob/raw/</strong><span class="sub">JSON per match</span></div>
+                <span class="flow-connector"><span class="label">load</span>→</span>
+                <div class="flow-node bronze"><strong>bronze.*</strong><span class="sub">15 tables</span></div>
+                <span class="flow-connector"><span class="label">SQL</span>→</span>
+                <div class="flow-node silver"><strong>silver.*</strong><span class="sub">8 tables</span></div>
+            </div>
+            <div class="flow-split">
+                <div class="flow-stack">
+                    <span class="flow-connector down">↓ <span class="label">signal SQL</span></span>
+                    <div class="flow-node gold"><strong>gold_signals.*</strong><span class="sub">344 tables</span></div>
+                    <span class="flow-connector down">↓ <span class="label">activation rebuild</span></span>
+                    <div class="flow-node red"><strong>gold.signal_activations</strong></div>
+                </div>
+                <div class="flow-stack">
+                    <span class="flow-connector down">↓ <span class="label">scenario SQL</span></span>
+                    <div class="flow-node gold"><strong>gold_scenarios.*</strong><span class="sub">48 tables</span></div>
+                    <span class="flow-connector down dashed">⇢ <span class="label">context only</span></span>
+                </div>
+                <div class="flow-stack">
+                    <span class="flow-connector down">↓ <span class="label">sync</span></span>
+                    <div class="flow-node dim"><strong>signal catalogs</strong><span class="sub">*.md frontmatter</span></div>
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-node silver"><strong>MongoDB</strong><span class="sub">orbit_content</span></div>
+                </div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-node red"><strong>gold.signal_activations</strong></div>
+                <span class="flow-connector"><span class="label">query</span>→</span>
+                <div class="flow-node accent"><strong>Product / BI</strong><span class="sub">consumers</span></div>
+            </div>
         </div>
         <div class="legend">
             <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Scrape / API</div>
@@ -956,26 +1395,36 @@ graph LR
                 <h3>SQL vs Python ownership</h3>
                 <div class="subtitle">Where logic lives vs where orchestration lives</div>
             </div>
-            <div class="mermaid" data-rendered="false">
-graph LR
-    subgraph SQL["SQL owns — analytical logic"]
-        S1["Bronze → Silver DML"]
-        S2["Gold scenario SQL"]
-        S3["Gold signal SQL"]
-    end
-    subgraph PY["Python owns — execution & glue"]
-        P1["Scraping & parsing"]
-        P2["Job discovery & execution"]
-        P3["Contract assertions"]
-        P4["Activation rebuild"]
-        P5["Catalog sync"]
-    end
-    SQL --> CH["ClickHouse"]
-    PY --> CH
-    PY --> FS["Filesystem / MongoDB"]
-
-    style SQL fill:#b47bff1f,stroke:#b47bff
-    style PY fill:#1f6feb1f,stroke:#1f6feb
+            <div class="flow-diagram">
+                <div class="flow-split">
+                    <div class="flow-group gold">
+                        <div class="flow-group-label">SQL owns — analytical logic</div>
+                        <div class="flow-stack">
+                            <div class="flow-node gold"><strong>Bronze → Silver DML</strong></div>
+                            <div class="flow-node gold"><strong>Gold scenario SQL</strong></div>
+                            <div class="flow-node gold"><strong>Gold signal SQL</strong></div>
+                        </div>
+                    </div>
+                    <div class="flow-stack" style="justify-content:center;padding-top:2rem">
+                        <span class="flow-connector down">↓</span>
+                        <div class="flow-node accent"><strong>ClickHouse</strong></div>
+                        <span class="flow-connector down">↑</span>
+                    </div>
+                    <div class="flow-group accent">
+                        <div class="flow-group-label">Python owns — execution &amp; glue</div>
+                        <div class="flow-stack">
+                            <div class="flow-node accent"><strong>Scraping &amp; parsing</strong></div>
+                            <div class="flow-node accent"><strong>Job discovery &amp; execution</strong></div>
+                            <div class="flow-node accent"><strong>Contract assertions</strong></div>
+                            <div class="flow-node accent"><strong>Activation rebuild</strong></div>
+                            <div class="flow-node accent"><strong>Catalog sync</strong></div>
+                        </div>
+                        <div class="flow-row" style="margin-top:0.65rem">
+                            <span class="flow-connector">→</span>
+                            <div class="flow-node dim"><strong>Filesystem / MongoDB</strong></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="callout note">
                 <span class="callout-icon">📋</span>
@@ -987,31 +1436,38 @@ graph LR
                 <h3>Layer responsibilities</h3>
                 <div class="subtitle">What each layer does — and explicitly does not do</div>
             </div>
-            <div class="mermaid" data-rendered="false">
-graph TB
-    subgraph BRONZE_LAYER["Bronze — preserve & load"]
-        B1["Raw JSON on disk"]
-        B2["15 ClickHouse tables"]
-        B3["DLQ for failed inserts"]
-        B4["No typing / no joins"]
-    end
-    subgraph SILVER_LAYER["Silver — conform & clean"]
-        S1["Standardize keys & types"]
-        S2["8 analytical tables"]
-        S3["Full-table reload"]
-        S4["Pure SQL INSERT...SELECT"]
-    end
-    subgraph GOLD_LAYER["Gold — materialize & serve"]
-        G1["48 scenario tables"]
-        G2["344 signal tables"]
-        G3["Activation serving table"]
-        G4["Business-facing outputs"]
-    end
-    BRONZE_LAYER --> SILVER_LAYER --> GOLD_LAYER
-
-    style BRONZE_LAYER fill:#e5a6231a,stroke:#e5a623
-    style SILVER_LAYER fill:#3ecf731a,stroke:#3ecf73
-    style GOLD_LAYER fill:#b47bff1a,stroke:#b47bff
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-group bronze" style="flex:1">
+                        <div class="flow-group-label">Bronze — preserve &amp; load</div>
+                        <div class="flow-stack">
+                            <div class="flow-node bronze"><strong>Raw JSON on disk</strong></div>
+                            <div class="flow-node bronze"><strong>15 ClickHouse tables</strong></div>
+                            <div class="flow-node bronze"><strong>DLQ for failed inserts</strong></div>
+                            <div class="flow-node bronze"><strong>No typing / no joins</strong></div>
+                        </div>
+                    </div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-group silver" style="flex:1">
+                        <div class="flow-group-label">Silver — conform &amp; clean</div>
+                        <div class="flow-stack">
+                            <div class="flow-node silver"><strong>Standardize keys &amp; types</strong></div>
+                            <div class="flow-node silver"><strong>8 analytical tables</strong></div>
+                            <div class="flow-node silver"><strong>Full-table reload</strong></div>
+                            <div class="flow-node silver"><strong>Pure SQL INSERT…SELECT</strong></div>
+                        </div>
+                    </div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-group gold" style="flex:1">
+                        <div class="flow-group-label">Gold — materialize &amp; serve</div>
+                        <div class="flow-stack">
+                            <div class="flow-node gold"><strong>48 scenario tables</strong></div>
+                            <div class="flow-node gold"><strong>344 signal tables</strong></div>
+                            <div class="flow-node red"><strong>Activation serving table</strong></div>
+                            <div class="flow-node gold"><strong>Business-facing outputs</strong></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1021,19 +1477,30 @@ graph TB
             <h3>Quality gates &amp; preflight</h3>
             <div class="subtitle">Checks that run before and after each pipeline stage</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph LR
-    HC["health_check.py"] --> PREFLIGHT["Preflight OK?"]
-    PREFLIGHT --> PIPE["pipeline.py"]
-    PIPE --> BRONZE_C["Bronze contract<br/>assert_bronze_dataframe_contract"]
-    PIPE --> SILVER_C["Silver contract<br/>assert_silver_layer_contracts"]
-    BRONZE_C --> RECON["Bronze→Silver<br/>reconciliation check"]
-    SILVER_C --> RECON
-    RECON --> DONE["Validated warehouse"]
-
-    style HC fill:#1f6feb,stroke:#388bfd,color:#fff
-    style RECON fill:#c17e1a,stroke:#e5a623,color:#fff
-    style DONE fill:#2a8c50,stroke:#3ecf73,color:#000
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node accent"><strong>health_check.py</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>Preflight OK?</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>pipeline.py</strong></div>
+            </div>
+            <div class="flow-branch">
+                <div class="flow-branch-arm">
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-node bronze"><strong>Bronze contract</strong><span class="sub">assert_bronze_dataframe_contract</span></div>
+                </div>
+                <div class="flow-branch-arm">
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-node silver"><strong>Silver contract</strong><span class="sub">assert_silver_layer_contracts</span></div>
+                </div>
+            </div>
+            <div class="flow-merge">
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node bronze"><strong>Bronze→Silver reconciliation</strong></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node silver"><strong>Validated warehouse</strong></div>
+            </div>
         </div>
         <details class="cmd-block">
             <summary>▸ Canonical preflight commands</summary>
@@ -1080,27 +1547,30 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
             <h3>Scraping flow</h3>
             <div class="subtitle">FotMob API → raw JSON files on disk (parallel per match)</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-sequenceDiagram
-    participant P as pipeline.py
-    participant S as scrape_fotmob.py
-    participant O as FotMobOrchestrator
-    participant DS as DailyScraper
-    participant MS as MatchScraper
-    participant API as FotMob API
-    participant FS as Filesystem
-
-    P->>S: subprocess
-    S->>O: orchestrate(date)
-    O->>DS: fetch daily listing
-    DS->>API: GET /matches?date=YYYYMMDD
-    API-->>DS: match IDs
-    loop For each match (parallel ThreadPoolExecutor)
-        O->>MS: fetch match details
-        MS->>API: GET /matchDetails?id=...
-        API-->>MS: full JSON payload
-        O->>FS: write data/fotmob/raw/YYYYMMDD/match_id.json
-    end
+        <div class="flow-seq">
+            <div class="flow-seq-participants">
+                <div class="flow-seq-participant">pipeline.py</div>
+                <div class="flow-seq-participant">scrape_fotmob.py</div>
+                <div class="flow-seq-participant">FotMobOrchestrator</div>
+                <div class="flow-seq-participant">DailyScraper</div>
+                <div class="flow-seq-participant">MatchScraper</div>
+                <div class="flow-seq-participant">FotMob API</div>
+                <div class="flow-seq-participant">Filesystem</div>
+            </div>
+            <div class="flow-seq-body">
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → scrape_fotmob.py</span><span class="flow-seq-detail">subprocess</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>scrape_fotmob.py</em> → FotMobOrchestrator</span><span class="flow-seq-detail">orchestrate(date)</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → DailyScraper</span><span class="flow-seq-detail">fetch daily listing</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>DailyScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matches?date=YYYYMMDD</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>DailyScraper</em></span><span class="flow-seq-detail">match IDs</span></div>
+                <div class="flow-seq-loop">
+                    <div class="flow-seq-block-label">For each match (parallel ThreadPoolExecutor)</div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper</span><span class="flow-seq-detail">fetch match details</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>MatchScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matchDetails?id=…</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>MatchScraper</em></span><span class="flow-seq-detail">full JSON payload</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">write data/fotmob/raw/YYYYMMDD/match_id.json</span></div>
+                </div>
+            </div>
         </div>
         <div class="callout note">
             <span class="callout-icon">🔄</span>
@@ -1113,18 +1583,28 @@ sequenceDiagram
             <h3>ClickHouse loading</h3>
             <div class="subtitle">Raw JSON → 15 Bronze tables via Pydantic extraction</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    RAW["data/fotmob/raw/<br/>JSON files"] --> PROC["FotMobBronzeMatchProcessor"]
-    PROC --> EXTRACT["14 entity DataFrames<br/>Pydantic + SafeFieldExtractor"]
-    EXTRACT --> VALIDATE["assert_bronze_dataframe_contract()"]
-    VALIDATE --> INSERT["ClickHouseClient.upsert()"]
-    INSERT --> BT["bronze.*<br/>15 tables"]
-    INSERT -->|failures| DLQ["data/dlq/<br/>JSONL files"]
-
-    style RAW fill:#1f6feb,stroke:#388bfd,color:#fff
-    style BT fill:#c17e1a,stroke:#e5a623,color:#fff
-    style DLQ fill:#b83030,stroke:#f05f5a,color:#fff
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node accent"><strong>data/fotmob/raw/</strong><span class="sub">JSON files</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>FotMobBronzeMatchProcessor</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>14 entity DataFrames</strong><span class="sub">Pydantic + SafeFieldExtractor</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>assert_bronze_dataframe_contract()</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>ClickHouseClient.upsert()</strong></div>
+            </div>
+            <div class="flow-branch">
+                <div class="flow-branch-arm">
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-node bronze"><strong>bronze.*</strong><span class="sub">15 tables</span></div>
+                </div>
+                <div class="flow-branch-arm">
+                    <span class="flow-connector down dashed"><span class="label">failures</span>↓</span>
+                    <div class="flow-node red"><strong>data/dlq/</strong><span class="sub">JSONL files</span></div>
+                </div>
+            </div>
         </div>
         <div class="callout warning">
             <span class="callout-icon">⚠️</span>
@@ -1191,45 +1671,48 @@ python scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
             <h3>Bronze → Silver lineage</h3>
             <div class="subtitle">Which Bronze tables feed each Silver table</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    subgraph BRONZE_IN["Bronze input (11 of 15 tables)"]
-        B_GEN["bronze.general"]
-        B_TIM["bronze.timeline"]
-        B_VEN["bronze.venue"]
-        B_PLA["bronze.player"]
-        B_SHO["bronze.shotmap"]
-        B_CAR["bronze.cards"]
-        B_COA["bronze.coaches"]
-        B_SUB["bronze.substitutes"]
-        B_PER["bronze.period"]
-        B_MOM["bronze.momentum"]
-        B_FOR["bronze.team_form"]
-    end
-    subgraph SILVER_OUT["Silver output (8 tables)"]
-        S_MAT["silver.match"]
-        S_PST["silver.period_stat"]
-        S_PMS["silver.player_match_stat"]
-        S_MOM["silver.momentum"]
-        S_SHO["silver.shot"]
-        S_CAR["silver.card"]
-        S_MPE["silver.match_personnel"]
-        S_TF["silver.team_form"]
-    end
-    B_GEN --> S_MAT
-    B_TIM --> S_MAT
-    B_VEN --> S_MAT
-    B_PER --> S_PST
-    B_PLA --> S_PMS
-    B_SHO --> S_SHO
-    B_CAR --> S_CAR
-    B_COA --> S_MPE
-    B_SUB --> S_MPE
-    B_MOM --> S_MOM
-    B_FOR --> S_TF
-
-    style BRONZE_IN fill:#e5a6231a,stroke:#e5a623
-    style SILVER_OUT fill:#3ecf731a,stroke:#3ecf73
+        <div class="flow-diagram">
+            <div class="flow-lineage">
+                <div class="flow-group bronze">
+                    <div class="flow-group-label">Bronze input (11 of 15 tables)</div>
+                    <div class="flow-lineage-col">
+                        <div class="flow-node bronze"><span class="sub">bronze.general</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.timeline</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.venue</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.player</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.shotmap</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.cards</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.coaches</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.substitutes</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.period</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.momentum</span></div>
+                        <div class="flow-node bronze"><span class="sub">bronze.team_form</span></div>
+                    </div>
+                </div>
+                <div class="flow-lineage-links">
+                    <span>general, timeline, venue → match</span>
+                    <span>period → period_stat</span>
+                    <span>player → player_match_stat</span>
+                    <span>shotmap → shot</span>
+                    <span>cards → card</span>
+                    <span>coaches, substitutes → match_personnel</span>
+                    <span>momentum → momentum</span>
+                    <span>team_form → team_form</span>
+                </div>
+                <div class="flow-group silver">
+                    <div class="flow-group-label">Silver output (8 tables)</div>
+                    <div class="flow-lineage-col">
+                        <div class="flow-node silver"><span class="sub">silver.match</span></div>
+                        <div class="flow-node silver"><span class="sub">silver.period_stat</span></div>
+                        <div class="flow-node silver"><span class="sub">silver.player_match_stat</span></div>
+                        <div class="flow-node silver"><span class="sub">silver.momentum</span></div>
+                        <div class="flow-node silver"><span class="sub">silver.shot</span></div>
+                        <div class="flow-node silver"><span class="sub">silver.card</span></div>
+                        <div class="flow-node silver"><span class="sub">silver.match_personnel</span></div>
+                        <div class="flow-node silver"><span class="sub">silver.team_form</span></div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="callout note" style="margin-top:1rem">
             <span class="callout-icon">📌</span>
@@ -1242,22 +1725,25 @@ graph TB
             <h3>Silver execution flow</h3>
             <div class="subtitle">Ordered DML scripts with post-load contract checks</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-sequenceDiagram
-    participant P as pipeline.py
-    participant S as silver/load_clickhouse.py
-    participant SVC as SilverService
-    participant CH as ClickHouse
-
-    P->>S: subprocess
-    S->>SVC: discover DML scripts
-    SVC->>SVC: 01_*.sql through 08_*.sql
-    loop For each DML script (ordered)
-        SVC->>CH: INSERT...SELECT from bronze.*
-        CH-->>SVC: rows inserted
-    end
-    SVC->>SVC: assert_silver_layer_contracts()
-    SVC-->>S: summary report
+        <div class="flow-seq">
+            <div class="flow-seq-participants">
+                <div class="flow-seq-participant">pipeline.py</div>
+                <div class="flow-seq-participant">silver/load_clickhouse.py</div>
+                <div class="flow-seq-participant">SilverService</div>
+                <div class="flow-seq-participant">ClickHouse</div>
+            </div>
+            <div class="flow-seq-body">
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → silver/load_clickhouse.py</span><span class="flow-seq-detail">subprocess</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">silver/load_clickhouse.py → <em>SilverService</em></span><span class="flow-seq-detail">discover DML scripts</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em></span><span class="flow-seq-detail">01_*.sql through 08_*.sql</span></div>
+                <div class="flow-seq-loop">
+                    <div class="flow-seq-block-label">For each DML script (ordered)</div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em> → ClickHouse</span><span class="flow-seq-detail">INSERT…SELECT from bronze.*</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors">ClickHouse → <em>SilverService</em></span><span class="flow-seq-detail">rows inserted</span></div>
+                </div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em></span><span class="flow-seq-detail">assert_silver_layer_contracts()</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em> → silver/load_clickhouse.py</span><span class="flow-seq-detail">summary report</span></div>
+            </div>
         </div>
         <div class="callout success">
             <span class="callout-icon">✓</span>
@@ -1291,32 +1777,35 @@ python scripts/silver/load_clickhouse.py</pre>
             <h3>Three Gold namespaces</h3>
             <div class="subtitle">Separate databases enforce separate ownership boundaries</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    subgraph SILVER["Silver — 8 tables (foundation)"]
-        SL["silver.*"]
-    end
-    subgraph GOLD_SCEN["gold_scenarios.* — 48 tables"]
-        SC1["scenario_demolition"]
-        SC2["scenario_underdog_heist"]
-        SC3["23 team + 25 player grain"]
-    end
-    subgraph GOLD_SIG["gold_signals.* — 344 tables"]
-        SIG1["sig_match_shooting_goals_*"]
-        SIG2["sig_player_shooting_goals_*"]
-        SIG3["sig_team_discipline_cards_*"]
-    end
-    subgraph GOLD_META["gold.* — shared serving metadata"]
-        ACT["signal_activations<br/>ReplacingMergeTree"]
-    end
-    SL --> GOLD_SCEN
-    SL --> GOLD_SIG
-    GOLD_SIG --> ACT
-
-    style SILVER fill:#3ecf731a,stroke:#3ecf73
-    style GOLD_SCEN fill:#b47bff1a,stroke:#b47bff
-    style GOLD_SIG fill:#b47bff1a,stroke:#b47bff
-    style GOLD_META fill:#f05f5a1a,stroke:#f05f5a
+        <div class="flow-diagram">
+            <div class="flow-group silver">
+                <div class="flow-group-label">Silver — 8 tables (foundation)</div>
+                <div class="flow-row"><div class="flow-node silver"><strong>silver.*</strong></div></div>
+            </div>
+            <div class="flow-connector down">↓</div>
+            <div class="flow-split">
+                <div class="flow-group gold" style="flex:1">
+                    <div class="flow-group-label">gold_scenarios.* — 48 tables</div>
+                    <div class="flow-stack">
+                        <div class="flow-node gold"><span class="sub">scenario_demolition</span></div>
+                        <div class="flow-node gold"><span class="sub">scenario_underdog_heist</span></div>
+                        <div class="flow-node gold"><strong>23 team + 25 player grain</strong></div>
+                    </div>
+                </div>
+                <div class="flow-group gold" style="flex:1">
+                    <div class="flow-group-label">gold_signals.* — 344 tables</div>
+                    <div class="flow-stack">
+                        <div class="flow-node gold"><span class="sub">sig_match_shooting_goals_*</span></div>
+                        <div class="flow-node gold"><span class="sub">sig_player_shooting_goals_*</span></div>
+                        <div class="flow-node gold"><span class="sub">sig_team_discipline_cards_*</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flow-connector down">↓</div>
+            <div class="flow-group red">
+                <div class="flow-group-label">gold.* — shared serving metadata</div>
+                <div class="flow-row"><div class="flow-node red"><strong>signal_activations</strong><span class="sub">ReplacingMergeTree</span></div></div>
+            </div>
         </div>
         <div class="callout insight">
             <span class="callout-icon">💡</span>
@@ -1329,27 +1818,31 @@ graph TB
             <h3>Gold SQL job execution</h3>
             <div class="subtitle">Generic runner discovers and executes all scenario and signal jobs via file-system convention</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-sequenceDiagram
-    participant P as pipeline.py
-    participant G as load_clickhouse_gold.py
-    participant R as run_sql_job.py
-    participant J as GoldSqlJob
-    participant CH as ClickHouse
-
-    P->>G: subprocess
-    G->>R: scenario jobs
-    R->>J: discover scenario_*.sql
-    loop Each scenario (48 files)
-        J->>CH: execute SQL
-    end
-    G->>R: signal jobs
-    R->>J: discover sig_*.sql
-    loop Each signal (344 files)
-        J->>CH: execute SQL
-    end
-    G->>G: build_signal_activations.py
-    G->>CH: rebuild gold.signal_activations
+        <div class="flow-seq">
+            <div class="flow-seq-participants">
+                <div class="flow-seq-participant">pipeline.py</div>
+                <div class="flow-seq-participant">load_clickhouse_gold.py</div>
+                <div class="flow-seq-participant">run_sql_job.py</div>
+                <div class="flow-seq-participant">GoldSqlJob</div>
+                <div class="flow-seq-participant">ClickHouse</div>
+            </div>
+            <div class="flow-seq-body">
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → load_clickhouse_gold.py</span><span class="flow-seq-detail">subprocess</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_sql_job.py</em></span><span class="flow-seq-detail">scenario jobs</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_sql_job.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover scenario_*.sql</span></div>
+                <div class="flow-seq-loop">
+                    <div class="flow-seq-block-label">Each scenario (48 files)</div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors">GoldSqlJob → ClickHouse</span><span class="flow-seq-detail">execute SQL</span></div>
+                </div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_sql_job.py</em></span><span class="flow-seq-detail">signal jobs</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_sql_job.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover sig_*.sql</span></div>
+                <div class="flow-seq-loop">
+                    <div class="flow-seq-block-label">Each signal (344 files)</div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors">GoldSqlJob → ClickHouse</span><span class="flow-seq-detail">execute SQL</span></div>
+                </div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py</span><span class="flow-seq-detail">build_signal_activations.py</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → ClickHouse</span><span class="flow-seq-detail">rebuild gold.signal_activations</span></div>
+            </div>
         </div>
         <details class="cmd-block">
             <summary>▸ Gold commands</summary>
@@ -1367,19 +1860,23 @@ python scripts/gold/setup_clickhouse_gold.py --part signals</pre>
             <h3>Activation rebuild</h3>
             <div class="subtitle">Full-table rebuild of the unified signal serving table — always a complete replacement</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    CATALOGS["Active signal catalogs<br/>scripts/gold/signal/catalogs/*.md"] --> SCAN["Scan catalogs for active signals"]
-    SCAN --> READ["Read row_identity fields per signal"]
-    READ --> SIG_TABLES["gold_signals.sig_*<br/>344 tables"]
-    SIG_TABLES --> STAGE["gold.signal_activations_stage<br/>ephemeral build buffer"]
-    STAGE --> FINAL["signal_activation_final_insert.sql<br/>match-level summaries"]
-    FINAL --> SERVE["gold.signal_activations<br/>serving table"]
-
-    style CATALOGS fill:#4a5570,stroke:#6b7a99,color:#fff
-    style SIG_TABLES fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style STAGE fill:#4a5570,stroke:#6b7a99,color:#fff
-    style SERVE fill:#b83030,stroke:#f05f5a,color:#fff
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node dim"><strong>Active signal catalogs</strong><span class="sub">scripts/gold/signal/catalogs/*.md</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>Scan catalogs for active signals</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>Read row_identity fields per signal</strong></div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-node gold"><strong>gold_signals.sig_*</strong><span class="sub">344 tables</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node dim"><strong>gold.signal_activations_stage</strong><span class="sub">ephemeral build buffer</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node gold"><strong>signal_activation_final_insert.sql</strong><span class="sub">match-level summaries</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node red"><strong>gold.signal_activations</strong><span class="sub">serving table</span></div>
+            </div>
         </div>
         <div class="callout note">
             <span class="callout-icon">🔑</span>
@@ -1416,20 +1913,29 @@ python scripts/gold/activations/build_signal_activations.py</pre>
             <h3>Signal lifecycle</h3>
             <div class="subtitle">Four artifacts per signal — from SQL file to product activation</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph LR
-    SQL["sig_*.sql<br/>transformation"] --> TABLE["gold_signals.*<br/>ClickHouse table"]
-    DDL["sig_*_ddl.sql<br/>table DDL"] --> TABLE
-    CATALOG["sig_*.md<br/>YAML frontmatter"] --> SYNC["sync_signal_catalogs.py"]
-    TABLE --> ACT["gold.signal_activations"]
-    SYNC --> MONGO["MongoDB signals collection"]
-
-    style SQL fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style CATALOG fill:#4a5570,stroke:#6b7a99,color:#fff
-    style DDL fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style TABLE fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style ACT fill:#b83030,stroke:#f05f5a,color:#fff
-    style MONGO fill:#2a8c50,stroke:#3ecf73,color:#000
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node gold"><strong>sig_*.sql</strong><span class="sub">transformation</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node gold"><strong>gold_signals.*</strong><span class="sub">ClickHouse table</span></div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-node gold"><strong>sig_*_ddl.sql</strong><span class="sub">table DDL</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node gold"><strong>gold_signals.*</strong><span class="sub">ClickHouse table</span></div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-node dim"><strong>sig_*.md</strong><span class="sub">YAML frontmatter</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>sync_signal_catalogs.py</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node silver"><strong>MongoDB signals collection</strong></div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-node gold"><strong>gold_signals.*</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node red"><strong>gold.signal_activations</strong></div>
+            </div>
         </div>
     </div>
 
@@ -1439,26 +1945,35 @@ graph LR
                 <h3>Signal taxonomy</h3>
                 <div class="subtitle">Naming: <code>sig_{entity}_{family}_{subfamily}_{name}</code></div>
             </div>
-            <div class="mermaid" data-rendered="false">
-graph TB
-    ROOT["sig_*"] --> ENT["Entity"]
-    ROOT --> FAM["Family"]
-    ROOT --> SUB["Subfamily"]
-    ENT --> E1["match"]
-    ENT --> E2["player"]
-    ENT --> E3["team"]
-    FAM --> F1["shooting"]
-    FAM --> F2["creativity"]
-    FAM --> F3["possession"]
-    FAM --> F4["discipline"]
-    FAM --> F5["goalkeeping"]
-    SUB --> S1["goals"]
-    SUB --> S2["playmaking"]
-    SUB --> S3["passing"]
-    SUB --> S4["cards"]
-    SUB --> S5["defense"]
-
-    style ROOT fill:#7d4fd4,stroke:#b47bff,color:#fff
+            <div class="flow-diagram">
+                <div class="flow-taxonomy">
+                    <div class="flow-node gold"><strong>sig_*</strong></div>
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-taxonomy-level">
+                        <div class="flow-node gold"><strong>Entity</strong></div>
+                        <div class="flow-node gold"><strong>Family</strong></div>
+                        <div class="flow-node gold"><strong>Subfamily</strong></div>
+                    </div>
+                    <div class="flow-taxonomy-level">
+                        <div class="flow-node dim"><span class="sub">match</span></div>
+                        <div class="flow-node dim"><span class="sub">player</span></div>
+                        <div class="flow-node dim"><span class="sub">team</span></div>
+                    </div>
+                    <div class="flow-taxonomy-level">
+                        <div class="flow-node dim"><span class="sub">shooting</span></div>
+                        <div class="flow-node dim"><span class="sub">creativity</span></div>
+                        <div class="flow-node dim"><span class="sub">possession</span></div>
+                        <div class="flow-node dim"><span class="sub">discipline</span></div>
+                        <div class="flow-node dim"><span class="sub">goalkeeping</span></div>
+                    </div>
+                    <div class="flow-taxonomy-level">
+                        <div class="flow-node dim"><span class="sub">goals</span></div>
+                        <div class="flow-node dim"><span class="sub">playmaking</span></div>
+                        <div class="flow-node dim"><span class="sub">passing</span></div>
+                        <div class="flow-node dim"><span class="sub">cards</span></div>
+                        <div class="flow-node dim"><span class="sub">defense</span></div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="diagram-card" style="margin-bottom:0">
@@ -1466,18 +1981,24 @@ graph TB
                 <h3>Signal identity hash</h3>
                 <div class="subtitle">Deterministic activation IDs — stable across full rebuilds</div>
             </div>
-            <div class="mermaid" data-rendered="false">
-graph LR
-    V["v1<br/>(scheme ver)"] --> HASH["SHA-256"]
-    SID["signal_id"] --> HASH
-    RI["row_identity<br/>column values"] --> HASH
-    HASH --> SII["signal_instance_id"]
-
-    style V fill:#c17e1a,stroke:#e5a623,color:#fff
-    style SID fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style RI fill:#4a5570,stroke:#6b7a99,color:#fff
-    style HASH fill:#1f6feb,stroke:#388bfd,color:#fff
-    style SII fill:#b83030,stroke:#f05f5a,color:#fff
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-node bronze"><strong>v1</strong><span class="sub">scheme ver</span></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node accent"><strong>SHA-256</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node red"><strong>signal_instance_id</strong></div>
+                </div>
+                <div class="flow-row" style="margin-top:0.35rem">
+                    <div class="flow-node gold"><strong>signal_id</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node accent"><strong>SHA-256</strong></div>
+                </div>
+                <div class="flow-row">
+                    <div class="flow-node dim"><strong>row_identity</strong><span class="sub">column values</span></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node accent"><strong>SHA-256</strong></div>
+                </div>
             </div>
             <div class="callout note" style="margin-top:0.75rem">
                 <span class="callout-icon">🔑</span>
@@ -1529,30 +2050,40 @@ graph LR
             <h3>Pipeline execution flow</h3>
             <div class="subtitle">Sequential stages with optional skip paths shown as dashed lines</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    START["pipeline.py<br/>date argument"] --> BRONZE["1. Scrape<br/>scrape_fotmob.py"]
-    BRONZE --> LOAD["2. Bronze load<br/>load_clickhouse.py"]
-    LOAD --> SILVER["3. Silver<br/>load_clickhouse.py"]
-    SILVER --> GOLD["4. Gold<br/>load_clickhouse_gold.py"]
-    GOLD --> SCEN["4a. Scenario SQL<br/>48 jobs"]
-    GOLD --> SIG["4b. Signal SQL<br/>344 jobs"]
-    SIG --> ACT["4c. Activation rebuild<br/>build_signal_activations.py"]
-    ACT --> DONE["Exit 0 ✓"]
-
-    BRONZE -.->|--skip-bronze| LOAD
-    BRONZE -.->|--skip-fotmob| DONE
-    LOAD -.->|--skip-clickhouse| SILVER
-    SILVER -.->|--skip-silver| GOLD
-    GOLD -.->|--skip-gold| DONE
-
-    style START fill:#1f6feb,stroke:#388bfd,color:#fff
-    style BRONZE fill:#c17e1a,stroke:#e5a623,color:#fff
-    style LOAD fill:#c17e1a,stroke:#e5a623,color:#fff
-    style SILVER fill:#2a8c50,stroke:#3ecf73,color:#000
-    style GOLD fill:#7d4fd4,stroke:#b47bff,color:#fff
-    style ACT fill:#b83030,stroke:#f05f5a,color:#fff
-    style DONE fill:#2a8c50,stroke:#3ecf73,color:#000
+        <div class="flow-diagram">
+            <div class="flow-stack" style="width:100%;align-items:center">
+                <div class="flow-node accent"><strong>pipeline.py</strong><span class="sub">date argument</span></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node bronze"><strong>1. Scrape</strong><span class="sub">scrape_fotmob.py</span></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node bronze"><strong>2. Bronze load</strong><span class="sub">load_clickhouse.py</span></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node silver"><strong>3. Silver</strong><span class="sub">load_clickhouse.py</span></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node gold"><strong>4. Gold</strong><span class="sub">load_clickhouse_gold.py</span></div>
+                <div class="flow-branch">
+                    <div class="flow-branch-arm">
+                        <span class="flow-connector down">↓</span>
+                        <div class="flow-node gold"><strong>4a. Scenario SQL</strong><span class="sub">48 jobs</span></div>
+                    </div>
+                    <div class="flow-branch-arm">
+                        <span class="flow-connector down">↓</span>
+                        <div class="flow-node gold"><strong>4b. Signal SQL</strong><span class="sub">344 jobs</span></div>
+                    </div>
+                </div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node red"><strong>4c. Activation rebuild</strong><span class="sub">build_signal_activations.py</span></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node silver"><strong>Exit 0 ✓</strong></div>
+            </div>
+            <div class="flow-shortcut" style="margin-top:0.75rem">
+                <span><strong>Skip paths:</strong></span>
+                <span class="flow-connector dashed">--skip-bronze → Silver</span>
+                <span class="flow-connector dashed">--skip-fotmob → halt</span>
+                <span class="flow-connector dashed">--skip-clickhouse → Silver</span>
+                <span class="flow-connector dashed">--skip-silver → Gold</span>
+                <span class="flow-connector dashed">--skip-gold → done</span>
+            </div>
         </div>
     </div>
 
@@ -1620,29 +2151,38 @@ graph TB
             <h3>Parallel scraping</h3>
             <div class="subtitle">FotMobOrchestrator with ThreadPoolExecutor — all matches fetched concurrently</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-sequenceDiagram
-    participant O as FotMobOrchestrator
-    participant DS as DailyScraper
-    participant MS1 as MatchScraper 1
-    participant MS2 as MatchScraper 2
-    participant MSN as MatchScraper N
-    participant API as FotMob API
-
-    O->>DS: fetch daily listing
-    DS->>API: GET /matches
-    API-->>DS: match IDs [id1, id2, …, idN]
-    par Parallel fetch (ThreadPoolExecutor)
-        O->>MS1: match id1
-        MS1->>API: GET /matchDetails
-    and
-        O->>MS2: match id2
-        MS2->>API: GET /matchDetails
-    and
-        O->>MSN: match idN
-        MSN->>API: GET /matchDetails
-    end
-    O->>O: write all to filesystem
+        <div class="flow-seq">
+            <div class="flow-seq-participants">
+                <div class="flow-seq-participant">FotMobOrchestrator</div>
+                <div class="flow-seq-participant">DailyScraper</div>
+                <div class="flow-seq-participant">MatchScraper 1</div>
+                <div class="flow-seq-participant">MatchScraper 2</div>
+                <div class="flow-seq-participant">MatchScraper N</div>
+                <div class="flow-seq-participant">FotMob API</div>
+            </div>
+            <div class="flow-seq-body">
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → DailyScraper</span><span class="flow-seq-detail">fetch daily listing</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>DailyScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matches</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>DailyScraper</em></span><span class="flow-seq-detail">match IDs [id1, id2, …, idN]</span></div>
+                <div class="flow-seq-par">
+                    <div class="flow-seq-block-label">Parallel fetch (ThreadPoolExecutor)</div>
+                    <div class="flow-seq-par-cols">
+                        <div class="flow-stack">
+                            <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper 1</span><span class="flow-seq-detail">match id1</span></div>
+                            <div class="flow-seq-msg"><span class="flow-seq-actors">MatchScraper 1 → FotMob API</span><span class="flow-seq-detail">GET /matchDetails</span></div>
+                        </div>
+                        <div class="flow-stack">
+                            <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper 2</span><span class="flow-seq-detail">match id2</span></div>
+                            <div class="flow-seq-msg"><span class="flow-seq-actors">MatchScraper 2 → FotMob API</span><span class="flow-seq-detail">GET /matchDetails</span></div>
+                        </div>
+                        <div class="flow-stack">
+                            <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper N</span><span class="flow-seq-detail">match idN</span></div>
+                            <div class="flow-seq-msg"><span class="flow-seq-actors">MatchScraper N → FotMob API</span><span class="flow-seq-detail">GET /matchDetails</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em></span><span class="flow-seq-detail">write all to filesystem</span></div>
+            </div>
         </div>
     </div>
 </div>
@@ -1667,36 +2207,53 @@ sequenceDiagram
             <h3>Service layout</h3>
             <div class="subtitle">Docker Compose services, ports, and host configuration</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    subgraph DOCKER["Docker Compose"]
-        subgraph CH["depthmark-clickhouse"]
-            CH_HTTP[":8123 HTTP"]
-            CH_NATIVE[":9000 native"]
-            CH_DB["bronze + silver<br/>gold_scenarios + gold_signals + gold"]
-        end
-        subgraph MONGO["depthmark-mongodb"]
-            M_PORT[":27017"]
-            M_DB["orbit_content<br/>5 collections"]
-        end
-        subgraph SCRAPER["depthmark-scraper"]
-            S_SCRIPTS["Python scripts"]
-            S_DATA["data/fotmob/"]
-            S_DLQ["data/dlq/"]
-        end
-    end
-    subgraph HOST["Host"]
-        ENV[".env credentials"]
-        CFG["config.yaml"]
-    end
-    ENV --> CH
-    ENV --> MONGO
-    ENV --> SCRAPER
-    CFG --> SCRAPER
-
-    style DOCKER fill:#1f6feb14,stroke:#1f6feb
-    style CH fill:#e5a6231a,stroke:#e5a623
-    style MONGO fill:#3ecf731a,stroke:#3ecf73
+        <div class="flow-diagram">
+            <div class="flow-group accent">
+                <div class="flow-group-label">Docker Compose</div>
+                <div class="flow-split">
+                    <div class="flow-group bronze" style="flex:1">
+                        <div class="flow-group-label">depthmark-clickhouse</div>
+                        <div class="flow-stack">
+                            <div class="flow-node bronze"><span class="sub">:8123 HTTP</span></div>
+                            <div class="flow-node bronze"><span class="sub">:9000 native</span></div>
+                            <div class="flow-node bronze"><strong>bronze + silver</strong><span class="sub">gold_scenarios + gold_signals + gold</span></div>
+                        </div>
+                    </div>
+                    <div class="flow-group silver" style="flex:1">
+                        <div class="flow-group-label">depthmark-mongodb</div>
+                        <div class="flow-stack">
+                            <div class="flow-node silver"><span class="sub">:27017</span></div>
+                            <div class="flow-node silver"><strong>orbit_content</strong><span class="sub">5 collections</span></div>
+                        </div>
+                    </div>
+                    <div class="flow-group accent" style="flex:1">
+                        <div class="flow-group-label">depthmark-scraper</div>
+                        <div class="flow-stack">
+                            <div class="flow-node accent"><strong>Python scripts</strong></div>
+                            <div class="flow-node accent"><span class="sub">data/fotmob/</span></div>
+                            <div class="flow-node red"><span class="sub">data/dlq/</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flow-connector down">↓</div>
+            <div class="flow-group dim">
+                <div class="flow-group-label">Host</div>
+                <div class="flow-row">
+                    <div class="flow-node dim"><strong>.env credentials</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node bronze"><strong>ClickHouse</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node silver"><strong>MongoDB</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node accent"><strong>Scraper</strong></div>
+                </div>
+                <div class="flow-row" style="margin-top:0.5rem">
+                    <div class="flow-node dim"><strong>config.yaml</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node accent"><strong>Scraper</strong></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1706,17 +2263,30 @@ graph TB
                 <h3>Bootstrap sequence</h3>
                 <div class="subtitle">First-time setup — run in this exact order</div>
             </div>
-            <div class="mermaid" data-rendered="false">
-graph LR
-    DC["docker-compose up -d"] --> SETUP["setup_clickhouse.py"]
-    SETUP --> BDDL["Bronze DDL"]
-    SETUP --> SDDL["Silver DDL"]
-    SETUP --> GDDL["Gold DDL"]
-    SETUP --> MIDX["init_indexes.py"]
-
-    style DC fill:#1f6feb,stroke:#388bfd,color:#fff
-    style SETUP fill:#c17e1a,stroke:#e5a623,color:#fff
-    style MIDX fill:#2a8c50,stroke:#3ecf73,color:#000
+            <div class="flow-diagram">
+                <div class="flow-row">
+                    <div class="flow-node accent"><strong>docker-compose up -d</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node bronze"><strong>setup_clickhouse.py</strong></div>
+                </div>
+                <div class="flow-branch" style="margin-top:0.5rem">
+                    <div class="flow-branch-arm">
+                        <span class="flow-connector down">↓</span>
+                        <div class="flow-node bronze"><strong>Bronze DDL</strong></div>
+                    </div>
+                    <div class="flow-branch-arm">
+                        <span class="flow-connector down">↓</span>
+                        <div class="flow-node silver"><strong>Silver DDL</strong></div>
+                    </div>
+                    <div class="flow-branch-arm">
+                        <span class="flow-connector down">↓</span>
+                        <div class="flow-node gold"><strong>Gold DDL</strong></div>
+                    </div>
+                    <div class="flow-branch-arm">
+                        <span class="flow-connector down">↓</span>
+                        <div class="flow-node silver"><strong>init_indexes.py</strong></div>
+                    </div>
+                </div>
             </div>
             <details class="cmd-block">
                 <summary>▸ Setup commands</summary>
@@ -1773,21 +2343,35 @@ docker compose exec depthmark-scraper python scripts/mongodb/init_indexes.py</pr
             <h3>Catalog sync flow</h3>
             <div class="subtitle">Markdown frontmatter → validated upsert into MongoDB</div>
         </div>
-        <div class="mermaid" data-rendered="false">
-graph TB
-    MD["catalogs/*.md<br/>YAML frontmatter + body"] --> PARSE["sync_signal_catalogs.py"]
-    PARSE --> VALIDATE["Validate required keys<br/>(signal_id, status, grain, etc.)"]
-    VALIDATE --> CHECK["Check gold_signals.* namespace<br/>in asset_paths"]
-    CHECK --> HASH["SHA-256 content hashes<br/>(idempotent upserts)"]
-    HASH --> UPSERT["Upsert with content hashing"]
-    UPSERT --> SIG_COL["signals collection"]
-    UPSERT --> SCEN_COL["scenarios collection"]
-    UPSERT --> TPL_COL["channel_templates collection"]
-
-    style MD fill:#4a5570,stroke:#6b7a99,color:#fff
-    style SIG_COL fill:#2a8c50,stroke:#3ecf73,color:#000
-    style SCEN_COL fill:#2a8c50,stroke:#3ecf73,color:#000
-    style TPL_COL fill:#2a8c50,stroke:#3ecf73,color:#000
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node dim"><strong>catalogs/*.md</strong><span class="sub">YAML frontmatter + body</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>sync_signal_catalogs.py</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>Validate required keys</strong><span class="sub">signal_id, status, grain, etc.</span></div>
+            </div>
+            <div class="flow-row">
+                <div class="flow-node accent"><strong>Check gold_signals.* namespace</strong><span class="sub">in asset_paths</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>SHA-256 content hashes</strong><span class="sub">idempotent upserts</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>Upsert with content hashing</strong></div>
+            </div>
+            <div class="flow-branch">
+                <div class="flow-branch-arm">
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-node silver"><strong>signals collection</strong></div>
+                </div>
+                <div class="flow-branch-arm">
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-node silver"><strong>scenarios collection</strong></div>
+                </div>
+                <div class="flow-branch-arm">
+                    <span class="flow-connector down">↓</span>
+                    <div class="flow-node silver"><strong>channel_templates collection</strong></div>
+                </div>
+            </div>
         </div>
         <div class="callout success">
             <span class="callout-icon">✓</span>
@@ -1822,42 +2406,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
 </div><!-- /content -->
 
 <script>
-    // ── Mermaid init ──
-    mermaid.initialize({
-        startOnLoad: false,
-        theme: 'dark',
-        themeVariables: {
-            primaryColor: '#1f6feb',
-            primaryTextColor: '#dde4f0',
-            primaryBorderColor: '#388bfd',
-            lineColor: '#6b7a99',
-            secondaryColor: '#111520',
-            tertiaryColor: '#0a0e14',
-            fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif',
-        },
-        flowchart: { curve: 'basis', padding: 20 },
-        sequence: { mirrorActors: false, messageMargin: 40 },
-    });
-
     const TAB_IDS = ['overview', 'bronze', 'silver', 'gold', 'signals', 'orchestration', 'infrastructure', 'mongodb'];
-
-    function renderMermaidInSection(section) {
-        section.querySelectorAll('.mermaid[data-rendered="false"]').forEach(async (el) => {
-            if (!el.dataset.mermaidSrc) {
-                el.dataset.mermaidSrc = el.textContent.trim();
-            }
-            const src = el.dataset.mermaidSrc;
-            el.removeAttribute('data-processed');
-            try {
-                const { svg } = await mermaid.render('mmd-' + Math.random().toString(36).slice(2), src);
-                el.innerHTML = svg;
-                el.setAttribute('data-rendered', 'true');
-            } catch (e) {
-                el.innerHTML = '<pre style="color:#f05f5a;font-size:0.78rem;padding:0.5rem">Diagram render error: ' + e.message + '</pre>';
-                el.setAttribute('data-rendered', 'true');
-            }
-        });
-    }
 
     function showTab(id, pushState = true) {
         if (!TAB_IDS.includes(id)) id = 'overview';
@@ -1874,7 +2423,6 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         if (!section) return;
         section.classList.add('active');
         section.setAttribute('aria-hidden', 'false');
-        renderMermaidInSection(section);
         if (pushState) history.replaceState(null, '', '#' + id);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1889,6 +2437,614 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         const h = location.hash.replace('#', '');
         if (TAB_IDS.includes(h)) showTab(h, false);
     });
+
+    // ── Flow command registry (click any diagram step) ──
+    const FLOW_COMMAND_REGISTRY = [
+        {
+            match: ['cp .env.example', 'docker compose up'],
+            title: 'Environment & Docker',
+            scripts: ['docker/docker-compose.yml', '.env.example'],
+            commands: [
+                'cp .env.example .env',
+                'docker compose -f docker/docker-compose.yml up -d',
+            ],
+            note: 'Edit .env with FOTMOB_X_MAS_TOKEN, ClickHouse, and MongoDB credentials before running loaders.',
+            sectionTab: 'infrastructure',
+        },
+        {
+            match: ['health_check.py', 'health_check'],
+            title: 'Health check',
+            scripts: ['scripts/health_check.py'],
+            commands: [
+                'python scripts/health_check.py',
+                'python scripts/health_check.py --json',
+            ],
+        },
+        {
+            match: ['setup_clickhouse.py', 'setup_clickhouse'],
+            title: 'ClickHouse DDL setup (all layers)',
+            scripts: ['scripts/orchestration/setup_clickhouse.py'],
+            commands: ['python scripts/orchestration/setup_clickhouse.py'],
+            note: 'Creates bronze (15) + silver (8) + gold scenario/signal DDL + signal_activations table.',
+            sectionTab: 'infrastructure',
+        },
+        {
+            match: ['setup_clickhouse_gold', 'gold/setup_clickhouse'],
+            title: 'Gold-only DDL setup',
+            scripts: ['scripts/gold/setup_clickhouse_gold.py'],
+            commands: [
+                'python scripts/gold/setup_clickhouse_gold.py',
+                'python scripts/gold/setup_clickhouse_gold.py --part signals',
+                'python scripts/gold/setup_clickhouse_gold.py --part scenarios',
+            ],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['init_indexes.py', 'mongodb/init_indexes'],
+            title: 'MongoDB index bootstrap',
+            scripts: ['scripts/mongodb/init_indexes.py'],
+            commands: ['python scripts/mongodb/init_indexes.py'],
+            sectionTab: 'mongodb',
+        },
+        {
+            match: ['scrape_fotmob.py', 'scrape_fotmob', '1. scrape', 'dailyscraper', 'matchscraper'],
+            title: 'Bronze scrape (FotMob → disk)',
+            scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py'],
+            commands: ['python scripts/bronze/scrape_fotmob.py <YYYYMMDD>'],
+            note: 'If the API blocks requests: python scripts/refresh_turnstile.py',
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['refresh_turnstile', 'turnstile'],
+            title: 'FotMob turnstile / token refresh',
+            scripts: ['scripts/refresh_turnstile.py'],
+            commands: ['python scripts/refresh_turnstile.py'],
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['bronze/load_clickhouse', 'load_clickhouse.py --date', '2. bronze load'],
+            title: 'Bronze ClickHouse load',
+            scripts: ['scripts/bronze/load_clickhouse.py'],
+            commands: [
+                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
+                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD> --truncate',
+            ],
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['silver/load_clickhouse', '3. silver', 'silverservice'],
+            title: 'Silver full-table reload',
+            scripts: ['scripts/silver/load_clickhouse.py', 'src/services/silver/fotmob_silver_service.py'],
+            sql: ['clickhouse/silver/dml/'],
+            commands: [
+                'python scripts/silver/load_clickhouse.py --dry-run',
+                'python scripts/silver/load_clickhouse.py',
+            ],
+            sectionTab: 'silver',
+        },
+        {
+            match: ['gold/load_clickhouse_gold', '4. gold', 'load_clickhouse_gold.py'],
+            title: 'Gold load (scenarios + signals + activations)',
+            scripts: ['scripts/gold/load_clickhouse_gold.py'],
+            commands: [
+                'python scripts/gold/load_clickhouse_gold.py --dry-run',
+                'python scripts/gold/load_clickhouse_gold.py',
+                'python scripts/gold/load_clickhouse_gold.py --part scenarios',
+                'python scripts/gold/load_clickhouse_gold.py --part signals',
+            ],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['run_sql_job.py', 'goldsqljob', 'scenario_*.sql', 'sig_*.sql', '4a. scenario', '4b. signal'],
+            title: 'Single Gold SQL job runner',
+            scripts: ['scripts/gold/run_sql_job.py', 'src/services/gold/gold_dml_runner.py'],
+            commands: [
+                'python scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>',
+                'python scripts/gold/run_sql_job.py --kind signal --id <signal_id>',
+                'python scripts/gold/run_sql_job.py --kind signal --entity team',
+                'python scripts/gold/run_sql_job.py --kind signal --family shooting',
+            ],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['build_signal_activations', '4c. activation', 'activation rebuild', 'signal_activations_stage', 'signal_activation_final_insert'],
+            title: 'Signal activation rebuild',
+            scripts: ['scripts/gold/activations/build_signal_activations.py'],
+            sql: [
+                'clickhouse/gold/ddl/create_table_signal_activations.sql',
+                'clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql',
+                'clickhouse/gold/dml/activations/signal_activation_final_insert.sql',
+            ],
+            commands: [
+                'python scripts/gold/activations/build_signal_activations.py',
+                'clickhouse-client --multiquery < clickhouse/gold/ddl/create_table_signal_activations.sql',
+            ],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['pipeline.py', 'preflight ok'],
+            title: 'Full pipeline orchestration',
+            scripts: ['scripts/orchestration/pipeline.py'],
+            commands: [
+                'python scripts/orchestration/pipeline.py <YYYYMMDD>',
+                'python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207',
+                'python scripts/orchestration/pipeline.py --month 202512',
+                'python scripts/orchestration/pipeline.py --bronze-only',
+                'python scripts/orchestration/pipeline.py --silver-only',
+                'python scripts/orchestration/pipeline.py --gold-only',
+            ],
+            note: 'Skip flags: --skip-fotmob, --skip-bronze, --skip-clickhouse, --skip-silver, --skip-gold',
+            sectionTab: 'orchestration',
+        },
+        {
+            match: ['check_bronze_to_silver', 'reconciliation', 'bronze→silver'],
+            title: 'Bronze → Silver reconciliation',
+            scripts: ['scripts/quality/check_bronze_to_silver_reconciliation.py'],
+            commands: [
+                'python scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+            ],
+        },
+        {
+            match: ['check_logging_style'],
+            title: 'Logging style check',
+            scripts: ['scripts/quality/check_logging_style.py'],
+            commands: ['python scripts/quality/check_logging_style.py'],
+        },
+        {
+            match: ['sync_signal_catalogs', 'catalog sync', 'catalogs/*.md', 'sig_*.md', 'signal catalogs'],
+            title: 'Signal / scenario catalog sync (Git → MongoDB)',
+            scripts: ['scripts/mongodb/sync_signal_catalogs.py'],
+            paths: ['scripts/gold/signal/catalogs/*.md'],
+            commands: [
+                'python scripts/mongodb/sync_signal_catalogs.py --dry-run',
+                'python scripts/mongodb/sync_signal_catalogs.py',
+            ],
+            sectionTab: 'mongodb',
+        },
+        {
+            match: ['assert_bronze_dataframe_contract', 'bronze contract', 'fotmobbronze'],
+            title: 'Bronze contract assertion (runtime)',
+            scripts: ['scripts/bronze/load_clickhouse.py', 'src/processors/bronze/'],
+            commands: ['python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            note: 'Contract runs automatically during bronze load — not a standalone CLI.',
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['assert_silver_layer_contracts', 'silver contract'],
+            title: 'Silver contract assertion (runtime)',
+            scripts: ['scripts/silver/load_clickhouse.py'],
+            commands: ['python scripts/silver/load_clickhouse.py'],
+            note: 'Contract runs automatically after Silver DML scripts complete.',
+            sectionTab: 'silver',
+        },
+        {
+            match: ['fotmob api', 'fotmoborchestrator', 'ingest'],
+            title: 'FotMob ingest (API → raw JSON)',
+            scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py', 'scripts/refresh_turnstile.py'],
+            commands: [
+                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/refresh_turnstile.py',
+            ],
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['data/fotmob/raw', 'raw json on disk', 'filesystem'],
+            title: 'Bronze raw file output',
+            paths: ['data/fotmob/raw/<YYYYMMDD>/<match_id>.json'],
+            commands: ['python scripts/bronze/scrape_fotmob.py <YYYYMMDD>'],
+            note: 'Written by the scraper; consumed by bronze/load_clickhouse.py.',
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['fotmobbronze', 'pydantic', '14 entity', 'clickhouseclient.upsert'],
+            title: 'Bronze parse & load pipeline',
+            scripts: ['scripts/bronze/load_clickhouse.py', 'src/processors/bronze/'],
+            commands: ['python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['data/dlq', 'dlq'],
+            title: 'Dead-letter queue (failed bronze inserts)',
+            paths: ['data/dlq/'],
+            commands: ['python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            note: 'Re-run bronze load after fixing parse/contract issues.',
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['bronze.*', 'bronze.', '15 clickhouse tables', '15 tables', 'source fidelity'],
+            title: 'Bronze layer',
+            scripts: ['scripts/bronze/scrape_fotmob.py', 'scripts/bronze/load_clickhouse.py'],
+            sql: ['clickhouse/bronze/ddl/'],
+            commands: [
+                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
+            ],
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['silver.*', 'silver.', '8 tables', '8 analytical', 'conformed analytics', 'full-table reload', 'insert…select', 'bronze → silver dml'],
+            title: 'Silver layer',
+            scripts: ['scripts/silver/load_clickhouse.py'],
+            sql: ['clickhouse/silver/dml/'],
+            commands: [
+                'python scripts/silver/load_clickhouse.py --dry-run',
+                'python scripts/silver/load_clickhouse.py',
+            ],
+            sectionTab: 'silver',
+        },
+        {
+            match: ['gold_signals', '344 tables', '344 signal', 'sig_*.sql', 'sig_*_ddl'],
+            title: 'Gold signals',
+            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_sql_job.py'],
+            sql: ['clickhouse/gold/dml/signals/'],
+            commands: [
+                'python scripts/gold/load_clickhouse_gold.py --part signals',
+                'python scripts/gold/run_sql_job.py --kind signal --id <signal_id>',
+            ],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['gold_scenarios', '48 scenario', '48 tables', 'scenario_demolition', 'scenario sql', 'gold scenario sql'],
+            title: 'Gold scenarios',
+            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_sql_job.py'],
+            sql: ['clickhouse/gold/dml/scenarios/'],
+            commands: [
+                'python scripts/gold/load_clickhouse_gold.py --part scenarios',
+                'python scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>',
+            ],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['gold.signal_activations', 'signal_activations', 'activation serving', 'signal_instance_id'],
+            title: 'Signal activations serving table',
+            scripts: ['scripts/gold/activations/build_signal_activations.py'],
+            sql: ['clickhouse/gold/ddl/create_table_signal_activations.sql'],
+            commands: ['python scripts/gold/activations/build_signal_activations.py'],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['mongodb', 'orbit_content', 'signals collection', 'scenarios collection', 'channel_templates'],
+            title: 'MongoDB content catalog',
+            scripts: ['scripts/mongodb/init_indexes.py', 'scripts/mongodb/sync_signal_catalogs.py'],
+            commands: [
+                'python scripts/mongodb/init_indexes.py',
+                'python scripts/mongodb/sync_signal_catalogs.py --dry-run',
+                'python scripts/mongodb/sync_signal_catalogs.py',
+            ],
+            sectionTab: 'mongodb',
+        },
+        {
+            match: ['docker-compose up', 'depthmark-clickhouse', 'depthmark-mongodb', 'depthmark-scraper', 'service layout'],
+            title: 'Docker Compose services',
+            scripts: ['docker/docker-compose.yml'],
+            commands: [
+                'docker compose -f docker/docker-compose.yml up -d',
+                'docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py',
+            ],
+            sectionTab: 'infrastructure',
+        },
+        {
+            match: ['scraping & parsing', 'job discovery', 'catalog sync'],
+            title: 'Python orchestration responsibilities',
+            scripts: [
+                'scripts/bronze/scrape_fotmob.py',
+                'scripts/gold/load_clickhouse_gold.py',
+                'scripts/mongodb/sync_signal_catalogs.py',
+            ],
+            commands: [
+                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/gold/load_clickhouse_gold.py',
+                'python scripts/mongodb/sync_signal_catalogs.py',
+            ],
+        },
+        {
+            match: ['contract assertions', 'activation rebuild'],
+            title: 'Python validation & serving glue',
+            scripts: [
+                'scripts/bronze/load_clickhouse.py',
+                'scripts/silver/load_clickhouse.py',
+                'scripts/gold/activations/build_signal_activations.py',
+            ],
+            commands: [
+                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
+                'python scripts/silver/load_clickhouse.py',
+                'python scripts/gold/activations/build_signal_activations.py',
+            ],
+        },
+        {
+            match: ['validated warehouse', 'preflight'],
+            title: 'Preflight & validation',
+            scripts: [
+                'scripts/health_check.py',
+                'scripts/silver/load_clickhouse.py',
+                'scripts/gold/load_clickhouse_gold.py',
+                'scripts/quality/check_bronze_to_silver_reconciliation.py',
+            ],
+            commands: [
+                'python scripts/health_check.py --json',
+                'python scripts/silver/load_clickhouse.py --dry-run',
+                'python scripts/gold/load_clickhouse_gold.py --dry-run',
+                'python scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+            ],
+        },
+        {
+            match: ['product & bi', 'product / bi', 'consumers'],
+            title: 'Product / BI consumption',
+            note: 'Query gold.signal_activations in ClickHouse; read catalog metadata from MongoDB orbit_content — no loader script.',
+        },
+        {
+            match: ['--skip-'],
+            title: 'Pipeline skip flags',
+            scripts: ['scripts/orchestration/pipeline.py'],
+            commands: [
+                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-fotmob',
+                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-bronze',
+                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-clickhouse',
+                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-silver',
+                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-gold',
+            ],
+            sectionTab: 'orchestration',
+        },
+        {
+            match: ['exit 0', 'done when'],
+            title: 'Successful pipeline completion',
+            commands: [
+                'python scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+                'python scripts/mongodb/sync_signal_catalogs.py',
+            ],
+        },
+        {
+            match: ['active signal catalogs', 'row_identity', 'scan catalogs'],
+            title: 'Activation catalog scan (runtime)',
+            scripts: ['scripts/gold/activations/build_signal_activations.py'],
+            paths: ['scripts/gold/signal/catalogs/*.md'],
+            commands: ['python scripts/gold/activations/build_signal_activations.py'],
+            sectionTab: 'gold',
+        },
+        {
+            match: ['sig_*', 'entity', 'family', 'subfamily', 'taxonomy'],
+            title: 'Signal naming & discovery',
+            paths: ['scripts/gold/signal/catalogs/', 'clickhouse/gold/dml/signals/'],
+            commands: [
+                'python scripts/gold/run_sql_job.py --kind signal --entity match',
+                'python scripts/gold/run_sql_job.py --kind signal --family shooting',
+            ],
+            sectionTab: 'signals',
+        },
+        {
+            match: ['sha-256', 'v1', 'scheme ver'],
+            title: 'Signal instance ID (deterministic hash)',
+            scripts: ['scripts/gold/activations/build_signal_activations.py'],
+            note: 'signal_instance_id = lower(hex(SHA256("v1|signal_id|row_identity_values…"))). Rebuilt via build_signal_activations.py.',
+            sectionTab: 'signals',
+        },
+        {
+            match: ['clickhouse'],
+            title: 'ClickHouse warehouse',
+            scripts: ['scripts/orchestration/setup_clickhouse.py'],
+            commands: ['python scripts/orchestration/setup_clickhouse.py'],
+            sectionTab: 'infrastructure',
+        },
+        {
+            match: ['bronze ddl', 'silver ddl', 'gold ddl', 'bootstrap'],
+            title: 'First-time warehouse bootstrap',
+            scripts: ['scripts/orchestration/setup_clickhouse.py', 'scripts/mongodb/init_indexes.py'],
+            commands: [
+                'docker compose -f docker/docker-compose.yml up -d',
+                'python scripts/orchestration/setup_clickhouse.py',
+                'python scripts/mongodb/init_indexes.py',
+            ],
+            sectionTab: 'infrastructure',
+        },
+        {
+            match: ['validate required', 'gold_signals.* namespace', 'content hashing', 'upsert with content'],
+            title: 'Catalog sync validation steps',
+            scripts: ['scripts/mongodb/sync_signal_catalogs.py'],
+            commands: [
+                'python scripts/mongodb/sync_signal_catalogs.py --dry-run',
+                'python scripts/mongodb/sync_signal_catalogs.py',
+            ],
+            sectionTab: 'mongodb',
+        },
+        {
+            match: ['product outputs', 'serve'],
+            title: 'Serving layer (Gold + MongoDB)',
+            scripts: [
+                'scripts/gold/activations/build_signal_activations.py',
+                'scripts/mongodb/sync_signal_catalogs.py',
+            ],
+            commands: [
+                'python scripts/gold/activations/build_signal_activations.py',
+                'python scripts/mongodb/sync_signal_catalogs.py',
+            ],
+            sectionTab: 'mongodb',
+        },
+    ];
+
+    let activeFlowClickable = null;
+
+    function flowHaystack(label, sub) {
+        return (label + ' ' + (sub || '')).toLowerCase().replace(/…/g, '...');
+    }
+
+    function resolveFlowCommand(label, sub) {
+        const hay = flowHaystack(label, sub);
+        for (const entry of FLOW_COMMAND_REGISTRY) {
+            if (entry.match.some((m) => hay.includes(m.toLowerCase()))) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    function createFlowCmdPanel() {
+        const panel = document.createElement('div');
+        panel.className = 'flow-cmd-panel';
+        panel.hidden = true;
+        panel.setAttribute('aria-live', 'polite');
+        return panel;
+    }
+
+    function renderFlowCmdPanel(panel, entry, sourceEl) {
+        const paths = [...(entry.scripts || []), ...(entry.sql || []), ...(entry.paths || [])];
+        const hasCommands = entry.commands && entry.commands.length;
+        const hasPaths = paths.length > 0;
+
+        let html = '<div class="flow-cmd-panel-header">';
+        html += '<div class="flow-cmd-panel-title">' + entry.title + '</div>';
+        html += '<button type="button" class="flow-cmd-panel-close" aria-label="Close">×</button>';
+        html += '</div>';
+
+        if (hasPaths) {
+            html += '<div class="flow-cmd-panel-section"><div class="flow-cmd-panel-label">Scripts & paths</div>';
+            html += '<div class="flow-cmd-panel-paths">';
+            paths.forEach((p) => { html += '<span class="flow-cmd-path">' + p + '</span>'; });
+            html += '</div></div>';
+        }
+
+        if (hasCommands) {
+            html += '<div class="flow-cmd-panel-section"><div class="flow-cmd-panel-label">Commands</div>';
+            html += '<pre class="flow-cmd-pre">' + entry.commands.join('\n') + '</pre></div>';
+        }
+
+        if (entry.note) {
+            html += '<div class="flow-cmd-panel-note">' + entry.note + '</div>';
+        }
+
+        if (!hasCommands && !hasPaths && entry.note) {
+            html += '<div class="flow-cmd-panel-note" style="margin-top:0">No standalone CLI — see note above.</div>';
+        }
+
+        if (entry.sectionTab) {
+            html += '<div class="flow-cmd-panel-actions">';
+            html += '<button type="button" class="flow-cmd-panel-link" data-goto-tab="' + entry.sectionTab + '">Open ' + entry.sectionTab + ' section →</button>';
+            html += '</div>';
+        }
+
+        panel.innerHTML = html;
+        panel.hidden = false;
+
+        panel.querySelector('.flow-cmd-panel-close').addEventListener('click', () => closeFlowCmdPanel(panel));
+        const tabBtn = panel.querySelector('[data-goto-tab]');
+        if (tabBtn) {
+            tabBtn.addEventListener('click', () => showTab(tabBtn.dataset.gotoTab));
+        }
+
+        if (activeFlowClickable) activeFlowClickable.classList.remove('active');
+        activeFlowClickable = sourceEl;
+        sourceEl.classList.add('active');
+
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeFlowCmdPanel(panel) {
+        panel.hidden = true;
+        if (activeFlowClickable) {
+            activeFlowClickable.classList.remove('active');
+            activeFlowClickable = null;
+        }
+    }
+
+    function getFlowTargetMeta(el) {
+        if (el.classList.contains('pipe-stage')) {
+            return {
+                label: el.querySelector('.pipe-stage-title')?.textContent.trim() || '',
+                sub: (el.querySelector('.pipe-stage-label')?.textContent.trim() || '') + ' ' +
+                     (el.querySelector('.pipe-stage-desc')?.textContent.trim() || ''),
+                sectionTab: el.dataset.flowSection || null,
+            };
+        }
+        if (el.classList.contains('flow-seq-participant')) {
+            return { label: el.textContent.trim(), sub: '' };
+        }
+        if (el.classList.contains('flow-seq-msg')) {
+            const actors = el.querySelector('.flow-seq-actors')?.textContent.trim() || '';
+            const detail = el.querySelector('.flow-seq-detail')?.textContent.trim() || '';
+            return { label: actors, sub: detail };
+        }
+        if (el.classList.contains('flow-node')) {
+            return {
+                label: el.querySelector('strong')?.textContent.trim() || el.textContent.trim(),
+                sub: el.querySelector('.sub')?.textContent.trim() || '',
+            };
+        }
+        return null;
+    }
+
+    function findFlowCmdPanel(el) {
+        const card = el.closest('.diagram-card');
+        if (card) {
+            let panel = card.querySelector(':scope > .flow-cmd-panel');
+            if (!panel) {
+                panel = createFlowCmdPanel();
+                card.appendChild(panel);
+            }
+            return panel;
+        }
+        const wrap = el.closest('.pipeline-visual-wrap');
+        if (wrap) return wrap.querySelector('.flow-cmd-panel');
+        return null;
+    }
+
+    function onFlowElementClick(el) {
+        const meta = getFlowTargetMeta(el);
+        if (!meta) return;
+
+        let entry = resolveFlowCommand(meta.label, meta.sub);
+        if (!entry && meta.sectionTab) {
+            entry = resolveFlowCommand(meta.label, meta.sub + ' ' + meta.sectionTab);
+        }
+        if (!entry) return;
+
+        if (meta.sectionTab && !entry.sectionTab) {
+            entry = { ...entry, sectionTab: meta.sectionTab };
+        }
+
+        const panel = findFlowCmdPanel(el);
+        if (!panel) return;
+
+        document.querySelectorAll('.flow-cmd-panel:not([hidden])').forEach((p) => {
+            if (p !== panel) closeFlowCmdPanel(p);
+        });
+
+        renderFlowCmdPanel(panel, entry, el);
+    }
+
+    function initFlowCommandClicks() {
+        const selector = '.flow-node, .flow-seq-participant, .flow-seq-msg, .pipe-stage';
+        document.querySelectorAll(selector).forEach((el) => {
+            const meta = getFlowTargetMeta(el);
+            if (!meta) return;
+            const entry = resolveFlowCommand(meta.label, meta.sub) ||
+                (meta.sectionTab ? resolveFlowCommand(meta.label, meta.sub + ' ' + meta.sectionTab) : null);
+            if (!entry) return;
+
+            el.classList.add('flow-clickable');
+            el.setAttribute('tabindex', '0');
+            el.setAttribute('role', 'button');
+            el.setAttribute('title', 'Show scripts & commands');
+
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                onFlowElementClick(el);
+            });
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onFlowElementClick(el);
+                }
+            });
+        });
+
+        document.querySelectorAll('.diagram-card').forEach((card) => {
+            if ((card.querySelector('.flow-diagram') || card.querySelector('.flow-seq')) &&
+                !card.querySelector(':scope > .flow-cmd-panel')) {
+                card.appendChild(createFlowCmdPanel());
+            }
+        });
+    }
+
+    initFlowCommandClicks();
 
     // ── Search index ──
     const SEARCH_INDEX = [
