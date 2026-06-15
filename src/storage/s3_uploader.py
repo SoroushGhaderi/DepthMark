@@ -13,6 +13,7 @@ import tarfile
 import tempfile
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import urlparse
 
 from ..utils.logging_utils import get_logger
 
@@ -30,9 +31,7 @@ logger = get_logger(__name__)
 class S3Uploader:
     """S3 Uploader for bronze layer data."""
 
-    def __init__(
-        self, endpoint: str, access_key: str, secret_key: str, bucket_name: str = "depthmark-sport"
-    ):
+    def __init__(self, endpoint: str, access_key: str, secret_key: str, bucket_name: str):
         """Initialize S3 uploader."""
         self.logger = logger
         self.endpoint = endpoint
@@ -196,6 +195,19 @@ class S3Uploader:
         return self.create_tar_and_upload(bronze_dir, date_str, scraper_name)
 
 
+def resolve_s3_bucket_name(endpoint: str) -> Optional[str]:
+    """Resolve the S3 bucket name from env or virtual-hosted endpoint URL."""
+    bucket_name = os.getenv("S3_BUCKET")
+    if bucket_name:
+        return bucket_name
+
+    host = urlparse(endpoint).netloc
+    if ".s3." in host:
+        return host.split(".s3.", 1)[0]
+
+    return None
+
+
 def get_s3_uploader() -> Optional[S3Uploader]:
     """Get S3 uploader instance from environment variables."""
     endpoint = os.getenv("S3_ENDPOINT")
@@ -210,4 +222,17 @@ def get_s3_uploader() -> Optional[S3Uploader]:
         logger.warning("S3 credentials not configured, skipping upload")
         return None
 
-    return S3Uploader(endpoint=endpoint, access_key=access_key, secret_key=secret_key)
+    bucket_name = resolve_s3_bucket_name(endpoint)
+    if not bucket_name:
+        logger.warning(
+            "S3 bucket could not be resolved; set S3_BUCKET or use a virtual-hosted "
+            "endpoint URL (e.g. https://my-bucket.s3.region.provider.com)"
+        )
+        return None
+
+    return S3Uploader(
+        endpoint=endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+        bucket_name=bucket_name,
+    )
