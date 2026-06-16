@@ -75,5 +75,6 @@ trade-off.
 | 2       | `src/` application-service boundary | Accepted in `0010`; BronzeService extraction confirmed as follow-up  |
 | 3       | Gold scenario bulk loading          | Re-enabled in `0004`; 48 scenarios + 344 signals in default Gold run |
 | 4       | Telegram module redesign            | Accepted in `0015-redesign-telegram-notification-module.md`          |
+| 5       | Unify configuration systems         | Accepted in `0016-unify-configuration-systems.md`                    |
 
 

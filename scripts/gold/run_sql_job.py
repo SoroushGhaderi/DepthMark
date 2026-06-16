@@ -10,7 +10,7 @@ project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from config.settings import settings
+from config.settings import get_settings
 from src.services.gold.gold_dml_runner import (
     GoldJobKind,
     discover_gold_sql_jobs,
@@ -142,6 +142,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     """Run selected Gold SQL jobs."""
     global logger
     args = parse_args(argv)
+    settings = get_settings()
     logger = setup_logging(
         name="gold_sql_job_runner",
         log_dir=settings.log_dir,

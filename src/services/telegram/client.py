@@ -8,7 +8,7 @@ from typing import Any
 
 import requests
 
-from config.settings import settings
+from config.settings import get_settings
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -33,8 +33,9 @@ class TelegramClient:
     """Thin transport layer for sending Telegram messages via Bot API."""
 
     def __init__(self) -> None:
-        self._bot_token = settings.telegram_bot_token
-        self._chat_id = settings.telegram_chat_id
+        _settings = get_settings()
+        self._bot_token = _settings.telegram_bot_token
+        self._chat_id = _settings.telegram_chat_id
         self._base_url = (
             f"https://api.telegram.org/bot{self._bot_token}" if self._bot_token else ""
         )

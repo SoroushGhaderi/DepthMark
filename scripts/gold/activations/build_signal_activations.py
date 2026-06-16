@@ -8,12 +8,11 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 import yaml
-from dotenv import load_dotenv
 
 project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
-from config.settings import settings
+from config.settings import get_settings
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.gold_databases import gold_db, gold_signals_db
 from src.utils.logging_utils import get_logger, setup_logging
@@ -49,13 +48,7 @@ class SignalCatalog:
 
 def load_environment() -> None:
     """Load env vars for local script execution."""
-    env_files = [
-        project_root / ".env",
-        project_root.parent / ".env",
-    ]
-    for env_file in env_files:
-        if env_file.exists():
-            load_dotenv(env_file, override=False)
+    get_settings()
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
@@ -453,6 +446,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     global logger
     load_environment()
     args = parse_args(argv)
+    settings = get_settings()
     logger = setup_logging(
         name="gold_build_signal_activations",
         log_dir=settings.log_dir,
