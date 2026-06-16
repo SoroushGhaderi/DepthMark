@@ -12,7 +12,7 @@ for candidate in (str(project_root), str(scripts_dir)):
     if candidate not in sys.path:
         sys.path.insert(0, candidate)
 
-from config.settings import settings
+from config.settings import get_settings
 from src.services.gold.fotmob_gold_service import GoldService, GoldRunResult
 from src.services.telegram import LayerAlertData, TelegramClient
 from src.storage.clickhouse_client import ClickHouseClient
@@ -43,6 +43,7 @@ def main(argv=None) -> int:
     global logger
     stage_start = time.perf_counter()
     args = parse_args(argv)
+    settings = get_settings()
     logger = setup_logging(
         name="clickhouse_gold_orchestrator",
         log_dir=settings.log_dir,

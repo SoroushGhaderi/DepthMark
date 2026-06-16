@@ -1,45 +1,26 @@
-"""
-Base configuration classes for unified scraper configuration system.
+"""Base configuration utilities for DepthMark.
 
-Configuration is loaded from:
-1. config.yaml - Application settings (required)
-2. .env file - Environment-specific & sensitive data (optional overrides)
-
-This follows industry best practices for configuration management.
-
-Features:
-- Type-safe data classes
-- YAML-based configuration with .env overrides
-- Hierarchical configuration structure
-- Validation and defaults
+This module previously contained the abstract ``BaseConfig`` class and
+dataclass-based config models.  Configuration has been unified into
+:class:`~config.settings.Settings` (pydantic-settings).  The dataclass
+types are retained as lightweight type aliases for any code that still
+references them, but new code should use the pydantic models in
+``config.settings`` directly.
 """
 
-import os
 from dataclasses import dataclass, field
-from typing import Dict, Any, Optional, List
 from pathlib import Path
-from abc import ABC, abstractmethod
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
-
-try:
-    import yaml
-except ImportError:
-    yaml = None
+from typing import List
 
 
 @dataclass
 class StorageConfig:
-    """Base storage configuration for data lake architecture."""
+    """Legacy storage config (use ``FotMobStorageSettings`` instead)."""
+
     bronze_path: str = ""
     enabled: bool = True
 
-    def ensure_directories(self):
-        """Create storage directories if they don't exist."""
+    def ensure_directories(self) -> None:
         if not self.enabled:
             return
         if self.bronze_path:
@@ -48,7 +29,8 @@ class StorageConfig:
 
 @dataclass
 class LoggingConfig:
-    """Standardized logging configuration."""
+    """Legacy logging config (use ``FotMobLoggingSettings`` instead)."""
+
     level: str = "INFO"
     format: str = (
         "%(asctime)s - %(name)s - %(levelname)s - "
@@ -59,27 +41,24 @@ class LoggingConfig:
     backup_count: int = 5
     dir: str = "logs"
 
-    def ensure_directories(self):
-        """Create log directory if it doesn't exist."""
+    def ensure_directories(self) -> None:
         Path(self.dir).mkdir(parents=True, exist_ok=True)
         Path(self.file).parent.mkdir(parents=True, exist_ok=True)
 
 
 @dataclass
 class MetricsConfig:
-    """Standardized metrics configuration."""
+    """Legacy metrics config (use ``FotMobMetricsSettings`` instead)."""
+
     enabled: bool = False
     export_path: str = "metrics"
     export_format: str = "json"
 
-    def ensure_directories(self):
-        """Metrics persistence is disabled; do not create directories."""
-        return
-
 
 @dataclass
 class RetryConfig:
-    """Standardized retry configuration."""
+    """Legacy retry config (use ``FotMobRetrySettings`` instead)."""
+
     max_attempts: int = 3
     initial_wait: float = 2.0
     max_wait: float = 10.0
@@ -90,196 +69,9 @@ class RetryConfig:
     )
 
 
-class BaseConfig(ABC):
-    """
-    Base configuration class with common functionality.
-
-    All scraper configs should inherit from this class to ensure consistency.
-
-    Configuration is loaded from:
-    1. config.yaml - Application settings (primary source)
-    2. .env file - Environment-specific & sensitive data (overrides)
-    """
-
-    def __init__(self):
-        """Initialize configuration from YAML and environment variables."""
-        self._yaml_config = self._load_yaml_config()
-        self._load_config()
-        self._apply_env_overrides()
-        self._ensure_directories()
-
-    @staticmethod
-    def _load_yaml_config(required_keys: Optional[List[str]] = None) -> Dict[str, Any]:
-        """Load configuration from config.yaml file.
-        
-        Args:
-            required_keys: List of required top-level keys. If missing, raises error.
-            
-        Returns:
-            Dictionary with configuration from YAML
-            
-        Raises:
-            FileNotFoundError: If config.yaml doesn't exist
-            ValueError: If required keys are missing from config.yaml
-        """
-        config_path = os.getenv('CONFIG_FILE_PATH', 'config.yaml')
-        if not Path(config_path).exists():
-            config_path = Path(__file__).parent.parent / 'config.yaml'
-        
-        if not Path(config_path).exists():
-            raise FileNotFoundError(
-                f"config.yaml not found at {config_path}. "
-                f"Please create config.yaml with required settings."
-            )
-        
-        if yaml is None:
-            raise ImportError("PyYAML is required. Install with: pip install pyyaml")
-        
-        with open(config_path, 'r') as f:
-            config = yaml.safe_load(f) or {}
-        
-        if required_keys:
-            missing = [k for k in required_keys if k not in config]
-            if missing:
-                raise ValueError(
-                    f"Missing required sections in config.yaml: {missing}. "
-                    f"Please add these sections to config.yaml."
-                )
-        
-        return config
-
-    @abstractmethod
-    def _load_config(self) -> None:
-        """Initialize configuration with defaults.
-
-        Subclasses must implement this method to set up their specific
-        configuration attributes (storage, logging, retry, etc.).
-
-        This method is called before _apply_env_overrides() and
-        _ensure_directories() during __init__.
-
-        Raises:
-            NotImplementedError: If subclass does not implement this method.
-        """
-        raise NotImplementedError("Subclasses must implement _load_config()")
-
-    def _apply_env_overrides(self):
-        """
-        Apply environment variable overrides.
-
-        Subclasses should override this to add scraper-specific env vars.
-
-        Pattern: {SCRAPER_NAME}_{CONFIG_KEY} (e.g., FOTMOB_X_MAS_TOKEN)
-        """
-        if hasattr(self, 'logging') and isinstance(self.logging, LoggingConfig):
-            if os.getenv('LOG_LEVEL'):
-                self.logging.level = os.getenv('LOG_LEVEL')
-            if os.getenv('LOG_FILE'):
-                self.logging.file = os.getenv('LOG_FILE')
-
-        if hasattr(self, 'metrics') and isinstance(self.metrics, MetricsConfig):
-            if os.getenv('METRICS_ENABLED'):
-                self.metrics.enabled = (
-                    os.getenv('METRICS_ENABLED').lower() == 'true'
-                )
-
-    def _ensure_directories(self):
-        """Ensure all required directories exist."""
-        data_path = Path("data")
-
-        if data_path.exists():
-            if data_path.is_dir():
-                pass
-            elif data_path.is_file():
-                raise OSError(
-                    f"Cannot create directory 'data': A file with that name "
-                    f"already exists. Path: {data_path.absolute()}. "
-                    f"Please remove or rename the file."
-                )
-            else:
-                raise OSError(
-                    f"Cannot create directory 'data': A non-directory with "
-                    f"that name already exists. Path: {data_path.absolute()}. "
-                    f"Please remove or rename it."
-                )
-        else:
-            try:
-                data_path.mkdir(parents=True, exist_ok=True)
-            except FileExistsError as e:
-                if data_path.exists() and data_path.is_dir():
-                    pass
-                else:
-                    raise OSError(
-                        f"Cannot create directory 'data': A file or "
-                        f"non-directory with that name exists. "
-                        f"Path: {data_path.absolute()}. "
-                        f"Please remove or rename it."
-                    ) from e
-            except OSError as e:
-                if e.errno == 17:
-                    if data_path.exists() and data_path.is_dir():
-                        pass
-                    else:
-                        raise OSError(
-                            f"Cannot create directory 'data': A file or "
-                            f"non-directory with that name exists. "
-                            f"Path: {data_path.absolute()}. "
-                            f"Please remove or rename it."
-                        ) from e
-                else:
-                    raise
-
-        for field_name, field_value in self.__dict__.items():
-            if isinstance(field_value, (StorageConfig, LoggingConfig)):
-                field_value.ensure_directories()
-
-    def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert configuration to dictionary.
-
-        Returns:
-            Dictionary representation of configuration
-        """
-        result = {}
-        for field_name, field_value in self.__dict__.items():
-            if field_name.startswith('_'):
-                continue
-            if isinstance(
-                field_value,
-                (StorageConfig, LoggingConfig, MetricsConfig, RetryConfig)
-            ):
-                result[field_name] = field_value.__dict__
-            elif isinstance(
-                field_value, (list, dict, str, int, float, bool, type(None))
-            ):
-                result[field_name] = field_value
-            else:
-                result[field_name] = (
-                    field_value.__dict__
-                    if hasattr(field_value, '__dict__')
-                    else str(field_value)
-                )
-        return result
-
-    def validate(self) -> List[str]:
-        """
-        Validate configuration values.
-
-        Returns:
-            List of validation error messages (empty if valid)
-        """
-        errors = []
-
-        if hasattr(self, 'logging') and isinstance(self.logging, LoggingConfig):
-            valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-            if self.logging.level not in valid_levels:
-                errors.append(
-                    f"Invalid log level: {self.logging.level}. "
-                    f"Must be one of {valid_levels}"
-                )
-
-        if hasattr(self, 'storage') and isinstance(self.storage, StorageConfig):
-            if not self.storage.bronze_path:
-                errors.append("bronze_path cannot be empty")
-
-        return errors
+__all__ = [
+    "StorageConfig",
+    "LoggingConfig",
+    "MetricsConfig",
+    "RetryConfig",
+]

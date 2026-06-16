@@ -138,11 +138,25 @@ Creates 5 collections with unique and compound indexes:
 
 ## Configuration Module (`config/settings.py`)
 
-Pydantic-settings based configuration:
+Unified pydantic-settings based configuration — single source of truth for all settings:
+
+**Infrastructure settings** (from `.env` / environment variables):
 - `clickhouse_host`, `clickhouse_port`, `clickhouse_user`, `clickhouse_password`
-- `mongodb_host`, `mongodb_port`, `mongodb_user`, `mongodb_password`, `mongodb_database`
-- `fotmob_api_token`, `fotmob_api_base_url`
-- `enable_health_checks`, `enable_alerting`
+- `clickhouse_db_fotmob`, `clickhouse_db_gold`, `clickhouse_db_gold_scenarios`, `clickhouse_db_gold_signals`
+- `telegram_bot_token`, `telegram_chat_id`, `telegram_enabled`
+- `s3_endpoint`, `s3_access_key`, `s3_secret_key`
+- `environment`, `log_level`, `log_dir`, `data_dir`
+
+**FotMob scraping settings** (from `config.yaml` with env-var overrides):
+- `fotmob.api.base_url`, `fotmob.api.user_agents`, `fotmob.api.x_mas_token`
+- `fotmob.request.timeout`, `fotmob.request.delay_min`, `fotmob.request.delay_max`
+- `fotmob.scraping.max_workers`, `fotmob.scraping.enable_parallel`
+- `fotmob.storage.bronze_path`, `fotmob.storage.enabled`
+- `fotmob.retry.*`, `fotmob.logging.*`, `fotmob.data_quality.*`, `fotmob.proxy.*`
+
+Env vars override YAML values: `FOTMOB_X_MAS_TOKEN`, `FOTMOB_MAX_WORKERS`, etc.
+
+`FotMobConfig` is a backward-compatible adapter that delegates to `Settings.fotmob`.
 
 ## Health Checks
 

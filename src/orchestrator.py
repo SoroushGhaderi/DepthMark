@@ -20,6 +20,7 @@ from .core import OrchestratorError, OrchestratorProtocol
 from .core.constants import Defaults
 from .processors import FotMobBronzeMatchProcessor
 from .scrapers import DailyScraper, MatchScraper
+from .scrapers.fotmob.errors import FotMobMatchDataNotFoundError
 from .storage import FotMobBronzeStorage, get_s3_uploader
 from .utils import DataQualityChecker, ScraperMetrics, get_logger
 from .services.telegram import ErrorAlertData, TelegramClient
@@ -155,17 +156,22 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 match_ids_to_scrape = [
                     str(m)
                     for m in match_ids
-                    if not self.bronze_storage.match_exists(str(m), date_str)
+                    if not self.bronze_storage.is_match_complete(str(m), date_str)
                 ]
                 skipped = len(match_ids) - len(match_ids_to_scrape)
                 if skipped > 0:
                     self.logger.info(
-                        "Skipping already scraped matches in Bronze",
+                        "Skipping already completed matches in Bronze",
                         extra={"date": date_str, "skipped_matches": skipped},
                     )
                 for match_id in match_ids:
-                    if self.bronze_storage.match_exists(str(match_id), date_str):
-                        metrics.record_skip(str(match_id), "Already scraped in Bronze")
+                    if self.bronze_storage.is_match_complete(str(match_id), date_str):
+                        reason = (
+                            "FotMob data not found"
+                            if self.bronze_storage.is_match_unavailable(str(match_id), date_str)
+                            else "Already scraped in Bronze"
+                        )
+                        metrics.record_skip(str(match_id), reason)
                         scraped_match_ids.add(str(match_id))
             else:
                 match_ids_to_scrape = [str(m) for m in match_ids]
@@ -459,53 +465,22 @@ class FotMobOrchestrator(OrchestratorProtocol):
                     )
                     continue
 
-                success, error_msg, quality_issues = self._fetch_and_save_match(
+                success, error_msg, quality_issues, fotmob_unavailable = self._fetch_and_save_match(
                     scraper, match_id, date_str
                 )
 
-                if success:
-                    scraped_match_ids.add(match_id)
+                if self._apply_match_process_result(
+                    match_id=match_id,
+                    date_str=date_str,
+                    metrics=metrics,
+                    scraped_match_ids=scraped_match_ids,
+                    success=success,
+                    error_msg=error_msg,
+                    quality_issues=quality_issues,
+                    fotmob_unavailable=fotmob_unavailable,
+                ):
                     consecutive_errors = 0
-
-                    if quality_issues:
-                        metrics.record_data_quality_issue(match_id, quality_issues)
-                        self.telegram_client.render_and_send(
-                            "error_alert.html.j2",
-                            ErrorAlertData(
-                                level="WARNING",
-                                title=f"Data Quality Issue: Match {match_id}",
-                                message=f"Data quality issues detected for match {match_id}: {', '.join(quality_issues[:3])}",
-                                context={
-                                    "match_id": match_id,
-                                    "issues": ", ".join(quality_issues),
-                                    "date": date_str,
-                                },
-                            ),
-                        )
-
-                    metrics.record_success(match_id)
-                    self.logger.info(
-                        "[SUCCESS] Scraped match to Bronze",
-                        extra={"date": date_str, "match_id": match_id},
-                    )
                 else:
-                    metrics.record_failure(
-                        match_id, error_msg or "Unknown error", "ProcessingError"
-                    )
-                    self.telegram_client.render_and_send(
-                        "error_alert.html.j2",
-                        ErrorAlertData(
-                            level="ERROR",
-                            title=f"Scrape Failed: Match {match_id}",
-                            message=f"Failed to scrape match {match_id}: {error_msg or 'Unknown error'}",
-                            context={
-                                "match_id": match_id,
-                                "error": error_msg or "Unknown error",
-                                "error_type": "ProcessingError",
-                                "date": date_str,
-                            },
-                        ),
-                    )
                     consecutive_errors += 1
 
                     if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
@@ -581,7 +556,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
                     created_scrapers.append(scraper)
             return scraper
 
-        def _worker(match_id: str) -> tuple[bool, Optional[str]]:
+        def _worker(match_id: str) -> tuple[bool, Optional[str], bool]:
             scraper = _get_thread_scraper()
             return self._process_match_with_scraper(scraper, match_id, date_str)
 
@@ -597,20 +572,17 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 for future in as_completed(future_to_match):
                     match_id = future_to_match[future]
                     try:
-                        success, error_msg = future.result()
-                        if success:
-                            scraped_match_ids.add(match_id)
-                            metrics.record_success(match_id)
-                            self.logger.info(
-                                "[SUCCESS] Processed match",
-                                extra={"date": date_str, "match_id": match_id},
-                            )
-                        else:
-                            metrics.record_failure(match_id, error_msg or "Unknown error")
-                            self.logger.error(
-                                "[FAILED] Match processing failed",
-                                extra={"date": date_str, "match_id": match_id},
-                            )
+                        success, error_msg, fotmob_unavailable = future.result()
+                        self._apply_match_process_result(
+                            match_id=match_id,
+                            date_str=date_str,
+                            metrics=metrics,
+                            scraped_match_ids=scraped_match_ids,
+                            success=success,
+                            error_msg=error_msg,
+                            quality_issues=None,
+                            fotmob_unavailable=fotmob_unavailable,
+                        )
                     except Exception as e:
                         self.logger.exception(
                             "Exception in parallel match processing",
@@ -648,7 +620,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
         scraper: MatchScraper,
         match_id: str,
         date_str: str,
-    ) -> tuple[bool, Optional[str], Optional[List[str]]]:
+    ) -> tuple[bool, Optional[str], Optional[List[str]], bool]:
         """
         Core match processing logic - fetch data and save to Bronze storage.
 
@@ -662,15 +634,16 @@ class FotMobOrchestrator(OrchestratorProtocol):
             date_str: Date string YYYYMMDD format
 
         Returns:
-            Tuple of (success, error_message, quality_issues)
+            Tuple of (success, error_message, quality_issues, fotmob_unavailable)
             - success: True if match was processed successfully
             - error_message: Error description if failed, None otherwise
             - quality_issues: List of data quality issues, or None if not checked
+            - fotmob_unavailable: True when FotMob has no detail data for the match
         """
         try:
             raw_data = scraper.fetch_match_details(match_id)
             if not raw_data:
-                return False, "Failed to fetch match data", None
+                return False, "Failed to fetch match data", None, False
 
             self.bronze_storage.save_raw_match_data(match_id, raw_data, date_str)
             self.logger.debug(
@@ -687,7 +660,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 )
 
             if self.bronze_only:
-                return True, None, None
+                return True, None, None, False
 
             # Run data quality checks if enabled
             quality_issues = None
@@ -703,52 +676,60 @@ class FotMobOrchestrator(OrchestratorProtocol):
                     ]
 
                     if quality_issues and self.config.fail_on_quality_issues:
-                        return False, f"Data quality issues: {quality_issues}", quality_issues
+                        return (
+                            False,
+                            f"Data quality issues: {quality_issues}",
+                            quality_issues,
+                            False,
+                        )
                 except Exception as e:
                     self.logger.warning(
                         "Data quality check failed for match",
                         extra={"date": date_str, "match_id": match_id, "error": str(e)},
                     )
 
-            return True, None, quality_issues
+            return True, None, quality_issues, False
+
+        except FotMobMatchDataNotFoundError:
+            try:
+                self.bronze_storage.mark_match_as_unavailable(match_id, date_str)
+            except Exception as e:
+                self.logger.warning(
+                    "Could not mark FotMob-unavailable match in daily listing",
+                    extra={"date": date_str, "match_id": match_id, "error": str(e)},
+                )
+            return True, None, None, True
 
         except Exception as e:
             self.logger.exception(
                 "Error processing match",
                 extra={"date": date_str, "match_id": match_id, "error": str(e)},
             )
-            return False, str(e), None
+            return False, str(e), None, False
 
-    def _process_match_with_scraper(
+    def _apply_match_process_result(
         self,
-        scraper: MatchScraper,
         match_id: str,
         date_str: str,
-    ) -> tuple[bool, Optional[str]]:
-        """
-        Process a single match using an existing scraper instance.
-
-        NOTE: This method intentionally does NOT create/close the scraper.
-        In parallel mode we reuse a scraper (and HTTP session) per worker thread.
-
-        Returns:
-            Tuple of (success, error_message)
-        """
-        success, error_msg, _ = self._fetch_and_save_match(scraper, match_id, date_str)
-        return success, error_msg
-
-    def _process_single_match(
-        self,
-        scraper: MatchScraper,
-        match_id: str,
         metrics: ScraperMetrics,
-        date_str: str,
         scraped_match_ids: set,
-    ):
-        """Process a single match (for sequential execution)."""
-        self.logger.info("Processing match", extra={"date": date_str, "match_id": match_id})
+        success: bool,
+        error_msg: Optional[str],
+        quality_issues: Optional[List[str]],
+        fotmob_unavailable: bool,
+    ) -> bool:
+        """Apply metrics/logging for a processed match.
 
-        success, error_msg, quality_issues = self._fetch_and_save_match(scraper, match_id, date_str)
+        Returns True when the match should not count as a hard failure.
+        """
+        if fotmob_unavailable:
+            scraped_match_ids.add(match_id)
+            metrics.record_skip(match_id, "FotMob data not found")
+            self.logger.info(
+                "[UNAVAILABLE] FotMob has no detail data; treating match as complete",
+                extra={"date": date_str, "match_id": match_id},
+            )
+            return True
 
         if success:
             scraped_match_ids.add(match_id)
@@ -774,22 +755,70 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 "[SUCCESS] Scraped match to Bronze",
                 extra={"date": date_str, "match_id": match_id},
             )
-        else:
-            metrics.record_failure(match_id, error_msg or "Unknown error", "ProcessingError")
-            self.telegram_client.render_and_send(
-                "error_alert.html.j2",
-                ErrorAlertData(
-                    level="ERROR",
-                    title=f"Scrape Failed: Match {match_id}",
-                    message=f"Failed to scrape match {match_id}: {error_msg or 'Unknown error'}",
-                    context={
-                        "match_id": match_id,
-                        "error": error_msg or "Unknown error",
-                        "error_type": "ProcessingError",
-                        "date": date_str,
-                    },
-                ),
-            )
+            return True
+
+        metrics.record_failure(match_id, error_msg or "Unknown error", "ProcessingError")
+        self.telegram_client.render_and_send(
+            "error_alert.html.j2",
+            ErrorAlertData(
+                level="ERROR",
+                title=f"Scrape Failed: Match {match_id}",
+                message=f"Failed to scrape match {match_id}: {error_msg or 'Unknown error'}",
+                context={
+                    "match_id": match_id,
+                    "error": error_msg or "Unknown error",
+                    "error_type": "ProcessingError",
+                    "date": date_str,
+                },
+            ),
+        )
+        return False
+
+    def _process_match_with_scraper(
+        self,
+        scraper: MatchScraper,
+        match_id: str,
+        date_str: str,
+    ) -> tuple[bool, Optional[str], bool]:
+        """
+        Process a single match using an existing scraper instance.
+
+        NOTE: This method intentionally does NOT create/close the scraper.
+        In parallel mode we reuse a scraper (and HTTP session) per worker thread.
+
+        Returns:
+            Tuple of (success, error_message, fotmob_unavailable)
+        """
+        success, error_msg, _, fotmob_unavailable = self._fetch_and_save_match(
+            scraper, match_id, date_str
+        )
+        return success, error_msg, fotmob_unavailable
+
+    def _process_single_match(
+        self,
+        scraper: MatchScraper,
+        match_id: str,
+        metrics: ScraperMetrics,
+        date_str: str,
+        scraped_match_ids: set,
+    ):
+        """Process a single match (for sequential execution)."""
+        self.logger.info("Processing match", extra={"date": date_str, "match_id": match_id})
+
+        success, error_msg, quality_issues, fotmob_unavailable = self._fetch_and_save_match(
+            scraper, match_id, date_str
+        )
+
+        self._apply_match_process_result(
+            match_id=match_id,
+            date_str=date_str,
+            metrics=metrics,
+            scraped_match_ids=scraped_match_ids,
+            success=success,
+            error_msg=error_msg,
+            quality_issues=quality_issues,
+            fotmob_unavailable=fotmob_unavailable,
+        )
 
     def get_match_data(self, match_id: int, date_str: str) -> Optional[Dict[str, Any]]:
         """

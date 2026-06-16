@@ -1,7 +1,9 @@
 """Scraper for fetching detailed match data."""
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
+
 from .base_scraper import BaseScraper
+from .errors import FotMobMatchDataNotFoundError, is_fotmob_data_not_found_response
 
 
 class MatchScraper(BaseScraper):
@@ -31,6 +33,13 @@ class MatchScraper(BaseScraper):
                 f"Failed to fetch match details for ID: {match_id}"
             )
             return None
+
+        if is_fotmob_data_not_found_response(response_data):
+            self.logger.warning(
+                "FotMob listed match but returned no detail data",
+                extra={"match_id": match_id},
+            )
+            raise FotMobMatchDataNotFoundError(match_id)
 
         if not self._validate_match_response(response_data, match_id):
             return None

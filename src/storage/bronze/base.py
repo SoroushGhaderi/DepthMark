@@ -495,6 +495,26 @@ class BaseBronzeStorage(StorageProtocol, ABC):
 
         return False
 
+    def is_match_unavailable(self, match_id: str, date_str: str) -> bool:
+        """Return True when FotMob has no detail data for a listed match."""
+        listing = self.load_daily_listing(date_str)
+        if not listing:
+            return False
+
+        unavailable = listing.get("storage", {}).get("unavailable_match_ids", [])
+        try:
+            match_id_int = int(match_id)
+        except (TypeError, ValueError):
+            return False
+
+        return match_id_int in {int(mid) for mid in unavailable}
+
+    def is_match_complete(self, match_id: str, date_str: str) -> bool:
+        """Return True when a match is stored in Bronze or marked FotMob-unavailable."""
+        return self.match_exists(match_id, date_str) or self.is_match_unavailable(
+            match_id, date_str
+        )
+
     def save_daily_listing(self, date_str: str, match_ids: List) -> Path:
         """Save daily listing of match IDs for a date with comprehensive metadata.
 
@@ -515,7 +535,18 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         listing_file = date_dir / "matches.json"
 
         matches_date_dir = self.matches_dir / date_str_normalized
-        storage_stats = self._get_storage_stats(date_str_normalized, match_ids, matches_date_dir)
+        existing_listing = self.load_daily_listing(date_str_normalized)
+        existing_unavailable = []
+        if existing_listing:
+            existing_unavailable = existing_listing.get("storage", {}).get(
+                "unavailable_match_ids", []
+            )
+        storage_stats = self._get_storage_stats(
+            date_str_normalized,
+            match_ids,
+            matches_date_dir,
+            unavailable_match_ids=existing_unavailable,
+        )
 
         listing_data = {
             "date": date_str_normalized,
@@ -541,7 +572,11 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             raise
 
     def _get_storage_stats(
-        self, date_str: str, match_ids: List, matches_date_dir: Path
+        self,
+        date_str: str,
+        match_ids: List,
+        matches_date_dir: Path,
+        unavailable_match_ids: Optional[List] = None,
     ) -> Dict[str, Any]:
         """Gather comprehensive storage statistics for a date.
 
@@ -564,11 +599,26 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             "archive_size_mb": 0.0,
             "scraped_match_ids": [],
             "missing_match_ids": [],
+            "unavailable_match_ids": [],
         }
 
+        unavailable_ids = []
+        for match_id in unavailable_match_ids or []:
+            try:
+                unavailable_ids.append(int(match_id))
+            except (TypeError, ValueError):
+                continue
+        unavailable_set = set(unavailable_ids)
+        stats["unavailable_match_ids"] = sorted(unavailable_set)
+
         if not matches_date_dir.exists():
-            stats["files_missing"] = len(match_ids)
-            stats["missing_match_ids"] = [str(mid) for mid in match_ids]
+            stats["missing_match_ids"] = [
+                int(mid) for mid in match_ids if int(mid) not in unavailable_set
+            ]
+            stats["files_missing"] = len(stats["missing_match_ids"])
+            if len(match_ids) > 0:
+                completed = len(unavailable_set)
+                stats["completion_percentage"] = round((completed / len(match_ids)) * 100, 2)
             return stats
 
         # Check archive
@@ -622,6 +672,8 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                 )
 
             if not found:
+                if int(match_id) in unavailable_set:
+                    continue
                 stats["files_missing"] += 1
                 stats["missing_match_ids"].append(
                     int(match_id) if isinstance(match_id, str) and match_id.isdigit() else match_id
@@ -631,9 +683,8 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         stats["total_size_mb"] = stats["total_size_bytes"] / (1024 * 1024)
 
         if len(match_ids) > 0:
-            stats["completion_percentage"] = round(
-                (stats["files_stored"] / len(match_ids)) * 100, 2
-            )
+            completed = stats["files_stored"] + len(unavailable_set)
+            stats["completion_percentage"] = round((completed / len(match_ids)) * 100, 2)
         else:
             stats["completion_percentage"] = 0.0
 

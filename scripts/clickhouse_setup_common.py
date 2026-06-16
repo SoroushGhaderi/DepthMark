@@ -7,11 +7,10 @@ import time
 from pathlib import Path
 from typing import Callable, Iterable, Optional
 
-from dotenv import load_dotenv
-
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from config.settings import get_settings
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.logging_utils import get_logger
 
@@ -34,9 +33,8 @@ INSECURE_CLICKHOUSE_PASSWORDS = {
 
 
 def load_local_env_files() -> None:
-    """Load local environment files without overriding already exported values."""
-    for env_path in (project_root.parent / ".env", project_root / ".env"):
-        load_dotenv(env_path, override=False)
+    """Load .env via pydantic-settings (centralised env loading)."""
+    get_settings()
 
 
 load_local_env_files()

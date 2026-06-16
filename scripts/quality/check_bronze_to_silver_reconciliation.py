@@ -17,7 +17,7 @@ for candidate in (str(project_root), str(scripts_dir)):
     if candidate not in sys.path:
         sys.path.insert(0, candidate)
 
-from config.settings import settings
+from config.settings import get_settings
 from src.services.telegram import LayerAlertData, TelegramClient
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.logging_utils import get_logger
@@ -238,6 +238,7 @@ def _resolve_requested_checks(raw_value: str, available: List[str]) -> List[str]
 def main(argv: Optional[List[str]] = None) -> int:
     start_time = time.perf_counter()
     args = parse_args(argv)
+    settings = get_settings()
 
     if args.sample_limit <= 0:
         logger.error("sample-limit must be a positive integer", sample_limit=args.sample_limit)

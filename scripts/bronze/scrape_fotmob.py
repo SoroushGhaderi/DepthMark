@@ -21,11 +21,6 @@ Usage:
     python scripts/bronze/scrape_fotmob.py 20250108 --force --debug
 """
 
-# Load environment variables from .env file FIRST
-from dotenv import load_dotenv
-
-load_dotenv()
-
 import argparse
 import sys
 import time

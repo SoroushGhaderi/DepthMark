@@ -7,11 +7,11 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 import yaml
-from dotenv import load_dotenv
 
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
+from config.settings import get_settings
 from src.utils.gold_databases import gold_signals_db
 from src.utils.logging_utils import get_logger, setup_logging
 
@@ -25,13 +25,7 @@ SIGNAL_TABLE_ASSET_KEY = "table"
 
 def load_environment() -> None:
     """Load env vars for local script execution."""
-    env_files = [
-        project_root / ".env",
-        project_root.parent / ".env",
-    ]
-    for env_file in env_files:
-        if env_file.exists():
-            load_dotenv(env_file, override=False)
+    get_settings()
 
 
 def parse_args() -> argparse.Namespace:

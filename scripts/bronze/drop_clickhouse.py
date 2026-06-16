@@ -8,7 +8,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from config.settings import settings
+from config.settings import get_settings
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.logging_utils import get_logger
 
@@ -45,6 +45,7 @@ def _find_tables(client: ClickHouseClient, database: str) -> list[str]:
 
 def main(argv=None) -> int:
     args = parse_args(argv)
+    settings = get_settings()
     database = args.database
 
     client = ClickHouseClient(

@@ -298,8 +298,12 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                     if all_match_ids:
                         match_ids_int = [int(mid) for mid in all_match_ids]
                         matches_date_dir = self.matches_dir / date_str_normalized
+                        unavailable_match_ids = storage.get("unavailable_match_ids", [])
                         storage_stats = self._get_storage_stats(
-                            date_str_normalized, match_ids_int, matches_date_dir
+                            date_str_normalized,
+                            match_ids_int,
+                            matches_date_dir,
+                            unavailable_match_ids=unavailable_match_ids,
                         )
 
                         storage.update(
@@ -314,6 +318,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                                 "archive_size_mb": storage_stats["archive_size_mb"],
                                 "scraped_match_ids": storage_stats["scraped_match_ids"],
                                 "missing_match_ids": storage_stats["missing_match_ids"],
+                                "unavailable_match_ids": storage_stats["unavailable_match_ids"],
                                 "completion_percentage": storage_stats.get(
                                     "completion_percentage", 0.0
                                 ),
@@ -340,6 +345,109 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
             except Exception as e:
                 self.logger.error(f"Error updating daily listing for match {match_id}: {e}")
+
+                temp_file = listing_file.parent / ".matches.json.tmp"
+                if temp_file.exists():
+                    try:
+                        temp_file.unlink()
+                    except Exception:
+                        pass
+                return False
+
+    def mark_match_as_unavailable(self, match_id: str, date_str: str) -> bool:
+        """Mark a match as unavailable from FotMob detail API.
+
+        FotMob may list a fixture in the daily schedule but return
+        ``{"error": true, "message": "Data not found"}`` for matchDetails.
+        These matches count toward day completion without a Bronze file.
+        """
+        try:
+            date_str_normalized = self._normalize_date(date_str)
+        except ValueError:
+            self.logger.warning(f"Invalid date format: {date_str}")
+            return False
+
+        listing_file = self.daily_listings_dir / date_str_normalized / "matches.json"
+
+        if not listing_file.exists():
+            self.logger.debug(f"Daily listing file not found: {listing_file}")
+            return False
+
+        lock_file = listing_file.parent / ".matches.json.lock"
+
+        if FILE_LOCKING_AVAILABLE:
+            lock = FileLock(lock_file, timeout=30)
+        else:
+            lock = contextlib.nullcontext()
+
+        with lock:
+            try:
+                with open(listing_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                match_id_int = int(match_id)
+                storage = data.setdefault("storage", {})
+                unavailable_match_ids = storage.setdefault("unavailable_match_ids", [])
+
+                if match_id_int not in unavailable_match_ids:
+                    unavailable_match_ids.append(match_id_int)
+
+                if match_id_int in storage.get("missing_match_ids", []):
+                    storage["missing_match_ids"].remove(match_id_int)
+
+                try:
+                    all_match_ids = data.get("match_ids", [])
+                    if all_match_ids:
+                        match_ids_int = [int(mid) for mid in all_match_ids]
+                        matches_date_dir = self.matches_dir / date_str_normalized
+                        storage_stats = self._get_storage_stats(
+                            date_str_normalized,
+                            match_ids_int,
+                            matches_date_dir,
+                            unavailable_match_ids=unavailable_match_ids,
+                        )
+                        storage.update(
+                            {
+                                "files_stored": storage_stats["files_stored"],
+                                "files_missing": storage_stats["files_missing"],
+                                "total_size_bytes": storage_stats["total_size_bytes"],
+                                "total_size_mb": storage_stats["total_size_mb"],
+                                "files_in_archive": storage_stats["files_in_archive"],
+                                "files_individual": storage_stats["files_individual"],
+                                "archive_size_bytes": storage_stats["archive_size_bytes"],
+                                "archive_size_mb": storage_stats["archive_size_mb"],
+                                "scraped_match_ids": storage_stats["scraped_match_ids"],
+                                "missing_match_ids": storage_stats["missing_match_ids"],
+                                "unavailable_match_ids": storage_stats["unavailable_match_ids"],
+                                "completion_percentage": storage_stats.get(
+                                    "completion_percentage", 0.0
+                                ),
+                            }
+                        )
+                except Exception as e:
+                    self.logger.warning(f"Could not update storage statistics: {e}")
+
+                temp_file = listing_file.parent / ".matches.json.tmp"
+                with open(temp_file, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+
+                with open(temp_file, "r", encoding="utf-8") as f:
+                    json.load(f)
+
+                if listing_file.exists():
+                    listing_file.unlink()
+                temp_file.rename(listing_file)
+
+                self.logger.info(
+                    "Marked match as FotMob-unavailable in daily listing",
+                    extra={"date": date_str_normalized, "match_id": match_id},
+                )
+                return True
+
+            except Exception as e:
+                self.logger.error(
+                    f"Error marking match {match_id} as unavailable in daily listing: {e}"
+                )
 
                 temp_file = listing_file.parent / ".matches.json.tmp"
                 if temp_file.exists():
