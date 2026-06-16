@@ -128,7 +128,7 @@ python scripts/health_check.py --json
 | Failure | Recovery |
 | --- | ---|
 | Scraping fails (API) | Re-run `scrape_fotmob.py` for affected dates |
-| Bronze load fails | Re-run `load_clickhouse.py --date <date>` |
+| Bronze load fails | Re-run `load_clickhouse.py --date <date>` or `--single-date <date>` |
 | Silver SQL fails | Fix SQL, re-run `silver/load_clickhouse.py` |
 | Gold SQL fails | Re-run `run_sql_job.py --kind signal --id <id>` |
 | Activation fails | Re-run `build_signal_activations.py` (requires populated `gold_signals.sig_*`) |

@@ -94,6 +94,7 @@ Job discovery uses `GoldSqlJob` in `src/services/gold/gold_dml_runner.py`:
 Runs all Gold SQL jobs and activation rebuilds:
 ```bash
 python scripts/gold/load_clickhouse_gold.py              # all
+python scripts/gold/load_clickhouse_gold.py --single-date 20251208  # single date
 python scripts/gold/load_clickhouse_gold.py --part signals
 python scripts/gold/load_clickhouse_gold.py --part scenarios
 python scripts/gold/load_clickhouse_gold.py --dry-run

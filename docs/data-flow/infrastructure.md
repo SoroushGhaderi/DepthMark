@@ -15,6 +15,7 @@ cp .env.example .env
 docker compose up -d
 docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py
 docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py --single-date 20251208
 ```
 
 Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
@@ -44,6 +45,7 @@ command surface):
 
 ```bash
 docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
+docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py --single-date 20251208
 ```
 
 ## TouchDesk Integration
