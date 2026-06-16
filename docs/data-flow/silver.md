@@ -41,6 +41,7 @@ python scripts/silver/setup_clickhouse.py
 Discovers and executes all DML scripts in order:
 ```bash
 python scripts/silver/load_clickhouse.py          # full load
+python scripts/silver/load_clickhouse.py --single-date 20251208  # single date
 python scripts/silver/load_clickhouse.py --dry-run # preview only
 ```
 

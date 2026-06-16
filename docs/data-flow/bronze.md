@@ -38,6 +38,7 @@ Key classes:
 CLI arguments:
 ```bash
 python scripts/bronze/scrape_fotmob.py 20251208           # single date
+python scripts/bronze/scrape_fotmob.py --single-date 20251208  # single date (named)
 python scripts/bronze/scrape_fotmob.py --month 202512     # full month
 python scripts/bronze/scrape_fotmob.py 20251201 20251207  # date range
 python scripts/bronze/scrape_fotmob.py 20251208 --force   # re-scrape
@@ -74,6 +75,7 @@ Processing chain:
 CLI arguments:
 ```bash
 python scripts/bronze/load_clickhouse.py --date 20251208
+python scripts/bronze/load_clickhouse.py --single-date 20251208
 python scripts/bronze/load_clickhouse.py --start-date 20251201 --end-date 20251207
 python scripts/bronze/load_clickhouse.py --month 202512
 python scripts/bronze/load_clickhouse.py --date 20251208 --truncate
