@@ -24,6 +24,7 @@ pipeline.py [date]
 ```bash
 # Single date
 python scripts/orchestration/pipeline.py 20251208
+python scripts/orchestration/pipeline.py --single-date 20251208
 
 # Date range
 python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
@@ -60,7 +61,7 @@ Pipeline calls each layer script through CLI subprocesses (ADR 0002):
 
 ### Mutually Exclusive Flags
 
-- `date` / `--start-date` / `--month` — one required
+- `date` / `--single-date` / `--start-date` / `--month` — one required
 - `--bronze-only` / `--silver-only` / `--gold-only` — at most one
 
 ## Orchestrator (`src/orchestrator.py`)

@@ -13,7 +13,7 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import get_settings
-from src.services.silver.fotmob_silver_service import SilverService, SilverRunResult
+from src.services.silver.fotmob_silver_service import SilverRunResult, SilverService
 from src.services.telegram import LayerAlertData, TelegramClient
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.layer_contracts import LayerContractError
@@ -24,6 +24,11 @@ logger = get_logger(__name__)
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Load FotMob silver SQL into ClickHouse")
+    parser.add_argument(
+        "--single-date",
+        type=str,
+        help="Process a single date (YYYYMMDD format). Reserved for interface consistency; silver currently processes all pending SQL jobs.",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -123,11 +128,15 @@ def main(argv=None) -> int:
                 details={
                     "Jobs planned": str(result.total_jobs),
                     "Jobs completed": str(result.completed_jobs),
-                    "Contract checks": "passed" if result.contracts_checked else "failed or skipped",
+                    "Contract checks": "passed"
+                    if result.contracts_checked
+                    else "failed or skipped",
                 },
                 insights={
                     "Completion rate": f"{completion_rate:.1f}%",
-                    "Quality signal": "contracts passed" if result.contracts_checked else "contract check failed",
+                    "Quality signal": "contracts passed"
+                    if result.contracts_checked
+                    else "contract check failed",
                 },
             ),
         )

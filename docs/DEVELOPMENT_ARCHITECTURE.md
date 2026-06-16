@@ -83,7 +83,9 @@ python scripts/gold/setup_clickhouse_gold.py --part signals
 
 ```bash
 python scripts/bronze/scrape_fotmob.py 20251208
+python scripts/bronze/scrape_fotmob.py --single-date 20251208
 python scripts/bronze/load_clickhouse.py --date 20251208
+python scripts/bronze/load_clickhouse.py --single-date 20251208
 python scripts/bronze/drop_clickhouse.py --dry-run
 ```
 
@@ -91,6 +93,7 @@ python scripts/bronze/drop_clickhouse.py --dry-run
 
 ```bash
 python scripts/silver/load_clickhouse.py
+python scripts/silver/load_clickhouse.py --single-date 20251208
 python scripts/silver/load_clickhouse.py --dry-run
 python scripts/silver/drop_clickhouse.py --dry-run
 ```
@@ -99,6 +102,7 @@ python scripts/silver/drop_clickhouse.py --dry-run
 
 ```bash
 python scripts/gold/load_clickhouse_gold.py
+python scripts/gold/load_clickhouse_gold.py --single-date 20251208
 python scripts/gold/load_clickhouse_gold.py --dry-run
 python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
 python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
@@ -117,6 +121,7 @@ python scripts/gold/drop_clickhouse_scenarios.py --dry-run
 
 ```bash
 python scripts/orchestration/pipeline.py 20251208
+python scripts/orchestration/pipeline.py --single-date 20251208
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 python scripts/quality/check_logging_style.py
 python scripts/health_check.py --json
@@ -132,6 +137,7 @@ python scripts/mongodb/sync_signal_catalogs.py --dry-run
 
 ```bash
 python scripts/orchestration/pipeline.py 20251208
+python scripts/orchestration/pipeline.py --single-date 20251208
 python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
 python scripts/orchestration/pipeline.py --month 202512
 ```
