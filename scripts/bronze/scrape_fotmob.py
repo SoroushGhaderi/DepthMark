@@ -158,6 +158,11 @@ def _add_date_arguments(parser: argparse.ArgumentParser) -> None:
         help="Date (or start date) in YYYYMMDD format. Required unless --month is used.",
     )
     date_group.add_argument(
+        "--single-date",
+        type=str,
+        help="Scrape a single date (YYYYMMDD format). Equivalent to the positional start_date argument.",
+    )
+    date_group.add_argument(
         "--month",
         type=str,
         help="Scrape entire month (YYYYMM format, e.g., 202511 for November 2025)",
@@ -218,6 +223,10 @@ def _validate_start_date_argument(
     parser: argparse.ArgumentParser, args: argparse.Namespace
 ) -> None:
     """Validate start date and related arguments."""
+    if args.single_date:
+        if args.start_date:
+            parser.error("Use either the positional start_date or --single-date, not both")
+        args.start_date = args.single_date
     if not args.start_date:
         return
 

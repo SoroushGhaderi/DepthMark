@@ -71,6 +71,11 @@ Examples:
     date_group = parser.add_mutually_exclusive_group()
     date_group.add_argument("--date", type=str, help="Date to load (YYYYMMDD format)")
     date_group.add_argument(
+        "--single-date",
+        type=str,
+        help="Load a single date (YYYYMMDD format). Equivalent to --date.",
+    )
+    date_group.add_argument(
         "--start-date", type=str, help="Start date for range loading (YYYYMMDD format)"
     )
     date_group.add_argument("--month", type=str, help="Load entire month (YYYYMM format)")
@@ -149,6 +154,10 @@ def generate_month_dates(month_str: str) -> List[str]:
 
 def get_dates_to_process(args: argparse.Namespace, log: logging.Logger) -> List[str]:
     """Get list of dates to process from arguments."""
+    if args.single_date:
+        if args.date:
+            raise SystemExit("Use either --date or --single-date, not both")
+        args.date = args.single_date
     if args.month:
         dates = generate_month_dates(args.month)
         year, month = extract_year_month(args.month)

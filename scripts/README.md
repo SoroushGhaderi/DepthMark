@@ -26,6 +26,20 @@ Use these paths for new automation and daily runs:
 - `scripts/orchestration/pipeline.py`
 - `scripts/orchestration/setup_clickhouse.py`
 
+### Single-Date Mode
+
+All layer scripts accept `--single-date YYYYMMDD` as a named alternative to
+existing date arguments. This provides a consistent interface across the
+pipeline:
+
+```bash
+python scripts/orchestration/pipeline.py --single-date 20251208
+python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/load_clickhouse.py --single-date 20251208
+python scripts/silver/load_clickhouse.py --single-date 20251208
+python scripts/gold/load_clickhouse_gold.py --single-date 20251208
+```
+
 ### Dry-Run Support
 
 - `scripts/silver/load_clickhouse.py --dry-run`

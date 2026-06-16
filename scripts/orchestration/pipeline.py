@@ -161,6 +161,11 @@ def _add_date_arguments(parser: argparse.ArgumentParser) -> None:
         ),
     )
     date_group.add_argument(
+        "--single-date",
+        type=str,
+        help="Process a single date (YYYYMMDD format). Equivalent to the positional date argument.",
+    )
+    date_group.add_argument(
         "--start-date", type=str, help="Start date for range processing (YYYYMMDD format)"
     )
     date_group.add_argument(
@@ -282,6 +287,10 @@ def _validate_single_date_argument(
     parser: argparse.ArgumentParser, args: argparse.Namespace
 ) -> None:
     """Validate single date argument."""
+    if args.single_date:
+        if args.date:
+            parser.error("Use either the positional date or --single-date, not both")
+        args.date = args.single_date
     if not args.date:
         return
     is_valid, error_msg = validate_date_format(args.date, "YYYYMMDD")

@@ -13,7 +13,7 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import get_settings
-from src.services.gold.fotmob_gold_service import GoldService, GoldRunResult
+from src.services.gold.fotmob_gold_service import GoldRunResult, GoldService
 from src.services.telegram import LayerAlertData, TelegramClient
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
@@ -25,6 +25,11 @@ logger = get_logger(__name__)
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Process FotMob gold layer in ClickHouse")
+    parser.add_argument(
+        "--single-date",
+        type=str,
+        help="Process a single date (YYYYMMDD format). Reserved for interface consistency; gold currently processes all pending SQL jobs.",
+    )
     parser.add_argument(
         "--part",
         choices=("all", "signals", "scenarios"),
@@ -163,11 +168,15 @@ def main(argv=None) -> int:
                     "Signals succeeded": str(result.signal_success_count),
                     "Signal failures": str(result.signal_failed_count),
                     "Activation exit code": str(result.signal_activation_exit_code),
-                    "Contract checks": "passed" if result.contracts_checked else "failed or skipped",
+                    "Contract checks": "passed"
+                    if result.contracts_checked
+                    else "failed or skipped",
                 },
                 insights={
                     "Success rate": f"{scenario_success_rate:.1f}%",
-                    "Quality signal": "gold contracts passed" if result.contracts_checked else "contract check failed",
+                    "Quality signal": "gold contracts passed"
+                    if result.contracts_checked
+                    else "contract check failed",
                 },
             ),
         )
