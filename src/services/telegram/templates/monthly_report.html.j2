@@ -1,7 +1,7 @@
 <b>📅 {{ data.year_month }} Summary</b>
 {{ data.dates_processed }}/{{ data.dates_total }} dates · {{ data.total_matches }} matches{% if data.errors > 0 %} · <b>{{ data.errors }} errors</b>{% endif %}
 {{ format_duration(data.duration_seconds) }}{% if data.dates_processed > 0 %} · {{ format_duration(data.duration_seconds / data.dates_processed) }}/day{% endif %}
-<b>📦</b> {{ data.bronze_files }} files · {{ "%.1f"|format(data.bronze_size_mb) }} MB{% if data.s3_archives > 0 %} · S3: {{ data.s3_archives }} archives · {{ "%.1f"|format(data.s3_size_mb) }} MB{% endif %}
+<b>📦</b> {{ data.bronze_files }} files · {{ "%.1f"|format(data.bronze_size_mb) }} MB
 {% if data.errors == 0 %}✅ Month complete.
 {% else %}⚠️ {{ data.errors }} errors this month.
 {% endif %}

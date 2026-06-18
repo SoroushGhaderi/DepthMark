@@ -9,7 +9,6 @@ PURPOSE: Orchestrate the entire scraping and processing pipeline.
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import requests
@@ -21,9 +20,9 @@ from .core.constants import Defaults
 from .processors import FotMobBronzeMatchProcessor
 from .scrapers import DailyScraper, MatchScraper
 from .scrapers.fotmob.errors import FotMobMatchDataNotFoundError
-from .storage import FotMobBronzeStorage, get_s3_uploader
-from .utils import DataQualityChecker, ScraperMetrics, get_logger
 from .services.telegram import ErrorAlertData, TelegramClient
+from .storage import FotMobBronzeStorage
+from .utils import DataQualityChecker, ScraperMetrics, get_logger
 
 logger = get_logger(__name__)
 
@@ -133,7 +132,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
 
             if already_complete:
                 self.logger.info(
-                    "Date already complete, skipping scrape and proceeding with compression/S3",
+                    "Date already complete, skipping scrape",
                     extra={
                         "date": date_str,
                         "completion_pct": round(completion_pct or 0.0, 2),
@@ -210,130 +209,36 @@ class FotMobOrchestrator(OrchestratorProtocol):
             },
         )
 
-        if self.bronze_only and metrics.successful_matches > 0:
-            self.logger.info(
-                "Compression eligibility check",
-                extra={"date": date_str, "all_matches_scraped": all_matches_scraped},
+        if self.bronze_only and metrics.successful_matches > 0 and not all_matches_scraped:
+            missing_count = (
+                metrics.total_matches - metrics.successful_matches - metrics.skipped_matches
             )
-            if not all_matches_scraped:
-                missing_count = (
-                    metrics.total_matches - metrics.successful_matches - metrics.skipped_matches
-                )
-                missing_reason = f"Missing {missing_count} of {metrics.total_matches} matches (failed: {metrics.failed_matches}, skipped: {metrics.skipped_matches})"
-                self.logger.warning(
-                    "Skipping compression due to incomplete scraping",
-                    extra={"date": date_str, "missing_reason": missing_reason},
-                )
-
-                self.telegram_client.render_and_send(
-                    "error_alert.html.j2",
-                    ErrorAlertData(
-                        level="WARNING",
-                        title=f"FotMob Partial Scraping — {date_str}",
-                        message=f"Only {metrics.successful_matches}/{metrics.total_matches} matches scraped. Compression and S3 backup skipped.\n\nReason: {missing_reason}",
-                        context={
-                            "date": date_str,
-                            "total_matches": str(metrics.total_matches),
-                            "successful": str(metrics.successful_matches),
-                            "failed": str(metrics.failed_matches),
-                            "skipped": str(metrics.skipped_matches),
-                        },
+            missing_reason = (
+                f"Missing {missing_count} of {metrics.total_matches} matches "
+                f"(failed: {metrics.failed_matches}, skipped: {metrics.skipped_matches})"
+            )
+            self.logger.warning(
+                "Scraping completed with missing matches",
+                extra={"date": date_str, "missing_reason": missing_reason},
+            )
+            self.telegram_client.render_and_send(
+                "error_alert.html.j2",
+                ErrorAlertData(
+                    level="WARNING",
+                    title=f"FotMob Partial Scraping — {date_str}",
+                    message=(
+                        f"Only {metrics.successful_matches}/{metrics.total_matches} matches "
+                        f"scraped.\n\nReason: {missing_reason}"
                     ),
-                )
-            else:
-                try:
-                    self.logger.debug("Starting compression", extra={"date": date_str})
-                    compression_stats = self.bronze_storage.compress_date_files(date_str)
-
-                    if (
-                        compression_stats.get("status") == "success"
-                        and compression_stats["compressed"] > 0
-                    ):
-                        saved_mb = compression_stats.get("saved_mb", 0)
-                        saved_pct = compression_stats.get("saved_pct", 0)
-                        compressed = compression_stats.get("compressed", 0)
-                        self.logger.info(
-                            f"Compressed {compressed} files for {date_str}: "
-                            f"saved {saved_mb:.2f} MB ({saved_pct:.0f}% reduction)"
-                        )
-                except Exception as e:
-                    self.logger.error(
-                        "Error during compression",
-                        extra={"date": date_str, "error": str(e)},
-                    )
-
-        if self.bronze_only and all_matches_scraped:
-            self.logger.info("Checking S3 backup...")
-            s3_uploader = get_s3_uploader()
-            if s3_uploader:
-                bronze_dir = f"{self.config.storage.bronze_path}/matches/{date_str}"
-                bronze_path = Path(bronze_dir)
-
-                self.logger.info(
-                    "Checking bronze directory", extra={"bronze_dir": bronze_dir, "date": date_str}
-                )
-
-                if bronze_path.exists():
-                    files = list(bronze_path.iterdir())
-                    self.logger.info(
-                        "Bronze directory file count",
-                        extra={
-                            "bronze_dir": bronze_dir,
-                            "date": date_str,
-                            "file_count": len(files),
-                        },
-                    )
-
-                    if files:
-                        year_month = date_str[:6]
-                        s3_key = f"bronze/fotmob/{year_month}/{date_str}.tar.gz"
-                        already_in_bucket = s3_uploader.object_exists(s3_key)
-
-                        if already_in_bucket:
-                            self.logger.info(
-                                "S3 backup already exists in bucket",
-                                extra={"date": date_str, "s3_key": s3_key},
-                            )
-                            metrics.s3_already_in_bucket = True
-                            metrics.s3_uploaded = True
-                            obj_size = s3_uploader.get_object_size(s3_key)
-                            if obj_size is not None:
-                                metrics.s3_size_mb = round(obj_size / (1024 * 1024), 1)
-                        else:
-                            try:
-                                if s3_uploader.upload_bronze_backup(bronze_dir, date_str, "fotmob"):
-                                    self.logger.info(
-                                        "S3 backup uploaded", extra={"date": date_str}
-                                    )
-                                    metrics.s3_uploaded = True
-                                    obj_size = s3_uploader.get_object_size(s3_key)
-                                    if obj_size is not None:
-                                        metrics.s3_size_mb = round(
-                                            obj_size / (1024 * 1024), 1
-                                        )
-                                else:
-                                    self.logger.error(
-                                        "Failed to upload date to S3", extra={"date": date_str}
-                                    )
-                            except Exception as e:
-                                self.logger.error(
-                                    "Error uploading to S3",
-                                    extra={"date": date_str, "error": str(e)},
-                                )
-                    else:
-                        self.logger.warning(
-                            "Bronze directory is empty, skipping S3 upload",
-                            extra={"bronze_dir": bronze_dir, "date": date_str},
-                        )
-                else:
-                    self.logger.warning(
-                        "Bronze directory missing, skipping S3 upload",
-                        extra={"bronze_dir": bronze_dir, "date": date_str},
-                    )
-            else:
-                self.logger.info(
-                    "S3 uploader not available (not configured or boto3 not installed)"
-                )
+                    context={
+                        "date": date_str,
+                        "total_matches": str(metrics.total_matches),
+                        "successful": str(metrics.successful_matches),
+                        "failed": str(metrics.failed_matches),
+                        "skipped": str(metrics.skipped_matches),
+                    },
+                ),
+            )
 
         metrics.print_summary()
 

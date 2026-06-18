@@ -32,7 +32,7 @@ python-dotenv>=1.0.0
 # File locking for concurrent access protection
 filelock>=3.13.0
 
-# S3 upload support
+# Standalone Bronze S3 sync support
 boto3>=1.28.0
 
 # HTTP client with retry logic

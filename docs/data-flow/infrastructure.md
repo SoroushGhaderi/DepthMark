@@ -146,7 +146,9 @@ Unified pydantic-settings based configuration — single source of truth for all
 - `clickhouse_host`, `clickhouse_port`, `clickhouse_user`, `clickhouse_password`
 - `clickhouse_db_fotmob`, `clickhouse_db_gold`, `clickhouse_db_gold_scenarios`, `clickhouse_db_gold_signals`
 - `telegram_bot_token`, `telegram_chat_id`, `telegram_enabled`
-- `s3_endpoint`, `s3_access_key`, `s3_secret_key`
+- standalone Bronze S3 sync reads `S3_ENDPOINT`, `S3_ACCESS_KEY`,
+  `S3_SECRET_KEY`, optional `S3_BUCKET`, and optional `S3_REGION` directly from
+  the environment
 - `environment`, `log_level`, `log_dir`, `data_dir`
 
 **FotMob scraping settings** (from `config.yaml` with env-var overrides):
@@ -189,11 +191,16 @@ fotmob:
 Storage structure:
 ```text
 data/fotmob/
-  raw/{YYYYMMDD}/{match_id}.json    raw match payloads
-  listings/{YYYYMMDD}.json          daily match listings
-  compressed/{YYYYMMDD}.tar         optional archives
+  matches/{YYYYMMDD}/match_{id}.json[.gz]  raw match payloads
+  daily_listings/{YYYYMMDD}/matches.json   daily match listings
 data/dlq/                           dead letter queue files
 ```
+
+S3-compatible storage is not part of the scrape or pipeline lifecycle. The
+operator runs `scripts/bronze/sync_s3.py` explicitly. Uploads create temporary
+`tar.gz` transfer archives containing both canonical date directories and store
+them at `bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`; they do not compress or delete
+the canonical local files.
 
 ## Production Deployment
 

@@ -25,8 +25,6 @@ class DailyReportData:
     retries: int = 0
     failed_retries: int = 0
     cache_hits: int = 0
-    s3_uploaded: bool = False
-    s3_size_mb: float = 0.0
     clickhouse_rows: int = 0
     silent: bool = True
 
@@ -44,8 +42,6 @@ class MonthlyReportData:
     duration_seconds: float = 0.0
     bronze_files: int = 0
     bronze_size_mb: float = 0.0
-    s3_archives: int = 0
-    s3_size_mb: float = 0.0
     silent: bool = True
 
 

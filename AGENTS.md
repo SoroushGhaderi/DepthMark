@@ -52,6 +52,7 @@ python scripts/orchestration/setup_clickhouse.py
 python scripts/mongodb/init_indexes.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/bronze/scrape_fotmob.py 20251208
+python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python scripts/bronze/load_clickhouse.py --date 20251208
 python scripts/silver/load_clickhouse.py --dry-run
 python scripts/gold/load_clickhouse_gold.py --dry-run

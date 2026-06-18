@@ -49,6 +49,16 @@ narrative docs live in `scripts/gold/scenario/scenarios_catalog.md`.
 
 ## Glossary
 
+### Bronze S3 Sync
+
+An operator-invoked, date-scoped transfer of FotMob Bronze artifacts between
+canonical local storage and S3-compatible object storage. It is independent of
+scraping and warehouse orchestration: neither scraping nor the pipeline starts
+an upload or download, and their success never depends on S3 availability.
+
+Avoid saying: automatic S3 backup, post-scrape upload, pipeline S3 stage.
+Related terms: Bronze Layer, Bronze Retention.
+
 ### Signal Activation
 
 A Gold serving fact row that records one triggered signal output row for one
