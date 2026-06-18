@@ -17,16 +17,15 @@ _TEMPLATE_DIR = Path(__file__).parent / "templates"
 
 
 def _format_duration(seconds: float) -> str:
-    """Format seconds into a human-readable duration string."""
+    """Format seconds into duration (e.g. 'Duration: 9m', 'Duration: 2h 15m')."""
     if seconds < 60:
-        return f"{seconds:.0f}s"
+        return f"Duration: {seconds:.0f}s"
     if seconds < 3600:
         minutes = int(seconds // 60)
-        secs = int(seconds % 60)
-        return f"{minutes}m {secs}s"
+        return f"Duration: {minutes}m"
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
-    return f"{hours}h {minutes}m"
+    return f"Duration: {hours}h {minutes}m"
 
 
 class TelegramClient:
