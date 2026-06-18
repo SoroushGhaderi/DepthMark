@@ -188,11 +188,6 @@ def _add_option_arguments(parser: argparse.ArgumentParser) -> None:
         "--force", action="store_true", help="Force re-scrape already processed matches"
     )
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
-    parser.add_argument(
-        "--compress",
-        action="store_true",
-        help="Compress files after scraping (creates .tar archives)",
-    )
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -296,7 +291,6 @@ def print_scraping_header(date_info: DateRangeInfo, args: argparse.Namespace) ->
     logger.info("Total dates:      %s", len(date_info.dates))
     logger.info("Mode:             Single-threaded (sequential)")
     logger.info("Force re-scrape:  %s", args.force)
-    logger.info("Auto-compress:    %s", args.compress)
     logger.info("%s", "=" * 80 + "\n")
 
 
@@ -444,8 +438,6 @@ def run_scraping(args: argparse.Namespace) -> int:
                     duration_seconds=duration,
                     bronze_files=bronze_files,
                     bronze_size_mb=bronze_size_mb,
-                    s3_uploaded=metrics.s3_uploaded,
-                    s3_size_mb=metrics.s3_size_mb,
                 ),
             )
 

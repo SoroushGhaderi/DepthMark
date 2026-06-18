@@ -7,9 +7,8 @@ from the FotMob API with minimal transformation.
 
 ```text
 FotMob API
-  → data/fotmob/raw/         raw match JSON files
-  → data/fotmob/listings/    daily match listings
-  → data/fotmob/compressed/  TAR archives (optional)
+  → data/fotmob/matches/         raw match JSON/GZIP/TAR files
+  → data/fotmob/daily_listings/  daily match listings
   → bronze.*                 15 ClickHouse tables
 ```
 
@@ -24,10 +23,13 @@ The scraper fetches match data from the FotMob API:
 2. **Match details** — `MatchScraper` calls `/matchDetails` for each match ID,
    returns the full JSON payload.
 3. **Storage** — `FotMobBronzeStorage` writes raw JSON to
-   `data/fotmob/raw/{YYYYMMDD}/{match_id}.json`.
-4. **Compression** — Optional TAR archiving of daily folders.
-5. **Turnstile refresh** — `scripts/refresh_turnstile.py` handles token/cookie
+   `data/fotmob/matches/{YYYYMMDD}/match_{match_id}.json` and listings to
+   `data/fotmob/daily_listings/{YYYYMMDD}/matches.json`.
+4. **Turnstile refresh** — `scripts/refresh_turnstile.py` handles token/cookie
    rotation when needed.
+
+Scraping does not compress or upload its output. S3 availability has no effect
+on scrape success or pipeline success.
 
 Key classes:
 - `BaseScraper` — retry, rate limiting, health checks
@@ -44,7 +46,34 @@ python scripts/bronze/scrape_fotmob.py 20251201 20251207  # date range
 python scripts/bronze/scrape_fotmob.py 20251208 --force   # re-scrape
 ```
 
-### 2. ClickHouse Loading (`scripts/bronze/load_clickhouse.py`)
+### 2. S3 Sync (`scripts/bronze/sync_s3.py`)
+
+S3 upload and download are standalone, operator-invoked workflows:
+
+```bash
+python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python scripts/bronze/sync_s3.py upload --month 202512
+python scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
+python scripts/bronze/sync_s3.py download --all
+```
+
+Each new archive contains `matches/{YYYYMMDD}` and
+`daily_listings/{YYYYMMDD}` and uses the compatible object key
+`bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`. Uploads require a listing that proves
+every expected match is stored or marked unavailable; `--allow-incomplete`
+provides an explicit recovery override. Existing remote objects and local date
+directories are protected unless `--force` is supplied.
+
+Downloads verify SHA-256 metadata when present, validate archive paths before
+extraction, and restore through a temporary staging directory. Legacy archives
+that contain only `{YYYYMMDD}/` remain downloadable, but cannot restore a daily
+listing that was never stored in the legacy object.
+
+Both directions support `--date`/`--single-date`,
+`--start-date`/`--end-date`, `--month`, `--all`, and `--dry-run`. Multi-date
+runs continue after independent failures and exit non-zero if any date fails.
+
+### 3. ClickHouse Loading (`scripts/bronze/load_clickhouse.py`)
 
 Raw JSON is parsed and loaded into 15 Bronze ClickHouse tables:
 
@@ -82,7 +111,7 @@ python scripts/bronze/load_clickhouse.py --date 20251208 --truncate
 python scripts/bronze/load_clickhouse.py --stats
 ```
 
-### 3. Table Optimization
+### 4. Table Optimization
 
 Bronze tables use `ReplacingMergeTree(inserted_at)` for idempotent reruns.
 Optimization SQL runs via:
@@ -116,3 +145,4 @@ See `CONTEXT.md` for the DLQ Replay glossary entry.
 | ClickHouse connection | Non-zero exit, re-run `load_clickhouse.py` |
 | Token expiry | `refresh_turnstile.py` rotates credentials |
 | Disk full | `health_check.py --disk-path data` detects threshold |
+| S3 transfer failure | Re-run `sync_s3.py` for the affected dates; scraping and warehouse loading are unaffected |

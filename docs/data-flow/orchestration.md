@@ -3,6 +3,10 @@
 Orchestration coordinates the full pipeline: scraping, Bronze loading, Silver
 processing, Gold materialization, and activation rebuilds.
 
+Bronze S3 sync is deliberately outside this orchestration boundary. Run
+`scripts/bronze/sync_s3.py` independently when local/remote transfer is needed;
+pipeline success never depends on S3 availability.
+
 ## Pipeline Flow
 
 ```text

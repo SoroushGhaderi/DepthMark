@@ -22,6 +22,14 @@ FotMob API
 Bronze is the only filesystem-backed data layer. Silver and Gold exist only in
 ClickHouse.
 
+S3 transfer is an independent operator workflow; scraping and the warehouse
+pipeline never upload automatically. Preview or run a date-scoped transfer with:
+
+```bash
+python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python scripts/bronze/sync_s3.py download --date 20251208
+```
+
 ## Documentation
 
 Start with [`docs/README.md`](docs/README.md) for the documentation map.

@@ -13,6 +13,7 @@ their CLI behavior, dry-run semantics, and exit-code contract.
 Use these paths for new automation and daily runs:
 
 - `scripts/bronze/scrape_fotmob.py`
+- `scripts/bronze/sync_s3.py`
 - `scripts/bronze/load_clickhouse.py`
 - `scripts/bronze/drop_clickhouse.py`
 - `scripts/bronze/setup_clickhouse.py`
@@ -35,6 +36,8 @@ pipeline:
 ```bash
 python scripts/orchestration/pipeline.py --single-date 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/sync_s3.py upload --single-date 20251208
+python scripts/bronze/sync_s3.py download --single-date 20251208
 python scripts/bronze/load_clickhouse.py --single-date 20251208
 python scripts/silver/load_clickhouse.py --single-date 20251208
 python scripts/gold/load_clickhouse_gold.py --single-date 20251208
@@ -42,6 +45,8 @@ python scripts/gold/load_clickhouse_gold.py --single-date 20251208
 
 ### Dry-Run Support
 
+- `scripts/bronze/sync_s3.py upload --date 20251208 --dry-run`
+- `scripts/bronze/sync_s3.py download --date 20251208 --dry-run`
 - `scripts/silver/load_clickhouse.py --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --part signals --dry-run`
@@ -51,6 +56,15 @@ python scripts/gold/load_clickhouse_gold.py --single-date 20251208
 - `scripts/gold/run_sql_job.py --kind signal --entity player --dry-run`
 - `scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run`
 - `scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run`
+
+### Bronze S3 Sync
+
+`scripts/bronze/sync_s3.py` is the only supported S3 transfer entry point.
+Scraping and `scripts/orchestration/pipeline.py` never invoke it. Both `upload`
+and `download` require an explicit `--date`, `--start-date/--end-date`,
+`--month`, or `--all` scope. Existing destinations are protected unless
+`--force` is supplied; uploads reject incomplete dates unless
+`--allow-incomplete` is explicitly supplied.
 
 ## Operational Utility Scripts
 

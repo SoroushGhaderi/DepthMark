@@ -84,6 +84,8 @@ python scripts/gold/setup_clickhouse_gold.py --part signals
 ```bash
 python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 python scripts/bronze/load_clickhouse.py --date 20251208
 python scripts/bronze/load_clickhouse.py --single-date 20251208
 python scripts/bronze/drop_clickhouse.py --dry-run
@@ -228,11 +230,13 @@ combine `--entity` and `--family`; treat them as separate signal batch selectors
 
 ```text
 src/
+  services/bronze/        Bronze loading and independent S3 sync services
   services/gold/          Gold application service and shared SQL job helpers
   services/silver/        Silver application service
   scrapers/fotmob/        FotMob API fetchers and request behavior
   processors/bronze/      Bronze transformation wiring
   storage/bronze/         Bronze persistence
+  storage/s3_client.py    Low-level S3-compatible object operations
   storage/mongodb/        content catalog client/repositories
   utils/                  logging, contracts, alerts, metrics, health checks
 scripts/                  operational CLI entry points
@@ -359,6 +363,8 @@ one activation row.
    `scripts/refresh_turnstile.py`.
 7. Bronze tables use `ReplacingMergeTree(inserted_at)` and can be compacted with
    `clickhouse/bronze/99_optimize_tables.sql`.
+8. Bronze S3 upload/download is operator-invoked through
+   `scripts/bronze/sync_s3.py`; neither scraping nor the pipeline invokes it.
 
 ## Engineering Standards
 
