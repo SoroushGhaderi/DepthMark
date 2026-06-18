@@ -1,8 +1,7 @@
 <b>📅 {{ data.date }} Scrape</b>
-{{ data.matches_scraped }}/{{ data.matches_total }} matches{% if data.skipped > 0 %} · {{ data.skipped }} cached{% endif %}{% if data.errors > 0 %} · <b>{{ data.errors }} errors</b>{% endif %}
-{{ format_duration(data.duration_seconds) }}{% if data.avg_response_time > 0 %} · avg {{ "%.1f"|format(data.avg_response_time) }}s/req{% endif %}{% if data.retries > 0 %} · {{ data.retries }} retries{% if data.failed_retries > 0 %} ({{ data.failed_retries }} failed){% endif %}{% endif %}
-<b>📦 Bronze</b> {{ data.bronze_files }} files · {{ "%.1f"|format(data.bronze_size_mb) }} MB{% if data.clickhouse_rows > 0 %} · <b>CH ✅</b> {{ data.clickhouse_rows }} rows{% endif %}
-{% if data.errors == 0 and (data.matches_total == 0 or data.matches_scraped == data.matches_total) %}✅ All matches scraped.
-{% elif data.matches_total > 0 and data.matches_scraped / data.matches_total >= 0.95 %}⚠️ {{ data.errors }} errors — review recommended.
-{% elif data.matches_total > 0 %}🔴 {{ data.errors }} failures — action required.
-{% endif %}
+⚽ {{ data.matches_scraped }}/{{ data.matches_total }} matches{% if data.skipped > 0 %} · {{ data.skipped }} cached{% endif %}{% if data.errors > 0 %} · <b>{{ data.errors }} errors</b>{% endif %}
+⏱️ {{ format_duration(data.duration_seconds) }}{% if data.avg_response_time > 0 %} · avg {{ "%.1f"|format(data.avg_response_time) }}s/req{% endif %}{% if data.retries > 0 %} · {{ data.retries }} retries{% if data.failed_retries > 0 %} ({{ data.failed_retries }} failed){% endif %}{% endif %}
+📦 Bronze {{ data.bronze_files }} files · {{ "%.1f"|format(data.bronze_size_mb) }} MB
+{% if data.errors > 0 %}{% if data.matches_total > 0 and data.matches_scraped / data.matches_total >= 0.95 %}⚠️ {{ data.errors }} errors — review recommended.
+{% else %}🔴 {{ data.errors }} failures — action required.
+{% endif %}{% endif %}💾 Local ✅

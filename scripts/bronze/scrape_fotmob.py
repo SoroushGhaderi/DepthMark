@@ -105,9 +105,10 @@ def get_bronze_storage_stats(bronze_base_dir: str, date_str: str) -> tuple:
     if not date_dir.exists():
         return 0, 0.0
 
+    tar_files = list(date_dir.glob("*_matches.tar"))
     json_files = list(date_dir.glob("match_*.json"))
     gz_files = list(date_dir.glob("match_*.json.gz"))
-    all_files = json_files + gz_files
+    all_files = tar_files + json_files + gz_files
 
     total_size = sum(f.stat().st_size for f in all_files)
     size_mb = total_size / (1024 * 1024)

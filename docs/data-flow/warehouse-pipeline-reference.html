@@ -1204,6 +1204,11 @@
             <h4>Git is truth for metadata</h4>
             <p>Signal catalogs are markdown frontmatter in Git. MongoDB is a synchronized serving copy — product APIs read from MongoDB, never ClickHouse.</p>
         </div>
+        <div class="principle">
+            <div class="eyebrow">Archives</div>
+            <h4>S3 sync is independent</h4>
+            <p>Bronze upload and download are explicit operator workflows. Scraping and warehouse runs never depend on S3 availability.</p>
+        </div>
     </div>
 
     <div class="diagram-card" id="full-warehouse-route">
@@ -1277,6 +1282,10 @@
             <span class="callout-icon">📋</span>
             <span><strong>Shortcut:</strong> After steps 0–2, <code>python scripts/orchestration/pipeline.py &lt;YYYYMMDD&gt;</code> runs scrape → bronze load → silver → gold (including activation rebuild) in one pass. Repeat scrape + bronze load per date; silver and gold always reload from the <em>complete</em> bronze dataset.</span>
         </div>
+        <div class="callout insight">
+            <span class="callout-icon">☁️</span>
+            <span><strong>S3 is outside this route:</strong> run <code>scripts/bronze/sync_s3.py</code> separately when Bronze archives need to move between local storage and S3. A transfer failure does not change pipeline success.</span>
+        </div>
         <details class="cmd-block">
             <summary>▸ Phase 1 — first-time setup (create all empty tables)</summary>
             <pre># From project root. In Docker: prefix with `docker compose exec depthmark-scraper`
@@ -1309,6 +1318,10 @@ python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
 python scripts/bronze/load_clickhouse.py --date 20251208
 python scripts/bronze/load_clickhouse.py --single-date 20251208
+
+# Optional, independent Bronze archive transfer (not a pipeline stage)
+python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 
 # Silver: full-table reload from all bronze data (8 tables)
 python scripts/silver/load_clickhouse.py
@@ -1354,7 +1367,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             <div class="flow-row">
                 <div class="flow-node accent"><strong>FotMob API</strong></div>
                 <span class="flow-connector"><span class="label">scrape</span>→</span>
-                <div class="flow-node accent"><strong>data/fotmob/raw/</strong><span class="sub">JSON per match</span></div>
+                <div class="flow-node accent"><strong>data/fotmob/matches/</strong><span class="sub">JSON / GZIP per match</span></div>
                 <span class="flow-connector"><span class="label">load</span>→</span>
                 <div class="flow-node bronze"><strong>bronze.*</strong><span class="sub">15 tables</span></div>
                 <span class="flow-connector"><span class="label">SQL</span>→</span>
@@ -1527,7 +1540,8 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
             The only filesystem-backed layer. Scrapes FotMob API payloads to disk in parallel, then
             parses them into 15 raw ClickHouse tables via Pydantic extraction. Failed inserts land in a
             dead-letter queue — no data is silently dropped. Bronze has no business logic, typing, or joins;
-            those belong in Silver.
+            those belong in Silver. S3 archive transfer is an independent operator action and is never part
+            of scraping or the warehouse pipeline.
         </p>
         <p class="doc-link">Deep dive: <a href="bronze.md">bronze.md</a></p>
     </div>
@@ -1539,7 +1553,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
         </div>
         <div class="mini-card">
             <h4>💾 Storage</h4>
-            <p>Raw files at <code>data/fotmob/raw/YYYYMMDD/match_id.json</code>. Failed ClickHouse inserts → <code>data/dlq/</code></p>
+            <p>Match files at <code>data/fotmob/matches/YYYYMMDD/</code>, listings at <code>data/fotmob/daily_listings/YYYYMMDD/</code>. Failed inserts → <code>data/dlq/</code></p>
         </div>
         <div class="mini-card">
             <h4>♻️ Idempotency</h4>
@@ -1573,13 +1587,53 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
                     <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper</span><span class="flow-seq-detail">fetch match details</span></div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors"><em>MatchScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matchDetails?id=…</span></div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>MatchScraper</em></span><span class="flow-seq-detail">full JSON payload</span></div>
-                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">write data/fotmob/raw/YYYYMMDD/match_id.json</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">write matches/YYYYMMDD/match_{id}.json + daily listing</span></div>
                 </div>
             </div>
         </div>
         <div class="callout note">
             <span class="callout-icon">🔄</span>
-            <span><strong>Turnstile:</strong> <code>scripts/refresh_turnstile.py</code> handles token/cookie rotation when the API blocks requests. The orchestrator runs health checks before scraping begins.</span>
+            <span><strong>Scrape boundary:</strong> <code>scripts/refresh_turnstile.py</code> handles token/cookie rotation when the API blocks requests. Scraping writes canonical local files only; it does not compress, upload, or check S3.</span>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Standalone S3 archive sync</h3>
+            <div class="subtitle">Explicit upload/download workflow — isolated from scraping and pipeline success</div>
+        </div>
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node accent"><strong>sync_s3.py</strong><span class="sub">upload or download</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>BronzeS3Service</strong><span class="sub">per-date validation + staging</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>S3Client</strong><span class="sub">S3-compatible object operations</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node silver"><strong>bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz</strong></div>
+            </div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Policy</th><th>Behavior</th></tr></thead>
+            <tbody>
+                <tr><td>Archive contents</td><td><code>matches/YYYYMMDD</code> + <code>daily_listings/YYYYMMDD</code>; canonical local files are not compressed or deleted</td></tr>
+                <tr><td>Upload completeness</td><td>Listing must prove every expected match is stored or unavailable; <code>--allow-incomplete</code> is an explicit recovery override</td></tr>
+                <tr><td>Overwrite protection</td><td>Existing remote objects and local date directories are preserved unless <code>--force</code> is supplied</td></tr>
+                <tr><td>Download safety</td><td>Verify SHA-256 metadata when present, reject unsafe archive paths, and restore through temporary staging</td></tr>
+                <tr><td>Date selection</td><td><code>--date</code>/<code>--single-date</code>, ranges, <code>--month</code>, and <code>--all</code>; both directions support <code>--dry-run</code></td></tr>
+                <tr><td>Batch failures</td><td>Continue independent dates, summarize results, and exit non-zero if any date fails</td></tr>
+            </tbody>
+        </table>
+        <details class="cmd-block">
+            <summary>▸ S3 sync commands</summary>
+            <pre>python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python scripts/bronze/sync_s3.py upload --month 202512
+python scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
+python scripts/bronze/sync_s3.py download --all</pre>
+        </details>
+        <div class="callout warning">
+            <span class="callout-icon">⚠️</span>
+            <span><strong>Legacy compatibility:</strong> archives containing only <code>YYYYMMDD/</code> remain downloadable, but cannot restore a daily listing that the legacy object never contained.</span>
         </div>
     </div>
 
@@ -1590,7 +1644,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
         </div>
         <div class="flow-diagram">
             <div class="flow-row">
-                <div class="flow-node accent"><strong>data/fotmob/raw/</strong><span class="sub">JSON files</span></div>
+                <div class="flow-node accent"><strong>data/fotmob/matches/</strong><span class="sub">JSON / GZIP files</span></div>
                 <span class="flow-connector">→</span>
                 <div class="flow-node accent"><strong>FotMobBronzeMatchProcessor</strong></div>
                 <span class="flow-connector">→</span>
@@ -1646,6 +1700,8 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
             <summary>▸ Bronze commands</summary>
             <pre>python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 python scripts/bronze/load_clickhouse.py --date 20251208
 python scripts/bronze/load_clickhouse.py --single-date 20251208
 python scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
@@ -2049,9 +2105,15 @@ python scripts/gold/activations/build_signal_activations.py</pre>
         <p>
             <code>pipeline.py</code> coordinates all layers via subprocess calls (ADR 0002). Any non-zero exit halts the run
             immediately — there is no partial-success state. Skip and partial-run flags support fast iterative
-            development without rerunning the full pipeline.
+            development without rerunning the full pipeline. Bronze S3 sync is deliberately outside this boundary;
+            pipeline success never depends on S3 availability.
         </p>
         <p class="doc-link">Deep dive: <a href="orchestration.md">orchestration.md</a></p>
+    </div>
+
+    <div class="callout insight">
+        <span class="callout-icon">☁️</span>
+        <span><strong>Not a pipeline stage:</strong> use <code>scripts/bronze/sync_s3.py</code> independently for local/remote Bronze transfer. The scraper no longer uploads archives, and <code>pipeline.py</code> never invokes S3.</span>
     </div>
 
     <div class="diagram-card">
@@ -2142,6 +2204,7 @@ python scripts/gold/activations/build_signal_activations.py</pre>
             <tbody>
                 <tr><td>Scraping (API block / turnstile)</td><td><code>scrape_fotmob.py</code> for affected dates</td></tr>
                 <tr><td>Bronze ClickHouse load</td><td><code>load_clickhouse.py --date &lt;date&gt;</code></td></tr>
+                <tr><td>S3 archive transfer</td><td>Re-run <code>sync_s3.py</code> for affected dates; scraping and warehouse loading remain unaffected</td></tr>
                 <tr><td>Silver SQL error</td><td>Fix SQL → re-run <code>silver/load_clickhouse.py</code></td></tr>
                 <tr><td>Single signal failure</td><td><code>run_sql_job.py --kind signal --id &lt;id&gt;</code></td></tr>
                 <tr><td>Single scenario failure</td><td><code>run_sql_job.py --kind scenario --id &lt;id&gt;</code></td></tr>
@@ -2206,7 +2269,8 @@ python scripts/gold/activations/build_signal_activations.py</pre>
             Local development runs via Docker Compose. ClickHouse holds all warehouse layers (<code>bronze</code>,
             <code>silver</code>, <code>gold_scenarios</code>, <code>gold_signals</code>, <code>gold</code>). MongoDB
             holds content catalogs in the <code>orbit_content</code> database. Credential policy differs
-            significantly between local and production — never expose ports in production.
+            significantly between local and production — never expose ports in production. Optional S3-compatible
+            storage is used only by the standalone Bronze archive sync command.
         </p>
         <p class="doc-link">Deep dive: <a href="infrastructure.md">infrastructure.md</a></p>
     </div>
@@ -2261,6 +2325,13 @@ python scripts/gold/activations/build_signal_activations.py</pre>
                     <div class="flow-node dim"><strong>config.yaml</strong></div>
                     <span class="flow-connector">→</span>
                     <div class="flow-node accent"><strong>Scraper</strong></div>
+                </div>
+                <div class="flow-row" style="margin-top:0.5rem">
+                    <div class="flow-node dim"><strong>S3_* environment</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node accent"><strong>sync_s3.py</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node silver"><strong>S3-compatible storage</strong></div>
                 </div>
             </div>
         </div>
@@ -2323,6 +2394,27 @@ docker compose exec depthmark-scraper python scripts/mongodb/init_indexes.py</pr
                 <span class="callout-icon">⚠️</span>
                 <span>Never run local credentials in production. <code>DEPTHMARK_ENV</code> gates all credential validation logic.</span>
             </div>
+        </div>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Bronze S3 configuration &amp; storage policy</h3>
+            <div class="subtitle">Optional environment-only configuration for explicit archive transfer</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Variable</th><th>Requirement</th><th>Purpose</th></tr></thead>
+            <tbody>
+                <tr><td><code>S3_ENDPOINT</code></td><td>Required</td><td>S3-compatible endpoint URL</td></tr>
+                <tr><td><code>S3_ACCESS_KEY</code></td><td>Required</td><td>Access credential; never commit it</td></tr>
+                <tr><td><code>S3_SECRET_KEY</code></td><td>Required</td><td>Secret credential; never commit it</td></tr>
+                <tr><td><code>S3_BUCKET</code></td><td>Optional when inferable</td><td>Explicit bucket; otherwise inferred from virtual-hosted endpoints such as <code>bucket.s3.region.provider</code></td></tr>
+                <tr><td><code>S3_REGION</code></td><td>Optional</td><td>Signing region; defaults to <code>ir-tbz-sh1</code></td></tr>
+            </tbody>
+        </table>
+        <div class="callout note">
+            <span class="callout-icon">📦</span>
+            <span>Uploads build temporary <code>tar.gz</code> transfer archives and store them at <code>bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz</code>. They do not compress or delete canonical files under <code>data/fotmob/</code>.</span>
         </div>
     </div>
 </div>
@@ -2637,9 +2729,24 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'bronze',
         },
         {
-            match: ['data/fotmob/raw', 'raw json on disk', 'filesystem'],
+            match: ['sync_s3.py', 'bronzes3service', 's3client', 's3-compatible storage', 'bronze/fotmob/yyyymm'],
+            title: 'Standalone Bronze S3 archive sync',
+            scripts: ['scripts/bronze/sync_s3.py', 'src/services/bronze/s3_sync_service.py', 'src/storage/s3_client.py'],
+            paths: ['bronze/fotmob/<YYYYMM>/<YYYYMMDD>.tar.gz'],
+            commands: [
+                'python scripts/bronze/sync_s3.py upload --date <YYYYMMDD> --dry-run',
+                'python scripts/bronze/sync_s3.py download --date <YYYYMMDD> --dry-run',
+            ],
+            note: 'Independent operator workflow; scraping and pipeline success do not depend on S3.',
+            sectionTab: 'bronze',
+        },
+        {
+            match: ['data/fotmob/matches', 'data/fotmob/daily_listings', 'raw json on disk', 'filesystem'],
             title: 'Bronze raw file output',
-            paths: ['data/fotmob/raw/<YYYYMMDD>/<match_id>.json'],
+            paths: [
+                'data/fotmob/matches/<YYYYMMDD>/match_<match_id>.json[.gz]',
+                'data/fotmob/daily_listings/<YYYYMMDD>/matches.json',
+            ],
             commands: ['python scripts/bronze/scrape_fotmob.py <YYYYMMDD>'],
             note: 'Written by the scraper; consumed by bronze/load_clickhouse.py.',
             sectionTab: 'bronze',
@@ -3064,6 +3171,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python ownership adr 0001 0009 generic runner' },
         // Bronze
         { title: 'Scraping flow', section: 'bronze', sectionLabel: 'Bronze', keywords: 'scrape_fotmob fotmorchestrator dailyscraper matchscraper api json' },
+        { title: 'Standalone S3 archive sync', section: 'bronze', sectionLabel: 'Bronze', keywords: 'sync_s3 upload download archive tar gzip bucket force allow-incomplete sha256 staging dry-run' },
         { title: 'ClickHouse loading', section: 'bronze', sectionLabel: 'Bronze', keywords: 'load clickhouse pydantic safeFieldExtractor contract dlq dead letter queue' },
         { title: 'Bronze table inventory', section: 'bronze', sectionLabel: 'Bronze', keywords: 'general timeline venue player shotmap goal cards red_card period momentum starters substitutes coaches team_form match_reference' },
         { title: 'ReplacingMergeTree (Bronze)', section: 'bronze', sectionLabel: 'Bronze', keywords: 'replacingmergetree idempotent optimize inserted_at' },
@@ -3089,6 +3197,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         { title: 'Service layout', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'docker compose depthmark-clickhouse depthmark-mongodb depthmark-scraper depthmark_network 8123 9000 27017' },
         { title: 'Bootstrap sequence', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'setup_clickhouse init_indexes docker-compose first time setup ddl' },
         { title: 'Credential policy', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'adr 0005 depthmark_env local production passwords secrets ports' },
+        { title: 'Bronze S3 configuration & storage policy', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 's3_endpoint s3_access_key s3_secret_key s3_bucket infer virtual hosted s3_region ir-tbz-sh1 object key archive' },
         // MongoDB
         { title: 'Catalog sync flow', section: 'mongodb', sectionLabel: 'MongoDB', keywords: 'sync_signal_catalogs validate upsert sha256 frontmatter yaml' },
         { title: 'MongoDB collections', section: 'mongodb', sectionLabel: 'MongoDB', keywords: 'signals scenarios channel_templates content_versions scenario_signal_map orbit_content' },
