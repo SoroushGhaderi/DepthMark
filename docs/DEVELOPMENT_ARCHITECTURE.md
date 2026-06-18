@@ -365,6 +365,9 @@ one activation row.
    `clickhouse/bronze/99_optimize_tables.sql`.
 8. Bronze S3 upload/download is operator-invoked through
    `scripts/bronze/sync_s3.py`; neither scraping nor the pipeline invokes it.
+9. The scraper compresses each complete local date into
+   `data/fotmob/matches/YYYYMMDD/YYYYMMDD_matches.tar`; incomplete dates remain
+   uncompressed for safe resumption.
 
 ## Engineering Standards
 

@@ -128,7 +128,9 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 return metrics
 
             completion_pct = self.bronze_storage.get_completion_percentage(date_str)
-            already_complete = completion_pct is not None and completion_pct >= 100.0
+            already_complete = (
+                completion_pct is not None and completion_pct >= 100.0 and not force_rescrape
+            )
 
             if already_complete:
                 self.logger.info(
@@ -240,9 +242,39 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 ),
             )
 
+        if self.bronze_only and all_matches_scraped:
+            self._compress_completed_date(date_str, force=force_rescrape)
+
         metrics.print_summary()
 
         return metrics
+
+    def _compress_completed_date(self, date_str: str, force: bool = False) -> None:
+        """Compress one complete Bronze date without invoking remote storage."""
+        self.logger.info(
+            "Starting completed-date compression",
+            extra={"date": date_str, "force": force},
+        )
+        compression_stats = self.bronze_storage.compress_date_files(date_str, force=force)
+        status = compression_stats.get("status")
+
+        expected_statuses = {"success", "already_compressed", "no_files", "no_directory"}
+        if status not in expected_statuses:
+            error = compression_stats.get("error", "unknown compression error")
+            raise OrchestratorError(
+                f"Bronze compression failed for {date_str}: {error}",
+                details={"date": date_str, "compression_status": status},
+            )
+
+        self.logger.info(
+            "Completed-date compression finished",
+            extra={
+                "date": date_str,
+                "status": status,
+                "compressed_files": compression_stats.get("compressed", 0),
+                "archive_file": compression_stats.get("archive_file"),
+            },
+        )
 
     def _fetch_match_ids(self, date_str: str, force_refetch: bool = False) -> List[Union[int, str]]:
         """

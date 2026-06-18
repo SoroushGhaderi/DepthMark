@@ -1593,7 +1593,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
         </div>
         <div class="callout note">
             <span class="callout-icon">🔄</span>
-            <span><strong>Scrape boundary:</strong> <code>scripts/refresh_turnstile.py</code> handles token/cookie rotation when the API blocks requests. Scraping writes canonical local files only; it does not compress, upload, or check S3.</span>
+            <span><strong>Scrape boundary:</strong> <code>scripts/refresh_turnstile.py</code> handles token/cookie rotation when the API blocks requests. Completed dates are compressed locally after scraping; the scraper does not upload or check S3.</span>
         </div>
     </div>
 
@@ -1616,7 +1616,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
         <table class="data-table">
             <thead><tr><th>Policy</th><th>Behavior</th></tr></thead>
             <tbody>
-                <tr><td>Archive contents</td><td><code>matches/YYYYMMDD</code> + <code>daily_listings/YYYYMMDD</code>; canonical local files are not compressed or deleted</td></tr>
+                <tr><td>Archive contents</td><td><code>matches/YYYYMMDD</code> + <code>daily_listings/YYYYMMDD</code>; sync does not alter local compression state or delete canonical artifacts</td></tr>
                 <tr><td>Upload completeness</td><td>Listing must prove every expected match is stored or unavailable; <code>--allow-incomplete</code> is an explicit recovery override</td></tr>
                 <tr><td>Overwrite protection</td><td>Existing remote objects and local date directories are preserved unless <code>--force</code> is supplied</td></tr>
                 <tr><td>Download safety</td><td>Verify SHA-256 metadata when present, reject unsafe archive paths, and restore through temporary staging</td></tr>
@@ -2414,7 +2414,7 @@ docker compose exec depthmark-scraper python scripts/mongodb/init_indexes.py</pr
         </table>
         <div class="callout note">
             <span class="callout-icon">📦</span>
-            <span>Uploads build temporary <code>tar.gz</code> transfer archives and store them at <code>bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz</code>. They do not compress or delete canonical files under <code>data/fotmob/</code>.</span>
+            <span>Uploads build temporary <code>tar.gz</code> transfer archives and store them at <code>bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz</code>. Sync does not alter local compression state or delete canonical artifacts under <code>data/fotmob/</code>.</span>
         </div>
     </div>
 </div>

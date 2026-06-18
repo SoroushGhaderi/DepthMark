@@ -199,8 +199,8 @@ data/dlq/                           dead letter queue files
 S3-compatible storage is not part of the scrape or pipeline lifecycle. The
 operator runs `scripts/bronze/sync_s3.py` explicitly. Uploads create temporary
 `tar.gz` transfer archives containing both canonical date directories and store
-them at `bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`; they do not compress or delete
-the canonical local files.
+them at `bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`; the sync command does not modify
+the scraper's local compression state or delete canonical local artifacts.
 
 ## Production Deployment
 

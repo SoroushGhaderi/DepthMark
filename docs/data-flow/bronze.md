@@ -25,11 +25,14 @@ The scraper fetches match data from the FotMob API:
 3. **Storage** — `FotMobBronzeStorage` writes raw JSON to
    `data/fotmob/matches/{YYYYMMDD}/match_{match_id}.json` and listings to
    `data/fotmob/daily_listings/{YYYYMMDD}/matches.json`.
-4. **Turnstile refresh** — `scripts/refresh_turnstile.py` handles token/cookie
+4. **Compression** — after a date is complete, the orchestrator compresses its
+   match JSON files into `matches/{YYYYMMDD}/{YYYYMMDD}_matches.tar`. Partial
+   dates remain uncompressed so they can be resumed safely.
+5. **Turnstile refresh** — `scripts/refresh_turnstile.py` handles token/cookie
    rotation when needed.
 
-Scraping does not compress or upload its output. S3 availability has no effect
-on scrape success or pipeline success.
+Scraping compresses completed local dates but never uploads them. S3
+availability has no effect on scrape success or pipeline success.
 
 Key classes:
 - `BaseScraper` — retry, rate limiting, health checks
