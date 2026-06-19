@@ -15,7 +15,8 @@ DepthMark is a FotMob-only medallion pipeline:
 
 ```text
 FotMob API
-  -> data/fotmob/          raw Bronze files
+  -> data/fotmob/historical/  completed-date Bronze files
+  -> data/fotmob/live/        current-date Live snapshots
   -> bronze.*              raw warehouse tables
   -> silver.*              cleaned analytical tables
   -> gold_scenarios.*      scenario outputs

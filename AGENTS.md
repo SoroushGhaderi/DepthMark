@@ -12,7 +12,9 @@ Do not use this file as a Codex skill. Skills are reusable procedures with their
 
 DepthMark is a Python data pipeline for FotMob football data.
 
-- Bronze: raw FotMob API payloads on disk under `data/fotmob/`, plus raw ClickHouse tables in `bronze.*`.
+- Bronze: completed-date FotMob payloads under `data/fotmob/historical/`,
+  current-date snapshots under `data/fotmob/live/`, and raw ClickHouse tables
+  in `bronze.*` sourced only from Historical storage.
 - Silver: cleaned and conformed analytical tables in ClickHouse `silver.*`.
 - Gold: analytics and product-ready scenario tables in ClickHouse
   `gold_scenarios.*`, signal tables in `gold_signals.*`, and shared metadata in

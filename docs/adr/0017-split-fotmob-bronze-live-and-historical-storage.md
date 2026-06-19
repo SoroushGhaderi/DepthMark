@@ -39,12 +39,9 @@ together when an operator configures a different Bronze root.
 
 Historical scraping includes only dates strictly before the machine's current
 local date. It retains the existing caching, resumption, and completed-date
-compression behavior. Existing `data/fotmob/matches/` and
-`data/fotmob/daily_listings/` content must be moved into the historical aspect
-as a repository data migration. The migration creates the Historical aspect and
-uses same-filesystem directory renames rather than copying payloads. It performs
-collision checks first and aborts if either destination already contains data;
-it never merges or overwrites automatically.
+compression behavior. The pre-split local directories were moved once into the
+Historical aspect when this decision was implemented. That completed move is
+not exposed as an ongoing operational script.
 
 The dedicated `--today` selector starts the Live journey. It determines today
 from the system clock, refreshes the daily listing, re-scrapes every currently
@@ -80,8 +77,8 @@ other medallion-layer flows.
   artifacts.
 - Historical loaders, S3 sync, health checks, documentation, and configuration
   must resolve the Historical aspect explicitly.
-- Existing local Bronze data requires a one-time filesystem migration before
-  the new canonical paths are used.
+- The prior local layout was moved once during implementation; no reusable
+  migration command is part of the supported script surface.
 - Live storage can grow across date rollovers until an explicit retention or
   cleanup policy is accepted.
 - Promoting Live payloads into Historical storage is intentionally unsupported;

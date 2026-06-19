@@ -6,10 +6,11 @@ Accepted
 
 ## Context
 
-Bronze is the only filesystem-backed data layer in DepthMark. Raw FotMob API
-payloads are stored under `data/fotmob/` as match JSON files, daily listings,
-and compressed tar archives. Failed ClickHouse insertions are written to
-`data/dlq/` as JSONL files by `src/storage/dlq.py`.
+Bronze is the only filesystem-backed data layer in DepthMark. Completed-date
+FotMob API payloads are stored under `data/fotmob/historical/` as match JSON
+files, daily listings, and compressed tar archives. Refreshable current-date
+snapshots are stored uncompressed under `data/fotmob/live/`. Failed ClickHouse
+insertions are written to `data/dlq/` as JSONL files by `src/storage/dlq.py`.
 
 Neither layer has a documented retention or cleanup policy. Files accumulate
 indefinitely. The DLQ class docstring claims "replay" capability, but no
@@ -26,9 +27,9 @@ clean up, and what to do when DLQ files appear.
 
 ## Decision
 
-Bronze filesystem files and DLQ files are retained indefinitely by default.
-There are no automated deletion scripts, TTL mechanisms, or rotation policies for
-either layer.
+Historical and Live Bronze filesystem files and DLQ files are retained
+indefinitely by default. There are no automated deletion scripts, TTL
+mechanisms, or rotation policies for either layer.
 
 Cleanup of Bronze files (match JSONs, daily listings, tar archives) and DLQ
 files is operator-initiated and manual only. Before deleting Bronze files for a
