@@ -13,6 +13,7 @@ their CLI behavior, dry-run semantics, and exit-code contract.
 Use these paths for new automation and daily runs:
 
 - `scripts/bronze/scrape_fotmob.py`
+- `scripts/bronze/migrate_fotmob_storage.py`
 - `scripts/bronze/sync_s3.py`
 - `scripts/bronze/load_clickhouse.py`
 - `scripts/bronze/drop_clickhouse.py`
@@ -36,11 +37,28 @@ pipeline:
 ```bash
 python scripts/orchestration/pipeline.py --single-date 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/scrape_fotmob.py --today
+python scripts/bronze/scrape_fotmob.py --yesterday
 python scripts/bronze/sync_s3.py upload --single-date 20251208
 python scripts/bronze/sync_s3.py download --single-date 20251208
 python scripts/bronze/load_clickhouse.py --single-date 20251208
 python scripts/silver/load_clickhouse.py --single-date 20251208
 python scripts/gold/load_clickhouse_gold.py --single-date 20251208
+```
+
+FotMob scraping has two filesystem aspects beneath the configured Bronze root:
+Historical (`data/fotmob/historical/`) and Live (`data/fotmob/live/`). Explicit
+dates, ranges, `--month`, and `--yesterday` write Historical data. `--today`
+always refreshes Live listings and match payloads and never compresses them.
+Historical selectors reject today and future dates; a current-month scope ends
+at yesterday.
+
+Before first use of this layout, migrate the legacy directories with a dry-run
+followed by the explicit apply command:
+
+```bash
+python scripts/bronze/migrate_fotmob_storage.py
+python scripts/bronze/migrate_fotmob_storage.py --apply
 ```
 
 ### Dry-Run Support

@@ -25,6 +25,7 @@ from config import FotMobConfig
 from scripts.utils import generate_date_range, generate_month_dates, validate_date_format
 from src.services.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
 from src.storage import S3Client, S3ConfigurationError
+from src.storage.bronze.paths import get_fotmob_historical_path
 from src.utils.logging_utils import configure_logging, get_logger
 
 logger = get_logger(__name__)
@@ -169,7 +170,7 @@ def run(args: argparse.Namespace) -> int:
     """Run independent syncs and return a process exit code."""
     load_environment()
     client = create_s3_client()
-    bronze_path = Path(FotMobConfig().storage.bronze_path)
+    bronze_path = get_fotmob_historical_path(FotMobConfig().storage.bronze_path)
     service = BronzeS3Service(bronze_path=bronze_path, s3_client=client)
     dates = resolve_dates(args, service)
     if not dates:

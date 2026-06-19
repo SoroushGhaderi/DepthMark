@@ -1367,7 +1367,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             <div class="flow-row">
                 <div class="flow-node accent"><strong>FotMob API</strong></div>
                 <span class="flow-connector"><span class="label">scrape</span>→</span>
-                <div class="flow-node accent"><strong>data/fotmob/matches/</strong><span class="sub">JSON / GZIP per match</span></div>
+                <div class="flow-node accent"><strong>data/fotmob/historical/matches/</strong><span class="sub">JSON / GZIP per match</span></div>
                 <span class="flow-connector"><span class="label">load</span>→</span>
                 <div class="flow-node bronze"><strong>bronze.*</strong><span class="sub">15 tables</span></div>
                 <span class="flow-connector"><span class="label">SQL</span>→</span>
@@ -1553,7 +1553,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
         </div>
         <div class="mini-card">
             <h4>💾 Storage</h4>
-            <p>Match files at <code>data/fotmob/matches/YYYYMMDD/</code>, listings at <code>data/fotmob/daily_listings/YYYYMMDD/</code>. Failed inserts → <code>data/dlq/</code></p>
+            <p>Historical match files at <code>data/fotmob/historical/matches/YYYYMMDD/</code>, listings at <code>data/fotmob/historical/daily_listings/YYYYMMDD/</code>. Live files remain isolated under <code>data/fotmob/live/</code>. Failed inserts → <code>data/dlq/</code></p>
         </div>
         <div class="mini-card">
             <h4>♻️ Idempotency</h4>
@@ -1644,7 +1644,7 @@ python scripts/bronze/sync_s3.py download --all</pre>
         </div>
         <div class="flow-diagram">
             <div class="flow-row">
-                <div class="flow-node accent"><strong>data/fotmob/matches/</strong><span class="sub">JSON / GZIP files</span></div>
+                <div class="flow-node accent"><strong>data/fotmob/historical/matches/</strong><span class="sub">JSON / GZIP files</span></div>
                 <span class="flow-connector">→</span>
                 <div class="flow-node accent"><strong>FotMobBronzeMatchProcessor</strong></div>
                 <span class="flow-connector">→</span>
@@ -2741,11 +2741,11 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'bronze',
         },
         {
-            match: ['data/fotmob/matches', 'data/fotmob/daily_listings', 'raw json on disk', 'filesystem'],
+            match: ['data/fotmob/historical/matches', 'data/fotmob/historical/daily_listings', 'data/fotmob/live', 'raw json on disk', 'filesystem'],
             title: 'Bronze raw file output',
             paths: [
-                'data/fotmob/matches/<YYYYMMDD>/match_<match_id>.json[.gz]',
-                'data/fotmob/daily_listings/<YYYYMMDD>/matches.json',
+                'data/fotmob/historical/matches/<YYYYMMDD>/match_<match_id>.json[.gz]',
+                'data/fotmob/historical/daily_listings/<YYYYMMDD>/matches.json',
             ],
             commands: ['python scripts/bronze/scrape_fotmob.py <YYYYMMDD>'],
             note: 'Written by the scraper; consumed by bronze/load_clickhouse.py.',

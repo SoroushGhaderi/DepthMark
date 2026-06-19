@@ -46,6 +46,7 @@ trade-off.
 | `0013-fotmob-only-provider-scope.md`                                   | DepthMark is FotMob-only. No provider abstraction boundary exists or will be added until a concrete second provider needs support. | A second provider abstraction must be introduced alongside a concrete second provider.                                                                                                    |
 | `0014-use-single-enriched-signal-activation-serving-table.md`          | Gold activations use one enriched serving table, not a thin index plus separate match aggregate.                                   | `gold_signals.sig_*` tables expose `signal_instance_id`; downstream services read details from `gold.signal_activations` before reaching for typed source tables.                         |
 | `0015-redesign-telegram-notification-module.md`                       | Telegram module redesigned: thin transport, Jinja2 templates, dataclasses, single config source, clean break from old modules.    | New `src/services/telegram/` package replaces `metrics_alerts.py`, `alerting.py`, `layer_completion_alerts.py`. Callers must migrate.                                                       |
+| `0017-split-fotmob-bronze-live-and-historical-storage.md`             | FotMob Bronze filesystem storage is split into independently owned Live and Historical aspects.                                  | Only `--today` writes Live data; completed-date selectors write Historical data, and Live payloads are never promoted automatically.                                                       |
 
 
 ## Queue
@@ -76,5 +77,5 @@ trade-off.
 | 3       | Gold scenario bulk loading          | Re-enabled in `0004`; 48 scenarios + 344 signals in default Gold run |
 | 4       | Telegram module redesign            | Accepted in `0015-redesign-telegram-notification-module.md`          |
 | 5       | Unify configuration systems         | Accepted in `0016-unify-configuration-systems.md`                    |
-
+| 6       | Split FotMob Live/Historical Bronze | Accepted in `0017-split-fotmob-bronze-live-and-historical-storage.md` |
 

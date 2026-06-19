@@ -9,6 +9,7 @@ PURPOSE: Orchestrate the entire scraping and processing pipeline.
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import requests
@@ -22,6 +23,7 @@ from .scrapers import DailyScraper, MatchScraper
 from .scrapers.fotmob.errors import FotMobMatchDataNotFoundError
 from .services.telegram import ErrorAlertData, TelegramClient
 from .storage import FotMobBronzeStorage
+from .storage.bronze.paths import get_fotmob_historical_path
 from .utils import DataQualityChecker, ScraperMetrics, get_logger
 
 logger = get_logger(__name__)
@@ -36,7 +38,12 @@ class FotMobOrchestrator(OrchestratorProtocol):
              ClickHouse loading is done separately via load_clickhouse.py
     """
 
-    def __init__(self, config: Optional[FotMobConfig] = None, bronze_only: bool = True):
+    def __init__(
+        self,
+        config: Optional[FotMobConfig] = None,
+        bronze_only: bool = True,
+        bronze_path: Optional[Union[str, Path]] = None,
+    ):
         """
         Initialize the orchestrator.
 
@@ -68,7 +75,8 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 extra={"error": str(e)},
             )
 
-        self.bronze_storage = FotMobBronzeStorage(self.config.storage.bronze_path)
+        storage_path = bronze_path or get_fotmob_historical_path(self.config.storage.bronze_path)
+        self.bronze_storage = FotMobBronzeStorage(str(storage_path))
         self.logger.info("Bronze layer storage initialized")
 
         self.processor = None if bronze_only else FotMobBronzeMatchProcessor()
@@ -77,13 +85,21 @@ class FotMobOrchestrator(OrchestratorProtocol):
         if bronze_only:
             self.logger.info("Note: Use load_clickhouse.py to load data from bronze to ClickHouse")
 
-    def scrape_date(self, date_str: str, force_rescrape: bool = False) -> ScraperMetrics:
+    def scrape_date(
+        self,
+        date_str: str,
+        force_rescrape: bool = False,
+        force_refetch_listing: bool = False,
+        compress_completed: bool = True,
+    ) -> ScraperMetrics:
         """
         Scrape all matches for a specific date.
 
         Args:
             date_str: Date in YYYYMMDD format
             force_rescrape: If True, rescrape already processed matches
+            force_refetch_listing: If True, refresh the daily listing from FotMob
+            compress_completed: If True, compress complete date payloads
 
         Returns:
             ScraperMetrics object with results
@@ -119,7 +135,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
         try:
             scraped_match_ids = set()
 
-            match_ids = self._fetch_match_ids(date_str)
+            match_ids = self._fetch_match_ids(date_str, force_refetch=force_refetch_listing)
             metrics.total_matches = len(match_ids)
 
             if not match_ids:
@@ -242,7 +258,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
                 ),
             )
 
-        if self.bronze_only and all_matches_scraped:
+        if self.bronze_only and all_matches_scraped and compress_completed:
             self._compress_completed_date(date_str, force=force_rescrape)
 
         metrics.print_summary()

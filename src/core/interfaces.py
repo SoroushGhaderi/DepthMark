@@ -179,12 +179,20 @@ class OrchestratorProtocol(Protocol):
         - FotMobOrchestrator
     """
 
-    def scrape_date(self, date: str, force_rescrape: bool = False) -> Dict[str, Any]:
+    def scrape_date(
+        self,
+        date: str,
+        force_rescrape: bool = False,
+        force_refetch_listing: bool = False,
+        compress_completed: bool = True,
+    ) -> Dict[str, Any]:
         """Scrape all matches for a given date.
 
         Args:
             date: Date string (YYYYMMDD or YYYY-MM-DD)
             force_rescrape: If True, re-scrape even if data exists
+            force_refetch_listing: If True, refresh the date listing
+            compress_completed: If True, compress complete date payloads
 
         Returns:
             Dictionary with scraping metrics and results

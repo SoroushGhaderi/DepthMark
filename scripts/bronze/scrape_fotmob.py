@@ -25,8 +25,10 @@ import argparse
 import sys
 import time
 from dataclasses import dataclass
+from datetime import date as calendar_date
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 # Ensure local project imports resolve before importing project modules.
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -46,6 +48,7 @@ from src.services.telegram import (
     MonthlyReportData,
     TelegramClient,
 )
+from src.storage.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
 from src.utils.logging_utils import get_logger, setup_logging
 from utils import (
     DateRangeInfo,
@@ -140,6 +143,10 @@ Examples:
   Monthly Scraping:
     python scripts/bronze/scrape_fotmob.py --month 202511              # Scrape entire November 2025
     python scripts/bronze/scrape_fotmob.py --month 202511 --force       # Month with force re-scrape
+
+  Live and Recent Historical:
+    python scripts/bronze/scrape_fotmob.py --today                      # Refresh today's Live data
+    python scripts/bronze/scrape_fotmob.py --yesterday                  # Scrape yesterday historically
         """,
     )
 
@@ -168,6 +175,16 @@ def _add_date_arguments(parser: argparse.ArgumentParser) -> None:
         type=str,
         help="Scrape entire month (YYYYMM format, e.g., 202511 for November 2025)",
     )
+    date_group.add_argument(
+        "--today",
+        action="store_true",
+        help="Refresh today's Live Bronze data using the machine-local date",
+    )
+    date_group.add_argument(
+        "--yesterday",
+        action="store_true",
+        help="Scrape yesterday into Historical Bronze using the machine-local date",
+    )
 
     range_group = parser.add_mutually_exclusive_group()
     range_group.add_argument(
@@ -191,18 +208,30 @@ def _add_option_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--debug", action="store_true", help="Enable debug logging")
 
 
-def parse_arguments() -> argparse.Namespace:
+def parse_arguments(
+    argv: Optional[Sequence[str]] = None,
+    current_date: Optional[calendar_date] = None,
+) -> argparse.Namespace:
     """Parse and validate command-line arguments."""
     parser = create_argument_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
+    today = current_date or calendar_date.today()
 
-    _validate_month_argument(parser, args)
+    _validate_month_argument(parser, args, today)
     _validate_start_date_argument(parser, args)
+    _validate_historical_scope(parser, args, today)
+
+    if args.today and args.force:
+        parser.error("--force applies only to Historical scraping and cannot be used with --today")
 
     return args
 
 
-def _validate_month_argument(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+def _validate_month_argument(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+    today: calendar_date,
+) -> None:
     """Validate month argument if provided."""
     if not args.month:
         return
@@ -213,6 +242,9 @@ def _validate_month_argument(parser: argparse.ArgumentParser, args: argparse.Nam
 
     if args.end_date or args.days:
         parser.error("Cannot use --end_date or --days with --month option")
+
+    if args.month > today.strftime("%Y%m"):
+        parser.error(f"Future month {args.month} cannot be scraped historically")
 
 
 def _validate_start_date_argument(
@@ -244,20 +276,71 @@ def _validate_start_date_argument(
         parser.error(f"Number of days must be at least 1 (got: {args.days})")
 
 
+def _validate_historical_scope(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+    today: calendar_date,
+) -> None:
+    """Reject explicit Historical scopes containing today or future dates."""
+    if args.today or args.yesterday or args.month or not args.start_date:
+        return
+
+    last_date = args.end_date or args.start_date
+    if args.days:
+        start = datetime.strptime(args.start_date, "%Y%m%d").date()
+        last_date = (start + timedelta(days=args.days - 1)).strftime("%Y%m%d")
+
+    today_str = today.strftime("%Y%m%d")
+    if last_date >= today_str:
+        parser.error(
+            "Historical scraping accepts only completed dates before today; "
+            "use --today for the current machine-local date"
+        )
+
+
 # ============================================================================
 # Date Range Generation
 # ============================================================================
 
 
-def create_date_info(args: argparse.Namespace) -> DateRangeInfo:
+def create_date_info(
+    args: argparse.Namespace,
+    current_date: Optional[calendar_date] = None,
+) -> DateRangeInfo:
     """Create DateRangeInfo from parsed arguments."""
-    return create_date_range_info(
+    today = current_date or calendar_date.today()
+    if args.today:
+        today_str = today.strftime("%Y%m%d")
+        return DateRangeInfo(
+            dates=[today_str],
+            display_text=f"Live date: {today_str}",
+            mode_text="Live (--today)",
+            log_suffix=f"live_{today_str}",
+        )
+    if args.yesterday:
+        yesterday = (today - timedelta(days=1)).strftime("%Y%m%d")
+        return DateRangeInfo(
+            dates=[yesterday],
+            display_text=f"Historical date: {yesterday}",
+            mode_text="Historical (--yesterday)",
+            log_suffix=yesterday,
+        )
+
+    date_info = create_date_range_info(
         date=args.start_date if not args.end_date and not args.days else None,
         start_date=args.start_date if args.end_date or args.days else None,
         end_date=args.end_date,
         month=args.month,
         num_days=args.days,
     )
+    if args.month == today.strftime("%Y%m"):
+        date_info.dates = [
+            date_str for date_str in date_info.dates if date_str < today.strftime("%Y%m%d")
+        ]
+        date_info.mode_text = f"Current month ({len(date_info.dates)} completed days)"
+        if not date_info.dates:
+            date_info.display_text += " — no completed dates yet"
+    return date_info
 
 
 # ============================================================================
@@ -350,7 +433,12 @@ def process_single_date(
     logger.info("[%s/%s] Scraping %s...", idx, total, date_str)
 
     try:
-        metrics = orchestrator.scrape_date(date_str=date_str, force_rescrape=args.force)
+        metrics = orchestrator.scrape_date(
+            date_str=date_str,
+            force_rescrape=args.force or args.today,
+            force_refetch_listing=args.today,
+            compress_completed=not args.today,
+        )
         return metrics
     except Exception as e:
         logger.error(f"Failed to process date {date_str}: {e}")
@@ -389,6 +477,10 @@ def run_scraping(args: argparse.Namespace) -> int:
     """
     config = create_config(args)
     date_info = create_date_info(args)
+    bronze_root = Path(config.storage.bronze_path)
+    storage_path = (
+        get_fotmob_live_path(bronze_root) if args.today else get_fotmob_historical_path(bronze_root)
+    )
 
     pipeline_start = time.time()
 
@@ -404,7 +496,10 @@ def run_scraping(args: argparse.Namespace) -> int:
 
     # Initialize
     stats = ScrapingStats()
-    orchestrator = FotMobOrchestrator(config)
+    orchestrator = FotMobOrchestrator(config, bronze_path=storage_path)
+
+    if not date_info.dates:
+        logger.info("No completed dates exist yet for this month; nothing to scrape")
 
     # Process each date
     for idx, date_str in enumerate(date_info.dates, 1):
@@ -418,9 +513,7 @@ def run_scraping(args: argparse.Namespace) -> int:
             stats.update_from_metrics(metrics)
             stats.add_duration(duration)
 
-            bronze_files, bronze_size_mb = get_bronze_storage_stats(
-                config.storage.bronze_path, date_str
-            )
+            bronze_files, bronze_size_mb = get_bronze_storage_stats(str(storage_path), date_str)
             stats.add_bronze_storage(bronze_files, bronze_size_mb)
 
             print_date_metrics(metrics)
@@ -473,7 +566,8 @@ def run_scraping(args: argparse.Namespace) -> int:
 
     # Print summary
     print_final_summary(stats, len(date_info.dates))
-    print_next_steps(stats)
+    if not args.today:
+        print_next_steps(stats)
 
     exit_code = 0 if stats.dates_failed == 0 else 1
     scope = date_info.display_text

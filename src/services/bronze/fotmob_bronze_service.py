@@ -17,6 +17,7 @@ import pandas as pd
 from config import FotMobConfig
 from src.processors.bronze.match_processor import FotMobBronzeMatchProcessor
 from src.storage.bronze.fotmob import FotMobBronzeStorage
+from src.storage.bronze.paths import get_fotmob_historical_path
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.dlq import DeadLetterQueue
 from src.utils.layer_contracts import (
@@ -849,7 +850,9 @@ def load_fotmob_data(
     stats: Dict[str, int] = {}
     try:
         config = FotMobConfig()
-        bronze_storage = FotMobBronzeStorage(config.storage.bronze_path)
+        bronze_storage = FotMobBronzeStorage(
+            str(get_fotmob_historical_path(config.storage.bronze_path))
+        )
         processor = FotMobBronzeMatchProcessor()
 
         matches_dir = bronze_storage.matches_dir / date_str
