@@ -30,8 +30,10 @@ def ensure_directories() -> None:
     directories = [
         project_root / "data",
         project_root / "data" / "fotmob",
-        project_root / "data" / "fotmob" / "daily_listings",
-        project_root / "data" / "fotmob" / "matches",
+        project_root / "data" / "fotmob" / "historical" / "daily_listings",
+        project_root / "data" / "fotmob" / "historical" / "matches",
+        project_root / "data" / "fotmob" / "live" / "daily_listings",
+        project_root / "data" / "fotmob" / "live" / "matches",
         project_root / "logs",
     ]
 

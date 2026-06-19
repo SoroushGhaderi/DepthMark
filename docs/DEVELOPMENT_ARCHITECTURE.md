@@ -84,6 +84,8 @@ python scripts/gold/setup_clickhouse_gold.py --part signals
 ```bash
 python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/scrape_fotmob.py --today
+python scripts/bronze/scrape_fotmob.py --yesterday
 python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 python scripts/bronze/load_clickhouse.py --date 20251208
@@ -365,9 +367,13 @@ one activation row.
    `clickhouse/bronze/99_optimize_tables.sql`.
 8. Bronze S3 upload/download is operator-invoked through
    `scripts/bronze/sync_s3.py`; neither scraping nor the pipeline invokes it.
-9. The scraper compresses each complete local date into
-   `data/fotmob/matches/YYYYMMDD/YYYYMMDD_matches.tar`; incomplete dates remain
+9. Historical scraping writes beneath `data/fotmob/historical/` and compresses
+   each complete local date into
+   `historical/matches/YYYYMMDD/YYYYMMDD_matches.tar`; incomplete dates remain
    uncompressed for safe resumption.
+10. `--today` writes refreshable, uncompressed snapshots beneath
+    `data/fotmob/live/`. Live data is not loaded, synchronized to S3, or promoted
+    into Historical storage automatically.
 
 ## Engineering Standards
 

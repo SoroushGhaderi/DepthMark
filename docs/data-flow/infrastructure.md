@@ -191,10 +191,19 @@ fotmob:
 Storage structure:
 ```text
 data/fotmob/
-  matches/{YYYYMMDD}/match_{id}.json[.gz]  raw match payloads
-  daily_listings/{YYYYMMDD}/matches.json   daily match listings
+  historical/
+    matches/{YYYYMMDD}/match_{id}.json[.gz]  completed-date payloads
+    daily_listings/{YYYYMMDD}/matches.json   completed-date listings
+  live/
+    matches/{YYYYMMDD}/match_{id}.json       latest Live payloads
+    daily_listings/{YYYYMMDD}/matches.json   refreshed Live listings
 data/dlq/                           dead letter queue files
 ```
+
+`FOTMOB_BRONZE_PATH` continues to configure the common `data/fotmob` root.
+Historical loaders and S3 sync use only the `historical/` aspect. Migrate the
+legacy layout with `scripts/bronze/migrate_fotmob_storage.py` (dry-run) and then
+repeat with `--apply`.
 
 S3-compatible storage is not part of the scrape or pipeline lifecycle. The
 operator runs `scripts/bronze/sync_s3.py` explicitly. Uploads create temporary

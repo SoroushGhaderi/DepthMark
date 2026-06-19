@@ -49,6 +49,28 @@ narrative docs live in `scripts/gold/scenario/scenarios_catalog.md`.
 
 ## Glossary
 
+### Historical Scrape
+
+A FotMob Bronze scrape whose scope contains only completed calendar dates,
+strictly before the machine's current local date. Historical selectors exclude
+today and reject future dates. Historical payloads and listings belong under
+`data/fotmob/historical/` and retain the existing completed-date compression
+behavior.
+
+Avoid saying: current scrape, live scrape.
+Related terms: Live Scrape.
+
+### Live Scrape
+
+A FotMob Bronze scrape explicitly selected by `--today` and scoped to the
+machine's current local calendar date. Live payloads and listings belong under
+`data/fotmob/live/`, remain uncompressed, and are not currently inputs to other
+medallion-layer flows. The date boundary comes from the system clock rather
+than the FotMob API timezone configuration.
+
+Avoid saying: historical scrape, latest-date scrape, today scrape.
+Related terms: Historical Scrape.
+
 ### Bronze S3 Sync
 
 An operator-invoked, date-scoped transfer of FotMob Bronze artifacts between

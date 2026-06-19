@@ -33,7 +33,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
     - FotMob-specific match marking functionality
 
     Structure:
-        data/fotmob/
+        data/fotmob/{historical|live}/
             ├── matches/
             │   └── YYYYMMDD/
             │       ├── match_4193494.json
@@ -55,11 +55,11 @@ class FotMobBronzeStorage(BaseBronzeStorage):
         """Return the data source name."""
         return "fotmob_api"
 
-    def __init__(self, base_dir: str = "data/fotmob"):
+    def __init__(self, base_dir: str = "data/fotmob/historical"):
         """Initialize FotMob Bronze storage.
 
         Args:
-            base_dir: Base directory for raw data (default: data/fotmob)
+            base_dir: One explicit Bronze aspect directory
         """
         super().__init__(base_dir)
         logger.info(f"Bronze storage initialized: {base_dir}")

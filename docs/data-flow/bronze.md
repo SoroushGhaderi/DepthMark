@@ -7,8 +7,8 @@ from the FotMob API with minimal transformation.
 
 ```text
 FotMob API
-  → data/fotmob/matches/         raw match JSON/GZIP/TAR files
-  → data/fotmob/daily_listings/  daily match listings
+  → data/fotmob/historical/      completed-date JSON/GZIP/TAR and listings
+  → data/fotmob/live/            refreshable, uncompressed current-date data
   → bronze.*                 15 ClickHouse tables
 ```
 
@@ -23,8 +23,8 @@ The scraper fetches match data from the FotMob API:
 2. **Match details** — `MatchScraper` calls `/matchDetails` for each match ID,
    returns the full JSON payload.
 3. **Storage** — `FotMobBronzeStorage` writes raw JSON to
-   `data/fotmob/matches/{YYYYMMDD}/match_{match_id}.json` and listings to
-   `data/fotmob/daily_listings/{YYYYMMDD}/matches.json`.
+   `data/fotmob/historical/matches/{YYYYMMDD}/match_{match_id}.json` and listings
+   to `data/fotmob/historical/daily_listings/{YYYYMMDD}/matches.json`.
 4. **Compression** — after a date is complete, the orchestrator compresses its
    match JSON files into `matches/{YYYYMMDD}/{YYYYMMDD}_matches.tar`. Partial
    dates remain uncompressed so they can be resumed safely.
@@ -47,7 +47,14 @@ python scripts/bronze/scrape_fotmob.py --single-date 20251208  # single date (na
 python scripts/bronze/scrape_fotmob.py --month 202512     # full month
 python scripts/bronze/scrape_fotmob.py 20251201 20251207  # date range
 python scripts/bronze/scrape_fotmob.py 20251208 --force   # re-scrape
+python scripts/bronze/scrape_fotmob.py --yesterday        # previous completed date
+python scripts/bronze/scrape_fotmob.py --today            # refresh Live data
 ```
+
+Historical selectors accept only completed machine-local dates. For the current
+month, `--month` stops at yesterday. `--today` refreshes the listing and every
+listed match under `data/fotmob/live/`, overwrites the latest snapshots
+atomically, and skips compression. Live data does not feed other layers.
 
 ### 2. S3 Sync (`scripts/bronze/sync_s3.py`)
 
