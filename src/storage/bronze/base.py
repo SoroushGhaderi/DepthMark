@@ -70,7 +70,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         """Initialize Bronze storage.
 
         Args:
-            base_dir: Base directory for raw data (e.g., data/fotmob)
+            base_dir: Explicit aspect directory (e.g., data/fotmob/historical)
         """
         self.base_dir = Path(base_dir)
         self.logger = get_logger(self.__class__.__name__)

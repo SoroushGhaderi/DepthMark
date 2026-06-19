@@ -1132,7 +1132,7 @@
         <div class="pipe-stage s-raw" data-flow-section="bronze">
             <div class="pipe-stage-label">Ingest</div>
             <div class="pipe-stage-title">FotMob API</div>
-            <div class="pipe-stage-desc">Raw JSON per match, written to disk by parallel scrapers</div>
+            <div class="pipe-stage-desc">Historical JSON and Live snapshots, fetched sequentially</div>
             <div class="pipe-stage-count">∞</div>
         </div>
         <div class="pipe-stage s-bronze" data-flow-section="bronze">
@@ -1270,7 +1270,7 @@
                 <tr><td>0</td><td>Infra</td><td>Docker services</td><td><code>docker compose up -d</code></td></tr>
                 <tr><td>1</td><td>All ClickHouse</td><td>15 bronze + 8 silver + 48 scenarios + 344 signals + <code>gold.signal_activations</code></td><td><code>python scripts/orchestration/setup_clickhouse.py</code></td></tr>
                 <tr><td>2</td><td>MongoDB</td><td>5 collections (empty indexes)</td><td><code>python scripts/mongodb/init_indexes.py</code></td></tr>
-                <tr><td>3</td><td>Bronze (disk)</td><td>Raw JSON per match</td><td><code>python scripts/bronze/scrape_fotmob.py &lt;YYYYMMDD&gt;</code></td></tr>
+                <tr><td>3</td><td>Bronze (disk)</td><td>Historical JSON or Live snapshots per match</td><td><code>python scripts/bronze/scrape_fotmob.py &lt;YYYYMMDD&gt;</code> or <code>--today</code></td></tr>
                 <tr><td>4</td><td>Bronze (CH)</td><td>15 <code>bronze.*</code> tables</td><td><code>python scripts/bronze/load_clickhouse.py --date &lt;YYYYMMDD&gt;</code></td></tr>
                 <tr><td>5</td><td>Silver</td><td>8 <code>silver.*</code> tables (full reload)</td><td><code>python scripts/silver/load_clickhouse.py</code></td></tr>
                 <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python scripts/gold/load_clickhouse_gold.py</code></td></tr>
@@ -1316,6 +1316,8 @@ python scripts/orchestration/pipeline.py --month 202512</pre>
             <pre># Bronze: ingest raw FotMob payloads
 python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/scrape_fotmob.py --yesterday
+python scripts/bronze/scrape_fotmob.py --today  # Live only; no warehouse load
 python scripts/bronze/load_clickhouse.py --date 20251208
 python scripts/bronze/load_clickhouse.py --single-date 20251208
 
@@ -1537,7 +1539,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
             <h2><span class="layer-badge bronze">Bronze</span> Source fidelity</h2>
         </div>
         <p>
-            The only filesystem-backed layer. Scrapes FotMob API payloads to disk in parallel, then
+            The only filesystem-backed layer. Scrapes FotMob API payloads to disk sequentially, then
             parses them into 15 raw ClickHouse tables via Pydantic extraction. Failed inserts land in a
             dead-letter queue — no data is silently dropped. Bronze has no business logic, typing, or joins;
             those belong in Silver. S3 archive transfer is an independent operator action and is never part
@@ -1549,7 +1551,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
     <div class="three-col">
         <div class="mini-card">
             <h4>🌐 Source</h4>
-            <p>FotMob API — one JSON payload per match, fetched in parallel via <code>ThreadPoolExecutor</code></p>
+            <p>FotMob API — one JSON payload per match, fetched sequentially to reduce rate-limit and ban risk</p>
         </div>
         <div class="mini-card">
             <h4>💾 Storage</h4>
@@ -1564,7 +1566,7 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
     <div class="diagram-card">
         <div class="card-header">
             <h3>Scraping flow</h3>
-            <div class="subtitle">FotMob API → raw JSON files on disk (parallel per match)</div>
+            <div class="subtitle">FotMob API → Historical or Live raw JSON files on disk (sequential per match)</div>
         </div>
         <div class="flow-seq">
             <div class="flow-seq-participants">
@@ -1583,17 +1585,17 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>DailyScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matches?date=YYYYMMDD</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>DailyScraper</em></span><span class="flow-seq-detail">match IDs</span></div>
                 <div class="flow-seq-loop">
-                    <div class="flow-seq-block-label">For each match (parallel ThreadPoolExecutor)</div>
+                    <div class="flow-seq-block-label">For each match (sequential FotMob-safe requests)</div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper</span><span class="flow-seq-detail">fetch match details</span></div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors"><em>MatchScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matchDetails?id=…</span></div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>MatchScraper</em></span><span class="flow-seq-detail">full JSON payload</span></div>
-                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">write matches/YYYYMMDD/match_{id}.json + daily listing</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">write historical/ or live/ matches/YYYYMMDD/match_{id}.json + daily listing</span></div>
                 </div>
             </div>
         </div>
         <div class="callout note">
             <span class="callout-icon">🔄</span>
-            <span><strong>Scrape boundary:</strong> <code>scripts/refresh_turnstile.py</code> handles token/cookie rotation when the API blocks requests. Completed dates are compressed locally after scraping; the scraper does not upload or check S3.</span>
+            <span><strong>Scrape boundary:</strong> <code>scripts/refresh_turnstile.py</code> handles token/cookie rotation when the API blocks requests. Historical completed dates are compressed locally; <code>--today</code> refreshes uncompressed Live files. The scraper does not upload or check S3.</span>
         </div>
     </div>
 
@@ -1700,6 +1702,8 @@ python scripts/bronze/sync_s3.py download --all</pre>
             <summary>▸ Bronze commands</summary>
             <pre>python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/scrape_fotmob.py --single-date 20251208
+python scripts/bronze/scrape_fotmob.py --yesterday
+python scripts/bronze/scrape_fotmob.py --today
 python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 python scripts/bronze/load_clickhouse.py --date 20251208
@@ -2220,40 +2224,26 @@ python scripts/gold/activations/build_signal_activations.py</pre>
 
     <div class="diagram-card">
         <div class="card-header">
-            <h3>Parallel scraping</h3>
-            <div class="subtitle">FotMobOrchestrator with ThreadPoolExecutor — all matches fetched concurrently</div>
+            <h3>Sequential scraping</h3>
+            <div class="subtitle">FotMobOrchestrator fetches one match at a time to protect API reliability</div>
         </div>
         <div class="flow-seq">
             <div class="flow-seq-participants">
                 <div class="flow-seq-participant">FotMobOrchestrator</div>
                 <div class="flow-seq-participant">DailyScraper</div>
-                <div class="flow-seq-participant">MatchScraper 1</div>
-                <div class="flow-seq-participant">MatchScraper 2</div>
-                <div class="flow-seq-participant">MatchScraper N</div>
+                <div class="flow-seq-participant">MatchScraper</div>
                 <div class="flow-seq-participant">FotMob API</div>
             </div>
             <div class="flow-seq-body">
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → DailyScraper</span><span class="flow-seq-detail">fetch daily listing</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>DailyScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matches</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>DailyScraper</em></span><span class="flow-seq-detail">match IDs [id1, id2, …, idN]</span></div>
-                <div class="flow-seq-par">
-                    <div class="flow-seq-block-label">Parallel fetch (ThreadPoolExecutor)</div>
-                    <div class="flow-seq-par-cols">
-                        <div class="flow-stack">
-                            <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper 1</span><span class="flow-seq-detail">match id1</span></div>
-                            <div class="flow-seq-msg"><span class="flow-seq-actors">MatchScraper 1 → FotMob API</span><span class="flow-seq-detail">GET /matchDetails</span></div>
-                        </div>
-                        <div class="flow-stack">
-                            <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper 2</span><span class="flow-seq-detail">match id2</span></div>
-                            <div class="flow-seq-msg"><span class="flow-seq-actors">MatchScraper 2 → FotMob API</span><span class="flow-seq-detail">GET /matchDetails</span></div>
-                        </div>
-                        <div class="flow-stack">
-                            <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper N</span><span class="flow-seq-detail">match idN</span></div>
-                            <div class="flow-seq-msg"><span class="flow-seq-actors">MatchScraper N → FotMob API</span><span class="flow-seq-detail">GET /matchDetails</span></div>
-                        </div>
-                    </div>
+                <div class="flow-seq-loop">
+                    <div class="flow-seq-block-label">For each match, sequentially</div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper</span><span class="flow-seq-detail">next match ID</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors">MatchScraper → FotMob API</span><span class="flow-seq-detail">GET /matchDetails</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">atomically write Historical or Live payload</span></div>
                 </div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em></span><span class="flow-seq-detail">write all to filesystem</span></div>
             </div>
         </div>
     </div>
@@ -2303,7 +2293,7 @@ python scripts/gold/activations/build_signal_activations.py</pre>
                         <div class="flow-group-label">depthmark-scraper</div>
                         <div class="flow-stack">
                             <div class="flow-node accent"><strong>Python scripts</strong></div>
-                            <div class="flow-node accent"><span class="sub">data/fotmob/</span></div>
+                            <div class="flow-node accent"><span class="sub">data/fotmob/historical/ + live/</span></div>
                             <div class="flow-node red"><span class="sub">data/dlq/</span></div>
                         </div>
                     </div>
@@ -2414,7 +2404,7 @@ docker compose exec depthmark-scraper python scripts/mongodb/init_indexes.py</pr
         </table>
         <div class="callout note">
             <span class="callout-icon">📦</span>
-            <span>Uploads build temporary <code>tar.gz</code> transfer archives and store them at <code>bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz</code>. Sync does not alter local compression state or delete canonical artifacts under <code>data/fotmob/</code>.</span>
+            <span>Uploads build temporary <code>tar.gz</code> transfer archives from <code>data/fotmob/historical/</code> and store them at <code>bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz</code>. Sync never reads <code>data/fotmob/live/</code>, alters local compression state, or deletes canonical Historical artifacts.</span>
         </div>
     </div>
 </div>
@@ -2591,8 +2581,12 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['scrape_fotmob.py', 'scrape_fotmob', '1. scrape', 'dailyscraper', 'matchscraper'],
             title: 'Bronze scrape (FotMob → disk)',
             scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py'],
-            commands: ['python scripts/bronze/scrape_fotmob.py <YYYYMMDD>'],
-            note: 'If the API blocks requests: python scripts/refresh_turnstile.py',
+            commands: [
+                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/bronze/scrape_fotmob.py --yesterday',
+                'python scripts/bronze/scrape_fotmob.py --today',
+            ],
+            note: '--today writes refreshable Live data only. If the API blocks requests: python scripts/refresh_turnstile.py',
             sectionTab: 'bronze',
         },
         {
@@ -2724,6 +2718,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py', 'scripts/refresh_turnstile.py'],
             commands: [
                 'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/bronze/scrape_fotmob.py --today',
                 'python scripts/refresh_turnstile.py',
             ],
             sectionTab: 'bronze',
@@ -2746,9 +2741,14 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             paths: [
                 'data/fotmob/historical/matches/<YYYYMMDD>/match_<match_id>.json[.gz]',
                 'data/fotmob/historical/daily_listings/<YYYYMMDD>/matches.json',
+                'data/fotmob/live/matches/<YYYYMMDD>/match_<match_id>.json',
+                'data/fotmob/live/daily_listings/<YYYYMMDD>/matches.json',
             ],
-            commands: ['python scripts/bronze/scrape_fotmob.py <YYYYMMDD>'],
-            note: 'Written by the scraper; consumed by bronze/load_clickhouse.py.',
+            commands: [
+                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/bronze/scrape_fotmob.py --today',
+            ],
+            note: 'Only Historical files are consumed by bronze/load_clickhouse.py and S3 sync.',
             sectionTab: 'bronze',
         },
         {
@@ -2773,6 +2773,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             sql: ['clickhouse/bronze/ddl/'],
             commands: [
                 'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/bronze/scrape_fotmob.py --today',
                 'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
             ],
             sectionTab: 'bronze',
@@ -2849,6 +2850,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             ],
             commands: [
                 'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python scripts/bronze/scrape_fotmob.py --today',
                 'python scripts/gold/load_clickhouse_gold.py',
                 'python scripts/mongodb/sync_signal_catalogs.py',
             ],
@@ -3192,7 +3194,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         { title: 'Pipeline modes', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'single date range month bronze-only silver-only gold-only' },
         { title: 'Skip flags', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'skip-fotmob skip-bronze skip-clickhouse skip-silver skip-gold' },
         { title: 'Failure recovery', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'recovery failure scraping bronze silver signal scenario activation catalog sync' },
-        { title: 'Parallel scraping', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'threadpoolexecutor parallel fotmorchestrator concurrent matchscraper' },
+        { title: 'Sequential scraping', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'sequential fotmoborchestrator rate limit matchscraper live historical today' },
         // Infrastructure
         { title: 'Service layout', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'docker compose depthmark-clickhouse depthmark-mongodb depthmark-scraper depthmark_network 8123 9000 27017' },
         { title: 'Bootstrap sequence', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'setup_clickhouse init_indexes docker-compose first time setup ddl' },

@@ -11,7 +11,8 @@ architecture:
 
 ```text
 FotMob API
-  -> data/fotmob/          raw Bronze files
+  -> data/fotmob/historical/  completed-date Bronze files
+  -> data/fotmob/live/        current-date Live snapshots
   -> bronze.*              raw warehouse tables
   -> silver.*              cleaned analytical tables
   -> gold_scenarios.*      scenario outputs
@@ -51,7 +52,7 @@ Subsystem contracts live next to the code they govern, such as
 DepthMark/
   clickhouse/             ClickHouse DDL/DML by layer (gold uses ddl/ + dml/)
   config/                 Python configuration modules
-  data/fotmob/            raw Bronze files
+  data/fotmob/            Historical and Live raw Bronze aspects
   docker/                 Dockerfile, entrypoint; root docker-compose.yml is the main stack
   docs/                   project-wide architecture and contracts
   scripts/                operational entry points

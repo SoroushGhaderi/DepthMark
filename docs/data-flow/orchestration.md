@@ -70,14 +70,18 @@ Pipeline calls each layer script through CLI subprocesses (ADR 0002):
 
 ## Orchestrator (`src/orchestrator.py`)
 
-The `FotMobOrchestrator` handles parallel scraping:
+The `FotMobOrchestrator` handles sequential scraping:
 
-1. **Parallel scraping** — `ThreadPoolExecutor` fetches multiple matches
-   concurrently.
+1. **Sequential scraping** — fetches one match at a time to reduce FotMob
+   rate-limit and ban risk.
 2. **Daily listing** — Fetches match IDs for the target date.
 3. **Match detail** — Fetches full payloads for each match.
 4. **Turnstile refresh** — Handles token rotation when needed.
 5. **Health checks** — Validates storage and API connectivity before scraping.
+
+The warehouse pipeline operates on Historical dates only. Live scraping is an
+independent `scrape_fotmob.py --today` journey and does not invoke Bronze
+loading, Silver, Gold, or S3 sync.
 
 ## Preflight Checks
 

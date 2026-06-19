@@ -13,7 +13,6 @@ their CLI behavior, dry-run semantics, and exit-code contract.
 Use these paths for new automation and daily runs:
 
 - `scripts/bronze/scrape_fotmob.py`
-- `scripts/bronze/migrate_fotmob_storage.py`
 - `scripts/bronze/sync_s3.py`
 - `scripts/bronze/load_clickhouse.py`
 - `scripts/bronze/drop_clickhouse.py`
@@ -52,14 +51,6 @@ dates, ranges, `--month`, and `--yesterday` write Historical data. `--today`
 always refreshes Live listings and match payloads and never compresses them.
 Historical selectors reject today and future dates; a current-month scope ends
 at yesterday.
-
-Before first use of this layout, migrate the legacy directories with a dry-run
-followed by the explicit apply command:
-
-```bash
-python scripts/bronze/migrate_fotmob_storage.py
-python scripts/bronze/migrate_fotmob_storage.py --apply
-```
 
 ### Dry-Run Support
 

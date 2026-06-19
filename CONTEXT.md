@@ -148,7 +148,8 @@ Related terms: Signal Catalog.
 
 ### Bronze Retention
 
-Bronze filesystem files (`data/fotmob/`) are retained indefinitely by default.
+Historical and Live Bronze filesystem files beneath `data/fotmob/` are retained
+indefinitely by default.
 Cleanup of raw match files, daily listings, and compressed archives is
 operator-initiated and manual only. No automated deletion scripts or TTL
 mechanisms apply to Bronze filesystem artifacts. Before deleting, the operator

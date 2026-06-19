@@ -38,7 +38,7 @@ Key classes:
 - `BaseScraper` — retry, rate limiting, health checks
 - `MatchScraper(BaseScraper)` — match detail fetching
 - `DailyScraper(BaseScraper)` — daily listing fetching
-- `FotMobOrchestrator` — parallel scraping with `ThreadPoolExecutor`
+- `FotMobOrchestrator` — sequential match scraping to limit FotMob request risk
 
 CLI arguments:
 ```bash
