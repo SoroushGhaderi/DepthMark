@@ -49,7 +49,8 @@ source table and includes:
 - `signal_instance_id`;
 - `signal_id_version`;
 - parsed signal taxonomy fields from `signal_id`;
-- common match, team, opponent, player, and score context when present;
+- common match, kickoff, league, venue, team, opponent, player, and score
+  context when present;
 - match-level activation summary fields previously held in
   `gold.signal_activations_match`;
 - `source_table`;

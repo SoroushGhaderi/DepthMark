@@ -25,7 +25,7 @@ from ...models import (
     TeamCoach,
     TeamFormMatch,
 )
-from ...utils.fotmob_validator import FotMobValidator, ResponseSaver, SafeFieldExtractor
+from ...utils.fotmob_validator import FotMobValidator, SafeFieldExtractor
 from ...utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -115,9 +115,6 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
         self,
         validator: Optional[FotMobValidator] = None,
         extractor: Optional[SafeFieldExtractor] = None,
-        response_saver: Optional[ResponseSaver] = None,
-        save_responses: bool = True,
-        response_output_dir: str = "data/validated_responses",
     ):
         """
         Initialize the match processor with dependency injection.
@@ -127,26 +124,11 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                 If None, creates a default instance.
             extractor: SafeFieldExtractor instance for safe field access.
                 If None, creates a default instance.
-            response_saver: ResponseSaver instance for saving invalid responses.
-                If None and save_responses is True, creates a default instance.
-            save_responses: If True, save invalid responses to JSON for debugging.
-                Ignored if response_saver is explicitly provided.
-            response_output_dir: Directory to save invalid response snapshots.
-                Only used if response_saver is None and save_responses is True.
         """
         self.logger = logger
         self.validator = validator or FotMobValidator()
         self.extractor = extractor or SafeFieldExtractor()
-        self.save_responses = save_responses
         self._processed_match_count = 0
-
-        # Handle response_saver with backward compatibility
-        if response_saver is not None:
-            self.response_saver = response_saver
-        elif save_responses:
-            self.response_saver = ResponseSaver(response_output_dir)
-        else:
-            self.response_saver = None
 
     @staticmethod
     def _split_full_score(full_score: Optional[str]) -> Tuple[Optional[int], Optional[int]]:
@@ -335,16 +317,6 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     self.logger.error(f"  - {error}")
             else:
                 self.logger.debug(f"[OK] Validation passed for match {match_id}")
-
-        # Save invalid responses for debugging if enabled
-        if self.save_responses and self.response_saver:
-            try:
-                if validation_summary and not validation_summary["is_valid"]:
-                    self.response_saver.save_invalid_response(
-                        raw_response, str(match_id), validation_summary, source="fotmob"
-                    )
-            except Exception as e:
-                self.logger.error(f"Failed to save response for match {match_id}: {e}")
 
         # Process data
         self.logger.debug("Processing match payload", match_id=match_id)
@@ -1107,12 +1079,18 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     "team_id": player_data_raw.get("teamId"),
                     "team_name": player_data_raw.get("teamName"),
                     "is_goalkeeper": player_data_raw.get("isGoalkeeper", False),
-                    "fun_facts": [
-                        fact.get("fallback")
-                        for fact in player_data_raw.get("funFacts", [])
-                        if isinstance(fact, dict)
-                    ],
                 }
+                fun_facts = []
+                for fact in player_data_raw.get("funFacts", []):
+                    if not isinstance(fact, dict):
+                        continue
+                    fallback = fact.get("fallback")
+                    if isinstance(fallback, str):
+                        cleaned_fallback = fallback.strip()
+                        if cleaned_fallback:
+                            fun_facts.append(cleaned_fallback)
+                if fun_facts:
+                    flat_data["fun_facts"] = fun_facts
                 for group in player_data_raw.get("stats", []):
                     if not isinstance(group, dict):
                         continue

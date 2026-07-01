@@ -316,8 +316,7 @@ Creation flow:
    - `signal_id_version = 'v1'`
    - parsed signal metadata from `signal_id` pattern (`signal_prefix`, `signal_entity`,
      `signal_family`, `signal_subfamily`, `signal_name`, `signal_tags`)
-   - common fixture/team/player context when available from the source signal
-     table
+   - common fixture, league, venue, team, and player context when available
    - source signal row details in `source_row_json` and `source_row_columns`
 6. The same `gold.signal_activations` row also carries match-level summary
    fields that previously lived in `gold.signal_activations_match`, including

@@ -252,19 +252,21 @@ def _identity_fields(row_identity: list[str]) -> list[str]:
     return ["match_id", *row_identity]
 
 
-def _hash_component_expr(column_name: str) -> str:
+def _hash_component_expr(column_name: str, table_alias: str = "") -> str:
     safe_col = _validate_identifier(column_name, "column name")
-    return f"coalesce(toString({safe_col}), '')"
+    qualified_col = f"{table_alias}.{safe_col}" if table_alias else safe_col
+    return f"coalesce(toString({qualified_col}), '')"
 
 
-def _source_row_json_expr(available_columns: set[str]) -> str:
+def _source_row_json_expr(available_columns: set[str], table_alias: str = "") -> str:
     """Return a JSON object expression preserving source column names and JSON values."""
     json_parts = []
     for column in sorted(available_columns):
         safe_col = _validate_identifier(column, "column name")
+        qualified_col = f"{table_alias}.{safe_col}" if table_alias else safe_col
         json_key = column.replace("\\", "\\\\").replace('"', '\\"')
         json_parts.append(
-            f"""concat('"{json_key}":', if(isNull({safe_col}), 'null', toJSONString({safe_col})))"""
+            f"""concat('"{json_key}":', if(isNull({qualified_col}), 'null', toJSONString({qualified_col})))"""
         )
     return "concat('{', arrayStringConcat([" + ", ".join(json_parts) + "], ','), '}')"
 
@@ -289,11 +291,14 @@ def _activation_insert_sql(
     safe_source_database = _validate_identifier(source_database, "source database")
     safe_signal_table = _validate_identifier(catalog.signal_id, "table")
     stage_table = _stage_table_name()
+    source_alias = "sig"
+    match_reference_alias = "mr"
+    venue_alias = "venue"
 
     def optional_col(column: str, cast_type: str) -> str:
         safe_col = _validate_identifier(column, "column name")
         if column in available_columns:
-            return safe_col
+            return f"{source_alias}.{safe_col}"
         return f"CAST(NULL, '{cast_type}')"
 
     key_fields = _identity_fields(catalog.row_identity)
@@ -307,11 +312,11 @@ def _activation_insert_sql(
     key_expr_parts = [
         f"'{SIGNAL_ID_VERSION}'",
         f"'{catalog.signal_id}'",
-        *[_hash_component_expr(field) for field in key_fields],
+        *[_hash_component_expr(field, source_alias) for field in key_fields],
     ]
     key_expr = ", '|', ".join(key_expr_parts)
     signal_instance_expr = (
-        "signal_instance_id"
+        f"{source_alias}.signal_instance_id"
         if "signal_instance_id" in available_columns
         else f"lower(hex(SHA256(concat({key_expr}))))"
     )
@@ -330,12 +335,36 @@ def _activation_insert_sql(
         signal_tags,
         match_id,
         match_date,
+        match_kickoff_utc,
+        match_round,
+        coverage_level,
+        country_code,
+        league_id,
+        league_name,
+        league_round_name,
+        parent_league_id,
+        parent_league_name,
+        parent_league_season,
+        parent_league_tournament_id,
+        match_started,
+        match_finished,
+        full_score,
         home_team_id,
         home_team_name,
         away_team_id,
         away_team_name,
         home_score,
         away_score,
+        stadium_name,
+        stadium_city,
+        stadium_country,
+        stadium_latitude,
+        stadium_longitude,
+        stadium_capacity,
+        stadium_surface,
+        attendance,
+        referee_name,
+        referee_country,
         triggered_side,
         triggered_team_id,
         triggered_team_name,
@@ -358,14 +387,42 @@ def _activation_insert_sql(
         {_sql_string_literal(catalog.signal_subfamily)} AS signal_subfamily,
         {_sql_string_literal(catalog.signal_name)} AS signal_name,
         {_sql_array_literal(catalog.signal_tags)} AS signal_tags,
-        toInt32(match_id) AS match_id,
+        toInt32({source_alias}.match_id) AS match_id,
         toDate({match_date_expr}) AS match_date,
+        parseDateTime64BestEffortOrNull(
+            coalesce(nullIf({match_reference_alias}.match_time_utc, ''), nullIf({venue_alias}.match_date_utc, '')),
+            3,
+            'UTC'
+        ) AS match_kickoff_utc,
+        {match_reference_alias}.match_round AS match_round,
+        {match_reference_alias}.coverage_level AS coverage_level,
+        {match_reference_alias}.country_code AS country_code,
+        {match_reference_alias}.league_id AS league_id,
+        {match_reference_alias}.league_name AS league_name,
+        {match_reference_alias}.league_round_name AS league_round_name,
+        {match_reference_alias}.parent_league_id AS parent_league_id,
+        {match_reference_alias}.parent_league_name AS parent_league_name,
+        {match_reference_alias}.parent_league_season AS parent_league_season,
+        {match_reference_alias}.parent_league_tournament_id AS parent_league_tournament_id,
+        {match_reference_alias}.match_started AS match_started,
+        {match_reference_alias}.match_finished AS match_finished,
+        {match_reference_alias}.full_score AS full_score,
         toNullable(toInt32({optional_col('home_team_id', 'Nullable(Int32)')})) AS home_team_id,
         toNullable(toString({optional_col('home_team_name', 'Nullable(String)')})) AS home_team_name,
         toNullable(toInt32({optional_col('away_team_id', 'Nullable(Int32)')})) AS away_team_id,
         toNullable(toString({optional_col('away_team_name', 'Nullable(String)')})) AS away_team_name,
         toNullable(toInt32({optional_col('home_score', 'Nullable(Int32)')})) AS home_score,
         toNullable(toInt32({optional_col('away_score', 'Nullable(Int32)')})) AS away_score,
+        {venue_alias}.stadium_name AS stadium_name,
+        {venue_alias}.stadium_city AS stadium_city,
+        {venue_alias}.stadium_country AS stadium_country,
+        {venue_alias}.stadium_latitude AS stadium_latitude,
+        {venue_alias}.stadium_longitude AS stadium_longitude,
+        {venue_alias}.stadium_capacity AS stadium_capacity,
+        {venue_alias}.stadium_surface AS stadium_surface,
+        {venue_alias}.attendance AS attendance,
+        {venue_alias}.referee_name AS referee_name,
+        {venue_alias}.referee_country AS referee_country,
         toNullable(toString({optional_col('triggered_side', 'Nullable(String)')})) AS triggered_side,
         toNullable(toInt32({optional_col('triggered_team_id', 'Nullable(Int32)')})) AS triggered_team_id,
         toNullable(toString({optional_col('triggered_team_name', 'Nullable(String)')})) AS triggered_team_name,
@@ -374,12 +431,17 @@ def _activation_insert_sql(
         toNullable(toInt32({optional_col('opponent_team_id', 'Nullable(Int32)')})) AS opponent_team_id,
         toNullable(toString({optional_col('opponent_team_name', 'Nullable(String)')})) AS opponent_team_name,
         '{catalog.signal_id}' AS source_table,
-        {_source_row_json_expr(available_columns)} AS source_row_json,
+        {_source_row_json_expr(available_columns, source_alias)} AS source_row_json,
         {_sql_array_literal(sorted(available_columns))} AS source_row_columns,
         now() AS inserted_at
-    FROM {safe_source_database}.{safe_signal_table}
-    WHERE match_id > 0
+    FROM {safe_source_database}.{safe_signal_table} AS {source_alias}
+    LEFT JOIN bronze.match_reference AS {match_reference_alias}
+        ON {match_reference_alias}.match_id = {source_alias}.match_id
+    LEFT JOIN bronze.venue AS {venue_alias}
+        ON {venue_alias}.match_id = {source_alias}.match_id
+    WHERE {source_alias}.match_id > 0
       AND {match_date_expr} IS NOT NULL
+    SETTINGS join_use_nulls = 1
     """
 
 

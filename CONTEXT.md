@@ -85,8 +85,8 @@ Related terms: Bronze Layer, Bronze Retention.
 
 A Gold serving fact row that records one triggered signal output row for one
 match, team, or player occurrence. It includes stable activation identity,
-signal catalog metadata, common fixture/team/player context, match-level
-activation summary fields, and a JSON payload copied from the source
+signal catalog metadata, common fixture, league, venue, team, and player
+context, match-level activation summary fields, and a JSON payload copied from the source
 `gold_signals.sig_*` row.
 
 Related terms: Signal, Signal Catalog, Signal Activation ID.

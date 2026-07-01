@@ -145,7 +145,8 @@ Key fields in `gold.signal_activations`:
 - `signal_instance_id` — deterministic identity hash
 - `signal_id_version` — identity scheme version (`v1`)
 - `signal_id`, `signal_entity`, `signal_family`, `signal_subfamily`
-- `match_id`, `team_id`, `player_id` — context fields
+- `match_id`, `match_kickoff_utc`, `league_name`, `stadium_name`,
+  `triggered_team_id`, `triggered_player_id` — context fields
 - `source_row_json` — full source signal row
 - `activated_signal_instance_ids` — match-level summary array
 - `unique_signal_count` — distinct signal count per match
