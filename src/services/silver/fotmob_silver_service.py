@@ -29,7 +29,7 @@ class SilverService:
     """Coordinates FotMob Silver layer execution in ClickHouse.
 
     Owns: SQL directory discovery, SQL file discovery and deduplication,
-    SQL execution and table optimization, layer contract assertion.
+    SQL execution and table refresh, layer contract assertion.
 
     Does NOT own Silver analytical logic (that lives in SQL files).
     """
@@ -96,7 +96,7 @@ class SilverService:
         target_table: str,
         dry_run: bool = False,
     ) -> int:
-        """Execute one silver load SQL file and optimize its target table. Returns exit code."""
+        """Execute one silver load SQL file and refresh its target table."""
         if not sql_file.exists():
             logger.error("Load SQL file not found: %s", sql_file)
             return 1
@@ -109,9 +109,9 @@ class SilverService:
 
         if dry_run:
             logger.info(
-                "[dry-run] Would execute %s SQL statement(s) and optimize %s using %s",
-                len(statements),
+                "[dry-run] Would truncate %s, execute %s SQL statement(s), and refresh using %s",
                 target_table,
+                len(statements),
                 sql_file.name,
             )
             return 0
@@ -119,14 +119,14 @@ class SilverService:
         if self.client is None:
             raise RuntimeError("ClickHouse client is required for SQL execution")
 
+        # Silver is rebuilt from the full Bronze snapshot, so refresh by replacement.
+        self.client.execute(f"TRUNCATE TABLE {target_table}")
         execute_sql_statements(
             client=self.client,
             statements=statements,
             layer_name="silver_load",
             source_name=sql_file.name,
         )
-
-        self.client.execute(f"OPTIMIZE TABLE {target_table} FINAL DEDUPLICATE")
         return 0
 
     def run_load_jobs(self, dry_run: bool = False) -> tuple[int, int, int]:

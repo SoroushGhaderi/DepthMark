@@ -47,8 +47,8 @@ python scripts/silver/load_clickhouse.py --dry-run # preview only
 
 Each DML script is an `INSERT...SELECT` that:
 1. Reads from one or more `bronze.*` tables.
-2. Casts types, standardizes keys, deduplicates.
-3. Writes to the target `silver.*` table.
+2. Casts types and standardizes keys.
+3. Refreshes the target `silver.*` table with a full-table replacement.
 
 The Silver service (`src/services/silver/`) coordinates:
 - SQL file discovery by prefix (`01_*.sql` through `08_*.sql`)
@@ -61,14 +61,17 @@ The Silver service (`src/services/silver/`) coordinates:
 - All 8 tables exist.
 - Required columns are present with correct types.
 - Row counts are non-zero after a full load.
+- Duplicate business keys are treated as a load failure.
 
 ## Key Design Decisions
 
 - **SQL owns transformation logic.** Python orchestrates and executes, but all
   cleaning, typing, and joining logic lives in ClickHouse SQL.
 - **Full-table reloads.** Silver does not support date-scoped incremental
-  loads — it rebuilds from the full Bronze dataset.
-- **Deterministic and rerunnable.** Each DML script is idempotent.
+  loads — it rebuilds from the full Bronze dataset and truncates each target
+  table before inserting the fresh snapshot.
+- **Deterministic and rerunnable.** Each DML script is idempotent because the
+  previous table contents are removed before the new load lands.
 
 ## Failure Modes
 

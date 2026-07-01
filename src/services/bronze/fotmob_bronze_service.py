@@ -390,9 +390,17 @@ def validate_and_fix_schema(
                     nullable_int_cols.append(col_name)
                 elif "Float" in col_type:
                     nullable_float_cols.append(col_name)
+                elif col_name == "fun_facts":
+                    df.loc[:, col_name] = df[col_name].apply(
+                        lambda value: [] if value is None or (isinstance(value, float) and pd.isna(value)) else value
+                    )
                 elif "String" in col_type:
                     nullable_string_cols.append(col_name)
             elif col_name in df.columns:
+                if col_name == "fun_facts":
+                    df.loc[:, col_name] = df[col_name].apply(
+                        lambda value: [] if value is None or (isinstance(value, float) and pd.isna(value)) else value
+                    )
                 if "UInt" in col_type:
                     non_nullable_uint_cols.append(col_name)
                 elif "Int" in col_type:

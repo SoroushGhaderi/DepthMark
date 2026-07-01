@@ -47,7 +47,7 @@ ephemeral `gold.signal_activations_stage`, then drops that table after the
 serving table is populated. The serving table includes:
 
 - stable identity and signal catalog metadata
-- common fixture/team/player context when present
+- common fixture, league, venue, team, and player context when present
 - `source_row_json`, a JSON copy of the source `gold_signals.sig_*` row
 - `source_row_columns`, the ordered source payload column names
 - match-level summary fields repeated on each activation row

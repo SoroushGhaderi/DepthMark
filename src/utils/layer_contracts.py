@@ -230,11 +230,10 @@ def assert_silver_layer_contracts(
         row_count = int(result.result_rows[0][0]) if result.result_rows else 0
         unique_count = int(result.result_rows[0][1]) if result.result_rows else 0
         if row_count > unique_count:
-            log.warning(
-                "Silver table has duplicate key rows (expected for replacing engines until final dedup)",
-                table=f"{db}.{table}",
-                duplicate_rows=row_count - unique_count,
-                key_columns=keys,
+            duplicate_rows = row_count - unique_count
+            raise LayerContractError(
+                f"Silver contract failed for {db}.{table}: {duplicate_rows} duplicate key rows "
+                f"for key columns {keys}"
             )
 
 
@@ -364,12 +363,42 @@ def assert_gold_activation_contracts(
         "signal_id_version",
         "match_id",
         "match_date",
+        "match_kickoff_utc",
+        "match_round",
+        "coverage_level",
+        "country_code",
+        "league_id",
+        "league_name",
+        "league_round_name",
+        "parent_league_id",
+        "parent_league_name",
+        "parent_league_season",
+        "parent_league_tournament_id",
+        "match_started",
+        "match_finished",
+        "full_score",
         "match_activation_instance_id",
         "activated_signal_instance_ids",
         "total_signal_rows",
         "unique_signal_count",
         "source_table",
         "source_row_json",
+        "home_team_id",
+        "home_team_name",
+        "away_team_id",
+        "away_team_name",
+        "home_score",
+        "away_score",
+        "stadium_name",
+        "stadium_city",
+        "stadium_country",
+        "stadium_latitude",
+        "stadium_longitude",
+        "stadium_capacity",
+        "stadium_surface",
+        "attendance",
+        "referee_name",
+        "referee_country",
     }
     columns = set(_list_table_columns(client, database=db, table=table))
     missing_columns = sorted(required_columns - columns)
