@@ -68,10 +68,10 @@ tables. The grouped signal DDL files use `DROP TABLE IF EXISTS` before each
 column. Operators should recreate the Gold signal tables and repopulate them
 through the Gold signal jobs.
 
-Activation rebuilds remain full-table rebuilds as accepted in ADR 0011. The
-builder may stage rows before replacing `gold.signal_activations`, but it must
-not introduce date-scoped or partition-scoped activation rebuilds without a
-future ADR defining safe replacement semantics.
+At the time of this decision, activation rebuilds remained full-table rebuilds
+under ADR 0011. ADR 0018 now supersedes that execution rule for date and month
+runs by defining staged, partition-safe replacement; explicit full-history
+runs still exchange the complete serving table.
 
 ## Consequences
 

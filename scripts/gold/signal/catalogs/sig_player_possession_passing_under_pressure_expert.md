@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_under_pressure_expert
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_under_pressure_expert.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_possession_passing_under_pressure_expert
 
@@ -38,13 +38,13 @@ Flags players who keep elite pass accuracy under sustained opponent pressure, is
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_under_pressure_expert.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_under_pressure_expert`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_under_pressure_expert
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_under_pressure_expert
 ```
 
 ## Output Schema

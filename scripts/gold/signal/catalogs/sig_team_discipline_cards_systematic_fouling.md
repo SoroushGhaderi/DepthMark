@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_systematic_fouling
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_systematic_fouling.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_discipline_cards_systematic_fouling
 
@@ -33,13 +33,13 @@ Flags match-team cases where caution pressure is spread across the entire starti
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_systematic_fouling.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_discipline_cards_systematic_fouling`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_systematic_fouling
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_systematic_fouling
 ```
 
 ## Output Schema

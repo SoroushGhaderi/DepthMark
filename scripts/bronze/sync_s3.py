@@ -2,10 +2,10 @@
 """Upload or download FotMob Bronze artifacts independently of scraping.
 
 Examples:
-    python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-    python scripts/bronze/sync_s3.py upload --month 202512
-    python scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
-    python scripts/bronze/sync_s3.py download --all
+    python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+    python3 scripts/bronze/sync_s3.py upload --month 202512
+    python3 scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
+    python3 scripts/bronze/sync_s3.py download --all
 """
 
 import argparse

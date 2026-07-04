@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_passive_defender
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_passive_defender.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_goalkeeping_defense_passive_defender
 
@@ -43,13 +43,13 @@ Flags full-match defender appearances with no tackles won and no interceptions u
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_passive_defender.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_passive_defender`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_goalkeeping_defense_passive_defender
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_passive_defender
 ```
 
 ## Output Schema

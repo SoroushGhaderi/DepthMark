@@ -55,7 +55,7 @@ grants a narrow exception.
 Shared execution infrastructure (job discovery, resolution, execution) lives in
 `src/services/gold/gold_dml_runner.py`, extracted from the former
 `scripts/gold/sql_jobs.py`. This module is imported by both `GoldService` and the
-standalone `run_sql_job.py` entry point.
+standalone `run_gold_sql_jobs.py` entry point.
 
 ## Consequences
 

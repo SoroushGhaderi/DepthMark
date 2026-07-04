@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_the_brace_battle
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_the_brace_battle.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_shooting_goals_the_brace_battle
 
@@ -35,13 +35,13 @@ Detect finished matches where each team has a different brace scorer, then emit 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_the_brace_battle.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_match_shooting_goals_the_brace_battle`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_the_brace_battle
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_the_brace_battle
 ```
 
 ## Output Schema

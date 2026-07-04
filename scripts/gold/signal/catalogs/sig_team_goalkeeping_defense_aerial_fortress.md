@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_goalkeeping_defense_aerial_fortress
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_aerial_fortress.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_goalkeeping_defense_aerial_fortress
 
@@ -45,13 +45,13 @@ match aerial duels, then preserve bilateral defensive-pressure, control, and out
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_aerial_fortress.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_aerial_fortress`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_goalkeeping_defense_aerial_fortress
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_aerial_fortress
 ```
 
 ## Output Schema

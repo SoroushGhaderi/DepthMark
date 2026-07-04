@@ -43,9 +43,20 @@ load_local_env_files()
 def is_local_development_environment() -> bool:
     """Return whether local-only development credentials are allowed."""
     environment = (
-        os.getenv("DEPTHMARK_ENV") or os.getenv("ENVIRONMENT") or os.getenv("SCRAPER_ENV") or ""
+        os.getenv("DEPTHMARK_ENV")
+        or os.getenv("ENVIRONMENT")
+        or os.getenv("SCRAPER_ENV")
+        or ""
     ).strip()
-    return environment.lower() in LOCAL_ENVIRONMENT_VALUES
+    if environment.lower() in LOCAL_ENVIRONMENT_VALUES:
+        return True
+
+    try:
+        settings = get_settings()
+    except Exception:
+        return False
+
+    return settings.environment.value in LOCAL_ENVIRONMENT_VALUES
 
 
 def validate_clickhouse_credentials(username: str, password: str) -> None:

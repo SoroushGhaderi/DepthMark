@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_midfield_engine_vision
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_midfield_engine_vision.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_creativity_playmaking_midfield_engine_vision
 
@@ -45,13 +45,13 @@ then preserve bilateral context for chance quality, passing execution, and attac
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_midfield_engine_vision.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_midfield_engine_vision`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_creativity_playmaking_midfield_engine_vision
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_midfield_engine_vision
 ```
 
 ## Output Schema

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_keeper_distributor
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_keeper_distributor.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_possession_passing_keeper_distributor
 
@@ -34,13 +34,13 @@ Triggers when a goalkeeper records high short-distribution completion volume (`>
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_keeper_distributor.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_keeper_distributor`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_keeper_distributor
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_keeper_distributor
 ```
 
 ## Output Schema

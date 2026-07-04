@@ -118,6 +118,22 @@ stability rules in DepthMark. The canonical command list lives in
 4. Script summaries should be deterministic and comparable across runs.
 5. Backward compatibility is the default for script arguments and outputs.
 
+### Warehouse Execution Scopes
+
+1. Silver, Gold, Gold SQL-job, and activation entry points require exactly one
+   of `--date YYYYMMDD`, `--month YYYYMM`, or `--full-history`.
+2. `--single-date` remains a backward-compatible alias for `--date`.
+3. A scoped run replaces only rows whose match-date lineage is inside its
+   output scope. `inserted_at` is never scope lineage.
+4. Jobs may read all available history to preserve contextual calculations
+   while replacing only the selected output scope.
+5. Scoped derived loads stage and validate all selected outputs before commits.
+   Date runs reconstruct the containing month with `REPLACE PARTITION`; month
+   runs replace that month; full-history runs use staged table exchange.
+6. Dry-run performs no ClickHouse writes, subprocess execution, notifications,
+   or other state mutation. It reports context, output scope, selected tables,
+   exclusions, and planned operations.
+
 ## Data Safety
 
 1. Do not change schema semantics unintentionally.

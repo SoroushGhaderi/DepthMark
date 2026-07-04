@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_impossible_angle
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impossible_angle.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_shooting_goals_impossible_angle
 
@@ -41,13 +41,13 @@ Detects match-player events where a player scores from an ultra-low-probability 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impossible_angle.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_shooting_goals_impossible_angle`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_impossible_angle
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_impossible_angle
 ```
 
 ## Output Schema

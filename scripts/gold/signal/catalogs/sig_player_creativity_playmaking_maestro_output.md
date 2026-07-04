@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_creativity_playmaking_maestro_output
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_maestro_output.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_creativity_playmaking_maestro_output
 
@@ -36,13 +36,13 @@ Flags player performances with high-volume chance creation (`>= 5` key passes) t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_maestro_output.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_maestro_output`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_creativity_playmaking_maestro_output
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_maestro_output
 ```
 
 ## Output Schema

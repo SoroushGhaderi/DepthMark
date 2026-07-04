@@ -23,11 +23,11 @@ def parse_arguments() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python scripts/health_check.py
-  python scripts/health_check.py --no-clickhouse
-  python scripts/health_check.py --storage-only
-  python scripts/health_check.py --storage data data/fotmob
-  python scripts/health_check.py --json
+  python3 scripts/health_check.py
+  python3 scripts/health_check.py --no-clickhouse
+  python3 scripts/health_check.py --storage-only
+  python3 scripts/health_check.py --storage data data/fotmob
+  python3 scripts/health_check.py --json
         """,
     )
     parser.add_argument(

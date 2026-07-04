@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_end_to_end_drama
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_end_to_end_drama.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_shooting_goals_end_to_end_drama
 
@@ -36,13 +36,13 @@ Flag high-volatility matches where each side scores in both halves, then expose 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_end_to_end_drama.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_match_shooting_goals_end_to_end_drama`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_end_to_end_drama
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_end_to_end_drama
 ```
 
 ## Output Schema

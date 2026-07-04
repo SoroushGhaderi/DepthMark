@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_the_tap_in_merchant
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_the_tap_in_merchant.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_shooting_goals_the_tap_in_merchant
 
@@ -35,13 +35,13 @@ Flags multi-goal player outputs (`goals >= 2`) built on high individual chance q
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_the_tap_in_merchant.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_shooting_goals_the_tap_in_merchant`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_the_tap_in_merchant
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_the_tap_in_merchant
 ```
 
 ## Output Schema

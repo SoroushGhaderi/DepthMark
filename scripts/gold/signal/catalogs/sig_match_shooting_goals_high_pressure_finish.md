@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_high_pressure_finish
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_pressure_finish.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_shooting_goals_high_pressure_finish
 
@@ -32,13 +32,13 @@ Detect matches that turn into late two-sided shot pressure (10+ combined attempt
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_pressure_finish.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_match_shooting_goals_high_pressure_finish`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_high_pressure_finish
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_high_pressure_finish
 ```
 
 ## Output Schema

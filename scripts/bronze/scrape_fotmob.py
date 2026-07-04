@@ -6,19 +6,19 @@ PURPOSE: Scrapes raw match data from FotMob API and saves to Bronze layer.
 
 Usage:
     # Single date
-    python scripts/bronze/scrape_fotmob.py 20250108
+    python3 scripts/bronze/scrape_fotmob.py 20250108
 
     # Date range (start and end)
-    python scripts/bronze/scrape_fotmob.py 20250101 20250107
+    python3 scripts/bronze/scrape_fotmob.py 20250101 20250107
 
     # Date range (start + number of days)
-    python scripts/bronze/scrape_fotmob.py 20250101 --days 7
+    python3 scripts/bronze/scrape_fotmob.py 20250101 --days 7
 
     # Monthly scraping
-    python scripts/bronze/scrape_fotmob.py --month 202511
+    python3 scripts/bronze/scrape_fotmob.py --month 202511
 
     # With options
-    python scripts/bronze/scrape_fotmob.py 20250108 --force --debug
+    python3 scripts/bronze/scrape_fotmob.py 20250108 --force --debug
 """
 
 import argparse
@@ -132,21 +132,21 @@ def create_argument_parser() -> argparse.ArgumentParser:
         epilog="""
 Examples:
   Single Date:
-    python scripts/bronze/scrape_fotmob.py 20250108                   # Scrape Jan 8, 2025
-    python scripts/bronze/scrape_fotmob.py 20250108 --force --debug   # Force + debug mode
+    python3 scripts/bronze/scrape_fotmob.py 20250108                   # Scrape Jan 8, 2025
+    python3 scripts/bronze/scrape_fotmob.py 20250108 --force --debug   # Force + debug mode
 
   Date Range:
-    python scripts/bronze/scrape_fotmob.py 20250101 20250107          # Scrape Jan 1-7
-    python scripts/bronze/scrape_fotmob.py 20250101 --days 7          # 7 days from Jan 1
-    python scripts/bronze/scrape_fotmob.py 20250101 --days 30 --force # Force 30 days
+    python3 scripts/bronze/scrape_fotmob.py 20250101 20250107          # Scrape Jan 1-7
+    python3 scripts/bronze/scrape_fotmob.py 20250101 --days 7          # 7 days from Jan 1
+    python3 scripts/bronze/scrape_fotmob.py 20250101 --days 30 --force # Force 30 days
 
   Monthly Scraping:
-    python scripts/bronze/scrape_fotmob.py --month 202511              # Scrape entire November 2025
-    python scripts/bronze/scrape_fotmob.py --month 202511 --force       # Month with force re-scrape
+    python3 scripts/bronze/scrape_fotmob.py --month 202511              # Scrape entire November 2025
+    python3 scripts/bronze/scrape_fotmob.py --month 202511 --force       # Month with force re-scrape
 
   Live and Recent Historical:
-    python scripts/bronze/scrape_fotmob.py --today                      # Refresh today's Live data
-    python scripts/bronze/scrape_fotmob.py --yesterday                  # Scrape yesterday historically
+    python3 scripts/bronze/scrape_fotmob.py --today                      # Refresh today's Live data
+    python3 scripts/bronze/scrape_fotmob.py --yesterday                  # Scrape yesterday historically
         """,
     )
 
@@ -405,9 +405,9 @@ def print_next_steps(stats: ScrapingStats) -> None:
         logger.info("Next steps:")
         logger.info(
             "  Load to ClickHouse:  "
-            "python scripts/bronze/load_clickhouse.py --scraper fotmob --date <date>"
+            "python3 scripts/bronze/load_clickhouse.py --scraper fotmob --date <date>"
         )
-        logger.info("  View profiling:  python manage.py bronze view-profiling")
+        logger.info("  View profiling:  python3 manage.py bronze view-profiling")
 
 
 # ============================================================================

@@ -33,27 +33,34 @@ Silver SQL lives under `clickhouse/silver/`:
 
 Creates the `silver` database and all 8 tables:
 ```bash
-python scripts/silver/setup_clickhouse.py
+python3 scripts/silver/setup_clickhouse.py
 ```
 
 ### 2. DML Execution (`scripts/silver/load_clickhouse.py`)
 
-Discovers and executes all DML scripts in order:
+Requires one explicit scope and executes all DML scripts in order:
 ```bash
-python scripts/silver/load_clickhouse.py          # full load
-python scripts/silver/load_clickhouse.py --single-date 20251208  # single date
-python scripts/silver/load_clickhouse.py --dry-run # preview only
+python3 scripts/silver/load_clickhouse.py --date 20251208
+python3 scripts/silver/load_clickhouse.py --single-date 20251208
+python3 scripts/silver/load_clickhouse.py --month 202512
+python3 scripts/silver/load_clickhouse.py --full-history
+python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
 ```
 
-Each DML script is an `INSERT...SELECT` that:
-1. Reads from one or more `bronze.*` tables.
-2. Casts types and standardizes keys.
-3. Refreshes the target `silver.*` table with a full-table replacement.
+`--single-date` remains a backward-compatible alias for `--date`.
 
-The Silver service (`src/services/silver/`) coordinates:
-- SQL file discovery by prefix (`01_*.sql` through `08_*.sql`)
-- Sequential execution
-- Layer contract assertion after completion
+The scoped function flow is:
+
+1. `execution_scope_from_args()` returns a validated
+   `WarehouseExecutionScope`.
+2. `SilverService.build_scoped_jobs()` discovers SQL by prefix and creates one
+   `ScopedSqlJob` per target.
+3. `ScopedReplacementBatch` computes every selected table in staging using all
+   available Bronze history.
+4. After all staging succeeds, date runs reconstruct and replace the containing
+   month partition, month runs replace that month, and full-history runs
+   exchange complete staged tables.
+5. Layer contract assertions run after all commits succeed.
 
 ### 3. Contract Validation
 
@@ -67,17 +74,19 @@ The Silver service (`src/services/silver/`) coordinates:
 
 - **SQL owns transformation logic.** Python orchestrates and executes, but all
   cleaning, typing, and joining logic lives in ClickHouse SQL.
-- **Full-table reloads.** Silver does not support date-scoped incremental
-  loads — it rebuilds from the full Bronze dataset and truncates each target
-  table before inserting the fresh snapshot.
-- **Deterministic and rerunnable.** Each DML script is idempotent because the
-  previous table contents are removed before the new load lands.
+- **Scope-aware replacement.** Date and month runs never truncate whole tables.
+- **Historical context.** Jobs currently read full Bronze history while
+  replacing only the requested match-date output scope.
+- **Deterministic and rerunnable.** Repeating a scope replaces the same logical
+  rows and removes rows that stopped qualifying after source corrections.
 
 ## Failure Modes
 
 | Failure | Recovery |
 | --- | --- |
 | Bronze tables missing | Run Bronze loader first |
-| SQL syntax error | Fix SQL, re-run `load_clickhouse.py` |
+| SQL syntax error | Fix SQL, re-run `load_clickhouse.py` with the same scope |
 | Contract assertion fails | Check Bronze data quality, re-run |
+| Staging failure | Targets remain unchanged; inspect retained stage tables and rerun |
+| Partial commit failure | Rerun the identical scope to converge all tables |
 | ClickHouse connection | Non-zero exit, re-run |

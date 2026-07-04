@@ -8,7 +8,7 @@ This directory contains runtime assets for Gold signal execution.
 - `contracts/`: signal engineering contracts
 - Activation builders live under `scripts/gold/activations/`
 
-Signal SQL jobs are discovered and executed through `scripts/gold/run_sql_job.py`
+Signal SQL jobs are discovered and executed through `scripts/gold/run_gold_sql_jobs.py`
 and shared helpers in `src/services/gold/gold_dml_runner.py`.
 
 ## Signal Activation Serving Store
@@ -64,8 +64,9 @@ Match-level summary fields include:
 
 ## Execution Order
 
-When running `python scripts/gold/load_clickhouse_gold.py --part signals`:
+When running
+`python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals`:
 
 1. Signal SQL jobs write `gold_signals.sig_*` tables
-2. `scripts/gold/activations/build_signal_activations.py` writes the enriched
-   `gold.signal_activations` serving table
+2. The activation builder uses the same scope and replaces the corresponding
+   rows in `gold.signal_activations`

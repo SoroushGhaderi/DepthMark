@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_unproductive_beauty
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_unproductive_beauty.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_creativity_playmaking_unproductive_beauty
 
@@ -48,13 +48,13 @@ nil (0 total goals), surfacing aesthetically rich yet unproductive attacking con
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_unproductive_beauty.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_unproductive_beauty`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_match_creativity_playmaking_unproductive_beauty
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_unproductive_beauty
 ```
 
 ## Output Schema

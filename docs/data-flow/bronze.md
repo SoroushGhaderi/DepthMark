@@ -42,13 +42,13 @@ Key classes:
 
 CLI arguments:
 ```bash
-python scripts/bronze/scrape_fotmob.py 20251208           # single date
-python scripts/bronze/scrape_fotmob.py --single-date 20251208  # single date (named)
-python scripts/bronze/scrape_fotmob.py --month 202512     # full month
-python scripts/bronze/scrape_fotmob.py 20251201 20251207  # date range
-python scripts/bronze/scrape_fotmob.py 20251208 --force   # re-scrape
-python scripts/bronze/scrape_fotmob.py --yesterday        # previous completed date
-python scripts/bronze/scrape_fotmob.py --today            # refresh Live data
+python3 scripts/bronze/scrape_fotmob.py 20251208           # single date
+python3 scripts/bronze/scrape_fotmob.py --single-date 20251208  # single date (named)
+python3 scripts/bronze/scrape_fotmob.py --month 202512     # full month
+python3 scripts/bronze/scrape_fotmob.py 20251201 20251207  # date range
+python3 scripts/bronze/scrape_fotmob.py 20251208 --force   # re-scrape
+python3 scripts/bronze/scrape_fotmob.py --yesterday        # previous completed date
+python3 scripts/bronze/scrape_fotmob.py --today            # refresh Live data
 ```
 
 Historical selectors accept only completed machine-local dates. For the current
@@ -61,10 +61,10 @@ atomically, and skips compression. Live data does not feed other layers.
 S3 upload and download are standalone, operator-invoked workflows:
 
 ```bash
-python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python scripts/bronze/sync_s3.py upload --month 202512
-python scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
-python scripts/bronze/sync_s3.py download --all
+python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python3 scripts/bronze/sync_s3.py upload --month 202512
+python3 scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
+python3 scripts/bronze/sync_s3.py download --all
 ```
 
 Each new archive contains `matches/{YYYYMMDD}` and
@@ -113,12 +113,12 @@ Processing chain:
 
 CLI arguments:
 ```bash
-python scripts/bronze/load_clickhouse.py --date 20251208
-python scripts/bronze/load_clickhouse.py --single-date 20251208
-python scripts/bronze/load_clickhouse.py --start-date 20251201 --end-date 20251207
-python scripts/bronze/load_clickhouse.py --month 202512
-python scripts/bronze/load_clickhouse.py --date 20251208 --truncate
-python scripts/bronze/load_clickhouse.py --stats
+python3 scripts/bronze/load_clickhouse.py --date 20251208
+python3 scripts/bronze/load_clickhouse.py --single-date 20251208
+python3 scripts/bronze/load_clickhouse.py --start-date 20251201 --end-date 20251207
+python3 scripts/bronze/load_clickhouse.py --month 202512
+python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate
+python3 scripts/bronze/load_clickhouse.py --stats
 ```
 
 ### 4. Table Optimization
@@ -126,7 +126,7 @@ python scripts/bronze/load_clickhouse.py --stats
 Bronze tables use `ReplacingMergeTree(inserted_at)` for idempotent reruns.
 Optimization SQL runs via:
 ```bash
-python scripts/bronze/setup_clickhouse.py
+python3 scripts/bronze/setup_clickhouse.py
 ```
 Which executes `clickhouse/bronze/99_optimize_tables.sql`.
 

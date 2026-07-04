@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_redundant_possession
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_redundant_possession.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_possession_passing_redundant_possession
 
@@ -37,13 +37,13 @@ Triggers when a player has high passing volume but no final-third progression, i
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_redundant_possession.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_redundant_possession`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_redundant_possession
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_redundant_possession
 ```
 
 ## Output Schema

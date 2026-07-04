@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_possession_passing_accurate_unit
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_accurate_unit.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_possession_passing_accurate_unit
 
@@ -30,13 +30,13 @@ Triggers when a team records elite full-match pass accuracy above `92%`, flaggin
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_accurate_unit.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_possession_passing_accurate_unit`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_possession_passing_accurate_unit
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_accurate_unit
 ```
 
 ## Output Schema

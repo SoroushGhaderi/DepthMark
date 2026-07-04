@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Superseded by ADR 0018 for scoped runs. Full-table activation rebuilds remain
+the explicit `--full-history` behavior.
 
 ## Context
 

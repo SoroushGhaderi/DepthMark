@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_save_to_goal_ratio
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_save_to_goal_ratio.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_goalkeeping_defense_save_to_goal_ratio
 
@@ -44,13 +44,13 @@ pressure absorption, and control-state interpretation.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_save_to_goal_ratio.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_save_to_goal_ratio`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_match_goalkeeping_defense_save_to_goal_ratio
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_save_to_goal_ratio
 ```
 
 ## Output Schema

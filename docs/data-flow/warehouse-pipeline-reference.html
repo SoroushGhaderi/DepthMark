@@ -1268,19 +1268,19 @@
             <thead><tr><th>Step</th><th>Layer</th><th>Tables / collections</th><th>Command</th></tr></thead>
             <tbody>
                 <tr><td>0</td><td>Infra</td><td>Docker services</td><td><code>docker compose up -d</code></td></tr>
-                <tr><td>1</td><td>All ClickHouse</td><td>15 bronze + 8 silver + 48 scenarios + 344 signals + <code>gold.signal_activations</code></td><td><code>python scripts/orchestration/setup_clickhouse.py</code></td></tr>
-                <tr><td>2</td><td>MongoDB</td><td>5 collections (empty indexes)</td><td><code>python scripts/mongodb/init_indexes.py</code></td></tr>
-                <tr><td>3</td><td>Bronze (disk)</td><td>Historical JSON or Live snapshots per match</td><td><code>python scripts/bronze/scrape_fotmob.py &lt;YYYYMMDD&gt;</code> or <code>--today</code></td></tr>
-                <tr><td>4</td><td>Bronze (CH)</td><td>15 <code>bronze.*</code> tables</td><td><code>python scripts/bronze/load_clickhouse.py --date &lt;YYYYMMDD&gt;</code></td></tr>
-                <tr><td>5</td><td>Silver</td><td>8 <code>silver.*</code> tables (full reload)</td><td><code>python scripts/silver/load_clickhouse.py</code></td></tr>
-                <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python scripts/gold/load_clickhouse_gold.py</code></td></tr>
-                <tr><td>7</td><td>Quality</td><td>Bronze→Silver row counts</td><td><code>python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</code></td></tr>
-                <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
+                <tr><td>1</td><td>All ClickHouse</td><td>15 bronze + 8 silver + 48 scenarios + 344 signals + <code>gold.signal_activations</code></td><td><code>python3 scripts/orchestration/setup_clickhouse.py</code></td></tr>
+                <tr><td>2</td><td>MongoDB</td><td>5 collections (empty indexes)</td><td><code>python3 scripts/mongodb/init_indexes.py</code></td></tr>
+                <tr><td>3</td><td>Bronze (disk)</td><td>Historical JSON or Live snapshots per match</td><td><code>python3 scripts/bronze/scrape_fotmob.py &lt;YYYYMMDD&gt;</code> or <code>python3 scripts/bronze/scrape_fotmob.py --today</code></td></tr>
+                <tr><td>4</td><td>Bronze (CH)</td><td>15 <code>bronze.*</code> tables</td><td><code>python3 scripts/bronze/load_clickhouse.py --date &lt;YYYYMMDD&gt;</code></td></tr>
+                <tr><td>5</td><td>Silver</td><td>8 <code>silver.*</code> tables (scoped staged replacement)</td><td><code>python3 scripts/silver/load_clickhouse.py --full-history</code></td></tr>
+                <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python3 scripts/gold/load_clickhouse_gold.py --full-history</code></td></tr>
+                <tr><td>7</td><td>Quality</td><td>Bronze→Silver row counts</td><td><code>python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict</code></td></tr>
+                <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python3 scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
             </tbody>
         </table>
         <div class="callout note">
             <span class="callout-icon">📋</span>
-            <span><strong>Shortcut:</strong> After steps 0–2, <code>python scripts/orchestration/pipeline.py &lt;YYYYMMDD&gt;</code> runs scrape → bronze load → silver → gold (including activation rebuild) in one pass. Repeat scrape + bronze load per date; silver and gold always reload from the <em>complete</em> bronze dataset.</span>
+            <span><strong>Shortcut:</strong> After steps 0–2, <code>python3 scripts/orchestration/pipeline.py --date &lt;YYYYMMDD&gt;</code> runs scrape → bronze load → date-scoped Silver → date-scoped Gold (including activation replacement) in one pass. Use <code>--full-history</code> to skip scraping and rebuild every available warehouse date.</span>
         </div>
         <div class="callout insight">
             <span class="callout-icon">☁️</span>
@@ -1293,66 +1293,65 @@ cp .env.example .env
 # Edit .env: FOTMOB_X_MAS_TOKEN, ClickHouse, MongoDB credentials
 
 docker compose up -d
-python scripts/health_check.py --json
+python3 scripts/health_check.py --json
 
 # Creates bronze (15) + silver (8) + gold (48 scenarios + 344 signals + activations DDL)
-python scripts/orchestration/setup_clickhouse.py
+python3 scripts/orchestration/setup_clickhouse.py
 
 # MongoDB collection indexes (catalog serving layer)
-python scripts/mongodb/init_indexes.py</pre>
+python3 scripts/mongodb/init_indexes.py</pre>
         </details>
         <details class="cmd-block">
             <summary>▸ Phase 2 — fill all layers (one command)</summary>
             <pre># Scrape → bronze.* → silver.* → gold_scenarios.* + gold_signals.* + gold.signal_activations
-python scripts/orchestration/pipeline.py 20251208
-python scripts/orchestration/pipeline.py --single-date 20251208
+python3 scripts/orchestration/pipeline.py 20251208
+python3 scripts/orchestration/pipeline.py --date 20251208
+python3 scripts/orchestration/pipeline.py --single-date 20251208
 
 # Multiple dates (scrape + bronze load per day; silver + gold run once at the end)
-python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
-python scripts/orchestration/pipeline.py --month 202512</pre>
+python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/orchestration/pipeline.py --month 202512
+python3 scripts/orchestration/pipeline.py --full-history</pre>
         </details>
         <details class="cmd-block">
             <summary>▸ Phase 2 — fill all layers (step by step)</summary>
             <pre># Bronze: ingest raw FotMob payloads
-python scripts/bronze/scrape_fotmob.py 20251208
-python scripts/bronze/scrape_fotmob.py --single-date 20251208
-python scripts/bronze/scrape_fotmob.py --yesterday
-python scripts/bronze/scrape_fotmob.py --today  # Live only; no warehouse load
-python scripts/bronze/load_clickhouse.py --date 20251208
-python scripts/bronze/load_clickhouse.py --single-date 20251208
+python3 scripts/bronze/scrape_fotmob.py 20251208
+python3 scripts/bronze/scrape_fotmob.py --single-date 20251208
+python3 scripts/bronze/scrape_fotmob.py --yesterday
+python3 scripts/bronze/scrape_fotmob.py --today  # Live only; no warehouse load
+python3 scripts/bronze/load_clickhouse.py --date 20251208
 
 # Optional, independent Bronze archive transfer (not a pipeline stage)
-python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
+python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 
-# Silver: full-table reload from all bronze data (8 tables)
-python scripts/silver/load_clickhouse.py
-python scripts/silver/load_clickhouse.py --single-date 20251208
+# Silver: explicit full-history staged exchange (8 tables)
+python3 scripts/silver/load_clickhouse.py --full-history
 
 # Gold: all scenario SQL (48) + signal SQL (344) + activation rebuild
-python scripts/gold/load_clickhouse_gold.py
-python scripts/gold/load_clickhouse_gold.py --single-date 20251208
+python3 scripts/gold/load_clickhouse_gold.py --full-history
 
 # Or run gold parts individually:
-python scripts/gold/load_clickhouse_gold.py --part scenarios
-python scripts/gold/load_clickhouse_gold.py --part signals
+python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios
+python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals
 
 # Rebuild activations only (after signals are populated)
-python scripts/gold/activations/build_signal_activations.py</pre>
+python3 scripts/gold/activations/build_signal_activations.py --full-history</pre>
         </details>
         <details class="cmd-block">
             <summary>▸ Phase 3 — validate and sync serving catalogs</summary>
             <pre># Preflight (safe — no mutations)
-python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --dry-run
+python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
 
 # Post-load quality gate
-python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
-python scripts/quality/check_logging_style.py
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_logging_style.py
 
 # Sync signal/scenario catalogs from Git → MongoDB (product APIs)
-python scripts/mongodb/sync_signal_catalogs.py --dry-run
-python scripts/mongodb/sync_signal_catalogs.py</pre>
+python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
+python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         </details>
         <div class="callout success">
             <span class="callout-icon">✓</span>
@@ -1524,10 +1523,10 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         </div>
         <details class="cmd-block">
             <summary>▸ Canonical preflight commands</summary>
-            <pre>python scripts/health_check.py --json
-python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --dry-run
-python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
+            <pre>python3 scripts/health_check.py --json
+python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
         </details>
     </div>
 </div>
@@ -1628,10 +1627,10 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
         </table>
         <details class="cmd-block">
             <summary>▸ S3 sync commands</summary>
-            <pre>python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python scripts/bronze/sync_s3.py upload --month 202512
-python scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
-python scripts/bronze/sync_s3.py download --all</pre>
+            <pre>python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python3 scripts/bronze/sync_s3.py upload --month 202512
+python3 scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
+python3 scripts/bronze/sync_s3.py download --all</pre>
         </details>
         <div class="callout warning">
             <span class="callout-icon">⚠️</span>
@@ -1700,15 +1699,15 @@ python scripts/bronze/sync_s3.py download --all</pre>
         </table>
         <details class="cmd-block">
             <summary>▸ Bronze commands</summary>
-            <pre>python scripts/bronze/scrape_fotmob.py 20251208
-python scripts/bronze/scrape_fotmob.py --single-date 20251208
-python scripts/bronze/scrape_fotmob.py --yesterday
-python scripts/bronze/scrape_fotmob.py --today
-python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
-python scripts/bronze/load_clickhouse.py --date 20251208
-python scripts/bronze/load_clickhouse.py --single-date 20251208
-python scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
+            <pre>python3 scripts/bronze/scrape_fotmob.py 20251208
+python3 scripts/bronze/scrape_fotmob.py --single-date 20251208
+python3 scripts/bronze/scrape_fotmob.py --yesterday
+python3 scripts/bronze/scrape_fotmob.py --today
+python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
+python3 scripts/bronze/load_clickhouse.py --date 20251208
+python3 scripts/bronze/load_clickhouse.py --single-date 20251208
+python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
         </details>
     </div>
 </div>
@@ -1801,12 +1800,12 @@ python scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
             </div>
             <div class="flow-seq-body">
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → silver/load_clickhouse.py</span><span class="flow-seq-detail">subprocess</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">silver/load_clickhouse.py → <em>SilverService</em></span><span class="flow-seq-detail">discover DML scripts</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em></span><span class="flow-seq-detail">01_*.sql through 08_*.sql</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">silver/load_clickhouse.py → <em>WarehouseExecutionScope</em></span><span class="flow-seq-detail">validate date / month / full-history</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em></span><span class="flow-seq-detail">build ScopedSqlJob values</span></div>
                 <div class="flow-seq-loop">
                     <div class="flow-seq-block-label">For each DML script (ordered)</div>
-                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em> → ClickHouse</span><span class="flow-seq-detail">INSERT…SELECT from bronze.*</span></div>
-                    <div class="flow-seq-msg"><span class="flow-seq-actors">ClickHouse → <em>SilverService</em></span><span class="flow-seq-detail">rows inserted</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>ScopedReplacementBatch</em> → ClickHouse</span><span class="flow-seq-detail">calculate and validate in staging</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors">ClickHouse → <em>ScopedReplacementBatch</em></span><span class="flow-seq-detail">REPLACE PARTITION or EXCHANGE TABLES</span></div>
                 </div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em></span><span class="flow-seq-detail">assert_silver_layer_contracts()</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em> → silver/load_clickhouse.py</span><span class="flow-seq-detail">summary report</span></div>
@@ -1814,13 +1813,12 @@ python scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
         </div>
         <div class="callout success">
             <span class="callout-icon">✓</span>
-            <span><strong>Full reload:</strong> Every Silver run processes the entire Bronze dataset. There is no incremental watermark — reruns are deterministic and safe. Scripts run in numeric filename order (<code>01_</code> → <code>08_</code>).</span>
+            <span><strong>Scoped replacement:</strong> Silver reads all Bronze history for analytical context but replaces only the selected date or month. Full-table exchange occurs only with explicit <code>--full-history</code>. Scripts run in numeric filename order (<code>01_</code> → <code>08_</code>).</span>
         </div>
         <details class="cmd-block">
             <summary>▸ Silver commands</summary>
-            <pre>python scripts/silver/load_clickhouse.py --dry-run
-python scripts/silver/load_clickhouse.py
-python scripts/silver/load_clickhouse.py --single-date 20251208</pre>
+            <pre>python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/silver/load_clickhouse.py --full-history</pre>
         </details>
     </div>
 </div>
@@ -1890,20 +1888,20 @@ python scripts/silver/load_clickhouse.py --single-date 20251208</pre>
             <div class="flow-seq-participants">
                 <div class="flow-seq-participant">pipeline.py</div>
                 <div class="flow-seq-participant">load_clickhouse_gold.py</div>
-                <div class="flow-seq-participant">run_sql_job.py</div>
+                <div class="flow-seq-participant">run_gold_sql_jobs.py</div>
                 <div class="flow-seq-participant">GoldSqlJob</div>
                 <div class="flow-seq-participant">ClickHouse</div>
             </div>
             <div class="flow-seq-body">
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → load_clickhouse_gold.py</span><span class="flow-seq-detail">subprocess</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_sql_job.py</em></span><span class="flow-seq-detail">scenario jobs</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_sql_job.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover scenario_*.sql</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_gold_sql_jobs.py</em></span><span class="flow-seq-detail">scenario jobs</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_gold_sql_jobs.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover scenario_*.sql</span></div>
                 <div class="flow-seq-loop">
                     <div class="flow-seq-block-label">Each scenario (48 files)</div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">GoldSqlJob → ClickHouse</span><span class="flow-seq-detail">execute SQL</span></div>
                 </div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_sql_job.py</em></span><span class="flow-seq-detail">signal jobs</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_sql_job.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover sig_*.sql</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_gold_sql_jobs.py</em></span><span class="flow-seq-detail">signal jobs</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_gold_sql_jobs.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover sig_*.sql</span></div>
                 <div class="flow-seq-loop">
                     <div class="flow-seq-block-label">Each signal (344 files)</div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">GoldSqlJob → ClickHouse</span><span class="flow-seq-detail">execute SQL</span></div>
@@ -1914,13 +1912,12 @@ python scripts/silver/load_clickhouse.py --single-date 20251208</pre>
         </div>
         <details class="cmd-block">
             <summary>▸ Gold commands</summary>
-            <pre>python scripts/gold/load_clickhouse_gold.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --single-date 20251208
-python scripts/gold/load_clickhouse_gold.py --part scenarios
-python scripts/gold/load_clickhouse_gold.py --part signals
-python scripts/gold/activations/build_signal_activations.py
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
-python scripts/gold/setup_clickhouse_gold.py --part signals</pre>
+            <pre>python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios
+python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals
+python3 scripts/gold/activations/build_signal_activations.py --full-history
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
+python3 scripts/gold/setup_clickhouse_gold.py --part signals</pre>
         </details>
     </div>
 
@@ -1949,16 +1946,16 @@ python scripts/gold/setup_clickhouse_gold.py --part signals</pre>
         </div>
         <div class="callout note">
             <span class="callout-icon">🔑</span>
-            <span><strong>ADR 0006, 0011:</strong> Activation identity uses version prefix <code>v1</code> in the SHA-256 hash — this is a scheme version, not a signal definition version. Rebuilds are always full-table via <code>build_signal_activations.py</code>: stage rows in <code>gold.signal_activations_stage</code>, final insert from <code>clickhouse/gold/dml/activations/signal_activation_final_insert.sql</code>, then drop the stage table. <code>load_clickhouse_gold.py</code> skips activation rebuild when any signal SQL job fails.</span>
+            <span><strong>ADR 0006, 0018:</strong> Activation identity uses version prefix <code>v1</code> in the SHA-256 hash — this is a scheme version, not a signal definition version. The builder calculates from all selected signal history, then replaces the requested date/month partition or exchanges the whole table for explicit full history. <code>load_clickhouse_gold.py</code> skips activation replacement when any signal SQL job fails.</span>
         </div>
         <details class="cmd-block">
             <summary>▸ Activation rebuild commands</summary>
             <pre># After signals are loaded (or standalone)
-python scripts/gold/activations/build_signal_activations.py
+python3 scripts/gold/activations/build_signal_activations.py --full-history
 
 # Drop + recreate serving DDL, then rebuild
-clickhouse-client --multiquery &lt; clickhouse/gold/ddl/create_table_signal_activations.sql
-python scripts/gold/activations/build_signal_activations.py</pre>
+docker compose exec depthmark-clickhouse clickhouse-client --multiquery &lt; clickhouse/gold/ddl/create_table_signal_activations.sql
+python3 scripts/gold/activations/build_signal_activations.py --full-history</pre>
         </details>
     </div>
 </div>
@@ -2210,15 +2207,15 @@ python scripts/gold/activations/build_signal_activations.py</pre>
                 <tr><td>Bronze ClickHouse load</td><td><code>load_clickhouse.py --date &lt;date&gt;</code></td></tr>
                 <tr><td>S3 archive transfer</td><td>Re-run <code>sync_s3.py</code> for affected dates; scraping and warehouse loading remain unaffected</td></tr>
                 <tr><td>Silver SQL error</td><td>Fix SQL → re-run <code>silver/load_clickhouse.py</code></td></tr>
-                <tr><td>Single signal failure</td><td><code>run_sql_job.py --kind signal --id &lt;id&gt;</code></td></tr>
-                <tr><td>Single scenario failure</td><td><code>run_sql_job.py --kind scenario --id &lt;id&gt;</code></td></tr>
-                <tr><td>Activation rebuild</td><td><code>build_signal_activations.py</code></td></tr>
+                <tr><td>Single signal failure</td><td><code>run_gold_sql_jobs.py --date &lt;YYYYMMDD&gt; --kind signal --id &lt;id&gt;</code></td></tr>
+                <tr><td>Single scenario failure</td><td><code>run_gold_sql_jobs.py --date &lt;YYYYMMDD&gt; --kind scenario --id &lt;id&gt;</code></td></tr>
+                <tr><td>Activation replacement</td><td><code>build_signal_activations.py --date &lt;YYYYMMDD&gt;</code></td></tr>
                 <tr><td>Catalog sync</td><td><code>sync_signal_catalogs.py</code></td></tr>
             </tbody>
         </table>
         <div class="callout success">
             <span class="callout-icon">✓</span>
-            <span><strong>All stages are idempotent.</strong> You never need to manually clean data before a re-run. <code>ReplacingMergeTree</code> handles version collisions; full-table reloads handle correctness.</span>
+            <span><strong>All derived stages are rerunnable.</strong> Scoped staging removes corrected rows inside the selected output range, and repeating the identical scope converges safely after partial commits.</span>
         </div>
     </div>
 
@@ -2362,8 +2359,8 @@ python scripts/gold/activations/build_signal_activations.py</pre>
                 <summary>▸ Setup commands</summary>
                 <pre>cp .env.example .env
 docker compose up -d
-docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py
-docker compose exec depthmark-scraper python scripts/mongodb/init_indexes.py</pre>
+docker compose exec depthmark-scraper python3 scripts/orchestration/setup_clickhouse.py
+docker compose exec depthmark-scraper python3 scripts/mongodb/init_indexes.py</pre>
             </details>
         </div>
         <div class="diagram-card" style="margin-bottom:0">
@@ -2487,9 +2484,9 @@ docker compose exec depthmark-scraper python scripts/mongodb/init_indexes.py</pr
         </table>
         <details class="cmd-block">
             <summary>▸ MongoDB commands</summary>
-            <pre>python scripts/mongodb/init_indexes.py
-python scripts/mongodb/sync_signal_catalogs.py --dry-run
-python scripts/mongodb/sync_signal_catalogs.py</pre>
+            <pre>python3 scripts/mongodb/init_indexes.py
+python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
+python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         </details>
     </div>
 </div>
@@ -2547,15 +2544,15 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Health check',
             scripts: ['scripts/health_check.py'],
             commands: [
-                'python scripts/health_check.py',
-                'python scripts/health_check.py --json',
+                'python3 scripts/health_check.py',
+                'python3 scripts/health_check.py --json',
             ],
         },
         {
             match: ['setup_clickhouse.py', 'setup_clickhouse'],
             title: 'ClickHouse DDL setup (all layers)',
             scripts: ['scripts/orchestration/setup_clickhouse.py'],
-            commands: ['python scripts/orchestration/setup_clickhouse.py'],
+            commands: ['python3 scripts/orchestration/setup_clickhouse.py'],
             note: 'Creates bronze (15) + silver (8) + gold scenario/signal DDL + signal_activations table.',
             sectionTab: 'infrastructure',
         },
@@ -2564,9 +2561,9 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Gold-only DDL setup',
             scripts: ['scripts/gold/setup_clickhouse_gold.py'],
             commands: [
-                'python scripts/gold/setup_clickhouse_gold.py',
-                'python scripts/gold/setup_clickhouse_gold.py --part signals',
-                'python scripts/gold/setup_clickhouse_gold.py --part scenarios',
+                'python3 scripts/gold/setup_clickhouse_gold.py',
+                'python3 scripts/gold/setup_clickhouse_gold.py --part signals',
+                'python3 scripts/gold/setup_clickhouse_gold.py --part scenarios',
             ],
             sectionTab: 'gold',
         },
@@ -2574,7 +2571,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['init_indexes.py', 'mongodb/init_indexes'],
             title: 'MongoDB index bootstrap',
             scripts: ['scripts/mongodb/init_indexes.py'],
-            commands: ['python scripts/mongodb/init_indexes.py'],
+            commands: ['python3 scripts/mongodb/init_indexes.py'],
             sectionTab: 'mongodb',
         },
         {
@@ -2582,18 +2579,18 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Bronze scrape (FotMob → disk)',
             scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py'],
             commands: [
-                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
-                'python scripts/bronze/scrape_fotmob.py --yesterday',
-                'python scripts/bronze/scrape_fotmob.py --today',
+                'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python3 scripts/bronze/scrape_fotmob.py --yesterday',
+                'python3 scripts/bronze/scrape_fotmob.py --today',
             ],
-            note: '--today writes refreshable Live data only. If the API blocks requests: python scripts/refresh_turnstile.py',
+            note: '--today writes refreshable Live data only. If the API blocks requests: python3 scripts/refresh_turnstile.py',
             sectionTab: 'bronze',
         },
         {
             match: ['refresh_turnstile', 'turnstile'],
             title: 'FotMob turnstile / token refresh',
             scripts: ['scripts/refresh_turnstile.py'],
-            commands: ['python scripts/refresh_turnstile.py'],
+            commands: ['python3 scripts/refresh_turnstile.py'],
             sectionTab: 'bronze',
         },
         {
@@ -2601,19 +2598,19 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Bronze ClickHouse load',
             scripts: ['scripts/bronze/load_clickhouse.py'],
             commands: [
-                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
-                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD> --truncate',
+                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
+                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD> --truncate',
             ],
             sectionTab: 'bronze',
         },
         {
             match: ['silver/load_clickhouse', '3. silver', 'silverservice'],
-            title: 'Silver full-table reload',
+            title: 'Silver scoped staged replacement',
             scripts: ['scripts/silver/load_clickhouse.py', 'src/services/silver/fotmob_silver_service.py'],
             sql: ['clickhouse/silver/dml/'],
             commands: [
-                'python scripts/silver/load_clickhouse.py --dry-run',
-                'python scripts/silver/load_clickhouse.py',
+                'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
+                'python3 scripts/silver/load_clickhouse.py --full-history',
             ],
             sectionTab: 'silver',
         },
@@ -2622,22 +2619,22 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Gold load (scenarios + signals + activations)',
             scripts: ['scripts/gold/load_clickhouse_gold.py'],
             commands: [
-                'python scripts/gold/load_clickhouse_gold.py --dry-run',
-                'python scripts/gold/load_clickhouse_gold.py',
-                'python scripts/gold/load_clickhouse_gold.py --part scenarios',
-                'python scripts/gold/load_clickhouse_gold.py --part signals',
+                'python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run',
+                'python3 scripts/gold/load_clickhouse_gold.py --full-history',
+                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios',
+                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals',
             ],
             sectionTab: 'gold',
         },
         {
-            match: ['run_sql_job.py', 'goldsqljob', 'scenario_*.sql', 'sig_*.sql', '4a. scenario', '4b. signal'],
+            match: ['run_gold_sql_jobs.py', 'goldsqljob', 'scenario_*.sql', 'sig_*.sql', '4a. scenario', '4b. signal'],
             title: 'Single Gold SQL job runner',
-            scripts: ['scripts/gold/run_sql_job.py', 'src/services/gold/gold_dml_runner.py'],
+            scripts: ['scripts/gold/run_gold_sql_jobs.py', 'src/services/gold/gold_dml_runner.py'],
             commands: [
-                'python scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>',
-                'python scripts/gold/run_sql_job.py --kind signal --id <signal_id>',
-                'python scripts/gold/run_sql_job.py --kind signal --entity team',
-                'python scripts/gold/run_sql_job.py --kind signal --family shooting',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id <scenario_id>',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id <signal_id>',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --entity team',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --family shooting',
             ],
             sectionTab: 'gold',
         },
@@ -2651,8 +2648,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
                 'clickhouse/gold/dml/activations/signal_activation_final_insert.sql',
             ],
             commands: [
-                'python scripts/gold/activations/build_signal_activations.py',
-                'clickhouse-client --multiquery < clickhouse/gold/ddl/create_table_signal_activations.sql',
+                'python3 scripts/gold/activations/build_signal_activations.py --full-history',
+                'docker compose exec depthmark-clickhouse clickhouse-client --multiquery < clickhouse/gold/ddl/create_table_signal_activations.sql',
             ],
             sectionTab: 'gold',
         },
@@ -2661,12 +2658,14 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Full pipeline orchestration',
             scripts: ['scripts/orchestration/pipeline.py'],
             commands: [
-                'python scripts/orchestration/pipeline.py <YYYYMMDD>',
-                'python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207',
-                'python scripts/orchestration/pipeline.py --month 202512',
-                'python scripts/orchestration/pipeline.py --bronze-only',
-                'python scripts/orchestration/pipeline.py --silver-only',
-                'python scripts/orchestration/pipeline.py --gold-only',
+                'python3 scripts/orchestration/pipeline.py <YYYYMMDD>',
+                'python3 scripts/orchestration/pipeline.py --date 20251208',
+                'python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207',
+                'python3 scripts/orchestration/pipeline.py --month 202512',
+                'python3 scripts/orchestration/pipeline.py --full-history',
+                'python3 scripts/orchestration/pipeline.py --date 20251208 --bronze-only',
+                'python3 scripts/orchestration/pipeline.py --date 20251208 --silver-only',
+                'python3 scripts/orchestration/pipeline.py --date 20251208 --gold-only',
             ],
             note: 'Skip flags: --skip-fotmob, --skip-bronze, --skip-clickhouse, --skip-silver, --skip-gold',
             sectionTab: 'orchestration',
@@ -2676,14 +2675,14 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Bronze → Silver reconciliation',
             scripts: ['scripts/quality/check_bronze_to_silver_reconciliation.py'],
             commands: [
-                'python scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+                'python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
             ],
         },
         {
             match: ['check_logging_style'],
             title: 'Logging style check',
             scripts: ['scripts/quality/check_logging_style.py'],
-            commands: ['python scripts/quality/check_logging_style.py'],
+            commands: ['python3 scripts/quality/check_logging_style.py'],
         },
         {
             match: ['sync_signal_catalogs', 'catalog sync', 'catalogs/*.md', 'sig_*.md', 'signal catalogs'],
@@ -2691,8 +2690,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             scripts: ['scripts/mongodb/sync_signal_catalogs.py'],
             paths: ['scripts/gold/signal/catalogs/*.md'],
             commands: [
-                'python scripts/mongodb/sync_signal_catalogs.py --dry-run',
-                'python scripts/mongodb/sync_signal_catalogs.py',
+                'python3 scripts/mongodb/sync_signal_catalogs.py --dry-run',
+                'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
             sectionTab: 'mongodb',
         },
@@ -2700,7 +2699,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['assert_bronze_dataframe_contract', 'bronze contract', 'fotmobbronze'],
             title: 'Bronze contract assertion (runtime)',
             scripts: ['scripts/bronze/load_clickhouse.py', 'src/processors/bronze/'],
-            commands: ['python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
             note: 'Contract runs automatically during bronze load — not a standalone CLI.',
             sectionTab: 'bronze',
         },
@@ -2708,7 +2707,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['assert_silver_layer_contracts', 'silver contract'],
             title: 'Silver contract assertion (runtime)',
             scripts: ['scripts/silver/load_clickhouse.py'],
-            commands: ['python scripts/silver/load_clickhouse.py'],
+            commands: ['python3 scripts/silver/load_clickhouse.py --full-history'],
             note: 'Contract runs automatically after Silver DML scripts complete.',
             sectionTab: 'silver',
         },
@@ -2717,9 +2716,9 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'FotMob ingest (API → raw JSON)',
             scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py', 'scripts/refresh_turnstile.py'],
             commands: [
-                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
-                'python scripts/bronze/scrape_fotmob.py --today',
-                'python scripts/refresh_turnstile.py',
+                'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python3 scripts/bronze/scrape_fotmob.py --today',
+                'python3 scripts/refresh_turnstile.py',
             ],
             sectionTab: 'bronze',
         },
@@ -2729,8 +2728,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             scripts: ['scripts/bronze/sync_s3.py', 'src/services/bronze/s3_sync_service.py', 'src/storage/s3_client.py'],
             paths: ['bronze/fotmob/<YYYYMM>/<YYYYMMDD>.tar.gz'],
             commands: [
-                'python scripts/bronze/sync_s3.py upload --date <YYYYMMDD> --dry-run',
-                'python scripts/bronze/sync_s3.py download --date <YYYYMMDD> --dry-run',
+                'python3 scripts/bronze/sync_s3.py upload --date <YYYYMMDD> --dry-run',
+                'python3 scripts/bronze/sync_s3.py download --date <YYYYMMDD> --dry-run',
             ],
             note: 'Independent operator workflow; scraping and pipeline success do not depend on S3.',
             sectionTab: 'bronze',
@@ -2745,8 +2744,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
                 'data/fotmob/live/daily_listings/<YYYYMMDD>/matches.json',
             ],
             commands: [
-                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
-                'python scripts/bronze/scrape_fotmob.py --today',
+                'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python3 scripts/bronze/scrape_fotmob.py --today',
             ],
             note: 'Only Historical files are consumed by bronze/load_clickhouse.py and S3 sync.',
             sectionTab: 'bronze',
@@ -2755,14 +2754,14 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['fotmobbronze', 'pydantic', '14 entity', 'clickhouseclient.upsert'],
             title: 'Bronze parse & load pipeline',
             scripts: ['scripts/bronze/load_clickhouse.py', 'src/processors/bronze/'],
-            commands: ['python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
             sectionTab: 'bronze',
         },
         {
             match: ['data/dlq', 'dlq'],
             title: 'Dead-letter queue (failed bronze inserts)',
             paths: ['data/dlq/'],
-            commands: ['python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
             note: 'Re-run bronze load after fixing parse/contract issues.',
             sectionTab: 'bronze',
         },
@@ -2772,42 +2771,42 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             scripts: ['scripts/bronze/scrape_fotmob.py', 'scripts/bronze/load_clickhouse.py'],
             sql: ['clickhouse/bronze/ddl/'],
             commands: [
-                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
-                'python scripts/bronze/scrape_fotmob.py --today',
-                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
+                'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python3 scripts/bronze/scrape_fotmob.py --today',
+                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
             ],
             sectionTab: 'bronze',
         },
         {
-            match: ['silver.*', 'silver.', '8 tables', '8 analytical', 'conformed analytics', 'full-table reload', 'insert…select', 'bronze → silver dml'],
+            match: ['silver.*', 'silver.', '8 tables', '8 analytical', 'conformed analytics', 'scoped replacement', 'insert…select', 'bronze → silver dml'],
             title: 'Silver layer',
             scripts: ['scripts/silver/load_clickhouse.py'],
             sql: ['clickhouse/silver/dml/'],
             commands: [
-                'python scripts/silver/load_clickhouse.py --dry-run',
-                'python scripts/silver/load_clickhouse.py',
+                'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
+                'python3 scripts/silver/load_clickhouse.py --full-history',
             ],
             sectionTab: 'silver',
         },
         {
             match: ['gold_signals', '344 tables', '344 signal', 'sig_*.sql', 'sig_*_ddl'],
             title: 'Gold signals',
-            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_sql_job.py'],
+            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_gold_sql_jobs.py'],
             sql: ['clickhouse/gold/dml/signals/'],
             commands: [
-                'python scripts/gold/load_clickhouse_gold.py --part signals',
-                'python scripts/gold/run_sql_job.py --kind signal --id <signal_id>',
+                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id <signal_id>',
             ],
             sectionTab: 'gold',
         },
         {
             match: ['gold_scenarios', '48 scenario', '48 tables', 'scenario_demolition', 'scenario sql', 'gold scenario sql'],
             title: 'Gold scenarios',
-            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_sql_job.py'],
+            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_gold_sql_jobs.py'],
             sql: ['clickhouse/gold/dml/scenarios/'],
             commands: [
-                'python scripts/gold/load_clickhouse_gold.py --part scenarios',
-                'python scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>',
+                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id <scenario_id>',
             ],
             sectionTab: 'gold',
         },
@@ -2816,7 +2815,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Signal activations serving table',
             scripts: ['scripts/gold/activations/build_signal_activations.py'],
             sql: ['clickhouse/gold/ddl/create_table_signal_activations.sql'],
-            commands: ['python scripts/gold/activations/build_signal_activations.py'],
+            commands: ['python3 scripts/gold/activations/build_signal_activations.py --full-history'],
             sectionTab: 'gold',
         },
         {
@@ -2824,9 +2823,9 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'MongoDB content catalog',
             scripts: ['scripts/mongodb/init_indexes.py', 'scripts/mongodb/sync_signal_catalogs.py'],
             commands: [
-                'python scripts/mongodb/init_indexes.py',
-                'python scripts/mongodb/sync_signal_catalogs.py --dry-run',
-                'python scripts/mongodb/sync_signal_catalogs.py',
+                'python3 scripts/mongodb/init_indexes.py',
+                'python3 scripts/mongodb/sync_signal_catalogs.py --dry-run',
+                'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
             sectionTab: 'mongodb',
         },
@@ -2836,7 +2835,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             scripts: ['docker-compose.yml'],
             commands: [
                 'docker compose up -d',
-                'docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py',
+                'docker compose exec depthmark-scraper python3 scripts/orchestration/setup_clickhouse.py',
             ],
             sectionTab: 'infrastructure',
         },
@@ -2849,10 +2848,10 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
                 'scripts/mongodb/sync_signal_catalogs.py',
             ],
             commands: [
-                'python scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
-                'python scripts/bronze/scrape_fotmob.py --today',
-                'python scripts/gold/load_clickhouse_gold.py',
-                'python scripts/mongodb/sync_signal_catalogs.py',
+                'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
+                'python3 scripts/bronze/scrape_fotmob.py --today',
+                'python3 scripts/gold/load_clickhouse_gold.py --full-history',
+                'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
         },
         {
@@ -2864,9 +2863,9 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
                 'scripts/gold/activations/build_signal_activations.py',
             ],
             commands: [
-                'python scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
-                'python scripts/silver/load_clickhouse.py',
-                'python scripts/gold/activations/build_signal_activations.py',
+                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
+                'python3 scripts/silver/load_clickhouse.py --full-history',
+                'python3 scripts/gold/activations/build_signal_activations.py --full-history',
             ],
         },
         {
@@ -2879,10 +2878,10 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
                 'scripts/quality/check_bronze_to_silver_reconciliation.py',
             ],
             commands: [
-                'python scripts/health_check.py --json',
-                'python scripts/silver/load_clickhouse.py --dry-run',
-                'python scripts/gold/load_clickhouse_gold.py --dry-run',
-                'python scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+                'python3 scripts/health_check.py --json',
+                'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
+                'python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run',
+                'python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
             ],
         },
         {
@@ -2895,11 +2894,11 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Pipeline skip flags',
             scripts: ['scripts/orchestration/pipeline.py'],
             commands: [
-                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-fotmob',
-                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-bronze',
-                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-clickhouse',
-                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-silver',
-                'python scripts/orchestration/pipeline.py <YYYYMMDD> --skip-gold',
+                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-fotmob',
+                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-bronze',
+                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-clickhouse',
+                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-silver',
+                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-gold',
             ],
             sectionTab: 'orchestration',
         },
@@ -2907,8 +2906,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['exit 0', 'done when'],
             title: 'Successful pipeline completion',
             commands: [
-                'python scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
-                'python scripts/mongodb/sync_signal_catalogs.py',
+                'python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+                'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
         },
         {
@@ -2916,7 +2915,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Activation catalog scan (runtime)',
             scripts: ['scripts/gold/activations/build_signal_activations.py'],
             paths: ['scripts/gold/signal/catalogs/*.md'],
-            commands: ['python scripts/gold/activations/build_signal_activations.py'],
+            commands: ['python3 scripts/gold/activations/build_signal_activations.py --full-history'],
             sectionTab: 'gold',
         },
         {
@@ -2924,8 +2923,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Signal naming & discovery',
             paths: ['scripts/gold/signal/catalogs/', 'clickhouse/gold/dml/signals/'],
             commands: [
-                'python scripts/gold/run_sql_job.py --kind signal --entity match',
-                'python scripts/gold/run_sql_job.py --kind signal --family shooting',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --entity match',
+                'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --family shooting',
             ],
             sectionTab: 'signals',
         },
@@ -2940,7 +2939,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['clickhouse'],
             title: 'ClickHouse warehouse',
             scripts: ['scripts/orchestration/setup_clickhouse.py'],
-            commands: ['python scripts/orchestration/setup_clickhouse.py'],
+            commands: ['python3 scripts/orchestration/setup_clickhouse.py'],
             sectionTab: 'infrastructure',
         },
         {
@@ -2949,8 +2948,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             scripts: ['scripts/orchestration/setup_clickhouse.py', 'scripts/mongodb/init_indexes.py'],
             commands: [
                 'docker compose up -d',
-                'python scripts/orchestration/setup_clickhouse.py',
-                'python scripts/mongodb/init_indexes.py',
+                'python3 scripts/orchestration/setup_clickhouse.py',
+                'python3 scripts/mongodb/init_indexes.py',
             ],
             sectionTab: 'infrastructure',
         },
@@ -2959,8 +2958,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Catalog sync validation steps',
             scripts: ['scripts/mongodb/sync_signal_catalogs.py'],
             commands: [
-                'python scripts/mongodb/sync_signal_catalogs.py --dry-run',
-                'python scripts/mongodb/sync_signal_catalogs.py',
+                'python3 scripts/mongodb/sync_signal_catalogs.py --dry-run',
+                'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
             sectionTab: 'mongodb',
         },
@@ -2972,8 +2971,8 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
                 'scripts/mongodb/sync_signal_catalogs.py',
             ],
             commands: [
-                'python scripts/gold/activations/build_signal_activations.py',
-                'python scripts/mongodb/sync_signal_catalogs.py',
+                'python3 scripts/gold/activations/build_signal_activations.py --full-history',
+                'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
             sectionTab: 'mongodb',
         },
@@ -3170,7 +3169,7 @@ python scripts/mongodb/sync_signal_catalogs.py</pre>
         { title: 'Complete warehouse route', section: 'overview', sectionLabel: 'Overview', keywords: 'setup fill all tables layers create ddl pipeline scrape load bronze silver gold validation sync catalogs start end runbook' },
         { title: 'End-to-end pipeline', section: 'overview', sectionLabel: 'Overview', keywords: 'pipeline fotmob bronze silver gold activation product' },
         { title: 'Quality gates & preflight', section: 'overview', sectionLabel: 'Overview', keywords: 'health_check preflight contract reconciliation validated' },
-        { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python ownership adr 0001 0009 generic runner' },
+        { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python3 ownership adr 0001 0009 generic runner' },
         // Bronze
         { title: 'Scraping flow', section: 'bronze', sectionLabel: 'Bronze', keywords: 'scrape_fotmob fotmorchestrator dailyscraper matchscraper api json' },
         { title: 'Standalone S3 archive sync', section: 'bronze', sectionLabel: 'Bronze', keywords: 'sync_s3 upload download archive tar gzip bucket force allow-incomplete sha256 staging dry-run' },

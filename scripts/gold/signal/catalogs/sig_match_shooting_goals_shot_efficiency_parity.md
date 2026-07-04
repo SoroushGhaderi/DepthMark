@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_shooting_goals_shot_efficiency_parity
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_shot_efficiency_parity.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_shooting_goals_shot_efficiency_parity
 
@@ -31,13 +31,13 @@ Detect finished matches where both teams end with identical shots on target and 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_shot_efficiency_parity.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_match_shooting_goals_shot_efficiency_parity`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_match_shooting_goals_shot_efficiency_parity
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_shot_efficiency_parity
 ```
 
 ## Output Schema

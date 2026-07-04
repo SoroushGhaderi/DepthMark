@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_high_volume_zero_test
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_volume_zero_test.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_shooting_goals_high_volume_zero_test
 
@@ -37,13 +37,13 @@ Flags high-volume, completely off-frame shooting matches (`total_shots >= 5`, `s
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_volume_zero_test.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_shooting_goals_high_volume_zero_test`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_high_volume_zero_test
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_high_volume_zero_test
 ```
 
 ## Output Schema

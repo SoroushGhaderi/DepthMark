@@ -2,24 +2,21 @@
 
 import subprocess
 import sys
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from src.services.clickhouse_scoped_replace import ScopedReplacementBatch
 from src.services.gold.gold_dml_runner import (
     GoldSqlJob,
+    build_scoped_gold_job,
     discover_gold_sql_jobs,
-    execute_gold_sql_job,
 )
+from src.services.warehouse_scope import WarehouseExecutionScope
 from src.storage.clickhouse_client import ClickHouseClient
 from src.storage.clickhouse_sql_executor import execute_sql_script
 from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
-from src.utils.layer_contracts import (
-    LayerContractError,
-    assert_gold_activation_contracts,
-    assert_gold_layer_contracts,
-)
+from src.utils.layer_contracts import assert_gold_activation_contracts, assert_gold_layer_contracts
 from src.utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -46,9 +43,8 @@ class GoldRunResult:
 class GoldService:
     """Coordinates FotMob Gold layer execution in ClickHouse.
 
-    Owns workflow coordination: SQL file discovery and execution,
-    signal/scenario job discovery and iteration, activation script
-    invocation, and layer contract assertion.
+    Owns workflow coordination: SQL discovery, scope-aware staged replacement,
+    activation invocation with the same scope, and layer contract assertion.
 
     Does NOT own Gold analytical logic (that lives in SQL files).
     """
@@ -104,9 +100,10 @@ class GoldService:
         self,
         job_name: str,
         jobs: list[GoldSqlJob],
+        scope: WarehouseExecutionScope,
         dry_run: bool = False,
     ) -> tuple[int, int, list[str]]:
-        """Execute a list of Gold SQL jobs and return (success, failed, failed_ids)."""
+        """Stage and commit one Gold job group for an explicit scope."""
         if not jobs:
             logger.warning("No gold %s SQL jobs found", job_name)
             return 0, 0, []
@@ -115,37 +112,21 @@ class GoldService:
             logger.info("[dry-run] Planned gold %s SQL jobs: %s", job_name, len(jobs))
 
         total_jobs = len(jobs)
-        success_count = 0
         failed_jobs: list[str] = []
-
-        for index, job in enumerate(jobs, start=1):
-            logger.info(
-                "Running gold %s SQL job %s/%s: %s",
-                job_name,
-                index,
-                total_jobs,
-                job.job_id,
-            )
-            script_start = time.perf_counter()
-            try:
-                if execute_gold_sql_job(self.client, job, dry_run=dry_run, log=logger):
-                    success_count += 1
-                    continue
-            except Exception as error:
-                logger.error("Gold %s SQL job raised an exception: %s", job_name, error)
-
-            elapsed_seconds = time.perf_counter() - script_start
-            logger.info(
-                "Gold %s SQL job finished with failure %s/%s: %s in %.2f seconds",
-                job_name,
-                index,
-                total_jobs,
-                job.job_id,
-                elapsed_seconds,
-            )
-            failed_jobs.append(job.job_id)
+        try:
+            scoped_jobs = [build_scoped_gold_job(job) for job in jobs]
+            ScopedReplacementBatch(
+                self.client,
+                scope,
+                dry_run=dry_run,
+                log=logger,
+            ).run(scoped_jobs)
+        except Exception as error:
+            logger.error("Gold %s scoped batch failed: %s", job_name, error)
+            failed_jobs = [job.job_id for job in jobs]
 
         failed_count = len(failed_jobs)
+        success_count = total_jobs - failed_count
         logger.info(
             "Gold %s execution report | total=%s success=%s failed=%s",
             job_name,
@@ -161,9 +142,10 @@ class GoldService:
     def run_selected_jobs(
         self,
         part: str,
+        scope: WarehouseExecutionScope,
         dry_run: bool = False,
     ) -> tuple[int, int, int, int]:
-        """Run scenario and signal jobs filtered by part.
+        """Stage and commit scenario and signal jobs selected by part and scope.
 
         Returns (scenario_ok, scenario_fail, signal_ok, signal_fail).
         """
@@ -178,37 +160,32 @@ class GoldService:
             else []
         )
 
-        scenario_success_count = 0
-        scenario_failed_count = 0
-        signal_success_count = 0
-        signal_failed_count = 0
+        if not scenario_jobs:
+            logger.info("Scenario tables intentionally excluded because --part=%s", part)
+        if not signal_jobs:
+            logger.info("Signal tables intentionally excluded because --part=%s", part)
 
-        if scenario_jobs:
-            scenario_success_count, scenario_failed_count, _ = self.run_sql_jobs(
-                job_name="scenario",
-                jobs=scenario_jobs,
+        selected_jobs = [*scenario_jobs, *signal_jobs]
+        if not selected_jobs:
+            return 0, 0, 0, 0
+        try:
+            scoped_jobs = [build_scoped_gold_job(job) for job in selected_jobs]
+            ScopedReplacementBatch(
+                self.client,
+                scope,
                 dry_run=dry_run,
-            )
-        else:
-            logger.info("Skipping scenario SQL jobs because --part=%s", part)
+                log=logger,
+            ).run(scoped_jobs)
+        except Exception as error:
+            logger.error("Gold scoped staging or commit failed: %s", error)
+            return 0, len(scenario_jobs), 0, len(signal_jobs)
+        return len(scenario_jobs), 0, len(signal_jobs), 0
 
-        if signal_jobs:
-            signal_success_count, signal_failed_count, _ = self.run_sql_jobs(
-                job_name="signal",
-                jobs=signal_jobs,
-                dry_run=dry_run,
-            )
-        else:
-            logger.info("Skipping signal SQL jobs because --part=%s", part)
-
-        return (
-            scenario_success_count,
-            scenario_failed_count,
-            signal_success_count,
-            signal_failed_count,
-        )
-
-    def run_signal_activation_builders(self, dry_run: bool = False) -> int:
+    def run_signal_activation_builders(
+        self,
+        scope: WarehouseExecutionScope,
+        dry_run: bool = False,
+    ) -> int:
         """Run signal activation scripts. Returns exit code."""
         activation_dir = SCRIPTS_DIR / "activations"
         activation_scripts = [
@@ -222,11 +199,25 @@ class GoldService:
 
         for script_path in activation_scripts:
             if dry_run:
-                logger.info("[dry-run] Would execute signal activation script: %s", script_path)
+                logger.info(
+                    "[dry-run] Activation plan | scope=%s target=gold.signal_activations "
+                    "input=all selected signal history output=%s operations=stage; validate; "
+                    "scoped partition replacement or full-history exchange; script=%s",
+                    scope.label,
+                    scope.output_range,
+                    script_path,
+                )
                 continue
 
             logger.info("Running signal activation script: %s", script_path.name)
-            command = [sys.executable, str(script_path)]
+            scope_args = (
+                ["--date", scope.value]
+                if scope.kind == "date"
+                else ["--month", scope.value]
+                if scope.kind == "month"
+                else ["--full-history"]
+            )
+            command = [sys.executable, str(script_path), *scope_args]
             result = subprocess.run(command, cwd=PROJECT_ROOT)
             if result.returncode != 0:
                 logger.error(
@@ -240,7 +231,7 @@ class GoldService:
         return 0
 
     def assert_contracts(self, part: str = "all", database: Optional[str] = None) -> None:
-        """Run gold layer contract assertions. Raises LayerContractError on failure."""
+        """Run Gold layer contract assertions."""
         if self.client is None:
             raise RuntimeError("ClickHouse client is required for contract checks")
         assert_gold_layer_contracts(
@@ -258,8 +249,14 @@ class GoldService:
                 log=logger,
             )
 
-    def run(self, *, part: str = "all", dry_run: bool = False) -> GoldRunResult:
-        """Execute the full Gold layer pipeline and return a structured result.
+    def run(
+        self,
+        *,
+        scope: WarehouseExecutionScope,
+        part: str = "all",
+        dry_run: bool = False,
+    ) -> GoldRunResult:
+        """Execute one scoped Gold pipeline and return a structured result.
 
         The caller (script) is responsible for:
         - ClickHouse client creation and teardown
@@ -278,17 +275,17 @@ class GoldService:
         elif not dry_run:
             self.execute_sql_files(sql_files)
 
-        logger.info("Selected gold SQL jobs via --part=%s", part)
+        logger.info("Selected gold SQL jobs via --part=%s scope=%s", part, scope.label)
         (
             result.scenario_success_count,
             result.scenario_failed_count,
             result.signal_success_count,
             result.signal_failed_count,
-        ) = self.run_selected_jobs(part=part, dry_run=dry_run)
+        ) = self.run_selected_jobs(part=part, scope=scope, dry_run=dry_run)
 
         if part in ("all", "signals") and result.signal_failed_count == 0:
             result.signal_activation_exit_code = self.run_signal_activation_builders(
-                dry_run=dry_run
+                scope=scope, dry_run=dry_run
             )
         elif part in ("all", "signals") and result.signal_failed_count > 0:
             logger.warning("Skipping signal activation builder because signal scripts had failures")

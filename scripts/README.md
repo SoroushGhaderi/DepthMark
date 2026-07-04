@@ -21,7 +21,7 @@ Use these paths for new automation and daily runs:
 - `scripts/silver/drop_clickhouse.py`
 - `scripts/silver/setup_clickhouse.py`
 - `scripts/gold/load_clickhouse_gold.py`
-- `scripts/gold/run_sql_job.py`
+- `scripts/gold/run_gold_sql_jobs.py`
 - `scripts/gold/drop_clickhouse_scenarios.py`
 - `scripts/gold/setup_clickhouse_gold.py`
 - `scripts/orchestration/pipeline.py`
@@ -34,15 +34,16 @@ existing date arguments. This provides a consistent interface across the
 pipeline:
 
 ```bash
-python scripts/orchestration/pipeline.py --single-date 20251208
-python scripts/bronze/scrape_fotmob.py --single-date 20251208
-python scripts/bronze/scrape_fotmob.py --today
-python scripts/bronze/scrape_fotmob.py --yesterday
-python scripts/bronze/sync_s3.py upload --single-date 20251208
-python scripts/bronze/sync_s3.py download --single-date 20251208
-python scripts/bronze/load_clickhouse.py --single-date 20251208
-python scripts/silver/load_clickhouse.py --single-date 20251208
-python scripts/gold/load_clickhouse_gold.py --single-date 20251208
+python3 scripts/orchestration/pipeline.py --single-date 20251208
+python3 scripts/orchestration/pipeline.py --date 20251208
+python3 scripts/bronze/scrape_fotmob.py --single-date 20251208
+python3 scripts/bronze/scrape_fotmob.py --today
+python3 scripts/bronze/scrape_fotmob.py --yesterday
+python3 scripts/bronze/sync_s3.py upload --single-date 20251208
+python3 scripts/bronze/sync_s3.py download --single-date 20251208
+python3 scripts/bronze/load_clickhouse.py --single-date 20251208
+python3 scripts/silver/load_clickhouse.py --single-date 20251208
+python3 scripts/gold/load_clickhouse_gold.py --single-date 20251208
 ```
 
 FotMob scraping has two filesystem aspects beneath the configured Bronze root:
@@ -52,19 +53,37 @@ always refreshes Live listings and match payloads and never compresses them.
 Historical selectors reject today and future dates; a current-month scope ends
 at yesterday.
 
+### Warehouse Scope Modes
+
+Silver and Gold commands require an explicit output scope:
+
+```bash
+python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/silver/load_clickhouse.py --month 202512 --dry-run
+python3 scripts/silver/load_clickhouse.py --full-history --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --month 202512 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --full-history --dry-run
+```
+
+The generic Gold SQL runner and activation builder use the same selectors.
+`scripts/bronze/load_clickhouse.py --full-history` discovers all dates in
+Historical storage and never reads Live storage. Pipeline `--full-history`
+skips scraping and runs the remaining selected warehouse stages.
+
 ### Dry-Run Support
 
 - `scripts/bronze/sync_s3.py upload --date 20251208 --dry-run`
 - `scripts/bronze/sync_s3.py download --date 20251208 --dry-run`
-- `scripts/silver/load_clickhouse.py --dry-run`
-- `scripts/gold/load_clickhouse_gold.py --dry-run`
-- `scripts/gold/load_clickhouse_gold.py --part signals --dry-run`
-- `scripts/gold/run_sql_job.py --dry-run`
-- `scripts/gold/run_sql_job.py --kind signal --dry-run`
-- `scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run`
-- `scripts/gold/run_sql_job.py --kind signal --entity player --dry-run`
-- `scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run`
-- `scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run`
+- `scripts/silver/load_clickhouse.py --date 20251208 --dry-run`
+- `scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run`
+- `scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals --dry-run`
+- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --dry-run`
+- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --dry-run`
+- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run`
+- `scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player --dry-run`
+- `scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family shooting_goals --dry-run`
+- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run`
 
 ### Bronze S3 Sync
 
@@ -91,28 +110,30 @@ and `download` require an explicit `--date`, `--start-date/--end-date`,
 
 ## Scenario Scripts
 
-Scenario SQL jobs are executed by `scripts/gold/run_sql_job.py`.
+Scenario SQL jobs are executed by `scripts/gold/run_gold_sql_jobs.py`.
 Do not add handwritten `scripts/gold/scenario/scenario_*.py` runner files.
 Scenario standards are defined in `scripts/gold/scenario/SCENARIOS_CONTRACT.md`.
 
 Current inventory: 48 matching SQL transforms.
 
 - SQL files: `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
-- Catalog: `scripts/gold/scenario/scenarios_catalog.md`
+- Catalog: `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 
 ## Signal Scripts
 
-Signal SQL jobs are discovered and executed through `scripts/gold/run_sql_job.py`
+Signal SQL jobs are discovered and executed through `scripts/gold/run_gold_sql_jobs.py`
 and shared helpers in `src/services/gold/gold_dml_runner.py`. Do not add handwritten
 per-signal runner files. Use `--id` for one exact signal; use `--entity` or
 `--family` as separate signal batch selectors such as `--entity player` or
 `--family shooting_goals`.
+Every execution also requires `--date`, `--month`, or `--full-history`.
 After successful signal SQL execution, the loader runs `scripts/gold/activations/build_signal_activations.py`
 to populate deterministic per-match activation IDs in `gold.signal_activations`.
 The builder stages rows in ephemeral `gold.signal_activations_stage`, then runs
-`clickhouse/gold/dml/activations/signal_activation_final_insert.sql` to write the
-serving table. Signal SQL failures skip activation rebuild until signals succeed
-or the builder is rerun manually. The activation ID key uses each signal catalog
+`clickhouse/gold/dml/activations/signal_activation_final_insert.sql` into a
+calculation table and commits the same output scope as the signal run. Signal
+SQL failures skip activation replacement until signals succeed or the builder
+is rerun with the same scope. The activation ID key uses each signal catalog
 `row_identity` definition.
 
 Current inventory: 344 matching SQL transforms and 344 matching markdown catalogs.
