@@ -1,4 +1,4 @@
-"""Load FotMob silver data into ClickHouse tables."""
+"""Load FotMob Silver data with explicit date, month, or full-history scope."""
 
 import argparse
 import sys
@@ -15,6 +15,10 @@ for candidate in (str(project_root), str(scripts_dir)):
 from config.settings import get_settings
 from src.services.silver.fotmob_silver_service import SilverRunResult, SilverService
 from src.services.telegram import LayerAlertData, TelegramClient
+from src.services.warehouse_scope import (
+    add_warehouse_scope_arguments,
+    execution_scope_from_args,
+)
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.layer_contracts import LayerContractError
 from src.utils.logging_utils import get_logger, setup_logging
@@ -23,12 +27,13 @@ logger = get_logger(__name__)
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Load FotMob silver SQL into ClickHouse")
-    parser.add_argument(
-        "--single-date",
-        type=str,
-        help="Process a single date (YYYYMMDD format). Reserved for interface consistency; silver currently processes all pending SQL jobs.",
+    parser = argparse.ArgumentParser(
+        description=(
+            "Load FotMob Silver SQL through two-phase staged replacement. "
+            "Exactly one execution scope is required."
+        )
     )
+    add_warehouse_scope_arguments(parser)
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -41,6 +46,11 @@ def main(argv=None) -> int:
     global logger
     stage_start = time.perf_counter()
     args = parse_args(argv)
+    try:
+        scope = execution_scope_from_args(args)
+    except ValueError as error:
+        logger.error("Invalid Silver execution scope: %s", error)
+        return 2
     settings = get_settings()
     logger = setup_logging(
         name="clickhouse_silver_loader",
@@ -50,28 +60,7 @@ def main(argv=None) -> int:
     if args.dry_run:
         logger.info("Running silver loader in dry-run mode (no SQL will be executed)")
         service = SilverService(client=None)
-        result = service.run(dry_run=True)
-        completion_rate = (
-            (result.completed_jobs / result.total_jobs * 100) if result.total_jobs > 0 else 0
-        )
-        telegram_client = TelegramClient()
-        telegram_client.render_and_send(
-            "layer_alert.html.j2",
-            LayerAlertData(
-                layer="silver",
-                success=result.exit_code == 0,
-                scope="dry-run",
-                duration_seconds=time.perf_counter() - stage_start,
-                details={
-                    "Jobs planned": str(result.total_jobs),
-                    "Jobs completed": str(result.completed_jobs),
-                },
-                insights={
-                    "Completion rate": f"{completion_rate:.1f}%",
-                    "Mode": "dry-run (no writes)",
-                },
-            ),
-        )
+        result = service.run(scope=scope, dry_run=True)
         if result.exit_code == 0:
             logger.info("Silver dry-run completed successfully")
         return result.exit_code
@@ -103,9 +92,10 @@ def main(argv=None) -> int:
         return 1
 
     exit_code = 0
+    result = SilverRunResult(exit_code=1)
     try:
         service = SilverService(client=client)
-        result = service.run(dry_run=False)
+        result = service.run(scope=scope, dry_run=False)
         exit_code = result.exit_code
         return exit_code
     except LayerContractError as contract_error:
@@ -123,7 +113,7 @@ def main(argv=None) -> int:
             LayerAlertData(
                 layer="silver",
                 success=exit_code == 0,
-                scope="runtime",
+                scope=scope.label,
                 duration_seconds=time.perf_counter() - stage_start,
                 details={
                     "Jobs planned": str(result.total_jobs),

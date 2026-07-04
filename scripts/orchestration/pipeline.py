@@ -10,14 +10,16 @@ This script runs all steps sequentially, handling errors gracefully
 and providing a comprehensive summary at the end.
 
 Usage:
-    python scripts/orchestration/pipeline.py 20251113
-    python scripts/orchestration/pipeline.py --start-date 20251101 --end-date 20251107
-    python scripts/orchestration/pipeline.py --month 202511
-    python scripts/orchestration/pipeline.py 20251113 --skip-bronze
-    python scripts/orchestration/pipeline.py 20251113 --skip-clickhouse
-    python scripts/orchestration/pipeline.py 20251113 --bronze-only
-    python scripts/orchestration/pipeline.py 20251113 --silver-only
-    python scripts/orchestration/pipeline.py 20251113 --gold-only
+    python3 scripts/orchestration/pipeline.py 20251113
+    python3 scripts/orchestration/pipeline.py --date 20251113
+    python3 scripts/orchestration/pipeline.py --start-date 20251101 --end-date 20251107
+    python3 scripts/orchestration/pipeline.py --month 202511
+    python3 scripts/orchestration/pipeline.py --full-history
+    python3 scripts/orchestration/pipeline.py 20251113 --skip-bronze
+    python3 scripts/orchestration/pipeline.py 20251113 --skip-clickhouse
+    python3 scripts/orchestration/pipeline.py 20251113 --bronze-only
+    python3 scripts/orchestration/pipeline.py 20251113 --silver-only
+    python3 scripts/orchestration/pipeline.py 20251113 --gold-only
 """
 import argparse
 import logging
@@ -130,17 +132,19 @@ def create_argument_parser() -> argparse.ArgumentParser:
         epilog="""
 Examples:
   Full Pipeline:
-    python scripts/orchestration/pipeline.py 20251113
-    python scripts/orchestration/pipeline.py --start-date 20251101 --end-date 20251107
-    python scripts/orchestration/pipeline.py --month 202511
+    python3 scripts/orchestration/pipeline.py 20251113
+    python3 scripts/orchestration/pipeline.py --date 20251113
+    python3 scripts/orchestration/pipeline.py --start-date 20251101 --end-date 20251107
+    python3 scripts/orchestration/pipeline.py --month 202511
+    python3 scripts/orchestration/pipeline.py --full-history
   Partial Pipeline:
-    python scripts/orchestration/pipeline.py 20251113 --bronze-only
-    python scripts/orchestration/pipeline.py 20251113 --silver-only
-    python scripts/orchestration/pipeline.py 20251113 --gold-only
-    python scripts/orchestration/pipeline.py 20251113 --skip-bronze
-    python scripts/orchestration/pipeline.py 20251113 --skip-fotmob
+    python3 scripts/orchestration/pipeline.py 20251113 --bronze-only
+    python3 scripts/orchestration/pipeline.py 20251113 --silver-only
+    python3 scripts/orchestration/pipeline.py 20251113 --gold-only
+    python3 scripts/orchestration/pipeline.py 20251113 --skip-bronze
+    python3 scripts/orchestration/pipeline.py 20251113 --skip-fotmob
   Options:
-    python scripts/orchestration/pipeline.py 20251113 --force
+    python3 scripts/orchestration/pipeline.py 20251113 --force
         """,
     )
     _add_date_arguments(parser)
@@ -166,12 +170,23 @@ def _add_date_arguments(parser: argparse.ArgumentParser) -> None:
         help="Process a single date (YYYYMMDD format). Equivalent to the positional date argument.",
     )
     date_group.add_argument(
+        "--date",
+        dest="named_date",
+        type=str,
+        help="Process a single date (YYYYMMDD format).",
+    )
+    date_group.add_argument(
         "--start-date", type=str, help="Start date for range processing (YYYYMMDD format)"
     )
     date_group.add_argument(
         "--month",
         type=str,
         help="Process entire month (YYYYMM format, e.g., 202511 for November 2025)",
+    )
+    date_group.add_argument(
+        "--full-history",
+        action="store_true",
+        help="Load all available Historical Bronze files and rebuild Silver and Gold",
     )
     parser.add_argument(
         "--end-date",
@@ -250,6 +265,8 @@ def _validate_pipeline_flags(parser: argparse.ArgumentParser, args: argparse.Nam
     only_flags = [args.bronze_only, args.silver_only, args.gold_only]
     if sum(bool(f) for f in only_flags) > 1:
         parser.error("Use only one of --bronze-only, --silver-only, --gold-only")
+    if args.full_history and args.bronze_only:
+        parser.error("--full-history cannot use --bronze-only because scraping is excluded")
 
 
 def _validate_month_argument(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
@@ -287,10 +304,11 @@ def _validate_single_date_argument(
     parser: argparse.ArgumentParser, args: argparse.Namespace
 ) -> None:
     """Validate single date argument."""
-    if args.single_date:
+    named_date = args.single_date or args.named_date
+    if named_date:
         if args.date:
-            parser.error("Use either the positional date or --single-date, not both")
-        args.date = args.single_date
+            parser.error("Use either the positional date or a named date selector, not both")
+        args.date = named_date
     if not args.date:
         return
     is_valid, error_msg = validate_date_format(args.date, "YYYYMMDD")
@@ -316,6 +334,13 @@ def create_pipeline_config(args: argparse.Namespace) -> PipelineConfig:
 
 def create_date_info(args: argparse.Namespace) -> DateRangeInfo:
     """Create DateRangeInfo from parsed arguments."""
+    if args.full_history:
+        return DateRangeInfo(
+            dates=[],
+            display_text="Full history",
+            mode_text="full_history",
+            log_suffix="full_history",
+        )
     return create_date_range_info(
         date=args.date,
         start_date=args.start_date,
@@ -482,7 +507,7 @@ def run_silver_process(
 ) -> StepResult:
     """Run silver processing for a date."""
     script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
-    argv: List[str] = []
+    argv: List[str] = ["--date", date_str]
     return run_step(
         f"Silver Process - {date_str}",
         str(script_path),
@@ -497,7 +522,7 @@ def run_silver_process_month(
 ) -> StepResult:
     """Run silver processing for a month."""
     script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
-    argv: List[str] = []
+    argv: List[str] = ["--month", month_str]
     return run_step(
         f"Silver Process - Month {month_str}",
         str(script_path),
@@ -512,7 +537,7 @@ def run_gold_process(
 ) -> StepResult:
     """Run gold processing for a date."""
     script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
-    argv: List[str] = []
+    argv: List[str] = ["--date", date_str]
     return run_step(
         f"Gold Process - {date_str}",
         str(script_path),
@@ -527,7 +552,7 @@ def run_gold_process_month(
 ) -> StepResult:
     """Run gold processing for a month."""
     script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
-    argv: List[str] = []
+    argv: List[str] = ["--month", month_str]
     return run_step(
         f"Gold Process - Month {month_str}",
         str(script_path),
@@ -650,6 +675,68 @@ def process_gold_monthly(
         results.add_result("fotmob_gold", result)
 
 
+def process_full_history(
+    config: PipelineConfig,
+    results: PipelineResults,
+) -> None:
+    """Run every non-scraping warehouse stage in explicit full-history mode."""
+    if (
+        not config.skip_fotmob
+        and not config.skip_clickhouse
+        and not config.bronze_only
+        and not config.silver_only
+        and not config.gold_only
+    ):
+        script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_clickhouse.py"
+        argv = ["--full-history"]
+        if config.force:
+            argv.append("--force")
+        results.add_result(
+            "fotmob_clickhouse",
+            run_step(
+                "ClickHouse Load - FotMob - Full History",
+                f"{script_path} {' '.join(argv)}",
+                lambda: _run_script(script_path, argv),
+                continue_on_error=True,
+                date_str="full-history",
+            ),
+        )
+    if (
+        not config.skip_fotmob
+        and not config.skip_silver
+        and not config.bronze_only
+        and not config.gold_only
+    ):
+        script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
+        results.add_result(
+            "fotmob_silver",
+            run_step(
+                "Silver Process - Full History",
+                f"{script_path} --full-history",
+                lambda: _run_script(script_path, ["--full-history"]),
+                continue_on_error=True,
+                date_str="full-history",
+            ),
+        )
+    if (
+        not config.skip_fotmob
+        and not config.skip_gold
+        and not config.bronze_only
+        and not config.silver_only
+    ):
+        script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
+        results.add_result(
+            "fotmob_gold",
+            run_step(
+                "Gold Process - Full History",
+                f"{script_path} --full-history",
+                lambda: _run_script(script_path, ["--full-history"]),
+                continue_on_error=True,
+                date_str="full-history",
+            ),
+        )
+
+
 def log_pipeline_summary(
     logger: logging.Logger,
     results: PipelineResults,
@@ -692,6 +779,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
     log_pipeline_header(logger, date_info, config, log_file)
     results = PipelineResults()
     pipeline_start = time.time()
+    if args.full_history:
+        logger.info("Scraping is intentionally excluded from full-history pipeline mode")
+        process_full_history(config, results)
     for idx, date_str in enumerate(date_info.dates, 1):
         logger.info(f"\n\n{'#' * 80}")
         logger.info(f"# Processing date {idx}/{len(date_info.dates)}: {date_str}")
@@ -733,7 +823,8 @@ def run_pipeline(args: argparse.Namespace) -> int:
     if args.month and not config.skip_gold and not config.bronze_only and not config.silver_only:
         process_gold_monthly(args.month, config, results)
     pipeline_elapsed = time.time() - pipeline_start
-    log_pipeline_summary(logger, results, len(date_info.dates), pipeline_elapsed, log_file)
+    total_dates = len(date_info.dates) if not args.full_history else 0
+    log_pipeline_summary(logger, results, total_dates, pipeline_elapsed, log_file)
     if results.all_successful():
         logger.info("[OK] Pipeline completed successfully!")
         return 0

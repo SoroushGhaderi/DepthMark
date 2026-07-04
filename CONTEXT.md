@@ -45,7 +45,7 @@ Gold setup DDL lives under `clickhouse/gold/ddl/`; transforms live under
 - `dml/activations/signal_activation_final_insert.sql`
 
 Signal metadata is authored in `scripts/gold/signal/catalogs/*.md`. Scenario
-narrative docs live in `scripts/gold/scenario/scenarios_catalog.md`.
+narrative docs live in `scripts/gold/scenario/SCENARIOS_CATALOG.md`.
 
 ## Glossary
 
@@ -95,11 +95,26 @@ Related terms: Signal, Signal Catalog, Signal Activation ID.
 
 The process that regenerates Gold activation metadata from active signal
 catalogs and `gold_signals.sig_*` output tables. The canonical rebuild strategy
-is full-table: rebuild the single serving table `gold.signal_activations` from
-all active signal output rows.
+matches the selected warehouse execution scope: replace activation rows only
+for the selected date or month during a scoped run, and rebuild the complete
+table only during an explicit full-history run. Scoped replacement reads all
+upstream context required to calculate correct results but must not replace
+activation rows outside the selected output scope.
 
-Avoid saying: incremental activation patch, scoped activation patch.
-Related terms: Signal Activation, Signal Activation ID.
+Avoid saying: unbounded activation rebuild, incremental activation patch.
+Related terms: Signal Activation, Signal Activation ID, Warehouse Execution
+Scope.
+
+### Warehouse Execution Scope
+
+The explicit match-date output boundary selected for a Silver or Gold run. A
+scope is one calendar date, one calendar month, or full history. A scoped job
+may read earlier historical context when its analytical logic requires it, but
+it replaces only rows whose match-date lineage belongs to the selected output
+boundary.
+
+Avoid saying: inserted-at window, implicit full load.
+Related terms: Gold Activation Rebuild, Historical Scrape.
 
 ### Signal Activation ID
 
@@ -188,7 +203,7 @@ The execution of all scenario SQL jobs through the bulk Gold loader
 (`scripts/gold/load_clickhouse_gold.py`). Scenarios follow the same failure
 pattern as signals: a scenario failure blocks signal activation builders and
 produces a non-zero exit code. The `--part` flag accepts `scenarios` as an
-explicit selector.
+explicit selector, and every run also requires a Warehouse Execution Scope.
 
 Avoid saying: scenario bulk disabled, scenario opt-in, scenario validation pending.
 Related terms: Gold Bulk Loading, Gold Service, Scenario SQL Job.

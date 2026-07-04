@@ -64,10 +64,10 @@ indefinite retention has minimal disk cost and preserves audit evidence.
 ls data/dlq/
 
 # Read all records for a specific table and date
-cat data/dlq/player_20260115.jsonl | python -m json.tool
+cat data/dlq/player_20260115.jsonl | python3 -m json.tool
 
 # Get DLQ statistics
-python -c "
+python3 -c "
 from src.storage.dlq import DeadLetterQueue
 dlq = DeadLetterQueue()
 stats = dlq.get_dlq_stats()
@@ -81,7 +81,7 @@ print(f'By table: {stats[\"by_table\"]}')
 
 ```bash
 # Check row count for a date in a bronze table
-python -c "
+python3 -c "
 from clickhouse_driver import Client
 client = Client(host='localhost', port=9000, user='default', password='')
 count = client.execute('SELECT count() FROM bronze.match_reference WHERE date = \\'20260115\\'')[0][0]

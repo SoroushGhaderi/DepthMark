@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_big_chance_bottler
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_big_chance_bottler.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_shooting_goals_big_chance_bottler
 
@@ -36,13 +36,13 @@ Flags players who miss at least three big chances in one finished match, surfaci
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_big_chance_bottler.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_shooting_goals_big_chance_bottler`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_big_chance_bottler
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_big_chance_bottler
 ```
 
 ## Output Schema

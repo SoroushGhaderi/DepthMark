@@ -13,9 +13,10 @@ cp .env.example .env
 # keep DEPTHMARK_ENV=local only for the tracked local Docker workflow
 
 docker compose up -d
-docker compose exec depthmark-scraper python scripts/orchestration/setup_clickhouse.py
-docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
-docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py --single-date 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/setup_clickhouse.py
+docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --single-date 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --full-history
 ```
 
 Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
@@ -44,8 +45,8 @@ Run pipeline commands inside the scraper service (see
 command surface):
 
 ```bash
-docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py 20251208
-docker compose exec depthmark-scraper python scripts/orchestration/pipeline.py --single-date 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --single-date 20251208
 ```
 
 ## TouchDesk Integration
@@ -114,7 +115,7 @@ MONGODB_DATABASE=orbit_content
 ## ClickHouse Setup
 
 ```bash
-python scripts/orchestration/setup_clickhouse.py
+python3 scripts/orchestration/setup_clickhouse.py
 ```
 
 Runs DDL in layer order:
@@ -128,7 +129,7 @@ Runs DDL in layer order:
 ## MongoDB Setup
 
 ```bash
-python scripts/mongodb/init_indexes.py
+python3 scripts/mongodb/init_indexes.py
 ```
 
 Creates 5 collections with unique and compound indexes:
@@ -165,7 +166,7 @@ Env vars override YAML values: `FOTMOB_X_MAS_TOKEN`, `FOTMOB_MAX_WORKERS`, etc.
 ## Health Checks
 
 ```bash
-python scripts/health_check.py --json
+python3 scripts/health_check.py --json
 ```
 
 Checks:

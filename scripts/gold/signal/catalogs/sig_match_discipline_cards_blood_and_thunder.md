@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_blood_and_thunder
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_blood_and_thunder.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_discipline_cards_blood_and_thunder
 
@@ -33,13 +33,13 @@ Flags matches with sustained physical contest volume and elevated whistle pressu
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_blood_and_thunder.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_match_discipline_cards_blood_and_thunder`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_match_discipline_cards_blood_and_thunder
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_blood_and_thunder
 ```
 
 ## Output Schema

@@ -21,7 +21,7 @@ Asset paths are explicit in each catalog:
 
 - Target table: `gold_signals.{signal_id}`
 - SQL path: `clickhouse/gold/dml/signals/{entity}/{signal_id}.sql`
-- Runner path: `scripts/gold/run_sql_job.py`
+- Runner path: `scripts/gold/run_gold_sql_jobs.py`
 
 The MongoDB sync embeds the referenced SQL and shared generic runner file
 contents under `assets.sql.content` and `assets.runner.content`, along with each

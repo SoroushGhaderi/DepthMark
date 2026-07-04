@@ -28,8 +28,8 @@ same ClickHouse and logging conventions as the Gold loader, and preserve narrow
 selection by job kind and identifier. For example:
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
-python scripts/gold/run_sql_job.py --kind scenario --id scenario_team_shooting_goals
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_team_shooting_goals
 ```
 
 Signal jobs should also support DDL-grouped batch selection by entity and family,
@@ -37,13 +37,16 @@ matching the grouping used by `clickhouse/gold/ddl/signals/`. For
 example:
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --entity player --family shooting_goals
-python scripts/gold/run_sql_job.py --kind signal --entity team --family creativity_playmaking
+python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player
+python3 scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family creativity_playmaking
 ```
 
-ADR 0009 later supersedes the combined entity+family selector examples above:
-`--entity` and `--family` are separate signal batch selectors and should not be
-combined in one command.
+ADR 0009 later clarified that `--entity` and `--family` are separate signal
+batch selectors and must not be combined in one command; the examples above
+reflect that current contract.
+
+ADR 0018 later requires every generic runner invocation to select `--date`,
+`--month`, or `--full-history` explicitly.
 
 Bulk Gold loading should reuse the same generic execution path where practical.
 New Gold work should add or update SQL and catalog/contract documentation rather

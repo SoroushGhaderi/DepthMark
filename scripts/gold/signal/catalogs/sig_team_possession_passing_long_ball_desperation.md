@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_possession_passing_long_ball_desperation
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_long_ball_desperation.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_possession_passing_long_ball_desperation
 
@@ -30,13 +30,13 @@ Triggers when the losing side attempts an extreme long-ball volume (`>60`), indi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_long_ball_desperation.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_possession_passing_long_ball_desperation`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_possession_passing_long_ball_desperation
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_long_ball_desperation
 ```
 
 ## Output Schema

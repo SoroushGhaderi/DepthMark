@@ -74,7 +74,7 @@ These values are used to compute `signal_instance_id` in
 ### 1. Index Initialization
 
 ```bash
-python scripts/mongodb/init_indexes.py
+python3 scripts/mongodb/init_indexes.py
 ```
 
 Creates unique and compound indexes on all collections.
@@ -82,8 +82,8 @@ Creates unique and compound indexes on all collections.
 ### 2. Catalog Sync
 
 ```bash
-python scripts/mongodb/sync_signal_catalogs.py --dry-run  # preview
-python scripts/mongodb/sync_signal_catalogs.py             # execute
+python3 scripts/mongodb/sync_signal_catalogs.py --dry-run  # preview
+python3 scripts/mongodb/sync_signal_catalogs.py             # execute
 ```
 
 Sync process:

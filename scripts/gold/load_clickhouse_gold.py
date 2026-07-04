@@ -1,4 +1,4 @@
-"""Run FotMob gold layer orchestration in ClickHouse."""
+"""Run scope-aware FotMob Gold orchestration in ClickHouse."""
 
 import argparse
 import sys
@@ -15,6 +15,10 @@ for candidate in (str(project_root), str(scripts_dir)):
 from config.settings import get_settings
 from src.services.gold.fotmob_gold_service import GoldRunResult, GoldService
 from src.services.telegram import LayerAlertData, TelegramClient
+from src.services.warehouse_scope import (
+    add_warehouse_scope_arguments,
+    execution_scope_from_args,
+)
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
 from src.utils.layer_contracts import LayerContractError
@@ -24,12 +28,13 @@ logger = get_logger(__name__)
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Process FotMob gold layer in ClickHouse")
-    parser.add_argument(
-        "--single-date",
-        type=str,
-        help="Process a single date (YYYYMMDD format). Reserved for interface consistency; gold currently processes all pending SQL jobs.",
+    parser = argparse.ArgumentParser(
+        description=(
+            "Process FotMob Gold through two-phase staged replacement. "
+            "Exactly one execution scope is required."
+        )
     )
+    add_warehouse_scope_arguments(parser)
     parser.add_argument(
         "--part",
         choices=("all", "signals", "scenarios"),
@@ -48,6 +53,11 @@ def main(argv=None) -> int:
     global logger
     stage_start = time.perf_counter()
     args = parse_args(argv)
+    try:
+        scope = execution_scope_from_args(args)
+    except ValueError as error:
+        logger.error("Invalid Gold execution scope: %s", error)
+        return 2
     settings = get_settings()
     logger = setup_logging(
         name="clickhouse_gold_orchestrator",
@@ -64,39 +74,10 @@ def main(argv=None) -> int:
         logger.info("Gold signal database: %s", signal_db)
         logger.info("Gold metadata database: %s", metadata_db)
         service = GoldService(client=None, metadata_db=metadata_db)
-        result = service.run(part=args.part, dry_run=True)
+        result = service.run(scope=scope, part=args.part, dry_run=True)
         failed_count = result.scenario_failed_count + result.signal_failed_count
         if result.signal_activation_exit_code != 0:
             failed_count += 1
-        total_jobs = (
-            result.scenario_success_count
-            + result.scenario_failed_count
-            + result.signal_success_count
-            + result.signal_failed_count
-        )
-        successful_jobs = result.scenario_success_count + result.signal_success_count
-        scenario_success_rate = (successful_jobs / total_jobs * 100) if total_jobs > 0 else 0
-        telegram_client = TelegramClient()
-        telegram_client.render_and_send(
-            "layer_alert.html.j2",
-            LayerAlertData(
-                layer="gold",
-                success=failed_count == 0,
-                scope="dry-run",
-                duration_seconds=time.perf_counter() - stage_start,
-                details={
-                    "SQL files planned": str(result.sql_file_count),
-                    "Scenarios succeeded": str(result.scenario_success_count),
-                    "Scenario failures": str(result.scenario_failed_count),
-                    "Signal failures": str(result.signal_failed_count),
-                    "Activation exit code": str(result.signal_activation_exit_code),
-                },
-                insights={
-                    "Pass projection": f"{scenario_success_rate:.1f}%",
-                    "Mode": "dry-run (no writes)",
-                },
-            ),
-        )
         if failed_count > 0:
             return 1
         logger.info("Gold dry-run completed successfully")
@@ -131,9 +112,10 @@ def main(argv=None) -> int:
         return 1
 
     exit_code = 0
+    result = GoldRunResult(exit_code=1)
     try:
         service = GoldService(client=client, metadata_db=metadata_db)
-        result = service.run(part=args.part, dry_run=False)
+        result = service.run(scope=scope, part=args.part, dry_run=False)
         exit_code = result.exit_code
         return exit_code
     except LayerContractError as contract_error:
@@ -159,7 +141,7 @@ def main(argv=None) -> int:
             LayerAlertData(
                 layer="gold",
                 success=exit_code == 0,
-                scope="runtime",
+                scope=scope.label,
                 duration_seconds=time.perf_counter() - stage_start,
                 details={
                     "SQL files executed": str(result.sql_file_count),

@@ -27,30 +27,34 @@ pipeline.py [date]
 
 ```bash
 # Single date
-python scripts/orchestration/pipeline.py 20251208
-python scripts/orchestration/pipeline.py --single-date 20251208
+python3 scripts/orchestration/pipeline.py 20251208
+python3 scripts/orchestration/pipeline.py --date 20251208
+python3 scripts/orchestration/pipeline.py --single-date 20251208
 
 # Date range
-python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
 
 # Full month
-python scripts/orchestration/pipeline.py --month 202512
+python3 scripts/orchestration/pipeline.py --month 202512
+
+# Full history (scraping is intentionally skipped)
+python3 scripts/orchestration/pipeline.py --full-history
 
 # Partial runs
-python scripts/orchestration/pipeline.py 20251208 --bronze-only
-python scripts/orchestration/pipeline.py 20251208 --silver-only
-python scripts/orchestration/pipeline.py 20251208 --gold-only
+python3 scripts/orchestration/pipeline.py 20251208 --bronze-only
+python3 scripts/orchestration/pipeline.py 20251208 --silver-only
+python3 scripts/orchestration/pipeline.py 20251208 --gold-only
 
 # Skip stages
-python scripts/orchestration/pipeline.py 20251208 --skip-bronze
-python scripts/orchestration/pipeline.py 20251208 --skip-silver
-python scripts/orchestration/pipeline.py 20251208 --skip-gold
-python scripts/orchestration/pipeline.py 20251208 --skip-clickhouse
-python scripts/orchestration/pipeline.py 20251208 --skip-fotmob
+python3 scripts/orchestration/pipeline.py 20251208 --skip-bronze
+python3 scripts/orchestration/pipeline.py 20251208 --skip-silver
+python3 scripts/orchestration/pipeline.py 20251208 --skip-gold
+python3 scripts/orchestration/pipeline.py 20251208 --skip-clickhouse
+python3 scripts/orchestration/pipeline.py 20251208 --skip-fotmob
 
 # Options
-python scripts/orchestration/pipeline.py 20251208 --force
-python scripts/orchestration/pipeline.py 20251208 --debug
+python3 scripts/orchestration/pipeline.py 20251208 --force
+python3 scripts/orchestration/pipeline.py 20251208 --debug
 ```
 
 ### Execution Model
@@ -58,14 +62,19 @@ python scripts/orchestration/pipeline.py 20251208 --debug
 Pipeline calls each layer script through CLI subprocesses (ADR 0002):
 
 1. Each stage is a subprocess call to the layer script.
-2. Non-zero exit from any stage halts the pipeline.
+2. The selected date, month, or full-history scope is propagated to downstream
+   layer scripts.
 3. `--skip-*` flags bypass stages entirely.
 4. `--*-only` flags run exactly one stage.
-5. Date range and month modes iterate dates sequentially.
+5. Date ranges invoke downstream loads once per date; month mode invokes one
+   month-scoped load.
+6. Full-history mode skips scraping and runs Historical Bronze loading, Silver,
+   and Gold with `--full-history`.
 
 ### Mutually Exclusive Flags
 
-- `date` / `--single-date` / `--start-date` / `--month` — one required
+- `date` / `--date` / `--single-date` / `--start-date` / `--month` /
+  `--full-history` — one required
 - `--bronze-only` / `--silver-only` / `--gold-only` — at most one
 
 ## Orchestrator (`src/orchestrator.py`)
@@ -89,17 +98,17 @@ Before running the full pipeline:
 
 ```bash
 # System health
-python scripts/health_check.py --json
+python3 scripts/health_check.py --json
 
 # Preview Silver and Gold
-python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --dry-run
+python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
 
 # Reconciliation
-python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 
 # Logging style
-python scripts/quality/check_logging_style.py
+python3 scripts/quality/check_logging_style.py
 ```
 
 ## MongoDB Sync
@@ -107,9 +116,9 @@ python scripts/quality/check_logging_style.py
 After Gold activation rebuild, sync signal catalogs to MongoDB:
 
 ```bash
-python scripts/mongodb/init_indexes.py
-python scripts/mongodb/sync_signal_catalogs.py --dry-run
-python scripts/mongodb/sync_signal_catalogs.py
+python3 scripts/mongodb/init_indexes.py
+python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
+python3 scripts/mongodb/sync_signal_catalogs.py
 ```
 
 ## Full Operational Sequence
@@ -117,18 +126,18 @@ python scripts/mongodb/sync_signal_catalogs.py
 ```bash
 # 1. Infrastructure
 docker compose up -d
-python scripts/orchestration/setup_clickhouse.py
+python3 scripts/orchestration/setup_clickhouse.py
 
 # 2. Pipeline
-python scripts/orchestration/pipeline.py 20251208
+python3 scripts/orchestration/pipeline.py 20251208
 
 # 3. Catalog sync
-python scripts/mongodb/init_indexes.py
-python scripts/mongodb/sync_signal_catalogs.py
+python3 scripts/mongodb/init_indexes.py
+python3 scripts/mongodb/sync_signal_catalogs.py
 
 # 4. Validation
-python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
-python scripts/health_check.py --json
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/health_check.py --json
 ```
 
 ## Failure Modes
@@ -137,8 +146,9 @@ python scripts/health_check.py --json
 | --- | ---|
 | Scraping fails (API) | Re-run `scrape_fotmob.py` for affected dates |
 | Bronze load fails | Re-run `load_clickhouse.py --date <date>` or `--single-date <date>` |
-| Silver SQL fails | Fix SQL, re-run `silver/load_clickhouse.py` |
-| Gold SQL fails | Re-run `run_sql_job.py --kind signal --id <id>` |
-| Activation fails | Re-run `build_signal_activations.py` (requires populated `gold_signals.sig_*`) |
-| Signal failures skipped activations | Fix signals, rerun `load_clickhouse_gold.py --part signals`, or run `build_signal_activations.py` |
+| Silver SQL fails | Fix SQL, re-run `silver/load_clickhouse.py --date <YYYYMMDD>` for the same scope |
+| Gold SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind signal --id <id>` |
+| Activation fails | Re-run `build_signal_activations.py --date <YYYYMMDD>` with the same scope |
+| Signal failures skipped activations | Fix signals, rerun `load_clickhouse_gold.py --date <YYYYMMDD> --part signals` |
+| Commit fails after some tables changed | Re-run the identical scope; replacement converges safely |
 | MongoDB sync fails | Re-run `sync_signal_catalogs.py` |

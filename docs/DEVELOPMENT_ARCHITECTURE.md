@@ -72,68 +72,71 @@ the local Docker stack, prefix commands with
 ### Setup
 
 ```bash
-python scripts/orchestration/setup_clickhouse.py
-python scripts/bronze/setup_clickhouse.py
-python scripts/silver/setup_clickhouse.py
-python scripts/gold/setup_clickhouse_gold.py
-python scripts/gold/setup_clickhouse_gold.py --part scenarios
-python scripts/gold/setup_clickhouse_gold.py --part signals
+python3 scripts/orchestration/setup_clickhouse.py
+python3 scripts/bronze/setup_clickhouse.py
+python3 scripts/silver/setup_clickhouse.py
+python3 scripts/gold/setup_clickhouse_gold.py
+python3 scripts/gold/setup_clickhouse_gold.py --part scenarios
+python3 scripts/gold/setup_clickhouse_gold.py --part signals
 ```
 
 ### Bronze
 
 ```bash
-python scripts/bronze/scrape_fotmob.py 20251208
-python scripts/bronze/scrape_fotmob.py --single-date 20251208
-python scripts/bronze/scrape_fotmob.py --today
-python scripts/bronze/scrape_fotmob.py --yesterday
-python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python scripts/bronze/sync_s3.py download --date 20251208 --dry-run
-python scripts/bronze/load_clickhouse.py --date 20251208
-python scripts/bronze/load_clickhouse.py --single-date 20251208
-python scripts/bronze/drop_clickhouse.py --dry-run
+python3 scripts/bronze/scrape_fotmob.py 20251208
+python3 scripts/bronze/scrape_fotmob.py --single-date 20251208
+python3 scripts/bronze/scrape_fotmob.py --today
+python3 scripts/bronze/scrape_fotmob.py --yesterday
+python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
+python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
+python3 scripts/bronze/load_clickhouse.py --date 20251208
+python3 scripts/bronze/load_clickhouse.py --single-date 20251208
+python3 scripts/bronze/load_clickhouse.py --full-history
+python3 scripts/bronze/drop_clickhouse.py --dry-run
 ```
 
 ### Silver
 
 ```bash
-python scripts/silver/load_clickhouse.py
-python scripts/silver/load_clickhouse.py --single-date 20251208
-python scripts/silver/load_clickhouse.py --dry-run
-python scripts/silver/drop_clickhouse.py --dry-run
+python3 scripts/silver/load_clickhouse.py --date 20251208
+python3 scripts/silver/load_clickhouse.py --month 202512 --dry-run
+python3 scripts/silver/load_clickhouse.py --full-history --dry-run
+python3 scripts/silver/drop_clickhouse.py --dry-run
 ```
 
 ### Gold
 
 ```bash
-python scripts/gold/load_clickhouse_gold.py
-python scripts/gold/load_clickhouse_gold.py --single-date 20251208
-python scripts/gold/load_clickhouse_gold.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --part signals --dry-run
-python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
-python scripts/gold/activations/build_signal_activations.py
-python scripts/gold/activations/build_signal_activations.py --dry-run
-python scripts/gold/run_sql_job.py --dry-run
-python scripts/gold/run_sql_job.py --kind signal --dry-run
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
-python scripts/gold/run_sql_job.py --kind signal --entity player --dry-run
-python scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run
-python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run
-python scripts/gold/drop_clickhouse_scenarios.py --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208
+python3 scripts/gold/load_clickhouse_gold.py --month 202512 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --full-history --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part scenarios --dry-run
+python3 scripts/gold/activations/build_signal_activations.py --full-history
+python3 scripts/gold/activations/build_signal_activations.py --date 20251208 --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family shooting_goals --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run
+python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ```
 
 ### Orchestration, Quality, and Ops
 
 ```bash
-python scripts/orchestration/pipeline.py 20251208
-python scripts/orchestration/pipeline.py --single-date 20251208
-python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
-python scripts/quality/check_logging_style.py
-python scripts/health_check.py --json
-python scripts/ensure_directories.py
-python scripts/refresh_turnstile.py
-python scripts/mongodb/init_indexes.py
-python scripts/mongodb/sync_signal_catalogs.py --dry-run
+python3 scripts/orchestration/pipeline.py 20251208
+python3 scripts/orchestration/pipeline.py --date 20251208
+python3 scripts/orchestration/pipeline.py --single-date 20251208
+python3 scripts/orchestration/pipeline.py --full-history
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_logging_style.py
+python3 scripts/health_check.py --json
+python3 scripts/ensure_directories.py
+python3 scripts/refresh_turnstile.py
+python3 scripts/mongodb/init_indexes.py
+python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
 ```
 
 ## Pipeline Runbook
@@ -141,37 +144,38 @@ python scripts/mongodb/sync_signal_catalogs.py --dry-run
 ### Standard Runs
 
 ```bash
-python scripts/orchestration/pipeline.py 20251208
-python scripts/orchestration/pipeline.py --single-date 20251208
-python scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
-python scripts/orchestration/pipeline.py --month 202512
+python3 scripts/orchestration/pipeline.py 20251208
+python3 scripts/orchestration/pipeline.py --single-date 20251208
+python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/orchestration/pipeline.py --month 202512
+python3 scripts/orchestration/pipeline.py --full-history
 ```
 
 ### Partial Runs
 
 ```bash
-python scripts/orchestration/pipeline.py 20251208 --bronze-only
-python scripts/orchestration/pipeline.py 20251208 --silver-only
-python scripts/orchestration/pipeline.py 20251208 --gold-only
-python scripts/orchestration/pipeline.py 20251208 --skip-bronze
+python3 scripts/orchestration/pipeline.py 20251208 --bronze-only
+python3 scripts/orchestration/pipeline.py 20251208 --silver-only
+python3 scripts/orchestration/pipeline.py 20251208 --gold-only
+python3 scripts/orchestration/pipeline.py 20251208 --skip-bronze
 ```
 
 ### Recommended Preflight and Validation
 
 ```bash
-python scripts/health_check.py --json
-python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --dry-run
-python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
-python scripts/quality/check_logging_style.py
+python3 scripts/health_check.py --json
+python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_logging_style.py
 ```
 
 Use drop scripts with `--dry-run` before destructive schema work:
 
 ```bash
-python scripts/bronze/drop_clickhouse.py --dry-run
-python scripts/silver/drop_clickhouse.py --dry-run
-python scripts/gold/drop_clickhouse_scenarios.py --dry-run
+python3 scripts/bronze/drop_clickhouse.py --dry-run
+python3 scripts/silver/drop_clickhouse.py --dry-run
+python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ```
 
 ## SQL Layout
@@ -221,7 +225,7 @@ Current Gold inventory:
 - 1 shared activation serving table in `gold.signal_activations`
 
 Gold SQL jobs are executed through the generic runner in
-`scripts/gold/run_sql_job.py` and shared helpers in
+`scripts/gold/run_gold_sql_jobs.py` and shared helpers in
 `src/services/gold/gold_dml_runner.py`. Do not add handwritten per-signal or
 per-scenario runner files. Omit `--kind` to run all scenario and signal SQL jobs
 through the generic runner, or use `--kind scenario` / `--kind signal` to select
@@ -234,8 +238,10 @@ combine `--entity` and `--family`; treat them as separate signal batch selectors
 ```text
 src/
   services/bronze/        Bronze loading and independent S3 sync services
+  services/clickhouse_scoped_replace.py  staged derived-table replacement
   services/gold/          Gold application service and shared SQL job helpers
   services/silver/        Silver application service
+  services/warehouse_scope.py  validated date/month/full-history scopes
   scrapers/fotmob/        FotMob API fetchers and request behavior
   processors/bronze/      Bronze transformation wiring
   storage/bronze/         Bronze persistence
@@ -252,6 +258,39 @@ bootstrap, command compatibility, and exit-code translation. Application
 services may coordinate SQL discovery/execution, client setup, contract checks,
 validation, alerts, and deterministic summaries. They must not become a home for
 Silver or Gold analytical logic, which remains in ClickHouse SQL.
+
+Scoped derived loads share this function flow:
+
+1. CLI parsers call `execution_scope_from_args()` to create a required
+   `WarehouseExecutionScope`.
+2. Silver and Gold services convert SQL files into `ScopedSqlJob` values with a
+   target table and match-date expression.
+3. `ScopedReplacementBatch.run()` stages all selected jobs before any commit.
+4. `_prepare()` redirects each `INSERT INTO` to a calculation table, builds the
+   requested monthly replacement, and validates row counts.
+5. `_commit()` uses `REPLACE PARTITION` for date/month scopes or
+   `EXCHANGE TABLES` for full history.
+
+Date scopes reconstruct the containing month by copying unaffected target rows
+and taking the selected date from the fresh calculation. A staging failure
+leaves targets unchanged. ClickHouse has no cross-table transaction, so a
+commit failure can be partial; rerunning the identical scope converges safely.
+
+Programmatic callers must pass the scope explicitly:
+
+| Previous call shape | Current call shape |
+| --- | --- |
+| `SilverService.run(dry_run=...)` | `SilverService.run(scope=scope, dry_run=...)` |
+| `SilverService.run_load_jobs(dry_run=...)` | `SilverService.run_load_jobs(scope, dry_run=...)` |
+| `GoldService.run(part=..., dry_run=...)` | `GoldService.run(scope=scope, part=..., dry_run=...)` |
+| `GoldService.run_selected_jobs(part, dry_run=...)` | `GoldService.run_selected_jobs(part, scope, dry_run=...)` |
+| `execute_gold_sql_job(client, job, dry_run=..., log=...)` | `execute_gold_sql_job(client, job, scope=scope, dry_run=..., log=...)` |
+| `build_signal_activations(..., dry_run=...)` | `build_signal_activations(..., scope=scope, dry_run=...)` |
+
+Construct `scope` with `WarehouseExecutionScope.for_date("20251208")`,
+`WarehouseExecutionScope.for_month("202512")`, or
+`WarehouseExecutionScope.full_history()`. CLI code should use
+`execution_scope_from_args()` instead of constructing scopes manually.
 
 ## MongoDB Content Catalog
 
@@ -309,8 +348,9 @@ Creation flow:
 4. The builder stages one row per signal output in ephemeral
    `gold.signal_activations_stage` (DDL:
    `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`),
-   then truncates and repopulates `gold.signal_activations` using
-   `clickhouse/gold/dml/activations/signal_activation_final_insert.sql`.
+   calculates the serving rows with
+   `clickhouse/gold/dml/activations/signal_activation_final_insert.sql`, and
+   commits only the requested output scope.
 5. Each staged/serving row carries:
    - `signal_instance_id = lower(hex(SHA256(concat('v1|', signal_id, '|', ...identity values))))`
    - `signal_id_version = 'v1'`
@@ -332,16 +372,13 @@ Creation flow:
 To drop, recreate, and repopulate `gold.signal_activations` from scratch:
 
 ```bash
-clickhouse-client --multiquery < clickhouse/gold/ddl/create_table_signal_activations.sql
-python scripts/gold/activations/build_signal_activations.py
+docker compose exec depthmark-clickhouse clickhouse-client --multiquery < clickhouse/gold/ddl/create_table_signal_activations.sql
+python3 scripts/gold/activations/build_signal_activations.py --full-history
 ```
 
-Activation rebuilds are full-table rebuilds: rebuild
-`gold.signal_activations` from all active signal catalogs and signal output
-tables.
-Do not add incremental, date-scoped, or partition-scoped activation rebuilds
-until a later ADR defines partition-safe replacement semantics for upstream
-signal outputs and the derived activation serving table.
+The builder requires `--date`, `--month`, or `--full-history`. Date and month
+runs replace only their output partition scope; explicit full-history uses a
+staged whole-table exchange. ADR 0018 supersedes ADR 0011 for scoped runs.
 
 `signal_id_version` versions the activation identity scheme, not the authored
 signal definition. Keep it stable across reruns and ordinary signal SQL/catalog
@@ -387,7 +424,7 @@ one activation row.
    Gold signal table DDL files use
    `create_table_{entity}_{family}_{subfamily}.sql`.
 5. New or changed scenario work must update SQL, Gold scenario DDL, and
-   `scripts/gold/scenario/scenarios_catalog.md` when relevant.
+   `scripts/gold/scenario/SCENARIOS_CATALOG.md` when relevant.
 6. New or changed signal work must update SQL, signal DDL, catalog
    markdown, and `scripts/gold/signal/catalogs/README.md` when relevant.
 

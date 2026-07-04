@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_zero_shot_half
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_zero_shot_half.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_shooting_goals_zero_shot_half
 
@@ -46,13 +46,13 @@ Detect team-level attacking blackouts where a side produces no shots at all in a
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_zero_shot_half.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_shooting_goals_zero_shot_half`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_zero_shot_half
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_zero_shot_half
 ```
 
 ## Output Schema

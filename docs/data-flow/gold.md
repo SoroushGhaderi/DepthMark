@@ -59,7 +59,7 @@ Scenarios are narrative-driven analysis outputs:
 - 23 team/match-grain scenarios in `clickhouse/gold/dml/scenarios/team/`
 - 25 player-grain scenarios in `clickhouse/gold/dml/scenarios/player/`
 
-Catalog: `scripts/gold/scenario/scenarios_catalog.md`
+Catalog: `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 
 ## Data Flow
 
@@ -67,21 +67,21 @@ Catalog: `scripts/gold/scenario/scenarios_catalog.md`
 
 Creates all Gold databases and tables:
 ```bash
-python scripts/gold/setup_clickhouse_gold.py              # all
-python scripts/gold/setup_clickhouse_gold.py --part scenarios
-python scripts/gold/setup_clickhouse_gold.py --part signals
+python3 scripts/gold/setup_clickhouse_gold.py              # all
+python3 scripts/gold/setup_clickhouse_gold.py --part scenarios
+python3 scripts/gold/setup_clickhouse_gold.py --part signals
 ```
 
-### 2. SQL Job Execution (`scripts/gold/run_sql_job.py`)
+### 2. SQL Job Execution (`scripts/gold/run_gold_sql_jobs.py`)
 
 The generic runner discovers and executes Gold SQL jobs:
 ```bash
-python scripts/gold/run_sql_job.py --dry-run
-python scripts/gold/run_sql_job.py --kind signal
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_shooting_goals_shot_conversion_peak
-python scripts/gold/run_sql_job.py --kind signal --entity player
-python scripts/gold/run_sql_job.py --kind signal --family shooting_goals
-python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
+python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player
+python3 scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family shooting_goals
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance
 ```
 
 Job discovery uses `GoldSqlJob` in `src/services/gold/gold_dml_runner.py`:
@@ -91,30 +91,43 @@ Job discovery uses `GoldSqlJob` in `src/services/gold/gold_dml_runner.py`:
 
 ### 3. Bulk Loading (`scripts/gold/load_clickhouse_gold.py`)
 
-Runs all Gold SQL jobs and activation rebuilds:
+Runs all Gold SQL jobs and scoped activation replacement. One explicit scope is
+required:
 ```bash
-python scripts/gold/load_clickhouse_gold.py              # all
-python scripts/gold/load_clickhouse_gold.py --single-date 20251208  # single date
-python scripts/gold/load_clickhouse_gold.py --part signals
-python scripts/gold/load_clickhouse_gold.py --part scenarios
-python scripts/gold/load_clickhouse_gold.py --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208
+python3 scripts/gold/load_clickhouse_gold.py --single-date 20251208
+python3 scripts/gold/load_clickhouse_gold.py --month 202512
+python3 scripts/gold/load_clickhouse_gold.py --full-history
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part scenarios
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
 ```
 
 Execution order:
-1. Scenario SQL jobs (if `--part scenarios` or `--part all`)
-2. Signal SQL jobs (if `--part signals` or `--part all`)
-3. Activation rebuild (after signal execution)
+1. `execution_scope_from_args()` builds a `WarehouseExecutionScope`.
+2. `build_scoped_gold_job()` turns discovered scenario and signal files into
+   `ScopedSqlJob` values.
+3. `ScopedReplacementBatch` stages and validates every selected Gold output
+   before committing any table.
+4. Date runs reconstruct the containing month partition; month runs replace the
+   selected month; full-history runs exchange complete staged tables.
+5. Activation replacement runs with the same scope after every selected signal
+   table commits successfully.
 
 ### 4. Activation Rebuild (`scripts/gold/activations/build_signal_activations.py`)
 
-Rebuilds `gold.signal_activations` from all active signal catalogs in two phases:
+Builds `gold.signal_activations` from all active signal catalogs, then replaces
+only the requested output scope:
 
 1. **Stage** — insert one enriched row per `gold_signals.sig_*` output into ephemeral
    `gold.signal_activations_stage` (created from
    `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`).
-2. **Serve** — truncate `gold.signal_activations`, run
-   `clickhouse/gold/dml/activations/signal_activation_final_insert.sql` to join staged
-   rows with per-match summary aggregates, optimize, and drop the stage table.
+2. **Calculate** — run
+   `clickhouse/gold/dml/activations/signal_activation_final_insert.sql` into a
+   scoped calculation table with per-match summary aggregates.
+3. **Commit** — replace the selected monthly partition, reconstruct the
+   containing month for a date run, or exchange the complete table for an
+   explicit full-history run.
 
 Per-row enrichment in the stage pass:
 
@@ -131,8 +144,10 @@ The final insert adds match-level summary fields on every activation row
 and related arrays).
 
 ```bash
-python scripts/gold/activations/build_signal_activations.py
-python scripts/gold/activations/build_signal_activations.py --dry-run
+python3 scripts/gold/activations/build_signal_activations.py --date 20251208
+python3 scripts/gold/activations/build_signal_activations.py --month 202512
+python3 scripts/gold/activations/build_signal_activations.py --full-history
+python3 scripts/gold/activations/build_signal_activations.py --date 20251208 --dry-run
 ```
 
 Serving-table DDL: `clickhouse/gold/ddl/create_table_signal_activations.sql`
@@ -154,10 +169,10 @@ Key fields in `gold.signal_activations`:
 ### 5. Drop Scripts
 
 ```bash
-python scripts/gold/drop_clickhouse_scenarios.py --dry-run
-python scripts/gold/drop_clickhouse_scenarios.py --part scenarios
-python scripts/gold/drop_clickhouse_scenarios.py --part signals
-python scripts/gold/drop_clickhouse_scenarios.py --part all
+python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
+python3 scripts/gold/drop_clickhouse_scenarios.py --part scenarios
+python3 scripts/gold/drop_clickhouse_scenarios.py --part signals
+python3 scripts/gold/drop_clickhouse_scenarios.py --part all
 ```
 
 ## Key Design Decisions
@@ -166,8 +181,8 @@ python scripts/gold/drop_clickhouse_scenarios.py --part all
   logic; Python orchestrates execution.
 - **Generic runners only.** No handwritten per-signal or per-scenario Python
   wrappers (ADR 0001, 0009).
-- **Full-table activation rebuilds.** No incremental or date-scoped rebuilds
-  (ADR 0011).
+- **Scope-aware staged replacement.** ADR 0018 supersedes ADR 0011 for date and
+  month runs; full-table exchange is reserved for explicit full-history runs.
 - **`ReplacingMergeTree` with `FINAL`** for idempotent signal outputs.
 - **Versioned activation identity.** `signal_id_version` (`v1`) prefixes the
   activation hash (ADR 0006).
@@ -176,9 +191,11 @@ python scripts/gold/drop_clickhouse_scenarios.py --part all
 
 | Failure | Recovery |
 | --- | ---|
-| Signal SQL fails | Re-run `run_sql_job.py --kind signal --id <signal>` |
-| Scenario SQL fails | Re-run `run_sql_job.py --kind scenario --id <scenario>` |
-| Activation rebuild fails | Re-run `build_signal_activations.py` (requires populated `gold_signals.sig_*` tables) |
-| Signal SQL failures block activations | Fix failing signals, rerun signal load, then `build_signal_activations.py` |
+| Signal SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind signal --id <signal>` |
+| Scenario SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind scenario --id <scenario>` |
+| Activation replacement fails | Re-run `build_signal_activations.py` with the same scope |
+| Signal SQL failures block activations | Fix signals and rerun `load_clickhouse_gold.py` with the same scope |
+| Staging fails | Existing targets remain unchanged; inspect retained stage tables |
+| Commit partially fails | Rerun the identical scope to converge committed and pending tables |
 | DDL mismatch | Re-run `setup_clickhouse_gold.py` |
 | ClickHouse connection | Non-zero exit, re-run |

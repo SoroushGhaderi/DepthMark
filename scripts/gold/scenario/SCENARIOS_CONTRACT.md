@@ -7,10 +7,10 @@ This document defines the stable contract for Gold scenario jobs in DepthMark.
 This contract applies to:
 
 - `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
-- `scripts/gold/run_sql_job.py`
+- `scripts/gold/run_gold_sql_jobs.py`
 - `src/services/gold/gold_dml_runner.py`
 - `scripts/gold/load_clickhouse_gold.py`
-- `scripts/gold/scenario/scenarios_catalog.md`
+- `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 
 ## Scenario Unit Contract
 
@@ -21,7 +21,7 @@ Each scenario is a 3-part unit:
 2. Target table  
    `gold_scenarios.scenario_<name>`
 3. Catalog entry in  
-   `scripts/gold/scenario/scenarios_catalog.md`
+   `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 
 All three parts are required for a production-ready scenario.
 
@@ -52,9 +52,9 @@ All three parts are required for a production-ready scenario.
    - return non-zero on failure
 2. Runner should not embed business SQL in Python strings.
 3. Individual scenario execution must remain available through
-   `scripts/gold/run_sql_job.py --kind scenario --id <scenario_id>`.
+   `scripts/gold/run_gold_sql_jobs.py --date <YYYYMMDD> --kind scenario --id <scenario_id>`.
 4. Scenario-kind execution must remain available through
-   `scripts/gold/run_sql_job.py --kind scenario`.
+   `scripts/gold/run_gold_sql_jobs.py --date <YYYYMMDD> --kind scenario`.
 
 ## Bulk Execution Contract
 
@@ -64,10 +64,12 @@ All three parts are required for a production-ready scenario.
 2. Scenario bulk execution is enabled through `--part scenarios` or `--part all`.
 3. Supports `--dry-run` for plan/preview mode.
 4. Runs `assert_gold_layer_contracts` after scenario and/or signal execution.
+5. Requires `--date`, `--month`, or `--full-history` and commits through
+   `ScopedReplacementBatch`.
 
 ## Catalog Contract
 
-Each scenario entry in `scenarios_catalog.md` must include:
+Each scenario entry in `SCENARIOS_CATALOG.md` must include:
 
 1. Purpose
 2. Tactical/statistical logic (threshold rationale)
@@ -80,17 +82,17 @@ Each scenario entry in `scenarios_catalog.md` must include:
 
 Minimum operational checks:
 
-1. `python scripts/gold/load_clickhouse_gold.py --dry-run`
-2. `python scripts/gold/load_clickhouse_gold.py`
-3. `python scripts/gold/run_sql_job.py --kind scenario --id <scenario_id> --dry-run`
-4. `python scripts/gold/run_sql_job.py --kind scenario --dry-run`
+1. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run`
+2. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208`
+3. `python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id <scenario_id> --dry-run`
+4. `python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --dry-run`
 5. Verify no gold contract failures (`invalid match_id`, missing scenario tables).
 
 ## Change Management Rules
 
 1. Any new scenario must update:
    - `clickhouse/gold/ddl/01_create_scenario_tables.sql` (or active DDL file set)
-   - `scripts/gold/scenario/scenarios_catalog.md`
+   - `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 2. Renaming/deleting a scenario requires coordinated changes to:
    - SQL file
    - target table DDL

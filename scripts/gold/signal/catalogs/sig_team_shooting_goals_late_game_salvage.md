@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_late_game_salvage
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_late_game_salvage.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_shooting_goals_late_game_salvage
 
@@ -41,13 +41,13 @@ Detect team-level late-game salvage moments where a side scores a tying or winni
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_late_game_salvage.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_shooting_goals_late_game_salvage`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_shooting_goals_late_game_salvage
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_late_game_salvage
 ```
 
 ## Output Schema

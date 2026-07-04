@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_discipline_cards_dirty_half_dozen
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_dirty_half_dozen.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_discipline_cards_dirty_half_dozen
 
@@ -34,13 +34,13 @@ Flags players with extreme foul volume and zero tackle wins, surfacing high-cont
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_dirty_half_dozen.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_discipline_cards_dirty_half_dozen`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_discipline_cards_dirty_half_dozen
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_dirty_half_dozen
 ```
 
 ## Output Schema

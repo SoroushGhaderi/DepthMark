@@ -56,9 +56,13 @@ python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python scripts/bronze/load_clickhouse.py --date 20251208
-python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
+python scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python scripts/silver/load_clickhouse.py --month 202512 --dry-run
+python scripts/silver/load_clickhouse.py --full-history --dry-run
+python scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python scripts/gold/load_clickhouse_gold.py --month 202512 --dry-run
+python scripts/gold/load_clickhouse_gold.py --full-history --dry-run
+python scripts/gold/load_clickhouse_gold.py --date 20251208 --part scenarios --dry-run
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 python scripts/quality/check_logging_style.py
 python scripts/orchestration/pipeline.py 20251208
@@ -119,8 +123,8 @@ Use the narrowest verification that proves the change.
 pytest
 python scripts/quality/check_logging_style.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
-python scripts/silver/load_clickhouse.py --dry-run
-python scripts/gold/load_clickhouse_gold.py --dry-run
+python scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 ```
 

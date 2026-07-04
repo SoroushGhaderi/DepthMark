@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-ADR 0001 established `scripts/gold/run_sql_job.py` as the generic execution
+ADR 0001 established `scripts/gold/run_gold_sql_jobs.py` as the generic execution
 surface for Gold signal and scenario SQL jobs. The repository still carried
 hundreds of generated per-output Python wrappers under
 `scripts/gold/signal/runners/` and `scripts/gold/scenario/`, plus catalog
@@ -29,24 +29,27 @@ DepthMark now needs the generic runner to support multiple selection styles:
 ## Decision
 
 DepthMark will remove the legacy per-output Gold Python runner files without a
-compatibility shim. `scripts/gold/run_sql_job.py` is the only supported command
+compatibility shim. `scripts/gold/run_gold_sql_jobs.py` is the only supported command
 surface for executing individual or selected Gold SQL jobs outside the layer
 loader.
 
 The generic runner treats omitted selectors as `all`:
 
 ```bash
-python scripts/gold/run_sql_job.py --dry-run
-python scripts/gold/run_sql_job.py --kind scenario --dry-run
-python scripts/gold/run_sql_job.py --kind signal --dry-run
-python scripts/gold/run_sql_job.py --id sig_player_shooting_goals_shot_conversion_peak --dry-run
-python scripts/gold/run_sql_job.py --kind signal --entity player --dry-run
-python scripts/gold/run_sql_job.py --kind signal --family shooting_goals --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --full-history --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --id sig_player_shooting_goals_shot_conversion_peak --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family shooting_goals --dry-run
 ```
 
 Signal `--entity` and `--family` filters are separate selectors and must not be
 combined in one command. Scenario jobs do not support those filters until
 scenario metadata has an equivalent stable grouping contract.
+
+ADR 0018 later made one execution scope mandatory. Omitted job selectors still
+mean all jobs, but omitted scope selectors are rejected.
 
 This decision does not re-enable scenario execution inside
 `scripts/gold/load_clickhouse_gold.py`. That loader decision remains governed by
@@ -55,7 +58,7 @@ ADR 0004.
 ## Consequences
 
 Gold execution has one CLI surface for per-id, per-kind, and signal batch runs.
-Catalogs and runbooks must point to `scripts/gold/run_sql_job.py` rather than
+Catalogs and runbooks must point to `scripts/gold/run_gold_sql_jobs.py` rather than
 per-output wrapper files. Signal family selection is modeled as its own
 batch selector, not as an additional narrowing flag alongside entity.
 

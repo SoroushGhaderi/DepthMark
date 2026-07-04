@@ -1,4 +1,4 @@
-"""Build enriched signal activation serving rows in ClickHouse."""
+"""Build and scope-replace enriched signal activation rows in ClickHouse."""
 
 import argparse
 import re
@@ -13,6 +13,12 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
+from src.services.clickhouse_scoped_replace import ScopedReplacementBatch, ScopedSqlJob
+from src.services.warehouse_scope import (
+    WarehouseExecutionScope,
+    add_warehouse_scope_arguments,
+    execution_scope_from_args,
+)
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.gold_databases import gold_db, gold_signals_db
 from src.utils.logging_utils import get_logger, setup_logging
@@ -29,9 +35,7 @@ SAFE_IDENTIFIER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 STAGE_TABLE_SQL_FILE = (
     GOLD_SQL_DIR / "ddl" / "activations" / "create_table_signal_activations_stage.sql"
 )
-FINAL_INSERT_SQL_FILE = (
-    GOLD_SQL_DIR / "dml" / "activations" / "signal_activation_final_insert.sql"
-)
+FINAL_INSERT_SQL_FILE = GOLD_SQL_DIR / "dml" / "activations" / "signal_activation_final_insert.sql"
 
 
 @dataclass(frozen=True)
@@ -55,6 +59,7 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build enriched signal activation rows into gold.signal_activations."
     )
+    add_warehouse_scope_arguments(parser)
     parser.add_argument(
         "--catalog-dir",
         type=Path,
@@ -454,6 +459,7 @@ def build_signal_activations(
     source_database: str,
     target_database: str,
     catalogs: list[SignalCatalog],
+    scope: WarehouseExecutionScope,
     dry_run: bool,
 ) -> tuple[int, int]:
     processed = 0
@@ -495,10 +501,26 @@ def build_signal_activations(
             )
         processed += 1
 
+    target_table = f"{target_database}.signal_activations"
+    final_insert_sql = _final_activation_insert_sql().replace(
+        "gold.signal_activations",
+        target_table,
+        1,
+    )
+    activation_job = ScopedSqlJob(
+        job_id="signal_activations",
+        target_table=target_table,
+        statements=(final_insert_sql,),
+        date_expression="match_date",
+    )
+    ScopedReplacementBatch(
+        client if not dry_run else None,
+        scope,
+        dry_run=dry_run,
+        log=logger,
+    ).run([activation_job])
+
     if not dry_run:
-        client.execute("TRUNCATE TABLE gold.signal_activations")
-        client.execute(_final_activation_insert_sql())
-        client.execute("OPTIMIZE TABLE gold.signal_activations FINAL DEDUPLICATE")
         client.execute("DROP TABLE IF EXISTS gold.signal_activations_stage")
 
     return processed, skipped
@@ -508,6 +530,11 @@ def main(argv: Optional[list[str]] = None) -> int:
     global logger
     load_environment()
     args = parse_args(argv)
+    try:
+        scope = execution_scope_from_args(args)
+    except ValueError as error:
+        logger.error("Invalid activation execution scope: %s", error)
+        return 2
     settings = get_settings()
     logger = setup_logging(
         name="gold_build_signal_activations",
@@ -548,6 +575,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             source_database=args.source_db,
             target_database=args.target_db,
             catalogs=catalogs,
+            scope=scope,
             dry_run=args.dry_run,
         )
         logger.info(

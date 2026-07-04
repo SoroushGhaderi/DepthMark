@@ -1,4 +1,4 @@
-"""Run selected Gold scenario and signal SQL jobs through the generic executor."""
+"""Run selected Gold SQL jobs through scope-aware staged replacement."""
 
 import argparse
 import sys
@@ -11,11 +11,16 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
+from src.services.clickhouse_scoped_replace import ScopedReplacementBatch
 from src.services.gold.gold_dml_runner import (
     GoldJobKind,
+    build_scoped_gold_job,
     discover_gold_sql_jobs,
-    execute_gold_sql_job,
     resolve_gold_sql_job,
+)
+from src.services.warehouse_scope import (
+    add_warehouse_scope_arguments,
+    execution_scope_from_args,
 )
 from src.storage.clickhouse_client import ClickHouseClient
 from src.utils.logging_utils import get_logger, setup_logging
@@ -26,6 +31,7 @@ logger = get_logger(__name__)
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Run selected Gold SQL jobs in ClickHouse")
+    add_warehouse_scope_arguments(parser)
     parser.add_argument(
         "--kind",
         choices=("scenario", "signal"),
@@ -97,51 +103,55 @@ def _selected_jobs(args: argparse.Namespace):
     return [*scenario_jobs, *signal_jobs]
 
 
-def _run_jobs(client: Optional[ClickHouseClient], jobs, *, dry_run: bool) -> tuple[int, int]:
+def _run_jobs(
+    client: Optional[ClickHouseClient],
+    jobs,
+    *,
+    scope,
+    dry_run: bool,
+) -> tuple[int, int]:
     """Run selected jobs and return success/failure counts."""
     if not jobs:
         logger.error("No Gold SQL jobs matched the selection")
         return 0, 1
 
-    success_count = 0
-    failed_jobs: list[str] = []
     total_jobs = len(jobs)
     logger.info("Selected Gold SQL jobs: %s", total_jobs)
-    for index, job in enumerate(jobs, start=1):
-        started_at = time.perf_counter()
-        logger.info("Running Gold %s SQL job %s/%s: %s", job.kind, index, total_jobs, job.job_id)
-        try:
-            if execute_gold_sql_job(client, job, dry_run=dry_run, log=logger):
-                success_count += 1
-                continue
-        except Exception as error:
-            logger.error("Gold %s SQL job raised an exception: %s", job.kind, error)
-
-        logger.error(
-            "Gold %s SQL job failed %s/%s: %s after %.2f seconds",
-            job.kind,
-            index,
-            total_jobs,
-            job.job_id,
-            time.perf_counter() - started_at,
-        )
-        failed_jobs.append(job.job_id)
-
-    if failed_jobs:
-        logger.error("Failed Gold SQL jobs: %s", ", ".join(failed_jobs))
+    started_at = time.perf_counter()
+    try:
+        scoped_jobs = [build_scoped_gold_job(job) for job in jobs]
+        ScopedReplacementBatch(
+            client,
+            scope,
+            dry_run=dry_run,
+            log=logger,
+        ).run(scoped_jobs)
+        success_count = total_jobs
+        failed_count = 0
+    except Exception as error:
+        logger.error("Gold scoped SQL batch failed: %s", error)
+        success_count = 0
+        failed_count = total_jobs
     logger.info(
-        "Gold SQL job execution report | total=%s success=%s failed=%s",
+        "Gold SQL job execution report | scope=%s total=%s success=%s failed=%s duration=%.2f",
+        scope.label,
         total_jobs,
         success_count,
-        len(failed_jobs),
+        failed_count,
+        time.perf_counter() - started_at,
     )
-    return success_count, len(failed_jobs)
+    return success_count, failed_count
 
 
 def main(argv: Optional[list[str]] = None) -> int:
     """Run selected Gold SQL jobs."""
     global logger
     args = parse_args(argv)
+    try:
+        scope = execution_scope_from_args(args)
+    except ValueError as error:
+        logger.error("Invalid Gold execution scope: %s", error)
+        return 2
     settings = get_settings()
     logger = setup_logging(
         name="gold_sql_job_runner",
@@ -160,7 +170,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
 
     if args.dry_run:
-        _, failed_count = _run_jobs(None, jobs, dry_run=True)
+        _, failed_count = _run_jobs(None, jobs, scope=scope, dry_run=True)
         return 0 if failed_count == 0 else 1
 
     client = ClickHouseClient(
@@ -176,7 +186,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 1
 
     try:
-        _, failed_count = _run_jobs(client, jobs, dry_run=False)
+        _, failed_count = _run_jobs(client, jobs, scope=scope, dry_run=False)
         return 0 if failed_count == 0 else 1
     finally:
         client.disconnect()

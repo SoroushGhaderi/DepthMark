@@ -5,16 +5,19 @@ PURPOSE: Transform raw bronze files (JSON/JSON.gz/TAR) into ClickHouse bronze ta
 
 Usage:
     # Load FotMob data for a date
-    python scripts/bronze/load_clickhouse.py --date 20251113
+    python3 scripts/bronze/load_clickhouse.py --date 20251113
 
     # Load date range
-    python scripts/bronze/load_clickhouse.py --start-date 20251101 --end-date 20251107
+    python3 scripts/bronze/load_clickhouse.py --start-date 20251101 --end-date 20251107
 
     # Load entire month
-    python scripts/bronze/load_clickhouse.py --month 202511
+    python3 scripts/bronze/load_clickhouse.py --month 202511
+
+    # Load every completed date found in Historical storage
+    python3 scripts/bronze/load_clickhouse.py --full-history
 
     # Show table statistics
-    python scripts/bronze/load_clickhouse.py --stats
+    python3 scripts/bronze/load_clickhouse.py --stats
 
     Note:
     Table optimization is handled separately via SQL scripts.
@@ -25,9 +28,8 @@ import argparse
 import logging
 import os
 import sys
-import time
 from calendar import monthrange
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
@@ -52,19 +54,22 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         epilog="""
 Examples:
   # Load FotMob data for a date
-  python scripts/bronze/load_clickhouse.py --date 20251113
+  python3 scripts/bronze/load_clickhouse.py --date 20251113
 
   # Load date range
-  python scripts/bronze/load_clickhouse.py --start-date 20251101 --end-date 20251107
+  python3 scripts/bronze/load_clickhouse.py --start-date 20251101 --end-date 20251107
 
   # Load entire month
-  python scripts/bronze/load_clickhouse.py --month 202511
+  python3 scripts/bronze/load_clickhouse.py --month 202511
+
+  # Load every locally available Historical date
+  python3 scripts/bronze/load_clickhouse.py --full-history
 
   # Show table statistics
-  python scripts/bronze/load_clickhouse.py --stats
+  python3 scripts/bronze/load_clickhouse.py --stats
 
   # Truncate and reload
-  python scripts/bronze/load_clickhouse.py --date 20251113 --truncate
+  python3 scripts/bronze/load_clickhouse.py --date 20251113 --truncate
         """,
     )
 
@@ -79,6 +84,11 @@ Examples:
         "--start-date", type=str, help="Start date for range loading (YYYYMMDD format)"
     )
     date_group.add_argument("--month", type=str, help="Load entire month (YYYYMM format)")
+    date_group.add_argument(
+        "--full-history",
+        action="store_true",
+        help="Load every available date from data/fotmob/historical (Live is excluded)",
+    )
     parser.add_argument("--end-date", type=str, help="End date for range loading (YYYYMMDD format)")
 
     parser.add_argument(
@@ -129,8 +139,6 @@ def validate_arguments(args: argparse.Namespace) -> None:
 
 def generate_date_range(start_date: str, end_date: str) -> List[str]:
     """Generate list of dates between start and end (inclusive)."""
-    from datetime import datetime
-
     start = datetime.strptime(start_date, DATE_FORMAT_COMPACT)
     end = datetime.strptime(end_date, DATE_FORMAT_COMPACT)
 
@@ -152,12 +160,43 @@ def generate_month_dates(month_str: str) -> List[str]:
     return [f"{year}{month:02d}{day:02d}" for day in range(1, last_day + 1)]
 
 
-def get_dates_to_process(args: argparse.Namespace, log: logging.Logger) -> List[str]:
+def discover_historical_dates(historical_root: Path) -> List[str]:
+    """Return valid completed-date directories available in Historical storage."""
+    discovered: set[str] = set()
+    for parent_name in ("matches", "daily_listings"):
+        parent = historical_root / parent_name
+        if not parent.exists():
+            continue
+        for path in parent.iterdir():
+            if not path.is_dir() or len(path.name) != 8 or not path.name.isdigit():
+                continue
+            try:
+                candidate_date = datetime.strptime(path.name, DATE_FORMAT_COMPACT).date()
+            except ValueError:
+                continue
+            if candidate_date < date.today():
+                discovered.add(path.name)
+    return sorted(discovered)
+
+
+def get_dates_to_process(
+    args: argparse.Namespace,
+    log: logging.Logger,
+    historical_root: Optional[Path] = None,
+) -> List[str]:
     """Get list of dates to process from arguments."""
     if args.single_date:
         if args.date:
             raise SystemExit("Use either --date or --single-date, not both")
         args.date = args.single_date
+    if args.full_history:
+        root = historical_root or (project_root / "data" / "fotmob" / "historical")
+        dates = discover_historical_dates(root)
+        log.info(
+            "Full-history Bronze loading mode",
+            extra={"historical_root": str(root), "total_dates": len(dates)},
+        )
+        return dates
     if args.month:
         dates = generate_month_dates(args.month)
         year, month = extract_year_month(args.month)
@@ -228,7 +267,6 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
 def main(argv: Optional[List[str]] = None) -> int:
     """Main entry point."""
     global logger
-    stage_start = time.perf_counter()
     args = parse_args(argv)
     validate_arguments(args)
 
@@ -275,7 +313,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         dates = get_dates_to_process(args, logger)
         if not dates:
-            raise SystemExit("Either --date, --start-date, or --month must be provided")
+            raise SystemExit(
+                "One of --date, --start-date, --month, or --full-history must be provided"
+            )
 
         service = BronzeService(client=client, force=args.force)
         result = service.run(dates=dates, truncate=args.truncate)

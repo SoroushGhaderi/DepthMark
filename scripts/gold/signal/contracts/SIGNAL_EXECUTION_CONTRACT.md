@@ -16,7 +16,7 @@ This contract applies to:
 
 - `clickhouse/gold/ddl/signals/{match,team,player}/create_table_{entity}_{family}_{subfamily}.sql` (or active signal DDL set)
 - `clickhouse/gold/dml/signals/*/sig_*.sql`
-- `scripts/gold/run_sql_job.py`
+- `scripts/gold/run_gold_sql_jobs.py`
 - `src/services/gold/gold_dml_runner.py`
 - `scripts/gold/load_clickhouse_gold.py`
 - cross-asset wiring among SQL, table, and catalog files
@@ -38,7 +38,7 @@ Compatibility note:
 Operational compatibility:
 
 - `runners/` MAY temporarily include legacy per-signal files while old jobs are being migrated.
-- New or renamed signals MUST be executable through `scripts/gold/run_sql_job.py`.
+- New or renamed signals MUST be executable through `scripts/gold/run_gold_sql_jobs.py`.
 
 ## Signal Package Contract
 
@@ -64,12 +64,14 @@ No package is complete unless all 4 parts are present and consistent.
 1. The generic Gold SQL runner MUST:
    - initialize `ClickHouseClient`
    - load SQL from the selected signal SQL file
-   - execute the insert query
-   - run `OPTIMIZE TABLE <target> FINAL DEDUPLICATE`
+   - build a `ScopedSqlJob` for the validated execution scope
+   - stage the insert query through `ScopedReplacementBatch`
+   - commit with scoped partition replacement or full-history table exchange
    - exit non-zero on failure
 2. Runner logic MUST NOT embed business SQL inline.
-3. Individual signal execution MUST remain available through `scripts/gold/run_sql_job.py --kind signal --id <signal_id>`.
-4. DDL-grouped signal execution MUST remain available through `scripts/gold/run_sql_job.py --kind signal --entity <match|player|team> --family <family>`.
+3. Individual signal execution MUST remain available through `scripts/gold/run_gold_sql_jobs.py --date <YYYYMMDD> --kind signal --id <signal_id>`.
+4. Grouped signal execution MUST remain available through scoped
+   `--entity` or `--family` selectors.
 5. Runner SQL discovery MUST be deterministic and fail fast when the resolved SQL file is missing.
 6. Any SQL used by shared signal orchestration helpers MUST live in `.sql` files. Python MAY render validated SQL-template placeholders and pass query parameters, but MUST NOT inline business or reference queries.
 
@@ -82,13 +84,15 @@ No package is complete unless all 4 parts are present and consistent.
 3. MUST NOT require one Python runner file per new signal.
 4. MUST support `--dry-run` plan mode.
 5. MUST run `assert_gold_layer_contracts` after scenario and signal execution.
+6. MUST require `--date`, `--month`, or `--full-history` and stage every
+   selected signal target before committing any target.
 
 ## Validation and Release Gate
 
 Before merge or release, run:
 
-1. `python3 scripts/gold/load_clickhouse_gold.py --dry-run`
-2. `python3 scripts/gold/load_clickhouse_gold.py`
+1. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run`
+2. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208`
 3. Verify no Gold-layer contract failures, including:
    - invalid `match_id`
    - missing signal tables
@@ -96,10 +100,10 @@ Before merge or release, run:
 
 Recommended focused checks:
 
-1. `python3 scripts/gold/load_clickhouse_gold.py --part signals --dry-run`
-2. `python3 scripts/gold/load_clickhouse_gold.py --part signals`
-3. `python3 scripts/gold/run_sql_job.py --kind signal --id <signal_id> --dry-run`
-4. `python3 scripts/gold/run_sql_job.py --kind signal --entity <entity> --family <family> --dry-run`
+1. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals --dry-run`
+2. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals`
+3. `python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id <signal_id> --dry-run`
+4. `python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity <entity> --dry-run`
 
 ## Git Commit Policy
 
@@ -126,7 +130,7 @@ feat(signal): add sig_<name>
 
 - SQL: clickhouse/gold/dml/signals/<entity>/sig_<name>.sql
 - Table: gold_signals.sig_<name>
-- Runner: scripts/gold/run_sql_job.py
+- Runner: scripts/gold/run_gold_sql_jobs.py
 - Catalog: scripts/gold/signal/catalogs/sig_<name>.md
 ```
 

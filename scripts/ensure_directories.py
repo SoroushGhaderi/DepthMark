@@ -5,7 +5,7 @@ It's optional since the pipeline scripts create directories automatically,
 but can be useful for pre-initialization or troubleshooting.
 
 Usage:
-    python scripts/ensure_directories.py
+    python3 scripts/ensure_directories.py
 """
 
 import sys

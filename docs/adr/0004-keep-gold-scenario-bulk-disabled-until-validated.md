@@ -8,7 +8,7 @@ Superseded by re-enablement (scenario bulk loading is now enabled)
 
 DepthMark has two Gold execution surfaces:
 
-1. narrow SQL job execution through `scripts/gold/run_sql_job.py`;
+1. narrow SQL job execution through `scripts/gold/run_gold_sql_jobs.py`;
 2. bulk Gold orchestration through `scripts/gold/load_clickhouse_gold.py`.
 
 Scenario SQL has been migrated to the `gold_scenarios.*` namespace and can be
@@ -32,8 +32,8 @@ Scenario development, debugging, and one-off validation should use the generic
 runner:
 
 ```bash
-python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance --dry-run
-python scripts/gold/run_sql_job.py --kind scenario --id scenario_hollow_dominance
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run
+python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance
 ```
 
 ADR 0009 later expands the generic runner so `--kind scenario` can run all
@@ -57,7 +57,7 @@ The default Gold loader remains safer during the namespace migration and signal
 runner consolidation work.
 
 The tradeoff is that scenario backfills are not part of the default Gold bulk
-run yet. Operators must run selected scenario jobs through `run_sql_job.py` or
+run yet. Operators must run selected scenario jobs through `run_gold_sql_jobs.py` or
 use an intentionally validated follow-up change to restore bulk execution in
 the Gold layer loader.
 
@@ -75,7 +75,8 @@ Scenario bulk loading was re-enabled after validating:
 1. 48 scenario SQL files (24 team, 24 player) discover correctly via
    `discover_gold_sql_jobs("scenario")`;
 2. All scenario SQL files resolve to `gold_scenarios.scenario_*` targets;
-3. Dry-run execution through `load_clickhouse_gold.py --dry-run` confirms
+3. Date-scoped dry-run execution through
+   `load_clickhouse_gold.py --date 20251208 --dry-run` confirms
    48 scenario jobs + 344 signal jobs are planned correctly;
 4. Scenario failures follow the same pattern as signals: fail the run, skip
    activation builders, exit code 1.
@@ -83,6 +84,6 @@ Scenario bulk loading was re-enabled after validating:
 The `--part` flag now accepts `scenarios` as an explicit selector:
 
 ```bash
-python scripts/gold/load_clickhouse_gold.py --part scenarios --dry-run
-python scripts/gold/load_clickhouse_gold.py --part all --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part scenarios --dry-run
+python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part all --dry-run
 ```

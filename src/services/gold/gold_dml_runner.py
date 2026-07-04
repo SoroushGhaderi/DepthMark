@@ -7,7 +7,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 
+from src.services.clickhouse_scoped_replace import (
+    ScopedReplacementBatch,
+    ScopedSqlJob,
+)
+from src.services.warehouse_scope import WarehouseExecutionScope
 from src.storage.clickhouse_client import ClickHouseClient
+from src.storage.clickhouse_sql_executor import split_sql_statements
 from src.utils.gold_databases import gold_scenarios_db, gold_signals_db
 
 GoldJobKind = Literal["scenario", "signal"]
@@ -161,49 +167,49 @@ def discover_gold_sql_jobs(
     return jobs
 
 
+def build_scoped_gold_job(job: GoldSqlJob) -> ScopedSqlJob:
+    """Normalize one Gold SQL file into a scope-aware replacement job."""
+    if not job.sql_file.exists():
+        raise ValueError(f"Gold {job.kind} SQL file not found: {job.sql_file}")
+
+    sql_content = job.sql_file.read_text(encoding="utf-8")
+    if job.kind == "scenario":
+        sql_content = sql_content.replace(f"{gold_scenarios_db()}.", f"{job.target_db}.")
+        sql_content = sql_content.replace("gold.scenario_", f"{job.target_db}.scenario_")
+        date_expression = "toDateOrNull(match_time_utc_date)"
+    else:
+        sql_content = sql_content.replace(f"{gold_signals_db()}.", f"{job.target_db}.")
+        sql_content = sql_content.replace("gold.sig_", f"{job.target_db}.sig_")
+        sql_content = sql_content.replace("gold.signal_", f"{job.target_db}.signal_")
+        date_expression = "match_date"
+    statements = split_sql_statements(sql_content)
+    if not statements:
+        raise ValueError(f"No executable SQL found in {job.sql_file}")
+    return ScopedSqlJob(
+        job_id=job.job_id,
+        target_table=job.target_table,
+        statements=tuple(statements),
+        date_expression=date_expression,
+    )
+
+
 def execute_gold_sql_job(
     client: Optional[ClickHouseClient],
     job: GoldSqlJob,
     *,
+    scope: WarehouseExecutionScope,
     dry_run: bool,
     log,
 ) -> bool:
-    """Execute one Gold SQL job and optimize its target table."""
-    if not job.sql_file.exists():
-        log.error("Gold %s SQL file not found: %s", job.kind, job.sql_file)
-        return False
-
-    if dry_run:
-        log.info(
-            "[dry-run] Would execute Gold %s SQL job %s from %s into %s",
-            job.kind,
-            job.job_id,
-            job.sql_file,
-            job.target_table,
-        )
-        return True
-    if client is None:
-        raise RuntimeError("ClickHouse client is required when dry_run is false")
-
+    """Execute one Gold SQL job through staged scope replacement."""
     started_at = time.perf_counter()
-    insert_query = job.sql_file.read_text(encoding="utf-8").strip().rstrip(";")
-    if job.kind == "scenario":
-        insert_query = insert_query.replace(f"{gold_scenarios_db()}.", f"{job.target_db}.")
-        insert_query = insert_query.replace("gold.scenario_", f"{job.target_db}.scenario_")
-    else:
-        insert_query = insert_query.replace(f"{gold_signals_db()}.", f"{job.target_db}.")
-        insert_query = insert_query.replace("gold.sig_", f"{job.target_db}.sig_")
-        insert_query = insert_query.replace("gold.signal_", f"{job.target_db}.signal_")
-
-    client.execute(insert_query)
-    log.info("Gold %s SQL job completed: %s", job.kind, job.job_id)
-
-    optimize_sql = f"OPTIMIZE TABLE {job.target_table} FINAL DEDUPLICATE"
-    client.execute(optimize_sql)
+    scoped_job = build_scoped_gold_job(job)
+    ScopedReplacementBatch(client, scope, dry_run=dry_run, log=log).run([scoped_job])
     log.info(
-        "Optimized Gold %s SQL job target %s in %.2f seconds",
+        "Gold %s SQL job completed for scope %s: %s in %.2f seconds",
         job.kind,
-        job.target_table,
+        scope.label,
+        job.job_id,
         time.perf_counter() - started_at,
     )
     return True

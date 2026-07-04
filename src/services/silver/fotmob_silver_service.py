@@ -5,8 +5,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from src.services.clickhouse_scoped_replace import ScopedReplacementBatch, ScopedSqlJob
+from src.services.warehouse_scope import WarehouseExecutionScope
 from src.storage.clickhouse_client import ClickHouseClient
-from src.storage.clickhouse_sql_executor import execute_sql_statements, split_sql_statements
+from src.storage.clickhouse_sql_executor import split_sql_statements
 from src.utils.layer_contracts import assert_silver_layer_contracts
 from src.utils.logging_utils import get_logger
 
@@ -28,8 +30,8 @@ class SilverRunResult:
 class SilverService:
     """Coordinates FotMob Silver layer execution in ClickHouse.
 
-    Owns: SQL directory discovery, SQL file discovery and deduplication,
-    SQL execution and table refresh, layer contract assertion.
+    Owns: SQL discovery, scoped-job construction, two-phase staged replacement,
+    and layer contract assertion.
 
     Does NOT own Silver analytical logic (that lives in SQL files).
     """
@@ -82,56 +84,40 @@ class SilverService:
         for sql_path in sorted(sql_by_name.values(), key=lambda path: path.name):
             stem_parts = sql_path.stem.split("_", 1)
             if len(stem_parts) != 2:
-                logger.warning(
-                    "Skipping silver load SQL with unexpected name: %s", sql_path.name
-                )
+                logger.warning("Skipping silver load SQL with unexpected name: %s", sql_path.name)
                 continue
             table_name = stem_parts[1]
             jobs.append((sql_path, f"silver.{table_name}"))
         return jobs
 
-    def execute_load_sql(
-        self,
-        sql_file: Path,
-        target_table: str,
-        dry_run: bool = False,
-    ) -> int:
-        """Execute one silver load SQL file and refresh its target table."""
-        if not sql_file.exists():
-            logger.error("Load SQL file not found: %s", sql_file)
-            return 1
-
-        sql_content = sql_file.read_text(encoding="utf-8")
-        statements = split_sql_statements(sql_content)
-        if not statements:
-            logger.error("No executable SQL found in %s", sql_file)
-            return 1
-
-        if dry_run:
-            logger.info(
-                "[dry-run] Would truncate %s, execute %s SQL statement(s), and refresh using %s",
-                target_table,
-                len(statements),
-                sql_file.name,
+    def build_scoped_jobs(self) -> list[ScopedSqlJob]:
+        """Build staged replacement jobs from discovered Silver DML."""
+        jobs: list[ScopedSqlJob] = []
+        for sql_path, target_table in self.discover_load_jobs():
+            statements = split_sql_statements(sql_path.read_text(encoding="utf-8"))
+            if not statements:
+                raise ValueError(f"No executable SQL found in {sql_path}")
+            jobs.append(
+                ScopedSqlJob(
+                    job_id=sql_path.stem,
+                    target_table=target_table,
+                    statements=tuple(statements),
+                    date_expression="match_date",
+                )
             )
-            return 0
+        return jobs
 
-        if self.client is None:
-            raise RuntimeError("ClickHouse client is required for SQL execution")
-
-        # Silver is rebuilt from the full Bronze snapshot, so refresh by replacement.
-        self.client.execute(f"TRUNCATE TABLE {target_table}")
-        execute_sql_statements(
-            client=self.client,
-            statements=statements,
-            layer_name="silver_load",
-            source_name=sql_file.name,
-        )
-        return 0
-
-    def run_load_jobs(self, dry_run: bool = False) -> tuple[int, int, int]:
-        """Run all silver load jobs. Returns (exit_code, total, completed)."""
-        load_jobs = self.discover_load_jobs()
+    def run_load_jobs(
+        self,
+        scope: WarehouseExecutionScope,
+        dry_run: bool = False,
+    ) -> tuple[int, int, int]:
+        """Stage and commit all Silver jobs for one explicit output scope."""
+        try:
+            load_jobs = self.build_scoped_jobs()
+        except (OSError, ValueError) as error:
+            logger.error("Failed to prepare Silver load jobs: %s", error)
+            return 1, 0, 0
         if not load_jobs:
             logger.warning("No silver DML SQL files found in %s", self.silver_root)
             return 0, 0, 0
@@ -140,42 +126,25 @@ class SilverService:
             logger.info("[dry-run] Planned silver load jobs: %s", len(load_jobs))
 
         total_jobs = len(load_jobs)
-        completed_jobs = 0
-        for index, (sql_path, target_table) in enumerate(load_jobs, start=1):
-            logger.info(
-                "Running silver load job %s/%s: %s -> %s",
-                index,
-                total_jobs,
-                sql_path.name,
-                target_table,
-            )
-            started_at = time.perf_counter()
-            if not dry_run and self.client is None:
-                logger.error("ClickHouse client is required when not running dry-run")
-                return 1, total_jobs, completed_jobs
-            result = self.execute_load_sql(sql_path, target_table, dry_run=dry_run)
-            elapsed_seconds = time.perf_counter() - started_at
-            if result != 0:
-                logger.error(
-                    "Silver load job failed %s/%s: %s -> %s (exit code %s) after %.2f seconds",
-                    index,
-                    total_jobs,
-                    sql_path.name,
-                    target_table,
-                    result,
-                    elapsed_seconds,
-                )
-                return 1, total_jobs, completed_jobs
-            completed_jobs += 1
-            logger.info(
-                "Completed silver load job %s/%s: %s -> %s in %.2f seconds",
-                index,
-                total_jobs,
-                sql_path.name,
-                target_table,
-                elapsed_seconds,
-            )
-        return 0, total_jobs, completed_jobs
+        started_at = time.perf_counter()
+        batch = ScopedReplacementBatch(
+            self.client,
+            scope,
+            dry_run=dry_run,
+            log=logger,
+        )
+        try:
+            batch.run(load_jobs)
+        except Exception as error:
+            logger.error("Silver scoped load failed: %s", error)
+            return 1, total_jobs, 0
+        logger.info(
+            "Silver scoped load completed | scope=%s jobs=%s duration_seconds=%.2f",
+            scope.label,
+            total_jobs,
+            time.perf_counter() - started_at,
+        )
+        return 0, total_jobs, total_jobs
 
     def assert_contracts(self, database: str = "silver") -> None:
         """Run silver layer contract assertions. Raises LayerContractError on failure."""
@@ -183,8 +152,13 @@ class SilverService:
             raise RuntimeError("ClickHouse client is required for contract checks")
         assert_silver_layer_contracts(self.client, database=database, log=logger)
 
-    def run(self, *, dry_run: bool = False) -> SilverRunResult:
-        """Execute the full Silver layer pipeline and return a structured result.
+    def run(
+        self,
+        *,
+        scope: WarehouseExecutionScope,
+        dry_run: bool = False,
+    ) -> SilverRunResult:
+        """Execute one scoped Silver pipeline and return a structured result.
 
         The caller (script) is responsible for:
         - ClickHouse client creation and teardown
@@ -193,7 +167,10 @@ class SilverService:
         """
         result = SilverRunResult(exit_code=0)
 
-        load_exit_code, total_jobs, completed_jobs = self.run_load_jobs(dry_run=dry_run)
+        load_exit_code, total_jobs, completed_jobs = self.run_load_jobs(
+            scope=scope,
+            dry_run=dry_run,
+        )
         result.exit_code = load_exit_code
         result.total_jobs = total_jobs
         result.completed_jobs = completed_jobs

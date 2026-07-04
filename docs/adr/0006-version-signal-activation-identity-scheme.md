@@ -62,9 +62,10 @@ the activation identity contract intentionally changes. Examples include:
 Signal-definition versioning, if needed, must be modeled separately from
 `signal_instance_id` and `signal_id_version`.
 
-Activation rebuilds remain full-table rebuilds for now. Because the identity is
-deterministic, rerunning the activation builders should reproduce the same IDs
-for the same active signal rows and identity values.
+Activation rebuilds were full-table when this decision was accepted. ADR 0018
+later added scoped replacement. Because identity remains deterministic, either
+scoped reruns or full-history reruns reproduce the same IDs for the same active
+signal rows and identity values.
 
 ## Consequences
 

@@ -14,7 +14,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_deadball_creator
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_deadball_creator.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_possession_passing_deadball_creator
 
@@ -34,13 +34,13 @@ Triggers when a player creates at least 1 big chance from indirect free kicks in
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_deadball_creator.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_deadball_creator`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_player_possession_passing_deadball_creator
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_deadball_creator
 ```
 
 ## Output Schema

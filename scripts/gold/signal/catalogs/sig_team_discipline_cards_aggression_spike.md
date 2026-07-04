@@ -13,7 +13,7 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_discipline_cards_aggression_spike
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_aggression_spike.sql
-  runner: scripts/gold/run_sql_job.py
+  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_discipline_cards_aggression_spike
 
@@ -32,13 +32,13 @@ Flags team-match performances where a side's foul count jumps sharply after half
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_aggression_spike.sql`
-- Runner: `scripts/gold/run_sql_job.py`
+- Runner: `scripts/gold/run_gold_sql_jobs.py`
 - Target table: `gold_signals.sig_team_discipline_cards_aggression_spike`
 
 ## Example Execution
 
 ```bash
-python scripts/gold/run_sql_job.py --kind signal --id sig_team_discipline_cards_aggression_spike
+python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_aggression_spike
 ```
 
 ## Output Schema

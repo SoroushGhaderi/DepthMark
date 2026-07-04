@@ -15,7 +15,7 @@ clickhouse/gold/
       player/                  # create_table_player_*.sql
     activations/
       create_table_signal_activations_stage.sql
-  dml/                         # run_sql_job.py / load_clickhouse_gold.py
+  dml/                         # run_gold_sql_jobs.py / load_clickhouse_gold.py
     scenarios/
       team/                    # scenario_*.sql
       player/                  # scenario_*.sql
