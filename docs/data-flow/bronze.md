@@ -117,6 +117,8 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208
 python3 scripts/bronze/load_clickhouse.py --single-date 20251208
 python3 scripts/bronze/load_clickhouse.py --start-date 20251201 --end-date 20251207
 python3 scripts/bronze/load_clickhouse.py --month 202512
+python3 scripts/bronze/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate --dry-run
 python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate
 python3 scripts/bronze/load_clickhouse.py --stats
 ```
