@@ -1276,6 +1276,7 @@
                 <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python3 scripts/gold/load_clickhouse_gold.py --full-history</code></td></tr>
                 <tr><td>7</td><td>Quality</td><td>Logical duplicate identities and physical-version diagnostics in all layers; Bronze↔Silver identity reconciliation</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
                 <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python3 scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
+                <tr><td>9</td><td>Maintenance</td><td>Optional ClickHouse storage optimization after reviewing physical-version diagnostics</td><td><code>python3 scripts/maintenance/optimize_clickhouse.py --layer bronze</code></td></tr>
             </tbody>
         </table>
         <div class="callout note">
@@ -1354,6 +1355,16 @@ python3 scripts/quality/check_logging_style.py
 # Sync signal/scenario catalogs from Git → MongoDB (product APIs)
 python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
 python3 scripts/mongodb/sync_signal_catalogs.py</pre>
+        </details>
+        <details class="cmd-block">
+            <summary>▸ Optional maintenance — explicit ClickHouse optimization</summary>
+            <pre># Dry-run first: logs planned OPTIMIZE TABLE ... FINAL DEDUPLICATE statements
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
+python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
+
+# Execute only after reviewing the selected table scope
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
+python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --table sig_team_shooting_goals_efficiency_peak --execute</pre>
         </details>
         <div class="callout success">
             <span class="callout-icon">✓</span>
@@ -1692,7 +1703,7 @@ python3 scripts/bronze/sync_s3.py download --all</pre>
         </div>
         <div class="callout warning">
             <span class="callout-icon">⚠️</span>
-            <span><strong>Idempotency:</strong> Bronze uses <code>ReplacingMergeTree(inserted_at)</code>. Re-running a date overwrites via version column. Compaction runs via <code>99_optimize_tables.sql</code>.</span>
+            <span><strong>Idempotency:</strong> Bronze uses <code>ReplacingMergeTree(inserted_at)</code>. Re-running a date converges via the version column. Routine setup does not run full-table compaction; quality checks report physical row versions as storage diagnostics.</span>
         </div>
     </div>
 
@@ -2592,6 +2603,19 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'gold',
         },
         {
+            match: ['optimize_clickhouse', 'maintenance optimize', 'physical row versions', 'storage diagnostics'],
+            title: 'Explicit ClickHouse optimization maintenance',
+            scripts: ['scripts/maintenance/optimize_clickhouse.py'],
+            commands: [
+                'python3 scripts/maintenance/optimize_clickhouse.py --layer bronze',
+                'python3 scripts/maintenance/optimize_clickhouse.py --layer silver --execute',
+                'python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals',
+                'python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --table sig_team_shooting_goals_efficiency_peak --execute',
+            ],
+            note: 'Dry-run is the default. Pass --execute only after reviewing the planned OPTIMIZE TABLE ... FINAL DEDUPLICATE statements.',
+            sectionTab: 'infrastructure',
+        },
+        {
             match: ['init_indexes.py', 'mongodb/init_indexes'],
             title: 'MongoDB index bootstrap',
             scripts: ['scripts/mongodb/init_indexes.py'],
@@ -3198,13 +3222,14 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         { title: 'Complete warehouse route', section: 'overview', sectionLabel: 'Overview', keywords: 'setup fill all tables layers create ddl pipeline scrape load bronze silver gold validation sync catalogs start end runbook' },
         { title: 'End-to-end pipeline', section: 'overview', sectionLabel: 'Overview', keywords: 'pipeline fotmob bronze silver gold activation product' },
         { title: 'Quality gates & preflight', section: 'overview', sectionLabel: 'Overview', keywords: 'health_check preflight contract duplicate identities bronze silver gold reconciliation strict exit codes validated' },
+        { title: 'ClickHouse optimization maintenance', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'optimize_clickhouse maintenance physical row versions storage diagnostics execute dry-run' },
         { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python3 ownership adr 0001 0009 generic runner' },
         // Bronze
         { title: 'Scraping flow', section: 'bronze', sectionLabel: 'Bronze', keywords: 'scrape_fotmob fotmorchestrator dailyscraper matchscraper api json' },
         { title: 'Standalone S3 archive sync', section: 'bronze', sectionLabel: 'Bronze', keywords: 'sync_s3 upload download archive tar gzip bucket force allow-incomplete sha256 staging dry-run' },
         { title: 'ClickHouse loading', section: 'bronze', sectionLabel: 'Bronze', keywords: 'load clickhouse pydantic safeFieldExtractor contract dlq dead letter queue' },
         { title: 'Bronze table inventory', section: 'bronze', sectionLabel: 'Bronze', keywords: 'general timeline venue player shotmap goal cards red_card period momentum starters substitutes coaches team_form match_reference' },
-        { title: 'ReplacingMergeTree (Bronze)', section: 'bronze', sectionLabel: 'Bronze', keywords: 'replacingmergetree idempotent optimize inserted_at' },
+        { title: 'ReplacingMergeTree (Bronze)', section: 'bronze', sectionLabel: 'Bronze', keywords: 'replacingmergetree idempotent physical row versions inserted_at storage diagnostics' },
         // Silver
         { title: 'Bronze → Silver lineage', section: 'silver', sectionLabel: 'Silver', keywords: 'lineage match period_stat player_match_stat momentum shot card match_personnel team_form' },
         { title: 'Silver execution flow', section: 'silver', sectionLabel: 'Silver', keywords: 'dml script 01 08 ordered insert select assert_silver_layer_contracts' },

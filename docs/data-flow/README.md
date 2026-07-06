@@ -16,6 +16,9 @@ infrastructure change.
 | `infrastructure.md` | Docker Compose, ClickHouse setup, MongoDB, environment configuration, and credential policy. |
 | `mongodb.md` | Signal catalog sync: markdown frontmatter → MongoDB serving copy. |
 
+Maintenance commands such as `scripts/maintenance/optimize_clickhouse.py` are
+documented in `infrastructure.md` and the interactive warehouse reference.
+
 ## How To Use
 
 1. Start with `warehouse-pipeline-reference.html` for a visual overview of the entire system.

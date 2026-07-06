@@ -8,12 +8,12 @@ Supersedes ADR 0011 for Gold activation rebuild scope.
 
 ## Context
 
-Silver currently truncates each target table before rebuilding it from the
-complete Bronze snapshot. Gold scenario and signal jobs append their current
-results and rely on `ReplacingMergeTree` optimization to collapse repeated
-business keys. That does not reliably remove rows that stop qualifying after a
-source correction. Gold activation metadata is rebuilt through a full-table
-stage and swap under ADR 0011.
+Before this decision, Silver truncated each target table before rebuilding it
+from the complete Bronze snapshot. Gold scenario and signal jobs appended their
+current results and relied on `ReplacingMergeTree` convergence to collapse
+repeated business keys. That did not reliably remove rows that stopped
+qualifying after a source correction. Gold activation metadata was rebuilt
+through a full-table stage and swap under ADR 0011.
 
 DepthMark now needs explicit date, month, and full-history execution scopes.
 Date- and month-scoped runs must preserve rows outside their selected output

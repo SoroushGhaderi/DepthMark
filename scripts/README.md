@@ -26,6 +26,7 @@ Use these paths for new automation and daily runs:
 - `scripts/gold/setup_clickhouse_gold.py`
 - `scripts/orchestration/pipeline.py`
 - `scripts/orchestration/setup_clickhouse.py`
+- `scripts/maintenance/optimize_clickhouse.py`
 
 ### Single-Date Mode
 
@@ -99,8 +100,18 @@ and `download` require an explicit `--date`, `--start-date/--end-date`,
 - `scripts/ensure_directories.py`
 - `scripts/health_check.py`
 - `scripts/refresh_turnstile.py`
+- `scripts/maintenance/optimize_clickhouse.py`
 - `scripts/mongodb/init_indexes.py`
 - `scripts/mongodb/sync_signal_catalogs.py`
+
+`scripts/maintenance/optimize_clickhouse.py` is explicit ClickHouse storage
+maintenance. It is dry-run by default and only mutates tables with `--execute`:
+
+```bash
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
+python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
+```
 - `scripts/gold/activations/build_signal_activations.py`
 
 ## Quality Check Scripts

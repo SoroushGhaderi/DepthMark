@@ -9,7 +9,7 @@ Accepted
 DepthMark Gold signal and scenario transformation logic lives in SQL files under
 `clickhouse/gold/`. Python runner files currently act mostly as operational
 wrappers around those SQL files: they locate SQL, execute it in ClickHouse, log
-results, and optimize target tables.
+results, and coordinate replacement of derived output tables.
 
 The project has many Gold outputs, so maintaining one Python runner file per
 signal or scenario creates boilerplate and makes contribution rules heavier than
@@ -47,6 +47,9 @@ reflect that current contract.
 
 ADR 0018 later requires every generic runner invocation to select `--date`,
 `--month`, or `--full-history` explicitly.
+ADR 0020 later clarified that full-table ClickHouse optimization is not a
+routine setup or runner responsibility; scoped replacement may optimize only
+temporary calculation or replacement tables as part of preparing a safe commit.
 
 Bulk Gold loading should reuse the same generic execution path where practical.
 New Gold work should add or update SQL and catalog/contract documentation rather

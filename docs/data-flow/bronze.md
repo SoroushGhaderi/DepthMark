@@ -121,14 +121,29 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate
 python3 scripts/bronze/load_clickhouse.py --stats
 ```
 
-### 4. Table Optimization
+### 4. Table Storage Hygiene
 
 Bronze tables use `ReplacingMergeTree(inserted_at)` for idempotent reruns.
-Optimization SQL runs via:
+Routine setup does not run full-table optimization or deduplication. ClickHouse
+background merges handle normal storage cleanup, while warehouse quality checks
+report extra physical row versions as non-failing diagnostics:
+
 ```bash
-python3 scripts/bronze/setup_clickhouse.py
+python3 scripts/quality/check_data_quality.py --layers bronze --strict
 ```
-Which executes `clickhouse/bronze/99_optimize_tables.sql`.
+
+Treat physical row-version buildup as an operator maintenance signal, not as a
+Bronze correctness failure by itself.
+
+Plan explicit Bronze optimization before executing it:
+
+```bash
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
+```
+
+Omitting `--execute` is a dry run. Do not add optimization SQL back into Bronze
+setup.
 
 ## DLQ (Dead Letter Queue)
 

@@ -126,6 +126,24 @@ Runs DDL in layer order:
 4. Activation stage DDL (`ddl/activations/`) is applied during activation rebuilds,
    not during `setup_clickhouse.py`
 
+Setup is schema-only and does not run full-table optimization.
+
+## ClickHouse Optimization Maintenance
+
+Run optimization only as explicit operator maintenance after reviewing physical
+row-version diagnostics from `check_data_quality.py`. The maintenance command
+is dry-run by default:
+
+```bash
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
+python3 scripts/maintenance/optimize_clickhouse.py --layer silver --execute
+python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
+python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --table sig_team_shooting_goals_efficiency_peak --execute
+```
+
+Use `--execute` only after the planned `OPTIMIZE TABLE ... FINAL DEDUPLICATE`
+statements are acceptable for the selected layer, database, or table.
+
 ## MongoDB Setup
 
 ```bash

@@ -7,14 +7,14 @@ Last updated: 2026-07-07
 
 ## Executive Summary
 
-DepthMark has a clear FotMob-only medallion shape and the codebase is well documented, but a few operational risks still stand out. The highest-impact issues are the normal ClickHouse setup path still auto-running expensive `OPTIMIZE ... FINAL DEDUPLICATE`, the unified pipeline continuing after upstream failures, and the test suite failing to collect from the repo root because the package paths are not on `PYTHONPATH` during pytest discovery. ClickHouse bootstrap also remains more permissive than ideal for a production posture, especially around local default-user fallback and broad grants.
+DepthMark has a clear FotMob-only medallion shape and the codebase is well documented, but a few operational risks still stand out. The previous ClickHouse setup-time `OPTIMIZE ... FINAL DEDUPLICATE` risk is fixed by ADR 0020 and the explicit maintenance command. The remaining highest-impact issues are the unified pipeline continuing after upstream failures and the test suite failing to collect from the repo root because the package paths are not on `PYTHONPATH` during pytest discovery. ClickHouse bootstrap also remains more permissive than ideal for a production posture, especially around local default-user fallback and broad grants.
 
 ## Findings
 
 ### P0 (Fix now)
 
-1. **Routine full-table compaction in setup flow** — `scripts/clickhouse_setup_common.py:312-324` sorts `99_optimize_tables.sql` to the end of normal layer setup, and `scripts/clickhouse_setup_common.py:425-433` executes every selected SQL file during setup. The Bronze optimization script itself runs `OPTIMIZE TABLE ... FINAL DEDUPLICATE` across the layer at `clickhouse/bronze/99_optimize_tables.sql:18-32`, so a normal setup pass rewrites whole tables instead of leaving merges to ClickHouse.
-   - Status: **Open**.
+1. **Routine full-table compaction in setup flow** — normal setup previously selected `99_optimize_tables.sql` and ran full-table `OPTIMIZE TABLE ... FINAL DEDUPLICATE` across Bronze, causing setup to rewrite populated tables and clear physical-version diagnostics.
+   - Status: **Fixed in ADR 0020**. Setup discovery now excludes `optimize` SQL files, and the legacy Bronze optimization SQL file was removed.
 
 ### P1 (This sprint)
 
@@ -51,7 +51,7 @@ DepthMark has a clear FotMob-only medallion shape and the codebase is well docum
 
 ## SQL Quality
 
-- Routine `OPTIMIZE TABLE ... FINAL DEDUPLICATE` is still part of the normal setup path.
+- Routine `OPTIMIZE TABLE ... FINAL DEDUPLICATE` is no longer part of the normal setup path.
 - `SELECT *` remains in some production Gold queries and in the data-quality helper.
 - Silver and Gold use explicit `ReplacingMergeTree` / partitioning patterns, which is a solid base.
 
@@ -70,7 +70,7 @@ DepthMark has a clear FotMob-only medallion shape and the codebase is well docum
 
 ### Phase 1 - P0 Stabilization
 
-1. Remove routine `OPTIMIZE ... FINAL` from the normal setup path and keep it behind an explicit operator action if it is still needed.
+1. Keep routine `OPTIMIZE ... FINAL` out of setup; use `scripts/maintenance/optimize_clickhouse.py` only as an explicit operator maintenance command.
 2. Fix pytest discovery so the root package layout is importable without ad hoc environment setup.
 3. Add a regression test for the unified orchestrator's failure behavior so upstream errors stop downstream writes by default.
 
@@ -93,7 +93,7 @@ DepthMark has a clear FotMob-only medallion shape and the codebase is well docum
 
 ## Work Tracking
 
-- [ ] P0.1 Remove routine `OPTIMIZE ... FINAL` from runtime setup
+- [x] P0.1 Remove routine `OPTIMIZE ... FINAL` from runtime setup
 - [ ] P0.2 Repair pytest collection/import path configuration
 - [x] P0.3 Make orchestrator failure handling explicit and safe
 - [ ] P1.1 Remove insecure ClickHouse default-user fallback where possible
