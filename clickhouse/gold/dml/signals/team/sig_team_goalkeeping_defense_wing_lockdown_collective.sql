@@ -31,7 +31,7 @@ INSERT INTO gold.sig_team_goalkeeping_defense_wing_lockdown_collective (
     opponent_fullbacks_and_wingers_tackles_won,
     fullbacks_and_wingers_tackles_won_delta,
     triggered_team_fullbacks_and_wingers_tackles_won_above_threshold,
-    fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
+    triggered_team_fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
     opponent_fullbacks_and_wingers_tackles_share_of_team_tackles_pct,
     fullbacks_and_wingers_tackles_share_of_team_tackles_delta_pct,
     triggered_team_tackles_won,

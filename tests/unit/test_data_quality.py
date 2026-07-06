@@ -1,5 +1,8 @@
+import re
 from pathlib import Path
 from types import SimpleNamespace
+
+import yaml
 
 from scripts.quality.check_data_quality import strict_exit_code
 from src.services.data_quality import (
@@ -12,6 +15,9 @@ from src.services.data_quality import (
     build_identity_contracts,
 )
 from src.services.warehouse_scope import WarehouseExecutionScope
+
+
+DEFAULT_SIGNAL_COLUMNS = {"signal_instance_id", "inserted_at"}
 
 
 class FakeClickHouseClient:
@@ -35,6 +41,78 @@ class FakeClickHouseClient:
             if marker in sql:
                 return SimpleNamespace(result_rows=rows)
         return SimpleNamespace(result_rows=[])
+
+
+def _parenthesized_body(sql: str, open_paren_index: int) -> str:
+    depth = 0
+    for index, character in enumerate(sql[open_paren_index:], open_paren_index):
+        if character == "(":
+            depth += 1
+        elif character == ")":
+            depth -= 1
+            if depth == 0:
+                return sql[open_paren_index + 1 : index]
+    raise ValueError("Unclosed parenthesized SQL body")
+
+
+def _split_top_level_csv(value: str) -> list[str]:
+    items: list[str] = []
+    buffer: list[str] = []
+    depth = 0
+    quoted_by = ""
+    for character in value:
+        if quoted_by:
+            buffer.append(character)
+            if character == quoted_by:
+                quoted_by = ""
+        elif character in ("'", '"', "`"):
+            quoted_by = character
+            buffer.append(character)
+        elif character == "(":
+            depth += 1
+            buffer.append(character)
+        elif character == ")":
+            depth -= 1
+            buffer.append(character)
+        elif character == "," and depth == 0:
+            items.append("".join(buffer).strip())
+            buffer = []
+        else:
+            buffer.append(character)
+    trailing = "".join(buffer).strip()
+    if trailing:
+        items.append(trailing)
+    return items
+
+
+def _signal_ddl_columns(project_root: Path) -> dict[str, tuple[str, ...]]:
+    contracts: dict[str, tuple[str, ...]] = {}
+    table_pattern = re.compile(
+        r"CREATE TABLE IF NOT EXISTS\s+gold_signals\.(sig_[a-z0-9_]+)\s*\(",
+        re.IGNORECASE,
+    )
+    for path in (project_root / "clickhouse/gold/ddl/signals").rglob("create_table_*.sql"):
+        sql = path.read_text(encoding="utf-8")
+        for match in table_pattern.finditer(sql):
+            body = _parenthesized_body(sql, sql.find("(", match.end() - 1))
+            columns = []
+            for item in _split_top_level_csv(body):
+                if not item or item.startswith("--"):
+                    continue
+                column = item.split()[0].strip("`")
+                if column.upper() not in {"INDEX", "CONSTRAINT", "PRIMARY", "ORDER", "PARTITION"}:
+                    columns.append(column)
+            contracts[match.group(1)] = tuple(columns)
+    return contracts
+
+
+def _signal_insert_columns(sql: str) -> tuple[str, tuple[str, ...]]:
+    match = re.search(r"INSERT\s+INTO\s+gold\.(sig_[a-z0-9_]+)\s*\(", sql, re.IGNORECASE)
+    if not match:
+        raise ValueError("Signal SQL must insert into gold.sig_*")
+    body = _parenthesized_body(sql, sql.find("(", match.end() - 1))
+    columns = tuple(item.strip().strip("`") for item in _split_top_level_csv(body))
+    return match.group(1), columns
 
 
 def test_table_without_duplicates_passes():
@@ -220,6 +298,32 @@ def test_repository_contracts_cover_all_declared_warehouse_outputs():
     assert len([name for name in contracts if name.startswith("gold_scenarios.")]) == 48
     assert len([name for name in contracts if name.startswith("gold_signals.")]) == 344
     assert contracts["gold.signal_activations"].columns == ("signal_instance_id",)
+
+
+def test_signal_dml_insert_columns_match_ddl_and_catalog_identity():
+    project_root = Path.cwd()
+    ddl_columns_by_signal = _signal_ddl_columns(project_root)
+
+    assert len(ddl_columns_by_signal) == 344
+
+    for path in sorted((project_root / "clickhouse/gold/dml/signals").rglob("sig_*.sql")):
+        signal_id, insert_columns = _signal_insert_columns(path.read_text(encoding="utf-8"))
+        ddl_columns = tuple(
+            column
+            for column in ddl_columns_by_signal[signal_id]
+            if column not in DEFAULT_SIGNAL_COLUMNS
+        )
+
+        assert insert_columns == ddl_columns, signal_id
+
+    for path in sorted((project_root / "scripts/gold/signal/catalogs").glob("sig_*.md")):
+        text = path.read_text(encoding="utf-8")
+        frontmatter = yaml.safe_load(text.split("---", 2)[1])
+        sql_path = project_root / frontmatter["asset_paths"]["sql"]
+        signal_id, insert_columns = _signal_insert_columns(sql_path.read_text(encoding="utf-8"))
+
+        assert signal_id == frontmatter["signal_id"]
+        assert set(frontmatter["row_identity"]).issubset(set(insert_columns))
 
 
 def test_bronze_date_duplicate_query_scopes_through_match_reference():

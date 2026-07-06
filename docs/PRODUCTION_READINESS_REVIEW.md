@@ -18,8 +18,8 @@ DepthMark has a clear FotMob-only medallion shape and the codebase is well docum
 
 ### P1 (This sprint)
 
-2. **Unified pipeline keeps going after upstream failures** — the orchestrator sets `continue_on_error=True` for Bronze, ClickHouse load, Silver, and Gold steps at `scripts/orchestration/pipeline.py:450-546` and again for full-history execution at `scripts/orchestration/pipeline.py:678-824`. That means a Bronze failure can still be followed by Silver/Gold work against stale or incomplete inputs, which is risky for warehouse consistency.
-   - Status: **Open**.
+2. **Unified pipeline keeps going after upstream failures** — the orchestrator previously allowed Bronze, ClickHouse load, Silver, and Gold steps to continue after upstream failures, which meant a Bronze failure could still be followed by Silver/Gold work against stale or incomplete inputs.
+   - Status: **Fixed**. The unified pipeline now gates downstream stages on upstream success in daily, monthly, and full-history modes, with regression coverage for Bronze, Silver, and full-history ClickHouse failures.
 
 3. **ClickHouse bootstrap is still overly permissive** — `scripts/clickhouse_setup_common.py:87-205` falls back to the `default` user in local development, and `scripts/clickhouse_setup_common.py:208-241` grants broad access (`GRANT ALL` on Bronze/Silver/Gold databases plus `CREATE DATABASE` and `TABLE ENGINE`) once a user is created. The local-dev gate helps, but the permission model is still much wider than least-privilege production practice.
    - Status: **Open**.
