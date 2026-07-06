@@ -63,6 +63,8 @@ Related terms: Physical Row Version, Row Identity.
 One of multiple stored `ReplacingMergeTree` rows sharing a declared identity
 before background merging collapses older versions. Extra physical versions
 are storage and merge-health diagnostics, not logical duplicate failures.
+Routine setup does not compact these versions; operators use quality diagnostics
+to decide whether explicit maintenance is needed.
 
 Avoid saying: logical duplicate, duplicate business row.
 Related terms: Logical Duplicate Identity, Row Identity.

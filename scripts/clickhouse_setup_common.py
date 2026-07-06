@@ -17,6 +17,7 @@ from src.utils.logging_utils import get_logger
 logger = get_logger()
 
 LAYER_ORDER = ("bronze", "silver", "gold")
+SETUP_EXCLUDED_SQL_NAME_PARTS = ("optimize",)
 CREATE_TABLE_PATTERN = re.compile(
     r"^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([`\"\w.]+)",
     re.IGNORECASE,
@@ -260,7 +261,7 @@ def resolve_clickhouse_root() -> Path:
 
 
 def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None) -> list[Path]:
-    """Return ordered SQL files for a specific medallion layer."""
+    """Return ordered schema SQL files for a specific medallion layer."""
     if layer_name not in LAYER_ORDER:
         raise ValueError(f"Unknown layer '{layer_name}'")
     root = clickhouse_root or resolve_clickhouse_root()
@@ -290,7 +291,7 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
             sql_file
             for sql_file in candidate_dir.glob("*.sql")
             if not sql_file.name.startswith("scenario_")
-            and "optimize" not in sql_file.name.lower()
+            and not _is_excluded_from_layer_setup(sql_file)
         ]
         for sql_file in sorted(candidate_sql_files, key=lambda path: path.name):
             if sql_file.name in sql_by_name:
@@ -320,6 +321,12 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
         return (2, 0, name)
 
     return sorted(sql_by_name.values(), key=_sort_key)
+
+
+def _is_excluded_from_layer_setup(sql_file: Path) -> bool:
+    """Return whether a SQL file is intentionally outside schema setup."""
+    normalized_name = sql_file.name.lower()
+    return any(part in normalized_name for part in SETUP_EXCLUDED_SQL_NAME_PARTS)
 
 
 def execute_sql_file(

@@ -48,7 +48,8 @@ All three parts are required for a production-ready scenario.
    - connect via `ClickHouseClient`
    - read SQL from the selected scenario SQL file
    - execute insert SQL
-   - run `OPTIMIZE TABLE <target> FINAL DEDUPLICATE`
+   - stage scope-aware replacement output and, when needed, optimize temporary
+     calculation or replacement tables before committing
    - return non-zero on failure
 2. Runner should not embed business SQL in Python strings.
 3. Individual scenario execution must remain available through

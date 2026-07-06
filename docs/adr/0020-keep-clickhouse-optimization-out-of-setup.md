@@ -28,9 +28,10 @@ ClickHouse layer setup is schema-only. Setup discovery excludes SQL files whose
 names contain `optimize`, and DepthMark does not keep layer-level
 `99_optimize_tables.sql` files in the normal SQL tree.
 
-Full-table optimization is not a setup concern. If DepthMark later needs manual
-warehouse compaction, it should be introduced as an explicit maintenance
-workflow with dry-run planning and operator-selected layer/table scope.
+Full-table optimization is not a setup concern. Manual warehouse compaction is
+handled by `scripts/maintenance/optimize_clickhouse.py`, an explicit maintenance
+workflow with dry-run planning by default and operator-selected layer, database,
+or table scope.
 
 Scoped replacement workflows may still optimize temporary calculation or
 replacement tables when that optimization is part of preparing a validated
@@ -47,5 +48,7 @@ setup no longer clears storage-health evidence. Operators should interpret
 extra physical versions as a maintenance signal, not as a strict correctness
 failure.
 
-Introducing future manual compaction requires a deliberate operator command and
-documentation update rather than adding optimization SQL back into setup.
+Manual compaction must remain behind the maintenance command rather than
+optimization SQL in layer setup. Operators should run the command without
+`--execute` first, review the planned statements, and then execute only the
+selected scope when the operational cost is acceptable.

@@ -134,6 +134,9 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_data_quality.py --month 202512 --strict
 python3 scripts/quality/check_data_quality.py --full-history --strict
 python3 scripts/quality/check_logging_style.py
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
+python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
 python3 scripts/health_check.py --json
 python3 scripts/ensure_directories.py
 python3 scripts/refresh_turnstile.py
@@ -219,6 +222,25 @@ python3 scripts/silver/drop_clickhouse.py --dry-run
 python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ```
 
+### Explicit ClickHouse Optimization
+
+Layer setup is schema-only and never runs full-table optimization. If physical
+row-version diagnostics show storage-health buildup that needs operator action,
+plan table optimization first and then execute only the selected scope:
+
+```bash
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
+python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
+python3 scripts/maintenance/optimize_clickhouse.py --layer silver --execute
+python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
+python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --table sig_team_shooting_goals_efficiency_peak --execute
+```
+
+Omitting `--execute` is a dry run that logs the planned
+`OPTIMIZE TABLE ... FINAL DEDUPLICATE` statements without mutating ClickHouse.
+Use this command as explicit maintenance, not as part of routine setup or
+normal pipeline execution.
+
 ## SQL Layout
 
 ```text
@@ -226,7 +248,6 @@ clickhouse/
   bronze/
     00_create_database.sql
     01_*.sql ... 15_*.sql
-    99_optimize_tables.sql
   silver/
     ddl/
       00_create_database.sql
@@ -441,8 +462,9 @@ one activation row.
    `send_layer_completion_alert`.
 6. Bronze runtime supports turnstile refresh automation through
    `scripts/refresh_turnstile.py`.
-7. Bronze tables use `ReplacingMergeTree(inserted_at)` and can be compacted with
-   `clickhouse/bronze/99_optimize_tables.sql`.
+7. Layer setup is schema-only. It does not run full-table ClickHouse
+   optimization or compaction. Physical `ReplacingMergeTree` versions are
+   reported by warehouse quality checks as diagnostics.
 8. Bronze S3 upload/download is operator-invoked through
    `scripts/bronze/sync_s3.py`; neither scraping nor the pipeline invokes it.
 9. Historical scraping writes beneath `data/fotmob/historical/` and compresses
