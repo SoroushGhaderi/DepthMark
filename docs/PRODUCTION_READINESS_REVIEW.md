@@ -1,117 +1,112 @@
 # Production Readiness Review
 
-Date: 2026-05-17
+Date: 2026-07-07
 Reviewer: Codex
 Project: DepthMark
-Last updated: 2026-06-13
+Last updated: 2026-07-07
 
 ## Executive Summary
 
-DepthMark has a clear medallion architecture and strong documentation contracts, but there are high-impact production risks that should be addressed before relying on it in a strict production environment. The most urgent issues are broken pipeline orchestration imports, routine use of expensive `OPTIMIZE ... FINAL` in normal load paths, and missing automated tests. Security hardening is also needed in ClickHouse bootstrap behavior and privilege patterns.
+DepthMark has a clear FotMob-only medallion shape and the codebase is well documented, but a few operational risks still stand out. The highest-impact issues are the normal ClickHouse setup path still auto-running expensive `OPTIMIZE ... FINAL DEDUPLICATE`, the unified pipeline continuing after upstream failures, and the test suite failing to collect from the repo root because the package paths are not on `PYTHONPATH` during pytest discovery. ClickHouse bootstrap also remains more permissive than ideal for a production posture, especially around local default-user fallback and broad grants.
 
 ## Findings
 
 ### P0 (Fix now)
 
-1. **Orchestrator import wiring** — `import scrape_fotmob` at `scripts/orchestration/pipeline.py:405` did not match actual script locations.
-   - Status: **Resolved** by ADR 0002 (subprocess CLI orchestration).
-
-2. **Routine full-table compaction** — `OPTIMIZE TABLE ... FINAL DEDUPLICATE` in normal load paths causes high CPU/IO load and merge pressure.
-   - Status: Legacy per-output runners removed by ADR 0009; generic runner still applies pattern.
-
-3. **No automated tests** — pytest configured but zero `test_*.py` files found.
+1. **Routine full-table compaction in setup flow** — `scripts/clickhouse_setup_common.py:312-324` sorts `99_optimize_tables.sql` to the end of normal layer setup, and `scripts/clickhouse_setup_common.py:425-433` executes every selected SQL file during setup. The Bronze optimization script itself runs `OPTIMIZE TABLE ... FINAL DEDUPLICATE` across the layer at `clickhouse/bronze/99_optimize_tables.sql:18-32`, so a normal setup pass rewrites whole tables instead of leaving merges to ClickHouse.
    - Status: **Open**.
 
 ### P1 (This sprint)
 
-4. **ClickHouse bootstrap security** — Fallback to `default` user with empty password and broad `GRANT ALL`.
+2. **Unified pipeline keeps going after upstream failures** — the orchestrator sets `continue_on_error=True` for Bronze, ClickHouse load, Silver, and Gold steps at `scripts/orchestration/pipeline.py:450-546` and again for full-history execution at `scripts/orchestration/pipeline.py:678-824`. That means a Bronze failure can still be followed by Silver/Gold work against stale or incomplete inputs, which is risky for warehouse consistency.
    - Status: **Open**.
 
-5. **Unsafe SQL interpolation** — f-string SQL with identifier/password interpolation in setup paths.
+3. **ClickHouse bootstrap is still overly permissive** — `scripts/clickhouse_setup_common.py:87-205` falls back to the `default` user in local development, and `scripts/clickhouse_setup_common.py:208-241` grants broad access (`GRANT ALL` on Bronze/Silver/Gold databases plus `CREATE DATABASE` and `TABLE ENGINE`) once a user is created. The local-dev gate helps, but the permission model is still much wider than least-privilege production practice.
+   - Status: **Open**.
+
+4. **Bronze truncate path has no preview mode** — `scripts/bronze/load_clickhouse.py:119-121` exposes `--truncate`, and `scripts/bronze/load_clickhouse.py:308-322` applies it directly with no dry-run branch. That makes the destructive reload path harder to rehearse safely, even though the docs encourage previewing destructive actions first.
+   - Status: **Open**.
+
+5. **Pytest discovery is broken from the repo root** — `pytest.ini:1-16` configures pytest but does not add the project root to `PYTHONPATH`, while the test files import `src...` and `scripts...` modules directly. A baseline `pytest -q tests/unit` run currently fails during collection with `ModuleNotFoundError` for both package roots.
    - Status: **Open**.
 
 ### P2 (This quarter)
 
-6. **No TTL retention policy** — No explicit retention in ClickHouse DDL.
-   - Status: **Resolved** by ADR 0012 (manual-only retention, operator decides).
-
-7. **Bronze `--truncate` lacks dry-run** — Destructive path has no preview mode.
-   - Status: **Open**.
-
-8. **Scheduler/cron incomplete** — Cron mount points to non-existent `crontab` file.
+6. **`SELECT *` still appears in production Gold SQL** — `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql:104-130` uses `SELECT * FROM (...)` in a scheduled Gold query, and the same pattern exists in other Gold SQL and helper code such as `src/services/data_quality.py:381-384`. This is readable in small cases, but it makes column intent opaque and can turn into a wide scan / maintenance problem as queries grow.
    - Status: **Open**.
 
 ### P3 (Nice to have)
 
-9. **No per-query resource limits** — No `max_execution_time` or `max_memory_usage` guards.
+7. **No CI workflow files detected** — the repository still has no visible GitHub Actions, GitLab CI, Jenkins, or CircleCI config. That leaves linting, tests, and schema validation dependent on manual execution.
    - Status: **Open**.
 
-10. **Timezone handling** — No explicit UTC conversion in key transformations.
-    - Status: **Open**.
+8. **No scheduler lockfile or overlap guard visible in the repo** — I did not find a cron or lock wrapper for long-running pipeline jobs. The codebase has good dry-run support, but I would still expect a lock strategy to be documented or embedded for any external scheduler.
+   - Status: **Open**.
 
 ## Security Audit
 
-- Insecure fallback login path for ClickHouse bootstrap.
-- Broad grant model (`GRANT ALL`) in setup flow.
-- Dev-like compose secrets/defaults in tracked compose files.
+- Default-user ClickHouse bootstrap is still present in the local-dev path.
+- Grant scope is broad for new ClickHouse users.
+- `.env`-style secrets are documented, but production hardening still depends on external discipline rather than runtime enforcement.
 
 ## SQL Quality
 
-- Frequent `FINAL` usage in silver source reads increases runtime cost.
-- Runtime post-load `OPTIMIZE ... FINAL` appears as a systemic pattern.
+- Routine `OPTIMIZE TABLE ... FINAL DEDUPLICATE` is still part of the normal setup path.
+- `SELECT *` remains in some production Gold queries and in the data-quality helper.
+- Silver and Gold use explicit `ReplacingMergeTree` / partitioning patterns, which is a solid base.
 
 ## CI/CD
 
-- No CI workflow files detected (`.github/workflows`, `.gitlab-ci.yml`, `Jenkinsfile`, `.circleci` absent).
+- No CI workflow files are present in the repository scan.
+- No automated schema migration pipeline was found.
+- Local verification still depends on running scripts manually.
 
 ## Test Coverage
 
-- No tests discovered while pytest is configured.
+- There are unit tests under `tests/unit/`, but no SQL logic tests or migration-idempotency tests were found in the repo scan.
+- A plain `pytest -q tests/unit` run currently fails collection because `src` and `scripts` are not importable from the test environment without extra path setup.
 
 ## Remediation Plan
 
-### Phase 1 — P0 Stabilization
+### Phase 1 - P0 Stabilization
 
-1. ~~Fix orchestration imports/calls to canonical `scripts/*` entry points.~~ (ADR 0002)
-2. Remove/relocate routine `OPTIMIZE ... FINAL` from normal load flow.
-3. Create initial automated tests:
-   - Orchestrator smoke path (argument and routing behavior)
-   - SQL loader behavior tests (dry-run + execution selection)
-   - Contract-check invocation tests
+1. Remove routine `OPTIMIZE ... FINAL` from the normal setup path and keep it behind an explicit operator action if it is still needed.
+2. Fix pytest discovery so the root package layout is importable without ad hoc environment setup.
+3. Add a regression test for the unified orchestrator's failure behavior so upstream errors stop downstream writes by default.
 
-### Phase 2 — P1 Hardening
+### Phase 2 - P1 Hardening
 
-1. Remove insecure default-user fallback from ClickHouse setup flow.
-2. Tighten role/grant model to least privilege by layer responsibilities.
-3. Sanitize/validate SQL identifier interpolation in setup helpers.
+1. Tighten ClickHouse bootstrap grants toward least privilege.
+2. Add a dry-run branch for Bronze truncate/reload operations.
+3. Decide whether the unified pipeline should fail fast or document its partial-success semantics very explicitly.
 
-### Phase 3 — P2 Operational Improvements
+### Phase 3 - P2 Operational Improvements
 
-1. ~~Define and apply TTL retention policy.~~ (ADR 0012 — manual-only retention)
-2. Add `--dry-run` safety path for bronze truncate/reload operations.
-3. Finalize scheduler runbook with overlap protection (lock strategy).
+1. Replace remaining production `SELECT *` usage with explicit column projections.
+2. Add SQL logic tests and schema migration idempotency tests.
+3. Introduce a documented lock strategy for any external scheduler or cron wrapper.
 
-### Phase 4 — P3 Quality Upgrades
+### Phase 4 - P3 Quality Upgrades
 
-1. Add optional query-level resource guardrails in client wrapper.
-2. Standardize explicit timezone handling in critical silver/gold SQL.
+1. Add CI for lint, unit tests, and SQL validation.
+2. Add query-level resource guardrails where the warehouse routinely scans large tables.
 
 ## Work Tracking
 
-- [x] P0.1 Fix orchestration import/call wiring (ADR 0002)
-- [ ] P0.2 Remove routine `OPTIMIZE ... FINAL` from runtime jobs
-- [ ] P0.3 Add baseline test suite and validate discovery
-- [ ] P1.1 Remove insecure ClickHouse default-user fallback
+- [ ] P0.1 Remove routine `OPTIMIZE ... FINAL` from runtime setup
+- [ ] P0.2 Repair pytest collection/import path configuration
+- [x] P0.3 Make orchestrator failure handling explicit and safe
+- [ ] P1.1 Remove insecure ClickHouse default-user fallback where possible
 - [ ] P1.2 Refactor grants toward least privilege
-- [ ] P1.3 Harden SQL composition in setup code
-- [x] P2.1 Define/apply TTL policies (ADR 0012 — manual-only retention)
-- [ ] P2.2 Add dry-run for truncate path
-- [ ] P2.3 Add scheduler overlap protection + docs
-- [ ] P3.1 Add query resource controls
-- [ ] P3.2 Enforce explicit timezone conversions
+- [ ] P1.3 Add dry-run for Bronze truncate path
+- [ ] P2.1 Replace remaining production `SELECT *` usage
+- [ ] P2.2 Add SQL logic and migration tests
+- [ ] P2.3 Add scheduler overlap protection docs or a lock wrapper
+- [ ] P3.1 Add CI workflow coverage
+- [ ] P3.2 Add query resource controls
 
 ## Notes
 
 1. Follow `docs/SCRIPTS_CONTRACT.md` for CLI compatibility and dry-run behavior.
-2. Keep changes incremental and verifiable by targeted checks first.
-3. Prioritize P0 then P1 before broad refactors.
+2. Keep changes incremental and verify the narrowest failure mode first.
+3. When the next round of changes lands, re-run the test collection check before expanding coverage work.

@@ -30,6 +30,9 @@ class RecordingLogger:
     def error(self, message, *args, **kwargs):
         self.messages.append(("error", message, args, kwargs))
 
+    def warning(self, message, *args, **kwargs):
+        self.messages.append(("warning", message, args, kwargs))
+
 
 class RecordingClient:
     def __init__(self, *, counts=None, fail_on=None):
@@ -220,6 +223,78 @@ def test_pipeline_full_history_skips_scraping_and_propagates_to_all_loaders(monk
         ["--full-history"],
     ]
     assert not any("scrape_fotmob.py" in path for path, _ in calls)
+
+
+def test_pipeline_skips_downstream_daily_stages_after_bronze_failure(monkeypatch, tmp_path):
+    calls = []
+    logger = RecordingLogger()
+
+    def fake_run_script(script_path: Path, args):
+        calls.append((script_path.name, args))
+        return 1 if script_path.name == "scrape_fotmob.py" else 0
+
+    monkeypatch.setattr(pipeline, "_run_script", fake_run_script)
+    monkeypatch.setattr(pipeline, "_send_step_failure_alert", lambda result: None)
+    monkeypatch.setattr(
+        pipeline,
+        "setup_pipeline_logging",
+        lambda *args: (logger, tmp_path / "p.log"),
+    )
+
+    args = pipeline.create_argument_parser().parse_args(["20251208"])
+    pipeline._validate_single_date_argument(pipeline.create_argument_parser(), args)
+
+    assert pipeline.run_pipeline(args) == 1
+    assert calls == [("scrape_fotmob.py", ["20251208"])]
+
+
+def test_pipeline_skips_gold_after_daily_silver_failure(monkeypatch, tmp_path):
+    calls = []
+    logger = RecordingLogger()
+
+    def fake_run_script(script_path: Path, args):
+        calls.append((script_path.name, args))
+        return 1 if "silver" in str(script_path) else 0
+
+    monkeypatch.setattr(pipeline, "_run_script", fake_run_script)
+    monkeypatch.setattr(pipeline, "_send_step_failure_alert", lambda result: None)
+    monkeypatch.setattr(
+        pipeline,
+        "setup_pipeline_logging",
+        lambda *args: (logger, tmp_path / "p.log"),
+    )
+
+    args = pipeline.create_argument_parser().parse_args(["20251208"])
+    pipeline._validate_single_date_argument(pipeline.create_argument_parser(), args)
+
+    assert pipeline.run_pipeline(args) == 1
+    assert calls == [
+        ("scrape_fotmob.py", ["20251208"]),
+        ("load_clickhouse.py", ["--date", "20251208"]),
+        ("load_clickhouse.py", ["--date", "20251208"]),
+    ]
+
+
+def test_pipeline_full_history_skips_silver_and_gold_after_clickhouse_failure(
+    monkeypatch,
+):
+    calls = []
+
+    def fake_run_script(script_path: Path, args):
+        calls.append((str(script_path), args))
+        return 1 if "bronze/load_clickhouse.py" in str(script_path) else 0
+
+    monkeypatch.setattr(pipeline, "_run_script", fake_run_script)
+    monkeypatch.setattr(pipeline, "_send_step_failure_alert", lambda result: None)
+
+    results = pipeline.PipelineResults()
+    pipeline.process_full_history(pipeline.PipelineConfig(), results)
+
+    assert [args for _, args in calls] == [["--full-history"]]
+    assert len(results.fotmob_clickhouse) == 1
+    assert not results.fotmob_clickhouse[0].success
+    assert results.fotmob_silver == []
+    assert results.fotmob_gold == []
 
 
 def test_full_history_bronze_discovery_excludes_live_and_invalid_names(tmp_path):

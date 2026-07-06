@@ -459,7 +459,6 @@ def run_fotmob_bronze(date_str: str, config: PipelineConfig) -> StepResult:
         f"FotMob Bronze - {date_str}",
         f"{script_path} {' '.join(argv)}",
         lambda: _run_script(script_path, argv),
-        continue_on_error=True,
         date_str=date_str,
     )
 
@@ -478,7 +477,6 @@ def run_clickhouse_load(
         f"ClickHouse Load - {scraper} - {date_str}",
         f"{script_path} {' '.join(argv)}",
         lambda: _run_script(script_path, argv),
-        continue_on_error=True,
         date_str=date_str,
     )
 
@@ -497,7 +495,6 @@ def run_clickhouse_load_month(
         f"ClickHouse Load - {scraper} - Month {month_str}",
         f"{script_path} {' '.join(argv)}",
         lambda: _run_script(script_path, argv),
-        continue_on_error=True,
         date_str=month_str,
     )
 
@@ -512,7 +509,6 @@ def run_silver_process(
         f"Silver Process - {date_str}",
         str(script_path),
         lambda: _run_script(script_path, argv),
-        continue_on_error=True,
         date_str=date_str,
     )
 
@@ -527,7 +523,6 @@ def run_silver_process_month(
         f"Silver Process - Month {month_str}",
         str(script_path),
         lambda: _run_script(script_path, argv),
-        continue_on_error=True,
         date_str=month_str,
     )
 
@@ -542,7 +537,6 @@ def run_gold_process(
         f"Gold Process - {date_str}",
         str(script_path),
         lambda: _run_script(script_path, argv),
-        continue_on_error=True,
         date_str=date_str,
     )
 
@@ -557,7 +551,6 @@ def run_gold_process_month(
         f"Gold Process - Month {month_str}",
         str(script_path),
         lambda: _run_script(script_path, argv),
-        continue_on_error=True,
         date_str=month_str,
     )
 
@@ -598,22 +591,26 @@ def process_bronze_scraping(
     date_str: str,
     config: PipelineConfig,
     results: PipelineResults,
-) -> None:
+) -> Optional[StepResult]:
     """Process bronze scraping for a single date."""
     if not config.skip_fotmob and not config.skip_bronze:
         result = run_fotmob_bronze(date_str, config)
         results.add_result("fotmob_bronze", result)
+        return result
+    return None
 
 
 def process_clickhouse_loading_per_date(
     date_str: str,
     config: PipelineConfig,
     results: PipelineResults,
-) -> None:
+) -> Optional[StepResult]:
     """Process ClickHouse loading for a single date."""
     if not config.skip_fotmob:
         result = run_clickhouse_load("fotmob", date_str, config)
         results.add_result("fotmob_clickhouse", result)
+        return result
+    return None
 
 
 def process_clickhouse_loading_monthly(
@@ -621,7 +618,7 @@ def process_clickhouse_loading_monthly(
     config: PipelineConfig,
     results: PipelineResults,
     logger: logging.Logger,
-) -> None:
+) -> Optional[StepResult]:
     """Process ClickHouse loading for monthly mode."""
     logger.info(f"\n\n{'#' * 80}")
     logger.info("# Loading to ClickHouse (Monthly Mode)")
@@ -629,50 +626,60 @@ def process_clickhouse_loading_monthly(
     if not config.skip_fotmob:
         result = run_clickhouse_load_month("fotmob", month_str, config)
         results.add_result("fotmob_clickhouse", result)
+        return result
+    return None
 
 
 def process_silver_per_date(
     date_str: str,
     config: PipelineConfig,
     results: PipelineResults,
-) -> None:
+) -> Optional[StepResult]:
     """Process silver layer for a single date."""
     if not config.skip_fotmob:
         result = run_silver_process(date_str)
         results.add_result("fotmob_silver", result)
+        return result
+    return None
 
 
 def process_silver_monthly(
     month_str: str,
     config: PipelineConfig,
     results: PipelineResults,
-) -> None:
+) -> Optional[StepResult]:
     """Process silver layer for monthly mode."""
     if not config.skip_fotmob:
         result = run_silver_process_month(month_str)
         results.add_result("fotmob_silver", result)
+        return result
+    return None
 
 
 def process_gold_per_date(
     date_str: str,
     config: PipelineConfig,
     results: PipelineResults,
-) -> None:
+) -> Optional[StepResult]:
     """Process gold layer for a single date."""
     if not config.skip_fotmob:
         result = run_gold_process(date_str)
         results.add_result("fotmob_gold", result)
+        return result
+    return None
 
 
 def process_gold_monthly(
     month_str: str,
     config: PipelineConfig,
     results: PipelineResults,
-) -> None:
+) -> Optional[StepResult]:
     """Process gold layer for monthly mode."""
     if not config.skip_fotmob:
         result = run_gold_process_month(month_str)
         results.add_result("fotmob_gold", result)
+        return result
+    return None
 
 
 def process_full_history(
@@ -680,6 +687,7 @@ def process_full_history(
     results: PipelineResults,
 ) -> None:
     """Run every non-scraping warehouse stage in explicit full-history mode."""
+    clickhouse_result: Optional[StepResult] = None
     if (
         not config.skip_fotmob
         and not config.skip_clickhouse
@@ -691,16 +699,17 @@ def process_full_history(
         argv = ["--full-history"]
         if config.force:
             argv.append("--force")
-        results.add_result(
-            "fotmob_clickhouse",
-            run_step(
-                "ClickHouse Load - FotMob - Full History",
-                f"{script_path} {' '.join(argv)}",
-                lambda: _run_script(script_path, argv),
-                continue_on_error=True,
-                date_str="full-history",
-            ),
+        clickhouse_result = run_step(
+            "ClickHouse Load - FotMob - Full History",
+            f"{script_path} {' '.join(argv)}",
+            lambda: _run_script(script_path, argv),
+            date_str="full-history",
         )
+        results.add_result("fotmob_clickhouse", clickhouse_result)
+    if clickhouse_result is not None and not clickhouse_result.success:
+        return
+
+    silver_result: Optional[StepResult] = None
     if (
         not config.skip_fotmob
         and not config.skip_silver
@@ -708,16 +717,16 @@ def process_full_history(
         and not config.gold_only
     ):
         script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
-        results.add_result(
-            "fotmob_silver",
-            run_step(
-                "Silver Process - Full History",
-                f"{script_path} --full-history",
-                lambda: _run_script(script_path, ["--full-history"]),
-                continue_on_error=True,
-                date_str="full-history",
-            ),
+        silver_result = run_step(
+            "Silver Process - Full History",
+            f"{script_path} --full-history",
+            lambda: _run_script(script_path, ["--full-history"]),
+            date_str="full-history",
         )
+        results.add_result("fotmob_silver", silver_result)
+    if silver_result is not None and not silver_result.success:
+        return
+
     if (
         not config.skip_fotmob
         and not config.skip_gold
@@ -731,7 +740,6 @@ def process_full_history(
                 "Gold Process - Full History",
                 f"{script_path} --full-history",
                 lambda: _run_script(script_path, ["--full-history"]),
-                continue_on_error=True,
                 date_str="full-history",
             ),
         )
@@ -786,8 +794,17 @@ def run_pipeline(args: argparse.Namespace) -> int:
         logger.info(f"\n\n{'#' * 80}")
         logger.info(f"# Processing date {idx}/{len(date_info.dates)}: {date_str}")
         logger.info(f"{'#' * 80}\n")
+        bronze_result: Optional[StepResult] = None
         if not config.silver_only and not config.gold_only:
-            process_bronze_scraping(date_str, config, results)
+            bronze_result = process_bronze_scraping(date_str, config, results)
+        if bronze_result is not None and not bronze_result.success:
+            logger.error(
+                "Skipping downstream stages for %s because FotMob Bronze failed",
+                date_str,
+            )
+            continue
+
+        clickhouse_result: Optional[StepResult] = None
         if (
             not args.month
             and not config.skip_clickhouse
@@ -795,14 +812,26 @@ def run_pipeline(args: argparse.Namespace) -> int:
             and not config.silver_only
             and not config.gold_only
         ):
-            process_clickhouse_loading_per_date(date_str, config, results)
+            clickhouse_result = process_clickhouse_loading_per_date(date_str, config, results)
+        if clickhouse_result is not None and not clickhouse_result.success:
+            logger.error(
+                "Skipping Silver and Gold for %s because ClickHouse Bronze load failed",
+                date_str,
+            )
+            continue
+
+        silver_result: Optional[StepResult] = None
         if (
             not args.month
             and not config.skip_silver
             and not config.bronze_only
             and not config.gold_only
         ):
-            process_silver_per_date(date_str, config, results)
+            silver_result = process_silver_per_date(date_str, config, results)
+        if silver_result is not None and not silver_result.success:
+            logger.error("Skipping Gold for %s because Silver failed", date_str)
+            continue
+
         if (
             not args.month
             and not config.skip_gold
@@ -810,6 +839,18 @@ def run_pipeline(args: argparse.Namespace) -> int:
             and not config.silver_only
         ):
             process_gold_per_date(date_str, config, results)
+
+    if (
+        args.month
+        and results.fotmob_bronze
+        and not all(r.success for r in results.fotmob_bronze)
+    ):
+        logger.error("Skipping monthly warehouse stages because one or more Bronze dates failed")
+        pipeline_elapsed = time.time() - pipeline_start
+        log_pipeline_summary(logger, results, len(date_info.dates), pipeline_elapsed, log_file)
+        return 1
+
+    monthly_clickhouse_result: Optional[StepResult] = None
     if (
         args.month
         and not config.skip_clickhouse
@@ -817,9 +858,24 @@ def run_pipeline(args: argparse.Namespace) -> int:
         and not config.silver_only
         and not config.gold_only
     ):
-        process_clickhouse_loading_monthly(args.month, config, results, logger)
+        monthly_clickhouse_result = process_clickhouse_loading_monthly(
+            args.month, config, results, logger
+        )
+    if monthly_clickhouse_result is not None and not monthly_clickhouse_result.success:
+        logger.error("Skipping monthly Silver and Gold because ClickHouse Bronze load failed")
+        pipeline_elapsed = time.time() - pipeline_start
+        log_pipeline_summary(logger, results, len(date_info.dates), pipeline_elapsed, log_file)
+        return 1
+
+    monthly_silver_result: Optional[StepResult] = None
     if args.month and not config.skip_silver and not config.bronze_only and not config.gold_only:
-        process_silver_monthly(args.month, config, results)
+        monthly_silver_result = process_silver_monthly(args.month, config, results)
+    if monthly_silver_result is not None and not monthly_silver_result.success:
+        logger.error("Skipping monthly Gold because Silver failed")
+        pipeline_elapsed = time.time() - pipeline_start
+        log_pipeline_summary(logger, results, len(date_info.dates), pipeline_elapsed, log_file)
+        return 1
+
     if args.month and not config.skip_gold and not config.bronze_only and not config.silver_only:
         process_gold_monthly(args.month, config, results)
     pipeline_elapsed = time.time() - pipeline_start
