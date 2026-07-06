@@ -290,6 +290,7 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
             sql_file
             for sql_file in candidate_dir.glob("*.sql")
             if not sql_file.name.startswith("scenario_")
+            and "optimize" not in sql_file.name.lower()
         ]
         for sql_file in sorted(candidate_sql_files, key=lambda path: path.name):
             if sql_file.name in sql_by_name:
@@ -311,9 +312,6 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
 
     def _sort_key(sql_file: Path) -> tuple[int, int, str]:
         name = sql_file.name
-        if "optimize" in name.lower():
-            # Always run optimization scripts last, after table creation files.
-            return (9, 0, name)
         number_prefix = re.match(r"^(\d+)_", name)
         if number_prefix:
             return (0, int(number_prefix.group(1)), name)

@@ -20,8 +20,8 @@ Usage:
     python3 scripts/bronze/load_clickhouse.py --stats
 
     Note:
-    Table optimization is handled separately via SQL scripts.
-    Run clickhouse/bronze/99_optimize_tables.sql to optimize and deduplicate tables.
+    ClickHouse background merges handle routine ReplacingMergeTree storage cleanup.
+    Warehouse quality checks report extra physical row versions as diagnostics.
 """
 
 import argparse
