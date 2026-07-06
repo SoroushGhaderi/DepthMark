@@ -42,7 +42,10 @@ def test_table_without_duplicates_passes():
     client = FakeClickHouseClient(
         ["bronze.general"],
         {"bronze.general": {"match_id"}},
-        {"duplicate_count:bronze.general": [[0, 0]]},
+        {
+            "logical_duplicate_count:bronze.general": [[0, 0]],
+            "physical_version_count:bronze.general": [[0, 0]],
+        },
     )
     service = DataQualityService(client, Path.cwd(), {"bronze.general": identity})
 
@@ -61,8 +64,10 @@ def test_duplicate_row_identities_include_counts_and_samples():
         ["silver.shot"],
         {"silver.shot": {"match_id", "shot_id", "match_date"}},
         {
-            "duplicate_count:silver.shot": [[1, 2]],
-            "duplicate_samples:silver.shot": [[123, 7, 3]],
+            "logical_duplicate_count:silver.shot": [[1, 2]],
+            "logical_duplicate_samples:silver.shot": [[123, 7, 3]],
+            "physical_version_count:silver.shot": [[1, 2]],
+            "physical_version_samples:silver.shot": [[123, 7, 3]],
         },
     )
     service = DataQualityService(client, Path.cwd(), {"silver.shot": identity})
@@ -72,7 +77,29 @@ def test_duplicate_row_identities_include_counts_and_samples():
     assert results[0].duplicate_identities == 1
     assert results[0].duplicate_rows == 2
     assert results[0].samples == ((123, 7, 3),)
+    assert results[0].physical_extra_versions == 2
     assert "toYYYYMM(toDate(match_date)) = 202601" in client.queries[2]
+
+
+def test_physical_versions_are_diagnostic_not_logical_duplicates():
+    identity = TableIdentity("bronze", "general", ("match_id",))
+    client = FakeClickHouseClient(
+        ["bronze.general"],
+        {"bronze.general": {"match_id"}},
+        {
+            "logical_duplicate_count:bronze.general": [[0, 0]],
+            "physical_version_count:bronze.general": [[1, 3]],
+            "physical_version_samples:bronze.general": [[123, 4]],
+        },
+    )
+    service = DataQualityService(client, Path.cwd(), {"bronze.general": identity})
+
+    result = service.run_duplicates(WarehouseExecutionScope.full_history(), ["bronze"], 10)[0][0]
+
+    assert result.duplicate_identities == 0
+    assert result.physical_duplicate_identities == 1
+    assert result.physical_extra_versions == 3
+    assert result.physical_samples == ((123, 4),)
 
 
 def test_missing_or_undefined_row_identity_is_reported():
@@ -136,7 +163,12 @@ def test_gold_duplicates_are_checked_without_reconciliation():
     client = FakeClickHouseClient(
         [table],
         {table: {"match_id", "triggered_team_id", "match_date"}},
-        {f"duplicate_count:{table}": [[1, 1]], f"duplicate_samples:{table}": [[5, 9, 2]]},
+        {
+            f"logical_duplicate_count:{table}": [[1, 1]],
+            f"logical_duplicate_samples:{table}": [[5, 9, 2]],
+            f"physical_version_count:{table}": [[1, 1]],
+            f"physical_version_samples:{table}": [[5, 9, 2]],
+        },
     )
     service = DataQualityService(client, Path.cwd(), {table: identity})
 
@@ -160,11 +192,24 @@ def test_strict_mode_exit_behavior():
     duplicate_failed = DataQualitySummary(
         duplicate_results=[DuplicateResult("bronze.general", ("match_id",), 1, 1)]
     )
+    physical_only = DataQualitySummary(
+        duplicate_results=[
+            DuplicateResult(
+                "bronze.general",
+                ("match_id",),
+                0,
+                0,
+                physical_duplicate_identities=1,
+                physical_extra_versions=2,
+            )
+        ]
+    )
 
     assert strict_exit_code(clean, strict=True) == 0
     assert strict_exit_code(failed, strict=False) == 0
     assert strict_exit_code(failed, strict=True) == 1
     assert strict_exit_code(duplicate_failed, strict=True) == 1
+    assert strict_exit_code(physical_only, strict=True) == 0
 
 
 def test_repository_contracts_cover_all_declared_warehouse_outputs():
@@ -182,9 +227,10 @@ def test_bronze_date_duplicate_query_scopes_through_match_reference():
         "bronze", "player", ("match_id", "player_id"), scope_expression="match_id"
     )
 
-    count_sql, _ = build_duplicate_queries(
-        identity, WarehouseExecutionScope.for_date("20260102"), 10
-    )
+    queries = build_duplicate_queries(identity, WarehouseExecutionScope.for_date("20260102"), 10)
 
-    assert "match_id IN (SELECT match_id FROM bronze.match_reference" in count_sql
-    assert "toDate(match_date) = toDate('2026-01-02')" in count_sql
+    assert "FROM bronze.player FINAL" in queries.logical_count_sql
+    assert "FROM bronze.player\n" in queries.physical_count_sql
+    assert "r.identity_row_count - f.identity_row_count" in queries.physical_count_sql
+    assert "match_id IN (SELECT match_id FROM bronze.match_reference" in queries.logical_count_sql
+    assert "toDate(match_date) = toDate('2026-01-02')" in queries.logical_count_sql

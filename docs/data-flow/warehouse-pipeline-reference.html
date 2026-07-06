@@ -1257,7 +1257,7 @@
                 <div class="flow-group gold">
                     <div class="flow-group-label">3 · Validate &amp; serve</div>
                     <div class="flow-row">
-                        <div class="flow-node bronze"><strong>check_data_quality.py</strong><span class="sub">duplicates: Bronze + Silver + Gold<br>reconciliation: Bronze ↔ Silver only</span></div>
+                        <div class="flow-node bronze"><strong>check_data_quality.py</strong><span class="sub">logical duplicates: Bronze + Silver + Gold<br>physical versions: diagnostic<br>reconciliation: Bronze ↔ Silver only</span></div>
                         <span class="flow-connector">→</span>
                         <div class="flow-node silver"><strong>sync_signal_catalogs.py</strong></div>
                     </div>
@@ -1274,7 +1274,7 @@
                 <tr><td>4</td><td>Bronze (CH)</td><td>15 <code>bronze.*</code> tables</td><td><code>python3 scripts/bronze/load_clickhouse.py --date &lt;YYYYMMDD&gt;</code></td></tr>
                 <tr><td>5</td><td>Silver</td><td>8 <code>silver.*</code> tables (scoped staged replacement)</td><td><code>python3 scripts/silver/load_clickhouse.py --full-history</code></td></tr>
                 <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python3 scripts/gold/load_clickhouse_gold.py --full-history</code></td></tr>
-                <tr><td>7</td><td>Quality</td><td>Duplicate identities in all warehouse layers; Bronze↔Silver identity reconciliation</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
+                <tr><td>7</td><td>Quality</td><td>Logical duplicate identities and physical-version diagnostics in all layers; Bronze↔Silver identity reconciliation</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
                 <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python3 scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
             </tbody>
         </table>
@@ -1357,7 +1357,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         </details>
         <div class="callout success">
             <span class="callout-icon">✓</span>
-            <span><strong>Done when:</strong> <code>bronze.*</code> (15), <code>silver.*</code> (8), <code>gold_scenarios.*</code> (48), <code>gold_signals.*</code> (344), and <code>gold.signal_activations</code> all contain rows; duplicate checks pass in every layer; Bronze↔Silver reconciliation passes; MongoDB catalogs are synced.</span>
+            <span><strong>Done when:</strong> <code>bronze.*</code> (15), <code>silver.*</code> (8), <code>gold_scenarios.*</code> (48), <code>gold_signals.*</code> (344), and <code>gold.signal_activations</code> all contain rows; logical duplicate checks pass in every layer; physical-version diagnostics are reviewed; Bronze↔Silver reconciliation passes; MongoDB catalogs are synced.</span>
         </div>
     </div>
 
@@ -1518,7 +1518,9 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             </div>
             <div class="flow-merge">
                 <span class="flow-connector down">↓</span>
-                <div class="flow-node bronze"><strong>Duplicate identities</strong><span class="sub">Bronze + Silver + Gold</span></div>
+                <div class="flow-node bronze"><strong>Logical duplicates</strong><span class="sub">FINAL · strict failure</span></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node bronze"><strong>Physical row versions</strong><span class="sub">raw rows · diagnostic only</span></div>
                 <span class="flow-connector down">↓</span>
                 <div class="flow-node silver"><strong>Bronze↔Silver reconciliation</strong><span class="sub">missing and unexpected identities</span></div>
                 <span class="flow-connector down">↓</span>
@@ -1534,7 +1536,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
         </details>
         <div class="callout note">
             <span class="callout-icon">◎</span>
-            <span><strong>Identity sources:</strong> Bronze/Silver layer-key contracts, scenario DDL <code>ORDER BY</code>, signal catalog <code>row_identity</code>, and activation <code>signal_instance_id</code>. Tables without a defined or usable identity are reported as not validated.</span>
+            <span><strong>Identity sources:</strong> Bronze/Silver layer-key contracts, scenario DDL <code>ORDER BY</code>, signal catalog <code>row_identity</code>, and activation <code>signal_instance_id</code>. Logical duplicates use <code>FINAL</code> and can fail strict mode; raw physical versions are non-failing merge/storage diagnostics. Tables without a defined or usable identity are reported as not validated.</span>
         </div>
         <div class="callout insight">
             <span class="callout-icon">≠</span>
@@ -1543,7 +1545,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
         <table class="data-table">
             <thead><tr><th>Scope / mode</th><th>Command</th><th>Exit behavior</th></tr></thead>
             <tbody>
-                <tr><td>Date</td><td><code>python3 scripts/quality/check_data_quality.py --date 20251208 --strict</code></td><td rowspan="3"><code>0</code> clean (or non-strict findings); <code>1</code> strict duplicates/reconciliation mismatch or operational failure; <code>2</code> invalid arguments</td></tr>
+                <tr><td>Date</td><td><code>python3 scripts/quality/check_data_quality.py --date 20251208 --strict</code></td><td rowspan="3"><code>0</code> clean (or non-strict findings); <code>1</code> strict logical duplicates/reconciliation mismatch or operational failure; <code>2</code> invalid arguments. Physical versions do not fail strict mode.</td></tr>
                 <tr><td>Month</td><td><code>python3 scripts/quality/check_data_quality.py --month 202512 --strict</code></td></tr>
                 <tr><td>Full history</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
                 <tr><td>Gold only</td><td><code>python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict</code></td><td>Duplicate checks only; no reconciliation</td></tr>
@@ -2703,7 +2705,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict',
                 'python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
             ],
-            note: 'Duplicates are checked across Bronze, Silver, and Gold. Reconciliation compares Bronze and Silver only; Gold has separate transformations, filters, and grains.',
+            note: 'Logical duplicates use FINAL and fail strict mode. Raw physical versions are non-failing diagnostics. Reconciliation compares Bronze and Silver only; Gold has separate transformations, filters, and grains.',
         },
         {
             match: ['check_logging_style'],

@@ -127,10 +127,11 @@ The canonical quality workflow is
 `scripts/quality/check_data_quality.py`. It performs two deliberately separate
 classes of read-only SQL validation:
 
-1. Duplicate identities across Bronze, Silver, and Gold. Bronze and Silver
-   identities come from layer contracts; scenario identities come from DDL
-   `ORDER BY`; signal identities come from catalog `row_identity`; activations
-   use `signal_instance_id`.
+1. Logical duplicate identities across Bronze, Silver, and Gold are evaluated
+   from `FINAL`. Bronze and Silver identities come from layer contracts;
+   scenario identities come from DDL `ORDER BY`; signal identities come from
+   catalog `row_identity`; activations use `signal_instance_id`. Raw physical
+   versions are also counted as non-failing merge/storage diagnostics.
 2. Bronze-to-Silver reconciliation for match, period, player, momentum, shot,
    card, personnel, and team-form identity sets. Both missing-from-Silver and
    unexpected-in-Silver keys are failures.
@@ -168,7 +169,8 @@ python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --str
 
 The script reports existing tables whose grain or row identity is undefined.
 On a completed run, exit `0` means clean or non-strict findings; strict mode
-exits `1` when duplicates or Bronze-to-Silver mismatches exist. Argument errors
+exits `1` when logical duplicates or Bronze-to-Silver mismatches exist. Physical
+row versions never cause strict failure. Argument errors
 exit `2`; connection or query errors exit `1`. The legacy
 `check_bronze_to_silver_reconciliation.py` command remains available and
 forwards its compatible options to the unified workflow.

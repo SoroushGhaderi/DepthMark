@@ -41,13 +41,26 @@ class TableIdentity:
 
 @dataclass(frozen=True)
 class DuplicateResult:
-    """Duplicate-check result for one table."""
+    """Logical duplicate result plus physical ReplacingMergeTree version diagnostics."""
 
     table: str
     identity_columns: Tuple[str, ...]
     duplicate_identities: int
     duplicate_rows: int
     samples: Tuple[Tuple[Any, ...], ...] = ()
+    physical_duplicate_identities: int = 0
+    physical_extra_versions: int = 0
+    physical_samples: Tuple[Tuple[Any, ...], ...] = ()
+
+
+@dataclass(frozen=True)
+class DuplicateQueries:
+    """Logical and physical duplicate SQL for one table."""
+
+    logical_count_sql: str
+    logical_sample_sql: str
+    physical_count_sql: str
+    physical_sample_sql: str
 
 
 @dataclass(frozen=True)
@@ -241,8 +254,8 @@ def build_duplicate_queries(
     identity: TableIdentity,
     scope: WarehouseExecutionScope,
     sample_limit: int,
-) -> Tuple[str, str]:
-    """Build deterministic SQL for duplicate counts and samples."""
+) -> DuplicateQueries:
+    """Build logical FINAL checks and non-failing physical-version diagnostics."""
     keys_csv = ", ".join(_validate_identifier(column) for column in identity.columns)
     predicate = _scope_predicate(identity, scope)
     if (
@@ -254,21 +267,51 @@ def build_duplicate_queries(
         reference_predicate = _scope_predicate(reference_identity, scope)
         predicate = _bronze_scope_expression().format(predicate=reference_predicate)
     where_clause = f"\nWHERE {predicate}" if predicate else ""
-    grouped = (
+    final_counts = (
+        f"SELECT {keys_csv}, count() AS identity_row_count\n"
+        f"FROM {identity.qualified_name} FINAL{where_clause}\n"
+        f"GROUP BY {keys_csv}"
+    )
+    raw_counts = (
         f"SELECT {keys_csv}, count() AS identity_row_count\n"
         f"FROM {identity.qualified_name}{where_clause}\n"
-        f"GROUP BY {keys_csv}\nHAVING identity_row_count > 1"
+        f"GROUP BY {keys_csv}"
     )
-    count_sql = (
-        f"/* duplicate_count:{identity.qualified_name} */\n"
+    logical_grouped = f"{final_counts}\nHAVING identity_row_count > 1"
+    joined_keys = ", ".join(identity.columns)
+    selected_keys = ", ".join(f"r.{column}" for column in identity.columns)
+    physical_grouped = (
+        f"SELECT {selected_keys}, r.identity_row_count AS raw_row_count, "
+        "f.identity_row_count AS final_row_count, "
+        "r.identity_row_count - f.identity_row_count AS physical_extra_versions\n"
+        f"FROM (\n{raw_counts}\n) AS r\n"
+        f"INNER JOIN (\n{final_counts}\n) AS f USING ({joined_keys})\n"
+        "WHERE r.identity_row_count > f.identity_row_count"
+    )
+    logical_count_sql = (
+        f"/* logical_duplicate_count:{identity.qualified_name} */\n"
         "SELECT count(), ifNull(sum(identity_row_count - 1), 0)\n"
-        f"FROM (\n{grouped}\n)"
+        f"FROM (\n{logical_grouped}\n)"
     )
-    sample_sql = (
-        f"/* duplicate_samples:{identity.qualified_name} */\n"
-        f"{grouped}\nORDER BY {keys_csv}\nLIMIT {sample_limit}"
+    logical_sample_sql = (
+        f"/* logical_duplicate_samples:{identity.qualified_name} */\n"
+        f"{logical_grouped}\nORDER BY {keys_csv}\nLIMIT {sample_limit}"
     )
-    return count_sql, sample_sql
+    physical_count_sql = (
+        f"/* physical_version_count:{identity.qualified_name} */\n"
+        "SELECT count(), ifNull(sum(physical_extra_versions), 0)\n"
+        f"FROM (\n{physical_grouped}\n)"
+    )
+    physical_sample_sql = (
+        f"/* physical_version_samples:{identity.qualified_name} */\n"
+        f"{physical_grouped}\nORDER BY {keys_csv}\nLIMIT {sample_limit}"
+    )
+    return DuplicateQueries(
+        logical_count_sql=logical_count_sql,
+        logical_sample_sql=logical_sample_sql,
+        physical_count_sql=physical_count_sql,
+        physical_sample_sql=physical_sample_sql,
+    )
 
 
 def _reconciliation_definitions() -> Dict[str, ReconciliationDefinition]:
@@ -459,14 +502,28 @@ class DataQualityService:
                     SkippedTable(table, f"identity columns are absent: {missing_columns}")
                 )
                 continue
-            count_sql, sample_sql = build_duplicate_queries(identity, scope, sample_limit)
-            count_rows = _rows(self.client.execute(count_sql, log_query=False))
+            queries = build_duplicate_queries(identity, scope, sample_limit)
+            count_rows = _rows(self.client.execute(queries.logical_count_sql, log_query=False))
             duplicate_identities = int(count_rows[0][0]) if count_rows else 0
             duplicate_rows = int(count_rows[0][1]) if count_rows else 0
             samples = ()
             if duplicate_identities:
                 samples = tuple(
-                    tuple(row) for row in _rows(self.client.execute(sample_sql, log_query=False))
+                    tuple(row)
+                    for row in _rows(
+                        self.client.execute(queries.logical_sample_sql, log_query=False)
+                    )
+                )
+            physical_rows = _rows(self.client.execute(queries.physical_count_sql, log_query=False))
+            physical_duplicate_identities = int(physical_rows[0][0]) if physical_rows else 0
+            physical_extra_versions = int(physical_rows[0][1]) if physical_rows else 0
+            physical_samples = ()
+            if physical_duplicate_identities:
+                physical_samples = tuple(
+                    tuple(row)
+                    for row in _rows(
+                        self.client.execute(queries.physical_sample_sql, log_query=False)
+                    )
                 )
             results.append(
                 DuplicateResult(
@@ -475,6 +532,9 @@ class DataQualityService:
                     duplicate_identities=duplicate_identities,
                     duplicate_rows=duplicate_rows,
                     samples=samples,
+                    physical_duplicate_identities=physical_duplicate_identities,
+                    physical_extra_versions=physical_extra_versions,
+                    physical_samples=physical_samples,
                 )
             )
         return results, skipped

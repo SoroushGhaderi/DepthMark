@@ -125,6 +125,10 @@ Gold duplicate checking uses scenario DDL identities, signal catalog
 to Bronze or Silver because its outputs have intentionally different filters,
 business logic, and grains.
 
+Logical duplicate identities are evaluated with `FINAL` and participate in
+strict failure. Raw physical versions awaiting `ReplacingMergeTree` merges are
+reported as non-failing operational diagnostics.
+
 ## Scenario Scripts
 
 Scenario SQL jobs are executed by `scripts/gold/run_gold_sql_jobs.py`.
