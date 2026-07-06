@@ -40,6 +40,7 @@ Start with [`docs/README.md`](docs/README.md) for the documentation map.
 | Architecture, commands, and runbook | [`docs/DEVELOPMENT_ARCHITECTURE.md`](docs/DEVELOPMENT_ARCHITECTURE.md) |
 | Script behavior and CLI contract | [`docs/SCRIPTS_CONTRACT.md`](docs/SCRIPTS_CONTRACT.md) |
 | Data flow, layer diagrams, and infrastructure | [`docs/data-flow/`](docs/data-flow/) |
+| Warehouse duplicate checks and reconciliation | [`docs/data-flow/orchestration.md`](docs/data-flow/orchestration.md#post-load-data-quality) |
 | Script inventory | [`scripts/README.md`](scripts/README.md) |
 
 Subsystem contracts live next to the code they govern, such as
@@ -60,3 +61,21 @@ DepthMark/
 ```
 
 DepthMark currently supports FotMob only.
+
+## Warehouse Data Quality
+
+The canonical read-only quality command checks declared row identities for
+duplicates across Bronze, Silver, and Gold, then reconciles identity sets only
+from Bronze to Silver:
+
+```bash
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
+python3 scripts/quality/check_data_quality.py --month 202512 --strict
+python3 scripts/quality/check_data_quality.py --full-history --strict
+```
+
+Gold is duplicate-checked but is intentionally not reconciled with upstream
+layers: scenario, signal, and activation outputs apply business rules, filters,
+and grains for which row parity is not meaningful. The existing
+`check_bronze_to_silver_reconciliation.py` command remains a compatibility
+entry point for Bronze/Silver checks.

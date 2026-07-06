@@ -134,6 +134,23 @@ stability rules in DepthMark. The canonical command list lives in
    or other state mutation. It reports context, output scope, selected tables,
    exclusions, and planned operations.
 
+### Quality Entry Points
+
+1. `scripts/quality/check_data_quality.py` is the canonical warehouse quality
+   entry point and is always read-only.
+2. It supports `--date`, `--month`, and `--full-history`; omission defaults to
+   full history for compatibility with the prior reconciliation command.
+3. Duplicate checks may span Bronze, Silver, and Gold. Cross-layer
+   reconciliation is limited to Bronze and Silver and must never infer Gold
+   parity.
+4. Strict mode exits `1` only for detected duplicate identities or completed
+   Bronze-to-Silver reconciliation mismatches. Tables with undefined identities
+   are reported separately. Argument errors exit `2`; operational errors exit
+   non-zero.
+5. `scripts/quality/check_bronze_to_silver_reconciliation.py` remains a
+   backward-compatible alias with its existing `--checks`, `--sample-limit`,
+   and `--strict` arguments.
+
 ## Data Safety
 
 1. Do not change schema semantics unintentionally.

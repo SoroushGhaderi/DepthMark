@@ -104,8 +104,8 @@ python3 scripts/health_check.py --json
 python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
 python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
 
-# Reconciliation
-python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+# Read-only duplicate checks plus Bronze-to-Silver reconciliation
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 
 # Logging style
 python3 scripts/quality/check_logging_style.py
@@ -120,6 +120,58 @@ python3 scripts/mongodb/init_indexes.py
 python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
 python3 scripts/mongodb/sync_signal_catalogs.py
 ```
+
+## Post-load Data Quality
+
+The canonical quality workflow is
+`scripts/quality/check_data_quality.py`. It performs two deliberately separate
+classes of read-only SQL validation:
+
+1. Duplicate identities across Bronze, Silver, and Gold. Bronze and Silver
+   identities come from layer contracts; scenario identities come from DDL
+   `ORDER BY`; signal identities come from catalog `row_identity`; activations
+   use `signal_instance_id`.
+2. Bronze-to-Silver reconciliation for match, period, player, momentum, shot,
+   card, personnel, and team-form identity sets. Both missing-from-Silver and
+   unexpected-in-Silver keys are failures.
+
+| Layer / tables | Duplicate row identity |
+| --- | --- |
+| Bronze `general`, `timeline`, `venue`, `match_reference` | `match_id` |
+| Bronze `player`, `starters`, `substitutes` | `match_id, player_id` |
+| Bronze `shotmap` | `match_id, shot_id` |
+| Bronze `goal`, `cards`, `red_card` | `match_id, event_id` |
+| Bronze `period`; `momentum`; `coaches` | `match_id, period`; `match_id, minute`; `match_id, coach_id` |
+| Bronze `team_form` | `match_id, team_id, form_position` |
+| Silver `match` | `match_id` |
+| Silver `period_stat`; `momentum` | `match_id, period`; `match_id, minute` |
+| Silver `player_match_stat`; `shot`; `card` | `match_id, player_id`; `match_id, shot_id`; `match_id, event_id` |
+| Silver `match_personnel`; `team_form` | `match_id, team_side, role, person_id`; `match_id, team_id, form_position` |
+| Gold scenarios | Columns declared by each table's DDL `ORDER BY` grain |
+| Gold signals | Each catalog's ordered `row_identity` columns |
+| `gold.signal_activations` | `signal_instance_id` |
+
+The ephemeral `gold.signal_activations_stage` rebuild table is not a stable
+quality target; if present during a check, it is reported as skipped.
+
+Gold is not reconciled to either upstream layer. Gold outputs apply separate
+business logic, filters, aggregation, and entity grains, so row-count or key
+parity would report expected product behavior as a defect. Gold remains covered
+by duplicate detection.
+
+```bash
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
+python3 scripts/quality/check_data_quality.py --month 202512 --strict
+python3 scripts/quality/check_data_quality.py --full-history --strict
+python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict
+```
+
+The script reports existing tables whose grain or row identity is undefined.
+On a completed run, exit `0` means clean or non-strict findings; strict mode
+exits `1` when duplicates or Bronze-to-Silver mismatches exist. Argument errors
+exit `2`; connection or query errors exit `1`. The legacy
+`check_bronze_to_silver_reconciliation.py` command remains available and
+forwards its compatible options to the unified workflow.
 
 ## Full Operational Sequence
 
@@ -136,7 +188,7 @@ python3 scripts/mongodb/init_indexes.py
 python3 scripts/mongodb/sync_signal_catalogs.py
 
 # 4. Validation
-python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/health_check.py --json
 ```
 
