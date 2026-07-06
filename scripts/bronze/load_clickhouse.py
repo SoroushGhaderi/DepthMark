@@ -19,6 +19,9 @@ Usage:
     # Show table statistics
     python3 scripts/bronze/load_clickhouse.py --stats
 
+    # Preview truncate and reload
+    python3 scripts/bronze/load_clickhouse.py --date 20251113 --truncate --dry-run
+
     Note:
     ClickHouse background merges handle routine ReplacingMergeTree storage cleanup.
     Warehouse quality checks report extra physical row versions as diagnostics.
@@ -70,6 +73,9 @@ Examples:
 
   # Truncate and reload
   python3 scripts/bronze/load_clickhouse.py --date 20251113 --truncate
+
+  # Preview truncate and reload
+  python3 scripts/bronze/load_clickhouse.py --date 20251113 --truncate --dry-run
         """,
     )
 
@@ -117,6 +123,11 @@ Examples:
     )
 
     parser.add_argument("--truncate", action="store_true", help="Truncate tables before loading")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview bronze load operations without truncating tables or loading data",
+    )
     parser.add_argument("--stats", action="store_true", help="Show table statistics and exit")
     parser.add_argument("--force", action="store_true", help="Force reload even if data exists")
 
@@ -278,6 +289,21 @@ def main(argv: Optional[List[str]] = None) -> int:
         log_level=settings_log_level,
     )
 
+    if args.dry_run and args.stats:
+        logger.info("Ignoring --dry-run because --stats is read-only")
+
+    if args.dry_run and not args.stats:
+        dates = get_dates_to_process(args, logger)
+        if not dates:
+            raise SystemExit(
+                "One of --date, --start-date, --month, or --full-history must be provided"
+            )
+        service = BronzeService(client=None, force=args.force)
+        result = service.run(dates=dates, truncate=args.truncate, dry_run=True)
+        if result.exit_code == 0:
+            logger.info("Bronze dry-run completed successfully")
+        return result.exit_code
+
     client = ClickHouseClient(
         host=args.host,
         port=args.port,
@@ -318,7 +344,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
 
         service = BronzeService(client=client, force=args.force)
-        result = service.run(dates=dates, truncate=args.truncate)
+        result = service.run(dates=dates, truncate=args.truncate, dry_run=False)
         return result.exit_code
 
     except LayerContractError as exc:

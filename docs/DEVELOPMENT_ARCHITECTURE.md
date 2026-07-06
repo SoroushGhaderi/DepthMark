@@ -90,6 +90,8 @@ python3 scripts/bronze/scrape_fotmob.py --yesterday
 python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 python3 scripts/bronze/load_clickhouse.py --date 20251208
+python3 scripts/bronze/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate --dry-run
 python3 scripts/bronze/load_clickhouse.py --single-date 20251208
 python3 scripts/bronze/load_clickhouse.py --full-history
 python3 scripts/bronze/drop_clickhouse.py --dry-run

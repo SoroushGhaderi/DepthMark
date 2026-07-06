@@ -76,6 +76,8 @@ skips scraping and runs the remaining selected warehouse stages.
 
 - `scripts/bronze/sync_s3.py upload --date 20251208 --dry-run`
 - `scripts/bronze/sync_s3.py download --date 20251208 --dry-run`
+- `scripts/bronze/load_clickhouse.py --date 20251208 --dry-run`
+- `scripts/bronze/load_clickhouse.py --date 20251208 --truncate --dry-run`
 - `scripts/silver/load_clickhouse.py --date 20251208 --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run`
 - `scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals --dry-run`

@@ -392,14 +392,18 @@ def validate_and_fix_schema(
                     nullable_float_cols.append(col_name)
                 elif col_name == "fun_facts":
                     df.loc[:, col_name] = df[col_name].apply(
-                        lambda value: [] if value is None or (isinstance(value, float) and pd.isna(value)) else value
+                        lambda value: []
+                        if value is None or (isinstance(value, float) and pd.isna(value))
+                        else value
                     )
                 elif "String" in col_type:
                     nullable_string_cols.append(col_name)
             elif col_name in df.columns:
                 if col_name == "fun_facts":
                     df.loc[:, col_name] = df[col_name].apply(
-                        lambda value: [] if value is None or (isinstance(value, float) and pd.isna(value)) else value
+                        lambda value: []
+                        if value is None or (isinstance(value, float) and pd.isna(value))
+                        else value
                     )
                 if "UInt" in col_type:
                     non_nullable_uint_cols.append(col_name)
@@ -1075,9 +1079,31 @@ class BronzeService:
         - Mapping the result to an exit code
         """
         if dry_run:
-            logger.info("Running bronze loader in dry-run mode (no data will be loaded)")
+            planned_dates = dates or []
+            logger.info(
+                "Running bronze loader in dry-run mode (no tables will be truncated and no data will be loaded)"
+            )
+            logger.info(
+                "Bronze dry-run plan",
+                extra={
+                    "database": BRONZE_DATABASE,
+                    "dates": ",".join(planned_dates),
+                    "total_dates": len(planned_dates),
+                    "truncate": truncate,
+                    "tables": ",".join(FOTMOB_TABLES),
+                    "force": self.force,
+                },
+            )
+            if truncate:
+                logger.warning(
+                    "[dry-run] Would truncate bronze tables before loading",
+                    extra={
+                        "database": BRONZE_DATABASE,
+                        "table_count": len(FOTMOB_TABLES),
+                    },
+                )
             result = BronzeRunResult(exit_code=0)
-            result.dates_processed = len(dates) if dates else 0
+            result.dates_processed = len(planned_dates)
             return result
 
         if not dates:

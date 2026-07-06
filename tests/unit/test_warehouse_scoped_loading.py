@@ -4,10 +4,12 @@ from types import SimpleNamespace
 
 import pytest
 
+from scripts.bronze import load_clickhouse as bronze_loader
 from scripts.bronze.load_clickhouse import discover_historical_dates
 from scripts.gold import load_clickhouse_gold as gold_loader
 from scripts.orchestration import pipeline
 from scripts.silver import load_clickhouse as silver_loader
+from src.services.bronze import BronzeService
 from src.services.clickhouse_scoped_replace import (
     ScopedReplacementBatch,
     ScopedSqlJob,
@@ -95,6 +97,50 @@ def test_loader_parsers_require_explicit_scope():
         silver_loader.parse_args([])
     with pytest.raises(SystemExit):
         gold_loader.parse_args([])
+
+
+def test_bronze_loader_parser_accepts_dry_run():
+    args = bronze_loader.parse_args(["--date", "20251208", "--truncate", "--dry-run"])
+    assert args.date == "20251208"
+    assert args.truncate is True
+    assert args.dry_run is True
+
+
+def test_bronze_service_dry_run_does_not_truncate_or_load(monkeypatch):
+    service = BronzeService(client=None)
+    calls = []
+
+    monkeypatch.setattr(service, "truncate_tables", lambda: calls.append("truncate"))
+    monkeypatch.setattr(service, "load_date", lambda date: calls.append(("load", date)))
+
+    result = service.run(dates=["20251208"], truncate=True, dry_run=True)
+
+    assert result.exit_code == 0
+    assert result.dates_processed == 1
+    assert calls == []
+
+
+def test_bronze_loader_dry_run_skips_clickhouse_and_telegram(monkeypatch):
+    connected = []
+    notifications = []
+
+    class BlockingClickHouseClient:
+        def __init__(self, *args, **kwargs):
+            connected.append(("init", args, kwargs))
+
+    class RecordingTelegramClient:
+        def render_and_send(self, *args, **kwargs):
+            notifications.append((args, kwargs))
+
+    monkeypatch.setattr(bronze_loader, "ClickHouseClient", BlockingClickHouseClient)
+    monkeypatch.setattr(bronze_loader, "TelegramClient", lambda: RecordingTelegramClient())
+    monkeypatch.setattr(bronze_loader, "setup_logging", lambda *args, **kwargs: RecordingLogger())
+
+    exit_code = bronze_loader.main(["--date", "20251208", "--truncate", "--dry-run"])
+
+    assert exit_code == 0
+    assert connected == []
+    assert notifications == []
 
 
 def test_pipeline_accepts_named_date_scope():

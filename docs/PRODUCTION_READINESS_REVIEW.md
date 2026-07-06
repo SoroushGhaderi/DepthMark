@@ -24,8 +24,8 @@ DepthMark has a clear FotMob-only medallion shape and the codebase is well docum
 3. **ClickHouse bootstrap is still overly permissive** — `scripts/clickhouse_setup_common.py:87-205` falls back to the `default` user in local development, and `scripts/clickhouse_setup_common.py:208-241` grants broad access (`GRANT ALL` on Bronze/Silver/Gold databases plus `CREATE DATABASE` and `TABLE ENGINE`) once a user is created. The local-dev gate helps, but the permission model is still much wider than least-privilege production practice.
    - Status: **Open**.
 
-4. **Bronze truncate path has no preview mode** — `scripts/bronze/load_clickhouse.py:119-121` exposes `--truncate`, and `scripts/bronze/load_clickhouse.py:308-322` applies it directly with no dry-run branch. That makes the destructive reload path harder to rehearse safely, even though the docs encourage previewing destructive actions first.
-   - Status: **Open**.
+4. **Bronze truncate path has no preview mode** — `scripts/bronze/load_clickhouse.py` exposes `--truncate`, and the destructive reload path previously had no dry-run branch. That made reload rehearsal harder even though the docs encourage previewing destructive actions first.
+   - Status: **Fixed**. Bronze ClickHouse loading now supports `--dry-run`, including `--truncate --dry-run`, and skips truncation, loading, ClickHouse connection setup, and Telegram notification in preview mode.
 
 5. **Pytest discovery is broken from the repo root** — `pytest.ini:1-16` configures pytest but does not add the project root to `PYTHONPATH`, while the test files import `src...` and `scripts...` modules directly. A baseline `pytest -q tests/unit` run currently fails during collection with `ModuleNotFoundError` for both package roots.
    - Status: **Open**.
@@ -98,7 +98,7 @@ DepthMark has a clear FotMob-only medallion shape and the codebase is well docum
 - [x] P0.3 Make orchestrator failure handling explicit and safe
 - [ ] P1.1 Remove insecure ClickHouse default-user fallback where possible
 - [ ] P1.2 Refactor grants toward least privilege
-- [ ] P1.3 Add dry-run for Bronze truncate path
+- [x] P1.3 Add dry-run for Bronze truncate path
 - [ ] P2.1 Replace remaining production `SELECT *` usage
 - [ ] P2.2 Add SQL logic and migration tests
 - [ ] P2.3 Add scheduler overlap protection docs or a lock wrapper
