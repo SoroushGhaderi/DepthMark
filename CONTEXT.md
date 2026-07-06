@@ -49,6 +49,33 @@ narrative docs live in `scripts/gold/scenario/SCENARIOS_CATALOG.md`.
 
 ## Glossary
 
+### Logical Duplicate Identity
+
+More than one current row for the same declared row identity in ClickHouse's
+logical `FINAL` view. Logical duplicates are data-correctness failures and may
+fail the strict warehouse quality gate.
+
+Avoid saying: physical duplicate, unmerged version.
+Related terms: Physical Row Version, Row Identity.
+
+### Physical Row Version
+
+One of multiple stored `ReplacingMergeTree` rows sharing a declared identity
+before background merging collapses older versions. Extra physical versions
+are storage and merge-health diagnostics, not logical duplicate failures.
+
+Avoid saying: logical duplicate, duplicate business row.
+Related terms: Logical Duplicate Identity, Row Identity.
+
+### Row Identity
+
+The ordered columns that identify one row at its declared table grain. Bronze
+and Silver identities come from layer contracts, scenario identities from DDL
+sorting keys, signal identities from catalog `row_identity`, and activation
+identity from `signal_instance_id`.
+
+Related terms: Logical Duplicate Identity, Physical Row Version.
+
 ### Historical Scrape
 
 A FotMob Bronze scrape whose scope contains only completed calendar dates,

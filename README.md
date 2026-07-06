@@ -65,8 +65,9 @@ DepthMark currently supports FotMob only.
 ## Warehouse Data Quality
 
 The canonical read-only quality command checks declared row identities for
-duplicates across Bronze, Silver, and Gold, then reconciles identity sets only
-from Bronze to Silver:
+logical duplicates across Bronze, Silver, and Gold, reports unmerged physical
+row versions separately, then reconciles identity sets only from Bronze to
+Silver:
 
 ```bash
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict

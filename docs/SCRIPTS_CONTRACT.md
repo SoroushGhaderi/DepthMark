@@ -143,10 +143,11 @@ stability rules in DepthMark. The canonical command list lives in
 3. Duplicate checks may span Bronze, Silver, and Gold. Cross-layer
    reconciliation is limited to Bronze and Silver and must never infer Gold
    parity.
-4. Strict mode exits `1` only for detected duplicate identities or completed
-   Bronze-to-Silver reconciliation mismatches. Tables with undefined identities
-   are reported separately. Argument errors exit `2`; operational errors exit
-   non-zero.
+4. Strict mode exits `1` only for logical duplicate identities in the `FINAL`
+   view or completed Bronze-to-Silver reconciliation mismatches. Extra physical
+   `ReplacingMergeTree` versions are non-failing diagnostics. Tables with
+   undefined identities are reported separately. Argument errors exit `2`;
+   operational errors exit non-zero.
 5. `scripts/quality/check_bronze_to_silver_reconciliation.py` remains a
    backward-compatible alias with its existing `--checks`, `--sample-limit`,
    and `--strict` arguments.

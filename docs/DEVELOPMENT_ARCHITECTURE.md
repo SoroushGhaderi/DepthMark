@@ -182,6 +182,9 @@ ClickHouse SQL performs duplicate grouping and identity-set reconciliation.
   `BRONZE_REQUIRED_KEYS` and `SILVER_TABLE_KEYS`, all scenario tables using
   their DDL `ORDER BY` identity, all signal tables using catalog
   `row_identity`, and `gold.signal_activations` using `signal_instance_id`.
+- Logical duplicates are calculated from `FINAL` and are strict failures.
+  Multiple raw physical versions are reported separately as non-failing
+  `ReplacingMergeTree` merge/storage diagnostics.
 - A discovered table with no declared identity, or with absent identity
   columns, is reported as not validated. This is visible but is not itself a
   strict failure.
@@ -191,11 +194,13 @@ ClickHouse SQL performs duplicate grouping and identity-set reconciliation.
   coaches exactly as the Silver DML does.
 - Gold never participates in cross-layer reconciliation. Its scenarios,
   signals, and activations intentionally transform, filter, and change grain;
-  only duplicate identity checks are meaningful there.
+  only logical duplicate identity checks and physical-version diagnostics are
+  meaningful there.
 - `--date`, `--month`, and `--full-history` are supported. Omitting a scope is a
-  backward-compatible full-history check. `--strict` returns `1` for duplicates
-  or reconciliation mismatches; a clean/non-strict completed run returns `0`,
-  argument errors return `2`, and connection/query failures return `1`.
+  backward-compatible full-history check. `--strict` returns `1` for logical
+  duplicates or reconciliation mismatches; a clean/non-strict completed run
+  returns `0`, argument errors return `2`, and connection/query failures return
+  `1`.
 
 Useful selections:
 

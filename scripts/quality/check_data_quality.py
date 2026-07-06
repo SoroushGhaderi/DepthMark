@@ -60,7 +60,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Exit 1 when duplicates or Bronze-to-Silver mismatches are found",
+        help="Exit 1 when logical duplicates or Bronze-to-Silver mismatches are found",
     )
     return parser.parse_args(argv)
 
@@ -90,7 +90,7 @@ def _log_summary(summary: DataQualitySummary, scope: WarehouseExecutionScope) ->
     for result in summary.duplicate_results:
         log = logger.warning if result.duplicate_identities else logger.info
         log(
-            "Duplicate identity check",
+            "Logical duplicate identity check",
             table=result.table,
             scope=scope.label,
             identity_columns=list(result.identity_columns),
@@ -98,7 +98,21 @@ def _log_summary(summary: DataQualitySummary, scope: WarehouseExecutionScope) ->
             duplicate_rows=result.duplicate_rows,
         )
         for sample in result.samples:
-            logger.warning("Duplicate identity sample", table=result.table, sample=list(sample))
+            logger.warning(
+                "Logical duplicate identity sample", table=result.table, sample=list(sample)
+            )
+        physical_log = logger.warning if result.physical_duplicate_identities else logger.info
+        physical_log(
+            "Physical row-version diagnostic",
+            table=result.table,
+            scope=scope.label,
+            identity_columns=list(result.identity_columns),
+            identities_with_multiple_versions=result.physical_duplicate_identities,
+            physical_extra_versions=result.physical_extra_versions,
+            strict_failure=False,
+        )
+        for sample in result.physical_samples:
+            logger.warning("Physical row-version sample", table=result.table, sample=list(sample))
     for skipped in summary.skipped_tables:
         logger.warning("Table not validated", table=skipped.table, reason=skipped.reason)
     for result in summary.reconciliation_results:
@@ -169,7 +183,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         exit_code = strict_exit_code(summary, args.strict)
         logger.info(
             "Unified warehouse data quality completed",
-            duplicate_failures=summary.duplicate_failure_count,
+            logical_duplicate_failures=summary.duplicate_failure_count,
             reconciliation_failures=summary.reconciliation_failure_count,
             unvalidated_tables=len(summary.skipped_tables),
             exit_code=exit_code,
