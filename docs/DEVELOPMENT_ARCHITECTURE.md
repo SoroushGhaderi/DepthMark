@@ -130,7 +130,9 @@ python3 scripts/orchestration/pipeline.py 20251208
 python3 scripts/orchestration/pipeline.py --date 20251208
 python3 scripts/orchestration/pipeline.py --single-date 20251208
 python3 scripts/orchestration/pipeline.py --full-history
-python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
+python3 scripts/quality/check_data_quality.py --month 202512 --strict
+python3 scripts/quality/check_data_quality.py --full-history --strict
 python3 scripts/quality/check_logging_style.py
 python3 scripts/health_check.py --json
 python3 scripts/ensure_directories.py
@@ -166,8 +168,42 @@ python3 scripts/orchestration/pipeline.py 20251208 --skip-bronze
 python3 scripts/health_check.py --json
 python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
 python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
-python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_logging_style.py
+```
+
+### Unified Warehouse Quality
+
+`scripts/quality/check_data_quality.py` is the canonical read-only quality entry
+point. Python discovers contracts, applies scope, executes SQL, and reports;
+ClickHouse SQL performs duplicate grouping and identity-set reconciliation.
+
+- Duplicate checks cover all existing `bronze.*` and `silver.*` tables using
+  `BRONZE_REQUIRED_KEYS` and `SILVER_TABLE_KEYS`, all scenario tables using
+  their DDL `ORDER BY` identity, all signal tables using catalog
+  `row_identity`, and `gold.signal_activations` using `signal_instance_id`.
+- A discovered table with no declared identity, or with absent identity
+  columns, is reported as not validated. This is visible but is not itself a
+  strict failure.
+- Reconciliation is bidirectional for the eight Silver outputs: it compares
+  distinct eligible Bronze and Silver identities and reports missing and
+  unexpected keys. The personnel mapping combines starters, substitutes, and
+  coaches exactly as the Silver DML does.
+- Gold never participates in cross-layer reconciliation. Its scenarios,
+  signals, and activations intentionally transform, filter, and change grain;
+  only duplicate identity checks are meaningful there.
+- `--date`, `--month`, and `--full-history` are supported. Omitting a scope is a
+  backward-compatible full-history check. `--strict` returns `1` for duplicates
+  or reconciliation mismatches; a clean/non-strict completed run returns `0`,
+  argument errors return `2`, and connection/query failures return `1`.
+
+Useful selections:
+
+```bash
+python3 scripts/quality/check_data_quality.py --date 20251208 --layers bronze,silver --strict
+python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict
+python3 scripts/quality/check_data_quality.py --full-history --reconciliation-checks shot,card
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict  # compatibility alias
 ```
 
 Use drop scripts with `--dry-run` before destructive schema work:

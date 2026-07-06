@@ -105,8 +105,25 @@ and `download` require an explicit `--date`, `--start-date/--end-date`,
 
 ## Quality Check Scripts
 
+- `scripts/quality/check_data_quality.py` — canonical read-only duplicate check
+  across Bronze, Silver, and Gold plus Bronze-to-Silver reconciliation. Supports
+  date, month, and full-history scopes, layer/check selection, samples, and
+  strict exits.
 - `scripts/quality/check_bronze_to_silver_reconciliation.py`
+  — compatibility alias for Bronze/Silver duplicate checks and reconciliation.
 - `scripts/quality/check_logging_style.py`
+
+```bash
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
+python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict
+python3 scripts/quality/check_data_quality.py --full-history --strict
+python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+```
+
+Gold duplicate checking uses scenario DDL identities, signal catalog
+`row_identity`, and activation `signal_instance_id`. Gold is never reconciled
+to Bronze or Silver because its outputs have intentionally different filters,
+business logic, and grains.
 
 ## Scenario Scripts
 

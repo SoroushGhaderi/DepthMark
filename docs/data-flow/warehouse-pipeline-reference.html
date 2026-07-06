@@ -1257,7 +1257,7 @@
                 <div class="flow-group gold">
                     <div class="flow-group-label">3 · Validate &amp; serve</div>
                     <div class="flow-row">
-                        <div class="flow-node bronze"><strong>check_bronze_to_silver_reconciliation</strong></div>
+                        <div class="flow-node bronze"><strong>check_data_quality.py</strong><span class="sub">duplicates: Bronze + Silver + Gold<br>reconciliation: Bronze ↔ Silver only</span></div>
                         <span class="flow-connector">→</span>
                         <div class="flow-node silver"><strong>sync_signal_catalogs.py</strong></div>
                     </div>
@@ -1274,7 +1274,7 @@
                 <tr><td>4</td><td>Bronze (CH)</td><td>15 <code>bronze.*</code> tables</td><td><code>python3 scripts/bronze/load_clickhouse.py --date &lt;YYYYMMDD&gt;</code></td></tr>
                 <tr><td>5</td><td>Silver</td><td>8 <code>silver.*</code> tables (scoped staged replacement)</td><td><code>python3 scripts/silver/load_clickhouse.py --full-history</code></td></tr>
                 <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python3 scripts/gold/load_clickhouse_gold.py --full-history</code></td></tr>
-                <tr><td>7</td><td>Quality</td><td>Bronze→Silver row counts</td><td><code>python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict</code></td></tr>
+                <tr><td>7</td><td>Quality</td><td>Duplicate identities in all warehouse layers; Bronze↔Silver identity reconciliation</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
                 <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python3 scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
             </tbody>
         </table>
@@ -1345,8 +1345,10 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
 python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
 python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
 
-# Post-load quality gate
-python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+# Post-load quality gate (read-only)
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict
+python3 scripts/quality/check_data_quality.py --month 202512 --strict
+python3 scripts/quality/check_data_quality.py --full-history --strict
 python3 scripts/quality/check_logging_style.py
 
 # Sync signal/scenario catalogs from Git → MongoDB (product APIs)
@@ -1355,7 +1357,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         </details>
         <div class="callout success">
             <span class="callout-icon">✓</span>
-            <span><strong>Done when:</strong> <code>bronze.*</code> (15), <code>silver.*</code> (8), <code>gold_scenarios.*</code> (48), <code>gold_signals.*</code> (344), and <code>gold.signal_activations</code> all contain rows; reconciliation passes; MongoDB catalogs are synced.</span>
+            <span><strong>Done when:</strong> <code>bronze.*</code> (15), <code>silver.*</code> (8), <code>gold_scenarios.*</code> (48), <code>gold_signals.*</code> (344), and <code>gold.signal_activations</code> all contain rows; duplicate checks pass in every layer; Bronze↔Silver reconciliation passes; MongoDB catalogs are synced.</span>
         </div>
     </div>
 
@@ -1516,7 +1518,9 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             </div>
             <div class="flow-merge">
                 <span class="flow-connector down">↓</span>
-                <div class="flow-node bronze"><strong>Bronze→Silver reconciliation</strong></div>
+                <div class="flow-node bronze"><strong>Duplicate identities</strong><span class="sub">Bronze + Silver + Gold</span></div>
+                <span class="flow-connector down">↓</span>
+                <div class="flow-node silver"><strong>Bronze↔Silver reconciliation</strong><span class="sub">missing and unexpected identities</span></div>
                 <span class="flow-connector down">↓</span>
                 <div class="flow-node silver"><strong>Validated warehouse</strong></div>
             </div>
@@ -1526,8 +1530,26 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             <pre>python3 scripts/health_check.py --json
 python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
 python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
-python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict</pre>
+python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
         </details>
+        <div class="callout note">
+            <span class="callout-icon">◎</span>
+            <span><strong>Identity sources:</strong> Bronze/Silver layer-key contracts, scenario DDL <code>ORDER BY</code>, signal catalog <code>row_identity</code>, and activation <code>signal_instance_id</code>. Tables without a defined or usable identity are reported as not validated.</span>
+        </div>
+        <div class="callout insight">
+            <span class="callout-icon">≠</span>
+            <span><strong>Gold reconciliation is intentionally excluded:</strong> scenarios, signals, and activations apply business rules, filters, and different grains. Cross-layer row parity is therefore not meaningful; Gold is checked for duplicate identities only.</span>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Scope / mode</th><th>Command</th><th>Exit behavior</th></tr></thead>
+            <tbody>
+                <tr><td>Date</td><td><code>python3 scripts/quality/check_data_quality.py --date 20251208 --strict</code></td><td rowspan="3"><code>0</code> clean (or non-strict findings); <code>1</code> strict duplicates/reconciliation mismatch or operational failure; <code>2</code> invalid arguments</td></tr>
+                <tr><td>Month</td><td><code>python3 scripts/quality/check_data_quality.py --month 202512 --strict</code></td></tr>
+                <tr><td>Full history</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
+                <tr><td>Gold only</td><td><code>python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict</code></td><td>Duplicate checks only; no reconciliation</td></tr>
+                <tr><td>Compatibility</td><td><code>python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict</code></td><td>Forwards the existing CLI to unified Bronze/Silver checks</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -2671,12 +2693,17 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'orchestration',
         },
         {
-            match: ['check_bronze_to_silver', 'reconciliation', 'bronze→silver'],
-            title: 'Bronze → Silver reconciliation',
-            scripts: ['scripts/quality/check_bronze_to_silver_reconciliation.py'],
+            match: ['check_data_quality', 'check_bronze_to_silver', 'reconciliation', 'bronze→silver', 'duplicate identities'],
+            title: 'Unified warehouse data quality',
+            scripts: ['scripts/quality/check_data_quality.py', 'scripts/quality/check_bronze_to_silver_reconciliation.py'],
             commands: [
+                'python3 scripts/quality/check_data_quality.py --date 20251208 --strict',
+                'python3 scripts/quality/check_data_quality.py --month 202512 --strict',
+                'python3 scripts/quality/check_data_quality.py --full-history --strict',
+                'python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict',
                 'python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
             ],
+            note: 'Duplicates are checked across Bronze, Silver, and Gold. Reconciliation compares Bronze and Silver only; Gold has separate transformations, filters, and grains.',
         },
         {
             match: ['check_logging_style'],
@@ -2875,13 +2902,13 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'scripts/health_check.py',
                 'scripts/silver/load_clickhouse.py',
                 'scripts/gold/load_clickhouse_gold.py',
-                'scripts/quality/check_bronze_to_silver_reconciliation.py',
+                'scripts/quality/check_data_quality.py',
             ],
             commands: [
                 'python3 scripts/health_check.py --json',
                 'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
                 'python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run',
-                'python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+                'python3 scripts/quality/check_data_quality.py --date 20251208 --strict',
             ],
         },
         {
@@ -2906,7 +2933,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['exit 0', 'done when'],
             title: 'Successful pipeline completion',
             commands: [
-                'python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict',
+                'python3 scripts/quality/check_data_quality.py --full-history --strict',
                 'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
         },
@@ -3168,7 +3195,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         // Overview
         { title: 'Complete warehouse route', section: 'overview', sectionLabel: 'Overview', keywords: 'setup fill all tables layers create ddl pipeline scrape load bronze silver gold validation sync catalogs start end runbook' },
         { title: 'End-to-end pipeline', section: 'overview', sectionLabel: 'Overview', keywords: 'pipeline fotmob bronze silver gold activation product' },
-        { title: 'Quality gates & preflight', section: 'overview', sectionLabel: 'Overview', keywords: 'health_check preflight contract reconciliation validated' },
+        { title: 'Quality gates & preflight', section: 'overview', sectionLabel: 'Overview', keywords: 'health_check preflight contract duplicate identities bronze silver gold reconciliation strict exit codes validated' },
         { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python3 ownership adr 0001 0009 generic runner' },
         // Bronze
         { title: 'Scraping flow', section: 'bronze', sectionLabel: 'Bronze', keywords: 'scrape_fotmob fotmorchestrator dailyscraper matchscraper api json' },

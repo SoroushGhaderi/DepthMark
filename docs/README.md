@@ -12,6 +12,8 @@ short project overview; use this folder for setup, commands, and operations.
 - `data-flow/`: source of truth for system data flow, layer diagrams, and
   interactive wireframes. Start with `data-flow/warehouse-pipeline-reference.html` for a visual
   overview.
+- `data-flow/orchestration.md#post-load-data-quality`: canonical duplicate and
+  Bronze-to-Silver reconciliation workflow, scopes, and exit behavior.
 - `PRODUCTION_READINESS_REVIEW.md`: full DE review report with evidence-based
   findings, remediation plan, and work tracking checklist.
 

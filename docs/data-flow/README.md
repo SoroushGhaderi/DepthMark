@@ -12,7 +12,7 @@ infrastructure change.
 | `bronze.md` | Bronze layer: FotMob scraping, raw JSON storage, ClickHouse loading, DLQ handling. |
 | `silver.md` | Silver layer: SQL-driven cleaning, typing, and conformation of Bronze into analytical tables. |
 | `gold.md` | Gold layer: scenario outputs, signal outputs, activation rebuilds, and the generic SQL runner. |
-| `orchestration.md` | Pipeline orchestration: how `pipeline.py` coordinates layers, partial runs, and the orchestrator. |
+| `orchestration.md` | Pipeline orchestration plus the canonical post-load duplicate and Bronze-to-Silver reconciliation workflow. |
 | `infrastructure.md` | Docker Compose, ClickHouse setup, MongoDB, environment configuration, and credential policy. |
 | `mongodb.md` | Signal catalog sync: markdown frontmatter → MongoDB serving copy. |
 
