@@ -11,8 +11,8 @@ playwright>=1.40.0
 curl_cffi>=0.7.0
 # FotMob API: read Turnstile cookie from local Chrome browser (local/Mac only)
 browser-cookie3>=0.19.0
-# Optional: Better Cloudflare bypass (install with: pip install undetected-chromedriver)
-# undetected-chromedriver>=3.5.0
+# Required for the Oddspedia browser scraper's Cloudflare-aware Chrome driver.
+undetected-chromedriver>=3.5.5
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
 pandas>=2.1.0

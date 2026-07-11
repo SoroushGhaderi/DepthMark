@@ -1,7 +1,7 @@
 # DepthMark
 
-DepthMark is a FotMob-only football data pipeline built around a clear medallion
-architecture:
+DepthMark is a football data warehouse with isolated FotMob and Oddspedia
+source domains, built around a clear medallion architecture:
 
 - Bronze: raw FotMob API responses on disk plus raw ClickHouse `bronze.*` tables
 - Silver: cleaned and conformed ClickHouse `silver.*` tables
@@ -18,6 +18,11 @@ FotMob API
   -> gold_scenarios.*      scenario outputs
   -> gold_signals.*        signal outputs
   -> gold.*                shared Gold metadata and activation tables
+
+Oddspedia
+  -> data/oddspedia/historical/  source links, payloads, and manifests
+  -> oddspedia_bronze.*          source-specific warehouse facts
+  -> silver.oddspedia_match_resolution  audited link to `silver.match`
 ```
 
 Bronze is the only filesystem-backed data layer. Silver and Gold exist only in
@@ -53,14 +58,17 @@ Subsystem contracts live next to the code they govern, such as
 DepthMark/
   clickhouse/             ClickHouse DDL/DML by layer (gold uses ddl/ + dml/)
   config/                 Python configuration modules
-  data/fotmob/            Historical and Live raw Bronze aspects
+  data/fotmob/            FotMob Historical and Live raw Bronze aspects
+  data/oddspedia/         Oddspedia Historical source artifacts
   docker/                 Dockerfile, entrypoint; root docker-compose.yml is the main stack
   docs/                   project-wide architecture and contracts
   scripts/                operational entry points
   src/                    application services, scraper, storage, and utility code
 ```
 
-DepthMark currently supports FotMob only.
+FotMob remains the canonical fixture-reference source. Oddspedia remains the
+canonical source for its event and odds records; it does not modify FotMob
+Bronze or `silver.match`.
 
 ## Warehouse Data Quality
 

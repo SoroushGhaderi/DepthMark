@@ -1,0 +1,5 @@
+# Alias keys and values are normalized by the resolver.  Add a mapping only
+# after an ambiguous fixture has been manually reviewed.
+aliases:
+  man utd: manchester united
+  inter: inter milan

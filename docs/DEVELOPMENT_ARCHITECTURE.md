@@ -6,11 +6,12 @@ Script coding standards live in `SCRIPTS_CONTRACT.md`.
 
 ## Scope
 
-DepthMark is a FotMob-only medallion pipeline:
+DepthMark is a football warehouse with two explicit source domains:
 
-1. Bronze stores raw FotMob payloads on disk and loads raw tables into ClickHouse.
-2. Silver builds cleaned, typed, reusable analytical tables in ClickHouse.
-3. Gold materializes scenario and signal outputs in ClickHouse for product and BI
+1. FotMob Bronze stores raw FotMob payloads on disk and loads raw tables into ClickHouse.
+2. Oddspedia Historical stores source artifacts on disk and loads source facts into `oddspedia_bronze.*`.
+3. Silver builds cleaned, typed, reusable analytical tables in ClickHouse, including audited cross-source resolutions.
+4. Gold materializes scenario and signal outputs in ClickHouse for product and BI
    use, plus shared activation metadata for product consumption.
 
 ```text
@@ -22,6 +23,11 @@ FotMob API
   -> gold_scenarios.*      scenario outputs
   -> gold_signals.*        signal outputs
   -> gold.*                shared Gold metadata and activation tables
+
+Oddspedia
+  -> data/oddspedia/historical/  links, payloads, and manifests
+  -> oddspedia_bronze.*          source-specific source facts
+  -> silver.oddspedia_match_resolution  relationship to `silver.match`
 ```
 
 ## Layer Boundaries
@@ -31,7 +37,7 @@ FotMob API
 3. Bronze preserves source fidelity with minimal transformation.
 4. Silver standardizes keys, types, and reusable entities.
 5. Gold produces downstream-ready scenario and signal tables.
-6. Warehouse tables must be schema-qualified as `bronze.*`, `silver.*`,
+6. Warehouse tables must be schema-qualified as `bronze.*`, `oddspedia_bronze.*`, `silver.*`,
    `gold_scenarios.*`, `gold_signals.*`, or shared Gold metadata tables in
    `gold.*`.
 
@@ -96,6 +102,21 @@ python3 scripts/bronze/load_clickhouse.py --single-date 20251208
 python3 scripts/bronze/load_clickhouse.py --full-history
 python3 scripts/bronze/drop_clickhouse.py --dry-run
 ```
+
+### Oddspedia Source Domain
+
+```bash
+python3 scripts/oddspedia/football.py discover --date 20260301
+python3 scripts/oddspedia/football.py scrape --date 20260301
+python3 scripts/oddspedia/setup_clickhouse.py --dry-run
+python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
+```
+
+`resolve_matches.py` searches FotMob `silver.match` for the prior, current,
+and following calendar dates. It writes `not_covered` only when the operator
+asserts a complete reference window; otherwise an unmatched event remains
+`unresolved`.
 
 ### Silver
 

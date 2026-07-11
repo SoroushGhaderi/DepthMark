@@ -1,0 +1,23 @@
+rule_version: v1
+candidate_window_days: 1
+exact_time_minutes: 15
+alias_time_minutes: 60
+maximum_time_minutes: 720
+automatic_match_score: 95
+automatic_match_margin: 8
+team_similarity_minimum: 0.88
+qualifier_tokens:
+  - women
+  - u19
+  - u21
+  - u23
+  - b
+  - ii
+  - reserves
+  - academy
+generic_tokens:
+  - afc
+  - cf
+  - fc
+  - sc
+  - club

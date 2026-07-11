@@ -17,6 +17,11 @@ short project overview; use this folder for setup, commands, and operations.
 - `PRODUCTION_READINESS_REVIEW.md`: full DE review report with evidence-based
   findings, remediation plan, and work tracking checklist.
 
+Source-specific flows:
+
+- `data-flow/oddspedia.md`: Oddspedia discovery, source storage, Bronze load,
+  and FotMob-resolution workflow.
+
 Keep active subsystem contracts next to the code they govern. Current examples:
 
 - `scripts/README.md`

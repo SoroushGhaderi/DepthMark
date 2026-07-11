@@ -1,6 +1,6 @@
 # DepthMark Agent Guide
 
-Use this guide when working inside the `depthmark` project. Keep changes aligned with the existing FotMob-only medallion pipeline and prefer small, explicit edits over broad rewrites.
+Use this guide when working inside the `depthmark` project. Keep changes aligned with its source-isolated football warehouse and prefer small, explicit edits over broad rewrites.
 
 ## Location And Scope
 
@@ -10,7 +10,7 @@ Do not use this file as a Codex skill. Skills are reusable procedures with their
 
 ## Project Overview
 
-DepthMark is a Python data pipeline for FotMob football data.
+DepthMark is a Python football data warehouse with isolated FotMob and Oddspedia source domains.
 
 - Bronze: completed-date FotMob payloads under `data/fotmob/historical/`,
   current-date snapshots under `data/fotmob/live/`, and raw ClickHouse tables
@@ -20,8 +20,13 @@ DepthMark is a Python data pipeline for FotMob football data.
   `gold_scenarios.*`, signal tables in `gold_signals.*`, and shared metadata in
   `gold.*`.
 - MongoDB stores content/catalog metadata, including signal catalog entries authored from markdown frontmatter.
+- Oddspedia artifacts live under `data/oddspedia/historical/`, structured source
+  facts live in `oddspedia_bronze.*`, and `silver.oddspedia_match_resolution`
+  links an Oddspedia event to at most one canonical FotMob fixture.
 
-DepthMark currently supports FotMob only. Do not add generic multi-provider abstractions unless explicitly requested.
+Do not introduce a generic provider framework. FotMob and Oddspedia remain
+explicit source domains with isolated raw contracts; `silver.match` remains the
+canonical FotMob fixture reference.
 
 ## Important References
 
@@ -67,6 +72,10 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 python scripts/quality/check_logging_style.py
 python scripts/orchestration/pipeline.py 20251208
 python scripts/orchestration/pipeline.py --single-date 20251208
+python scripts/oddspedia/football.py discover --date 20260301
+python scripts/oddspedia/setup_clickhouse.py --dry-run
+python scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
+python scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
 ```
 
 Use dry-run modes first for loaders, destructive operations, and catalog syncs when available.
@@ -78,7 +87,7 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 - Keep source fidelity in Bronze; standardize keys and types in Silver; materialize business-facing outputs in Gold.
 - SQL should hold transformation and business logic. Python should orchestrate, execute, validate, and report.
 - Stable application services may live under `src/services/` behind script entry points to coordinate reusable workflows, but they must not own Silver or Gold analytical logic.
-- Use schema-qualified ClickHouse table names: `bronze.*`, `silver.*`,
+- Use schema-qualified ClickHouse table names: `bronze.*`, `oddspedia_bronze.*`, `silver.*`,
   `gold_scenarios.*`, `gold_signals.*`, and Gold metadata tables in `gold.*`.
 - Keep SQL deterministic and rerunnable.
 - Preserve script entry points and CLI behavior unless the task explicitly asks for a breaking change.
@@ -102,7 +111,7 @@ For files under `scripts/`, script-oriented helpers under `src/`, and applicatio
 - Keep script entry points thin and backward-compatible when extracting reusable workflow coordination into `src/`.
 - `--dry-run` must not mutate state.
 - Exit code `0` means success; non-zero means failure.
-- Root-level utility scripts are allowed, but new layer scripts should live under `scripts/bronze`, `scripts/silver`, `scripts/gold`, `scripts/orchestration`, `scripts/quality`, or `scripts/mongodb`.
+- Root-level utility scripts are allowed; source-specific Oddspedia commands live under `scripts/oddspedia`, while existing layer scripts live under `scripts/bronze`, `scripts/silver`, `scripts/gold`, `scripts/orchestration`, `scripts/quality`, or `scripts/mongodb`.
 - Load `.env` from the project root and parent root with `override=False` where scripts require local configuration.
 
 ## SQL And Catalog Work

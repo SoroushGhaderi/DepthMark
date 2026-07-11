@@ -48,6 +48,7 @@ dependencies = [
     "tqdm>=4.66.0",
     "boto3>=1.28.0",
     "structlog>=24.4.0",
+    "undetected-chromedriver>=3.5.5",
 ]
 
 [project.optional-dependencies]
@@ -66,9 +67,7 @@ dev = [
     "pandas-stubs>=2.1.0",
 ]
 
-cloudflare = [
-    "undetected-chromedriver>=3.5.0",
-]
+cloudflare = []
 
 [project.scripts]
 depthmark = "src.cli:main"
