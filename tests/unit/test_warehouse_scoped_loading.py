@@ -345,8 +345,8 @@ def test_pipeline_full_history_skips_silver_and_gold_after_clickhouse_failure(
 
 def test_full_history_bronze_discovery_excludes_live_and_invalid_names(tmp_path):
     historical = tmp_path / "historical"
-    (historical / "matches" / "20251208").mkdir(parents=True)
-    (historical / "daily_listings" / "20251209").mkdir(parents=True)
+    (historical / "matches" / "202512" / "20251208").mkdir(parents=True)
+    (historical / "daily_listings" / "202512" / "20251209").mkdir(parents=True)
     (historical / "matches" / "not-a-date").mkdir()
     (tmp_path / "live" / "matches" / "20251210").mkdir(parents=True)
     assert discover_historical_dates(historical) == ["20251208", "20251209"]

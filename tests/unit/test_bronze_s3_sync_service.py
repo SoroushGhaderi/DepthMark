@@ -40,8 +40,8 @@ class FakeS3Client:
 
 
 def create_complete_date(bronze_path: Path, date_str: str = "20251208") -> None:
-    matches_path = bronze_path / "matches" / date_str
-    listing_path = bronze_path / "daily_listings" / date_str
+    matches_path = bronze_path / "matches" / date_str[:6] / date_str
+    listing_path = bronze_path / "daily_listings" / date_str[:6] / date_str
     matches_path.mkdir(parents=True)
     listing_path.mkdir(parents=True)
     (matches_path / "match_101.json").write_text('{"id": 101}', encoding="utf-8")
@@ -78,15 +78,15 @@ def test_upload_includes_matches_and_daily_listing(tmp_path: Path) -> None:
     assert result.sha256 == hashlib.sha256(client.objects[result.key]).hexdigest()
     with tarfile.open(fileobj=io.BytesIO(client.objects[result.key]), mode="r:gz") as archive:
         names = archive.getnames()
-    assert "matches/20251208/match_101.json" in names
-    assert "daily_listings/20251208/matches.json" in names
-    assert (bronze_path / "matches" / "20251208" / "match_101.json").exists()
+    assert "matches/202512/20251208/match_101.json" in names
+    assert "daily_listings/202512/20251208/matches.json" in names
+    assert (bronze_path / "matches" / "202512" / "20251208" / "match_101.json").exists()
 
 
 def test_upload_rejects_incomplete_date_unless_explicitly_allowed(tmp_path: Path) -> None:
     bronze_path = tmp_path / "fotmob"
     create_complete_date(bronze_path)
-    listing_path = bronze_path / "daily_listings" / "20251208" / "matches.json"
+    listing_path = bronze_path / "daily_listings" / "202512" / "20251208" / "matches.json"
     listing_path.write_text(
         json.dumps({"match_ids": [101, 103], "storage": {"unavailable_match_ids": []}}),
         encoding="utf-8",
@@ -119,8 +119,8 @@ def test_download_restores_new_archive_and_checks_checksum(tmp_path: Path) -> No
     key = BronzeS3Service.object_key("20251208")
     payload = archive_bytes(
         {
-            "matches/20251208/match_101.json": b'{"id": 101}',
-            "daily_listings/20251208/matches.json": b'{"match_ids": [101]}',
+            "matches/202512/20251208/match_101.json": b'{"id": 101}',
+            "daily_listings/202512/20251208/matches.json": b'{"match_ids": [101]}',
         }
     )
     client.objects[key] = payload
@@ -131,8 +131,8 @@ def test_download_restores_new_archive_and_checks_checksum(tmp_path: Path) -> No
     result = service.download_date("20251208")
 
     assert result.status == "downloaded"
-    assert (bronze_path / "matches" / "20251208" / "match_101.json").exists()
-    assert (bronze_path / "daily_listings" / "20251208" / "matches.json").exists()
+    assert (bronze_path / "matches" / "202512" / "20251208" / "match_101.json").exists()
+    assert (bronze_path / "daily_listings" / "202512" / "20251208" / "matches.json").exists()
 
 
 def test_download_rejects_checksum_mismatch_without_local_mutation(tmp_path: Path) -> None:
@@ -152,12 +152,31 @@ def test_download_rejects_checksum_mismatch_without_local_mutation(tmp_path: Pat
 def test_download_rejects_new_archive_without_listing_file(tmp_path: Path) -> None:
     client = FakeS3Client()
     key = BronzeS3Service.object_key("20251208")
-    client.objects[key] = archive_bytes({"matches/20251208/match_101.json": b"{}"})
+    client.objects[key] = archive_bytes({"matches/202512/20251208/match_101.json": b"{}"})
     client.metadata[key] = {"Metadata": {}}
     service = BronzeS3Service(tmp_path / "fotmob", client)
 
     with pytest.raises(BronzeS3SyncError, match="missing its daily listing"):
         service.download_date("20251208")
+
+
+def test_download_restores_previous_archive_layout_to_canonical_paths(tmp_path: Path) -> None:
+    client = FakeS3Client()
+    key = BronzeS3Service.object_key("20251208")
+    payload = archive_bytes(
+        {
+            "matches/20251208/match_101.json": b'{"id": 101}',
+            "daily_listings/20251208/matches.json": b'{"match_ids": [101]}',
+        }
+    )
+    client.objects[key] = payload
+    client.metadata[key] = {"Metadata": {}}
+    bronze_path = tmp_path / "fotmob"
+
+    BronzeS3Service(bronze_path, client).download_date("20251208")
+
+    assert (bronze_path / "matches" / "202512" / "20251208" / "match_101.json").exists()
+    assert (bronze_path / "daily_listings" / "202512" / "20251208" / "matches.json").exists()
 
 
 def test_download_supports_legacy_archive_and_force_replacement(tmp_path: Path) -> None:
@@ -173,9 +192,9 @@ def test_download_supports_legacy_archive_and_force_replacement(tmp_path: Path) 
         service.download_date("20251208")
 
     service.download_date("20251208", force=True)
-    assert (bronze_path / "matches" / "20251208" / "match_202.json").exists()
-    assert not (bronze_path / "matches" / "20251208" / "match_101.json").exists()
-    assert not (bronze_path / "daily_listings" / "20251208").exists()
+    assert (bronze_path / "matches" / "202512" / "20251208" / "match_202.json").exists()
+    assert not (bronze_path / "matches" / "202512" / "20251208" / "match_101.json").exists()
+    assert not (bronze_path / "daily_listings" / "202512" / "20251208").exists()
 
 
 def test_remote_date_listing_ignores_unrelated_keys(tmp_path: Path) -> None:

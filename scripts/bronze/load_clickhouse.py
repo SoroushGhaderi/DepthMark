@@ -178,7 +178,7 @@ def discover_historical_dates(historical_root: Path) -> List[str]:
         parent = historical_root / parent_name
         if not parent.exists():
             continue
-        for path in parent.iterdir():
+        for path in parent.glob("??????/????????"):
             if not path.is_dir() or len(path.name) != 8 or not path.name.isdigit():
                 continue
             try:

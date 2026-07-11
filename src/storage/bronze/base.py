@@ -40,12 +40,14 @@ class BaseBronzeStorage(StorageProtocol, ABC):
     Structure:
         data/{scraper}/
             ├── matches/
-            │   └── YYYYMMDD/
+            │   └── YYYYMM/
+            │       └── YYYYMMDD/
             │       ├── match_{id}.json
             │       └── match_{id}.json
             └── daily_listings/
-                └── YYYYMMDD/
-                    └── matches.json
+                └── YYYYMM/
+                    └── YYYYMMDD/
+                        └── matches.json
 
     Daily listings track match IDs to prevent duplicate API requests.
 
@@ -125,6 +127,11 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         else:
             raise ValueError(f"Invalid date format: {date_str}. Expected YYYYMMDD or YYYY-MM-DD")
 
+    @staticmethod
+    def _date_partition_dir(parent_dir: Path, date_str: str) -> Path:
+        """Return the canonical ``YYYYMM/YYYYMMDD`` directory for a date."""
+        return parent_dir / date_str[:6] / date_str
+
     def _normalize_date_safe(self, date_str: str) -> str:
         """Normalize date string to YYYYMMDD format, returning as-is if invalid.
 
@@ -161,7 +168,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             else:
                 date_str_normalized = datetime.now().strftime("%Y%m%d")
 
-            date_dir = self.matches_dir / date_str_normalized
+            date_dir = self._date_partition_dir(self.matches_dir, date_str_normalized)
             date_dir.mkdir(parents=True, exist_ok=True)
 
             file_path = date_dir / f"match_{match_id}.json"
@@ -232,7 +239,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             else:
                 date_str_normalized = datetime.now().strftime("%Y%m%d")
 
-            date_dir = self.matches_dir / date_str_normalized
+            date_dir = self._date_partition_dir(self.matches_dir, date_str_normalized)
             date_dir.mkdir(parents=True, exist_ok=True)
 
             saved_paths = []
@@ -350,7 +357,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         try:
             if date_str:
                 date_str_normalized = self._normalize_date_safe(date_str)
-                date_dir = self.matches_dir / date_str_normalized
+                date_dir = self._date_partition_dir(self.matches_dir, date_str_normalized)
 
                 # Try tar archive first
                 archive_path = date_dir / f"{date_str_normalized}_matches.tar"
@@ -390,7 +397,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                 return None
             else:
                 # Search all date directories
-                for date_dir in self.matches_dir.iterdir():
+                for date_dir in self.matches_dir.rglob("????????"):
                     if not date_dir.is_dir():
                         continue
 
@@ -448,7 +455,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         """
         if date_str:
             date_str_normalized = self._normalize_date_safe(date_str)
-            date_dir = self.matches_dir / date_str_normalized
+            date_dir = self._date_partition_dir(self.matches_dir, date_str_normalized)
 
             # Check tar archive
             archive_path = date_dir / f"{date_str_normalized}_matches.tar"
@@ -477,7 +484,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                 return True
 
             # Check archives
-            for date_dir in self.matches_dir.iterdir():
+            for date_dir in self.matches_dir.rglob("????????"):
                 if not date_dir.is_dir():
                     continue
                 archive_path = date_dir / f"{date_dir.name}_matches.tar"
@@ -529,12 +536,12 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         """
         date_str_normalized = self._normalize_date(date_str)
 
-        date_dir = self.daily_listings_dir / date_str_normalized
+        date_dir = self._date_partition_dir(self.daily_listings_dir, date_str_normalized)
         date_dir.mkdir(parents=True, exist_ok=True)
 
         listing_file = date_dir / "matches.json"
 
-        matches_date_dir = self.matches_dir / date_str_normalized
+        matches_date_dir = self._date_partition_dir(self.matches_dir, date_str_normalized)
         existing_listing = self.load_daily_listing(date_str_normalized)
         existing_unavailable = []
         if existing_listing:
@@ -705,7 +712,9 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             self.logger.warning(f"Invalid date format: {date_str}")
             return None
 
-        listing_file = self.daily_listings_dir / date_str_normalized / "matches.json"
+        listing_file = self._date_partition_dir(
+            self.daily_listings_dir, date_str_normalized
+        ) / "matches.json"
 
         if not listing_file.exists():
             return None
@@ -760,7 +769,9 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         except ValueError:
             return False
 
-        listing_file = self.daily_listings_dir / date_str_normalized / "matches.json"
+        listing_file = self._date_partition_dir(
+            self.daily_listings_dir, date_str_normalized
+        ) / "matches.json"
         return listing_file.exists()
 
     def compress_date_files(self, date_str: str, force: bool = False) -> Dict[str, Any]:
@@ -783,7 +794,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         """
         date_str_normalized = self._normalize_date(date_str)
 
-        date_dir = self.matches_dir / date_str_normalized
+        date_dir = self._date_partition_dir(self.matches_dir, date_str_normalized)
         archive_path = date_dir / f"{date_str_normalized}_matches.tar"
 
         # Check if already compressed

@@ -58,6 +58,13 @@ always refreshes Live listings and match payloads and never compresses them.
 Historical selectors reject today and future dates; a current-month scope ends
 at yesterday.
 
+Oddspedia uses the same local aspect convention beneath `data/oddspedia/`.
+Its default current-date command writes refreshable Live artifacts; explicit
+completed dates and completed portions of a month write Historical artifacts.
+Both sources use `{historical|live}/{artifact-type}/YYYYMMDD/`; see
+[`../docs/data-flow/source-artifact-storage.md`](../docs/data-flow/source-artifact-storage.md)
+for exact files and the legacy-layout migration note.
+
 ### Warehouse Scope Modes
 
 Silver and Gold commands require an explicit output scope:
