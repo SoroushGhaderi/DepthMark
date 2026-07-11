@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 import sys
 import unittest
+from datetime import date
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 SRC = os.path.join(ROOT, "src")
@@ -12,8 +13,10 @@ if SRC not in sys.path:
 from src.oddspedia.config import (
     BASE_URL,
     get_manifest_file,
+    get_match_file,
     get_match_links_file,
     get_matches_dir,
+    get_storage_aspect,
     get_sport_listing_url,
     normalize_sport,
 )
@@ -23,10 +26,38 @@ from src.oddspedia.utils import load_json, save_json
 
 class SportConfigTests(unittest.TestCase):
     def test_football_uses_local_default_paths(self):
-        self.assertEqual(get_match_links_file("20260227"), get_match_links_file("20260227", sport="football"))
-        self.assertTrue(get_match_links_file("20260227").endswith(os.path.join("links", "202602", "match_links_20260227.json")))
-        self.assertTrue(get_manifest_file("20260227").endswith(os.path.join("manifests", "202602", "manifest_20260227.json")))
-        self.assertTrue(get_matches_dir("20260227").endswith(os.path.join("matches", "202602", "20260227")))
+        self.assertEqual(
+            get_match_links_file("20260227"), get_match_links_file("20260227", sport="football")
+        )
+        self.assertTrue(
+            get_match_links_file("20260227").endswith(
+                os.path.join(
+                    "historical", "daily_listings", "202602", "20260227", "match_links.json"
+                )
+            )
+        )
+        self.assertTrue(
+            get_manifest_file("20260227").endswith(
+                os.path.join("historical", "manifests", "202602", "20260227", "manifest.json")
+            )
+        )
+        self.assertTrue(
+            get_matches_dir("20260227").endswith(
+                os.path.join("historical", "matches", "202602", "20260227")
+            )
+        )
+        self.assertTrue(
+            get_match_file("20260227", "123").endswith(
+                os.path.join("historical", "matches", "202602", "20260227", "123.json")
+            )
+        )
+
+    def test_storage_aspect_uses_live_for_current_date(self):
+        today = date(2026, 7, 11)
+        self.assertEqual(get_storage_aspect("20260710", current_date=today), "historical")
+        self.assertEqual(get_storage_aspect("20260711", current_date=today), "live")
+        with self.assertRaises(ValueError):
+            get_storage_aspect("20260712", current_date=today)
 
     def test_project_rejects_tennis(self):
         with self.assertRaises(ValueError):
@@ -48,8 +79,15 @@ class SportConfigTests(unittest.TestCase):
             text=True,
         )
         for option in (
-            "discover", "scrape", "run", "status", "--collect",
-            "--retry-failed", "--retry", "--log-format", "--month",
+            "discover",
+            "scrape",
+            "run",
+            "status",
+            "--collect",
+            "--retry-failed",
+            "--retry",
+            "--log-format",
+            "--month",
         ):
             self.assertIn(option, result.stdout)
 

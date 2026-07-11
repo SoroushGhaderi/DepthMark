@@ -211,11 +211,11 @@ Storage structure:
 ```text
 data/fotmob/
   historical/
-    matches/{YYYYMMDD}/match_{id}.json[.gz]  completed-date payloads
-    daily_listings/{YYYYMMDD}/matches.json   completed-date listings
+    matches/{YYYYMM}/{YYYYMMDD}/match_{id}.json[.gz]  completed-date payloads
+    daily_listings/{YYYYMM}/{YYYYMMDD}/matches.json   completed-date listings
   live/
-    matches/{YYYYMMDD}/match_{id}.json       latest Live payloads
-    daily_listings/{YYYYMMDD}/matches.json   refreshed Live listings
+    matches/{YYYYMM}/{YYYYMMDD}/match_{id}.json       latest Live payloads
+    daily_listings/{YYYYMM}/{YYYYMMDD}/matches.json   refreshed Live listings
 data/dlq/                           dead letter queue files
 ```
 

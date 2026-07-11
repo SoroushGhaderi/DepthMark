@@ -84,11 +84,11 @@ class OddspediaBronzeLoader:
     def _event_rows(self, date_id: str) -> List[Dict[str, Any]]:
         path = Path(get_match_links_file(date_id))
         if not path.exists():
-            logger.warning("Oddspedia links file is absent", date=date_id, path=str(path))
+            logger.warning("Oddspedia daily listing is absent", date=date_id, path=str(path))
             return []
         records = _load_json(path)
         if not isinstance(records, list):
-            raise ValueError("Oddspedia links artifact must contain a list: %s" % path)
+            raise ValueError("Oddspedia daily listing must contain a list: %s" % path)
         discovery_date = datetime.strptime(date_id, "%Y%m%d").date()
         rows = []
         for record in records:

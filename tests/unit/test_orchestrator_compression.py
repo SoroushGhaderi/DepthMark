@@ -26,7 +26,7 @@ def build_orchestrator(compression_status: str = "success") -> FotMobOrchestrato
     orchestrator.bronze_storage.compress_date_files.return_value = {
         "status": compression_status,
         "compressed": 1 if compression_status == "success" else 0,
-        "archive_file": "data/fotmob/historical/matches/20251208/20251208_matches.tar",
+        "archive_file": "data/fotmob/historical/matches/202512/20251208/20251208_matches.tar",
         "error": "disk full" if compression_status == "error" else "",
     }
     orchestrator._fetch_match_ids = MagicMock(return_value=[101])

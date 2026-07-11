@@ -23,10 +23,10 @@ The scraper fetches match data from the FotMob API:
 2. **Match details** — `MatchScraper` calls `/matchDetails` for each match ID,
    returns the full JSON payload.
 3. **Storage** — `FotMobBronzeStorage` writes raw JSON to
-   `data/fotmob/historical/matches/{YYYYMMDD}/match_{match_id}.json` and listings
-   to `data/fotmob/historical/daily_listings/{YYYYMMDD}/matches.json`.
+   `data/fotmob/historical/matches/{YYYYMM}/{YYYYMMDD}/match_{match_id}.json` and listings
+   to `data/fotmob/historical/daily_listings/{YYYYMM}/{YYYYMMDD}/matches.json`.
 4. **Compression** — after a date is complete, the orchestrator compresses its
-   match JSON files into `matches/{YYYYMMDD}/{YYYYMMDD}_matches.tar`. Partial
+   match JSON files into `matches/{YYYYMM}/{YYYYMMDD}/{YYYYMMDD}_matches.tar`. Partial
    dates remain uncompressed so they can be resumed safely.
 5. **Turnstile refresh** — `scripts/refresh_turnstile.py` handles token/cookie
    rotation when needed.
@@ -67,8 +67,8 @@ python3 scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 2025
 python3 scripts/bronze/sync_s3.py download --all
 ```
 
-Each new archive contains `matches/{YYYYMMDD}` and
-`daily_listings/{YYYYMMDD}` and uses the compatible object key
+Each new archive contains `matches/{YYYYMM}/{YYYYMMDD}` and
+`daily_listings/{YYYYMM}/{YYYYMMDD}` and uses the compatible object key
 `bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`. Uploads require a listing that proves
 every expected match is stored or marked unavailable; `--allow-incomplete`
 provides an explicit recovery override. Existing remote objects and local date
