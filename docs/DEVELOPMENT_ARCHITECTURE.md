@@ -108,15 +108,21 @@ python3 scripts/bronze/drop_clickhouse.py --dry-run
 ```bash
 python3 scripts/oddspedia/football.py discover --date 20260301
 python3 scripts/oddspedia/football.py scrape --date 20260301
+python3 scripts/oddspedia/football.py run --date 20260301
 python3 scripts/oddspedia/setup_clickhouse.py --dry-run
 python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
 python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
 ```
 
+Oddspedia is an independent source workflow, not a stage in
+`scripts/orchestration/pipeline.py`. Its setup script creates the three
+`oddspedia_bronze.*` tables and the Silver resolution table. The load and
+resolve scripts also accept `--month YYYYMM`.
+
 `resolve_matches.py` searches FotMob `silver.match` for the prior, current,
 and following calendar dates. It writes `not_covered` only when the operator
-asserts a complete reference window; otherwise an unmatched event remains
-`unresolved`.
+asserts a complete reference window with `--reference-window-complete`;
+otherwise an unmatched event remains `unresolved`.
 
 ### Silver
 

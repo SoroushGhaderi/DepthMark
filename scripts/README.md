@@ -76,6 +76,29 @@ The generic Gold SQL runner and activation builder use the same selectors.
 Historical storage and never reads Live storage. Pipeline `--full-history`
 skips scraping and runs the remaining selected warehouse stages.
 
+### Oddspedia Source Workflow
+
+Oddspedia commands are source-specific and do not run through
+`scripts/orchestration/pipeline.py`. The browser scraper supports separate
+discovery and scraping, or `run` for both phases. Load its Historical artifacts
+into `oddspedia_bronze.*`, then resolve them to the read-only FotMob
+`silver.match` reference.
+
+```bash
+python3 scripts/oddspedia/football.py run --date 20260301
+python3 scripts/oddspedia/football.py run --month 202603
+python3 scripts/oddspedia/setup_clickhouse.py --dry-run
+python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
+python3 scripts/oddspedia/load_clickhouse.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run
+```
+
+Use `--reference-window-complete` on the resolver only after confirming the
+three-day FotMob reference window is complete. That assertion permits the
+resolver to emit `not_covered`; without it, unmatched fixtures stay
+`unresolved`.
+
 ### Dry-Run Support
 
 - `scripts/bronze/sync_s3.py upload --date 20251208 --dry-run`
