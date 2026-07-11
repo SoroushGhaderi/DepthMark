@@ -22,6 +22,7 @@ SCRIPT_MAP: Dict[str, str] = {
     "pipeline": "pipeline.py",
     "setup-clickhouse": "setup_clickhouse.py",
     "health-check": "health_check.py",
+    "oddspedia-football": "oddspedia/football.py",
 }
 
 

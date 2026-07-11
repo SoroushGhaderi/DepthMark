@@ -100,3 +100,19 @@ fotmob:
 
   proxy:
     enabled: false
+
+# ==========================================================================
+# ODDSPEDIA SOURCE DOMAIN
+# ==========================================================================
+
+oddspedia:
+  base_url: https://oddspedia.com
+  scraper_env: development
+  min_delay: 3.0
+  max_delay: 7.0
+  worker_min_delay: 5.0
+  worker_max_delay: 8.0
+  scroll_pause: 2.0
+  page_load_timeout: 60
+  cloudflare_wait: 40
+  data_dir: data/oddspedia/historical

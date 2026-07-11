@@ -24,7 +24,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -151,6 +151,35 @@ class FotMobSettings(BaseModel):
     proxy: FotMobProxySettings = FotMobProxySettings()
 
 
+class OddspediaSettings(BaseModel):
+    """Oddspedia browser-scraper settings and Historical artifact location."""
+
+    base_url: str = "https://oddspedia.com"
+    scraper_env: str = "development"
+    min_delay: float = 3.0
+    max_delay: float = 7.0
+    worker_min_delay: float = 5.0
+    worker_max_delay: float = 8.0
+    scroll_pause: float = 2.0
+    page_load_timeout: int = 60
+    cloudflare_wait: int = 40
+    data_dir: str = "data/oddspedia/historical"
+
+    @field_validator("max_delay")
+    @classmethod
+    def max_delay_gte_min(cls, value: float, info):
+        if "min_delay" in info.data and value < info.data["min_delay"]:
+            raise ValueError("max_delay must be >= min_delay")
+        return value
+
+    @field_validator("worker_max_delay")
+    @classmethod
+    def worker_max_delay_gte_min(cls, value: float, info):
+        if "worker_min_delay" in info.data and value < info.data["worker_min_delay"]:
+            raise ValueError("worker_max_delay must be >= worker_min_delay")
+        return value
+
+
 # ---------------------------------------------------------------------------
 # Env-var → FotMob nested-field mapping
 # ---------------------------------------------------------------------------
@@ -183,6 +212,19 @@ _FOTMOB_ENV_MAP: Dict[str, Tuple[str, str]] = {
     "FOTMOB_PROXY_HTTPS": ("proxy", "https"),
 }
 
+_ODDSPEDIA_ENV_MAP: Dict[str, str] = {
+    "ODDSPEDIA_BASE_URL": "base_url",
+    "ODDSPEDIA_SCRAPER_ENV": "scraper_env",
+    "ODDSPEDIA_MIN_DELAY": "min_delay",
+    "ODDSPEDIA_MAX_DELAY": "max_delay",
+    "ODDSPEDIA_WORKER_MIN_DELAY": "worker_min_delay",
+    "ODDSPEDIA_WORKER_MAX_DELAY": "worker_max_delay",
+    "ODDSPEDIA_SCROLL_PAUSE": "scroll_pause",
+    "ODDSPEDIA_PAGE_LOAD_TIMEOUT": "page_load_timeout",
+    "ODDSPEDIA_CLOUDFLARE_WAIT": "cloudflare_wait",
+    "ODDSPEDIA_DATA_DIR": "data_dir",
+}
+
 _BOOL_KEYS = frozenset(
     {
         "enable_parallel",
@@ -201,10 +243,24 @@ _INT_KEYS = frozenset(
         "max_attempts",
         "max_bytes",
         "backup_count",
+        "page_load_timeout",
+        "cloudflare_wait",
     }
 )
 _FLOAT_KEYS = frozenset(
-    {"delay_min", "delay_max", "initial_wait", "max_wait", "exponential_base", "backoff_factor"}
+    {
+        "delay_min",
+        "delay_max",
+        "initial_wait",
+        "max_wait",
+        "exponential_base",
+        "backoff_factor",
+        "min_delay",
+        "max_delay",
+        "worker_min_delay",
+        "worker_max_delay",
+        "scroll_pause",
+    }
 )
 
 
@@ -240,6 +296,23 @@ def _load_yaml_fotmob() -> Dict[str, Any]:
     return data.get("fotmob", {})
 
 
+def _load_yaml_oddspedia() -> Dict[str, Any]:
+    """Load the ``oddspedia`` section from config.yaml, if it exists."""
+    try:
+        import yaml
+    except ImportError:
+        return {}
+
+    config_path = os.getenv("CONFIG_FILE_PATH", "config.yaml")
+    if not Path(config_path).exists():
+        config_path = Path(__file__).parent.parent / "config.yaml"
+    if not Path(config_path).exists():
+        return {}
+    with open(config_path, "r") as fh:
+        data = yaml.safe_load(fh) or {}
+    return data.get("oddspedia", {})
+
+
 def _build_fotmob_overrides() -> Dict[str, Any]:
     """Build a nested dict from FOTMOB_* env vars (env vars win over YAML)."""
     yaml_data = _load_yaml_fotmob()
@@ -268,6 +341,16 @@ def _build_fotmob_overrides() -> Dict[str, Any]:
         merged[section_name] = {**section_data, **env_data}
 
     return merged
+
+
+def _build_oddspedia_overrides() -> Dict[str, Any]:
+    """Merge Oddspedia YAML defaults with explicit environment overrides."""
+    values = dict(_load_yaml_oddspedia())
+    for env_name, key in _ODDSPEDIA_ENV_MAP.items():
+        raw = os.getenv(env_name)
+        if raw is not None:
+            values[key] = _coerce_value(key, raw)
+    return values
 
 
 # ---------------------------------------------------------------------------
@@ -333,6 +416,7 @@ class Settings(BaseSettings):
 
     # FotMob scraping configuration (nested)
     fotmob: FotMobSettings = FotMobSettings()
+    oddspedia: OddspediaSettings = OddspediaSettings()
 
     @model_validator(mode="before")
     @classmethod
@@ -352,6 +436,12 @@ class Settings(BaseSettings):
                     existing_fotmob[section] = section_data
         else:
             values["fotmob"] = fotmob_overrides
+        oddspedia_overrides = _build_oddspedia_overrides()
+        existing_oddspedia = values.get("oddspedia")
+        if isinstance(existing_oddspedia, dict):
+            values["oddspedia"] = {**oddspedia_overrides, **existing_oddspedia}
+        else:
+            values["oddspedia"] = oddspedia_overrides
         return values
 
     # ------------------------------------------------------------------
@@ -439,4 +529,5 @@ __all__ = [
     "FotMobMetricsSettings",
     "FotMobDataQualitySettings",
     "FotMobProxySettings",
+    "OddspediaSettings",
 ]

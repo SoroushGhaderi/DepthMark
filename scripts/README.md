@@ -27,6 +27,10 @@ Use these paths for new automation and daily runs:
 - `scripts/orchestration/pipeline.py`
 - `scripts/orchestration/setup_clickhouse.py`
 - `scripts/maintenance/optimize_clickhouse.py`
+- `scripts/oddspedia/football.py`
+- `scripts/oddspedia/setup_clickhouse.py`
+- `scripts/oddspedia/load_clickhouse.py`
+- `scripts/oddspedia/resolve_matches.py`
 
 ### Single-Date Mode
 

@@ -190,6 +190,51 @@ to the MongoDB `signals` collection for serving and querying.
 Avoid saying: Mongo catalog authoring.
 Related terms: Signal Catalog.
 
+### Canonical FotMob Fixture Reference
+
+The record in `silver.match` that is authoritative for FotMob match identity,
+UTC kickoff, teams, league context, and FotMob coverage level. An Oddspedia
+event may be linked to this reference but cannot change it.
+
+Avoid saying: shared raw event, merged source payload.
+Related terms: Source Event, Match Resolution, Coverage Category.
+
+### Source Event
+
+An event as recorded by one provider. An Oddspedia Source Event owns its
+Oddspedia identity, source URL, discovered metadata, and extracted odds; it is
+not itself a FotMob match.
+
+Avoid saying: canonical match, merged fixture.
+Related terms: Canonical FotMob Fixture Reference, Match Resolution.
+
+### Match Resolution
+
+The auditable relationship from one Oddspedia Source Event to at most one
+Canonical FotMob Fixture Reference. A resolution records its evidence,
+confidence, and rule version rather than rewriting either source record.
+
+Related terms: Resolution Status, Coverage Category.
+
+### Resolution Status
+
+The state of a Match Resolution: `matched` for one confirmed FotMob fixture,
+`ambiguous` for more than one plausible candidate, `unmatched` when a complete
+reference window safely contains no matching fixture, and `unresolved` when
+source data or evidence is insufficient.
+
+Avoid saying: not covered when the source window is incomplete.
+Related terms: Match Resolution, Coverage Category.
+
+### Coverage Category
+
+The business classification of a resolved Oddspedia Source Event derived from
+the linked FotMob coverage level: `xG`, `ratings`, or `lower`. `not_covered`
+is allowed only for an `unmatched` event with a complete FotMob reference
+window; unresolved events have no Coverage Category.
+
+Related terms: Canonical FotMob Fixture Reference, Resolution Status.
+
 ### Bronze Retention
 
 Historical and Live Bronze filesystem files beneath `data/fotmob/` are retained
