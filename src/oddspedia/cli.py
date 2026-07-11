@@ -36,6 +36,7 @@ from src.oddspedia.config import (
     get_run_logs_dir,
     get_match_links_file,
     get_discovery_snapshot_file,
+    get_match_file,
     get_matches_dir,
     get_sport_listing_url,
     normalize_sport,
@@ -61,7 +62,11 @@ from src.oddspedia.match_scraper import (
 from src.oddspedia.metrics import get_metrics, reset_metrics
 from src.oddspedia.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.utils import save_json, load_json, random_delay
-from selenium.common.exceptions import InvalidSessionIdException, NoSuchWindowException, WebDriverException
+from selenium.common.exceptions import (
+    InvalidSessionIdException,
+    NoSuchWindowException,
+    WebDriverException,
+)
 from src.oddspedia.audit import (
     audit_date,
     audit_match_json,
@@ -91,16 +96,23 @@ def _driver_restart_required(exc: Exception) -> bool:
     if not isinstance(exc, WebDriverException):
         return False
     message = str(exc).lower()
-    return any(marker in message for marker in (
-        "invalid session id", "no such window", "disconnected",
-        "not connected to devtools", "chrome not reachable", "tab crashed",
-    ))
+    return any(
+        marker in message
+        for marker in (
+            "invalid session id",
+            "no such window",
+            "disconnected",
+            "not connected to devtools",
+            "chrome not reachable",
+            "tab crashed",
+        )
+    )
 
 
 def _retry_delay(attempt: int, exc: Exception) -> float:
     if isinstance(exc, FootballOddsCoverageError):
         return min(2 * (attempt + 1), 6)
-    return min(5 * (2 ** attempt), 120)
+    return min(5 * (2**attempt), 120)
 
 
 class _CircuitBreaker:
@@ -171,7 +183,9 @@ def _match_link(match_info):
     return match_info.get("full_url") or match_info.get("url", "")
 
 
-def _select_matches_to_scrape(matches, matches_dir, manifest, date_str, retry_failed: bool = False, sport: str = "football"):
+def _select_matches_to_scrape(
+    matches, matches_dir, manifest, date_str, retry_failed: bool = False, sport: str = "football"
+):
     """Choose matches from link inventory using JSON files as ground truth.
 
     Match links define the total available work. Per-match JSON files define
@@ -214,13 +228,21 @@ def _select_matches_to_scrape(matches, matches_dir, manifest, date_str, retry_fa
             if match_id in skipped_set:
                 skipped_count += 1
                 continue
-            out_path = os.path.join(matches_dir, f"{match_id}.json")
+            out_path = get_match_file(date_str, match_id, sport=sport)
             has_json = os.path.exists(out_path)
-            json_audit = audit_match_json(date_str, match_id, out_path, sport=sport) if has_json else None
+            json_audit = (
+                audit_match_json(date_str, match_id, out_path, sport=sport) if has_json else None
+            )
 
             if has_json and json_audit and json_audit.accepted:
-                if match_id not in done_set or match_id in failed_set or match_id in in_progress_ids:
-                    _log_manifest_json_reconciled(match_id, match_id in done_set, match_id in failed_set, has_json)
+                if (
+                    match_id not in done_set
+                    or match_id in failed_set
+                    or match_id in in_progress_ids
+                ):
+                    _log_manifest_json_reconciled(
+                        match_id, match_id in done_set, match_id in failed_set, has_json
+                    )
                     manifest.mark_done(match_id)
                     reconciled_count += 1
                 skipped_count += 1
@@ -229,7 +251,9 @@ def _select_matches_to_scrape(matches, matches_dir, manifest, date_str, retry_fa
                 manifest.mark_incomplete(match_id)
                 reconciled_count += 1
                 matches_to_scrape.append(match_info)
-            elif match_id in failed_set or match_id in incomplete_set or match_id in in_progress_ids:
+            elif (
+                match_id in failed_set or match_id in incomplete_set or match_id in in_progress_ids
+            ):
                 matches_to_scrape.append(match_info)
             elif match_id in done_set:
                 _log_stale_done_without_json(match_id)
@@ -243,13 +267,17 @@ def _select_matches_to_scrape(matches, matches_dir, manifest, date_str, retry_fa
         if match_id in skipped_set:
             skipped_count += 1
             continue
-        out_path = os.path.join(matches_dir, f"{match_id}.json")
+        out_path = get_match_file(date_str, match_id, sport=sport)
         has_json = os.path.exists(out_path)
-        json_audit = audit_match_json(date_str, match_id, out_path, sport=sport) if has_json else None
+        json_audit = (
+            audit_match_json(date_str, match_id, out_path, sport=sport) if has_json else None
+        )
 
         if has_json and json_audit and json_audit.accepted:
             if match_id not in done_set or match_id in failed_set or match_id in in_progress_ids:
-                _log_manifest_json_reconciled(match_id, match_id in done_set, match_id in failed_set, has_json)
+                _log_manifest_json_reconciled(
+                    match_id, match_id in done_set, match_id in failed_set, has_json
+                )
                 manifest.mark_done(match_id)
                 reconciled_count += 1
             skipped_count += 1
@@ -314,7 +342,9 @@ def _needs_discovery_retry(date_str, sport: str) -> bool:
     if manifest and manifest.discovery.get("status") == "rescrape_candidate":
         return True
     links_file = get_match_links_file(date_str, sport=sport)
-    return os.path.exists(links_file) and not _existing_inventory_matches_target(links_file, date_str)
+    return os.path.exists(links_file) and not _existing_inventory_matches_target(
+        links_file, date_str
+    )
 
 
 def _as_match_list(matches):
@@ -335,7 +365,9 @@ def _existing_inventory_matches_target(links_file, date_str) -> bool:
         return False
 
 
-def phase1_collect(driver, date_str, sport: str = "football", reuse_listing: bool = False, force: bool = False):
+def phase1_collect(
+    driver, date_str, sport: str = "football", reuse_listing: bool = False, force: bool = False
+):
     """Discover events for date_str and save the event-link inventory.
 
     ``reuse_listing`` keeps a month discovery run on the existing football
@@ -343,9 +375,18 @@ def phase1_collect(driver, date_str, sport: str = "football", reuse_listing: boo
     """
     sport = normalize_sport(sport)
     links_file = get_match_links_file(date_str, sport=sport)
-    if os.path.exists(links_file) and not force and _existing_inventory_matches_target(links_file, date_str):
+    if (
+        os.path.exists(links_file)
+        and not force
+        and _existing_inventory_matches_target(links_file, date_str)
+    ):
         matches = _as_match_list(load_json(links_file))
-        logger.info("links_file_exists_skipping_collection", sport=sport, path=links_file, count=len(matches))
+        logger.info(
+            "links_file_exists_skipping_collection",
+            sport=sport,
+            path=links_file,
+            count=len(matches),
+        )
         return matches
     if os.path.exists(links_file) and not force:
         logger.warning(
@@ -365,7 +406,10 @@ def phase1_collect(driver, date_str, sport: str = "football", reuse_listing: boo
     )
     # A stalled external listing is frequently transient. Retry once from a
     # fresh page before turning this Sport-Date Run into a Rescrape Candidate.
-    if not discovery.complete and {"pagination_stalled", "listing_target_date_missing"}.intersection(discovery.anomalies):
+    if not discovery.complete and {
+        "pagination_stalled",
+        "listing_target_date_missing",
+    }.intersection(discovery.anomalies):
         logger.info("event_discovery_retrying_fresh_listing", sport=sport, date=date_str)
         discovery = collect_match_links(
             driver,
@@ -406,6 +450,7 @@ def phase1_collect(driver, date_str, sport: str = "football", reuse_listing: boo
 def _warmup_cloudflare(driver, sport: str = "football"):
     """Visit the base site once so Cloudflare cookies are set for the session."""
     from src.oddspedia.utils import safe_get
+
     sport = normalize_sport(sport)
     logger.info("cloudflare_warmup_start", sport=sport)
     safe_get(driver, get_sport_listing_url(sport))
@@ -456,7 +501,14 @@ def phase2_scrape(
     )
 
 
-def _phase2_scrape_sequential(driver, matches, date_str, retry_failed: bool = False, max_retries: int = 3, sport: str = "football"):
+def _phase2_scrape_sequential(
+    driver,
+    matches,
+    date_str,
+    retry_failed: bool = False,
+    max_retries: int = 3,
+    sport: str = "football",
+):
     """Extract match details from the event-link inventory.
 
     When *workers* > 1, each worker gets its own Chrome instance and processes
@@ -476,7 +528,13 @@ def _phase2_scrape_sequential(driver, matches, date_str, retry_failed: bool = Fa
     metrics.phase2_start(total=len(matches))
     t0 = time.time()
 
-    logger.info("match_detail_extraction_start", sport=sport, total_matches=len(matches), date=date_str, retry_failed=retry_failed)
+    logger.info(
+        "match_detail_extraction_start",
+        sport=sport,
+        total_matches=len(matches),
+        date=date_str,
+        retry_failed=retry_failed,
+    )
     matches_dir = get_matches_dir(date_str, sport=sport)
     os.makedirs(matches_dir, exist_ok=True)
 
@@ -546,10 +604,12 @@ def _phase2_scrape_sequential(driver, matches, date_str, retry_failed: bool = Fa
 
     for i, match_info in enumerate(matches_to_scrape, 1):
         match_id = _match_id(match_info)
-        out_path = os.path.join(matches_dir, f"{match_id}.json")
+        out_path = get_match_file(date_str, match_id, sport=sport)
 
         if circuit_breaker.aborted:
-            logger.warning("circuit_breaker_skipping_remaining", remaining=len(matches_to_scrape) - i + 1)
+            logger.warning(
+                "circuit_breaker_skipping_remaining", remaining=len(matches_to_scrape) - i + 1
+            )
             break
 
         manifest.set_in_progress(match_id)
@@ -663,7 +723,9 @@ def _phase2_scrape_sequential(driver, matches, date_str, retry_failed: bool = Fa
     )
 
 
-def _phase2_scrape_concurrent(matches, date_str, retry_failed, workers, max_retries: int = 3, sport: str = "football"):
+def _phase2_scrape_concurrent(
+    matches, date_str, retry_failed, workers, max_retries: int = 3, sport: str = "football"
+):
     """Extract match details concurrently with one Chrome instance per worker.
 
     Workers process disjoint batches sequentially (with delays between matches
@@ -676,7 +738,13 @@ def _phase2_scrape_concurrent(matches, date_str, retry_failed, workers, max_retr
     metrics.phase2_start(total=len(matches))
     t0 = time.time()
 
-    logger.info("match_detail_extraction_concurrent_start", sport=sport, total_matches=len(matches), date=date_str, workers=workers)
+    logger.info(
+        "match_detail_extraction_concurrent_start",
+        sport=sport,
+        total_matches=len(matches),
+        date=date_str,
+        workers=workers,
+    )
     matches_dir = get_matches_dir(date_str, sport=sport)
     os.makedirs(matches_dir, exist_ok=True)
 
@@ -719,13 +787,22 @@ def _phase2_scrape_concurrent(matches, date_str, retry_failed, workers, max_retr
         manifest.clear_in_progress()
         save_manifest(manifest)
         duration_seconds = int(time.time() - t0)
-        metrics.phase2_complete(total=len(matches), success=manifest.completed_count,
-                                skipped=manifest.skipped_count, duration_seconds=duration_seconds)
+        metrics.phase2_complete(
+            total=len(matches),
+            success=manifest.completed_count,
+            skipped=manifest.skipped_count,
+            duration_seconds=duration_seconds,
+        )
         outcome_checkpoint.sync(manifest)
         save_manifest(manifest)
-        logger.info("match_detail_extraction_concurrent_complete", total=len(matches),
-                     done=manifest.completed_count, failed=manifest.failed_count,
-                     skipped=manifest.skipped_count, duration_seconds=duration_seconds)
+        logger.info(
+            "match_detail_extraction_concurrent_complete",
+            total=len(matches),
+            done=manifest.completed_count,
+            failed=manifest.failed_count,
+            skipped=manifest.skipped_count,
+            duration_seconds=duration_seconds,
+        )
         return manifest
 
     # Split matches into roughly equal batches per worker
@@ -757,8 +834,11 @@ def _phase2_scrape_concurrent(matches, date_str, retry_failed, workers, max_retr
         worker_results = []
         if driver is None:
             logger.error("worker_no_driver", worker=worker_id)
-            return [(match_id, False, "driver_init_failed") for match_info in batch
-                    for match_id in [_match_id(match_info)]]
+            return [
+                (match_id, False, "driver_init_failed")
+                for match_info in batch
+                for match_id in [_match_id(match_info)]
+            ]
 
         try:
             try:
@@ -772,11 +852,14 @@ def _phase2_scrape_concurrent(matches, date_str, retry_failed, workers, max_retr
                         pass
             for j, match_info in enumerate(batch):
                 match_id = _match_id(match_info)
-                out_path = os.path.join(matches_dir, f"{match_id}.json")
+                out_path = get_match_file(date_str, match_id, sport=sport)
 
                 if circuit_breaker.aborted:
-                    logger.warning("circuit_breaker_skipping_worker_batch",
-                                   worker=worker_id, remaining=len(batch) - j)
+                    logger.warning(
+                        "circuit_breaker_skipping_worker_batch",
+                        worker=worker_id,
+                        remaining=len(batch) - j,
+                    )
                     break
 
                 update_manifest(
@@ -825,7 +908,11 @@ def _phase2_scrape_concurrent(matches, date_str, retry_failed, workers, max_retr
                     except Exception as e:
                         last_error = e
                         if attempt < max_retries:
-                            update_manifest(date_str, lambda m, mid=match_id, err=str(e): m.record_retry(mid, err), sport=sport)
+                            update_manifest(
+                                date_str,
+                                lambda m, mid=match_id, err=str(e): m.record_retry(mid, err),
+                                sport=sport,
+                            )
                             delay = _retry_delay(attempt, e)
                             jitter = random.uniform(0, delay * 0.5)
                             restart_driver = _driver_restart_required(e)
@@ -874,7 +961,8 @@ def _phase2_scrape_concurrent(matches, date_str, retry_failed, workers, max_retr
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {
             pool.submit(_worker_task, batch, wid, worker_drivers[wid]): wid
-            for wid, batch in enumerate(batches) if batch
+            for wid, batch in enumerate(batches)
+            if batch
         }
         for future in as_completed(futures):
             wid = futures[future]
@@ -943,15 +1031,21 @@ def _dates_for_month(month_str):
 def _resolve_dates(args):
     """Resolve CLI date/month arguments into one or more date strings."""
     if args.month:
-        return _dates_for_month(args.month)
+        dates = _dates_for_month(args.month)
+    else:
+        date_str = args.date or datetime.now().strftime("%Y%m%d")
+        try:
+            dates = [normalize_date(date_str)]
+        except ValueError:
+            logger.error("invalid_date_format", date=date_str)
+            sys.exit(1)
 
-    date_str = args.date or datetime.now().strftime("%Y%m%d")
-    try:
-        date_str = normalize_date(date_str)
-    except ValueError:
-        logger.error("invalid_date_format", date=date_str)
+    today = datetime.now().date()
+    selected_dates = [datetime.strptime(date_str, "%Y%m%d").date() for date_str in dates]
+    if any(selected_date > today for selected_date in selected_dates):
+        logger.error("future_collection_date", dates=dates, today=today.strftime("%Y%m%d"))
         sys.exit(1)
-    return [date_str]
+    return [date_str for date_str in dates if datetime.strptime(date_str, "%Y%m%d").date() <= today]
 
 
 def _print_status(date_str, sport: str = "football"):
@@ -1009,7 +1103,7 @@ def main(argv=None, default_sport="football"):
     parser = argparse.ArgumentParser(
         description="OddsHarvest football scraper",
         epilog="Commands: discover (event links only), scrape (saved links only), "
-               "run (discover then scrape), status.",
+        "run (discover then scrape), status.",
     )
     parser.add_argument(
         "command",
@@ -1019,20 +1113,32 @@ def main(argv=None, default_sport="football"):
     )
     legacy_actions = parser.add_mutually_exclusive_group()
     legacy_actions.add_argument(
-        "--collect", dest="legacy_command", action="store_const", const="discover",
+        "--collect",
+        dest="legacy_command",
+        action="store_const",
+        const="discover",
         help="Deprecated alias for 'discover'",
     )
     legacy_actions.add_argument(
-        "--scrape", dest="legacy_command", action="store_const", const="scrape",
+        "--scrape",
+        dest="legacy_command",
+        action="store_const",
+        const="scrape",
         help="Deprecated alias for 'scrape'",
     )
     legacy_actions.add_argument(
-        "--status", dest="legacy_command", action="store_const", const="status",
+        "--status",
+        dest="legacy_command",
+        action="store_const",
+        const="status",
         help="Deprecated alias for 'status'",
     )
-    parser.add_argument("--headless", action="store_true", help="Run in headless mode (may fail CF)")
     parser.add_argument(
-        "--images", "--load-images",
+        "--headless", action="store_true", help="Run in headless mode (may fail CF)"
+    )
+    parser.add_argument(
+        "--images",
+        "--load-images",
         dest="load_images",
         action="store_true",
         help="Allow Chrome to load images (disabled by default to reduce bandwidth; --load-images is an alias)",
@@ -1052,20 +1158,29 @@ def main(argv=None, default_sport="football"):
     )
     log_format = parser.add_mutually_exclusive_group()
     log_format.add_argument(
-        "--log-format", choices=("text", "json"), default="text",
+        "--log-format",
+        choices=("text", "json"),
+        default="text",
         help="Terminal and persisted log format (default: text)",
     )
     log_format.add_argument(
-        "--json-logs", dest="log_format", action="store_const", const="json",
+        "--json-logs",
+        dest="log_format",
+        action="store_const",
+        const="json",
         help="Deprecated alias for '--log-format json'",
     )
     retry = parser.add_mutually_exclusive_group()
     retry.add_argument(
-        "--retry", choices=("failed", "incomplete"),
+        "--retry",
+        choices=("failed", "incomplete"),
         help="Retry failed match details or incomplete event discovery",
     )
     retry.add_argument(
-        "--retry-failed", dest="retry", action="store_const", const="failed",
+        "--retry-failed",
+        dest="retry",
+        action="store_const",
+        const="failed",
         help="Deprecated alias for '--retry failed'",
     )
     parser.add_argument(
@@ -1074,8 +1189,8 @@ def main(argv=None, default_sport="football"):
         default=None,
         metavar="N",
         help="Number of concurrent Chrome workers (default: 1, sequential). "
-             "Each worker gets its own browser instance and profile dir. "
-             "Recommended: 3 workers with default per-worker delays.",
+        "Each worker gets its own browser instance and profile dir. "
+        "Recommended: 3 workers with default per-worker delays.",
     )
     args = parser.parse_args(argv)
     if args.command and args.legacy_command:
@@ -1131,6 +1246,7 @@ def main(argv=None, default_sport="football"):
 
     driver = None
     try:
+
         def ensure_driver():
             nonlocal driver
             if driver is None:
@@ -1145,7 +1261,9 @@ def main(argv=None, default_sport="football"):
                     continue
                 links_file = get_match_links_file(date_str, sport=sport)
                 inventory_valid = _existing_inventory_matches_target(links_file, date_str)
-                collect_driver = None if inventory_valid and args.retry != "incomplete" else ensure_driver()
+                collect_driver = (
+                    None if inventory_valid and args.retry != "incomplete" else ensure_driver()
+                )
                 matches = phase1_collect(
                     collect_driver,
                     date_str,
@@ -1203,7 +1321,11 @@ def main(argv=None, default_sport="football"):
 
         for date_str in dates:
             links_file = get_match_links_file(date_str, sport=sport)
-            collect_driver = None if _existing_inventory_matches_target(links_file, date_str) else ensure_driver()
+            collect_driver = (
+                None
+                if _existing_inventory_matches_target(links_file, date_str)
+                else ensure_driver()
+            )
             matches = phase1_collect(collect_driver, date_str, sport=sport)
             if matches:
                 scrape_driver = None if workers > 1 else ensure_driver()

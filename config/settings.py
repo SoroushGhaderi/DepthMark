@@ -152,7 +152,7 @@ class FotMobSettings(BaseModel):
 
 
 class OddspediaSettings(BaseModel):
-    """Oddspedia browser-scraper settings and Historical artifact location."""
+    """Oddspedia browser-scraper settings and source-artifact root."""
 
     base_url: str = "https://oddspedia.com"
     scraper_env: str = "development"
@@ -163,7 +163,7 @@ class OddspediaSettings(BaseModel):
     scroll_pause: float = 2.0
     page_load_timeout: int = 60
     cloudflare_wait: int = 40
-    data_dir: str = "data/oddspedia/historical"
+    data_dir: str = "data/oddspedia"
 
     @field_validator("max_delay")
     @classmethod

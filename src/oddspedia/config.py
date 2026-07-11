@@ -1,6 +1,7 @@
 import os
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
+from typing import Optional
 
 from config.settings import OddspediaSettings, get_settings as get_depthmark_settings
 
@@ -13,19 +14,21 @@ def get_settings() -> OddspediaSettings:
 settings = get_settings()
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-# Oddspedia is an isolated source domain.  These are immutable Historical
-# source artifacts, intentionally separate from FotMob's Bronze paths.
+# Oddspedia is an isolated source domain. Historical and Live aspects mirror
+# FotMob's source-local storage convention without sharing implementation.
 _configured_data_dir = Path(settings.data_dir)
+# Accept the former aspect-specific setting as a root override so deployments
+# do not accidentally create ``historical/historical`` on upgrade.
+if _configured_data_dir.name == "historical":
+    _configured_data_dir = _configured_data_dir.parent
 DATA_DIR = str(
     _configured_data_dir
     if _configured_data_dir.is_absolute()
     else _PROJECT_ROOT / _configured_data_dir
 )
-LINKS_DIR = os.path.join(DATA_DIR, "links")
-MANIFESTS_DIR = os.path.join(DATA_DIR, "manifests")
-MATCHES_DIR = os.path.join(DATA_DIR, "matches")
+HISTORICAL_DIR = os.path.join(DATA_DIR, "historical")
+LIVE_DIR = os.path.join(DATA_DIR, "live")
 LOGS_DIR = str(_PROJECT_ROOT / "logs" / "oddspedia")
-MATCH_LINKS_FILE = os.path.join(LINKS_DIR, "match_links.json")
 
 BASE_URL = settings.base_url
 FOOTBALL_ODDS_URL = f"{BASE_URL}/football"
@@ -72,50 +75,70 @@ def normalize_month(month_str: str) -> str:
     raise ValueError(f"month must use YYYYMM format: {month_str}")
 
 
+def get_storage_aspect(date_str: str, current_date: Optional[date] = None) -> str:
+    """Return the Historical or Live aspect for one collection date.
+
+    Completed dates are immutable Historical artifacts. The machine-local
+    current date is a refreshable Live snapshot; future dates are rejected.
+    """
+    target_date = datetime.strptime(normalize_date(date_str), "%Y%m%d").date()
+    today = current_date or datetime.now().date()
+    if target_date > today:
+        raise ValueError(f"future dates cannot be collected: {date_str}")
+    return "live" if target_date == today else "historical"
+
+
 def get_date_dir(date_str=None, sport=None):
-    """Return the per-date data directory path."""
+    """Return the root directory for a date's storage aspect."""
     normalize_sport(sport)
-    if date_str:
-        date_id = normalize_date(date_str)
-        return os.path.join(DATA_DIR, "by_date", date_id[:6], date_id)
-    today = datetime.now().strftime("%Y%m%d")
-    return os.path.join(DATA_DIR, "by_date", today[:6], today)
+    date_id = normalize_date(date_str or datetime.now().strftime("%Y%m%d"))
+    return LIVE_DIR if get_storage_aspect(date_id) == "live" else HISTORICAL_DIR
+
+
+def _get_artifact_date_dir(artifact: str, date_str: str, sport=None) -> str:
+    """Return a canonical ``{aspect}/{artifact}/{YYYYMM}/{YYYYMMDD}`` directory."""
+    normalize_sport(sport)
+    date_id = normalize_date(date_str)
+    return os.path.join(get_date_dir(date_id, sport=sport), artifact, date_id[:6], date_id)
 
 
 def get_match_links_file(date_str=None, sport=None):
     """Return the match-links JSON path for a given date.
-    e.g. data/links/202602/match_links_20260227.json
+    e.g. data/oddspedia/historical/daily_listings/202602/20260227/match_links.json
     """
-    normalize_sport(sport)
-    if date_str:
-        date_id = normalize_date(date_str)
-        return os.path.join(LINKS_DIR, date_id[:6], f"match_links_{date_id}.json")
-    return MATCH_LINKS_FILE
+    date_id = normalize_date(date_str or datetime.now().strftime("%Y%m%d"))
+    return os.path.join(
+        _get_artifact_date_dir("daily_listings", date_id, sport), "match_links.json"
+    )
 
 
 def get_discovery_snapshot_file(date_str, sport=None):
     """Return the diagnostic snapshot path for an unaccepted discovery."""
     normalize_sport(sport)
     date_id = normalize_date(date_str)
-    return os.path.join(LINKS_DIR, date_id[:6], f"discovery_partial_{date_id}.json")
+    return os.path.join(
+        _get_artifact_date_dir("daily_listings", date_id, sport), "discovery_partial.json"
+    )
 
 
 def get_manifest_file(date_str, sport=None):
     """Return the scrape manifest JSON path for a given date."""
     normalize_sport(sport)
     date_id = normalize_date(date_str)
-    return os.path.join(MANIFESTS_DIR, date_id[:6], f"manifest_{date_id}.json")
+    return os.path.join(_get_artifact_date_dir("manifests", date_id, sport), "manifest.json")
 
 
 def get_matches_dir(date_str=None, sport=None):
     """Return the per-match JSON directory for a given date.
-    e.g. data/matches/202602/20260227/
+    e.g. data/oddspedia/historical/matches/202602/20260227/
     """
-    normalize_sport(sport)
-    if date_str:
-        date_id = normalize_date(date_str)
-        return os.path.join(DATA_DIR, "matches", date_id[:6], date_id)
-    return MATCHES_DIR
+    date_id = normalize_date(date_str or datetime.now().strftime("%Y%m%d"))
+    return _get_artifact_date_dir("matches", date_id, sport)
+
+
+def get_match_file(date_str: str, match_id: str, sport=None) -> str:
+    """Return the canonical raw match-payload filename for one fixture."""
+    return os.path.join(get_matches_dir(date_str, sport=sport), f"{match_id}.json")
 
 
 def get_run_logs_dir(date_str, sport=None):

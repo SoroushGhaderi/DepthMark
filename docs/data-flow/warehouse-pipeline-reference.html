@@ -1598,7 +1598,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
         </div>
         <div class="mini-card">
             <h4>💾 Storage</h4>
-            <p>Historical match files at <code>data/fotmob/historical/matches/YYYYMMDD/</code>, listings at <code>data/fotmob/historical/daily_listings/YYYYMMDD/</code>. Live files remain isolated under <code>data/fotmob/live/</code>. Failed inserts → <code>data/dlq/</code></p>
+            <p>Historical match files at <code>data/fotmob/historical/matches/YYYYMM/YYYYMMDD/</code>, listings at <code>data/fotmob/historical/daily_listings/YYYYMM/YYYYMMDD/</code>. Live files remain isolated under <code>data/fotmob/live/</code>. Failed inserts → <code>data/dlq/</code></p>
         </div>
         <div class="mini-card">
             <h4>♻️ Idempotency</h4>
@@ -1632,7 +1632,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
                     <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → MatchScraper</span><span class="flow-seq-detail">fetch match details</span></div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors"><em>MatchScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matchDetails?id=…</span></div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">FotMob API → <em>MatchScraper</em></span><span class="flow-seq-detail">full JSON payload</span></div>
-                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">write historical/ or live/ matches/YYYYMMDD/match_{id}.json + daily listing</span></div>
+                    <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → Filesystem</span><span class="flow-seq-detail">write historical/ or live/ matches/YYYYMM/YYYYMMDD/match_{id}.json + daily listing</span></div>
                 </div>
             </div>
         </div>
@@ -1661,7 +1661,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
         <table class="data-table">
             <thead><tr><th>Policy</th><th>Behavior</th></tr></thead>
             <tbody>
-                <tr><td>Archive contents</td><td><code>matches/YYYYMMDD</code> + <code>daily_listings/YYYYMMDD</code>; sync does not alter local compression state or delete canonical artifacts</td></tr>
+                <tr><td>Archive contents</td><td><code>matches/YYYYMM/YYYYMMDD</code> + <code>daily_listings/YYYYMM/YYYYMMDD</code>; sync does not alter local compression state or delete canonical artifacts</td></tr>
                 <tr><td>Upload completeness</td><td>Listing must prove every expected match is stored or unavailable; <code>--allow-incomplete</code> is an explicit recovery override</td></tr>
                 <tr><td>Overwrite protection</td><td>Existing remote objects and local date directories are preserved unless <code>--force</code> is supplied</td></tr>
                 <tr><td>Download safety</td><td>Verify SHA-256 metadata when present, reject unsafe archive paths, and restore through temporary staging</td></tr>
@@ -1780,7 +1780,7 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
             <div class="flow-row">
                 <div class="flow-node accent"><strong>Oddspedia listing / page</strong><span class="sub">browser scraper</span></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node bronze"><strong>data/oddspedia/historical/</strong><span class="sub">links, payloads, manifests</span></div>
+                <div class="flow-node bronze"><strong>data/oddspedia/historical/</strong><span class="sub">daily listings, payloads, manifests</span></div>
                 <span class="flow-connector">→</span>
                 <div class="flow-node bronze"><strong>oddspedia_bronze.*</strong><span class="sub">event, match_payload, market</span></div>
                 <span class="flow-connector">→</span>
@@ -2875,10 +2875,10 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['data/fotmob/historical/matches', 'data/fotmob/historical/daily_listings', 'data/fotmob/live', 'raw json on disk', 'filesystem'],
             title: 'Bronze raw file output',
             paths: [
-                'data/fotmob/historical/matches/<YYYYMMDD>/match_<match_id>.json[.gz]',
-                'data/fotmob/historical/daily_listings/<YYYYMMDD>/matches.json',
-                'data/fotmob/live/matches/<YYYYMMDD>/match_<match_id>.json',
-                'data/fotmob/live/daily_listings/<YYYYMMDD>/matches.json',
+                'data/fotmob/historical/matches/<YYYYMM>/<YYYYMMDD>/match_<match_id>.json[.gz]',
+                'data/fotmob/historical/daily_listings/<YYYYMM>/<YYYYMMDD>/matches.json',
+                'data/fotmob/live/matches/<YYYYMM>/<YYYYMMDD>/match_<match_id>.json',
+                'data/fotmob/live/daily_listings/<YYYYMM>/<YYYYMMDD>/matches.json',
             ],
             commands: [
                 'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',

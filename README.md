@@ -21,7 +21,7 @@ FotMob API
   -> gold.*                shared Gold metadata and activation tables
 
 Oddspedia
-  -> data/oddspedia/historical/  source links, payloads, and manifests
+  -> data/oddspedia/{historical,live}/  daily listings, payloads, and manifests
   -> oddspedia_bronze.*          source-specific warehouse facts
   -> silver.oddspedia_match_resolution  audited link to `silver.match`
 ```
@@ -60,7 +60,7 @@ DepthMark/
   clickhouse/             ClickHouse DDL/DML by layer (gold uses ddl/ + dml/)
   config/                 Python configuration modules
   data/fotmob/            FotMob Historical and Live raw Bronze aspects
-  data/oddspedia/         Oddspedia Historical source artifacts
+  data/oddspedia/         Oddspedia Historical and Live source artifacts
   docker/                 Dockerfile, entrypoint; root docker-compose.yml is the main stack
   docs/                   project-wide architecture and contracts
   scripts/                operational entry points
@@ -70,6 +70,11 @@ DepthMark/
 FotMob remains the canonical fixture-reference source. Oddspedia remains the
 canonical source for its event and odds records; it does not modify FotMob
 Bronze or `silver.match`.
+
+Both source domains use `historical/` for completed dates and `live/` for the
+machine-local current date. See
+[`docs/data-flow/source-artifact-storage.md`](docs/data-flow/source-artifact-storage.md)
+for the artifact hierarchy and collection commands.
 
 ## Oddspedia Workflow
 

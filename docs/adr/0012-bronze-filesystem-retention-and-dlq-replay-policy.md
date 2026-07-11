@@ -95,10 +95,10 @@ After verifying ClickHouse has the data:
 
 ```bash
 # Remove a specific date's match files
-rm -rf data/fotmob/historical/matches/20260115
+rm -rf data/fotmob/historical/matches/202601/20260115
 
 # Remove corresponding daily listing
-rm -rf data/fotmob/historical/daily_listings/20260115
+rm -rf data/fotmob/historical/daily_listings/202601/20260115
 
 # Remove DLQ files for a resolved table+date
 rm data/dlq/player_20260115.jsonl

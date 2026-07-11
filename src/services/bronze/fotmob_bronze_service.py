@@ -867,7 +867,7 @@ def load_fotmob_data(
         )
         processor = FotMobBronzeMatchProcessor()
 
-        matches_dir = bronze_storage.matches_dir / date_str
+        matches_dir = bronze_storage._date_partition_dir(bronze_storage.matches_dir, date_str)
 
         if not matches_dir.exists():
             log.warning(

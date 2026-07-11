@@ -60,7 +60,7 @@ class BronzeS3Service:
                 continue
             dates.update(
                 child.name
-                for child in parent.iterdir()
+                for child in parent.glob("??????/????????")
                 if child.is_dir() and DATE_PATTERN.fullmatch(child.name)
             )
         return sorted(dates)
@@ -198,14 +198,14 @@ class BronzeS3Service:
         matches_path, listing_path = self._local_targets(date_str)
         with tarfile.open(archive_path, "w:gz") as archive:
             if matches_path.exists():
-                archive.add(matches_path, arcname=f"matches/{date_str}")
+                archive.add(matches_path, arcname=f"matches/{date_str[:6]}/{date_str}")
             if listing_path.exists():
-                archive.add(listing_path, arcname=f"daily_listings/{date_str}")
+                archive.add(listing_path, arcname=f"daily_listings/{date_str[:6]}/{date_str}")
 
     def _local_targets(self, date_str: str) -> Tuple[Path, Path]:
         return (
-            self.bronze_path / "matches" / date_str,
-            self.bronze_path / "daily_listings" / date_str,
+            self.bronze_path / "matches" / date_str[:6] / date_str,
+            self.bronze_path / "daily_listings" / date_str[:6] / date_str,
         )
 
     @staticmethod
@@ -255,19 +255,26 @@ class BronzeS3Service:
 
     @staticmethod
     def _resolve_archive_layout(date_str: str, extract_path: Path) -> Dict[str, Path]:
-        new_matches = extract_path / "matches" / date_str
-        new_listing = extract_path / "daily_listings" / date_str
+        new_matches = extract_path / "matches" / date_str[:6] / date_str
+        new_listing = extract_path / "daily_listings" / date_str[:6] / date_str
         if new_matches.exists() or new_listing.exists():
             if not (new_listing / "matches.json").is_file():
                 raise BronzeS3SyncError("new-format archive is missing its daily listing")
             return {"matches": new_matches, "daily_listings": new_listing}
+
+        previous_matches = extract_path / "matches" / date_str
+        previous_listing = extract_path / "daily_listings" / date_str
+        if previous_matches.exists() or previous_listing.exists():
+            if not (previous_listing / "matches.json").is_file():
+                raise BronzeS3SyncError("previous-format archive is missing its daily listing")
+            return {"matches": previous_matches, "daily_listings": previous_listing}
 
         legacy_matches = extract_path / date_str
         if legacy_matches.exists() and legacy_matches.is_dir():
             return {"matches": legacy_matches}
         raise BronzeS3SyncError(
             "archive does not contain a supported Bronze layout "
-            f"(expected matches/{date_str} or {date_str})"
+            f"(expected matches/{date_str[:6]}/{date_str}, matches/{date_str}, or {date_str})"
         )
 
     def _install_targets(self, date_str: str, staged_targets: Dict[str, Path], force: bool) -> None:
@@ -278,17 +285,17 @@ class BronzeS3Service:
         try:
             if force:
                 for parent_name in ("matches", "daily_listings"):
-                    target = self.bronze_path / parent_name / date_str
+                    target = self.bronze_path / parent_name / date_str[:6] / date_str
                     if not target.exists():
                         continue
-                    backup = backup_root / parent_name / date_str
+                    backup = backup_root / parent_name / date_str[:6] / date_str
                     backup.parent.mkdir(parents=True, exist_ok=True)
                     target.replace(backup)
                     backups.append((backup, target))
             for parent_name, staged_path in staged_targets.items():
                 if not staged_path.exists():
                     continue
-                target = self.bronze_path / parent_name / date_str
+                target = self.bronze_path / parent_name / date_str[:6] / date_str
                 target.parent.mkdir(parents=True, exist_ok=True)
                 if target.exists():
                     raise BronzeS3SyncError(f"local target already exists: {target}")
