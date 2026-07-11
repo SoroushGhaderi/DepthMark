@@ -103,6 +103,12 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 - Do not swallow exceptions silently; preserve useful error context when re-raising or reporting.
 - Avoid mechanical rewrites of clean files.
 
+## Git Branch Naming
+
+- Use conventional branch names such as `feat/<description>`,
+  `fix/<description>`, or `chore/<description>`.
+- Do not prefix DepthMark branches with `codex/`.
+
 ## Scripts Contract
 
 For files under `scripts/`, script-oriented helpers under `src/`, and application-service code under `src/services/` behind script entry points, follow `docs/SCRIPTS_CONTRACT.md`.
