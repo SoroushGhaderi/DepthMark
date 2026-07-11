@@ -3,11 +3,11 @@
 Date: 2026-07-07
 Reviewer: Codex
 Project: DepthMark
-Last updated: 2026-07-07
+Last updated: 2026-07-11
 
 ## Executive Summary
 
-DepthMark has a clear FotMob-only medallion shape and the codebase is well documented, but a few operational risks still stand out. The previous ClickHouse setup-time `OPTIMIZE ... FINAL DEDUPLICATE` risk is fixed by ADR 0020 and the explicit maintenance command. The remaining highest-impact issues are the unified pipeline continuing after upstream failures and the test suite failing to collect from the repo root because the package paths are not on `PYTHONPATH` during pytest discovery. ClickHouse bootstrap also remains more permissive than ideal for a production posture, especially around local default-user fallback and broad grants.
+DepthMark has a clear medallion architecture with isolated FotMob and Oddspedia source domains, and the codebase is well documented. This review's findings primarily concern the FotMob warehouse pipeline; Oddspedia now has its own source-specific ingestion and resolution workflow under ADR 0021. The previous ClickHouse setup-time `OPTIMIZE ... FINAL DEDUPLICATE` risk is fixed by ADR 0020 and the explicit maintenance command. The remaining highest-impact issues are the unified pipeline continuing after upstream failures and the test suite failing to collect from the repo root because the package paths are not on `PYTHONPATH` during pytest discovery. ClickHouse bootstrap also remains more permissive than ideal for a production posture, especially around local default-user fallback and broad grants.
 
 ## Findings
 
