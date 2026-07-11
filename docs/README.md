@@ -21,6 +21,8 @@ Source-specific flows:
 
 - `data-flow/oddspedia.md`: Oddspedia discovery, source storage, Bronze load,
   and FotMob-resolution workflow.
+- `data-flow/warehouse-pipeline-reference.html#oddspedia`: interactive
+  warehouse view, including the isolated Oddspedia source-domain workflow.
 
 Keep active subsystem contracts next to the code they govern. Current examples:
 

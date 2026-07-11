@@ -3,7 +3,8 @@
 DepthMark is a football data warehouse with isolated FotMob and Oddspedia
 source domains, built around a clear medallion architecture:
 
-- Bronze: raw FotMob API responses on disk plus raw ClickHouse `bronze.*` tables
+- Bronze: source-faithful FotMob and Oddspedia artifacts on disk, with isolated
+  raw ClickHouse databases (`bronze.*` and `oddspedia_bronze.*`)
 - Silver: cleaned and conformed ClickHouse `silver.*` tables
 - Gold: scenario tables in ClickHouse `gold_scenarios.*`, signal tables in
   `gold_signals.*`, and shared activation metadata in `gold.*` for product and
@@ -69,6 +70,32 @@ DepthMark/
 FotMob remains the canonical fixture-reference source. Oddspedia remains the
 canonical source for its event and odds records; it does not modify FotMob
 Bronze or `silver.match`.
+
+## Oddspedia Workflow
+
+Oddspedia is operated independently of the FotMob orchestration pipeline. Its
+browser scraper first discovers event links, then scrapes their saved payloads.
+Load the resulting Historical artifacts into `oddspedia_bronze.*` before
+resolving each event to the read-only FotMob reference in `silver.match`.
+
+```bash
+# One date (use `run` to discover then scrape in one command)
+python3 scripts/oddspedia/football.py run --date 20260301
+python3 scripts/oddspedia/setup_clickhouse.py --dry-run
+python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
+
+# A whole calendar month
+python3 scripts/oddspedia/football.py run --month 202603
+python3 scripts/oddspedia/load_clickhouse.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run
+```
+
+The resolver considers the previous, current, and following UTC dates. Only
+pass `--reference-window-complete` when the corresponding FotMob reference
+window is complete; that assertion allows unmatched events to be classified as
+`not_covered`. See [`docs/data-flow/oddspedia.md`](docs/data-flow/oddspedia.md)
+for artifact paths, tables, and status definitions.
 
 ## Warehouse Data Quality
 
