@@ -25,7 +25,7 @@ FotMob API
   -> gold.*                shared Gold metadata and activation tables
 
 Oddspedia
-  -> data/oddspedia/historical/  links, payloads, and manifests
+  -> data/oddspedia/{historical,live}/  daily listings, payloads, and manifests
   -> oddspedia_bronze.*          source-specific source facts
   -> silver.oddspedia_match_resolution  relationship to `silver.match`
 ```
@@ -40,6 +40,10 @@ Oddspedia
 6. Warehouse tables must be schema-qualified as `bronze.*`, `oddspedia_bronze.*`, `silver.*`,
    `gold_scenarios.*`, `gold_signals.*`, or shared Gold metadata tables in
    `gold.*`.
+
+For the shared source-artifact hierarchy, current-date Live behavior, and
+legacy Oddspedia layout note, see
+[`data-flow/source-artifact-storage.md`](data-flow/source-artifact-storage.md).
 
 ## Gold Namespaces
 
@@ -498,7 +502,7 @@ one activation row.
    `scripts/bronze/sync_s3.py`; neither scraping nor the pipeline invokes it.
 9. Historical scraping writes beneath `data/fotmob/historical/` and compresses
    each complete local date into
-   `historical/matches/YYYYMMDD/YYYYMMDD_matches.tar`; incomplete dates remain
+   `historical/matches/YYYYMM/YYYYMMDD/YYYYMMDD_matches.tar`; incomplete dates remain
    uncompressed for safe resumption.
 10. `--today` writes refreshable, uncompressed snapshots beneath
     `data/fotmob/live/`. Live data is not loaded, synchronized to S3, or promoted

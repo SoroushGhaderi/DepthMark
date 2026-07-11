@@ -19,6 +19,8 @@ short project overview; use this folder for setup, commands, and operations.
 
 Source-specific flows:
 
+- `data-flow/source-artifact-storage.md`: shared local-storage convention for
+  FotMob and Oddspedia source artifacts.
 - `data-flow/oddspedia.md`: Oddspedia discovery, source storage, Bronze load,
   and FotMob-resolution workflow.
 - `data-flow/warehouse-pipeline-reference.html#oddspedia`: interactive

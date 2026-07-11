@@ -7,6 +7,7 @@ from typing import Any, Dict, List
 
 from src.oddspedia.config import (
     get_match_links_file,
+    get_match_file,
     get_matches_dir,
     normalize_sport,
 )
@@ -21,11 +22,23 @@ ACCEPTED_TERMINAL_NO_DATA = "accepted_terminal_no_data"
 # These are the standard full-time selector markets exposed on rich football
 # pages. A result already containing many markets should include every one.
 _FOOTBALL_RICH_PAGE_MARKETS = {
-    "full time result", "total goals", "asian handicap", "both teams to score",
-    "double chance", "draw no bet", "first team to score", "correct score",
-    "european handicap", "half time / full time", "next goal",
-    "corners odd or even", "clean sheet", "to win both halves",
-    "to score in both halves", "to score a penalty", "total corners",
+    "full time result",
+    "total goals",
+    "asian handicap",
+    "both teams to score",
+    "double chance",
+    "draw no bet",
+    "first team to score",
+    "correct score",
+    "european handicap",
+    "half time / full time",
+    "next goal",
+    "corners odd or even",
+    "clean sheet",
+    "to win both halves",
+    "to score in both halves",
+    "to score a penalty",
+    "total corners",
 }
 TERMINAL_NO_DATA_STATUSES = {
     "canceled",
@@ -96,14 +109,18 @@ def audit_date(date_str: str, sport: str = "football") -> DateAudit:
 
     matches_dir = get_matches_dir(date_str, sport=sport)
     json_paths = _json_paths(matches_dir)
-    existing_ids = {os.path.splitext(os.path.basename(path))[0] for path in json_paths}
+    existing_ids = {
+        os.path.splitext(os.path.basename(path))[0].removeprefix("match_") for path in json_paths
+    }
     result.existing = len(existing_ids)
 
     for match_id in sorted(expected_ids):
-        path = os.path.join(matches_dir, f"{match_id}.json")
+        path = get_match_file(date_str, match_id, sport=sport)
         if not os.path.exists(path):
             result.missing.append(
-                MatchAudit(date=date_str, sport=sport, match_id=match_id, path=path, status="missing")
+                MatchAudit(
+                    date=date_str, sport=sport, match_id=match_id, path=path, status="missing"
+                )
             )
             continue
 
@@ -121,7 +138,7 @@ def audit_date(date_str: str, sport: str = "football") -> DateAudit:
             result.incomplete.append(audit)
 
     for match_id in sorted(existing_ids - expected_ids):
-        path = os.path.join(matches_dir, f"{match_id}.json")
+        path = get_match_file(date_str, match_id, sport=sport)
         audit = audit_match_json(date_str, match_id, path, sport=sport)
         audit.status = "extra"
         audit.reasons.insert(0, "not present in match links")
@@ -130,11 +147,20 @@ def audit_date(date_str: str, sport: str = "football") -> DateAudit:
     return result
 
 
-def audit_match_json(date_str: str, match_id: str, path: str, sport: str = "football") -> MatchAudit:
+def audit_match_json(
+    date_str: str, match_id: str, path: str, sport: str = "football"
+) -> MatchAudit:
     """Classify one saved match JSON for rescrape decisions."""
     sport = normalize_sport(sport)
     size = os.path.getsize(path)
-    audit = MatchAudit(date=date_str, sport=sport, match_id=match_id, path=path, status=ACCEPTED_DATA_PRESENT, bytes=size)
+    audit = MatchAudit(
+        date=date_str,
+        sport=sport,
+        match_id=match_id,
+        path=path,
+        status=ACCEPTED_DATA_PRESENT,
+        bytes=size,
+    )
 
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -199,7 +225,9 @@ def sync_manifest_incomplete(result: DateAudit) -> None:
 
     valid_bad_ids = set(incomplete_ids)
     manifest.done = [match_id for match_id in manifest.done if str(match_id) not in valid_bad_ids]
-    manifest.failed = [match_id for match_id in manifest.failed if str(match_id) not in valid_bad_ids]
+    manifest.failed = [
+        match_id for match_id in manifest.failed if str(match_id) not in valid_bad_ids
+    ]
     save_manifest(manifest)
 
 
@@ -227,7 +255,17 @@ def _payload_reasons(data: Dict[str, Any]) -> List[str]:
     has_pbp = _list_count(data.get("point_by_point")) > 0
     has_overall_tabs = len(data.get("overall_stats", {}).get("tabs", [])) > 0
 
-    has_payload = any((has_scores, has_football_score, has_odds, has_live_odds, has_stats, has_pbp, has_overall_tabs))
+    has_payload = any(
+        (
+            has_scores,
+            has_football_score,
+            has_odds,
+            has_live_odds,
+            has_stats,
+            has_pbp,
+            has_overall_tabs,
+        )
+    )
 
     if (
         data.get("sport") == "football"
@@ -239,7 +277,9 @@ def _payload_reasons(data: Dict[str, Any]) -> List[str]:
 
     if not is_terminal_no_data and not is_result_unavailable and not has_payload:
         if not reasons:
-            reasons.append("no status, score, odds, stats, point-by-point, or overall tabs extracted")
+            reasons.append(
+                "no status, score, odds, stats, point-by-point, or overall tabs extracted"
+            )
 
     return reasons
 
@@ -260,8 +300,7 @@ def _football_coverage_observations(data: Dict[str, Any]) -> List[str]:
         observations.append(f"limited football odds coverage ({market_count} markets)")
 
     has_other_corners_market = any(
-        "corner" in market_name and market_name != "total corners"
-        for market_name in market_names
+        "corner" in market_name and market_name != "total corners" for market_name in market_names
     )
     if has_other_corners_market and "total corners" not in market_names:
         observations.append("Total Corners missing while other corners markets are present")
@@ -269,9 +308,7 @@ def _football_coverage_observations(data: Dict[str, Any]) -> List[str]:
     if market_count >= 15:
         missing_markets = sorted(_FOOTBALL_RICH_PAGE_MARKETS - market_names)
         if missing_markets:
-            observations.append(
-                "football rich-page markets missing: " + ", ".join(missing_markets)
-            )
+            observations.append("football rich-page markets missing: " + ", ".join(missing_markets))
     return observations
 
 

@@ -35,12 +35,14 @@ class FotMobBronzeStorage(BaseBronzeStorage):
     Structure:
         data/fotmob/{historical|live}/
             ├── matches/
-            │   └── YYYYMMDD/
-            │       ├── match_4193494.json
-            │       └── match_4193495.json
+            │   └── YYYYMM/
+            │       └── YYYYMMDD/
+            │           ├── match_4193494.json
+            │           └── match_4193495.json
             └── daily_listings/
-                └── YYYYMMDD/
-                    └── matches.json
+                └── YYYYMM/
+                    └── YYYYMMDD/
+                        └── matches.json
 
     Daily listings track match IDs to prevent duplicate API requests.
     """
@@ -252,7 +254,9 @@ class FotMobBronzeStorage(BaseBronzeStorage):
             self.logger.warning(f"Invalid date format: {date_str}")
             return False
 
-        listing_file = self.daily_listings_dir / date_str_normalized / "matches.json"
+        listing_file = self._date_partition_dir(
+            self.daily_listings_dir, date_str_normalized
+        ) / "matches.json"
 
         if not listing_file.exists():
             self.logger.debug(f"Daily listing file not found: {listing_file}")
@@ -297,7 +301,9 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
                     if all_match_ids:
                         match_ids_int = [int(mid) for mid in all_match_ids]
-                        matches_date_dir = self.matches_dir / date_str_normalized
+                        matches_date_dir = self._date_partition_dir(
+                            self.matches_dir, date_str_normalized
+                        )
                         unavailable_match_ids = storage.get("unavailable_match_ids", [])
                         storage_stats = self._get_storage_stats(
                             date_str_normalized,
@@ -367,7 +373,9 @@ class FotMobBronzeStorage(BaseBronzeStorage):
             self.logger.warning(f"Invalid date format: {date_str}")
             return False
 
-        listing_file = self.daily_listings_dir / date_str_normalized / "matches.json"
+        listing_file = self._date_partition_dir(
+            self.daily_listings_dir, date_str_normalized
+        ) / "matches.json"
 
         if not listing_file.exists():
             self.logger.debug(f"Daily listing file not found: {listing_file}")
@@ -399,7 +407,9 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                     all_match_ids = data.get("match_ids", [])
                     if all_match_ids:
                         match_ids_int = [int(mid) for mid in all_match_ids]
-                        matches_date_dir = self.matches_dir / date_str_normalized
+                        matches_date_dir = self._date_partition_dir(
+                            self.matches_dir, date_str_normalized
+                        )
                         storage_stats = self._get_storage_stats(
                             date_str_normalized,
                             match_ids_int,

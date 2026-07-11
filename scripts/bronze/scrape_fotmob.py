@@ -104,7 +104,7 @@ class ScrapingStats:
 
 def get_bronze_storage_stats(bronze_base_dir: str, date_str: str) -> tuple:
     """Get bronze storage stats for a specific date."""
-    date_dir = Path(bronze_base_dir) / "matches" / date_str
+    date_dir = Path(bronze_base_dir) / "matches" / date_str[:6] / date_str
     if not date_dir.exists():
         return 0, 0.0
 
