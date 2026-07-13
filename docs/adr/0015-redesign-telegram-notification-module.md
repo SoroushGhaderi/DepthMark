@@ -20,7 +20,7 @@ completion alert, despite these being critical pipeline steps.
 
 ## Decision
 
-Replace the entire Telegram subsystem with a new `src/services/telegram/`
+Replace the entire Telegram subsystem with a new `src/integrations/telegram/`
 package following these principles:
 
 1. **Thin transport layer**: A single `TelegramClient` class handles Bot API

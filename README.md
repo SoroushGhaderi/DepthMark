@@ -64,7 +64,7 @@ DepthMark/
   docker/                 Dockerfile, entrypoint; root docker-compose.yml is the main stack
   docs/                   project-wide architecture and contracts
   scripts/                operational entry points
-  src/                    application services, scraper, storage, and utility code
+  src/                    source domains plus warehouse, integrations, common, and operations modules
 ```
 
 FotMob remains the canonical fixture-reference source. Oddspedia remains the

@@ -1,1 +1,0 @@
-"""Silver layer storage helpers."""

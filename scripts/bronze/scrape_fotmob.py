@@ -40,16 +40,16 @@ for _path in (str(SCRIPT_DIR), str(SCRIPTS_ROOT), str(PROJECT_ROOT)):
 
 from config import FotMobConfig
 from scripts.refresh_turnstile import refresh_if_needed
-from src.orchestrator import FotMobOrchestrator
-from src.services.telegram import (
+from src.fotmob.orchestration import FotMobOrchestrator
+from src.integrations.telegram import (
     DailyReportData,
     ErrorAlertData,
     LayerAlertData,
     MonthlyReportData,
     TelegramClient,
 )
-from src.storage.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
-from src.utils.logging_utils import get_logger, setup_logging
+from src.fotmob.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
+from src.common.logging import get_logger, setup_logging
 from utils import (
     DateRangeInfo,
     create_date_range_info,

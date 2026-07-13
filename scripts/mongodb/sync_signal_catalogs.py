@@ -12,8 +12,8 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.utils.gold_databases import gold_signals_db
-from src.utils.logging_utils import get_logger, setup_logging
+from src.warehouse.databases import gold_signals_db
+from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
@@ -205,8 +205,8 @@ def sync_signals(catalog_dir: Path, dry_run: bool = False) -> Tuple[int, int]:
     mongo_client = None
     repository = None
     if not dry_run:
-        from src.storage.mongodb import get_mongodb_client
-        from src.storage.mongodb.repositories import SignalsRepository
+        from src.integrations.mongodb import get_mongodb_client
+        from src.integrations.mongodb.repositories import SignalsRepository
 
         mongo_client = get_mongodb_client()
         if not mongo_client.connect():

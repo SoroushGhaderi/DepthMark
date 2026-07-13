@@ -2,13 +2,13 @@
 
 ## Status
 
-Accepted
+Superseded by ADR 0021
 
 ## Context
 
 The codebase contains generic-looking abstractions: `BaseBronzeStorage` ABC with
 abstract `scraper_name`/`source_name` properties, a `--skip-fotmob` pipeline
-flag, and FotMob-specific classes namespaced under `src/scrapers/fotmob/`. The
+flag, and FotMob-specific classes namespaced under `src/fotmob/`. The
 architecture docs already state "DepthMark is a FotMob-only medallion pipeline,"
 but the abstract base class implies a provider plugin surface.
 

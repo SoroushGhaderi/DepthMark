@@ -12,7 +12,7 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from scripts.quality.check_data_quality import main as unified_main
-from src.services.data_quality import reconciliation_check_names
+from src.warehouse.quality import reconciliation_check_names
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:

@@ -9,7 +9,7 @@ This directory contains runtime assets for Gold signal execution.
 - Activation builders live under `scripts/gold/activations/`
 
 Signal SQL jobs are discovered and executed through `scripts/gold/run_gold_sql_jobs.py`
-and shared helpers in `src/services/gold/gold_dml_runner.py`.
+and shared helpers in `src/fotmob/gold/dml_runner.py`.
 
 ## Signal Activation Serving Store
 

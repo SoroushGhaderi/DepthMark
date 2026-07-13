@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from pathlib import Path
 
-from src.services.oddspedia.match_resolution import (
+from src.oddspedia.silver.match_resolution import (
     FotMobMatch,
     OddspediaEvent,
     OddspediaMatchResolver,

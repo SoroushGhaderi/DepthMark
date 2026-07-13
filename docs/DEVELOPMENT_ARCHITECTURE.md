@@ -41,6 +41,35 @@ Oddspedia
    `gold_scenarios.*`, `gold_signals.*`, or shared Gold metadata tables in
    `gold.*`.
 
+## Source Module Ownership
+
+Source-specific code lives under its source package; reusable infrastructure is
+grouped by its explicit responsibility:
+
+```text
+src/
+  fotmob/
+    scraping/             FotMob API adapters
+    bronze/               storage, processing, loading, and S3 synchronization
+    silver/               FotMob Silver workflow coordination
+    gold/                 FotMob Gold workflow coordination
+  oddspedia/
+    scraping/             Oddspedia browser collection and source contracts
+    bronze/               Oddspedia artifact loading
+    silver/               Oddspedia-to-FotMob resolution
+  warehouse/              scopes, staged replacement, contracts, and quality checks
+  integrations/           ClickHouse, MongoDB, S3, and Telegram adapters
+  common/                 dependency-light logging, date, metrics, and validation helpers
+  operations/             health checks and operational workflows
+```
+
+The source packages are intentionally not a provider framework. Each source
+owns its distinct contracts and supported warehouse stages: FotMob continues
+through Gold, while Oddspedia currently owns Bronze facts and its explicit
+Silver relationship to the canonical FotMob fixture. New code must import from
+the source package or the named shared boundary; `src/services`, `src/storage`,
+`src/processors`, `src/scrapers`, and `src/utils` are not part of the layout.
+
 For the shared source-artifact hierarchy, current-date Live behavior, and
 legacy Oddspedia layout note, see
 [`data-flow/source-artifact-storage.md`](data-flow/source-artifact-storage.md).
@@ -321,7 +350,7 @@ Current Gold inventory:
 
 Gold SQL jobs are executed through the generic runner in
 `scripts/gold/run_gold_sql_jobs.py` and shared helpers in
-`src/services/gold/gold_dml_runner.py`. Do not add handwritten per-signal or
+`src/fotmob/gold/dml_runner.py`. Do not add handwritten per-signal or
 per-scenario runner files. Omit `--kind` to run all scenario and signal SQL jobs
 through the generic runner, or use `--kind scenario` / `--kind signal` to select
 one Gold output kind. Jobs can be selected exactly by `--id`; signal jobs can
@@ -332,33 +361,30 @@ combine `--entity` and `--family`; treat them as separate signal batch selectors
 
 ```text
 src/
-  services/bronze/        Bronze loading and independent S3 sync services
-  services/clickhouse_scoped_replace.py  staged derived-table replacement
-  services/gold/          Gold application service and shared SQL job helpers
-  services/silver/        Silver application service
-  services/warehouse_scope.py  validated date/month/full-history scopes
-  scrapers/fotmob/        FotMob API fetchers and request behavior
-  processors/bronze/      Bronze transformation wiring
-  storage/bronze/         Bronze persistence
-  storage/s3_client.py    Low-level S3-compatible object operations
-  storage/mongodb/        content catalog client/repositories
-  utils/                  logging, contracts, alerts, metrics, health checks
+  fotmob/                 FotMob scraping and Bronze/Silver/Gold workflows
+  oddspedia/              Oddspedia scraping and Bronze/Silver workflows
+  warehouse/              scopes, staged replacement, contracts, and quality checks
+  integrations/           external-system adapters
+  common/                 dependency-light shared helpers
+  operations/             health and other operational workflows
+  core/                   stable application interfaces and exceptions
+  models/                 football data models
 scripts/                  operational CLI entry points
 ```
 
 Scripts remain the documented operational boundary, but reusable workflow
-coordination lives in layer-specific application services under `src/services/`
-behind the same CLI entry points. Scripts keep CLI parsing, environment
-bootstrap, command compatibility, and exit-code translation. Application
-services may coordinate SQL discovery/execution, client setup, contract checks,
-validation, alerts, and deterministic summaries. They must not become a home for
-Silver or Gold analytical logic, which remains in ClickHouse SQL.
+coordination lives in source packages and `src/warehouse/` behind the same CLI
+entry points. Scripts keep CLI parsing, environment bootstrap, command
+compatibility, and exit-code translation. These modules may coordinate SQL
+discovery/execution, client setup, contract checks, validation, alerts, and
+deterministic summaries. They must not become a home for Silver or Gold
+analytical logic, which remains in ClickHouse SQL.
 
 Scoped derived loads share this function flow:
 
 1. CLI parsers call `execution_scope_from_args()` to create a required
    `WarehouseExecutionScope`.
-2. Silver and Gold services convert SQL files into `ScopedSqlJob` values with a
+2. Silver and Gold workflow modules convert SQL files into `ScopedSqlJob` values with a
    target table and match-date expression.
 3. `ScopedReplacementBatch.run()` stages all selected jobs before any commit.
 4. `_prepare()` redirects each `INSERT INTO` to a calculation table, builds the
@@ -484,7 +510,7 @@ one activation row.
 
 ## Operational Guarantees
 
-1. Bronze loading includes DLQ fallback via `src/storage/dlq.py` for failed
+1. Bronze loading includes DLQ fallback via `src/fotmob/bronze/dead_letter.py` for failed
    inserts and replay context.
 2. Layer contracts are enforced at runtime by the Bronze, Silver, and Gold
    contract assertions.
@@ -513,8 +539,8 @@ one activation row.
 1. SQL contains transformation and business logic; Python handles orchestration,
    execution, and reporting.
 2. SQL files should be deterministic and rerunnable.
-3. Stable application services under `src/` sit behind script entry points and
-   preserve the existing command surface.
+3. Stable source and warehouse workflow modules under `src/` sit behind script
+   entry points and preserve the existing command surface.
 4. Keep naming stable: Silver SQL uses `NN_<entity>.sql`, Gold scenarios use
    `scenario_<name>.sql`, and Gold signals use `sig_<name>.sql`.
    Gold signal table DDL files use

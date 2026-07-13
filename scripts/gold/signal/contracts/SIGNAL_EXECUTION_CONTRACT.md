@@ -17,7 +17,7 @@ This contract applies to:
 - `clickhouse/gold/ddl/signals/{match,team,player}/create_table_{entity}_{family}_{subfamily}.sql` (or active signal DDL set)
 - `clickhouse/gold/dml/signals/*/sig_*.sql`
 - `scripts/gold/run_gold_sql_jobs.py`
-- `src/services/gold/gold_dml_runner.py`
+- `src/fotmob/gold/dml_runner.py`
 - `scripts/gold/load_clickhouse_gold.py`
 - cross-asset wiring among SQL, table, and catalog files
 

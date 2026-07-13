@@ -32,7 +32,7 @@ DepthMark has a clear medallion architecture with isolated FotMob and Oddspedia 
 
 ### P2 (This quarter)
 
-6. **`SELECT *` still appears in production Gold SQL** — `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql:104-130` uses `SELECT * FROM (...)` in a scheduled Gold query, and the same pattern exists in other Gold SQL and helper code such as `src/services/data_quality.py:381-384`. This is readable in small cases, but it makes column intent opaque and can turn into a wide scan / maintenance problem as queries grow.
+6. **`SELECT *` still appears in production Gold SQL** — `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql:104-130` uses `SELECT * FROM (...)` in a scheduled Gold query, and the same pattern exists in other Gold SQL and helper code such as `src/warehouse/quality.py:381-384`. This is readable in small cases, but it makes column intent opaque and can turn into a wide scan / maintenance problem as queries grow.
    - Status: **Open**.
 
 ### P3 (Nice to have)

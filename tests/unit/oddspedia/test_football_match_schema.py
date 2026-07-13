@@ -10,7 +10,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from src.oddspedia.match_scraper import (
+from src.oddspedia.scraping.match_scraper import (
     _JS_EXTRACT_ODDS,
     _JS_FOOTBALL_MARKET_SELECTOR_TEXTS,
     FootballOddsUnavailableError,
@@ -25,7 +25,7 @@ from src.oddspedia.match_scraper import (
     _extract_football_odds,
     scrape_match,
 )
-from src.oddspedia.utils import load_json, save_json
+from src.oddspedia.scraping.utils import load_json, save_json
 
 
 class _FootballDriver:
@@ -67,13 +67,13 @@ class _FootballDriver:
 
 
 class FootballMatchSchemaTests(unittest.TestCase):
-    @patch("src.oddspedia.match_scraper.now_iso", return_value="2026-07-09T12:00:00Z")
-    @patch("src.oddspedia.match_scraper._extract_live_odds", side_effect=AssertionError("football must not scrape live odds"))
-    @patch("src.oddspedia.match_scraper._extract_overall_stats")
-    @patch("src.oddspedia.match_scraper._expand_all_odds_lines", return_value=1)
-    @patch("src.oddspedia.match_scraper._scroll_page")
-    @patch("src.oddspedia.match_scraper.safe_get", return_value=True)
-    @patch("src.oddspedia.match_scraper.time.sleep", return_value=None)
+    @patch("src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-07-09T12:00:00Z")
+    @patch("src.oddspedia.scraping.match_scraper._extract_live_odds", side_effect=AssertionError("football must not scrape live odds"))
+    @patch("src.oddspedia.scraping.match_scraper._extract_overall_stats")
+    @patch("src.oddspedia.scraping.match_scraper._expand_all_odds_lines", return_value=1)
+    @patch("src.oddspedia.scraping.match_scraper._scroll_page")
+    @patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper.time.sleep", return_value=None)
     def test_football_match_uses_football_schema_and_live_stats(
         self,
         _sleep,
@@ -160,14 +160,14 @@ class FootballMatchSchemaTests(unittest.TestCase):
                     result.update(home_score="", away_score="", winner="")
                 return result
 
-        with patch("src.oddspedia.match_scraper.safe_get", return_value=True), \
-             patch("src.oddspedia.match_scraper._scroll_page"), \
-             patch("src.oddspedia.match_scraper._expand_football_market_list"), \
-             patch("src.oddspedia.match_scraper._expand_football_market_cards"), \
-             patch("src.oddspedia.match_scraper._extract_football_odds", return_value=[]), \
-             patch("src.oddspedia.match_scraper._extract_overall_stats", return_value={"tabs": []}), \
-             patch("src.oddspedia.match_scraper._football_score_from_dom", return_value=None), \
-             patch("src.oddspedia.match_scraper.time.sleep"):
+        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), \
+             patch("src.oddspedia.scraping.match_scraper._scroll_page"), \
+             patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"), \
+             patch("src.oddspedia.scraping.match_scraper._expand_football_market_cards"), \
+             patch("src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]), \
+             patch("src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}), \
+             patch("src.oddspedia.scraping.match_scraper._football_score_from_dom", return_value=None), \
+             patch("src.oddspedia.scraping.match_scraper.time.sleep"):
             with self.assertRaises(FootballScoreUnavailableError):
                 scrape_match(
                     BlankScoreDriver(),
@@ -283,7 +283,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertIn("return {dir: 'outcome', outcome: explicitLabel, val: val};", _JS_EXTRACT_ODDS)
 
     def test_market_selector_clicks_the_specific_control(self):
-        from src.oddspedia.match_scraper import _click_football_market_selector
+        from src.oddspedia.scraping.match_scraper import _click_football_market_selector
 
         # The callable's script is intentionally kept outside the test driver;
         # this guards against reintroducing broad market/filter ancestors.
@@ -299,7 +299,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertNotIn("[class*=\"market\"], [class*=\"filter\"]", driver.script)
 
     def test_market_selector_uses_native_click(self):
-        from src.oddspedia.match_scraper import _click_football_market_selector
+        from src.oddspedia.scraping.match_scraper import _click_football_market_selector
 
         class Clickable:
             def __init__(self):
@@ -321,9 +321,9 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertTrue(_click_football_market_selector(driver, "Correct Score"))
         self.assertTrue(driver.element.clicked)
 
-    @patch("src.oddspedia.match_scraper._current_odds_dom_signature", return_value="before")
-    @patch("src.oddspedia.match_scraper._click_football_market_selector", return_value=True)
-    @patch("src.oddspedia.match_scraper._wait_for_football_market_odds", return_value=[])
+    @patch("src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before")
+    @patch("src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_odds", return_value=[])
     def test_all_unresolved_exposed_markets_are_terminally_unavailable(
         self, _wait, _click, _signature
     ):
@@ -336,8 +336,8 @@ class FootballMatchSchemaTests(unittest.TestCase):
         with self.assertRaisesRegex(FootballOddsUnavailableError, "Double Chance"):
             _extract_football_odds(Driver(), [], home="Spain", away="Austria")
 
-    @patch("src.oddspedia.match_scraper._wait_for_football_market_card", return_value=True)
-    @patch("src.oddspedia.match_scraper._click_football_market_card", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_card", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._click_football_market_card", return_value=True)
     def test_collapsed_football_cards_are_expanded_before_parsing(self, click_card, wait_card):
         class Driver:
             def execute_script(self, script, *_args):
@@ -371,7 +371,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertTrue(driver.button.clicked)
 
     def test_football_market_list_expansion_uses_one_scoped_control(self):
-        from src.oddspedia.match_scraper import _expand_football_market_list
+        from src.oddspedia.scraping.match_scraper import _expand_football_market_list
 
         class Button:
             def __init__(self):
@@ -399,9 +399,9 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertEqual(expanded, 18)
         self.assertTrue(driver.button.clicked)
 
-    @patch("src.oddspedia.match_scraper._expand_football_market_card_lines", return_value=1)
-    @patch("src.oddspedia.match_scraper._wait_for_football_market_card", return_value=True)
-    @patch("src.oddspedia.match_scraper._click_football_market_card", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=1)
+    @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_card", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._click_football_market_card", return_value=True)
     def test_european_handicap_card_expands_its_alternative_lines(
         self, click_card, wait_card, expand_lines
     ):
@@ -415,10 +415,10 @@ class FootballMatchSchemaTests(unittest.TestCase):
         wait_card.assert_called_once_with(unittest.mock.ANY, "European Handicap")
         expand_lines.assert_called_once_with(unittest.mock.ANY, "European Handicap")
 
-    @patch("src.oddspedia.match_scraper._expand_football_market_card_lines", return_value=0)
-    @patch("src.oddspedia.match_scraper._wait_for_football_market_odds")
-    @patch("src.oddspedia.match_scraper._click_football_market_selector", return_value=True)
-    @patch("src.oddspedia.match_scraper._current_odds_dom_signature", return_value="before")
+    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0)
+    @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_odds")
+    @patch("src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before")
     def test_captured_european_handicap_is_not_clicked_as_a_selector(
         self, _signature, _click, wait_for_market, _expand_lines
     ):
@@ -449,10 +449,10 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         self.assertEqual(normalized[0]["lines"], fixture["expanded"][0]["lines"])
 
-    @patch("src.oddspedia.match_scraper._expand_football_market_card_lines", return_value=0)
-    @patch("src.oddspedia.match_scraper._wait_for_football_market_odds")
-    @patch("src.oddspedia.match_scraper._click_football_market_selector", return_value=True)
-    @patch("src.oddspedia.match_scraper._current_odds_dom_signature", return_value="before")
+    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0)
+    @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_odds")
+    @patch("src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before")
     def test_unlabeled_european_handicap_is_skipped_without_retrying_match(
         self, _signature, _click, wait_for_market, _expand_lines
     ):

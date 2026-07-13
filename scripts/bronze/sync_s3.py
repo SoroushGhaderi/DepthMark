@@ -23,10 +23,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from config import FotMobConfig
 from scripts.utils import generate_date_range, generate_month_dates, validate_date_format
-from src.services.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
-from src.storage import S3Client, S3ConfigurationError
-from src.storage.bronze.paths import get_fotmob_historical_path
-from src.utils.logging_utils import configure_logging, get_logger
+from src.fotmob.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
+from src.integrations.s3 import S3Client, S3ConfigurationError
+from src.fotmob.bronze.paths import get_fotmob_historical_path
+from src.common.logging import configure_logging, get_logger
 
 logger = get_logger(__name__)
 

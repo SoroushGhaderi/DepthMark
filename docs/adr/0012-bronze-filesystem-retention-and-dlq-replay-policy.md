@@ -10,7 +10,8 @@ Bronze is the only filesystem-backed data layer in DepthMark. Completed-date
 FotMob API payloads are stored under `data/fotmob/historical/` as match JSON
 files, daily listings, and compressed tar archives. Refreshable current-date
 snapshots are stored uncompressed under `data/fotmob/live/`. Failed ClickHouse
-insertions are written to `data/dlq/` as JSONL files by `src/storage/dlq.py`.
+insertions are written to `data/dlq/` as JSONL files by
+`src/fotmob/bronze/dead_letter.py`.
 
 Neither layer has a documented retention or cleanup policy. Files accumulate
 indefinitely. The DLQ class docstring claims "replay" capability, but no
@@ -68,7 +69,7 @@ cat data/dlq/player_20260115.jsonl | python3 -m json.tool
 
 # Get DLQ statistics
 python3 -c "
-from src.storage.dlq import DeadLetterQueue
+from src.fotmob.bronze.dead_letter import DeadLetterQueue
 dlq = DeadLetterQueue()
 stats = dlq.get_dlq_stats()
 print(f'Total files: {stats[\"total_files\"]}')

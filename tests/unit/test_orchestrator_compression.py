@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from src.core import OrchestratorError
-from src.orchestrator import FotMobOrchestrator
+from src.fotmob.orchestration import FotMobOrchestrator
 
 
 def build_orchestrator(compression_status: str = "success") -> FotMobOrchestrator:

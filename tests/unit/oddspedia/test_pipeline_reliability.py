@@ -12,13 +12,13 @@ if SRC not in sys.path:
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
-from src.oddspedia import cli as main
-from src.oddspedia.metrics import Metrics
-from src.oddspedia.manifest import ScrapeManifest
-from src.oddspedia.match_collector import DiscoveryResult
-from src.oddspedia.match_scraper import FootballOddsCoverageError
-from src.oddspedia.progress import TerminalOutcomeCheckpoint
-from src.oddspedia.utils import DataValidationError, save_json
+from src.oddspedia.scraping import cli as main
+from src.oddspedia.scraping.metrics import Metrics
+from src.oddspedia.scraping.manifest import ScrapeManifest
+from src.oddspedia.scraping.match_collector import DiscoveryResult
+from src.oddspedia.scraping.match_scraper import FootballOddsCoverageError
+from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
+from src.oddspedia.scraping.utils import DataValidationError, save_json
 from selenium.common.exceptions import InvalidSessionIdException, WebDriverException
 
 
@@ -68,10 +68,10 @@ class PipelineReliabilityTests(unittest.TestCase):
         self.assertEqual(restored.discovery["observed_pages"], 5)
         self.assertIn("next_attempt_at", restored.discovery)
 
-    @patch("src.oddspedia.cli._record_discovery")
-    @patch("src.oddspedia.cli.save_json")
-    @patch("src.oddspedia.cli.collect_match_links")
-    @patch("src.oddspedia.cli.os.path.exists", return_value=False)
+    @patch("src.oddspedia.scraping.cli._record_discovery")
+    @patch("src.oddspedia.scraping.cli.save_json")
+    @patch("src.oddspedia.scraping.cli.collect_match_links")
+    @patch("src.oddspedia.scraping.cli.os.path.exists", return_value=False)
     def test_phase1_persists_discovery_maps_as_match_link_lists(
         self, _exists, collect, save, _record
     ):
@@ -157,7 +157,7 @@ class PipelineReliabilityTests(unittest.TestCase):
             for _ in range(main.CIRCUIT_BREAKER_FAILURES_BEFORE_PAUSE):
                 breaker.record_failure()
 
-        with patch("src.oddspedia.cli.time.sleep", side_effect=cooldown_with_concurrent_failures):
+        with patch("src.oddspedia.scraping.cli.time.sleep", side_effect=cooldown_with_concurrent_failures):
             for _ in range(main.CIRCUIT_BREAKER_FAILURES_BEFORE_PAUSE):
                 breaker.record_failure()
 
@@ -187,8 +187,8 @@ class PipelineReliabilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             manifest_path = os.path.join(directory, "manifest.json")
             manifest = ScrapeManifest(date="2026-07-06", sport="football", total=1)
-            with patch("src.oddspedia.manifest.get_manifest_path", return_value=manifest_path):
-                from src.oddspedia.manifest import save_manifest
+            with patch("src.oddspedia.scraping.manifest.get_manifest_path", return_value=manifest_path):
+                from src.oddspedia.scraping.manifest import save_manifest
 
                 save_manifest(manifest)
                 checkpoint = TerminalOutcomeCheckpoint("2026-07-06", "football", metrics)

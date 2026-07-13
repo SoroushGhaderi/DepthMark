@@ -86,7 +86,7 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 - Silver and Gold are ClickHouse-only layers.
 - Keep source fidelity in Bronze; standardize keys and types in Silver; materialize business-facing outputs in Gold.
 - SQL should hold transformation and business logic. Python should orchestrate, execute, validate, and report.
-- Stable application services may live under `src/services/` behind script entry points to coordinate reusable workflows, but they must not own Silver or Gold analytical logic.
+- Stable source-owned or warehouse workflow modules may sit behind script entry points to coordinate reusable workflows, but they must not own Silver or Gold analytical logic.
 - Use schema-qualified ClickHouse table names: `bronze.*`, `oddspedia_bronze.*`, `silver.*`,
   `gold_scenarios.*`, `gold_signals.*`, and Gold metadata tables in `gold.*`.
 - Keep SQL deterministic and rerunnable.
@@ -111,7 +111,7 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 
 ## Scripts Contract
 
-For files under `scripts/`, script-oriented helpers under `src/`, and application-service code under `src/services/` behind script entry points, follow `docs/SCRIPTS_CONTRACT.md`.
+For files under `scripts/`, script-oriented helpers under `src/`, and source or warehouse workflow modules behind script entry points, follow `docs/SCRIPTS_CONTRACT.md`.
 
 - Keep CLI parsing, execution, reporting, and shared helpers separated.
 - Keep script entry points thin and backward-compatible when extracting reusable workflow coordination into `src/`.

@@ -109,7 +109,7 @@ Processing chain:
 1. `FotMobBronzeMatchProcessor` extracts 14 entity DataFrames from raw JSON.
 2. Uses Pydantic models + `SafeFieldExtractor` for safe nested access.
 3. `ClickHouseClient` performs upsert inserts with allowlisted tables.
-4. Failed inserts go to DLQ (`data/dlq/`) via `src/storage/dlq.py`.
+4. Failed inserts go to DLQ (`data/dlq/`) via `src/fotmob/bronze/dead_letter.py`.
 
 CLI arguments:
 ```bash
@@ -159,7 +159,7 @@ See `CONTEXT.md` for the DLQ Replay glossary entry.
 
 ## Contracts
 
-- `assert_bronze_dataframe_contract()` in `src/utils/layer_contracts.py`
+- `assert_bronze_dataframe_contract()` in `src/warehouse/contracts.py`
   validates DataFrame shapes before ClickHouse insertion.
 - Bronze preserves source fidelity — no type casting or key standardization.
 

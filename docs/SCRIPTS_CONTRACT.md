@@ -40,14 +40,14 @@ stability rules in DepthMark. The canonical command list lives in
 1. Scripts are the documented operational command surface.
 2. Scripts own CLI parsing, `.env` loading, import-path bootstrap, help text,
    backward-compatible arguments, dry-run flags, and process exit codes.
-3. Reusable workflow coordination may live in stable layer-specific application
-   services under `src/`.
-4. Application services may coordinate SQL discovery and execution, client
+3. Reusable workflow coordination may live in stable source-specific or
+   warehouse modules under `src/`.
+4. These workflow modules may coordinate SQL discovery and execution, client
    setup, contract checks, validation, alerts, reports, and deterministic
    summaries.
-5. Application services must not contain reusable Silver or Gold analytical
+5. Workflow modules must not contain reusable Silver or Gold analytical
    logic; those transformations belong in ClickHouse SQL.
-6. Refactors that introduce application services must preserve the script entry
+6. Refactors that introduce workflow modules must preserve the script entry
    point and CLI behavior unless a breaking change is explicitly requested and
    documented.
 

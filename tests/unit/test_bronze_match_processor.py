@@ -1,4 +1,4 @@
-from src.processors.bronze.match_processor import FotMobBronzeMatchProcessor
+from src.fotmob.bronze.match_processor import FotMobBronzeMatchProcessor
 
 
 def test_processor_initialization_does_not_create_validated_response_directory(
