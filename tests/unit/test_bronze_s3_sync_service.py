@@ -16,6 +16,7 @@ class FakeS3Client:
     """In-memory object store implementing the service-facing S3 interface."""
 
     def __init__(self) -> None:
+        self.bucket_name = "scout-sport"
         self.objects: Dict[str, bytes] = {}
         self.metadata: Dict[str, Dict] = {}
         self.upload_calls: List[str] = []
@@ -75,6 +76,7 @@ def test_upload_includes_matches_and_daily_listing(tmp_path: Path) -> None:
     result = service.upload_date("20251208")
 
     assert result.status == "uploaded"
+    assert result.key == "scout-sport/bronze/fotmob/202512/20251208.tar.gz"
     assert result.sha256 == hashlib.sha256(client.objects[result.key]).hexdigest()
     with tarfile.open(fileobj=io.BytesIO(client.objects[result.key]), mode="r:gz") as archive:
         names = archive.getnames()
@@ -133,6 +135,23 @@ def test_download_restores_new_archive_and_checks_checksum(tmp_path: Path) -> No
     assert result.status == "downloaded"
     assert (bronze_path / "matches" / "202512" / "20251208" / "match_101.json").exists()
     assert (bronze_path / "daily_listings" / "202512" / "20251208" / "matches.json").exists()
+
+
+def test_download_supports_bucket_prefixed_legacy_object_key(tmp_path: Path) -> None:
+    client = FakeS3Client()
+    key = "scout-sport/bronze/fotmob/202512/20251208.tar.gz"
+    payload = archive_bytes(
+        {
+            "matches/202512/20251208/match_101.json": b'{"id": 101}',
+            "daily_listings/202512/20251208/matches.json": b'{"match_ids": [101]}',
+        }
+    )
+    client.objects[key] = payload
+    client.metadata[key] = {"Metadata": {}}
+
+    result = BronzeS3Service(tmp_path / "fotmob", client).download_date("20251208")
+
+    assert result.key == key
 
 
 def test_download_rejects_checksum_mismatch_without_local_mutation(tmp_path: Path) -> None:
@@ -201,12 +220,13 @@ def test_remote_date_listing_ignores_unrelated_keys(tmp_path: Path) -> None:
     client = FakeS3Client()
     client.objects = {
         "bronze/fotmob/202512/20251208.tar.gz": b"archive",
+        "scout-sport/bronze/fotmob/202512/20251209.tar.gz": b"legacy archive",
         "bronze/fotmob/not-a-date.txt": b"ignore",
         "bronze/other/202512/20251209.tar.gz": b"ignore",
     }
     service = BronzeS3Service(tmp_path / "fotmob", client)
 
-    assert service.list_remote_dates() == ["20251208"]
+    assert service.list_remote_dates() == ["20251208", "20251209"]
 
 
 def test_object_key_rejects_invalid_calendar_date() -> None:

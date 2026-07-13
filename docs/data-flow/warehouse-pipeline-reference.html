@@ -1181,6 +1181,26 @@
         <div class="stat-card"><div class="number">5</div><div class="label">MongoDB collections</div></div>
     </div>
 
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Python source ownership</h3>
+            <div class="subtitle">Source domains own their workflows; shared modules own warehouse mechanics and external adapters</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Module</th><th>Owns</th><th>Key paths</th></tr></thead>
+            <tbody>
+                <tr><td>FotMob domain</td><td>API scraping, Bronze loading and archives, canonical Silver, and Gold execution</td><td><code>src/fotmob/scraping/</code>, <code>src/fotmob/bronze/</code>, <code>src/fotmob/silver/</code>, <code>src/fotmob/gold/</code></td></tr>
+                <tr><td>Oddspedia domain</td><td>Browser scraping, isolated raw loading, and audited fixture resolution</td><td><code>src/oddspedia/scraping/</code>, <code>src/oddspedia/bronze/</code>, <code>src/oddspedia/silver/</code></td></tr>
+                <tr><td>Warehouse shared</td><td>Execution scopes, staged replacement, layer contracts, quality checks, and database naming</td><td><code>src/warehouse/</code></td></tr>
+                <tr><td>Shared adapters</td><td>ClickHouse, MongoDB, S3, Telegram, logging, dates, and operational health checks</td><td><code>src/integrations/</code>, <code>src/common/</code>, <code>src/operations/</code></td></tr>
+            </tbody>
+        </table>
+        <div class="callout note" style="margin-top:1rem">
+            <span class="callout-icon">📁</span>
+            <span>There is no generic provider layer: FotMob and Oddspedia remain explicit, isolated source domains. Script entry points stay under <code>scripts/</code>; they coordinate these modules without owning analytical SQL.</span>
+        </div>
+    </div>
+
     <div class="principles">
         <div class="principle">
             <div class="eyebrow">Boundary 1</div>
@@ -2691,7 +2711,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['scrape_fotmob.py', 'scrape_fotmob', '1. scrape', 'dailyscraper', 'matchscraper'],
             title: 'Bronze scrape (FotMob → disk)',
-            scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py'],
+            scripts: ['scripts/bronze/scrape_fotmob.py', 'src/fotmob/orchestration.py', 'src/fotmob/scraping/'],
             commands: [
                 'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
                 'python3 scripts/bronze/scrape_fotmob.py --yesterday',
@@ -2725,6 +2745,9 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'scripts/oddspedia/setup_clickhouse.py',
                 'scripts/oddspedia/load_clickhouse.py',
                 'scripts/oddspedia/resolve_matches.py',
+                'src/oddspedia/scraping/',
+                'src/oddspedia/bronze/loader.py',
+                'src/oddspedia/silver/match_resolution.py',
             ],
             commands: [
                 'python3 scripts/oddspedia/football.py run --date 20260301',
@@ -2738,7 +2761,11 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['silver/load_clickhouse', '3. silver', 'silverservice'],
             title: 'Silver scoped staged replacement',
-            scripts: ['scripts/silver/load_clickhouse.py', 'src/services/silver/fotmob_silver_service.py'],
+            scripts: [
+                'scripts/silver/load_clickhouse.py',
+                'src/fotmob/silver/service.py',
+                'src/warehouse/scoped_replace.py',
+            ],
             sql: ['clickhouse/silver/dml/'],
             commands: [
                 'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
@@ -2749,7 +2776,11 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['gold/load_clickhouse_gold', '4. gold', 'load_clickhouse_gold.py'],
             title: 'Gold load (scenarios + signals + activations)',
-            scripts: ['scripts/gold/load_clickhouse_gold.py'],
+            scripts: [
+                'scripts/gold/load_clickhouse_gold.py',
+                'src/fotmob/gold/service.py',
+                'src/warehouse/scoped_replace.py',
+            ],
             commands: [
                 'python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run',
                 'python3 scripts/gold/load_clickhouse_gold.py --full-history',
@@ -2761,7 +2792,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['run_gold_sql_jobs.py', 'goldsqljob', 'scenario_*.sql', 'sig_*.sql', '4a. scenario', '4b. signal'],
             title: 'Single Gold SQL job runner',
-            scripts: ['scripts/gold/run_gold_sql_jobs.py', 'src/services/gold/gold_dml_runner.py'],
+            scripts: ['scripts/gold/run_gold_sql_jobs.py', 'src/fotmob/gold/dml_runner.py'],
             commands: [
                 'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id <scenario_id>',
                 'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id <signal_id>',
@@ -2805,7 +2836,11 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['check_data_quality', 'check_bronze_to_silver', 'reconciliation', 'bronze→silver', 'duplicate identities'],
             title: 'Unified warehouse data quality',
-            scripts: ['scripts/quality/check_data_quality.py', 'scripts/quality/check_bronze_to_silver_reconciliation.py'],
+            scripts: [
+                'scripts/quality/check_data_quality.py',
+                'scripts/quality/check_bronze_to_silver_reconciliation.py',
+                'src/warehouse/quality.py',
+            ],
             commands: [
                 'python3 scripts/quality/check_data_quality.py --date 20251208 --strict',
                 'python3 scripts/quality/check_data_quality.py --month 202512 --strict',
@@ -2835,7 +2870,11 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['assert_bronze_dataframe_contract', 'bronze contract', 'fotmobbronze'],
             title: 'Bronze contract assertion (runtime)',
-            scripts: ['scripts/bronze/load_clickhouse.py', 'src/processors/bronze/'],
+            scripts: [
+                'scripts/bronze/load_clickhouse.py',
+                'src/fotmob/bronze/match_processor.py',
+                'src/warehouse/contracts.py',
+            ],
             commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
             note: 'Contract runs automatically during bronze load — not a standalone CLI.',
             sectionTab: 'bronze',
@@ -2843,7 +2882,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['assert_silver_layer_contracts', 'silver contract'],
             title: 'Silver contract assertion (runtime)',
-            scripts: ['scripts/silver/load_clickhouse.py'],
+            scripts: ['scripts/silver/load_clickhouse.py', 'src/warehouse/contracts.py'],
             commands: ['python3 scripts/silver/load_clickhouse.py --full-history'],
             note: 'Contract runs automatically after Silver DML scripts complete.',
             sectionTab: 'silver',
@@ -2851,7 +2890,12 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['fotmob api', 'fotmoborchestrator', 'ingest'],
             title: 'FotMob ingest (API → raw JSON)',
-            scripts: ['scripts/bronze/scrape_fotmob.py', 'src/orchestrator.py', 'scripts/refresh_turnstile.py'],
+            scripts: [
+                'scripts/bronze/scrape_fotmob.py',
+                'src/fotmob/orchestration.py',
+                'src/fotmob/scraping/',
+                'scripts/refresh_turnstile.py',
+            ],
             commands: [
                 'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
                 'python3 scripts/bronze/scrape_fotmob.py --today',
@@ -2862,7 +2906,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['sync_s3.py', 'bronzes3service', 's3client', 's3-compatible storage', 'bronze/fotmob/yyyymm'],
             title: 'Standalone Bronze S3 archive sync',
-            scripts: ['scripts/bronze/sync_s3.py', 'src/services/bronze/s3_sync_service.py', 'src/storage/s3_client.py'],
+            scripts: ['scripts/bronze/sync_s3.py', 'src/fotmob/bronze/s3_sync.py', 'src/integrations/s3.py'],
             paths: ['bronze/fotmob/<YYYYMM>/<YYYYMMDD>.tar.gz'],
             commands: [
                 'python3 scripts/bronze/sync_s3.py upload --date <YYYYMMDD> --dry-run',
@@ -2890,7 +2934,12 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['fotmobbronze', 'pydantic', '14 entity', 'clickhouseclient.upsert'],
             title: 'Bronze parse & load pipeline',
-            scripts: ['scripts/bronze/load_clickhouse.py', 'src/processors/bronze/'],
+            scripts: [
+                'scripts/bronze/load_clickhouse.py',
+                'src/fotmob/bronze/match_processor.py',
+                'src/warehouse/contracts.py',
+                'src/integrations/clickhouse/client.py',
+            ],
             commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
             sectionTab: 'bronze',
         },

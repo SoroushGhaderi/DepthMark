@@ -13,7 +13,7 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Optional
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from dotenv import load_dotenv
 
@@ -23,10 +23,10 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from config import FotMobConfig
 from scripts.utils import generate_date_range, generate_month_dates, validate_date_format
-from src.fotmob.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
-from src.integrations.s3 import S3Client, S3ConfigurationError
-from src.fotmob.bronze.paths import get_fotmob_historical_path
 from src.common.logging import configure_logging, get_logger
+from src.fotmob.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
+from src.fotmob.bronze.paths import get_fotmob_historical_path
+from src.integrations.s3 import S3Client, S3ConfigurationError
 
 logger = get_logger(__name__)
 
@@ -145,12 +145,34 @@ def create_s3_client() -> S3Client:
             "Bronze S3 sync requires real endpoint, credentials, and a resolvable bucket." + detail
         )
 
-    return S3Client(endpoint, access_key, secret_key, bucket_name, region)
+    return S3Client(
+        _service_endpoint(endpoint, bucket_name), access_key, secret_key, bucket_name, region
+    )
 
 
 def _bucket_from_endpoint(endpoint: str) -> str:
     host = urlparse(endpoint).netloc
     return host.split(".s3.", 1)[0] if ".s3." in host else ""
+
+
+def _service_endpoint(endpoint: str, bucket_name: str) -> str:
+    """Convert a virtual-hosted bucket endpoint into its S3 service endpoint.
+
+    ``boto3`` uses path-style requests for custom endpoints by default. Leaving a
+    bucket name in a virtual-hosted endpoint therefore produces requests such as
+    ``https://bucket.s3.example/bucket/...``. Use the provider endpoint instead
+    and pass the bucket separately to keep the request target unambiguous.
+    """
+    parsed = urlparse(endpoint)
+    hostname = parsed.hostname or ""
+    virtual_host_prefix = f"{bucket_name}.s3."
+    if not hostname.startswith(virtual_host_prefix):
+        return endpoint
+
+    service_host = hostname[len(bucket_name) + 1 :]
+    if parsed.port:
+        service_host = f"{service_host}:{parsed.port}"
+    return urlunparse(parsed._replace(netloc=service_host))
 
 
 def resolve_dates(args: argparse.Namespace, service: BronzeS3Service) -> List[str]:

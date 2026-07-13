@@ -42,7 +42,7 @@ class S3Client:
             endpoint_url=endpoint,
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
-            config=BotoConfig(signature_version="s3v4"),
+            config=BotoConfig(signature_version="s3v4", s3={"addressing_style": "virtual"}),
             region_name=region,
         )
 
