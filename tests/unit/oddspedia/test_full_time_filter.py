@@ -9,7 +9,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from src.oddspedia.match_collector import (
+from src.oddspedia.scraping.match_collector import (
     _JS_SPORT_STATE,
     _fetch_all_matches,
     _is_full_time_match,
@@ -93,8 +93,8 @@ class FullTimeFilterTests(unittest.TestCase):
         self.assertEqual(match["league_name"], "Primera A Women")
         self.assertEqual(match["country"], "Argentina")
 
-    @patch("src.oddspedia.match_collector._extract_dom_links", return_value={})
-    @patch("src.oddspedia.match_collector.time.sleep", return_value=None)
+    @patch("src.oddspedia.scraping.match_collector._extract_dom_links", return_value={})
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
     def test_fetch_all_matches_continues_after_an_empty_page(self, _sleep, _dom_links):
         class Driver:
             def __init__(self):
@@ -122,8 +122,8 @@ class FullTimeFilterTests(unittest.TestCase):
 
         self.assertEqual(len(matches), 100)
 
-    @patch("src.oddspedia.match_collector._extract_dom_links", return_value={})
-    @patch("src.oddspedia.match_collector.time.sleep", return_value=None)
+    @patch("src.oddspedia.scraping.match_collector._extract_dom_links", return_value={})
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
     def test_fetch_result_marks_stalled_pagination_incomplete(self, _sleep, _dom_links):
         class Driver:
             def execute_script(self, script, *_args):
@@ -190,15 +190,15 @@ class FullTimeFilterTests(unittest.TestCase):
 
         self.assertEqual(_listing_status_token(match), "FT")
 
-    @patch("src.oddspedia.match_collector.time.sleep", return_value=None)
-    @patch("src.oddspedia.match_collector._build_urls")
-    @patch("src.oddspedia.match_collector._extract_dom_links")
-    @patch("src.oddspedia.match_collector._extract_matches_vuex")
-    @patch("src.oddspedia.match_collector._extract_matches_from_sports_events")
-    @patch("src.oddspedia.match_collector._fetch_all_matches")
-    @patch("src.oddspedia.match_collector._navigate_to_date", return_value=True)
-    @patch("src.oddspedia.match_collector._dismiss_cookie_popup")
-    @patch("src.oddspedia.match_collector.safe_get", return_value=True)
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    @patch("src.oddspedia.scraping.match_collector._build_urls")
+    @patch("src.oddspedia.scraping.match_collector._extract_dom_links")
+    @patch("src.oddspedia.scraping.match_collector._extract_matches_vuex")
+    @patch("src.oddspedia.scraping.match_collector._extract_matches_from_sports_events")
+    @patch("src.oddspedia.scraping.match_collector._fetch_all_matches")
+    @patch("src.oddspedia.scraping.match_collector._navigate_to_date", return_value=True)
+    @patch("src.oddspedia.scraping.match_collector._dismiss_cookie_popup")
+    @patch("src.oddspedia.scraping.match_collector.safe_get", return_value=True)
     def test_collect_match_links_keeps_all_matches_with_statuses(
         self,
         _safe_get,
@@ -247,15 +247,15 @@ class FullTimeFilterTests(unittest.TestCase):
         extract_vuex.assert_not_called()
         build_urls.assert_called_once()
 
-    @patch("src.oddspedia.match_collector.time.sleep", return_value=None)
-    @patch("src.oddspedia.match_collector._build_urls")
-    @patch("src.oddspedia.match_collector._extract_dom_links")
-    @patch("src.oddspedia.match_collector._extract_matches_vuex")
-    @patch("src.oddspedia.match_collector._extract_matches_from_sports_events")
-    @patch("src.oddspedia.match_collector._fetch_all_matches")
-    @patch("src.oddspedia.match_collector._navigate_to_date", return_value=True)
-    @patch("src.oddspedia.match_collector._dismiss_cookie_popup")
-    @patch("src.oddspedia.match_collector.safe_get", return_value=True)
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    @patch("src.oddspedia.scraping.match_collector._build_urls")
+    @patch("src.oddspedia.scraping.match_collector._extract_dom_links")
+    @patch("src.oddspedia.scraping.match_collector._extract_matches_vuex")
+    @patch("src.oddspedia.scraping.match_collector._extract_matches_from_sports_events")
+    @patch("src.oddspedia.scraping.match_collector._fetch_all_matches")
+    @patch("src.oddspedia.scraping.match_collector._navigate_to_date", return_value=True)
+    @patch("src.oddspedia.scraping.match_collector._dismiss_cookie_popup")
+    @patch("src.oddspedia.scraping.match_collector.safe_get", return_value=True)
     def test_collect_match_links_preserves_listing_metadata(
         self,
         _safe_get,

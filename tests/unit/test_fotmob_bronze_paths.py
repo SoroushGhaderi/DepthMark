@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from src.storage.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
+from src.fotmob.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
 
 
 def test_aspect_paths_are_derived_from_common_root(tmp_path: Path) -> None:

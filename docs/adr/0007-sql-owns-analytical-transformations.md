@@ -4,11 +4,18 @@
 
 Accepted
 
+> **Implementation note (2026-07-13):** This decision applies to both explicit
+> source domains. FotMob remains the canonical Silver and Gold analytical path;
+> Oddspedia has isolated Bronze facts and an audited Silver resolution, with no
+> generic provider framework.
+
 ## Context
 
-DepthMark is a FotMob-only medallion pipeline. Bronze stores raw FotMob payloads
-and raw ClickHouse tables, Silver conforms reusable analytical entities, and
-Gold materializes scenario, signal, and shared metadata outputs.
+DepthMark uses FotMob as the canonical medallion path. FotMob Bronze stores raw
+payloads and raw ClickHouse tables, Silver conforms reusable analytical
+entities, and Gold materializes scenario, signal, and shared metadata outputs.
+Oddspedia remains an isolated source domain rather than a second implementation
+of the FotMob analytical pipeline.
 
 The repository already keeps most Silver and Gold transformation logic in
 ClickHouse SQL under `clickhouse/`. Python scripts provide the operational
@@ -38,7 +45,7 @@ live in versioned ClickHouse SQL unless a later ADR grants a narrow exception.
 Python owns orchestration and validation around those transformations. Python is
 allowed to:
 
-- fetch FotMob data and preserve Bronze source fidelity;
+- fetch source data and preserve each source's Bronze fidelity;
 - normalize Bronze ingestion shape where needed to load raw payloads safely;
 - discover SQL files and resolve target databases or table names;
 - execute SQL, including dry-run planning and deterministic summaries;

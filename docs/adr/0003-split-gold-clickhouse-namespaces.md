@@ -46,7 +46,7 @@ matching the pattern already used by scenario SQL files. The runtime namespace
 rewriting in `scripts/gold/sql_jobs.py` becomes dead code after migration and
 must be removed.
 
-The helper functions in `src.utils.gold_databases` remain the canonical way for
+The helper functions in `src/warehouse/databases.py` remain the canonical way for
 Python code to resolve these database names.
 
 ## Consequences

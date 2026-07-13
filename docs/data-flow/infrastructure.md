@@ -194,8 +194,8 @@ Checks:
 
 ## Alerting
 
-`src/utils/alerting.py` provides `alert_health_check_failure()` for
-standardized alerts when health checks fail.
+`src/operations/health.py` coordinates standardized health-check failure
+notifications through the `src/integrations/telegram/` adapter.
 
 ## Bronze Storage
 

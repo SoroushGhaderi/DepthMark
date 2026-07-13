@@ -8,8 +8,8 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.storage.mongodb import ensure_content_catalog_indexes, get_mongodb_client
-from src.utils.logging_utils import get_logger, setup_logging
+from src.integrations.mongodb import ensure_content_catalog_indexes, get_mongodb_client
+from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 

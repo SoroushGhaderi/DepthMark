@@ -64,7 +64,7 @@ The scoped function flow is:
 
 ### 3. Contract Validation
 
-`assert_silver_layer_contracts()` in `src/utils/layer_contracts.py` checks:
+`assert_silver_layer_contracts()` in `src/warehouse/contracts.py` checks:
 - All 8 tables exist.
 - Required columns are present with correct types.
 - Row counts are non-zero after a full load.

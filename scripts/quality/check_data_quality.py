@@ -12,14 +12,14 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import get_settings
-from src.services.data_quality import (
+from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
     reconciliation_check_names,
 )
-from src.services.warehouse_scope import WarehouseExecutionScope
-from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.logging_utils import get_logger
+from src.warehouse.scope import WarehouseExecutionScope
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.common.logging import get_logger
 
 logger = get_logger(__name__)
 LAYERS = ("bronze", "silver", "gold")

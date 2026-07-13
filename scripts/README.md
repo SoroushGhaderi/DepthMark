@@ -5,8 +5,8 @@ For the project-wide command surface and runbook, use `../docs/DEVELOPMENT_ARCHI
 For script behavior rules, naming/style handwriting, function design, and update policy, use `../docs/SCRIPTS_CONTRACT.md`.
 
 Scripts are the supported operational entry points. They may delegate reusable
-workflow coordination to stable services under `src/`, but they must preserve
-their CLI behavior, dry-run semantics, and exit-code contract.
+workflow coordination to source-owned or warehouse modules under `src/`, but
+they must preserve their CLI behavior, dry-run semantics, and exit-code contract.
 
 ## Supported Entry Points
 
@@ -190,7 +190,7 @@ Current inventory: 48 matching SQL transforms.
 ## Signal Scripts
 
 Signal SQL jobs are discovered and executed through `scripts/gold/run_gold_sql_jobs.py`
-and shared helpers in `src/services/gold/gold_dml_runner.py`. Do not add handwritten
+and shared helpers in `src/fotmob/gold/dml_runner.py`. Do not add handwritten
 per-signal runner files. Use `--id` for one exact signal; use `--entity` or
 `--family` as separate signal batch selectors such as `--entity player` or
 `--family shooting_goals`.

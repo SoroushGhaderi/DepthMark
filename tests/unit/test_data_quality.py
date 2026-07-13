@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import yaml
 
 from scripts.quality.check_data_quality import strict_exit_code
-from src.services.data_quality import (
+from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
     DuplicateResult,
@@ -14,7 +14,7 @@ from src.services.data_quality import (
     build_duplicate_queries,
     build_identity_contracts,
 )
-from src.services.warehouse_scope import WarehouseExecutionScope
+from src.warehouse.scope import WarehouseExecutionScope
 
 
 DEFAULT_SIGNAL_COLUMNS = {"signal_instance_id", "inserted_at"}

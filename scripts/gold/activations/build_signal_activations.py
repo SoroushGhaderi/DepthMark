@@ -13,15 +13,15 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.services.clickhouse_scoped_replace import ScopedReplacementBatch, ScopedSqlJob
-from src.services.warehouse_scope import (
+from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
+from src.warehouse.scope import (
     WarehouseExecutionScope,
     add_warehouse_scope_arguments,
     execution_scope_from_args,
 )
-from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.gold_databases import gold_db, gold_signals_db
-from src.utils.logging_utils import get_logger, setup_logging
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.databases import gold_db, gold_signals_db
+from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 

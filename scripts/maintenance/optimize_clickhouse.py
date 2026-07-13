@@ -13,8 +13,8 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.logging_utils import get_logger
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.common.logging import get_logger
 
 logger = get_logger(__name__)
 

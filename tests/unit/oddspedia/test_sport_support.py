@@ -10,7 +10,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from src.oddspedia.config import (
+from src.oddspedia.scraping.config import (
     BASE_URL,
     get_manifest_file,
     get_match_file,
@@ -20,8 +20,8 @@ from src.oddspedia.config import (
     get_sport_listing_url,
     normalize_sport,
 )
-from src.oddspedia.match_collector import _build_urls
-from src.oddspedia.utils import load_json, save_json
+from src.oddspedia.scraping.match_collector import _build_urls
+from src.oddspedia.scraping.utils import load_json, save_json
 
 
 class SportConfigTests(unittest.TestCase):

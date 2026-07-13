@@ -107,7 +107,7 @@ For each signal catalog:
 
 ## Repositories
 
-`src/storage/mongodb/` contains repository classes:
+`src/integrations/mongodb/` contains repository classes:
 - `SignalsRepository` — CRUD with upsert semantics for signals
 - `ScenariosRepository` — CRUD for scenarios
 - `TemplatesRepository` — CRUD for channel templates

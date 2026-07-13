@@ -17,7 +17,7 @@ ROOT = Path(__file__).parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.utils.logging_utils import get_logger, initialize_logging
+from src.common.logging import get_logger, initialize_logging
 
 initialize_logging(log_level="INFO", force=True)
 logger = get_logger(__name__)

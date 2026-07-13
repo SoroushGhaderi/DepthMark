@@ -39,12 +39,12 @@ from typing import List, Optional
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from src.services.bronze import BronzeRunResult, BronzeService
-from src.services.telegram import ErrorAlertData, TelegramClient
-from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.date_utils import DATE_FORMAT_COMPACT, extract_year_month
-from src.utils.layer_contracts import LayerContractError
-from src.utils.logging_utils import get_logger, setup_logging
+from src.fotmob.bronze import BronzeRunResult, BronzeService
+from src.integrations.telegram import ErrorAlertData, TelegramClient
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.common.dates import DATE_FORMAT_COMPACT, extract_year_month
+from src.warehouse.contracts import LayerContractError
+from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
@@ -245,7 +245,7 @@ def get_dates_to_process(
 
 def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
     """Show table statistics."""
-    from src.services.bronze.fotmob_bronze_service import FOTMOB_TABLES, to_bronze_table_name
+    from src.fotmob.bronze.loader import FOTMOB_TABLES, to_bronze_table_name
 
     log.info("=" * 80)
     log.info("Database statistics", extra={"database": "BRONZE"})

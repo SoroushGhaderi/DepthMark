@@ -8,7 +8,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from src.oddspedia.utils import safe_get
+from src.oddspedia.scraping.utils import safe_get
 
 
 class _FakeDriver:
@@ -26,8 +26,8 @@ class _FakeDriver:
 
 
 class SafeGetTests(unittest.TestCase):
-    @patch("src.oddspedia.utils.random_delay")
-    @patch("src.oddspedia.utils.time.sleep", return_value=None)
+    @patch("src.oddspedia.scraping.utils.random_delay")
+    @patch("src.oddspedia.scraping.utils.time.sleep", return_value=None)
     def test_retries_after_cloudflare_timeout(self, _sleep, _random_delay):
         driver = _FakeDriver()
         attempts = {"count": 0}
@@ -39,7 +39,7 @@ class SafeGetTests(unittest.TestCase):
             driver_obj.title = "Oddspedia Football"
             return True
 
-        with patch("src.oddspedia.utils.wait_for_cloudflare", side_effect=wait_for_cloudflare):
+        with patch("src.oddspedia.scraping.utils.wait_for_cloudflare", side_effect=wait_for_cloudflare):
             result = safe_get(driver, "https://oddspedia.com/football", retries=2)
 
         self.assertTrue(result)

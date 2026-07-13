@@ -2,8 +2,10 @@
 
 ## Layer Inventory
 
-DepthMark's medallion layers are FotMob-only and ClickHouse-backed from Silver
-upward.
+DepthMark's analytical medallion path is FotMob-canonical and ClickHouse-backed
+from Silver upward. Oddspedia is an isolated source domain with
+`oddspedia_bronze.*` facts and an auditable relationship to `silver.match`; it
+does not alter the canonical FotMob entities or Gold outputs.
 
 ### Silver (`silver.*`)
 
@@ -19,7 +21,7 @@ Eight cleaned analytical tables with paired DDL and DML:
 - `team_form`
 
 Runtime contracts are enforced through `assert_silver_layer_contracts` in
-`src/utils/layer_contracts.py`.
+`src/warehouse/contracts.py`.
 
 ### Gold
 
@@ -262,8 +264,8 @@ Related terms: Dead Letter Queue, Bronze Retention.
 
 ### Application Service
 
-A stable, layer-specific coordination module under `src/services/` that sits
-behind a script entry point. Application services own reusable workflow
+A stable source-specific or warehouse coordination module that sits behind a
+script entry point. Workflow modules own reusable workflow
 coordination: SQL job discovery and execution, client setup, contract checks,
 validation, alerts, and deterministic summaries. They must not own Silver or Gold
 analytical logic, which belongs in ClickHouse SQL.
@@ -282,16 +284,17 @@ explicit selector, and every run also requires a Warehouse Execution Scope.
 Avoid saying: scenario bulk disabled, scenario opt-in, scenario validation pending.
 Related terms: Gold Bulk Loading, Gold Service, Scenario SQL Job.
 
-### FotMob Provider Scope
+### Source Domain Scope
 
-DepthMark currently supports FotMob only. There is no provider abstraction
-boundary. Code that looks generic (e.g., `BaseBronzeStorage` ABC, `--skip-fotmob`
-flag) is a FotMob-specific implementation detail, not an invitation to add new
-providers. A second provider abstraction will be added only when a concrete
-second provider needs to be supported.
+DepthMark has two explicit source domains: FotMob and Oddspedia. FotMob remains
+the canonical fixture reference and continues through Gold; Oddspedia owns
+source artifacts, `oddspedia_bronze.*` facts, and its audited Silver resolution
+to `silver.match`. There is no generic provider abstraction boundary. Code that
+looks reusable, such as `BaseBronzeStorage`, remains a FotMob implementation
+detail rather than an invitation to add a provider plugin framework.
 
-Avoid saying: multi-provider pipeline, provider plugin, provider abstraction.
-Related terms: Bronze Layer, FotMob API.
+Avoid saying: generic provider framework, provider plugin, provider abstraction.
+Related terms: Bronze Layer, FotMob API, Oddspedia.
 
 ### DLQ Retention
 
@@ -304,7 +307,7 @@ Related terms: Dead Letter Queue, Bronze Retention, DLQ Replay.
 
 ### Telegram Client
 
-A thin transport layer under `src/services/telegram/client.py` that handles
+A thin transport layer under `src/integrations/telegram/client.py` that handles
 Bot API communication. All Telegram message sending goes through this single
 client. It reads configuration from `config.settings` (Pydantic, reads `.env`).
 
@@ -314,7 +317,7 @@ Related terms: Telegram Message Template, Telegram Message Data.
 
 ### Telegram Message Template
 
-A Jinja2 `.html.j2` file under `src/services/telegram/templates/` that defines
+A Jinja2 `.html.j2` file under `src/integrations/telegram/templates/` that defines
 the HTML structure of one message family. Templates render to HTML for
 Telegram's `parse_mode="HTML"`. Five families exist: daily report, monthly
 report, layer alert, pipeline summary, and error alert.
@@ -324,7 +327,7 @@ Related terms: Telegram Client, Telegram Message Data.
 
 ### Telegram Message Data
 
-A Python dataclass under `src/services/telegram/messages.py` that carries the
+A Python dataclass under `src/integrations/telegram/messages.py` that carries the
 typed payload for one message family. Callers construct a dataclass instance and
 pass it to `TelegramClient.render_and_send()`. Five dataclasses exist:
 `DailyReportData`, `MonthlyReportData`, `LayerAlertData`,

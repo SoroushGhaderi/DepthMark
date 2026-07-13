@@ -4,6 +4,10 @@
 
 Accepted
 
+> **Implementation note (2026-07-13):** Stable source and warehouse workflow
+> modules now exist under `src/`, but they remain behind the same script entry
+> points. This preserves the CLI subprocess boundary decided here.
+
 ## Context
 
 DepthMark exposes operational layer entry points under `scripts/bronze/`,

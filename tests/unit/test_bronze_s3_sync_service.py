@@ -9,7 +9,7 @@ from typing import Dict, List
 
 import pytest
 
-from src.services.bronze.s3_sync_service import BronzeS3Service, BronzeS3SyncError
+from src.fotmob.bronze.s3_sync import BronzeS3Service, BronzeS3SyncError
 
 
 class FakeS3Client:

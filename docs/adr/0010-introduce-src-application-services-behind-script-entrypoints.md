@@ -4,6 +4,12 @@
 
 Accepted
 
+> **Implementation note (2026-07-13):** The command-surface decision remains
+> active. The original `src/services/` implementation was reorganized into
+> source-owned workflow modules under `src/fotmob/` and `src/oddspedia/`, plus
+> shared execution modules under `src/warehouse/` and adapters under
+> `src/integrations/`. The historical rationale below is unchanged.
+
 ## Context
 
 DepthMark's supported operational command surface lives under `scripts/`.
@@ -27,8 +33,9 @@ analytical logic belongs in ClickHouse SQL.
 
 ## Decision
 
-DepthMark introduces stable, layer-specific application services under
-`src/services/` behind the existing script entry points.
+DepthMark introduces stable workflow modules behind the existing script entry
+points. Source-specific workflow coordination lives under the relevant source
+package, while shared warehouse coordination lives under `src/warehouse/`.
 
 Scripts continue to own:
 
@@ -39,7 +46,7 @@ Scripts continue to own:
 - ClickHouse client creation and teardown;
 - `send_layer_completion_alert()` calls using service result dataclasses.
 
-Application services under `src/services/` own reusable workflow coordination:
+Workflow modules own reusable workflow coordination:
 
 - discovering and planning SQL jobs;
 - executing SQL and metadata jobs through existing storage helpers;
@@ -52,8 +59,8 @@ scenario criteria, signal trigger criteria, metrics, or downstream analytical
 table derivations. Those remain in versioned ClickHouse SQL unless a later ADR
 grants a narrow exception.
 
-Shared execution infrastructure (job discovery, resolution, execution) lives in
-`src/services/gold/gold_dml_runner.py`, extracted from the former
+Shared Gold job discovery and execution lives in
+`src/fotmob/gold/dml_runner.py`, extracted from the former
 `scripts/gold/sql_jobs.py`. This module is imported by both `GoldService` and the
 standalone `run_gold_sql_jobs.py` entry point.
 
@@ -75,13 +82,13 @@ The boundary adds a second internal shape to maintain: thin scripts plus
 application services. That cost is acceptable because it reduces duplication and
 test friction while preserving SQL ownership for analytical transformations.
 
-### Implemented services
+### Current implementation locations
 
 | Service | File | Absorbs |
 |---------|------|---------|
-| `GoldService` | `src/services/gold/fotmob_gold_service.py` | `FotMobGoldProcessor`, `FotMobGoldStorage`, `_selected_job_groups`, `_run_sql_jobs`, `_run_selected_jobs`, `_run_signal_activation_builder` |
-| `SilverService` | `src/services/silver/fotmob_silver_service.py` | `_load_sql_dirs`, `_load_jobs`, `_run_load_sql`, `_run_load_jobs` |
-| `gold_dml_runner` | `src/services/gold/gold_dml_runner.py` | Moved from `scripts/gold/sql_jobs.py` |
+| `GoldService` | `src/fotmob/gold/service.py` | Gold workflow coordination and activation invocation |
+| `SilverService` | `src/fotmob/silver/service.py` | Scoped Silver SQL execution and contract checks |
+| `gold_dml_runner` | `src/fotmob/gold/dml_runner.py` | Gold SQL job discovery and scoped job construction |
 
 Service result dataclasses (`GoldRunResult`, `SilverRunResult`) replace ad-hoc
 tuple returns and give scripts structured data for alerting and exit-code

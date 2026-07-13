@@ -42,8 +42,8 @@ from utils.script_utils import (
 )
 
 add_project_to_path()
-from src.services.telegram import ErrorAlertData, TelegramClient
-from src.utils.logging_utils import get_logger, setup_logging
+from src.integrations.telegram import ErrorAlertData, TelegramClient
+from src.common.logging import get_logger, setup_logging
 
 RESULT_CATEGORIES = {
     "fotmob_bronze": "FotMob Bronze",

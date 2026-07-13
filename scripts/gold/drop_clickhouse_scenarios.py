@@ -9,9 +9,9 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
-from src.utils.logging_utils import get_logger
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.common.logging import get_logger
 
 logger = get_logger()
 

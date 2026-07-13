@@ -10,9 +10,9 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.settings import get_settings
-from src.oddspedia.config import normalize_date, normalize_month
-from src.services.oddspedia.bronze_loader import OddspediaBronzeLoader
-from src.storage.clickhouse_client import ClickHouseClient
+from src.oddspedia.scraping.config import normalize_date, normalize_month
+from src.oddspedia.bronze import OddspediaBronzeLoader
+from src.integrations.clickhouse.client import ClickHouseClient
 
 
 def _dates(args):

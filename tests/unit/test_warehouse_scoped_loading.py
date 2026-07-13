@@ -9,13 +9,13 @@ from scripts.bronze.load_clickhouse import discover_historical_dates
 from scripts.gold import load_clickhouse_gold as gold_loader
 from scripts.orchestration import pipeline
 from scripts.silver import load_clickhouse as silver_loader
-from src.services.bronze import BronzeService
-from src.services.clickhouse_scoped_replace import (
+from src.fotmob.bronze import BronzeService
+from src.warehouse.scoped_replace import (
     ScopedReplacementBatch,
     ScopedSqlJob,
     replace_insert_target,
 )
-from src.services.warehouse_scope import (
+from src.warehouse.scope import (
     WarehouseExecutionScope,
     add_warehouse_scope_arguments,
     execution_scope_from_args,

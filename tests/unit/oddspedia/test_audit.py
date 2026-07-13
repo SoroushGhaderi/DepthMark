@@ -9,7 +9,7 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from src.oddspedia.audit import audit_match_json
+from src.oddspedia.scraping.audit import audit_match_json
 
 
 class FootballAuditTests(unittest.TestCase):

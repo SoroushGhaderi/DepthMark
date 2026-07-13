@@ -13,16 +13,16 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import get_settings
-from src.services.gold.fotmob_gold_service import GoldRunResult, GoldService
-from src.services.telegram import LayerAlertData, TelegramClient
-from src.services.warehouse_scope import (
+from src.fotmob.gold import GoldRunResult, GoldService
+from src.integrations.telegram import LayerAlertData, TelegramClient
+from src.warehouse.scope import (
     add_warehouse_scope_arguments,
     execution_scope_from_args,
 )
-from src.storage.clickhouse_client import ClickHouseClient
-from src.utils.gold_databases import gold_db, gold_scenarios_db, gold_signals_db
-from src.utils.layer_contracts import LayerContractError
-from src.utils.logging_utils import get_logger, setup_logging
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.warehouse.contracts import LayerContractError
+from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 

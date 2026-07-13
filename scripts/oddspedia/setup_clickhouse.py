@@ -9,8 +9,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.settings import get_settings
-from src.storage.clickhouse_client import ClickHouseClient
-from src.storage.clickhouse_sql_executor import split_sql_statements
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.integrations.clickhouse.sql import split_sql_statements
 
 
 def main(argv=None) -> int:
