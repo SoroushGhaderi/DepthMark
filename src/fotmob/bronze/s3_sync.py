@@ -11,8 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-from src.integrations.s3 import S3Client
 from src.common.logging import get_logger
+from src.integrations.s3 import S3Client
 
 logger = get_logger(__name__)
 
@@ -68,10 +68,11 @@ class BronzeS3Service:
     def list_remote_dates(self) -> List[str]:
         """List dates represented by compatible remote object keys."""
         dates = []
-        for key in self.s3_client.list_keys("bronze/fotmob/"):
-            match = REMOTE_KEY_PATTERN.fullmatch(key)
-            if match:
-                dates.append(match.group(1))
+        for prefix in self._remote_object_prefixes():
+            for key in self.s3_client.list_keys(prefix):
+                match = REMOTE_KEY_PATTERN.fullmatch(self._canonical_remote_key(key))
+                if match:
+                    dates.append(match.group(1))
         return sorted(set(dates))
 
     def upload_date(
@@ -82,12 +83,13 @@ class BronzeS3Service:
         dry_run: bool = False,
     ) -> BronzeS3SyncResult:
         """Validate, archive, and upload one local Bronze date."""
-        key = self.object_key(date_str)
+        key = self._preferred_remote_object_key(date_str)
         self._validate_upload_source(date_str, allow_incomplete=allow_incomplete)
 
-        if self.s3_client.object_exists(key) and not force:
+        existing_key = self._find_remote_object_key(date_str)
+        if existing_key and not force:
             return BronzeS3SyncResult(
-                date_str, "upload", "skipped", key, "remote object already exists"
+                date_str, "upload", "skipped", existing_key, "remote object already exists"
             )
         if dry_run:
             verb = "overwrite" if force else "upload"
@@ -116,9 +118,11 @@ class BronzeS3Service:
         self, date_str: str, force: bool = False, dry_run: bool = False
     ) -> BronzeS3SyncResult:
         """Download, validate, and restore one Bronze date."""
-        key = self.object_key(date_str)
-        if not self.s3_client.object_exists(key):
-            raise BronzeS3SyncError(f"remote object does not exist: {key}")
+        key = self._find_remote_object_key(date_str)
+        if not key:
+            raise BronzeS3SyncError(
+                "remote object does not exist: " + ", ".join(self._remote_object_keys(date_str))
+            )
 
         local_targets = self._local_targets(date_str)
         existing_targets = [path for path in local_targets if path.exists()]
@@ -161,6 +165,41 @@ class BronzeS3Service:
             size_bytes=size_bytes,
             sha256=checksum,
         )
+
+    def _remote_object_prefixes(self) -> Tuple[str, ...]:
+        """Return canonical and legacy archive prefixes to discover."""
+        canonical_prefix = "bronze/fotmob/"
+        bucket_name = getattr(self.s3_client, "bucket_name", "")
+        if not bucket_name:
+            return (canonical_prefix,)
+        return (canonical_prefix, f"{bucket_name}/{canonical_prefix}")
+
+    def _remote_object_keys(self, date_str: str) -> Tuple[str, ...]:
+        """Return preferred and compatibility key candidates for one archive."""
+        canonical_key = self.object_key(date_str)
+        bucket_name = getattr(self.s3_client, "bucket_name", "")
+        if not bucket_name:
+            return (canonical_key,)
+        return (f"{bucket_name}/{canonical_key}", canonical_key)
+
+    def _preferred_remote_object_key(self, date_str: str) -> str:
+        """Return the bucket-prefixed key used for new archives when available."""
+        return self._remote_object_keys(date_str)[0]
+
+    def _find_remote_object_key(self, date_str: str) -> str:
+        """Find the first available canonical or legacy archive key."""
+        for key in self._remote_object_keys(date_str):
+            if self.s3_client.object_exists(key):
+                return key
+        return ""
+
+    def _canonical_remote_key(self, key: str) -> str:
+        """Strip the supported bucket-named legacy prefix from an object key."""
+        bucket_name = getattr(self.s3_client, "bucket_name", "")
+        legacy_prefix = f"{bucket_name}/" if bucket_name else ""
+        if legacy_prefix and key.startswith(legacy_prefix):
+            return key[len(legacy_prefix) :]
+        return key
 
     def _validate_upload_source(self, date_str: str, allow_incomplete: bool) -> None:
         matches_path, listing_directory = self._local_targets(date_str)

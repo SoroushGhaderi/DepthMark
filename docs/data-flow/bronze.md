@@ -69,15 +69,20 @@ python3 scripts/bronze/sync_s3.py download --all
 
 Each new archive contains `matches/{YYYYMM}/{YYYYMMDD}` and
 `daily_listings/{YYYYMM}/{YYYYMMDD}` and uses the compatible object key
-`bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`. Uploads require a listing that proves
-every expected match is stored or marked unavailable; `--allow-incomplete`
-provides an explicit recovery override. Existing remote objects and local date
-directories are protected unless `--force` is supplied.
+`{S3_BUCKET}/bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz` when a bucket name is
+available (otherwise `bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`). Uploads require a
+listing that proves every expected match is stored or marked unavailable;
+`--allow-incomplete` provides an explicit recovery override. Existing remote
+objects and local date directories are protected unless `--force` is supplied.
 
 Downloads verify SHA-256 metadata when present, validate archive paths before
 extraction, and restore through a temporary staging directory. Legacy archives
 that contain only `{YYYYMMDD}/` remain downloadable, but cannot restore a daily
-listing that was never stored in the legacy object.
+listing that was never stored in the legacy object. The downloader also
+discovers the historical bucket-prefixed key layout
+`{S3_BUCKET}/bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz` alongside the canonical
+`bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz` layout; new uploads use the
+bucket-prefixed layout when a bucket is configured.
 
 Both directions support `--date`/`--single-date`,
 `--start-date`/`--end-date`, `--month`, `--all`, and `--dry-run`. Multi-date
