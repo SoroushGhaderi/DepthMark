@@ -13,6 +13,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+from urllib.parse import urlparse
 
 from src.oddspedia.scraping.config import BASE_URL, get_sport_listing_url, normalize_sport
 from src.oddspedia.scraping.utils import safe_get
@@ -307,7 +308,8 @@ _JS_EXTRACT_VUEX_FALLBACK = """
             var slug = (hs && as) ? (hs + '-' + as + '-' + urlId) : String(urlId);
             var path = '/' + sportSlug + '/' + slug;
             results.push({matchId: String(m.id), matchKey: slug,
-                home: m.ht||'', away: m.at||'', league: m.league_name||'',
+                home: m.ht||'', away: m.at||'', home_slug: hs, away_slug: as,
+                league: m.league_name||'',
                 date: m.md||'', url: path, full_url: origin+path});
         });
     } catch(e) {}
@@ -849,6 +851,8 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
             "matchKey": slug,
             "home":     m.get("ht", ""),
             "away":     m.get("at", ""),
+            "home_slug": hs,
+            "away_slug": as_,
             "league_name": _match_league_name(m),
             "league_slug": (m.get("league_slug") or m.get("tournament_slug") or "").strip(),
             "country":  _match_country(m),
@@ -927,7 +931,7 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
             if dom_status:
                 m["status"] = dom_status
 
-        _merge_league_names(matches, dom_links)
+        _merge_league_names(matches, dom_links, sport=sport)
 
         if corrected:
             logger.info(
@@ -1443,7 +1447,7 @@ def _build_urls(matches, sport="football"):
         m["full_url"] = BASE_URL + path
 
 
-def _merge_league_names(matches, league_matches, overwrite=False):
+def _merge_league_names(matches, league_matches, overwrite=False, sport="football"):
     """Merge league names from an auxiliary extractor into listing matches.
 
     Structured SportsEvent metadata is authoritative and may replace a value
@@ -1487,6 +1491,7 @@ def _merge_league_names(matches, league_matches, overwrite=False):
             "league_slug": league_slug,
             "country": country,
             "country_slug": country_slug,
+            "source_url": path,
         }
         if match_id:
             by_id[match_id] = context
@@ -1511,6 +1516,10 @@ def _merge_league_names(matches, league_matches, overwrite=False):
             match.get("full_url", ""),
             match.get("matchKey", ""),
         ]
+        match_path = match.get("url") or match.get("full_url") or match.get("matchKey") or ""
+        match_url_id = re.search(r"-(\d+)(?:/[^/]*)?$", str(match_path).rstrip("/"))
+        if match_url_id:
+            candidates.append(match_url_id.group(1))
         context = {}
         for candidate in candidates:
             context = by_id.get(candidate) or by_path.get(candidate) or by_slug.get(candidate, {})
@@ -1527,6 +1536,20 @@ def _merge_league_names(matches, league_matches, overwrite=False):
         for key in ("league_slug", "country", "country_slug"):
             if context.get(key) and not match.get(key):
                 match[key] = context[key]
+
+        # JSON-LD SportsEvent URLs retain Oddspedia's canonical team slugs
+        # (for example ``algeciras-cf``) while the match-poll payload may only
+        # expose shortened display names.  Prefer that source URL when it
+        # belongs to this sport so a reused numeric ID cannot resolve to an
+        # older fixture with a similar slug.
+        source_url = context.get("source_url", "")
+        if source_url:
+            parsed = urlparse(source_url)
+            source_path = parsed.path or source_url
+            if source_path.startswith(f"/{sport}/") or source_path.startswith(f"/a/{sport}/"):
+                match["url"] = source_path
+                match["full_url"] = BASE_URL + source_path
+                match["matchKey"] = source_path.rstrip("/").rsplit("/", 1)[-1]
     if identity_matches:
         logger.info("league_names_merged_by_event_identity", count=identity_matches)
 
@@ -1621,7 +1644,7 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
             # JSON-LD SportsEvent.superEvent is the competition title.  It is
             # more reliable than a nearby DOM heading, which can be an Odds
             # navigation link or an adjacent card's text.
-            _merge_league_names(matches, league_matches, overwrite=True)
+            _merge_league_names(matches, league_matches, overwrite=True, sport=sport)
 
     result = list(matches.values())
     for m in result:

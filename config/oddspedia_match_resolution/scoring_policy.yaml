@@ -1,4 +1,4 @@
-rule_version: v4
+rule_version: v5
 candidate_window_days: 1
 # The three-day candidate window is the only date guard. Candidate ranking and
 # automatic matching use normalized home and away team names only.
@@ -9,6 +9,27 @@ team_similarity_minimum: 0.88
 # inside its longer provider name, for example Brighton -> Brighton Hove Albion.
 approximate_token_min_length: 7
 approximate_token_containment_score: 0.92
+# Administrative club prefixes vary by provider and do not identify the team.
+# They are removed before comparison while meaningful qualifiers remain intact.
+club_designator_tokens:
+  - ac
+  - ad
+  - ca
+  - cd
+  - cs
+  - csd
+  - fk
+  - hsk
+  - kf
+  - pfc
+  - pfk
+# Equivalent reserve-team notation is normalized before qualifier comparison.
+qualifier_aliases:
+  "2": ii
+# A unique long shared token can rescue one team name only when the other team
+# is exact or a reviewed alias. It never matches two fuzzy team names together.
+unique_token_min_length: 7
+unique_token_similarity_score: 0.92
 qualifier_tokens:
   - women
   - u19

@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import yaml
 
@@ -101,16 +101,20 @@ class FotMobCandidateIndex:
         self.away_tokens: Dict[str, set] = {}
         self.home_ngrams: Dict[str, set] = {}
         self.away_ngrams: Dict[str, set] = {}
+        self.home_token_frequencies: Counter = Counter()
+        self.away_token_frequencies: Counter = Counter()
         for match in matches:
             home = resolver._normalize_team(match.home_team_name)
             away = resolver._normalize_team(match.away_team_name)
             self.exact.setdefault(
                 (home.core, home.qualifiers, away.core, away.qualifiers), []
             ).append(match)
-            for token in home.core.split():
+            for token in set(home.core.split()):
                 self.home_tokens.setdefault(token, set()).add(match)
-            for token in away.core.split():
+                self.home_token_frequencies[token] += 1
+            for token in set(away.core.split()):
                 self.away_tokens.setdefault(token, set()).add(match)
+                self.away_token_frequencies[token] += 1
             for ngram in _team_ngrams(home.core):
                 self.home_ngrams.setdefault(ngram, set()).add(match)
             for ngram in _team_ngrams(away.core):
@@ -151,8 +155,18 @@ class OddspediaMatchResolver:
         self.approximate_token_containment_score = float(
             policy.get("approximate_token_containment_score", 0.92)
         )
+        self.unique_token_min_length = int(policy.get("unique_token_min_length", 7))
+        self.unique_token_similarity_score = float(
+            policy.get("unique_token_similarity_score", 0.92)
+        )
         self.qualifier_tokens = frozenset(policy.get("qualifier_tokens", []))
         self.generic_tokens = frozenset(policy.get("generic_tokens", []))
+        self.club_designator_tokens = frozenset(policy.get("club_designator_tokens", []))
+        self.qualifier_aliases = {
+            _simple_text(key): _simple_text(value)
+            for key, value in (policy.get("qualifier_aliases") or {}).items()
+            if key and value
+        }
         self.aliases = {
             _simple_text(key): _simple_text(value)
             for key, value in aliases.items()
@@ -169,18 +183,40 @@ class OddspediaMatchResolver:
         """Build one reusable candidate index for a date-scoped resolution batch."""
         return FotMobCandidateIndex(self, matches)
 
+    def resolve_from_index(
+        self,
+        event: OddspediaEvent,
+        index: FotMobCandidateIndex,
+        reference_window_complete: bool = False,
+    ) -> ResolutionResult:
+        """Resolve from an index while retaining its date-window token frequencies."""
+        return self.resolve(
+            event,
+            index.candidates_for(event),
+            reference_window_complete=reference_window_complete,
+            home_token_frequencies=index.home_token_frequencies,
+            away_token_frequencies=index.away_token_frequencies,
+        )
+
     def resolve(
         self,
         event: OddspediaEvent,
         fotmob_matches: Iterable[FotMobMatch],
         reference_window_complete: bool = False,
+        home_token_frequencies: Optional[Mapping[str, int]] = None,
+        away_token_frequencies: Optional[Mapping[str, int]] = None,
     ) -> ResolutionResult:
         candidate_dates = self.candidate_dates(event.discovery_date)
         candidates = []
         for match in fotmob_matches:
             if match.match_date not in candidate_dates:
                 continue
-            candidate = self._score_candidate(event, match)
+            candidate = self._score_candidate(
+                event,
+                match,
+                home_token_frequencies=home_token_frequencies,
+                away_token_frequencies=away_token_frequencies,
+            )
             if candidate is not None:
                 candidates.append(candidate)
         candidates.sort(key=lambda item: (-item.score, item.match.match_id))
@@ -234,17 +270,25 @@ class OddspediaMatchResolver:
             },
         )
 
-    def _score_candidate(self, event: OddspediaEvent, match: FotMobMatch) -> Optional[Candidate]:
+    def _score_candidate(
+        self,
+        event: OddspediaEvent,
+        match: FotMobMatch,
+        home_token_frequencies: Optional[Mapping[str, int]] = None,
+        away_token_frequencies: Optional[Mapping[str, int]] = None,
+    ) -> Optional[Candidate]:
         home_similarity, home_rule = self._team_similarity(
-            event.home_team_name, match.home_team_name
+            event.home_team_name, match.home_team_name, home_token_frequencies
         )
         away_similarity, away_rule = self._team_similarity(
-            event.away_team_name, match.away_team_name
+            event.away_team_name, match.away_team_name, away_token_frequencies
         )
         if (
             home_similarity < self.team_similarity_minimum
             or away_similarity < self.team_similarity_minimum
         ):
+            return None
+        if not _unique_token_rescue_has_anchor(home_rule, away_rule):
             return None
         return Candidate(
             match=match,
@@ -254,7 +298,12 @@ class OddspediaMatchResolver:
             away_rule=away_rule,
         )
 
-    def _team_similarity(self, source_name: str, reference_name: str) -> Tuple[float, str]:
+    def _team_similarity(
+        self,
+        source_name: str,
+        reference_name: str,
+        token_frequencies: Optional[Mapping[str, int]] = None,
+    ) -> Tuple[float, str]:
         source = self._normalize_team(source_name)
         reference = self._normalize_team(reference_name)
         if not source.core or not reference.core or source.qualifiers != reference.qualifiers:
@@ -270,18 +319,27 @@ class OddspediaMatchResolver:
             source_tokens, reference_tokens, self.approximate_token_min_length
         ):
             return self.approximate_token_containment_score, "fuzzy_token_containment"
+        if character_similarity < self.team_similarity_minimum and _has_unique_shared_token(
+            source_tokens,
+            reference_tokens,
+            token_frequencies,
+            self.unique_token_min_length,
+        ):
+            return self.unique_token_similarity_score, "fuzzy_unique_token"
         return character_similarity, "fuzzy_character"
 
     def _normalize_team(self, value: str) -> TeamName:
         text = _simple_text(value)
         alias_used = text in self.aliases
         text = self.aliases.get(text, text)
-        tokens = text.split()
+        tokens = [self.qualifier_aliases.get(token, token) for token in text.split()]
         qualifiers = tuple(sorted(token for token in tokens if token in self.qualifier_tokens))
         core = " ".join(
             token
             for token in tokens
-            if token not in self.qualifier_tokens and token not in self.generic_tokens
+            if token not in self.qualifier_tokens
+            and token not in self.generic_tokens
+            and token not in self.club_designator_tokens
         )
         return TeamName(core=core, qualifiers=qualifiers, alias_used=alias_used)
 
@@ -331,10 +389,8 @@ class OddspediaResolutionService:
         matches = self._load_fotmob_matches(self.resolver.candidate_dates(discovery_date))
         index = self.resolver.candidate_index(matches)
         results = [
-            self.resolver.resolve(
-                event,
-                index.candidates_for(event),
-                reference_window_complete=reference_window_complete,
+            self.resolver.resolve_from_index(
+                event, index, reference_window_complete=reference_window_complete
             )
             for event in events
         ]
@@ -456,6 +512,31 @@ def _has_distinctive_token_containment(
         else (reference_set, source_set)
     )
     return shorter.issubset(longer) and all(len(token) >= minimum_length for token in shorter)
+
+
+def _has_unique_shared_token(
+    source_tokens: Tuple[str, ...],
+    reference_tokens: Tuple[str, ...],
+    token_frequencies: Optional[Mapping[str, int]],
+    minimum_length: int,
+) -> bool:
+    """Return whether a shared team token is unique on this fixture side/window."""
+    if not token_frequencies:
+        return False
+    return any(
+        len(token) >= minimum_length and token_frequencies.get(token) == 1
+        for token in set(source_tokens).intersection(reference_tokens)
+    )
+
+
+def _unique_token_rescue_has_anchor(home_rule: str, away_rule: str) -> bool:
+    """Require exact or reviewed-alias evidence opposite a unique-token rescue."""
+    unique_rule = "fuzzy_unique_token"
+    anchor_rules = {"exact", "alias"}
+    return not (
+        (home_rule == unique_rule and away_rule not in anchor_rules)
+        or (away_rule == unique_rule and home_rule not in anchor_rules)
+    )
 
 
 def _ngram_candidates(core: str, index: Dict[str, set]) -> set:

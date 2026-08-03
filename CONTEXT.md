@@ -238,10 +238,13 @@ Related terms: Resolution Status, Coverage Category.
 ### Approximate Team Match
 
 A team-name comparison that recognizes an equivalent provider spelling without
-requiring an exact normalized name. It is permitted only for token reordering,
-a reviewed alias, or containment of a distinctive shortened team name in the
-longer provider name. Approximate evidence is accepted automatically only when
-both home and away sides form a unique high-confidence fixture pair.
+requiring an exact normalized name. It canonicalizes non-identifying club
+designators and equivalent second-team notation (`II` and `2`), then permits
+token reordering, a reviewed alias, containment of a distinctive shortened
+team name, or a unique long shared token. A unique-token comparison is valid
+only when the opposite team is exact or a reviewed alias. Approximate evidence
+is accepted automatically only when both home and away sides form a unique
+high-confidence fixture pair.
 
 Avoid saying: loose match, best guess.
 Related terms: Match Resolution, Source Event.
@@ -289,6 +292,10 @@ reference data, because doing so could misclassify a missing canonical fixture
 as `unmatched`. The explicit readiness assertion is
 `--depthmark-window-ready`; it means the operator confirms DepthMark completed
 the needed Silver reference window.
+
+When a matcher update increases the selected priority set, a rerun uses the
+accepted per-event JSON payload as the completion record. It skips already
+saved events and scrapes only the newly selected event IDs.
 
 Avoid saying: Match Resolution, post-scrape match check.
 Related terms: Source Event, Match Resolution, Link Priority.

@@ -37,9 +37,12 @@ page scraping.
 - The previous/current/next-day window is the only date constraint. Within
   that window, resolution ranks normalized home and away team names only;
   kickoff, league, and other provider metadata never affect the decision.
-- Approximate team matching is limited to auditable character similarity,
-  token reordering, reviewed aliases, and containment of distinctive shortened
-  names. It is accepted only for a unique high-confidence home/away pair.
+- Approximate team matching canonicalizes non-identifying club designators and
+  equivalent `II` / `2` second-team notation, then uses auditable character
+  similarity, token reordering, reviewed aliases, distinctive-name containment,
+  and a unique-token rescue. The rescue is accepted only when the opposite
+  side is exact or a reviewed alias; every match still requires a unique
+  high-confidence home/away pair.
 - Each prioritized date has one deterministic, replaceable snapshot at
   `data/oddspedia/historical/link_priorities/YYYYMM/YYYYMMDD/prioritized_match_links.json`.
   Its metadata includes the prioritized date, source-inventory checksum,
@@ -66,6 +69,10 @@ page scraping.
   scrape refuses a missing or stale priority artifact whose source-inventory
   checksum or matcher rule version no longer matches `match_links.json` and
   the active resolver policy.
+- When a new matcher version expands a priority selection, the scraper treats
+  accepted per-event payload JSON as the completion record. It skips existing
+  payloads and scrapes only newly selected, incomplete, or explicitly retried
+  event IDs.
 - The date manifest stores a `priority_run` summary: artifact path and
   checksum, prioritized date, matcher/policy version, selected tier, selected
   count, and counts by validation status and priority tier. Per-link decisions
@@ -80,7 +87,7 @@ allowed, but these boundaries are required):
   "prioritized_date": "YYYYMMDD",
   "source_inventory": {"path": ".../match_links.json", "sha256": "..."},
   "reference_window": {"dates": ["YYYYMMDD", "YYYYMMDD", "YYYYMMDD"]},
-  "matcher": {"rule_version": "v4"},
+  "matcher": {"rule_version": "v5"},
   "links": [
     {
       "oddspedia_id": "...",
