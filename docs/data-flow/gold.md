@@ -1,16 +1,27 @@
-# Gold Layer
+# Gold Layer — Source-specific product outputs
 
-Gold materializes product-facing scenario and signal outputs for downstream
-consumption. It is a ClickHouse-only layer across three namespaces.
+Gold is the third layer in each source pipeline. It materializes
+source-specific, product-facing scenario, signal, and serving outputs for
+downstream consumption. It is ClickHouse-only. FotMob's currently implemented
+outputs use the three namespaces documented below; Oddspedia Gold will use the
+same responsibility boundary for odds-derived outputs without reusing FotMob
+business logic or raw contracts.
 
 ## Overview
 
 ```text
-silver.* (8 tables)
+FotMob silver.* (8 tables)
   → gold_scenarios.*  (48 scenario tables)
   → gold_signals.*    (344 signal tables)
   → gold.*            (1 shared activation serving table)
+
+Oddspedia Silver
+  → Oddspedia Gold scenarios/signals/serving outputs
 ```
+
+Gold outputs must remain source-qualified in their contracts. A FotMob Gold
+signal may not silently consume Oddspedia Bronze facts, and an Oddspedia Gold
+output may not be documented as a FotMob signal.
 
 ## Namespaces
 

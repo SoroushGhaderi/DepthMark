@@ -10,15 +10,23 @@ Do not use this file as a Codex skill. Skills are reusable procedures with their
 
 ## Project Overview
 
-DepthMark is a Python football data warehouse with isolated FotMob and Oddspedia source domains.
+DepthMark is a Python football data warehouse with two explicit source domains.
+FotMob and Oddspedia each have an independent Bronze → Silver → Gold medallion
+pipeline. Their raw contracts remain isolated; cross-source matching is an
+explicit integration relationship between source-specific Silver outputs.
 
-- Bronze: completed-date FotMob payloads under `data/fotmob/historical/`,
+- FotMob Bronze: completed-date payloads under `data/fotmob/historical/`,
   current-date snapshots under `data/fotmob/live/`, and raw ClickHouse tables
   in `bronze.*` sourced only from Historical storage.
-- Silver: cleaned and conformed analytical tables in ClickHouse `silver.*`.
-- Gold: analytics and product-ready scenario tables in ClickHouse
-  `gold_scenarios.*`, signal tables in `gold_signals.*`, and shared metadata in
-  `gold.*`.
+- FotMob Silver and Gold: cleaned analytical tables in `silver.*`, plus
+  scenarios/signals in `gold_scenarios.*`, `gold_signals.*`, and shared metadata
+  in `gold.*`.
+- Oddspedia Bronze: artifacts under `data/oddspedia/` and source facts in
+  `oddspedia_bronze.*`.
+- Oddspedia Silver and Gold: source-specific conformed odds/event entities and
+  odds-derived product outputs. Existing `silver.oddspedia_match_resolution`
+  is the current cross-source relationship table, not the whole Oddspedia
+  medallion path.
 - MongoDB stores content/catalog metadata, including signal catalog entries authored from markdown frontmatter.
 - Oddspedia artifacts live under `data/oddspedia/historical/`, structured source
   facts live in `oddspedia_bronze.*`, and `silver.oddspedia_match_resolution`
@@ -26,7 +34,7 @@ DepthMark is a Python football data warehouse with isolated FotMob and Oddspedia
 
 Do not introduce a generic provider framework. FotMob and Oddspedia remain
 explicit source domains with isolated raw contracts; `silver.match` remains the
-canonical FotMob fixture reference.
+canonical FotMob fixture reference used by the cross-source resolution edge.
 
 ## Important References
 
@@ -72,7 +80,9 @@ python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 python scripts/quality/check_logging_style.py
 python scripts/orchestration/pipeline.py 20251208
 python scripts/orchestration/pipeline.py --single-date 20251208
-python scripts/oddspedia/football.py discover --date 20260301
+python scripts/oddspedia/events.py discover --date 20260301
+python scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
+python scripts/oddspedia/events.py scrape --date 20260301 --priority lower
 python scripts/oddspedia/setup_clickhouse.py --dry-run
 python scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
 python scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
@@ -82,9 +92,10 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 
 ## Architecture Rules
 
-- Bronze is the only filesystem-backed layer.
-- Silver and Gold are ClickHouse-only layers.
+- Each source has its own Bronze, Silver, and Gold stage.
+- Bronze is the only filesystem-backed layer; Silver and Gold are ClickHouse-only.
 - Keep source fidelity in Bronze; standardize keys and types in Silver; materialize business-facing outputs in Gold.
+- Keep cross-source joins explicit and read-only; they must not merge raw source contracts.
 - SQL should hold transformation and business logic. Python should orchestrate, execute, validate, and report.
 - Stable source-owned or warehouse workflow modules may sit behind script entry points to coordinate reusable workflows, but they must not own Silver or Gold analytical logic.
 - Use schema-qualified ClickHouse table names: `bronze.*`, `oddspedia_bronze.*`, `silver.*`,

@@ -13,7 +13,7 @@ def get_settings() -> OddspediaSettings:
 
 settings = get_settings()
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_PROJECT_ROOT = Path(__file__).resolve().parents[3]
 # Oddspedia is an isolated source domain. Historical and Live aspects mirror
 # FotMob's source-local storage convention without sharing implementation.
 _configured_data_dir = Path(settings.data_dir)
@@ -126,6 +126,25 @@ def get_manifest_file(date_str, sport=None):
     normalize_sport(sport)
     date_id = normalize_date(date_str)
     return os.path.join(_get_artifact_date_dir("manifests", date_id, sport), "manifest.json")
+
+
+def get_prioritized_match_links_file(date_str, sport=None):
+    """Return the historical DepthMark-derived priority artifact for one date.
+
+    Unlike source listings, priority is meaningful only after a completed
+    historical DepthMark reference window. It therefore always belongs below
+    the Historical Oddspedia root, including when the source listing was first
+    discovered as a Live snapshot.
+    """
+    normalize_sport(sport)
+    date_id = normalize_date(date_str)
+    return os.path.join(
+        HISTORICAL_DIR,
+        "link_priorities",
+        date_id[:6],
+        date_id,
+        "prioritized_match_links.json",
+    )
 
 
 def get_matches_dir(date_str=None, sport=None):

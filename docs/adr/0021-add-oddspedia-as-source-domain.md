@@ -4,6 +4,11 @@
 
 Accepted
 
+> **Architecture scope note:** ADR 0023 complements this source-isolation
+> decision by defining Oddspedia as a complete Bronze → Silver → Gold path.
+> The resolution table described here is an Oddspedia Silver/integration
+> output, not the limit of the Oddspedia domain.
+
 ## Context
 
 DepthMark's existing warehouse is FotMob-only: `bronze.*` preserves FotMob

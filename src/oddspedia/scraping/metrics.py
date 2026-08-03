@@ -43,6 +43,7 @@ class Metrics:
 
     circuit_breaker_paused: int = 0
     circuit_breaker_aborted: bool = False
+    link_prioritization: Optional[Dict] = None
 
     start_time: datetime = field(default_factory=datetime.now)
     end_time: Optional[datetime] = None
@@ -85,7 +86,9 @@ class Metrics:
         with self._lock:
             self._context = dict(context)
 
-    def phase2_complete(self, total: int, success: int, skipped: int, duration_seconds: int) -> None:
+    def phase2_complete(
+        self, total: int, success: int, skipped: int, duration_seconds: int
+    ) -> None:
         with self._lock:
             self.phase_2_total = total
             self.phase_2_success = success
@@ -136,6 +139,11 @@ class Metrics:
     def record_circuit_breaker_abort(self) -> None:
         with self._lock:
             self.circuit_breaker_aborted = True
+
+    def record_link_prioritization(self, summary: Dict) -> None:
+        """Attach the date-scoped priority decision to this run's summary."""
+        with self._lock:
+            self.link_prioritization = dict(summary)
 
     def finish(self) -> None:
         self.end_time = datetime.now()
@@ -228,6 +236,7 @@ class Metrics:
                 "paused_count": self.circuit_breaker_paused,
                 "aborted": self.circuit_breaker_aborted,
             },
+            "link_prioritization": self.link_prioritization,
         }
 
     def manifest_snapshot(self) -> Dict:
@@ -241,6 +250,7 @@ class Metrics:
             "run_summary",
             **self.to_dict(),
         )
+
 
 _global_metrics: Optional[Metrics] = None
 

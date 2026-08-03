@@ -27,7 +27,7 @@ Use these paths for new automation and daily runs:
 - `scripts/orchestration/pipeline.py`
 - `scripts/orchestration/setup_clickhouse.py`
 - `scripts/maintenance/optimize_clickhouse.py`
-- `scripts/oddspedia/football.py`
+- `scripts/oddspedia/events.py` (canonical; `football.py` is deprecated)
 - `scripts/oddspedia/setup_clickhouse.py`
 - `scripts/oddspedia/load_clickhouse.py`
 - `scripts/oddspedia/resolve_matches.py`
@@ -83,17 +83,21 @@ The generic Gold SQL runner and activation builder use the same selectors.
 Historical storage and never reads Live storage. Pipeline `--full-history`
 skips scraping and runs the remaining selected warehouse stages.
 
-### Oddspedia Source Workflow
+### Oddspedia Source Pipeline
 
 Oddspedia commands are source-specific and do not run through
-`scripts/orchestration/pipeline.py`. The browser scraper supports separate
-discovery and scraping, or `run` for both phases. Load its Historical artifacts
-into `oddspedia_bronze.*`, then resolve them to the read-only FotMob
-`silver.match` reference.
+`scripts/orchestration/pipeline.py`. The event-intake command supports
+discovery, links-layer priority generation, and priority-selected scraping, or
+`run` for all three phases. Load its Historical artifacts into
+`oddspedia_bronze.*`, then build Oddspedia Silver outputs, including the
+read-only relationship to the FotMob `silver.match` reference. Oddspedia Gold
+will use its own source-qualified execution surface; the FotMob Gold commands
+below are not a substitute.
 
 ```bash
-python3 scripts/oddspedia/football.py run --date 20260301
-python3 scripts/oddspedia/football.py run --month 202603
+python3 scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
+python3 scripts/oddspedia/events.py scrape --date 20260301 --priority lower
+python3 scripts/oddspedia/events.py run --month 202603 --depthmark-window-ready
 python3 scripts/oddspedia/setup_clickhouse.py --dry-run
 python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
 python3 scripts/oddspedia/load_clickhouse.py --month 202603 --dry-run
@@ -101,10 +105,11 @@ python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
 python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run
 ```
 
-Use `--reference-window-complete` on the resolver only after confirming the
-three-day FotMob reference window is complete. That assertion permits the
-resolver to emit `not_covered`; without it, unmatched fixtures stay
-`unresolved`.
+Priority generation requires `--depthmark-window-ready` after confirming the
+three-day DepthMark Silver reference window is complete. It writes an auditable
+priority artifact under `data/oddspedia/historical/link_priorities/`; scraping
+rejects a missing or stale artifact. The later resolver retains its separate
+`--reference-window-complete` assertion for persisted resolution outcomes.
 
 ### Dry-Run Support
 

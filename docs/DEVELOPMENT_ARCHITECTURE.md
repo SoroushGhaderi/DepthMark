@@ -6,13 +6,10 @@ Script coding standards live in `SCRIPTS_CONTRACT.md`.
 
 ## Scope
 
-DepthMark is a football warehouse with two explicit source domains:
-
-1. FotMob Bronze stores raw FotMob payloads on disk and loads raw tables into ClickHouse.
-2. Oddspedia Historical stores source artifacts on disk and loads source facts into `oddspedia_bronze.*`.
-3. Silver builds cleaned, typed, reusable analytical tables in ClickHouse, including audited cross-source resolutions.
-4. Gold materializes scenario and signal outputs in ClickHouse for product and BI
-   use, plus shared activation metadata for product consumption.
+DepthMark is a football warehouse with two explicit source domains. Each source
+has its own complete Bronze → Silver → Gold medallion path. The paths are
+isolated at ingestion and conformation; cross-source matching is an explicit
+integration edge, not a replacement for Oddspedia Silver or Gold.
 
 ```text
 FotMob API
@@ -27,19 +24,32 @@ FotMob API
 Oddspedia
   -> data/oddspedia/{historical,live}/  daily listings, payloads, and manifests
   -> oddspedia_bronze.*          source-specific source facts
-  -> silver.oddspedia_match_resolution  relationship to `silver.match`
+  -> Oddspedia Silver          cleaned odds/events and source entities
+  -> Oddspedia Gold            odds-derived scenarios, signals, and serving outputs
+
+FotMob Silver  <---- audited match relationship ---->  Oddspedia Silver
 ```
+
+The exact ClickHouse names for existing and future Oddspedia Silver/Gold
+outputs are source-qualified in their contracts. The current implementation
+already has Oddspedia Bronze facts and the audited
+`silver.oddspedia_match_resolution` relationship; additional Oddspedia Silver
+and Gold outputs follow the same source-owned boundaries.
 
 ## Layer Boundaries
 
-1. Bronze is the only filesystem-backed data layer.
-2. Silver and Gold are ClickHouse-only layers.
+1. Each source has independent Bronze, Silver, and Gold stages.
+2. Bronze is the only filesystem-backed data layer; Silver and Gold are
+   ClickHouse-only layers.
 3. Bronze preserves source fidelity with minimal transformation.
-4. Silver standardizes keys, types, and reusable entities.
-5. Gold produces downstream-ready scenario and signal tables.
-6. Warehouse tables must be schema-qualified as `bronze.*`, `oddspedia_bronze.*`, `silver.*`,
-   `gold_scenarios.*`, `gold_signals.*`, or shared Gold metadata tables in
-   `gold.*`.
+4. Each source's Silver standardizes its own keys, types, and reusable entities.
+5. Each source's Gold produces downstream-ready scenario, signal, and serving
+   outputs.
+6. Cross-source joins are explicit integration work and must not mix raw source
+   contracts or rewrite either source's canonical records.
+7. Warehouse tables must be schema-qualified as `bronze.*`,
+   `oddspedia_bronze.*`, `silver.*`, `gold_scenarios.*`, `gold_signals.*`, or
+   shared Gold metadata tables in `gold.*`.
 
 ## Source Module Ownership
 
@@ -56,7 +66,8 @@ src/
   oddspedia/
     scraping/             Oddspedia browser collection and source contracts
     bronze/               Oddspedia artifact loading
-    silver/               Oddspedia-to-FotMob resolution
+    silver/               Oddspedia conformation and cross-source resolution
+    gold/                 Oddspedia Gold workflow coordination
   warehouse/              scopes, staged replacement, contracts, and quality checks
   integrations/           ClickHouse, MongoDB, S3, and Telegram adapters
   common/                 dependency-light logging, date, metrics, and validation helpers
@@ -64,17 +75,18 @@ src/
 ```
 
 The source packages are intentionally not a provider framework. Each source
-owns its distinct contracts and supported warehouse stages: FotMob continues
-through Gold, while Oddspedia currently owns Bronze facts and its explicit
-Silver relationship to the canonical FotMob fixture. New code must import from
-the source package or the named shared boundary; `src/services`, `src/storage`,
+owns its distinct contracts and all three warehouse stages. The current
+Oddspedia implementation is further along in Bronze and Silver resolution than
+in source-specific Gold outputs, but that implementation status must not be
+mistaken for a different architecture. New code must import from the source
+package or the named shared boundary; `src/services`, `src/storage`,
 `src/processors`, `src/scrapers`, and `src/utils` are not part of the layout.
 
 For the shared source-artifact hierarchy, current-date Live behavior, and
 legacy Oddspedia layout note, see
 [`data-flow/source-artifact-storage.md`](data-flow/source-artifact-storage.md).
 
-## Gold Namespaces
+## FotMob Gold Namespaces
 
 DepthMark uses separate Gold ClickHouse databases for separate ownership
 boundaries:
@@ -88,6 +100,10 @@ Scenario SQL targets `gold_scenarios.scenario_*`. Scenario bulk execution is
 enabled in `scripts/gold/load_clickhouse_gold.py` and can be run with
 `--part all` or `--part scenarios`. See
 `docs/adr/0004-keep-gold-scenario-bulk-disabled-until-validated.md`.
+
+These namespaces describe the currently implemented FotMob Gold path. Oddspedia
+Gold is a separate source-owned product layer and must receive its own
+source-qualified DDL, SQL, catalogs, and execution surface as it is built.
 
 ## Credential Policy
 
@@ -136,28 +152,32 @@ python3 scripts/bronze/load_clickhouse.py --full-history
 python3 scripts/bronze/drop_clickhouse.py --dry-run
 ```
 
-### Oddspedia Source Domain
+### Oddspedia Pipeline
 
 ```bash
-python3 scripts/oddspedia/football.py discover --date 20260301
-python3 scripts/oddspedia/football.py scrape --date 20260301
-python3 scripts/oddspedia/football.py run --date 20260301
+python3 scripts/oddspedia/events.py discover --date 20260301
+python3 scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
+python3 scripts/oddspedia/events.py scrape --date 20260301 --priority lower
+python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready
 python3 scripts/oddspedia/setup_clickhouse.py --dry-run
 python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
 python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
 ```
 
-Oddspedia is an independent source workflow, not a stage in
+Oddspedia is an independent source pipeline, not a stage in
 `scripts/orchestration/pipeline.py`. Its setup script creates the three
 `oddspedia_bronze.*` tables and the Silver resolution table. The load and
-resolve scripts also accept `--month YYYYMM`.
+resolve scripts also accept `--month YYYYMM`. The canonical Event Intake flow
+is `discover -> prioritize -> scrape`; `prioritize` and `run` require
+`--depthmark-window-ready` because they query the prior/current/following
+`silver.match` reference dates before selecting source pages.
 
 `resolve_matches.py` searches FotMob `silver.match` for the prior, current,
 and following calendar dates. It writes `not_covered` only when the operator
 asserts a complete reference window with `--reference-window-complete`;
 otherwise an unmatched event remains `unresolved`.
 
-### Silver
+### FotMob Silver
 
 ```bash
 python3 scripts/silver/load_clickhouse.py --date 20251208
@@ -166,7 +186,7 @@ python3 scripts/silver/load_clickhouse.py --full-history --dry-run
 python3 scripts/silver/drop_clickhouse.py --dry-run
 ```
 
-### Gold
+### FotMob Gold
 
 ```bash
 python3 scripts/gold/load_clickhouse_gold.py --date 20251208
@@ -362,7 +382,7 @@ combine `--entity` and `--family`; treat them as separate signal batch selectors
 ```text
 src/
   fotmob/                 FotMob scraping and Bronze/Silver/Gold workflows
-  oddspedia/              Oddspedia scraping and Bronze/Silver workflows
+  oddspedia/              Oddspedia scraping and Bronze/Silver/Gold workflows
   warehouse/              scopes, staged replacement, contracts, and quality checks
   integrations/           external-system adapters
   common/                 dependency-light shared helpers

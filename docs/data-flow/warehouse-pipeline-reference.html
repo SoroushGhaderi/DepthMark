@@ -1041,7 +1041,7 @@
             <div class="header-logo">DM</div>
             <div>
                 <h1>DepthMark — Warehouse Pipeline Reference</h1>
-                <div class="header-meta">FotMob + Oddspedia warehouse · isolated sources → Silver → Gold → Product</div>
+                <div class="header-meta">Two source pipelines · FotMob Bronze → Silver → Gold · Oddspedia Bronze → Silver → Gold</div>
             </div>
         </div>
         <div class="header-right">
@@ -1070,7 +1070,7 @@
         </div>
         <div class="pipeline-step">
             <button type="button" class="pipeline-step-btn" role="tab" data-tab="bronze" aria-selected="false" aria-controls="bronze">
-                <span class="pipeline-step-dot"></span>Bronze
+                <span class="pipeline-step-dot"></span>FotMob Bronze
             </button>
             <span class="pipeline-arrow">›</span>
         </div>
@@ -1082,19 +1082,19 @@
         </div>
         <div class="pipeline-step">
             <button type="button" class="pipeline-step-btn" role="tab" data-tab="silver" aria-selected="false" aria-controls="silver">
-                <span class="pipeline-step-dot"></span>Silver
+                <span class="pipeline-step-dot"></span>FotMob Silver
             </button>
             <span class="pipeline-arrow">›</span>
         </div>
         <div class="pipeline-step">
             <button type="button" class="pipeline-step-btn" role="tab" data-tab="gold" aria-selected="false" aria-controls="gold">
-                <span class="pipeline-step-dot"></span>Gold
+                <span class="pipeline-step-dot"></span>FotMob Gold
             </button>
             <span class="pipeline-arrow">›</span>
         </div>
         <div class="pipeline-step">
             <button type="button" class="pipeline-step-btn" role="tab" data-tab="signals" aria-selected="false" aria-controls="signals">
-                <span class="pipeline-step-dot"></span>Signals
+                <span class="pipeline-step-dot"></span>FotMob Signals
             </button>
         </div>
         <div class="pipeline-divider"></div>
@@ -1125,12 +1125,43 @@
             <h2>System at a glance</h2>
         </div>
         <p>
-            DepthMark follows a strict medallion architecture with isolated FotMob and Oddspedia source domains.
-            Bronze is the only filesystem-backed layer — it preserves each source's artifacts exactly as received.
-            Silver and Gold live entirely in ClickHouse. Gold splits into three
-            independent namespaces so scenarios, signals, and shared serving metadata evolve without coupling.
-            SQL owns all analytical logic; Python discovers jobs, executes, validates, and reports.
+            DepthMark follows two parallel medallion pipelines: one for FotMob and one for Oddspedia.
+            Each source owns Bronze, Silver, and Gold. Bronze is the only filesystem-backed layer and preserves
+            that source's artifacts; Silver and Gold live in ClickHouse. The sources meet only through explicit,
+            auditable integration relationships such as match resolution. SQL owns analytical logic; Python
+            discovers jobs, executes, validates, and reports.
         </p>
+    </div>
+
+    <div class="diagram-card" style="margin-top:1.5rem">
+        <div class="card-header">
+            <h3>Two source-owned medallion paths</h3>
+            <div class="subtitle">The layers repeat per source; they are not one shared FotMob pipeline with an Oddspedia side tab</div>
+        </div>
+        <div class="flow-diagram">
+            <div class="flow-row">
+                <div class="flow-node accent"><strong>FotMob API</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>FotMob Bronze</strong><span class="sub">data/fotmob + bronze.*</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node silver"><strong>FotMob Silver</strong><span class="sub">silver.* canonical fixtures</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node gold"><strong>FotMob Gold</strong><span class="sub">scenarios, signals, serving</span></div>
+            </div>
+            <div class="flow-row" style="margin-top:1rem">
+                <div class="flow-node accent"><strong>Oddspedia pages</strong></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>Oddspedia Bronze</strong><span class="sub">data/oddspedia + oddspedia_bronze.*</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node silver"><strong>Oddspedia Silver</strong><span class="sub">events, odds, resolutions</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node gold"><strong>Oddspedia Gold</strong><span class="sub">odds-derived outputs</span></div>
+            </div>
+            <div class="callout note" style="margin-top:1rem">
+                <span class="callout-icon">↔</span>
+                <span><strong>Integration edge:</strong> Oddspedia Silver may read FotMob <code>silver.match</code> to record an audited relationship. This does not merge raw data or make Oddspedia Silver/Gold a FotMob stage.</span>
+            </div>
+        </div>
     </div>
 
     <!-- Clickable pipeline swimlane -->
@@ -1145,20 +1176,20 @@
         <div class="pipe-stage s-bronze" data-flow-section="bronze">
             <div class="pipe-stage-label">Bronze</div>
             <div class="pipe-stage-title">Isolated raw facts</div>
-            <div class="pipe-stage-desc">No source mixing, typing, or analytical joins</div>
-            <div class="pipe-stage-count">15 + 3</div>
+            <div class="pipe-stage-desc">FotMob Bronze + Oddspedia Bronze, kept separate</div>
+            <div class="pipe-stage-count">15 + 3*</div>
         </div>
         <div class="pipe-stage s-silver" data-flow-section="silver">
             <div class="pipe-stage-label">Silver</div>
             <div class="pipe-stage-title">Conformed analytics</div>
-            <div class="pipe-stage-desc">FotMob analytics plus audited Oddspedia-to-FotMob resolution</div>
-            <div class="pipe-stage-count">9</div>
+            <div class="pipe-stage-desc">Each source has its own conformed analytical path</div>
+            <div class="pipe-stage-count">8 + 1*</div>
         </div>
         <div class="pipe-stage s-gold" data-flow-section="gold">
             <div class="pipe-stage-label">Gold</div>
             <div class="pipe-stage-title">Product outputs</div>
-            <div class="pipe-stage-desc">392 materialized tables across scenarios + signals</div>
-            <div class="pipe-stage-count">392</div>
+            <div class="pipe-stage-desc">FotMob outputs now; Oddspedia outputs follow the same boundary</div>
+            <div class="pipe-stage-count">392*</div>
         </div>
         <div class="pipe-stage s-serve" data-flow-section="mongodb">
             <div class="pipe-stage-label">Serve</div>
@@ -1172,11 +1203,11 @@
     </div>
 
     <div class="stats">
-        <div class="stat-card bronze"><div class="number">15</div><div class="label">Bronze tables</div></div>
+        <div class="stat-card bronze"><div class="number">15</div><div class="label">FotMob Bronze tables</div></div>
         <div class="stat-card bronze"><div class="number">3</div><div class="label">Oddspedia Bronze tables</div></div>
-        <div class="stat-card silver"><div class="number">9</div><div class="label">Silver tables</div></div>
-        <div class="stat-card gold"><div class="number">48</div><div class="label">Scenario tables</div></div>
-        <div class="stat-card gold"><div class="number">344</div><div class="label">Signal tables</div></div>
+        <div class="stat-card silver"><div class="number">8</div><div class="label">FotMob Silver tables</div></div>
+        <div class="stat-card gold"><div class="number">48</div><div class="label">FotMob scenario tables</div></div>
+        <div class="stat-card gold"><div class="number">344</div><div class="label">FotMob signal tables</div></div>
         <div class="stat-card meta"><div class="number">1</div><div class="label">Activation serving table</div></div>
         <div class="stat-card"><div class="number">5</div><div class="label">MongoDB collections</div></div>
     </div>
@@ -1190,7 +1221,7 @@
             <thead><tr><th>Module</th><th>Owns</th><th>Key paths</th></tr></thead>
             <tbody>
                 <tr><td>FotMob domain</td><td>API scraping, Bronze loading and archives, canonical Silver, and Gold execution</td><td><code>src/fotmob/scraping/</code>, <code>src/fotmob/bronze/</code>, <code>src/fotmob/silver/</code>, <code>src/fotmob/gold/</code></td></tr>
-                <tr><td>Oddspedia domain</td><td>Browser scraping, isolated raw loading, and audited fixture resolution</td><td><code>src/oddspedia/scraping/</code>, <code>src/oddspedia/bronze/</code>, <code>src/oddspedia/silver/</code></td></tr>
+                <tr><td>Oddspedia domain</td><td>Browser scraping, Bronze loading, Silver conformation/resolution, and future Gold coordination</td><td><code>src/oddspedia/scraping/</code>, <code>src/oddspedia/bronze/</code>, <code>src/oddspedia/silver/</code>, <code>src/oddspedia/gold/</code></td></tr>
                 <tr><td>Warehouse shared</td><td>Execution scopes, staged replacement, layer contracts, quality checks, and database naming</td><td><code>src/warehouse/</code></td></tr>
                 <tr><td>Shared adapters</td><td>ClickHouse, MongoDB, S3, Telegram, logging, dates, and operational health checks</td><td><code>src/integrations/</code>, <code>src/common/</code>, <code>src/operations/</code></td></tr>
             </tbody>
@@ -1198,6 +1229,10 @@
         <div class="callout note" style="margin-top:1rem">
             <span class="callout-icon">📁</span>
             <span>There is no generic provider layer: FotMob and Oddspedia remain explicit, isolated source domains. Script entry points stay under <code>scripts/</code>; they coordinate these modules without owning analytical SQL.</span>
+        </div>
+        <div class="callout note" style="margin-top:1rem">
+            <span class="callout-icon">*</span>
+            <span>Inventory counts shown here are current FotMob/Oddspedia implementation counts, not limits of the architecture. Oddspedia Silver and Gold inventories will be tracked separately when their source-owned outputs are added.</span>
         </div>
     </div>
 
@@ -1305,7 +1340,7 @@
                 <tr><td>7</td><td>Quality</td><td>Logical duplicate identities and physical-version diagnostics in all layers; Bronze↔Silver identity reconciliation</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
                 <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python3 scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
                 <tr><td>9</td><td>Maintenance</td><td>Optional ClickHouse storage optimization after reviewing physical-version diagnostics</td><td><code>python3 scripts/maintenance/optimize_clickhouse.py --layer bronze</code></td></tr>
-                <tr><td>10</td><td>Oddspedia</td><td>3 <code>oddspedia_bronze.*</code> + <code>silver.oddspedia_match_resolution</code></td><td><code>python3 scripts/oddspedia/setup_clickhouse.py</code>, then source-specific discover → scrape → load → resolve</td></tr>
+                <tr><td>10</td><td>Oddspedia source route</td><td>Oddspedia Bronze facts + Oddspedia Silver resolution today; source Silver/Gold expansion follows the same path</td><td><code>python3 scripts/oddspedia/setup_clickhouse.py</code>, then source-specific discover → prioritize → scrape → load → resolve</td></tr>
             </tbody>
         </table>
         <div class="callout note">
@@ -1599,7 +1634,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
 <div class="diagram-section" id="bronze" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge bronze">Bronze</span> Source fidelity</h2>
+            <h2><span class="layer-badge bronze">FotMob Bronze</span> Source fidelity</h2>
         </div>
         <p>
             The only filesystem-backed layer. Scrapes FotMob API payloads to disk sequentially, then
@@ -1780,38 +1815,49 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
 <div class="diagram-section" id="oddspedia" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge bronze">Oddspedia</span> Isolated source domain</h2>
+            <h2><span class="layer-badge bronze">Oddspedia</span> Complete source pipeline</h2>
         </div>
         <p>
-            Oddspedia source artifacts are stored separately from FotMob and loaded only into
-            <code>oddspedia_bronze.*</code>. The resolver reads canonical FotMob fixtures from
-            <code>silver.match</code> and writes an audited relationship to
-            <code>silver.oddspedia_match_resolution</code>; it never modifies FotMob Bronze or Silver match data.
+            Oddspedia owns a complete Bronze → Silver → Gold path. Its source artifacts are stored separately
+            from FotMob and loaded into <code>oddspedia_bronze.*</code>; source-specific Silver owns cleaned
+            event/odds entities and the audited relationship to canonical FotMob <code>silver.match</code>.
+            Oddspedia Gold owns future odds-derived scenarios, signals, and serving outputs. Nothing in this
+            path modifies FotMob Bronze or Silver match data.
         </p>
         <p class="doc-link">Deep dive: <a href="oddspedia.md">oddspedia.md</a></p>
     </div>
 
     <div class="diagram-card">
         <div class="card-header">
-            <h3>Independent source workflow</h3>
-            <div class="subtitle">This workflow is not part of <code>pipeline.py</code></div>
+            <h3>Oddspedia Bronze → Silver → Gold</h3>
+            <div class="subtitle">Independent source workflow; the current CLI covers intake, Bronze loading, and Silver resolution</div>
         </div>
         <div class="flow-diagram">
             <div class="flow-row">
-                <div class="flow-node accent"><strong>Oddspedia listing / page</strong><span class="sub">browser scraper</span></div>
+                <div class="flow-node accent"><strong>Oddspedia listing</strong><span class="sub">source link inventory</span></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node bronze"><strong>data/oddspedia/historical/</strong><span class="sub">daily listings, payloads, manifests</span></div>
+                <div class="flow-node silver"><strong>silver.match</strong><span class="sub">three-day canonical reference</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>link_priorities/</strong><span class="sub">derived decision ledger</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node accent"><strong>Selected Oddspedia pages</strong><span class="sub">priority-selected browser scraping</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node bronze"><strong>data/oddspedia/historical/</strong><span class="sub">source links, payloads, manifests</span></div>
                 <span class="flow-connector">→</span>
                 <div class="flow-node bronze"><strong>oddspedia_bronze.*</strong><span class="sub">event, match_payload, market</span></div>
                 <span class="flow-connector">→</span>
                 <div class="flow-node silver"><strong>silver.oddspedia_match_resolution</strong><span class="sub">read-only reference: silver.match</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node silver"><strong>Oddspedia Silver</strong><span class="sub">conformed odds/event entities</span></div>
+                <span class="flow-connector">→</span>
+                <div class="flow-node gold"><strong>Oddspedia Gold</strong><span class="sub">scenarios · signals · serving</span></div>
             </div>
         </div>
         <table class="data-table">
             <thead><tr><th>Phase</th><th>Command</th><th>Outcome</th></tr></thead>
             <tbody>
-                <tr><td>Discover + scrape</td><td><code>python3 scripts/oddspedia/football.py run --date 20260301</code></td><td>Saved event links and one raw payload per discovered event</td></tr>
-                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_clickhouse.py --dry-run</code></td><td>Plans the three raw tables plus the Silver resolution table</td></tr>
+                <tr><td>Discover + prioritize + scrape</td><td><code>python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready</code></td><td>Saved source links, auditable priority decisions, and selected raw payloads</td></tr>
+                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_clickhouse.py --dry-run</code></td><td>Plans the implemented Oddspedia Bronze tables plus the current Silver resolution table</td></tr>
                 <tr><td>Load raw facts</td><td><code>python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run</code></td><td>Plans source-faithful event, payload, and market rows</td></tr>
                 <tr><td>Resolve fixtures</td><td><code>python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run</code></td><td>Calculates a match relationship without writing it</td></tr>
             </tbody>
@@ -1820,13 +1866,17 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
 
     <div class="callout note">
         <span class="callout-icon">📅</span>
-        <span><strong>Resolution guardrail:</strong> the resolver evaluates the previous, current, and following UTC dates. Use <code>--reference-window-complete</code> only when all three FotMob dates are complete; otherwise unmatched events remain <code>unresolved</code> rather than <code>not_covered</code>.</span>
+        <span><strong>Three-day guardrail:</strong> priority generation requires <code>--depthmark-window-ready</code> before it reads the prior/current/following <code>silver.match</code> dates. The later resolver still uses <code>--reference-window-complete</code> before it persists <code>not_covered</code>; otherwise unmatched events remain <code>unresolved</code>.</span>
+    </div>
+    <div class="callout insight">
+        <span class="callout-icon">◌</span>
+        <span><strong>Architecture status:</strong> Oddspedia Bronze and Silver match resolution are implemented. Additional source-specific Silver entities and Oddspedia Gold outputs are planned within this same three-layer path; the current FotMob Gold commands must not be used as their substitute.</span>
     </div>
     <details class="cmd-block">
         <summary>▸ Month scope and recovery commands</summary>
-        <pre>python3 scripts/oddspedia/football.py run --month 202603
-python3 scripts/oddspedia/football.py scrape --date 20260301 --retry failed
-python3 scripts/oddspedia/football.py discover --date 20260301 --retry incomplete
+        <pre>python3 scripts/oddspedia/events.py run --month 202603 --depthmark-window-ready
+python3 scripts/oddspedia/events.py scrape --date 20260301 --priority lower --retry failed
+python3 scripts/oddspedia/events.py discover --date 20260301 --retry incomplete
 python3 scripts/oddspedia/load_clickhouse.py --month 202603 --dry-run
 python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run</pre>
     </details>
@@ -1836,14 +1886,16 @@ python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run</pre>
 <div class="diagram-section" id="silver" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge silver">Silver</span> Conformed analytics</h2>
+            <h2><span class="layer-badge silver">FotMob Silver</span> Conformed analytics</h2>
         </div>
         <p>
-            FotMob Bronze tables are joined, typed, and cleaned into 8 reusable analytical tables. Silver always
+            FotMob Bronze tables are joined, typed, and cleaned into 8 reusable FotMob Silver analytical tables. FotMob Silver always
             reloads from the complete Bronze dataset — there is no incremental watermark. Every Silver run is
             deterministic and safe to re-run. All 344 signals and 48 scenarios read exclusively from these
-            8 FotMob analytical tables, never directly from Bronze. A separate ninth table records audited
-            Oddspedia-to-FotMob fixture resolution and is not a Gold input.
+            8 FotMob analytical tables, never directly from Bronze. Oddspedia
+            match resolution belongs to the Oddspedia Silver/integration edge
+            documented in its own source tab; it is not a ninth FotMob Silver
+            table or a hidden Gold input.
         </p>
         <p class="doc-link">Deep dive: <a href="silver.md">silver.md</a></p>
     </div>
@@ -1948,10 +2000,10 @@ python3 scripts/silver/load_clickhouse.py --full-history</pre>
 <div class="diagram-section" id="gold" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge gold">Gold</span> Product outputs</h2>
+            <h2><span class="layer-badge gold">FotMob Gold</span> Product outputs</h2>
         </div>
         <p>
-            Three ClickHouse namespaces with deliberate independence: <code>gold_scenarios.*</code> for narrative analysis,
+            FotMob Gold uses three ClickHouse namespaces with deliberate independence: <code>gold_scenarios.*</code> for narrative analysis,
             <code>gold_signals.*</code> for granular detections, and <code>gold.*</code> for shared serving metadata.
             A single activation table (<code>gold.signal_activations</code>) unifies all active signals into one
             queryable surface for product and BI consumers.
@@ -2085,7 +2137,7 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
 <div class="diagram-section" id="signals" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2>Signal system</h2>
+            <h2>FotMob signal system</h2>
         </div>
         <p>
             Each signal is four co-located artifacts: a SQL transformation, a table DDL, a markdown catalog
@@ -2738,10 +2790,10 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'bronze',
         },
         {
-            match: ['oddspedia', 'oddspedia_bronze', 'match resolution', 'resolve_matches.py', 'football.py run'],
+            match: ['oddspedia', 'oddspedia_bronze', 'link priorities', 'match resolution', 'resolve_matches.py', 'events.py run'],
             title: 'Oddspedia source-domain workflow',
             scripts: [
-                'scripts/oddspedia/football.py',
+                'scripts/oddspedia/events.py',
                 'scripts/oddspedia/setup_clickhouse.py',
                 'scripts/oddspedia/load_clickhouse.py',
                 'scripts/oddspedia/resolve_matches.py',
@@ -2750,7 +2802,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'src/oddspedia/silver/match_resolution.py',
             ],
             commands: [
-                'python3 scripts/oddspedia/football.py run --date 20260301',
+                'python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready',
                 'python3 scripts/oddspedia/setup_clickhouse.py --dry-run',
                 'python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run',
                 'python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run',

@@ -2,12 +2,13 @@
 
 ## Layer Inventory
 
-DepthMark's analytical medallion path is FotMob-canonical and ClickHouse-backed
-from Silver upward. Oddspedia is an isolated source domain with
-`oddspedia_bronze.*` facts and an auditable relationship to `silver.match`; it
-does not alter the canonical FotMob entities or Gold outputs.
+DepthMark has two explicit source domains, FotMob and Oddspedia. Each source
+follows its own Bronze → Silver → Gold medallion path with isolated raw
+contracts. FotMob remains the canonical fixture-reference source for the
+cross-source match relationship; that relationship does not replace Oddspedia
+Silver or Gold.
 
-### Silver (`silver.*`)
+### FotMob Silver (`silver.*`)
 
 Eight cleaned analytical tables with paired DDL and DML:
 
@@ -23,7 +24,15 @@ Eight cleaned analytical tables with paired DDL and DML:
 Runtime contracts are enforced through `assert_silver_layer_contracts` in
 `src/warehouse/contracts.py`.
 
-### Gold
+### Oddspedia Silver
+
+Oddspedia Silver owns cleaned event/odds entities and the auditable
+`silver.oddspedia_match_resolution` relationship. It may read the canonical
+FotMob `silver.match` reference for matching, but it does not rewrite FotMob
+rows. Additional Oddspedia Silver outputs remain source-specific as they are
+implemented.
+
+### FotMob Gold
 
 Gold materializes product-facing scenario and signal outputs across three
 ClickHouse namespaces:
@@ -48,6 +57,14 @@ Gold setup DDL lives under `clickhouse/gold/ddl/`; transforms live under
 
 Signal metadata is authored in `scripts/gold/signal/catalogs/*.md`. Scenario
 narrative docs live in `scripts/gold/scenario/SCENARIOS_CATALOG.md`.
+
+### Oddspedia Gold
+
+Oddspedia Gold is the source-owned product layer for odds-derived scenarios,
+signals, and serving outputs. It follows the same responsibility boundary as
+FotMob Gold but must not reuse FotMob Gold SQL or silently write to FotMob
+signal tables. Its detailed DDL, SQL, catalogs, and loaders are follow-up
+implementation work.
 
 ## Glossary
 
@@ -218,6 +235,17 @@ confidence, and rule version rather than rewriting either source record.
 
 Related terms: Resolution Status, Coverage Category.
 
+### Approximate Team Match
+
+A team-name comparison that recognizes an equivalent provider spelling without
+requiring an exact normalized name. It is permitted only for token reordering,
+a reviewed alias, or containment of a distinctive shortened team name in the
+longer provider name. Approximate evidence is accepted automatically only when
+both home and away sides form a unique high-confidence fixture pair.
+
+Avoid saying: loose match, best guess.
+Related terms: Match Resolution, Source Event.
+
 ### Resolution Status
 
 The state of a Match Resolution: `matched` for one confirmed FotMob fixture,
@@ -236,6 +264,80 @@ is allowed only for an `unmatched` event with a complete FotMob reference
 window; unresolved events have no Coverage Category.
 
 Related terms: Canonical FotMob Fixture Reference, Resolution Status.
+
+### Link Validation
+
+The pre-scrape comparison of one discovered Oddspedia event link against
+canonical FotMob fixtures in `silver.match` within its three-day reference
+window (the discovery date, one day before, and one day after). It records a
+deterministic validation status and, only for a unique match, the canonical
+FotMob match ID and coverage level in a separate derived priority artifact.
+The window is the sole date constraint: matching evidence consists only of the
+normalized home and away team names. Kickoff, league, and other provider
+metadata are preserved for review but do not influence the decision.
+The artifact also preserves the FotMob reference fields for the matched row,
+or a clearly labelled top candidate for an ambiguous result, to make the
+provider comparison reviewable without changing source facts.
+It uses the same matching policy, aliases, scoring thresholds, and rule version
+as the later Silver Match Resolution; the latter verifies and persists the
+same decision after source payload loading rather than applying a competing
+matcher.
+
+Priority Generation fails closed unless the three-day Silver reference window
+is confirmed complete. It does not emit a new priority artifact from partial
+reference data, because doing so could misclassify a missing canonical fixture
+as `unmatched`. The explicit readiness assertion is
+`--depthmark-window-ready`; it means the operator confirms DepthMark completed
+the needed Silver reference window.
+
+Avoid saying: Match Resolution, post-scrape match check.
+Related terms: Source Event, Match Resolution, Link Priority.
+
+### Link Priority
+
+The inclusive scrape-selection tier assigned during Link Validation. Tiers are
+ordered `xG`, `ratings`, `lower`, then `unmatched`; a selected tier includes
+every higher tier. `ambiguous` and `unresolved` are not priority tiers and are
+excluded from automatic scraping. The default selected tier is `lower`.
+
+Link Priority artifacts live under the Oddspedia Historical data root, separate
+from the source-faithful daily link inventory. They preserve a compact decision
+ledger keyed by Oddspedia event ID, with a common provider-pair comparison and
+the decision policy that controlled a scrape run. Raw Oddspedia source facts
+remain only in the daily link inventory and are rehydrated by ID for scraping.
+The canonical per-date snapshot is
+`data/oddspedia/historical/link_priorities/YYYYMM/YYYYMMDD/prioritized_match_links.json`;
+it contains the prioritized date as explicit metadata. It contains every
+discovered Oddspedia event's validation result, including matched coverage tiers
+and excluded `ambiguous` or `unresolved` outcomes; it is not limited to the
+current scrape selection.
+
+The per-date manifest records a `priority_run` audit section rather than
+duplicating each link decision. It references the priority artifact and its
+checksum, the prioritized date, matcher/policy version, selected priority tier,
+selected count, and counts by validation status and tier.
+
+Related terms: Link Validation, Coverage Category, Resolution Status.
+
+### Priority Generation
+
+The explicit Oddspedia workflow that produces the Link Priority artifact for a
+date from an accepted source link inventory and the corresponding three-day
+`silver.match` reference window. The combined workflow runs discovery, then
+Priority Generation, then scraping. A priority-selected scrape requires a
+current Priority artifact whose source-inventory reference still matches the
+saved links.
+
+Related terms: Link Validation, Link Priority, Source Event.
+
+### Oddspedia Event Intake
+
+The Oddspedia command workflow that discovers event links, generates Link
+Priorities, and scrapes selected event pages. Its canonical script entry point
+is `scripts/oddspedia/events.py`; the legacy `football.py` entry point is a
+temporary compatibility wrapper rather than the public process name.
+
+Related terms: Source Event, Priority Generation.
 
 ### Bronze Retention
 
@@ -286,12 +388,13 @@ Related terms: Gold Bulk Loading, Gold Service, Scenario SQL Job.
 
 ### Source Domain Scope
 
-DepthMark has two explicit source domains: FotMob and Oddspedia. FotMob remains
-the canonical fixture reference and continues through Gold; Oddspedia owns
-source artifacts, `oddspedia_bronze.*` facts, and its audited Silver resolution
-to `silver.match`. There is no generic provider abstraction boundary. Code that
-looks reusable, such as `BaseBronzeStorage`, remains a FotMob implementation
-detail rather than an invitation to add a provider plugin framework.
+DepthMark has two explicit source domains: FotMob and Oddspedia. Both own
+source-specific Bronze, Silver, and Gold stages. FotMob remains the canonical
+fixture reference for the explicit relationship from Oddspedia Silver to
+`silver.match`; it does not own Oddspedia's entire medallion path. There is no
+generic provider abstraction boundary. Code that looks reusable, such as
+`BaseBronzeStorage`, remains a source implementation detail rather than an
+invitation to add a provider plugin framework.
 
 Avoid saying: generic provider framework, provider plugin, provider abstraction.
 Related terms: Bronze Layer, FotMob API, Oddspedia.

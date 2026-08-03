@@ -3,6 +3,7 @@
 import json
 import re
 import unicodedata
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from difflib import SequenceMatcher
@@ -98,6 +99,8 @@ class FotMobCandidateIndex:
         self.exact: Dict[Tuple[str, Tuple[str, ...], str, Tuple[str, ...]], List[FotMobMatch]] = {}
         self.home_tokens: Dict[str, set] = {}
         self.away_tokens: Dict[str, set] = {}
+        self.home_ngrams: Dict[str, set] = {}
+        self.away_ngrams: Dict[str, set] = {}
         for match in matches:
             home = resolver._normalize_team(match.home_team_name)
             away = resolver._normalize_team(match.away_team_name)
@@ -108,6 +111,10 @@ class FotMobCandidateIndex:
                 self.home_tokens.setdefault(token, set()).add(match)
             for token in away.core.split():
                 self.away_tokens.setdefault(token, set()).add(match)
+            for ngram in _team_ngrams(home.core):
+                self.home_ngrams.setdefault(ngram, set()).add(match)
+            for ngram in _team_ngrams(away.core):
+                self.away_ngrams.setdefault(ngram, set()).add(match)
 
     def candidates_for(self, event: OddspediaEvent) -> Iterable[FotMobMatch]:
         home = self.resolver._normalize_team(event.home_team_name)
@@ -121,7 +128,12 @@ class FotMobCandidateIndex:
             home_candidates.update(self.home_tokens.get(token, set()))
         for token in away.core.split():
             away_candidates.update(self.away_tokens.get(token, set()))
-        return home_candidates.intersection(away_candidates)
+        token_candidates = home_candidates.intersection(away_candidates)
+        return token_candidates.union(
+            _ngram_candidates(home.core, self.home_ngrams).intersection(
+                _ngram_candidates(away.core, self.away_ngrams)
+            )
+        )
 
 
 class OddspediaMatchResolver:
@@ -132,12 +144,13 @@ class OddspediaMatchResolver:
         aliases = _load_yaml(aliases_path).get("aliases", {})
         self.rule_version = str(policy.get("rule_version", "v1"))
         self.candidate_window_days = int(policy.get("candidate_window_days", 1))
-        self.exact_time_minutes = int(policy.get("exact_time_minutes", 15))
-        self.alias_time_minutes = int(policy.get("alias_time_minutes", 60))
-        self.maximum_time_minutes = int(policy.get("maximum_time_minutes", 720))
-        self.automatic_match_score = float(policy.get("automatic_match_score", 95))
+        self.team_name_match_score = float(policy.get("team_name_match_score", 90))
         self.automatic_match_margin = float(policy.get("automatic_match_margin", 8))
         self.team_similarity_minimum = float(policy.get("team_similarity_minimum", 0.88))
+        self.approximate_token_min_length = int(policy.get("approximate_token_min_length", 7))
+        self.approximate_token_containment_score = float(
+            policy.get("approximate_token_containment_score", 0.92)
+        )
         self.qualifier_tokens = frozenset(policy.get("qualifier_tokens", []))
         self.generic_tokens = frozenset(policy.get("generic_tokens", []))
         self.aliases = {
@@ -188,11 +201,12 @@ class OddspediaMatchResolver:
 
         best = candidates[0]
         margin = best.score - candidates[1].score if len(candidates) > 1 else best.score
-        automatic = (
-            best.score >= self.automatic_match_score and margin >= self.automatic_match_margin
-        )
-        if automatic:
+        if best.score >= self.team_name_match_score and margin >= self.automatic_match_margin:
             confidence = "exact" if best.home_rule == best.away_rule == "exact" else "alias"
+            if confidence == "alias" and any(
+                rule.startswith("fuzzy") for rule in (best.home_rule, best.away_rule)
+            ):
+                confidence = "high_similarity"
             return self._result(
                 event,
                 candidate_dates,
@@ -232,20 +246,10 @@ class OddspediaMatchResolver:
             or away_similarity < self.team_similarity_minimum
         ):
             return None
-        time_difference = _minutes_between(event.kickoff_utc, match.kickoff_utc)
-        if time_difference is not None and time_difference > self.maximum_time_minutes:
-            return None
-        score = (45 * home_similarity) + (45 * away_similarity) + self._time_points(time_difference)
-        if (
-            event.league_name
-            and match.league_name
-            and _simple_text(event.league_name) == _simple_text(match.league_name)
-        ):
-            score += 5
         return Candidate(
             match=match,
-            score=round(score, 2),
-            time_difference_minutes=time_difference,
+            score=round(50 * home_similarity + 50 * away_similarity, 2),
+            time_difference_minutes=None,
             home_rule=home_rule,
             away_rule=away_rule,
         )
@@ -257,7 +261,16 @@ class OddspediaMatchResolver:
             return 0.0, "qualifier_mismatch"
         if source.core == reference.core:
             return 1.0, "alias" if source.alias_used or reference.alias_used else "exact"
-        return SequenceMatcher(None, source.core, reference.core).ratio(), "fuzzy"
+        character_similarity = SequenceMatcher(None, source.core, reference.core).ratio()
+        source_tokens = tuple(source.core.split())
+        reference_tokens = tuple(reference.core.split())
+        if sorted(source_tokens) == sorted(reference_tokens):
+            return 1.0, "fuzzy_token_reordered"
+        if _has_distinctive_token_containment(
+            source_tokens, reference_tokens, self.approximate_token_min_length
+        ):
+            return self.approximate_token_containment_score, "fuzzy_token_containment"
+        return character_similarity, "fuzzy_character"
 
     def _normalize_team(self, value: str) -> TeamName:
         text = _simple_text(value)
@@ -271,17 +284,6 @@ class OddspediaMatchResolver:
             if token not in self.qualifier_tokens and token not in self.generic_tokens
         )
         return TeamName(core=core, qualifiers=qualifiers, alias_used=alias_used)
-
-    def _time_points(self, difference_minutes: Optional[int]) -> float:
-        if difference_minutes is None:
-            return 0.0
-        if difference_minutes <= self.exact_time_minutes:
-            return 10.0
-        if difference_minutes <= self.alias_time_minutes:
-            return 8.0
-        if difference_minutes <= 180:
-            return 4.0
-        return 1.0
 
     def _result(
         self,
@@ -402,21 +404,67 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
 
 
 def _simple_text(value: str) -> str:
-    value = str(value or "").replace("ß", "ss")
+    value = str(value or "").translate(
+        str.maketrans(
+            {
+                "ß": "ss",
+                "æ": "ae",
+                "Æ": "AE",
+                "œ": "oe",
+                "Œ": "OE",
+                "ø": "o",
+                "Ø": "O",
+                "ð": "d",
+                "Ð": "D",
+                "þ": "th",
+                "Þ": "TH",
+                "ł": "l",
+                "Ł": "L",
+                "ı": "i",
+                "İ": "I",
+            }
+        )
+    )
     normalized = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", normalized.casefold())).strip()
-
-
-def _minutes_between(first: Optional[datetime], second: Optional[datetime]) -> Optional[int]:
-    if first is None or second is None:
-        return None
-    if first.tzinfo is not None:
-        first = first.replace(tzinfo=None)
-    if second.tzinfo is not None:
-        second = second.replace(tzinfo=None)
-    return int(abs((first - second).total_seconds()) // 60)
 
 
 def _coverage_category(value: str) -> Optional[str]:
     normalized = _simple_text(value)
     return {"xg": "xG", "ratings": "ratings", "lower": "lower"}.get(normalized)
+
+
+def _team_ngrams(value: str) -> Tuple[str, ...]:
+    """Return distinctive character n-grams for controlled spelling fallbacks."""
+    compact = value.replace(" ", "")
+    if len(compact) < 3:
+        return ()
+    return tuple({compact[index : index + 3] for index in range(len(compact) - 2)})
+
+
+def _has_distinctive_token_containment(
+    source_tokens: Tuple[str, ...], reference_tokens: Tuple[str, ...], minimum_length: int
+) -> bool:
+    """Recognize a provider abbreviation only when its remaining token is distinctive."""
+    source_set = set(source_tokens)
+    reference_set = set(reference_tokens)
+    if source_set == reference_set or not source_set or not reference_set:
+        return False
+    shorter, longer = (
+        (source_set, reference_set)
+        if len(source_set) < len(reference_set)
+        else (reference_set, source_set)
+    )
+    return shorter.issubset(longer) and all(len(token) >= minimum_length for token in shorter)
+
+
+def _ngram_candidates(core: str, index: Dict[str, set]) -> set:
+    """Find candidates sharing at least two spelling fragments with a team name."""
+    ngrams = _team_ngrams(core)
+    minimum_shared = min(2, len(ngrams))
+    if not minimum_shared:
+        return set()
+    counts: Counter = Counter()
+    for ngram in ngrams:
+        counts.update(index.get(ngram, set()))
+    return {match for match, count in counts.items() if count >= minimum_shared}
