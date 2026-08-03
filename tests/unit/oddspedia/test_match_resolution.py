@@ -228,3 +228,93 @@ def test_does_not_treat_a_short_generic_name_as_approximate_identity():
     )
 
     assert result.resolution_status == "unmatched"
+
+
+def test_matches_club_designators_without_weakening_qualifier_matching():
+    source_event = event(home="CSD Tristan Suarez", away="San Martin de San Juan")
+    candidate = FotMobMatch(
+        match_id=133,
+        match_date=date(2026, 3, 1),
+        kickoff_utc=None,
+        home_team_name="Tristan Suarez",
+        away_team_name="San Martin San Juan",
+        coverage_level="ratings",
+    )
+    match_resolver = resolver()
+
+    result = match_resolver.resolve_from_index(
+        source_event,
+        match_resolver.candidate_index([candidate]),
+        reference_window_complete=True,
+    )
+
+    assert result.resolution_status == "matched"
+    assert result.home_match_rule == "exact"
+    assert result.coverage_category == "ratings"
+
+
+def test_canonicalizes_second_team_numeral_as_a_qualifier():
+    source_event = event(home="Houston Dynamo II", away="Colorado Rapids II")
+    candidate = FotMobMatch(
+        match_id=134,
+        match_date=date(2026, 3, 1),
+        kickoff_utc=None,
+        home_team_name="Houston Dynamo 2",
+        away_team_name="Colorado Rapids 2",
+        coverage_level="lower",
+    )
+    match_resolver = resolver()
+
+    result = match_resolver.resolve_from_index(
+        source_event,
+        match_resolver.candidate_index([candidate]),
+        reference_window_complete=True,
+    )
+
+    assert result.resolution_status == "matched"
+    assert result.home_match_rule == "exact"
+    assert result.away_match_rule == "exact"
+
+
+def test_uses_a_unique_token_only_when_the_opposite_team_is_an_anchor():
+    source_event = event(home="Emmen", away="Utrecht Youth")
+    candidate = FotMobMatch(
+        match_id=135,
+        match_date=date(2026, 3, 1),
+        kickoff_utc=None,
+        home_team_name="FC Emmen",
+        away_team_name="Jong FC Utrecht",
+        coverage_level="xG",
+    )
+    match_resolver = resolver()
+
+    result = match_resolver.resolve_from_index(
+        source_event,
+        match_resolver.candidate_index([candidate]),
+        reference_window_complete=True,
+    )
+
+    assert result.resolution_status == "matched"
+    assert result.home_match_rule == "exact"
+    assert result.away_match_rule == "fuzzy_unique_token"
+
+
+def test_does_not_use_two_unique_tokens_without_an_exact_or_alias_anchor():
+    source_event = event(home="Alpha United", away="Utrecht Youth")
+    candidate = FotMobMatch(
+        match_id=136,
+        match_date=date(2026, 3, 1),
+        kickoff_utc=None,
+        home_team_name="Alpha City",
+        away_team_name="Jong FC Utrecht",
+        coverage_level="xG",
+    )
+    match_resolver = resolver()
+
+    result = match_resolver.resolve_from_index(
+        source_event,
+        match_resolver.candidate_index([candidate]),
+        reference_window_complete=True,
+    )
+
+    assert result.resolution_status == "unmatched"

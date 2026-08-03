@@ -386,7 +386,9 @@ class FootballMatchSchemaTests(unittest.TestCase):
                 self.card_count = 4
 
             def execute_script(self, script, *_args):
+                self.last_script = script
                 if "return {button: button" in script:
+                    self.selector_script = script
                     return {"button": self.button, "cards": self.card_count}
                 if "querySelectorAll('.matchup-odds-comparison-card').length" in script:
                     self.card_count = 22
@@ -398,6 +400,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         self.assertEqual(expanded, 18)
         self.assertTrue(driver.button.clicked)
+        self.assertIn("show all markets", driver.selector_script.lower())
 
     @patch("src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=1)
     @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_card", return_value=True)
