@@ -10,9 +10,17 @@ Extracts from each match page:
 import time
 import re
 import json
+import unicodedata
+from urllib.parse import urlparse
 
 from src.oddspedia.scraping.config import BASE_URL, SCROLL_PAUSE, normalize_sport
-from src.oddspedia.scraping.utils import safe_get, now_iso, _is_error_page
+from src.oddspedia.scraping.utils import (
+    _is_detail_url,
+    _is_error_page,
+    _is_listing_page_title,
+    now_iso,
+    safe_get,
+)
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
 from selenium.common.exceptions import WebDriverException, StaleElementReferenceException
@@ -31,6 +39,10 @@ class FootballOddsUnavailableError(RuntimeError):
 
 class FootballScoreUnavailableError(RuntimeError):
     """Raised when a completed football event has no final score."""
+
+
+class MatchPageNotRenderedError(RuntimeError):
+    """Raised when a detail URL renders the listing shell instead of an event."""
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -52,6 +64,60 @@ def _scroll_page(driver, pause=SCROLL_PAUSE, max_scrolls=10):
 def _is_finished_football_status(value):
     """Return whether *value* is a terminal, score-bearing football status."""
     return str(value or "").strip().lower() in {"finished", "ft", "aet", "ot", "pen"}
+
+
+def _oddspedia_slug(value):
+    """Build the lowercase slug format used by Oddspedia match paths."""
+    value = unicodedata.normalize("NFKD", str(value or ""))
+    value = value.encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9]+", "-", value.lower()))
+
+
+def _archived_match_url(url, match_info, sport="football"):
+    """Return Oddspedia's canonical archived URL for a finished match.
+
+    Some listing records contain a stale plain ``/{sport}/...`` URL.  For
+    completed events Oddspedia's archived route is ``/a/{sport}/`` and uses
+    away-home slug order.  Return ``None`` when the source record cannot
+    provide enough information to construct that route.
+    """
+    if sport != "football" or not _is_finished_football_status(match_info.get("status")):
+        return None
+
+    path = urlparse(url).path.strip("/")
+    parts = path.split("/")
+    if len(parts) >= 3 and parts[-3] == "a" and parts[-2] == sport:
+        return None
+    if len(parts) < 2 or parts[-2] != sport:
+        return None
+
+    match_key = str(match_info.get("matchKey") or parts[-1] or "")
+    match_id_match = re.search(r"-(\d+)$", match_key)
+    if not match_id_match:
+        match_id_match = re.search(r"-(\d+)$", parts[-1])
+    if not match_id_match:
+        return None
+
+    # Do not derive these from display names: Oddspedia can reuse a numeric
+    # event ID across seasons, and names such as "Algeciras" may need a
+    # source-specific suffix such as ``-cf`` in the canonical URL.
+    home_slug = _oddspedia_slug(match_info.get("home_slug") or match_info.get("homeSlug"))
+    away_slug = _oddspedia_slug(match_info.get("away_slug") or match_info.get("awaySlug"))
+    if not home_slug or not away_slug:
+        return None
+
+    match_url_id = match_id_match.group(1)
+    return f"{BASE_URL}/a/{sport}/{away_slug}-{home_slug}-{match_url_id}"
+
+
+def _listing_shell_is_current(driver, sport="football"):
+    """Return whether the browser is currently showing the sport listing shell."""
+    try:
+        title = driver.title or ""
+        current_path = urlparse(driver.current_url or "").path.rstrip("/")
+    except Exception:
+        return False
+    return _is_listing_page_title(title) or current_path == f"/{sport}"
 
 
 def _wait_for_event_metadata(driver, max_attempts=15, poll_interval=0.2, sport="football"):
@@ -2335,20 +2401,80 @@ def scrape_match(driver, match_info, sport=None):
 
     logger.info("match_scrape_start", sport=sport, match_id=match_id, url=url)
 
-    if not safe_get(driver, url):
-        logger.error("match_load_failed", match_id=match_id, url=url)
-        metrics.record_scrape_error("load_failed")
-        return _build_result_from_listing(match_info, sport=sport)
+    archived_url = _archived_match_url(url, match_info, sport=sport)
+    candidate_urls = [url]
+    if archived_url and archived_url != url:
+        candidate_urls.append(archived_url)
 
-    if _is_error_page(driver.title or ""):
-        logger.warning("match_not_found", match_id=match_id)
-        result = _build_result_from_listing(match_info, sport=sport)
-        result["status"] = "page_not_found"
-        return result
+    meta = {}
+    loaded_url = None
+    for candidate_index, candidate_url in enumerate(candidate_urls):
+        if not safe_get(driver, candidate_url):
+            if (
+                candidate_index == 0
+                and archived_url
+                and _is_detail_url(candidate_url)
+                and _listing_shell_is_current(driver, sport=sport)
+            ):
+                logger.warning(
+                    "match_detail_url_fallback",
+                    match_id=match_id,
+                    requested_url=candidate_url,
+                    fallback_url=archived_url,
+                    reason="listing_shell_redirect",
+                )
+                continue
+            try:
+                page_title = driver.title or ""
+            except Exception:
+                page_title = ""
+            if _is_detail_url(candidate_url) and _is_listing_page_title(page_title):
+                raise MatchPageNotRenderedError(
+                    f"Match detail URL rendered the listing shell (match_id={match_id}, url={candidate_url})"
+                )
+            logger.error("match_load_failed", match_id=match_id, url=candidate_url)
+            metrics.record_scrape_error("load_failed")
+            return _build_result_from_listing(match_info, sport=sport)
 
-    # Proceed immediately when the page state is available instead of waiting a
-    # fixed three seconds on every match.
-    meta = _wait_for_event_metadata(driver, sport=sport)
+        if _is_error_page(driver.title or ""):
+            if candidate_index == 0 and archived_url:
+                logger.warning(
+                    "match_detail_url_fallback",
+                    match_id=match_id,
+                    requested_url=candidate_url,
+                    fallback_url=archived_url,
+                    reason="detail_page_not_found",
+                )
+                continue
+            logger.warning("match_not_found", match_id=match_id)
+            result = _build_result_from_listing(match_info, sport=sport)
+            result["status"] = "page_not_found"
+            return result
+
+        # Proceed immediately when the page state is available instead of
+        # waiting a fixed three seconds on every match.
+        meta = _wait_for_event_metadata(driver, sport=sport)
+        if not meta.get("home") or not meta.get("away"):
+            if candidate_index == 0 and archived_url:
+                logger.warning(
+                    "match_detail_url_fallback",
+                    match_id=match_id,
+                    requested_url=candidate_url,
+                    fallback_url=archived_url,
+                    reason="event_metadata_missing",
+                )
+                continue
+            raise MatchPageNotRenderedError(
+                f"Match detail page did not expose event metadata (match_id={match_id}, url={candidate_url})"
+            )
+        loaded_url = candidate_url
+        break
+
+    if loaded_url is None:
+        raise MatchPageNotRenderedError(
+            f"No usable match detail route (match_id={match_id}, url={url})"
+        )
+    url = loaded_url
     _scroll_page(driver)
     logger.info(
         "match_scrape_progress",

@@ -82,6 +82,7 @@ from src.oddspedia.scraping.match_collector import collect_match_links, listing_
 from src.oddspedia.scraping.match_scraper import (
     FootballOddsCoverageError,
     FootballOddsUnavailableError,
+    MatchPageNotRenderedError,
     scrape_match,
 )
 from src.oddspedia.scraping.metrics import get_metrics, reset_metrics
@@ -112,7 +113,9 @@ def _skip_reason(match_info, sport: str):
 
 def _driver_restart_required(exc: Exception) -> bool:
     """Only replace Chrome when the browser session itself is unusable."""
-    if isinstance(exc, (InvalidSessionIdException, NoSuchWindowException)):
+    if isinstance(
+        exc, (InvalidSessionIdException, NoSuchWindowException, MatchPageNotRenderedError)
+    ):
         return True
     if not isinstance(exc, WebDriverException):
         return False
@@ -355,6 +358,28 @@ def _select_matches_to_scrape(
     return matches_to_scrape, skipped_count, reconciled_count
 
 
+def _scrape_scope_terminal_counts(matches, manifest):
+    """Count terminal outcomes only for the matches scraped in this run."""
+    selected_ids = {_match_id(match_info) for match_info in matches}
+    done_ids = {str(match_id) for match_id in manifest.done}
+    skipped_ids = {str(match_id) for match_id in manifest.skipped}
+    failed_ids = {str(match_id) for match_id in manifest.failed}
+    return (
+        len(selected_ids & done_ids),
+        len(selected_ids & skipped_ids),
+        len(selected_ids & failed_ids),
+    )
+
+
+def _scrape_scope_progress(matches, manifest):
+    """Return completion percentage for the current run's scrape scope."""
+    selected_total = len(matches)
+    if selected_total == 0:
+        return 0.0
+    done_count, skipped_count, _ = _scrape_scope_terminal_counts(matches, manifest)
+    return round((done_count + skipped_count) / selected_total * 100, 2)
+
+
 def _log_manifest_json_reconciled(match_id, in_done, in_failed, has_json):
     logger.warning(
         "manifest_reconciled_from_json",
@@ -396,6 +421,14 @@ def _record_discovery(date_str, sport, discovery, snapshot=""):
 def _needs_discovery_retry(date_str, sport: str) -> bool:
     manifest = load_manifest(date_str, sport=sport)
     if manifest and manifest.discovery.get("status") == "rescrape_candidate":
+        return True
+    if manifest and manifest.incomplete:
+        logger.info(
+            "incomplete_matches_require_link_refresh",
+            sport=sport,
+            date=date_str,
+            count=len(manifest.incomplete),
+        )
         return True
     links_file = get_match_links_file(date_str, sport=sport)
     return os.path.exists(links_file) and not _existing_inventory_matches_target(
@@ -732,7 +765,6 @@ def _phase2_scrape_sequential(
     sport = normalize_sport(sport)
     metrics = get_metrics()
     outcome_checkpoint = TerminalOutcomeCheckpoint(date_str, sport, metrics)
-    metrics.phase2_start(total=len(matches))
     t0 = time.time()
 
     logger.info(
@@ -775,34 +807,42 @@ def _phase2_scrape_sequential(
     if reconciled_count:
         save_manifest(manifest)
         logger.info("manifest_reconciled_from_json_files", count=reconciled_count)
+    progress_matches = matches_to_scrape or matches
+    outcome_checkpoint.set_scope(_match_id(match_info) for match_info in progress_matches)
+    metrics.phase2_start(total=len(progress_matches))
     outcome_checkpoint.sync(manifest)
+    selected_progress = _scrape_scope_progress(progress_matches, manifest)
 
     logger.info(
         "scraping_matches",
         to_scrape=len(matches_to_scrape),
         already_done=skipped_count,
         previously_failed=len(failed_set),
+        completed_progress=selected_progress,
     )
 
     if not matches_to_scrape:
         manifest.clear_in_progress()
         save_manifest(manifest)
         duration_seconds = int(time.time() - t0)
+        selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
+            progress_matches, manifest
+        )
         metrics.phase2_complete(
-            total=len(matches),
-            success=manifest.completed_count,
-            skipped=manifest.skipped_count,
+            total=len(progress_matches),
+            success=selected_done,
+            skipped=selected_skipped,
             duration_seconds=duration_seconds,
         )
         outcome_checkpoint.sync(manifest)
         save_manifest(manifest)
         logger.info(
             "match_detail_extraction_complete",
-            total=len(matches),
-            done=manifest.completed_count,
-            failed=manifest.failed_count,
-            skipped=manifest.skipped_count,
-            completed_progress=manifest.completed_progress,
+            total=len(progress_matches),
+            done=selected_done,
+            failed=selected_failed,
+            skipped=selected_skipped,
+            completed_progress=_scrape_scope_progress(progress_matches, manifest),
             duration_seconds=duration_seconds,
         )
         return manifest
@@ -826,7 +866,7 @@ def _phase2_scrape_sequential(
             "match_scrape_start",
             match_id=match_id,
             progress=f"{i}/{len(matches_to_scrape)}",
-            completed_progress=manifest.completed_progress,
+            completed_progress=_scrape_scope_progress(progress_matches, manifest),
         )
 
         last_error = None
@@ -844,7 +884,7 @@ def _phase2_scrape_sequential(
                     "match_scrape_success",
                     match_id=match_id,
                     progress=f"{i}/{len(matches_to_scrape)}",
-                    completed_progress=manifest.completed_progress,
+                    completed_progress=_scrape_scope_progress(progress_matches, manifest),
                 )
                 last_error = None
                 break
@@ -910,10 +950,13 @@ def _phase2_scrape_sequential(
     save_manifest(manifest)
 
     duration_seconds = int(time.time() - t0)
+    selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
+        progress_matches, manifest
+    )
     metrics.phase2_complete(
-        total=len(matches),
-        success=manifest.completed_count,
-        skipped=manifest.skipped_count,
+        total=len(progress_matches),
+        success=selected_done,
+        skipped=selected_skipped,
         duration_seconds=duration_seconds,
     )
     outcome_checkpoint.sync(manifest)
@@ -921,11 +964,11 @@ def _phase2_scrape_sequential(
 
     logger.info(
         "match_detail_extraction_complete",
-        total=len(matches),
-        done=manifest.completed_count,
-        failed=manifest.failed_count,
-        skipped=manifest.skipped_count,
-        completed_progress=manifest.completed_progress,
+        total=len(progress_matches),
+        done=selected_done,
+        failed=selected_failed,
+        skipped=selected_skipped,
+        completed_progress=_scrape_scope_progress(progress_matches, manifest),
         duration_seconds=duration_seconds,
     )
 
@@ -942,7 +985,6 @@ def _phase2_scrape_concurrent(
     sport = normalize_sport(sport)
     metrics = get_metrics()
     outcome_checkpoint = TerminalOutcomeCheckpoint(date_str, sport, metrics)
-    metrics.phase2_start(total=len(matches))
     t0 = time.time()
 
     logger.info(
@@ -980,7 +1022,11 @@ def _phase2_scrape_concurrent(
     if reconciled_count:
         save_manifest(manifest)
         logger.info("manifest_reconciled_from_json_files", count=reconciled_count)
+    progress_matches = matches_to_scrape or matches
+    outcome_checkpoint.set_scope(_match_id(match_info) for match_info in progress_matches)
+    metrics.phase2_start(total=len(progress_matches))
     outcome_checkpoint.sync(manifest)
+    selected_progress = _scrape_scope_progress(progress_matches, manifest)
 
     logger.info(
         "scraping_matches_concurrent",
@@ -988,26 +1034,31 @@ def _phase2_scrape_concurrent(
         already_done=skipped_count,
         previously_failed=len(failed_set),
         workers=workers,
+        completed_progress=selected_progress,
     )
 
     if not matches_to_scrape:
         manifest.clear_in_progress()
         save_manifest(manifest)
         duration_seconds = int(time.time() - t0)
+        selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
+            progress_matches, manifest
+        )
         metrics.phase2_complete(
-            total=len(matches),
-            success=manifest.completed_count,
-            skipped=manifest.skipped_count,
+            total=len(progress_matches),
+            success=selected_done,
+            skipped=selected_skipped,
             duration_seconds=duration_seconds,
         )
         outcome_checkpoint.sync(manifest)
         save_manifest(manifest)
         logger.info(
             "match_detail_extraction_concurrent_complete",
-            total=len(matches),
-            done=manifest.completed_count,
-            failed=manifest.failed_count,
-            skipped=manifest.skipped_count,
+            total=len(progress_matches),
+            done=selected_done,
+            failed=selected_failed,
+            skipped=selected_skipped,
+            completed_progress=_scrape_scope_progress(progress_matches, manifest),
             duration_seconds=duration_seconds,
         )
         return manifest
@@ -1189,10 +1240,13 @@ def _phase2_scrape_concurrent(
     manifest = load_manifest(date_str, sport=sport) or manifest
 
     duration_seconds = int(time.time() - t0)
+    selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
+        progress_matches, manifest
+    )
     metrics.phase2_complete(
-        total=len(matches),
-        success=manifest.completed_count,
-        skipped=manifest.skipped_count,
+        total=len(progress_matches),
+        success=selected_done,
+        skipped=selected_skipped,
         duration_seconds=duration_seconds,
     )
     outcome_checkpoint.sync(manifest)
@@ -1200,11 +1254,11 @@ def _phase2_scrape_concurrent(
 
     logger.info(
         "match_detail_extraction_concurrent_complete",
-        total=len(matches),
-        done=manifest.completed_count,
-        failed=manifest.failed_count,
-        skipped=manifest.skipped_count,
-        completed_progress=manifest.completed_progress,
+        total=len(progress_matches),
+        done=selected_done,
+        failed=selected_failed,
+        skipped=selected_skipped,
+        completed_progress=_scrape_scope_progress(progress_matches, manifest),
         duration_seconds=duration_seconds,
     )
 
@@ -1568,12 +1622,19 @@ def main(argv=None, default_sport="football"):
 
         for date_str in dates:
             links_file = get_match_links_file(date_str, sport=sport)
+            refresh_inventory = _needs_discovery_retry(date_str, sport)
             collect_driver = (
                 None
                 if _existing_inventory_matches_target(links_file, date_str)
+                and not refresh_inventory
                 else ensure_driver()
             )
-            matches = phase1_collect(collect_driver, date_str, sport=sport)
+            matches = phase1_collect(
+                collect_driver,
+                date_str,
+                sport=sport,
+                force=refresh_inventory,
+            )
             if matches:
                 prioritize_date(date_str, priority=args.priority, sport=sport)
                 selected_matches = _selected_priority_matches(date_str, args.priority, sport=sport)

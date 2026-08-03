@@ -174,6 +174,34 @@ class PipelineReliabilityTests(unittest.TestCase):
         self.assertEqual([match["id"] for match in selected], ["newly-matched"])
         self.assertEqual(skipped, 1)
 
+    def test_scrape_scope_progress_ignores_completed_matches_outside_run_scope(self):
+        manifest = ScrapeManifest(date="2026-07-06", sport="football", total=269)
+        manifest.mark_done("outside-selected-run")
+
+        matches = [{"id": str(match_id)} for match_id in range(1, 87)]
+
+        self.assertEqual(main._scrape_scope_progress(matches, manifest), 0.0)
+
+        for match_id in range(1, 85):
+            manifest.mark_done(str(match_id))
+        manifest.mark_done("85")
+        self.assertEqual(main._scrape_scope_progress(matches, manifest), 98.84)
+
+    def test_scoped_checkpoint_metrics_ignore_unselected_manifest_outcomes(self):
+        metrics = Metrics()
+        metrics.phase2_start(total=2)
+        manifest = ScrapeManifest(date="2026-07-06", sport="football", total=269)
+        manifest.mark_done("selected-1")
+        manifest.mark_done("outside-selected-run")
+
+        checkpoint = TerminalOutcomeCheckpoint("2026-07-06", "football", metrics)
+        checkpoint.set_scope(["selected-1", "selected-2"])
+        checkpoint.sync(manifest)
+
+        self.assertEqual(metrics.phase_2_success, 1)
+        self.assertEqual(metrics.phase_2_skipped, 0)
+        self.assertEqual(metrics.phase2_completed_progress, 50.0)
+
     def test_coverage_errors_do_not_restart_chrome(self):
         self.assertFalse(main._driver_restart_required(FootballOddsCoverageError("missing card")))
         self.assertFalse(

@@ -23,6 +23,7 @@ from src.oddspedia.scraping.match_scraper import (
     _normalize_football_odds,
     _parse_football_score_payload,
     _extract_football_odds,
+    _archived_match_url,
     scrape_match,
 )
 from src.oddspedia.scraping.utils import load_json, save_json
@@ -67,6 +68,83 @@ class _FootballDriver:
 
 
 class FootballMatchSchemaTests(unittest.TestCase):
+    def test_archived_match_url_uses_away_home_route(self):
+        url = _archived_match_url(
+            "https://oddspedia.com/football/algeciras-cd-teruel-1660684",
+            {
+                "status": "FT",
+                "home": "Algeciras",
+                "away": "CD Teruel",
+                "home_slug": "algeciras-cf",
+                "away_slug": "cd-teruel",
+                "matchKey": "algeciras-cd-teruel-1660684",
+            },
+        )
+
+        self.assertEqual(
+            url,
+            "https://oddspedia.com/a/football/cd-teruel-algeciras-cf-1660684",
+        )
+
+    def test_archived_match_url_does_not_guess_from_short_display_names(self):
+        self.assertIsNone(
+            _archived_match_url(
+                "https://oddspedia.com/football/algeciras-cd-teruel-1660684",
+                {
+                    "status": "FT",
+                    "home": "Algeciras",
+                    "away": "CD Teruel",
+                    "matchKey": "algeciras-cd-teruel-1660684",
+                },
+            )
+        )
+
+    def test_finished_match_falls_back_to_archived_route_when_listing_redirects(self):
+        driver = _FootballDriver()
+        driver.current_url = "https://oddspedia.com/football"
+        driver.title = "Football Live Scores & Stats » Today's Fixtures, Results and News"
+        requested_urls = []
+
+        def fake_safe_get(driver_obj, requested_url):
+            requested_urls.append(requested_url)
+            if len(requested_urls) == 1:
+                driver_obj.current_url = "https://oddspedia.com/football"
+                driver_obj.title = "Football Live Scores & Stats » Today's Fixtures, Results and News"
+                return False
+            driver_obj.current_url = requested_url
+            driver_obj.title = "Algeciras vs CD Teruel Live Score"
+            return True
+
+        with patch("src.oddspedia.scraping.match_scraper.safe_get", side_effect=fake_safe_get), \
+             patch("src.oddspedia.scraping.match_scraper._scroll_page"), \
+             patch("src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}), \
+             patch("src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]), \
+             patch("src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-08-03T00:00:00Z"):
+            result = scrape_match(
+                driver,
+                {
+                    "id": "9955415",
+                    "sport": "football",
+                    "home": "Algeciras",
+                    "away": "CD Teruel",
+                    "home_slug": "algeciras-cf",
+                    "away_slug": "cd-teruel",
+                    "status": "FT",
+                    "matchKey": "algeciras-cd-teruel-1660684",
+                    "full_url": "https://oddspedia.com/football/algeciras-cd-teruel-1660684",
+                },
+                sport="football",
+            )
+
+        self.assertEqual(
+            requested_urls,
+            [
+                "https://oddspedia.com/football/algeciras-cd-teruel-1660684",
+                "https://oddspedia.com/a/football/cd-teruel-algeciras-cf-1660684",
+            ],
+        )
+        self.assertEqual(result["url"], requested_urls[-1])
+
     @patch("src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-07-09T12:00:00Z")
     @patch("src.oddspedia.scraping.match_scraper._extract_live_odds", side_effect=AssertionError("football must not scrape live odds"))
     @patch("src.oddspedia.scraping.match_scraper._extract_overall_stats")
