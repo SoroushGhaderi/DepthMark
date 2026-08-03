@@ -22,8 +22,20 @@ SCRIPT_MAP: Dict[str, str] = {
     "pipeline": "pipeline.py",
     "setup-clickhouse": "setup_clickhouse.py",
     "health-check": "health_check.py",
+    "oddspedia-discover-events": "oddspedia/discover_events.py",
+    "oddspedia-prioritize-events": "oddspedia/prioritize_events.py",
+    "oddspedia-scrape-matches": "oddspedia/scrape_matches.py",
+    "oddspedia-run-pipeline": "oddspedia/run_pipeline.py",
+    "oddspedia-status": "oddspedia/status.py",
+    "oddspedia-setup-warehouse": "oddspedia/setup_warehouse.py",
+    "oddspedia-load-bronze": "oddspedia/load_bronze.py",
+    "oddspedia-resolve-events": "oddspedia/resolve_events.py",
+    # Compatibility aliases retained for existing automation.
     "oddspedia-events": "oddspedia/events.py",
     "oddspedia-football": "oddspedia/football.py",
+    "oddspedia-setup-clickhouse": "oddspedia/setup_clickhouse.py",
+    "oddspedia-load-clickhouse": "oddspedia/load_clickhouse.py",
+    "oddspedia-resolve-matches": "oddspedia/resolve_matches.py",
 }
 
 
