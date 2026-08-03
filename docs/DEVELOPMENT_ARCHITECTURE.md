@@ -155,13 +155,13 @@ python3 scripts/bronze/drop_clickhouse.py --dry-run
 ### Oddspedia Pipeline
 
 ```bash
-python3 scripts/oddspedia/events.py discover --date 20260301
-python3 scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
-python3 scripts/oddspedia/events.py scrape --date 20260301 --priority lower
-python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready
-python3 scripts/oddspedia/setup_clickhouse.py --dry-run
-python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
-python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
+python3 scripts/oddspedia/discover_events.py --date 20260301
+python3 scripts/oddspedia/prioritize_events.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier lower
+python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/setup_warehouse.py --dry-run
+python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
 ```
 
 Oddspedia is an independent source pipeline, not a stage in
@@ -169,13 +169,15 @@ Oddspedia is an independent source pipeline, not a stage in
 `oddspedia_bronze.*` tables and the Silver resolution table. The load and
 resolve scripts also accept `--month YYYYMM`. The canonical Event Intake flow
 is `discover -> prioritize -> scrape`; `prioritize` and `run` require
-`--depthmark-window-ready` because they query the prior/current/following
+`--silver-reference-window-ready` because they query the prior/current/following
 `silver.match` reference dates before selecting source pages.
 
-`resolve_matches.py` searches FotMob `silver.match` for the prior, current,
-and following calendar dates. It writes `not_covered` only when the operator
-asserts a complete reference window with `--reference-window-complete`;
-otherwise an unmatched event remains `unresolved`.
+`resolve_events.py` searches FotMob `silver.match` for the prior, current, and
+following calendar dates. It writes `not_covered` only when the operator
+asserts a complete reference window with `--silver-reference-window-ready`;
+otherwise an unmatched event remains `unresolved`. The former
+`events.py`, `setup_clickhouse.py`, `load_clickhouse.py`, and
+`resolve_matches.py` paths remain compatibility wrappers.
 
 ### FotMob Silver
 

@@ -39,11 +39,11 @@ Historical collection.
 ```bash
 # Live/current-date discovery snapshots
 python3 scripts/bronze/scrape_fotmob.py --today
-python3 scripts/oddspedia/events.py discover
+python3 scripts/oddspedia/discover_events.py
 
 # Historical/completed-date priority-selected artifacts
 python3 scripts/bronze/scrape_fotmob.py --single-date 20260710
-python3 scripts/oddspedia/events.py run --date 20260710 --depthmark-window-ready
+python3 scripts/oddspedia/run_pipeline.py --date 20260710 --silver-reference-window-ready
 ```
 
 ## Migration

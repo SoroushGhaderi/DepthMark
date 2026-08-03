@@ -1,7 +1,7 @@
-"""Run the Oddspedia event-intake workflow.
+"""Compatibility umbrella for the phase-specific Oddspedia commands.
 
-This is the canonical entry point for event discovery, DepthMark link
-prioritization, and selected payload scraping.
+Use ``discover_events.py``, ``prioritize_events.py``, ``scrape_matches.py``,
+``run_pipeline.py``, and ``status.py`` for new automation.
 """
 
 import sys
@@ -15,4 +15,9 @@ from src.oddspedia.scraping.cli import main
 
 
 if __name__ == "__main__":
+    print(
+        "scripts/oddspedia/events.py is a compatibility entry point; use the "
+        "phase-specific Oddspedia scripts for new automation.",
+        file=sys.stderr,
+    )
     main(default_sport="football")

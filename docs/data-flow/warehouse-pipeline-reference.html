@@ -1340,7 +1340,7 @@
                 <tr><td>7</td><td>Quality</td><td>Logical duplicate identities and physical-version diagnostics in all layers; Bronze↔Silver identity reconciliation</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
                 <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python3 scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
                 <tr><td>9</td><td>Maintenance</td><td>Optional ClickHouse storage optimization after reviewing physical-version diagnostics</td><td><code>python3 scripts/maintenance/optimize_clickhouse.py --layer bronze</code></td></tr>
-                <tr><td>10</td><td>Oddspedia source route</td><td>Oddspedia Bronze facts + Oddspedia Silver resolution today; source Silver/Gold expansion follows the same path</td><td><code>python3 scripts/oddspedia/setup_clickhouse.py</code>, then source-specific discover → prioritize → scrape → load → resolve</td></tr>
+                <tr><td>10</td><td>Oddspedia source route</td><td>Oddspedia Bronze facts + Oddspedia Silver resolution today; source Silver/Gold expansion follows the same path</td><td><code>python3 scripts/oddspedia/setup_warehouse.py</code>, then source-specific discover → prioritize → scrape → load → resolve</td></tr>
             </tbody>
         </table>
         <div class="callout note">
@@ -1856,17 +1856,17 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
         <table class="data-table">
             <thead><tr><th>Phase</th><th>Command</th><th>Outcome</th></tr></thead>
             <tbody>
-                <tr><td>Discover + prioritize + scrape</td><td><code>python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready</code></td><td>Saved source links, auditable priority decisions, and selected raw payloads</td></tr>
-                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_clickhouse.py --dry-run</code></td><td>Plans the implemented Oddspedia Bronze tables plus the current Silver resolution table</td></tr>
-                <tr><td>Load raw facts</td><td><code>python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run</code></td><td>Plans source-faithful event, payload, and market rows</td></tr>
-                <tr><td>Resolve fixtures</td><td><code>python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run</code></td><td>Calculates a match relationship without writing it</td></tr>
+                <tr><td>Discover + prioritize + scrape</td><td><code>python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready</code></td><td>Saved source links, auditable priority decisions, and selected raw payloads</td></tr>
+                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_warehouse.py --dry-run</code></td><td>Plans the implemented Oddspedia Bronze tables plus the current Silver resolution table</td></tr>
+                <tr><td>Load raw facts</td><td><code>python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run</code></td><td>Plans source-faithful event, payload, and market rows</td></tr>
+                <tr><td>Resolve fixtures</td><td><code>python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run</code></td><td>Calculates a match relationship without writing it</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="callout note">
         <span class="callout-icon">📅</span>
-        <span><strong>Three-day guardrail:</strong> priority generation requires <code>--depthmark-window-ready</code> before it reads the prior/current/following <code>silver.match</code> dates. The later resolver still uses <code>--reference-window-complete</code> before it persists <code>not_covered</code>; otherwise unmatched events remain <code>unresolved</code>.</span>
+        <span><strong>Three-day guardrail:</strong> priority generation requires <code>--silver-reference-window-ready</code> before it reads the prior/current/following <code>silver.match</code> dates. The later resolver uses the same flag before it persists <code>not_covered</code>; otherwise unmatched events remain <code>unresolved</code>.</span>
     </div>
     <div class="callout insight">
         <span class="callout-icon">◌</span>
@@ -1874,11 +1874,11 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
     </div>
     <details class="cmd-block">
         <summary>▸ Month scope and recovery commands</summary>
-        <pre>python3 scripts/oddspedia/events.py run --month 202603 --depthmark-window-ready
-python3 scripts/oddspedia/events.py scrape --date 20260301 --priority lower --retry failed
-python3 scripts/oddspedia/events.py discover --date 20260301 --retry incomplete
-python3 scripts/oddspedia/load_clickhouse.py --month 202603 --dry-run
-python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run</pre>
+        <pre>python3 scripts/oddspedia/run_pipeline.py --month 202603 --silver-reference-window-ready
+python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier lower --retry-failed
+python3 scripts/oddspedia/discover_events.py --date 20260301 --retry-incomplete
+python3 scripts/oddspedia/load_bronze.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run</pre>
     </details>
 </div>
 
@@ -2790,22 +2790,25 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'bronze',
         },
         {
-            match: ['oddspedia', 'oddspedia_bronze', 'link priorities', 'match resolution', 'resolve_matches.py', 'events.py run'],
+            match: ['oddspedia', 'oddspedia_bronze', 'link priorities', 'match resolution', 'resolve_events.py', 'run_pipeline.py'],
             title: 'Oddspedia source-domain workflow',
             scripts: [
-                'scripts/oddspedia/events.py',
-                'scripts/oddspedia/setup_clickhouse.py',
-                'scripts/oddspedia/load_clickhouse.py',
-                'scripts/oddspedia/resolve_matches.py',
+                'scripts/oddspedia/discover_events.py',
+                'scripts/oddspedia/prioritize_events.py',
+                'scripts/oddspedia/scrape_matches.py',
+                'scripts/oddspedia/run_pipeline.py',
+                'scripts/oddspedia/setup_warehouse.py',
+                'scripts/oddspedia/load_bronze.py',
+                'scripts/oddspedia/resolve_events.py',
                 'src/oddspedia/scraping/',
                 'src/oddspedia/bronze/loader.py',
                 'src/oddspedia/silver/match_resolution.py',
             ],
             commands: [
-                'python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready',
-                'python3 scripts/oddspedia/setup_clickhouse.py --dry-run',
-                'python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run',
-                'python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run',
+                'python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready',
+                'python3 scripts/oddspedia/setup_warehouse.py --dry-run',
+                'python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run',
+                'python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run',
             ],
             note: 'Runs independently from pipeline.py. The resolver reads silver.match and writes only silver.oddspedia_match_resolution.',
             sectionTab: 'oddspedia',
