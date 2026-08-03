@@ -202,6 +202,28 @@ class PipelineReliabilityTests(unittest.TestCase):
         self.assertEqual(metrics.phase_2_skipped, 0)
         self.assertEqual(metrics.phase2_completed_progress, 50.0)
 
+    @patch("src.oddspedia.scraping.cli.logger.info")
+    def test_progress_reporter_logs_prior_scraped_matches_as_skipped(self, log_info):
+        reporter = main._MatchProgressReporter(
+            "2026-07-06",
+            "football",
+            total=2,
+            previously_scraped=3,
+            previously_skipped=1,
+        )
+
+        reporter.record("success", "42")
+
+        fields = log_info.call_args.kwargs
+        self.assertEqual(log_info.call_args.args[0], "[PROGRESS] Match processing update")
+        self.assertEqual(fields["completed"], 1)
+        self.assertEqual(fields["total"], 2)
+        self.assertEqual(fields["progress_pct"], 50.0)
+        self.assertEqual(fields["successful_matches"], 1)
+        self.assertEqual(fields["failed_matches"], 0)
+        self.assertEqual(fields["skipped_matches"], 4)
+        self.assertEqual(fields["previously_scraped_matches"], 3)
+
     def test_coverage_errors_do_not_restart_chrome(self):
         self.assertFalse(main._driver_restart_required(FootballOddsCoverageError("missing card")))
         self.assertFalse(
