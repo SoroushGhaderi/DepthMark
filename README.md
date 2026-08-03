@@ -108,8 +108,10 @@ Oddspedia uses phase-specific verb-noun scripts: `discover_events.py`,
 `prioritize_events.py`, `scrape_matches.py`, `run_pipeline.py`, and `status.py`.
 The older `events.py`, `setup_clickhouse.py`, `load_clickhouse.py`, and
 `resolve_matches.py` paths remain compatibility wrappers and emit deprecation
-warnings. Use `--retry-failed`, `--retry-incomplete`, and `--priority-tier` for
-explicit operation semantics. Priority generation requires
+warnings. Discovery automatically refreshes a target-date inventory when its
+manifest marks discovery or saved match output as incomplete; use
+`--retry-failed`, `--retry-incomplete`, and `--priority-tier` for explicit
+operation semantics. Priority generation requires
 `--silver-reference-window-ready`, which asserts the
 corresponding three-day Silver reference window is complete. It writes a
 complete decision ledger under `data/oddspedia/historical/link_priorities/`;

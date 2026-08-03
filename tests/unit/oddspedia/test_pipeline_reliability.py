@@ -88,6 +88,27 @@ class PipelineReliabilityTests(unittest.TestCase):
         self.assertEqual(matches, [{"id": "42", "home": "Home", "away": "Away"}])
         self.assertIsInstance(save.call_args.args[0], list)
 
+    @patch("src.oddspedia.scraping.cli._needs_discovery_retry", return_value=True)
+    @patch("src.oddspedia.scraping.cli._existing_inventory_matches_target", return_value=True)
+    @patch("src.oddspedia.scraping.cli.os.path.exists", return_value=True)
+    @patch("src.oddspedia.scraping.cli.save_json")
+    @patch("src.oddspedia.scraping.cli._record_discovery")
+    @patch("src.oddspedia.scraping.cli.collect_match_links")
+    def test_phase1_refreshes_valid_inventory_when_manifest_needs_retry(
+        self, collect, _record, save, _exists, _inventory_matches_target, _needs_retry
+    ):
+        collect.return_value = DiscoveryResult(
+            matches={"42": {"id": "42", "home": "Home", "away": "Away"}},
+            expected_pages=1,
+            observed_pages=1,
+        )
+
+        matches = main.phase1_collect(object(), "20260706")
+
+        self.assertEqual(matches, [{"id": "42", "home": "Home", "away": "Away"}])
+        collect.assert_called_once()
+        save.assert_called_once()
+
     def test_non_playable_football_status_is_skipped_before_scraping(self):
         manifest = ScrapeManifest(date="2026-07-06", sport="football", total=1)
         matches = [
