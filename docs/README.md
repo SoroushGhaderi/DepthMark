@@ -3,8 +3,8 @@
 Project-wide documentation lives in this folder. The root `README.md` stays a
 short project overview; use this folder for setup, commands, and operations.
 
-- `DEVELOPMENT_ARCHITECTURE.md`: architecture, layer boundaries, command surface,
-  runbook, operations, and documentation ownership.
+- `DEVELOPMENT_ARCHITECTURE.md`: two-source architecture, layer boundaries,
+  command surface, runbook, operations, and documentation ownership.
 - `data-flow/infrastructure.md`: Docker Compose setup, quick start, environment
   configuration, and TouchDesk integration.
 - `SCRIPTS_CONTRACT.md`: standards for script behavior, style, CLI semantics,
@@ -21,10 +21,12 @@ Source-specific flows:
 
 - `data-flow/source-artifact-storage.md`: shared local-storage convention for
   FotMob and Oddspedia source artifacts.
-- `data-flow/oddspedia.md`: Oddspedia discovery, source storage, Bronze load,
-  and FotMob-resolution workflow.
+- `data-flow/oddspedia.md`: Oddspedia discovery, source Bronze, Silver, and Gold
+  boundaries, links-layer prioritization, and the separate cross-source
+  resolution edge.
 - `data-flow/warehouse-pipeline-reference.html#oddspedia`: interactive
-  warehouse view, including the isolated Oddspedia source-domain workflow.
+  warehouse view for the complete Oddspedia source pipeline and its explicit
+  cross-source integration edge.
 
 Keep active subsystem contracts next to the code they govern. Current examples:
 

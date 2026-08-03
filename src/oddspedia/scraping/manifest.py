@@ -28,6 +28,7 @@ class ScrapeManifest:
     in_progress: Dict[str, str] = field(default_factory=dict)
     retries: Dict[str, Dict] = field(default_factory=dict)
     discovery: Dict = field(default_factory=dict)
+    priority_run: Dict = field(default_factory=dict)
     metrics: Dict = field(default_factory=dict)
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -60,7 +61,9 @@ class ScrapeManifest:
 
     @property
     def is_complete(self) -> bool:
-        return len(self.done) + len(self.failed) + len(self.skipped) >= self.total and self.total > 0
+        return (
+            len(self.done) + len(self.failed) + len(self.skipped) >= self.total and self.total > 0
+        )
 
     def mark_done(self, match_id: str) -> None:
         match_id = str(match_id)
@@ -173,6 +176,11 @@ class ScrapeManifest:
         self.discovery = entry
         self.updated_at = now
 
+    def record_priority_run(self, summary: Dict) -> None:
+        """Persist the audit summary for the priority artifact used by a run."""
+        self.priority_run = dict(summary)
+        self.updated_at = datetime.now().isoformat()
+
     def update_metrics(self, snapshot: Dict) -> None:
         """Store the latest in-memory run summary with this date's progress."""
         self.metrics = dict(snapshot)
@@ -202,6 +210,7 @@ class ScrapeManifest:
             "in_progress": self.in_progress,
             "retries": self.retries,
             "discovery": self.discovery,
+            "priority_run": self.priority_run,
             "metrics": self.metrics,
             "completed_progress": self.completed_progress,
             "started_at": self.started_at,
@@ -221,6 +230,7 @@ class ScrapeManifest:
             in_progress=_normalize_in_progress(data.get("in_progress")),
             retries=data.get("retries", {}),
             discovery=data.get("discovery", {}),
+            priority_run=data.get("priority_run", {}),
             metrics=data.get("metrics", {}),
             started_at=data.get("started_at", datetime.now().isoformat()),
             updated_at=data.get("updated_at", datetime.now().isoformat()),
@@ -230,6 +240,7 @@ class ScrapeManifest:
 def get_manifest_path(date_str: str, sport: str = "football") -> str:
     """Return the path to the manifest file for a given date."""
     from src.oddspedia.scraping.config import get_manifest_file
+
     return get_manifest_file(date_str, sport=sport)
 
 

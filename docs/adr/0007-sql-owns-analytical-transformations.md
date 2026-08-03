@@ -5,17 +5,17 @@
 Accepted
 
 > **Implementation note (2026-07-13):** This decision applies to both explicit
-> source domains. FotMob remains the canonical Silver and Gold analytical path;
-> Oddspedia has isolated Bronze facts and an audited Silver resolution, with no
-> generic provider framework.
+> source domains. FotMob and Oddspedia each own a source-specific Silver and
+> Gold analytical path; cross-source resolution is an explicit Silver
+> integration edge. See ADR 0023.
 
 ## Context
 
-DepthMark uses FotMob as the canonical medallion path. FotMob Bronze stores raw
-payloads and raw ClickHouse tables, Silver conforms reusable analytical
-entities, and Gold materializes scenario, signal, and shared metadata outputs.
-Oddspedia remains an isolated source domain rather than a second implementation
-of the FotMob analytical pipeline.
+DepthMark has two parallel source medallion paths. Each source stores raw
+payloads and raw ClickHouse facts in Bronze, conforms reusable source-owned
+entities in Silver, and materializes scenario, signal, and serving outputs in
+Gold. Cross-source resolution is an explicit relationship between the source
+Silver layers, not a second implementation of shared raw or Gold tables.
 
 The repository already keeps most Silver and Gold transformation logic in
 ClickHouse SQL under `clickhouse/`. Python scripts provide the operational

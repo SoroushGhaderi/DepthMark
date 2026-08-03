@@ -7,6 +7,7 @@ source artifacts use the same aspect, artifact-type, and date ordering:
 data/{source}/
 ├── historical/                     completed dates only
 │   ├── daily_listings/YYYYMM/YYYYMMDD/
+│   ├── link_priorities/YYYYMM/YYYYMMDD/  Oddspedia only
 │   ├── matches/YYYYMM/YYYYMMDD/
 │   └── manifests/YYYYMM/YYYYMMDD/   Oddspedia only
 └── live/                            machine-local current date only
@@ -21,7 +22,9 @@ discovered listings to `daily_listings/YYYYMM/YYYYMMDD/match_links.json`,
 diagnostic discovery snapshots to
 `daily_listings/YYYYMM/YYYYMMDD/discovery_partial.json`, raw payloads to
 `matches/YYYYMM/YYYYMMDD/<event_id>.json`, and scrape state to
-`manifests/YYYYMM/YYYYMMDD/manifest.json`.
+`manifests/YYYYMM/YYYYMMDD/manifest.json`. After the completed DepthMark
+reference window is confirmed, Oddspedia writes its derived decision ledger to
+`historical/link_priorities/YYYYMM/YYYYMMDD/prioritized_match_links.json`.
 
 The current date is always a refreshable Live snapshot. A completed date is
 Historical. Collection rejects future dates. FotMob exposes these choices with
@@ -30,13 +33,13 @@ command for Live and an explicit completed `--date` or `--month` for
 Historical collection.
 
 ```bash
-# Live/current-date snapshots
+# Live/current-date discovery snapshots
 python3 scripts/bronze/scrape_fotmob.py --today
-python3 scripts/oddspedia/football.py run
+python3 scripts/oddspedia/events.py discover
 
-# Historical/completed-date artifacts
+# Historical/completed-date priority-selected artifacts
 python3 scripts/bronze/scrape_fotmob.py --single-date 20260710
-python3 scripts/oddspedia/football.py run --date 20260710
+python3 scripts/oddspedia/events.py run --date 20260710 --depthmark-window-ready
 ```
 
 ## Migration

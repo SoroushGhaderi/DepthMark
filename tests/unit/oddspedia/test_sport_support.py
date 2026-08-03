@@ -16,6 +16,7 @@ from src.oddspedia.scraping.config import (
     get_match_file,
     get_match_links_file,
     get_matches_dir,
+    get_prioritized_match_links_file,
     get_storage_aspect,
     get_sport_listing_url,
     normalize_sport,
@@ -26,6 +27,7 @@ from src.oddspedia.scraping.utils import load_json, save_json
 
 class SportConfigTests(unittest.TestCase):
     def test_football_uses_local_default_paths(self):
+        self.assertTrue(get_match_links_file("20260227").startswith(os.path.join(ROOT, "data")))
         self.assertEqual(
             get_match_links_file("20260227"), get_match_links_file("20260227", sport="football")
         )
@@ -51,6 +53,17 @@ class SportConfigTests(unittest.TestCase):
                 os.path.join("historical", "matches", "202602", "20260227", "123.json")
             )
         )
+        self.assertTrue(
+            get_prioritized_match_links_file("20260227").endswith(
+                os.path.join(
+                    "historical",
+                    "link_priorities",
+                    "202602",
+                    "20260227",
+                    "prioritized_match_links.json",
+                )
+            )
+        )
 
     def test_storage_aspect_uses_live_for_current_date(self):
         today = date(2026, 7, 11)
@@ -70,9 +83,9 @@ class SportConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_sport("basketball")
 
-    def test_standalone_project_exposes_the_complete_cli(self):
+    def test_event_intake_exposes_the_complete_cli(self):
         result = subprocess.run(
-            [sys.executable, os.path.join(ROOT, "scripts", "oddspedia", "football.py"), "--help"],
+            [sys.executable, os.path.join(ROOT, "scripts", "oddspedia", "events.py"), "--help"],
             cwd=ROOT,
             check=True,
             capture_output=True,
@@ -80,6 +93,7 @@ class SportConfigTests(unittest.TestCase):
         )
         for option in (
             "discover",
+            "prioritize",
             "scrape",
             "run",
             "status",
@@ -88,6 +102,8 @@ class SportConfigTests(unittest.TestCase):
             "--retry",
             "--log-format",
             "--month",
+            "--priority",
+            "--depthmark-window-ready",
         ):
             self.assertIn(option, result.stdout)
 

@@ -1,7 +1,23 @@
-# Silver Layer
+# Silver Layer — Source-specific conformation
 
-Silver standardizes keys, types, and reusable analytical entities from Bronze.
-It is a ClickHouse-only layer — all transformations are pure SQL.
+Silver is the second layer in each source pipeline. It standardizes keys,
+types, and reusable analytical entities from that source's Bronze facts. It is
+ClickHouse-only and all analytical transformations are pure SQL.
+
+The two Silver paths are parallel:
+
+```text
+FotMob Bronze       → FotMob Silver       → FotMob Gold
+Oddspedia Bronze    → Oddspedia Silver    → Oddspedia Gold
+                         │
+                         └── explicit cross-source match relationship
+```
+
+The existing FotMob tables below describe the implemented FotMob Silver path.
+Oddspedia Silver owns cleaned event/odds entities and the auditable
+`silver.oddspedia_match_resolution` relationship; that relationship reads the
+canonical FotMob `silver.match` reference but does not replace the Oddspedia
+Silver path.
 
 ## Overview
 

@@ -51,6 +51,8 @@ trade-off.
 | `0015-redesign-telegram-notification-module.md`                       | Telegram module redesigned: thin transport, Jinja2 templates, dataclasses, single config source, clean break from old modules.    | `src/integrations/telegram/` replaces `metrics_alerts.py`, `alerting.py`, `layer_completion_alerts.py`. Callers must migrate.                                                               |
 | `0017-split-fotmob-bronze-live-and-historical-storage.md`             | FotMob Bronze filesystem storage is split into independently owned Live and Historical aspects.                                  | Only `--today` writes Live data; completed-date selectors write Historical data, and Live payloads are never promoted automatically.                                                       |
 | `0021-add-oddspedia-as-source-domain.md`                               | Oddspedia is an isolated source domain; FotMob remains the canonical fixture reference and matching is a Silver conformance output. | Oddspedia raw facts remain outside `bronze.*`; ambiguous cross-source matches are never auto-selected. |
+| `0022-prioritize-oddspedia-links-against-depthmark-silver.md`          | Oddspedia link selection is a pre-scrape, fail-closed decision against the completed canonical DepthMark window. | Keep source links immutable, use the shared resolver policy, and make priority artifacts and manifests auditable. |
+| `0023-parallel-source-medallion-pipelines.md`                         | FotMob and Oddspedia are parallel Bronze → Silver → Gold source pipelines; cross-source matching is a separate Silver integration edge. | Label source and layer together in docs and keep Oddspedia implementation status distinct from its target architecture. |
 
 
 ## Queue
@@ -84,3 +86,4 @@ trade-off.
 | 6       | Split FotMob Live/Historical Bronze | Accepted in `0017-split-fotmob-bronze-live-and-historical-storage.md` |
 | 7       | Logical duplicates vs physical versions | Accepted in `0019-separate-logical-duplicates-from-physical-versions.md` |
 | 8       | Isolated Oddspedia source domain | Accepted in `0021-add-oddspedia-as-source-domain.md`; supersedes FotMob-only scope |
+| 9       | Prioritize Oddspedia links against DepthMark Silver | Accepted in `0022-prioritize-oddspedia-links-against-depthmark-silver.md` |

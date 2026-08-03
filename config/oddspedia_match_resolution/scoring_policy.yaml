@@ -1,11 +1,14 @@
-rule_version: v1
+rule_version: v4
 candidate_window_days: 1
-exact_time_minutes: 15
-alias_time_minutes: 60
-maximum_time_minutes: 720
-automatic_match_score: 95
+# The three-day candidate window is the only date guard. Candidate ranking and
+# automatic matching use normalized home and away team names only.
+team_name_match_score: 90
 automatic_match_margin: 8
 team_similarity_minimum: 0.88
+# Approximate team matching may recognize a distinctive shortened team name
+# inside its longer provider name, for example Brighton -> Brighton Hove Albion.
+approximate_token_min_length: 7
+approximate_token_containment_score: 0.92
 qualifier_tokens:
   - women
   - u19

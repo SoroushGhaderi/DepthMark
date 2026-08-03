@@ -1,4 +1,4 @@
-"""Run the migrated Oddspedia football discovery and extraction workflow."""
+"""Deprecated compatibility wrapper for :mod:`scripts.oddspedia.events`."""
 
 import sys
 from pathlib import Path
@@ -11,4 +11,8 @@ from src.oddspedia.scraping.cli import main
 
 
 if __name__ == "__main__":
+    print(
+        "scripts/oddspedia/football.py is deprecated; use scripts/oddspedia/events.py",
+        file=sys.stderr,
+    )
     main(default_sport="football")

@@ -1,7 +1,20 @@
-# Bronze Layer
+# Bronze Layer — FotMob and Oddspedia
 
-Bronze is the only filesystem-backed data layer. It preserves source fidelity
-from the FotMob API with minimal transformation.
+Bronze is the first layer in both source pipelines and the only
+filesystem-backed data layer. It preserves source fidelity with minimal
+transformation, while keeping FotMob and Oddspedia artifacts and raw tables
+separate.
+
+## Source boundaries
+
+| Source | Filesystem artifacts | Raw ClickHouse facts | Next stage |
+| --- | --- | --- | --- |
+| FotMob | `data/fotmob/{historical,live}/` | `bronze.*` | FotMob Silver in `silver.*` |
+| Oddspedia | `data/oddspedia/{historical,live}/` | `oddspedia_bronze.*` | Oddspedia Silver and the explicit resolution edge |
+
+The Oddspedia workflow is documented in
+[`oddspedia.md`](oddspedia.md). Its Bronze facts are not inserted into FotMob
+`bronze.*` tables.
 
 ## Overview
 

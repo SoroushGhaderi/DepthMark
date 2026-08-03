@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Standalone OddsHarvest football scraper entry point.
+"""Oddspedia event-intake command implementation.
 
 Usage:
-    python main.py                              # full run for today (images blocked)
-    python main.py --date 20260227             # full run for a specific date
-    python main.py --headless                   # run without a browser window
-    python main.py --headless --date 20260227  # headless run for a specific date
+    python main.py run --date 20260227 --depthmark-window-ready
+    python main.py run --headless --date 20260227 --depthmark-window-ready
     python main.py discover --month 202607      # Event discovery only
-    python main.py scrape --date 20260711       # Match detail extraction only
-    python main.py run --month 202607            # Discover, then scrape
+    python main.py prioritize --date 20260711 --depthmark-window-ready
+    python main.py scrape --date 20260711       # Priority-selected extraction
+    python main.py run --month 202607 --depthmark-window-ready
     python main.py --collect --month 202607      # Legacy alias for discover
 
 Alternatively (after ``pip install -e .``):
@@ -31,13 +30,18 @@ import tempfile
 import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
+from pathlib import Path
+from typing import Tuple
 
+from config.settings import get_settings as get_depthmark_settings
 from src.oddspedia.scraping.config import (
     get_run_logs_dir,
     get_match_links_file,
     get_discovery_snapshot_file,
     get_match_file,
     get_matches_dir,
+    get_prioritized_match_links_file,
+    get_storage_aspect,
     get_sport_listing_url,
     normalize_sport,
     normalize_date,
@@ -60,6 +64,14 @@ from src.oddspedia.scraping.match_scraper import (
     scrape_match,
 )
 from src.oddspedia.scraping.metrics import get_metrics, reset_metrics
+from src.oddspedia.scraping.link_prioritization import (
+    LinkPriorityService,
+    load_priority_artifact,
+    priority_artifact_is_current,
+    priority_run_summary,
+    save_priority_artifact,
+    select_links_for_priority,
+)
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.scraping.utils import save_json, load_json, random_delay
 from selenium.common.exceptions import (
@@ -72,6 +84,8 @@ from src.oddspedia.scraping.audit import (
     audit_match_json,
     sync_manifest_incomplete,
 )
+from src.oddspedia.silver.match_resolution import OddspediaMatchResolver
+from src.integrations.clickhouse.client import ClickHouseClient
 
 configure_logging()
 logger = get_logger("oddspedia")
@@ -80,6 +94,7 @@ CIRCUIT_BREAKER_FAILURES_BEFORE_PAUSE = 5
 CIRCUIT_BREAKER_COOLDOWN_SECONDS = 120
 CIRCUIT_BREAKER_PAUSE_CYCLES_BEFORE_ABORT = 3
 FOOTBALL_SKIP_STATUSES = {"POSTPONED", "CANCELLED", "CANCELED", "ABANDONED", "SUSPENDED"}
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _skip_reason(match_info, sport: str):
@@ -450,6 +465,119 @@ def phase1_collect(
     for m in matches[:3]:
         logger.debug("sample_url", url=m.get("full_url", m.get("url", "")))
     return matches
+
+
+def _create_priority_service() -> Tuple[ClickHouseClient, LinkPriorityService]:
+    """Connect a source-workflow service to the canonical Silver reference."""
+    settings = get_depthmark_settings()
+    client = ClickHouseClient(
+        host=settings.clickhouse_host,
+        port=settings.clickhouse_port,
+        username=settings.clickhouse_user,
+        password=settings.clickhouse_password,
+        database="default",
+    )
+    if not client.connect():
+        raise RuntimeError("Unable to connect to ClickHouse for link prioritization")
+    return client, LinkPriorityService(client, _priority_resolver())
+
+
+def _priority_resolver() -> OddspediaMatchResolver:
+    """Create the versioned shared resolution policy without opening a connection."""
+    return OddspediaMatchResolver(
+        PROJECT_ROOT / "config" / "oddspedia_match_resolution" / "scoring_policy.yaml",
+        PROJECT_ROOT / "config" / "oddspedia_match_resolution" / "team_aliases.yaml",
+    )
+
+
+def prioritize_date(
+    date_str: str,
+    priority: str = "lower",
+    dry_run: bool = False,
+    sport: str = "football",
+):
+    """Generate and audit one complete, date-scoped priority decision artifact."""
+    sport = normalize_sport(sport)
+    if get_storage_aspect(date_str) != "historical":
+        raise ValueError("Link prioritization requires a completed Historical date")
+    links_file = get_match_links_file(date_str, sport=sport)
+    if not os.path.exists(links_file):
+        raise FileNotFoundError(f"Cannot prioritize without source links: {links_file}")
+    links = _as_match_list(load_json(links_file))
+    if not listing_matches_target_date(links, date_str):
+        raise ValueError(f"Source links do not target {date_str}: {links_file}")
+
+    client, service = _create_priority_service()
+    try:
+        artifact = service.prioritize(date_str, links, sport=sport)
+    finally:
+        client.disconnect()
+
+    artifact_path = get_prioritized_match_links_file(date_str, sport=sport)
+    summary = priority_run_summary(artifact, artifact_path, priority)
+    if not dry_run:
+        artifact_path = save_priority_artifact(artifact, date_str, sport=sport)
+        summary = priority_run_summary(artifact, artifact_path, priority)
+        manifest = load_manifest(date_str, sport=sport)
+        if manifest is None:
+            manifest = create_manifest(date_str, 0, sport=sport)
+        manifest.record_priority_run(summary)
+        save_manifest(manifest)
+    get_metrics().record_link_prioritization(summary)
+    logger.info(
+        "link_priorities_ready",
+        date=date_str,
+        priority=priority,
+        dry_run=dry_run,
+        artifact_path=artifact_path,
+        selected_count=len(select_links_for_priority(artifact, priority, links)),
+        validation_status_counts=summary["validation_status_counts"],
+        priority_counts=summary["priority_counts"],
+        match_confidence_counts=summary["match_confidence_counts"],
+        team_match_rule_counts=summary["team_match_rule_counts"],
+        no_candidate_count=summary["no_candidate_count"],
+        matcher_rule_version=summary["matcher_rule_version"],
+    )
+    return artifact
+
+
+def _selected_priority_matches(date_str: str, priority: str, sport: str = "football"):
+    """Load and validate the saved priority decision before any page scraping."""
+    links_file = get_match_links_file(date_str, sport=sport)
+    if not os.path.exists(links_file):
+        raise FileNotFoundError(f"Cannot scrape without source links: {links_file}")
+    links = _as_match_list(load_json(links_file))
+    artifact = load_priority_artifact(date_str, sport=sport)
+    artifact_path = get_prioritized_match_links_file(date_str, sport=sport)
+    if artifact is None:
+        raise FileNotFoundError(
+            f"Priority artifact is missing: {artifact_path}. Run prioritize first."
+        )
+    if not priority_artifact_is_current(
+        artifact,
+        date_str,
+        links,
+        matcher_rule_version=_priority_resolver().rule_version,
+    ):
+        raise ValueError(
+            f"Priority artifact is stale for {date_str}: {artifact_path}. "
+            "Run prioritize again after source or matcher changes."
+        )
+    selected = select_links_for_priority(artifact, priority, links)
+    manifest = load_manifest(date_str, sport=sport)
+    if manifest is None:
+        manifest = create_manifest(date_str, 0, sport=sport)
+    manifest.record_priority_run(priority_run_summary(artifact, artifact_path, priority))
+    save_manifest(manifest)
+    logger.info(
+        "priority_selection_loaded",
+        date=date_str,
+        priority=priority,
+        source_links=len(links),
+        selected_links=len(selected),
+        artifact_path=artifact_path,
+    )
+    return selected
 
 
 def _warmup_cloudflare(driver, sport: str = "football"):
@@ -1089,6 +1217,13 @@ def _print_status(date_str, sport: str = "football"):
         )
         if discovery.get("reasons"):
             print(f"Discovery reasons: {', '.join(discovery['reasons'])}")
+    if manifest.priority_run:
+        priority_run = manifest.priority_run
+        print(
+            "Priority run: "
+            f"{priority_run.get('selected_priority', 'unknown')} "
+            f"({priority_run.get('selected_count', 0)} selected)"
+        )
     if manifest.skipped:
         skipped = ", ".join(
             f"{match_id} ({entry.get('reason', 'unknown')})"
@@ -1106,14 +1241,14 @@ def main(argv=None, default_sport="football"):
     logging, and status pipeline.
     """
     parser = argparse.ArgumentParser(
-        description="OddsHarvest football scraper",
-        epilog="Commands: discover (event links only), scrape (saved links only), "
-        "run (discover then scrape), status.",
+        description="Oddspedia event intake",
+        epilog="Commands: discover (event links only), prioritize (DepthMark link validation), "
+        "scrape (priority-selected saved links), run (discover, prioritize, scrape), status.",
     )
     parser.add_argument(
         "command",
         nargs="?",
-        choices=("discover", "scrape", "run", "status"),
+        choices=("discover", "prioritize", "scrape", "run", "status"),
         help="Action to run (default: run)",
     )
     legacy_actions = parser.add_mutually_exclusive_group()
@@ -1181,6 +1316,22 @@ def main(argv=None, default_sport="football"):
         choices=("failed", "incomplete"),
         help="Retry failed match details or incomplete event discovery",
     )
+    parser.add_argument(
+        "--priority",
+        choices=("xG", "ratings", "lower", "unmatched"),
+        default="lower",
+        help="Inclusive scrape tier (default: lower)",
+    )
+    parser.add_argument(
+        "--depthmark-window-ready",
+        action="store_true",
+        help="Assert the previous/current/next DepthMark Silver reference dates are complete",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Calculate priority decisions without writing artifacts or manifests (prioritize only)",
+    )
     retry.add_argument(
         "--retry-failed",
         dest="retry",
@@ -1205,6 +1356,10 @@ def main(argv=None, default_sport="football"):
         parser.error("--retry failed is only valid with 'scrape' or 'run'")
     if args.retry == "incomplete" and command != "discover":
         parser.error("--retry incomplete is only valid with 'discover'")
+    if args.dry_run and command != "prioritize":
+        parser.error("--dry-run is only valid with 'prioritize'")
+    if command in {"prioritize", "run"} and not args.depthmark_window_ready:
+        parser.error("--depthmark-window-ready is required for prioritize and run")
     sport = normalize_sport(default_sport)
 
     dates = _resolve_dates(args)
@@ -1215,7 +1370,7 @@ def main(argv=None, default_sport="football"):
     run_started_at = datetime.now()
     run_id = run_started_at.strftime("%Y%m%dT%H%M%S")
     run_dir = get_run_logs_dir(log_date, sport=sport)
-    log_path = os.path.join(run_dir, f"run_{run_id}.log")
+    log_path = None if args.dry_run else os.path.join(run_dir, f"run_{run_id}.log")
     configure_logging(json_logs=args.log_format == "json", log_file=log_path)
     logger.info(
         "run_log_started",
@@ -1246,7 +1401,7 @@ def main(argv=None, default_sport="football"):
         target_dates=dates,
         log_path=log_path,
     )
-    persist_manifest_metrics = True
+    persist_manifest_metrics = not (command == "prioritize" and args.dry_run)
     logger.info("scraper_start", sport=sport, dates=dates, headless=args.headless, workers=workers)
 
     driver = None
@@ -1257,6 +1412,16 @@ def main(argv=None, default_sport="football"):
             if driver is None:
                 driver = DriverManager(headless=args.headless, block_images=not args.load_images)
             return driver
+
+        if command == "prioritize":
+            for date_str in dates:
+                prioritize_date(
+                    date_str,
+                    priority=args.priority,
+                    dry_run=args.dry_run,
+                    sport=sport,
+                )
+            return
 
         if command == "discover":
             listing_ready = False
@@ -1281,7 +1446,6 @@ def main(argv=None, default_sport="football"):
                 # listing and change only the date picker.
                 if collect_driver is not None and matches:
                     listing_ready = True
-            get_metrics().log_summary()
             return
 
         if command == "scrape":
@@ -1298,8 +1462,8 @@ def main(argv=None, default_sport="football"):
                     if not args.month:
                         sys.exit(1)
                     continue
-                matches = _as_match_list(load_json(links_file))
-                if not listing_matches_target_date(matches, date_str):
+                source_links = _as_match_list(load_json(links_file))
+                if not listing_matches_target_date(source_links, date_str):
                     logger.error(
                         "links_file_target_date_mismatch",
                         sport=sport,
@@ -1307,21 +1471,24 @@ def main(argv=None, default_sport="football"):
                         links_file=links_file,
                     )
                     continue
-                scrape_driver = None if workers > 1 else ensure_driver()
-                phase2_scrape(
-                    scrape_driver,
-                    matches,
-                    date_str,
-                    retry_failed=args.retry == "failed",
-                    workers=workers,
-                    sport=sport,
-                )
+                matches = _selected_priority_matches(date_str, args.priority, sport=sport)
+                if matches:
+                    scrape_driver = None if workers > 1 else ensure_driver()
+                    phase2_scrape(
+                        scrape_driver,
+                        matches,
+                        date_str,
+                        retry_failed=args.retry == "failed",
+                        workers=workers,
+                        sport=sport,
+                    )
+                else:
+                    logger.info("priority_selection_empty", sport=sport, date=date_str)
                 logger.info("scrape_json_complete", sport=sport, date=date_str)
                 scraped_any = True
             if not scraped_any:
                 logger.error("no_month_links_found", month=args.month)
                 sys.exit(1)
-            get_metrics().log_summary()
             return
 
         for date_str in dates:
@@ -1333,18 +1500,21 @@ def main(argv=None, default_sport="football"):
             )
             matches = phase1_collect(collect_driver, date_str, sport=sport)
             if matches:
-                scrape_driver = None if workers > 1 else ensure_driver()
-                phase2_scrape(
-                    scrape_driver,
-                    matches,
-                    date_str,
-                    retry_failed=args.retry == "failed",
-                    workers=workers,
-                    sport=sport,
-                )
-                logger.info("scrape_json_complete", sport=sport, date=date_str)
-
-        get_metrics().log_summary()
+                prioritize_date(date_str, priority=args.priority, sport=sport)
+                selected_matches = _selected_priority_matches(date_str, args.priority, sport=sport)
+                if selected_matches:
+                    scrape_driver = None if workers > 1 else ensure_driver()
+                    phase2_scrape(
+                        scrape_driver,
+                        selected_matches,
+                        date_str,
+                        retry_failed=args.retry == "failed",
+                        workers=workers,
+                        sport=sport,
+                    )
+                    logger.info("scrape_json_complete", sport=sport, date=date_str)
+                else:
+                    logger.info("priority_selection_empty", sport=sport, date=date_str)
 
     except KeyboardInterrupt:
         logger.info("interrupted_by_user")
@@ -1371,7 +1541,7 @@ def main(argv=None, default_sport="football"):
 
 
 def project_main():
-    """Console-script adapter for the standalone football project."""
+    """Console-script adapter for the Oddspedia event-intake workflow."""
     main(default_sport="football")
 
 

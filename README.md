@@ -1,14 +1,16 @@
 # DepthMark
 
-DepthMark is a football data warehouse with isolated FotMob and Oddspedia
-source domains, built around a clear medallion architecture:
+DepthMark is a football data warehouse with two explicit source domains. FotMob
+and Oddspedia each follow the same three-layer medallion shape while keeping
+their source contracts and raw data isolated:
 
-- Bronze: source-faithful FotMob and Oddspedia artifacts on disk, with isolated
-  raw ClickHouse databases (`bronze.*` and `oddspedia_bronze.*`)
-- Silver: cleaned and conformed ClickHouse `silver.*` tables
-- Gold: scenario tables in ClickHouse `gold_scenarios.*`, signal tables in
-  `gold_signals.*`, and shared activation metadata in `gold.*` for product and
-  analytics use
+- Bronze: source-faithful artifacts and raw warehouse facts for each website
+- Silver: source-specific cleaned, typed, and conformed analytical entities
+- Gold: source-specific scenarios, signals, and product-ready outputs
+
+Cross-source matching is a separate integration relationship between the two
+Silver layers. It does not merge Bronze data or turn one source's Silver/Gold
+tables into the other source's pipeline.
 
 ```text
 FotMob API
@@ -23,7 +25,10 @@ FotMob API
 Oddspedia
   -> data/oddspedia/{historical,live}/  daily listings, payloads, and manifests
   -> oddspedia_bronze.*          source-specific warehouse facts
-  -> silver.oddspedia_match_resolution  audited link to `silver.match`
+  -> Oddspedia Silver          cleaned odds/events and source entities
+  -> Oddspedia Gold            odds-derived scenarios, signals, and serving outputs
+
+FotMob Silver  <---- audited cross-source match relationship ---->  Oddspedia Silver
 ```
 
 Bronze is the only filesystem-backed data layer. Silver and Gold exist only in
@@ -67,40 +72,44 @@ DepthMark/
   src/                    source domains plus warehouse, integrations, common, and operations modules
 ```
 
-FotMob remains the canonical fixture-reference source. Oddspedia remains the
-canonical source for its event and odds records; it does not modify FotMob
-Bronze or `silver.match`.
+FotMob remains the canonical fixture-reference source for cross-source match
+resolution. Oddspedia remains the canonical source for its event and odds
+records; it does not modify FotMob Bronze or `silver.match`.
 
 Both source domains use `historical/` for completed dates and `live/` for the
 machine-local current date. See
 [`docs/data-flow/source-artifact-storage.md`](docs/data-flow/source-artifact-storage.md)
 for the artifact hierarchy and collection commands.
 
-## Oddspedia Workflow
+## Oddspedia Pipeline
 
 Oddspedia is operated independently of the FotMob orchestration pipeline. Its
-browser scraper first discovers event links, then scrapes their saved payloads.
-Load the resulting Historical artifacts into `oddspedia_bronze.*` before
-resolving each event to the read-only FotMob reference in `silver.match`.
+event intake discovers links, validates and prioritizes them against the
+completed three-day `silver.match` reference window, then scrapes the selected
+payloads. Load the resulting Historical artifacts into `oddspedia_bronze.*`
+before resolving each event to the read-only FotMob reference.
 
 ```bash
-# One date (use `run` to discover then scrape in one command)
-python3 scripts/oddspedia/football.py run --date 20260301
+# One date (default priority is `lower`)
+python3 scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
+python3 scripts/oddspedia/events.py scrape --date 20260301 --priority xG
+python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready
 python3 scripts/oddspedia/setup_clickhouse.py --dry-run
 python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
 python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
 
 # A whole calendar month
-python3 scripts/oddspedia/football.py run --month 202603
+python3 scripts/oddspedia/events.py run --month 202603 --depthmark-window-ready
 python3 scripts/oddspedia/load_clickhouse.py --month 202603 --dry-run
 python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run
 ```
 
-The resolver considers the previous, current, and following UTC dates. Only
-pass `--reference-window-complete` when the corresponding FotMob reference
-window is complete; that assertion allows unmatched events to be classified as
-`not_covered`. See [`docs/data-flow/oddspedia.md`](docs/data-flow/oddspedia.md)
-for artifact paths, tables, and status definitions.
+Priority generation requires `--depthmark-window-ready`, which asserts the
+corresponding three-day Silver reference window is complete. It writes a
+complete decision ledger under `data/oddspedia/historical/link_priorities/`;
+`scrape` rejects a stale or missing ledger. See
+[`docs/data-flow/oddspedia.md`](docs/data-flow/oddspedia.md) for artifact paths,
+tiers, tables, and status definitions.
 
 ## Warehouse Data Quality
 
