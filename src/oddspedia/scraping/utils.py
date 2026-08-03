@@ -4,6 +4,7 @@ import tempfile
 import time
 import random
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
@@ -41,6 +42,20 @@ def _is_error_page(title: str) -> bool:
         or "404" in t
         or "does not exist" in t
     )
+
+
+def _is_listing_page_title(title: str) -> bool:
+    """Return True when a detail URL rendered the generic football listing shell."""
+    t = (title or "").lower()
+    return "football live scores" in t and (
+        "fixtures" in t or "today's" in t or "results and news" in t
+    )
+
+
+def _is_detail_url(url: str) -> bool:
+    """Return True when *url* points below a sport listing route."""
+    path = urlparse(url).path.strip("/")
+    return len(path.split("/")) >= 2
 
 
 def safe_get(driver, url, retries=3):
@@ -87,6 +102,33 @@ def safe_get(driver, url, retries=3):
                 metrics.record_page_load(load_time_ms)
 
                 if title and "oddspedia" in current_url.lower():
+                    if _is_detail_url(url) and _is_listing_page_title(title):
+                        logger.warning(
+                            "detail_page_not_rendered",
+                            requested_url=url,
+                            current_url=current_url,
+                            title=title[:80],
+                            attempt=attempt,
+                        )
+                        if attempt < retries and hasattr(driver, "reconnect"):
+                            try:
+                                driver.reconnect()
+                                logger.info(
+                                    "detail_page_retry_reconnected",
+                                    url=url,
+                                    attempt=attempt,
+                                )
+                            except Exception as reconnect_err:
+                                logger.warning(
+                                    "detail_page_retry_reconnect_failed",
+                                    url=url,
+                                    attempt=attempt,
+                                    error=str(reconnect_err),
+                                )
+                        if attempt < retries:
+                            random_delay(2, 5)
+                            continue
+                        return False
                     if _is_error_page(title):
                         logger.warning("http_404", url=url, title=title[:60])
                         return False

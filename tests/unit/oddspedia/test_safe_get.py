@@ -20,6 +20,7 @@ class _FakeDriver:
 
     def get(self, url):
         self.get_calls.append(url)
+        self.current_url = url
 
     def reconnect(self):
         self.reconnect_calls += 1
@@ -45,6 +46,23 @@ class SafeGetTests(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(driver.get_calls, ["https://oddspedia.com/football", "https://oddspedia.com/football"])
         self.assertEqual(driver.reconnect_calls, 1)
+
+    @patch("src.oddspedia.scraping.utils.random_delay")
+    @patch("src.oddspedia.scraping.utils.wait_for_cloudflare", return_value=True)
+    def test_rejects_listing_shell_for_detail_url(self, _wait_for_cloudflare, _random_delay):
+        driver = _FakeDriver()
+        driver.title = "Football Live Scores & Stats » Today's Fixtures, Results and News"
+
+        result = safe_get(
+            driver,
+            "https://oddspedia.com/football/algeciras-cd-teruel-1660684",
+            retries=1,
+        )
+
+        self.assertFalse(result)
+        self.assertEqual(
+            driver.get_calls, ["https://oddspedia.com/football/algeciras-cd-teruel-1660684"]
+        )
 
 
 if __name__ == "__main__":
