@@ -90,21 +90,27 @@ payloads. Load the resulting Historical artifacts into `oddspedia_bronze.*`
 before resolving each event to the read-only FotMob reference.
 
 ```bash
-# One date (default priority is `lower`)
-python3 scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
-python3 scripts/oddspedia/events.py scrape --date 20260301 --priority xG
-python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready
-python3 scripts/oddspedia/setup_clickhouse.py --dry-run
-python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
-python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
+# One date (default priority tier is `lower`)
+python3 scripts/oddspedia/prioritize_events.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier xG
+python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/setup_warehouse.py --dry-run
+python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
 
 # A whole calendar month
-python3 scripts/oddspedia/events.py run --month 202603 --depthmark-window-ready
-python3 scripts/oddspedia/load_clickhouse.py --month 202603 --dry-run
-python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run
+python3 scripts/oddspedia/run_pipeline.py --month 202603 --silver-reference-window-ready
+python3 scripts/oddspedia/load_bronze.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run
 ```
 
-Priority generation requires `--depthmark-window-ready`, which asserts the
+Oddspedia uses phase-specific verb-noun scripts: `discover_events.py`,
+`prioritize_events.py`, `scrape_matches.py`, `run_pipeline.py`, and `status.py`.
+The older `events.py`, `setup_clickhouse.py`, `load_clickhouse.py`, and
+`resolve_matches.py` paths remain compatibility wrappers and emit deprecation
+warnings. Use `--retry-failed`, `--retry-incomplete`, and `--priority-tier` for
+explicit operation semantics. Priority generation requires
+`--silver-reference-window-ready`, which asserts the
 corresponding three-day Silver reference window is complete. It writes a
 complete decision ledger under `data/oddspedia/historical/link_priorities/`;
 `scrape` rejects a stale or missing ledger. See

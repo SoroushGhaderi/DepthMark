@@ -4,6 +4,7 @@ import tempfile
 import sys
 import unittest
 from datetime import date
+from unittest.mock import patch
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 SRC = os.path.join(ROOT, "src")
@@ -83,7 +84,7 @@ class SportConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_sport("basketball")
 
-    def test_event_intake_exposes_the_complete_cli(self):
+    def test_event_intake_exposes_the_compatibility_cli(self):
         result = subprocess.run(
             [sys.executable, os.path.join(ROOT, "scripts", "oddspedia", "events.py"), "--help"],
             cwd=ROOT,
@@ -99,13 +100,65 @@ class SportConfigTests(unittest.TestCase):
             "status",
             "--collect",
             "--retry-failed",
-            "--retry",
+            "--retry-incomplete",
             "--log-format",
             "--month",
-            "--priority",
-            "--depthmark-window-ready",
+            "--priority-tier",
+            "--silver-reference-window-ready",
         ):
             self.assertIn(option, result.stdout)
+
+    def test_canonical_oddspedia_scripts_expose_phase_specific_help(self):
+        scripts = (
+            "discover_events.py",
+            "prioritize_events.py",
+            "scrape_matches.py",
+            "run_pipeline.py",
+            "status.py",
+            "setup_warehouse.py",
+            "load_bronze.py",
+            "resolve_events.py",
+        )
+        for script in scripts:
+            with self.subTest(script=script):
+                result = subprocess.run(
+                    [sys.executable, os.path.join(ROOT, "scripts", "oddspedia", script), "--help"],
+                    cwd=ROOT,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                self.assertIn("usage:", result.stdout)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                os.path.join(ROOT, "scripts", "oddspedia", "run_pipeline.py"),
+                "--help",
+            ],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotIn("{discover,prioritize,scrape,run,pipeline,status}", result.stdout)
+
+    def test_legacy_priority_and_reference_flags_remain_accepted(self):
+        from src.oddspedia.scraping.cli import main
+
+        with patch("src.oddspedia.scraping.cli.prioritize_date") as prioritize:
+            main(
+                [
+                    "prioritize",
+                    "--date",
+                    "20260301",
+                    "--priority",
+                    "lower",
+                    "--depthmark-window-ready",
+                ]
+            )
+
+        prioritize.assert_called_once()
 
 
 class MatchCollectorUrlTests(unittest.TestCase):

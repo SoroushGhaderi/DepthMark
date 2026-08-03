@@ -2,13 +2,13 @@
 """Oddspedia event-intake command implementation.
 
 Usage:
-    python main.py run --date 20260227 --depthmark-window-ready
-    python main.py run --headless --date 20260227 --depthmark-window-ready
-    python main.py discover --month 202607      # Event discovery only
-    python main.py prioritize --date 20260711 --depthmark-window-ready
-    python main.py scrape --date 20260711       # Priority-selected extraction
-    python main.py run --month 202607 --depthmark-window-ready
-    python main.py --collect --month 202607      # Legacy alias for discover
+    python scripts/oddspedia/run_pipeline.py --date 20260227 --silver-reference-window-ready
+    python scripts/oddspedia/run_pipeline.py --headless --date 20260227 --silver-reference-window-ready
+    python scripts/oddspedia/discover_events.py --month 202607      # Event discovery only
+    python scripts/oddspedia/prioritize_events.py --date 20260711 --silver-reference-window-ready
+    python scripts/oddspedia/scrape_matches.py --date 20260711       # Priority-selected extraction
+    python scripts/oddspedia/run_pipeline.py --month 202607 --silver-reference-window-ready
+    python scripts/oddspedia/events.py --collect --month 202607      # Legacy alias for discover
 
 Alternatively (after ``pip install -e .``):
     oddspedia-scraper --help
@@ -20,6 +20,7 @@ import os
 import sys
 import threading
 import time
+from typing import Optional, Sequence
 
 # Make the src/ package discoverable when running main.py directly.
 _src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
@@ -1361,7 +1362,34 @@ def _print_status(date_str, sport: str = "football"):
     logger.info("manifest_status_shown", **manifest.to_dict())
 
 
-def main(argv=None, default_sport="football"):
+def _warn_deprecated_options(argv: Sequence[str]) -> None:
+    """Report legacy CLI spellings while keeping existing automation working."""
+    replacements = {
+        "--retry": "--retry-failed or --retry-incomplete",
+        "--priority": "--priority-tier",
+        "--depthmark-window-ready": "--silver-reference-window-ready",
+        "--reference-window-complete": "--silver-reference-window-ready",
+        "--images": "--load-images",
+        "--json-logs": "--log-format json",
+        "--collect": "discover_events.py",
+        "--scrape": "scrape_matches.py",
+        "--status": "status.py",
+    }
+    for argument in argv:
+        option = argument.split("=", 1)[0]
+        replacement = replacements.get(option)
+        if replacement:
+            print(
+                f"Warning: {option} is deprecated; use {replacement} instead.",
+                file=sys.stderr,
+            )
+
+
+def main(
+    argv: Optional[Sequence[str]] = None,
+    default_sport: str = "football",
+    fixed_command: Optional[str] = None,
+) -> None:
     """Run the shared pipeline.
 
     ``default_sport`` is used by the sport-specific project entry points.
@@ -1369,47 +1397,61 @@ def main(argv=None, default_sport="football"):
     logging, and status pipeline.
     """
     parser = argparse.ArgumentParser(
-        description="Oddspedia event intake",
-        epilog="Commands: discover (event links only), prioritize (DepthMark link validation), "
-        "scrape (priority-selected saved links), run (discover, prioritize, scrape), status.",
+        description=(
+            f"Oddspedia {fixed_command} command"
+            if fixed_command
+            else "Oddspedia event intake compatibility command"
+        ),
+        epilog=(
+            None
+            if fixed_command
+            else "Canonical phase scripts: discover_events.py, prioritize_events.py, "
+            "scrape_matches.py, run_pipeline.py, and status.py."
+        ),
     )
-    parser.add_argument(
-        "command",
-        nargs="?",
-        choices=("discover", "prioritize", "scrape", "run", "status"),
-        help="Action to run (default: run)",
-    )
-    legacy_actions = parser.add_mutually_exclusive_group()
-    legacy_actions.add_argument(
-        "--collect",
-        dest="legacy_command",
-        action="store_const",
-        const="discover",
-        help="Deprecated alias for 'discover'",
-    )
-    legacy_actions.add_argument(
-        "--scrape",
-        dest="legacy_command",
-        action="store_const",
-        const="scrape",
-        help="Deprecated alias for 'scrape'",
-    )
-    legacy_actions.add_argument(
-        "--status",
-        dest="legacy_command",
-        action="store_const",
-        const="status",
-        help="Deprecated alias for 'status'",
-    )
+    if fixed_command is None:
+        parser.add_argument(
+            "command",
+            nargs="?",
+            choices=("discover", "prioritize", "scrape", "run", "pipeline", "status"),
+            help="Compatibility action to run (default: run)",
+        )
+        legacy_actions = parser.add_mutually_exclusive_group()
+        legacy_actions.add_argument(
+            "--collect",
+            dest="legacy_command",
+            action="store_const",
+            const="discover",
+            help="Deprecated alias for 'discover'",
+        )
+        legacy_actions.add_argument(
+            "--scrape",
+            dest="legacy_command",
+            action="store_const",
+            const="scrape",
+            help="Deprecated alias for 'scrape'",
+        )
+        legacy_actions.add_argument(
+            "--status",
+            dest="legacy_command",
+            action="store_const",
+            const="status",
+            help="Deprecated alias for 'status'",
+        )
     parser.add_argument(
         "--headless", action="store_true", help="Run in headless mode (may fail CF)"
     )
     parser.add_argument(
-        "--images",
         "--load-images",
         dest="load_images",
         action="store_true",
-        help="Allow Chrome to load images (disabled by default to reduce bandwidth; --load-images is an alias)",
+        help="Allow Chrome to load images (disabled by default)",
+    )
+    parser.add_argument(
+        "--images",
+        dest="load_images",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
     date_group = parser.add_mutually_exclusive_group()
     date_group.add_argument(
@@ -1436,36 +1478,60 @@ def main(argv=None, default_sport="football"):
         dest="log_format",
         action="store_const",
         const="json",
-        help="Deprecated alias for '--log-format json'",
+        help=argparse.SUPPRESS,
     )
     retry = parser.add_mutually_exclusive_group()
-    retry.add_argument(
-        "--retry",
-        choices=("failed", "incomplete"),
-        help="Retry failed match details or incomplete event discovery",
-    )
-    parser.add_argument(
-        "--priority",
-        choices=("xG", "ratings", "lower", "unmatched"),
-        default="lower",
-        help="Inclusive scrape tier (default: lower)",
-    )
-    parser.add_argument(
-        "--depthmark-window-ready",
-        action="store_true",
-        help="Assert the previous/current/next DepthMark Silver reference dates are complete",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Calculate priority decisions without writing artifacts or manifests (prioritize only)",
-    )
     retry.add_argument(
         "--retry-failed",
         dest="retry",
         action="store_const",
         const="failed",
-        help="Deprecated alias for '--retry failed'",
+        help="Retry failed match-detail extraction",
+    )
+    retry.add_argument(
+        "--retry-incomplete",
+        dest="retry",
+        action="store_const",
+        const="incomplete",
+        help="Retry incomplete event discovery",
+    )
+    retry.add_argument(
+        "--retry",
+        dest="legacy_retry",
+        choices=("failed", "incomplete"),
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--priority-tier",
+        dest="priority",
+        choices=("xG", "ratings", "lower", "unmatched"),
+        default="lower",
+        help="Inclusive scrape priority tier (default: lower)",
+    )
+    parser.add_argument(
+        "--priority",
+        dest="priority",
+        choices=("xG", "ratings", "lower", "unmatched"),
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--silver-reference-window-ready",
+        dest="depthmark_window_ready",
+        action="store_true",
+        help="Assert the previous/current/next FotMob Silver reference dates are complete",
+    )
+    parser.add_argument(
+        "--depthmark-window-ready",
+        dest="depthmark_window_ready",
+        action="store_true",
+        default=argparse.SUPPRESS,
+        help=argparse.SUPPRESS,
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Calculate priority decisions without writing artifacts or manifests (prioritize only)",
     )
     parser.add_argument(
         "--workers",
@@ -1476,18 +1542,24 @@ def main(argv=None, default_sport="football"):
         "Each worker gets its own browser instance and profile dir. "
         "Recommended: 3 workers with default per-worker delays.",
     )
-    args = parser.parse_args(argv)
-    if args.command and args.legacy_command:
+    raw_argv = list(sys.argv[1:] if argv is None else argv)
+    args = parser.parse_args(raw_argv)
+    _warn_deprecated_options(raw_argv)
+    if args.legacy_retry:
+        args.retry = args.legacy_retry
+    if fixed_command is None and args.command and args.legacy_command:
         parser.error("choose either a command or a legacy action flag, not both")
-    command = args.command or args.legacy_command or "run"
+    command = fixed_command or args.command or args.legacy_command or "run"
+    if command == "pipeline":
+        command = "run"
     if args.retry == "failed" and command not in {"scrape", "run"}:
-        parser.error("--retry failed is only valid with 'scrape' or 'run'")
+        parser.error("--retry-failed is only valid with 'scrape' or 'run'")
     if args.retry == "incomplete" and command != "discover":
-        parser.error("--retry incomplete is only valid with 'discover'")
+        parser.error("--retry-incomplete is only valid with 'discover'")
     if args.dry_run and command != "prioritize":
         parser.error("--dry-run is only valid with 'prioritize'")
     if command in {"prioritize", "run"} and not args.depthmark_window_ready:
-        parser.error("--depthmark-window-ready is required for prioritize and run")
+        parser.error("--silver-reference-window-ready is required for prioritize and run")
     sport = normalize_sport(default_sport)
 
     dates = _resolve_dates(args)

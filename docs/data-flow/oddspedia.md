@@ -46,19 +46,23 @@ discover → prioritize → scrape → load Oddspedia Bronze
 ```
 
 ```bash
-python3 scripts/oddspedia/events.py discover --date 20260301
-python3 scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
-python3 scripts/oddspedia/events.py scrape --date 20260301 --priority lower
-python3 scripts/oddspedia/events.py run --date 20260301 --depthmark-window-ready
-python3 scripts/oddspedia/setup_clickhouse.py --dry-run
-python3 scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
+python3 scripts/oddspedia/discover_events.py --date 20260301
+python3 scripts/oddspedia/prioritize_events.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier lower
+python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/setup_warehouse.py --dry-run
+python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
 ```
 
-`events.py` supports `discover`, `prioritize`, `scrape`, `run`, and `status`.
-`run` performs discovery, priority generation, then priority-selected scraping.
-It requires `--depthmark-window-ready` because priority generation reads the
-previous, current, and following `silver.match` dates. `football.py` remains a
-deprecated compatibility wrapper.
+The canonical event-intake scripts are `discover_events.py`,
+`prioritize_events.py`, `scrape_matches.py`, `run_pipeline.py`, and `status.py`.
+`run_pipeline.py` performs discovery, priority generation, then
+priority-selected scraping. It requires `--silver-reference-window-ready`
+because priority generation reads the previous, current, and following
+`silver.match` dates. `football.py` and the former umbrella `events.py` remain
+deprecated compatibility wrappers. The canonical selectors are
+`--retry-failed`, `--retry-incomplete`, and `--priority-tier`; their former
+spellings remain accepted as aliases.
 
 The configured Historical root is `data/oddspedia/historical/`. Discovery
 creates the source-faithful event-link artifact. Priority generation writes a
@@ -101,8 +105,8 @@ canonical FotMob fixture. An Oddspedia Silver table is not the same thing as
 the shared FotMob `silver.match` table.
 
 ```bash
-python3 scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
-python3 scripts/oddspedia/resolve_matches.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run
 ```
 
 ## Oddspedia Gold
