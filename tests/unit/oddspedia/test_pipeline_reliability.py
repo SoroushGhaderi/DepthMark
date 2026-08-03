@@ -51,15 +51,17 @@ class PipelineReliabilityTests(unittest.TestCase):
 
     def test_manifest_tracks_discovery_rescrape_candidates(self):
         manifest = ScrapeManifest(date="2026-07-06", sport="football")
-        manifest.record_discovery({
-            "complete": False,
-            "anomalies": ["pagination_stalled"],
-            "expected_pages": 11,
-            "observed_pages": 5,
-            "match_count": 241,
-            "dom_count": 5,
-            "snapshot": "data/links/202607/discovery_partial_20260706.json",
-        })
+        manifest.record_discovery(
+            {
+                "complete": False,
+                "anomalies": ["pagination_stalled"],
+                "expected_pages": 11,
+                "observed_pages": 5,
+                "match_count": 241,
+                "dom_count": 5,
+                "snapshot": "data/links/202607/discovery_partial_20260706.json",
+            }
+        )
 
         restored = ScrapeManifest.from_dict(manifest.to_dict())
 
@@ -88,12 +90,14 @@ class PipelineReliabilityTests(unittest.TestCase):
 
     def test_non_playable_football_status_is_skipped_before_scraping(self):
         manifest = ScrapeManifest(date="2026-07-06", sport="football", total=1)
-        matches = [{
-            "id": "42",
-            "status": "CANCELED",
-            "url": "/football/home-away-42",
-            "full_url": "https://oddspedia.com/football/home-away-42",
-        }]
+        matches = [
+            {
+                "id": "42",
+                "status": "CANCELED",
+                "url": "/football/home-away-42",
+                "full_url": "https://oddspedia.com/football/home-away-42",
+            }
+        ]
         with tempfile.TemporaryDirectory() as directory:
             selected, skipped, reconciled = main._select_matches_to_scrape(
                 matches, directory, manifest, "2026-07-06", sport="football"
@@ -112,9 +116,14 @@ class PipelineReliabilityTests(unittest.TestCase):
         manifest = ScrapeManifest(date="2026-07-06", sport="football", total=1)
         manifest.mark_done("42")
         payload = {
-            "sport": "football", "id": "42", "home": "Home", "away": "Away",
-            "date": "2026-07-06", "url": "https://oddspedia.com/football/example",
-            "status": "FT", "score": {"home": 1, "away": 0},
+            "sport": "football",
+            "id": "42",
+            "home": "Home",
+            "away": "Away",
+            "date": "2026-07-06",
+            "url": "https://oddspedia.com/football/example",
+            "status": "FT",
+            "score": {"home": 1, "away": 0},
             "odds": [{"market": "Full Time Result", "lines": [{"home": 2.0}]}],
         }
         with tempfile.TemporaryDirectory() as directory:
@@ -132,11 +141,48 @@ class PipelineReliabilityTests(unittest.TestCase):
         self.assertEqual(skipped, 1)
         self.assertIn("42", manifest.done)
 
+    def test_priority_expansion_scrapes_only_newly_selected_matches(self):
+        manifest = ScrapeManifest(date="2026-07-06", sport="football", total=2)
+        manifest.mark_done("already-scraped")
+        completed_payload = {
+            "sport": "football",
+            "id": "already-scraped",
+            "home": "Home",
+            "away": "Away",
+            "date": "2026-07-06",
+            "url": "https://oddspedia.com/football/completed",
+            "status": "FT",
+            "score": {"home": 1, "away": 0},
+            "odds": [{"market": "Full Time Result", "lines": [{"home": 2.0}]}],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            with open(
+                os.path.join(directory, "already-scraped.json"), "w", encoding="utf-8"
+            ) as file:
+                json.dump(completed_payload, file)
+            selected, skipped, _ = main._select_matches_to_scrape(
+                [
+                    {"id": "already-scraped", "status": "FT"},
+                    {"id": "newly-matched", "status": "FT"},
+                ],
+                directory,
+                manifest,
+                "2026-07-06",
+                sport="football",
+            )
+
+        self.assertEqual([match["id"] for match in selected], ["newly-matched"])
+        self.assertEqual(skipped, 1)
+
     def test_coverage_errors_do_not_restart_chrome(self):
         self.assertFalse(main._driver_restart_required(FootballOddsCoverageError("missing card")))
-        self.assertFalse(main._driver_restart_required(WebDriverException("element not interactable")))
+        self.assertFalse(
+            main._driver_restart_required(WebDriverException("element not interactable"))
+        )
         self.assertTrue(main._driver_restart_required(InvalidSessionIdException("gone")))
-        self.assertTrue(main._driver_restart_required(WebDriverException("disconnected from DevTools")))
+        self.assertTrue(
+            main._driver_restart_required(WebDriverException("disconnected from DevTools"))
+        )
 
     def test_invalid_match_payload_is_not_persisted(self):
         invalid_payload = {
@@ -157,7 +203,9 @@ class PipelineReliabilityTests(unittest.TestCase):
             for _ in range(main.CIRCUIT_BREAKER_FAILURES_BEFORE_PAUSE):
                 breaker.record_failure()
 
-        with patch("src.oddspedia.scraping.cli.time.sleep", side_effect=cooldown_with_concurrent_failures):
+        with patch(
+            "src.oddspedia.scraping.cli.time.sleep", side_effect=cooldown_with_concurrent_failures
+        ):
             for _ in range(main.CIRCUIT_BREAKER_FAILURES_BEFORE_PAUSE):
                 breaker.record_failure()
 
@@ -179,7 +227,9 @@ class PipelineReliabilityTests(unittest.TestCase):
 
         self.assertEqual(manifest.metrics["run_id"], "test-run")
         self.assertEqual(manifest.metrics["match_detail_extraction"]["success"], 3)
-        self.assertEqual(manifest.metrics["match_detail_extraction"]["completed_progress_pct"], 100.0)
+        self.assertEqual(
+            manifest.metrics["match_detail_extraction"]["completed_progress_pct"], 100.0
+        )
 
     def test_terminal_outcome_checkpoint_updates_manifest_and_metrics_together(self):
         metrics = Metrics()
@@ -187,7 +237,9 @@ class PipelineReliabilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             manifest_path = os.path.join(directory, "manifest.json")
             manifest = ScrapeManifest(date="2026-07-06", sport="football", total=1)
-            with patch("src.oddspedia.scraping.manifest.get_manifest_path", return_value=manifest_path):
+            with patch(
+                "src.oddspedia.scraping.manifest.get_manifest_path", return_value=manifest_path
+            ):
                 from src.oddspedia.scraping.manifest import save_manifest
 
                 save_manifest(manifest)
@@ -196,7 +248,9 @@ class PipelineReliabilityTests(unittest.TestCase):
 
         self.assertEqual(persisted.skipped["42"]["reason"], "all_odds_unavailable")
         self.assertEqual(persisted.metrics["match_detail_extraction"]["skipped"], 1)
-        self.assertEqual(persisted.metrics["match_detail_extraction"]["completed_progress_pct"], 100.0)
+        self.assertEqual(
+            persisted.metrics["match_detail_extraction"]["completed_progress_pct"], 100.0
+        )
 
 
 if __name__ == "__main__":

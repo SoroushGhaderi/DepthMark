@@ -350,7 +350,11 @@ def _expand_football_market_list(driver, timeout=10.0):
         if (!root) return {button: null, cards: 0};
         var button = Array.from(root.querySelectorAll('button.btn-pagination')).find(function(candidate) {
             var text = (candidate.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
-            return text === 'show more' && !candidate.closest('.matchup-odds-comparison-card');
+            var expandsMarketList = text === 'show more'
+                || text === 'show all markets'
+                || text === 'show all'
+                || text === 'view all';
+            return expandsMarketList && !candidate.closest('.matchup-odds-comparison-card');
         }) || null;
         return {button: button, cards: root.querySelectorAll('.matchup-odds-comparison-card').length};
     """) or {}

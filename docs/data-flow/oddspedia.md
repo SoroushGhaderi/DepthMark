@@ -127,15 +127,23 @@ competition, coverage, and URL fields. `resolution` contains the decision,
 confidence, score, margin, and team-name rules; window and policy metadata live
 at the artifact root.
 
-Approximate matching supplements character similarity with token reordering and
-distinctive-token containment. It never accepts a generic short token alone and
-still requires a unique, high-confidence home/away pair. `ambiguous` and
+Approximate matching canonicalizes non-identifying club designators and `II` /
+`2` second-team notation, then supplements character similarity with token
+reordering and distinctive-token containment. A unique long token can rescue
+one side only when the opposite side is exact or a reviewed alias. It never
+accepts a generic short token alone and still requires a unique,
+high-confidence home/away pair. `ambiguous` and
 `unresolved` links are excluded from automatic scraping.
 
 Statuses are `matched`, `ambiguous`, `unmatched`, and `unresolved`. Coverage
 categories are `xG`, `ratings`, `lower`, and `not_covered`. `not_covered`
 requires an operator-confirmed complete three-day FotMob reference window;
 otherwise an unmatched event remains `unresolved`.
+
+When a new matcher version selects additional links, the scraper reconciles the
+selected IDs with accepted per-event JSON payloads. Existing payloads are not
+scraped again; only newly selected, incomplete, or explicitly retried IDs are
+processed.
 
 See [`source-artifact-storage.md`](source-artifact-storage.md) for the shared
 Historical/Live artifact hierarchy and
