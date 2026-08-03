@@ -381,6 +381,74 @@ def _scrape_scope_progress(matches, manifest):
     return round((done_count + skipped_count) / selected_total * 100, 2)
 
 
+class _MatchProgressReporter:
+    """Emit FotMob-shaped progress updates for one Oddspedia scrape batch."""
+
+    def __init__(
+        self,
+        date_str: str,
+        sport: str,
+        total: int,
+        previously_scraped: int = 0,
+        previously_skipped: int = 0,
+    ):
+        self.date_str = date_str
+        self.sport = sport
+        self.total = total
+        self.previously_scraped = previously_scraped
+        self.previously_skipped = previously_skipped
+        self.completed = 0
+        self.successful = 0
+        self.failed = 0
+        self.skipped = 0
+        self._lock = threading.Lock()
+
+    def record(self, outcome: str, match_id: str) -> None:
+        """Record one terminal batch outcome and log the aggregate progress."""
+        with self._lock:
+            self.completed += 1
+            if outcome == "success":
+                self.successful += 1
+            elif outcome == "failed":
+                self.failed += 1
+            elif outcome == "skipped":
+                self.skipped += 1
+            else:
+                raise ValueError(f"Unsupported progress outcome: {outcome}")
+
+            progress_pct = (
+                100.0 if self.total == 0 else round((self.completed / self.total) * 100, 1)
+            )
+            logger.info(
+                "[PROGRESS] Match processing update",
+                sport=self.sport,
+                date=self.date_str,
+                match_id=match_id,
+                completed=self.completed,
+                total=self.total,
+                progress_pct=progress_pct,
+                successful_matches=self.successful,
+                failed_matches=self.failed,
+                skipped_matches=(self.previously_scraped + self.previously_skipped + self.skipped),
+                previously_scraped_matches=self.previously_scraped,
+            )
+
+    def snapshot(self):
+        """Return the current progress fields for summary logging."""
+        with self._lock:
+            return {
+                "completed": self.completed,
+                "total": self.total,
+                "progress_pct": (
+                    100.0 if self.total == 0 else round((self.completed / self.total) * 100, 1)
+                ),
+                "successful_matches": self.successful,
+                "failed_matches": self.failed,
+                "skipped_matches": self.previously_scraped + self.previously_skipped + self.skipped,
+                "previously_scraped_matches": self.previously_scraped,
+            }
+
+
 def _log_manifest_json_reconciled(match_id, in_done, in_failed, has_json):
     logger.warning(
         "manifest_reconciled_from_json",
@@ -808,6 +876,16 @@ def _phase2_scrape_sequential(
     if reconciled_count:
         save_manifest(manifest)
         logger.info("manifest_reconciled_from_json_files", count=reconciled_count)
+    match_ids = {_match_id(match_info) for match_info in matches}
+    previously_scraped_count = len(match_ids & {str(match_id) for match_id in manifest.done})
+    previously_skipped_count = len(match_ids & {str(match_id) for match_id in manifest.skipped})
+    progress_reporter = _MatchProgressReporter(
+        date_str,
+        sport,
+        len(matches_to_scrape),
+        previously_scraped=previously_scraped_count,
+        previously_skipped=previously_skipped_count,
+    )
     progress_matches = matches_to_scrape or matches
     outcome_checkpoint.set_scope(_match_id(match_info) for match_info in progress_matches)
     metrics.phase2_start(total=len(progress_matches))
@@ -820,6 +898,8 @@ def _phase2_scrape_sequential(
         already_done=skipped_count,
         previously_failed=len(failed_set),
         completed_progress=selected_progress,
+        previously_scraped_matches=previously_scraped_count,
+        skipped_matches=previously_scraped_count + previously_skipped_count,
     )
 
     if not matches_to_scrape:
@@ -839,7 +919,13 @@ def _phase2_scrape_sequential(
         save_manifest(manifest)
         logger.info(
             "match_detail_extraction_complete",
-            total=len(progress_matches),
+            completed=0,
+            total=0,
+            progress_pct=100.0,
+            successful_matches=0,
+            failed_matches=0,
+            skipped_matches=previously_scraped_count + previously_skipped_count,
+            previously_scraped_matches=previously_scraped_count,
             done=selected_done,
             failed=selected_failed,
             skipped=selected_skipped,
@@ -887,6 +973,7 @@ def _phase2_scrape_sequential(
                     progress=f"{i}/{len(matches_to_scrape)}",
                     completed_progress=_scrape_scope_progress(progress_matches, manifest),
                 )
+                progress_reporter.record("success", match_id)
                 last_error = None
                 break
 
@@ -906,6 +993,7 @@ def _phase2_scrape_sequential(
                     error=str(e),
                     source="match_page",
                 )
+                progress_reporter.record("skipped", match_id)
                 last_error = None
                 break
             except Exception as e:
@@ -943,6 +1031,7 @@ def _phase2_scrape_sequential(
                     manifest = outcome_checkpoint.failed(match_id)
                     failed_count += 1
                     circuit_breaker.record_failure()
+                    progress_reporter.record("failed", match_id)
 
         if i < len(matches_to_scrape) and last_error is None:
             random_delay()
@@ -965,12 +1054,12 @@ def _phase2_scrape_sequential(
 
     logger.info(
         "match_detail_extraction_complete",
-        total=len(progress_matches),
         done=selected_done,
         failed=selected_failed,
         skipped=selected_skipped,
         completed_progress=_scrape_scope_progress(progress_matches, manifest),
         duration_seconds=duration_seconds,
+        **progress_reporter.snapshot(),
     )
 
 
@@ -1023,6 +1112,16 @@ def _phase2_scrape_concurrent(
     if reconciled_count:
         save_manifest(manifest)
         logger.info("manifest_reconciled_from_json_files", count=reconciled_count)
+    match_ids = {_match_id(match_info) for match_info in matches}
+    previously_scraped_count = len(match_ids & {str(match_id) for match_id in manifest.done})
+    previously_skipped_count = len(match_ids & {str(match_id) for match_id in manifest.skipped})
+    progress_reporter = _MatchProgressReporter(
+        date_str,
+        sport,
+        len(matches_to_scrape),
+        previously_scraped=previously_scraped_count,
+        previously_skipped=previously_skipped_count,
+    )
     progress_matches = matches_to_scrape or matches
     outcome_checkpoint.set_scope(_match_id(match_info) for match_info in progress_matches)
     metrics.phase2_start(total=len(progress_matches))
@@ -1036,6 +1135,8 @@ def _phase2_scrape_concurrent(
         previously_failed=len(failed_set),
         workers=workers,
         completed_progress=selected_progress,
+        previously_scraped_matches=previously_scraped_count,
+        skipped_matches=previously_scraped_count + previously_skipped_count,
     )
 
     if not matches_to_scrape:
@@ -1055,7 +1156,13 @@ def _phase2_scrape_concurrent(
         save_manifest(manifest)
         logger.info(
             "match_detail_extraction_concurrent_complete",
-            total=len(progress_matches),
+            completed=0,
+            total=0,
+            progress_pct=100.0,
+            successful_matches=0,
+            failed_matches=0,
+            skipped_matches=previously_scraped_count + previously_skipped_count,
+            previously_scraped_matches=previously_scraped_count,
             done=selected_done,
             failed=selected_failed,
             skipped=selected_skipped,
@@ -1093,6 +1200,8 @@ def _phase2_scrape_concurrent(
         worker_results = []
         if driver is None:
             logger.error("worker_no_driver", worker=worker_id)
+            for match_info in batch:
+                progress_reporter.record("failed", _match_id(match_info))
             return [
                 (match_id, False, "driver_init_failed")
                 for match_info in batch
@@ -1142,6 +1251,7 @@ def _phase2_scrape_concurrent(
                         outcome_checkpoint.done(match_id)
                         worker_results.append((match_id, True, None))
                         logger.info("concurrent_match_success", worker=worker_id, match_id=match_id)
+                        progress_reporter.record("success", match_id)
                         last_error = None
                         circuit_breaker.record_success()
                         break
@@ -1161,6 +1271,7 @@ def _phase2_scrape_concurrent(
                             error=str(e),
                             source="match_page",
                         )
+                        progress_reporter.record("skipped", match_id)
                         last_error = None
                         circuit_breaker.record_success()
                         break
@@ -1206,6 +1317,7 @@ def _phase2_scrape_concurrent(
                             metrics.record_scrape_error(type(e).__name__)
                             outcome_checkpoint.failed(match_id)
                             worker_results.append((match_id, False, str(e)))
+                            progress_reporter.record("failed", match_id)
                             circuit_breaker.record_failure()
 
                 if j < len(batch) - 1 and last_error is None:
@@ -1255,12 +1367,12 @@ def _phase2_scrape_concurrent(
 
     logger.info(
         "match_detail_extraction_concurrent_complete",
-        total=len(progress_matches),
         done=selected_done,
         failed=selected_failed,
         skipped=selected_skipped,
         completed_progress=_scrape_scope_progress(progress_matches, manifest),
         duration_seconds=duration_seconds,
+        **progress_reporter.snapshot(),
     )
 
     # Clean up temp Chrome profile directories
