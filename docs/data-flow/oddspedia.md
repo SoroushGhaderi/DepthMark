@@ -64,7 +64,18 @@ The configured Historical root is `data/oddspedia/historical/`. Discovery
 creates the source-faithful event-link artifact. Priority generation writes a
 separate decision ledger to
 `link_priorities/YYYYMM/YYYYMMDD/prioritized_match_links.json`. Scraping saves
-one raw payload per selected event. The Bronze loader writes:
+one raw payload per selected event. Once all selected events for a historical
+date have reached a terminal outcome, the date scraper applies the same local
+compression protocol as FotMob: each `{match_id}.json` becomes a
+`{match_id}.json.gz` member inside
+`matches/YYYYMM/YYYYMMDD/YYYYMMDD_matches.tar`, then the uncompressed working
+files are removed. The archive is verified before replacement. If a later
+priority tier adds events, the next compression pass merges those new payloads
+with the existing archive. Current-date Live artifacts remain uncompressed.
+
+The Bronze loader and scrape-resume audit read both the date archive and any
+new plain JSON files, so compression does not change retry or loading behavior.
+The Bronze loader writes:
 
 - `oddspedia_bronze.event` — discovered event metadata and raw event JSON.
 - `oddspedia_bronze.match_payload` — raw per-event page payloads.

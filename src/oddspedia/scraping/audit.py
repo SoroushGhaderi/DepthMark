@@ -6,13 +6,12 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List
 
 from src.oddspedia.scraping.config import (
-    get_match_links_file,
     get_match_file,
-    get_matches_dir,
+    get_match_links_file,
     normalize_sport,
 )
 from src.oddspedia.scraping.manifest import create_manifest, load_manifest, save_manifest
-
+from src.oddspedia.scraping.storage import iter_match_payloads, read_match_payload
 
 MIN_USEFUL_FILE_BYTES = 750
 IDENTITY_FIELDS = ("id", "home", "away", "date", "url")
@@ -107,24 +106,34 @@ def audit_date(date_str: str, sport: str = "football") -> DateAudit:
     expected_ids = {str(item.get("id")) for item in links if item.get("id") is not None}
     result.expected = len(expected_ids)
 
-    matches_dir = get_matches_dir(date_str, sport=sport)
-    json_paths = _json_paths(matches_dir)
-    existing_ids = {
-        os.path.splitext(os.path.basename(path))[0].removeprefix("match_") for path in json_paths
-    }
+    existing_payloads = {item.match_id: item for item in iter_match_payloads(date_str, sport=sport)}
+    existing_ids = set(existing_payloads)
     result.existing = len(existing_ids)
 
     for match_id in sorted(expected_ids):
-        path = get_match_file(date_str, match_id, sport=sport)
-        if not os.path.exists(path):
+        stored = existing_payloads.get(match_id) or read_match_payload(
+            date_str, match_id, sport=sport
+        )
+        if stored is None:
             result.missing.append(
                 MatchAudit(
-                    date=date_str, sport=sport, match_id=match_id, path=path, status="missing"
+                    date=date_str,
+                    sport=sport,
+                    match_id=match_id,
+                    path=get_match_file(date_str, match_id, sport=sport),
+                    status="missing",
                 )
             )
             continue
 
-        audit = audit_match_json(date_str, match_id, path, sport=sport)
+        audit = audit_match_payload(
+            date_str,
+            match_id,
+            stored.payload,
+            stored.source_file,
+            stored.size_bytes,
+            sport=sport,
+        )
         if audit.accepted:
             if audit.observations:
                 result.coverage_observations.append(audit)
@@ -138,8 +147,15 @@ def audit_date(date_str: str, sport: str = "football") -> DateAudit:
             result.incomplete.append(audit)
 
     for match_id in sorted(existing_ids - expected_ids):
-        path = get_match_file(date_str, match_id, sport=sport)
-        audit = audit_match_json(date_str, match_id, path, sport=sport)
+        stored = existing_payloads[match_id]
+        audit = audit_match_payload(
+            date_str,
+            match_id,
+            stored.payload,
+            stored.source_file,
+            stored.size_bytes,
+            sport=sport,
+        )
         audit.status = "extra"
         audit.reasons.insert(0, "not present in match links")
         result.extra.append(audit)
@@ -153,22 +169,33 @@ def audit_match_json(
     """Classify one saved match JSON for rescrape decisions."""
     sport = normalize_sport(sport)
     size = os.path.getsize(path)
-    audit = MatchAudit(
-        date=date_str,
-        sport=sport,
-        match_id=match_id,
-        path=path,
-        status=ACCEPTED_DATA_PRESENT,
-        bytes=size,
-    )
-
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as exc:
-        audit.status = "invalid"
-        audit.reasons.append(f"json parse error: {exc.msg}")
-        return audit
+        return _invalid_audit(date_str, match_id, path, sport, size, f"json parse error: {exc.msg}")
+
+    return audit_match_payload(date_str, match_id, data, path, size, sport=sport)
+
+
+def audit_match_payload(
+    date_str: str,
+    match_id: str,
+    data: Any,
+    source_file: str,
+    size: int,
+    sport: str = "football",
+) -> MatchAudit:
+    """Classify an already-loaded payload from JSON or a compressed archive."""
+    sport = normalize_sport(sport)
+    audit = MatchAudit(
+        date=date_str,
+        sport=sport,
+        match_id=match_id,
+        path=source_file,
+        status=ACCEPTED_DATA_PRESENT,
+        bytes=size,
+    )
 
     if not isinstance(data, dict):
         audit.status = "invalid"
@@ -199,6 +226,20 @@ def audit_match_json(
         audit.status = ACCEPTED_TERMINAL_NO_DATA
 
     return audit
+
+
+def _invalid_audit(
+    date_str: str, match_id: str, path: str, sport: str, size: int, reason: str
+) -> MatchAudit:
+    return MatchAudit(
+        date=date_str,
+        sport=normalize_sport(sport),
+        match_id=match_id,
+        path=path,
+        status="invalid",
+        reasons=[reason],
+        bytes=size,
+    )
 
 
 def sync_manifest_incomplete(result: DateAudit) -> None:
@@ -344,13 +385,3 @@ def _load_links(date_str: str, sport: str = "football") -> List[Dict[str, Any]]:
     except json.JSONDecodeError:
         return []
     return data if isinstance(data, list) else []
-
-
-def _json_paths(matches_dir: str) -> List[str]:
-    if not os.path.isdir(matches_dir):
-        return []
-    return [
-        os.path.join(matches_dir, name)
-        for name in os.listdir(matches_dir)
-        if name.endswith(".json") and os.path.isfile(os.path.join(matches_dir, name))
-    ]
