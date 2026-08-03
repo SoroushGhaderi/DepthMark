@@ -1,7 +1,7 @@
 """Durable terminal outcomes for one Sport-Date Scrape."""
 
 import threading
-from typing import Optional
+from typing import Iterable, Optional
 
 from src.oddspedia.scraping.manifest import ScrapeManifest, update_manifest
 from src.oddspedia.scraping.metrics import Metrics
@@ -20,13 +20,32 @@ class TerminalOutcomeCheckpoint:
         self.sport = sport
         self.metrics = metrics
         self._lock = threading.RLock()
+        self._scope_ids = None
+
+    def set_scope(self, match_ids: Iterable[str]) -> None:
+        """Limit embedded phase-2 metrics to the matches selected this run."""
+        with self._lock:
+            self._scope_ids = {str(match_id) for match_id in match_ids}
+
+    def _terminal_counts(self, manifest: ScrapeManifest):
+        if self._scope_ids is None:
+            return manifest.completed_count, manifest.skipped_count, manifest.failed_count
+        done_ids = {str(match_id) for match_id in manifest.done}
+        skipped_ids = {str(match_id) for match_id in manifest.skipped}
+        failed_ids = {str(match_id) for match_id in manifest.failed}
+        return (
+            len(self._scope_ids & done_ids),
+            len(self._scope_ids & skipped_ids),
+            len(self._scope_ids & failed_ids),
+        )
 
     def sync(self, manifest: ScrapeManifest) -> None:
         with self._lock:
+            done_count, skipped_count, failed_count = self._terminal_counts(manifest)
             self.metrics.sync_phase2_progress(
-                manifest.completed_count,
-                manifest.skipped_count,
-                manifest.failed_count,
+                done_count,
+                skipped_count,
+                failed_count,
             )
             manifest.update_metrics(self.metrics.manifest_snapshot())
 
@@ -59,10 +78,11 @@ class TerminalOutcomeCheckpoint:
         with self._lock:
             def apply_and_sync(manifest: ScrapeManifest) -> None:
                 apply(manifest)
+                done_count, skipped_count, failed_count = self._terminal_counts(manifest)
                 self.metrics.sync_phase2_progress(
-                    manifest.completed_count,
-                    manifest.skipped_count,
-                    manifest.failed_count,
+                    done_count,
+                    skipped_count,
+                    failed_count,
                 )
                 manifest.update_metrics(self.metrics.manifest_snapshot())
 

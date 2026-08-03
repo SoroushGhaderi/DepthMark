@@ -130,11 +130,7 @@ class LinkPriorityService:
         records = []
         for source_link in links:
             event = _event_from_link(source_link, discovery_date)
-            result = self.resolver.resolve(
-                event,
-                index.candidates_for(event),
-                reference_window_complete=True,
-            )
+            result = self.resolver.resolve_from_index(event, index, reference_window_complete=True)
             records.append(
                 {
                     "oddspedia_id": str(source_link.get("id") or ""),
