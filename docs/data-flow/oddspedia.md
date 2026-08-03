@@ -149,6 +149,11 @@ selected IDs with accepted per-event JSON payloads. Existing payloads are not
 scraped again; only newly selected, incomplete, or explicitly retried IDs are
 processed.
 
+Discovery also refreshes an otherwise valid date inventory when the manifest
+records an incomplete discovery or saved match output. This lets the standard
+`discover_events.py --date ...` command recover rescrape candidates without
+requiring an extra retry flag.
+
 See [`source-artifact-storage.md`](source-artifact-storage.md) for the shared
 Historical/Live artifact hierarchy and
 [`../adr/0021-add-oddspedia-as-source-domain.md`](../adr/0021-add-oddspedia-as-source-domain.md)
