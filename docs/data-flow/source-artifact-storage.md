@@ -25,6 +25,10 @@ diagnostic discovery snapshots to
 `manifests/YYYYMM/YYYYMMDD/manifest.json`. After the completed DepthMark
 reference window is confirmed, Oddspedia writes its derived decision ledger to
 `historical/link_priorities/YYYYMM/YYYYMMDD/prioritized_match_links.json`.
+After a historical odds date reaches terminal completion, its payload JSON
+files are compressed into the FotMob-compatible
+`matches/YYYYMM/YYYYMMDD/YYYYMMDD_matches.tar` archive with
+`<event_id>.json.gz` members; Live artifacts remain uncompressed.
 
 The current date is always a refreshable Live snapshot. A completed date is
 Historical. Collection rejects future dates. FotMob exposes these choices with

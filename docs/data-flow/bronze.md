@@ -47,6 +47,17 @@ The scraper fetches match data from the FotMob API:
 Scraping compresses completed local dates but never uploads them. S3
 availability has no effect on scrape success or pipeline success.
 
+### Oddspedia historical payload storage
+
+The Oddspedia odds scraper follows the same completed-date local archive
+protocol. After all selected event outcomes for a historical date are terminal,
+`data/oddspedia/historical/matches/{YYYYMM}/{YYYYMMDD}/{YYYYMMDD}_matches.tar`
+contains `{match_id}.json.gz` members. Partial dates and current-date Live
+artifacts remain as plain JSON so they can be resumed or refreshed. The
+Oddspedia audit and Bronze loader read both archive members and any new plain
+JSON files; a later priority expansion merges its newly scraped files into the
+existing date archive.
+
 Key classes:
 - `BaseScraper` — retry, rate limiting, health checks
 - `MatchScraper(BaseScraper)` — match detail fetching
