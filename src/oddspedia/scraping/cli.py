@@ -26,30 +26,51 @@ _src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
 if _src not in sys.path:
     sys.path.insert(0, _src)
 import random
-import tempfile
 import shutil
+import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from pathlib import Path
 from typing import Tuple
 
+from selenium.common.exceptions import (
+    InvalidSessionIdException,
+    NoSuchWindowException,
+    WebDriverException,
+)
+
 from config.settings import get_settings as get_depthmark_settings
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.oddspedia.scraping.audit import (
+    audit_date,
+    audit_match_json,
+    audit_match_payload,
+    sync_manifest_incomplete,
+)
 from src.oddspedia.scraping.config import (
-    get_run_logs_dir,
-    get_match_links_file,
+    WORKER_MAX_DELAY,
+    WORKER_MIN_DELAY,
     get_discovery_snapshot_file,
     get_match_file,
+    get_match_links_file,
     get_matches_dir,
     get_prioritized_match_links_file,
-    get_storage_aspect,
+    get_run_logs_dir,
     get_sport_listing_url,
-    normalize_sport,
+    get_storage_aspect,
     normalize_date,
     normalize_month,
-    WORKER_MIN_DELAY,
-    WORKER_MAX_DELAY,
+    normalize_sport,
 )
 from src.oddspedia.scraping.driver import DriverManager
+from src.oddspedia.scraping.link_prioritization import (
+    LinkPriorityService,
+    load_priority_artifact,
+    priority_artifact_is_current,
+    priority_run_summary,
+    save_priority_artifact,
+    select_links_for_priority,
+)
 from src.oddspedia.scraping.logging import configure_logging, get_logger
 from src.oddspedia.scraping.manifest import (
     create_manifest,
@@ -64,28 +85,13 @@ from src.oddspedia.scraping.match_scraper import (
     scrape_match,
 )
 from src.oddspedia.scraping.metrics import get_metrics, reset_metrics
-from src.oddspedia.scraping.link_prioritization import (
-    LinkPriorityService,
-    load_priority_artifact,
-    priority_artifact_is_current,
-    priority_run_summary,
-    save_priority_artifact,
-    select_links_for_priority,
-)
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
-from src.oddspedia.scraping.utils import save_json, load_json, random_delay
-from selenium.common.exceptions import (
-    InvalidSessionIdException,
-    NoSuchWindowException,
-    WebDriverException,
+from src.oddspedia.scraping.storage import (
+    compress_date_files,
+    read_match_payload,
 )
-from src.oddspedia.scraping.audit import (
-    audit_date,
-    audit_match_json,
-    sync_manifest_incomplete,
-)
+from src.oddspedia.scraping.utils import load_json, random_delay, save_json
 from src.oddspedia.silver.match_resolution import OddspediaMatchResolver
-from src.integrations.clickhouse.client import ClickHouseClient
 
 configure_logging()
 logger = get_logger("oddspedia")
@@ -249,10 +255,25 @@ def _select_matches_to_scrape(
                 skipped_count += 1
                 continue
             out_path = _match_payload_path(matches_dir, match_id)
-            has_json = os.path.exists(out_path)
-            json_audit = (
-                audit_match_json(date_str, match_id, out_path, sport=sport) if has_json else None
-            )
+            if os.path.exists(out_path):
+                stored = None
+                has_json = True
+                json_audit = audit_match_json(date_str, match_id, out_path, sport=sport)
+            else:
+                stored = read_match_payload(date_str, match_id, sport=sport)
+                has_json = stored is not None
+                json_audit = (
+                    audit_match_payload(
+                        date_str,
+                        match_id,
+                        stored.payload,
+                        stored.source_file,
+                        stored.size_bytes,
+                        sport=sport,
+                    )
+                    if stored is not None
+                    else None
+                )
 
             if has_json and json_audit and json_audit.accepted:
                 if (
@@ -288,10 +309,25 @@ def _select_matches_to_scrape(
             skipped_count += 1
             continue
         out_path = _match_payload_path(matches_dir, match_id)
-        has_json = os.path.exists(out_path)
-        json_audit = (
-            audit_match_json(date_str, match_id, out_path, sport=sport) if has_json else None
-        )
+        if os.path.exists(out_path):
+            stored = None
+            has_json = True
+            json_audit = audit_match_json(date_str, match_id, out_path, sport=sport)
+        else:
+            stored = read_match_payload(date_str, match_id, sport=sport)
+            has_json = stored is not None
+            json_audit = (
+                audit_match_payload(
+                    date_str,
+                    match_id,
+                    stored.payload,
+                    stored.source_file,
+                    stored.size_bytes,
+                    sport=sport,
+                )
+                if stored is not None
+                else None
+            )
 
         if has_json and json_audit and json_audit.accepted:
             if match_id not in done_set or match_id in failed_set or match_id in in_progress_ids:
@@ -591,7 +627,7 @@ def _warmup_cloudflare(driver, sport: str = "football"):
 
 
 def _audit_before_scrape(date_str, sport: str = "football"):
-    """Refresh manifest.incomplete from existing JSON files before scraping."""
+    """Refresh manifest.incomplete from existing JSON or date archives."""
     audit_result = audit_date(date_str, sport=sport)
     sync_manifest_incomplete(audit_result)
     logger.info(
@@ -601,6 +637,44 @@ def _audit_before_scrape(date_str, sport: str = "football"):
         missing=len(audit_result.missing),
         incomplete=len(audit_result.incomplete),
         invalid=len(audit_result.invalid),
+    )
+
+
+def _compress_completed_date(manifest, date_str: str, sport: str = "football") -> None:
+    """Compress one complete historical Oddspedia date without remote storage."""
+    if manifest is None or manifest.total <= 0:
+        return
+    if manifest.failed_count or manifest.incomplete_count or manifest.in_progress:
+        logger.info(
+            "oddspedia_date_not_compressed",
+            sport=sport,
+            date=date_str,
+            total=manifest.total,
+            done=manifest.completed_count,
+            skipped=manifest.skipped_count,
+            failed=manifest.failed_count,
+            incomplete=manifest.incomplete_count,
+        )
+        return
+    if manifest.completed_count + manifest.skipped_count < manifest.total:
+        return
+    if get_storage_aspect(date_str) != "historical":
+        logger.info("oddspedia_live_date_not_compressed", sport=sport, date=date_str)
+        return
+
+    logger.info("oddspedia_date_compression_start", sport=sport, date=date_str)
+    result = compress_date_files(date_str, sport=sport)
+    if result.get("status") not in {"success", "already_compressed", "no_files", "no_directory"}:
+        raise RuntimeError(
+            f"Oddspedia date compression failed for {date_str}: {result.get('error', 'unknown error')}"
+        )
+    logger.info(
+        "oddspedia_date_compression_complete",
+        sport=sport,
+        date=date_str,
+        status=result.get("status"),
+        compressed_files=result.get("compressed", 0),
+        archive_file=result.get("archive_file"),
     )
 
 
@@ -1474,7 +1548,7 @@ def main(argv=None, default_sport="football"):
                 matches = _selected_priority_matches(date_str, args.priority, sport=sport)
                 if matches:
                     scrape_driver = None if workers > 1 else ensure_driver()
-                    phase2_scrape(
+                    manifest = phase2_scrape(
                         scrape_driver,
                         matches,
                         date_str,
@@ -1482,6 +1556,7 @@ def main(argv=None, default_sport="football"):
                         workers=workers,
                         sport=sport,
                     )
+                    _compress_completed_date(manifest, date_str, sport=sport)
                 else:
                     logger.info("priority_selection_empty", sport=sport, date=date_str)
                 logger.info("scrape_json_complete", sport=sport, date=date_str)
@@ -1504,7 +1579,7 @@ def main(argv=None, default_sport="football"):
                 selected_matches = _selected_priority_matches(date_str, args.priority, sport=sport)
                 if selected_matches:
                     scrape_driver = None if workers > 1 else ensure_driver()
-                    phase2_scrape(
+                    manifest = phase2_scrape(
                         scrape_driver,
                         selected_matches,
                         date_str,
@@ -1512,6 +1587,7 @@ def main(argv=None, default_sport="football"):
                         workers=workers,
                         sport=sport,
                     )
+                    _compress_completed_date(manifest, date_str, sport=sport)
                     logger.info("scrape_json_complete", sport=sport, date=date_str)
                 else:
                     logger.info("priority_selection_empty", sport=sport, date=date_str)

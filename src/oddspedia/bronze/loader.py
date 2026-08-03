@@ -8,9 +8,10 @@ from typing import Any, Dict, List
 
 import pandas as pd
 
-from src.oddspedia.scraping.config import get_match_links_file, get_matches_dir, normalize_date
-from src.integrations.clickhouse.client import ClickHouseClient
 from src.common.logging import get_logger
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.oddspedia.scraping.config import get_match_links_file, normalize_date
+from src.oddspedia.scraping.storage import iter_match_payloads
 
 logger = get_logger(__name__)
 
@@ -113,23 +114,20 @@ class OddspediaBronzeLoader:
         return rows
 
     def _payload_rows(self, date_id: str):
-        matches_dir = Path(get_matches_dir(date_id))
-        if not matches_dir.exists():
-            return [], []
         event_date = datetime.strptime(date_id, "%Y%m%d").date()
         payload_rows: List[Dict[str, Any]] = []
         market_rows: List[Dict[str, Any]] = []
-        for path in sorted(matches_dir.glob("*.json")):
-            payload = _load_json(path)
-            if not isinstance(payload, dict) or payload.get("id") is None:
-                logger.warning("Ignoring invalid Oddspedia match payload", path=str(path))
+        for stored in iter_match_payloads(date_id):
+            payload = stored.payload
+            if payload.get("id") is None:
+                logger.warning("Ignoring invalid Oddspedia match payload", path=stored.source_file)
                 continue
             match_id = str(payload["id"])
             payload_rows.append(
                 {
                     "oddspedia_match_id": match_id,
                     "event_date": event_date,
-                    "source_file": str(path),
+                    "source_file": stored.source_file,
                     "raw_payload_json": json.dumps(payload, ensure_ascii=False, sort_keys=True),
                     "scraped_at": _parse_datetime(payload.get("scraped_at")),
                 }
@@ -143,7 +141,7 @@ class OddspediaBronzeLoader:
                         "event_date": event_date,
                         "market_name": str(market["market"]),
                         "lines_json": json.dumps(market.get("lines") or [], ensure_ascii=False),
-                        "source_file": str(path),
+                        "source_file": stored.source_file,
                     }
                 )
         return payload_rows, market_rows
