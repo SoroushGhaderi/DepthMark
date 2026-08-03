@@ -22,10 +22,11 @@ facts with DepthMark-owned metadata.
 Oddspedia Event Intake gains a links-layer priority stage between discovery and
 page scraping.
 
-- The canonical command entry point is `scripts/oddspedia/events.py`.
-  `scripts/oddspedia/football.py` remains a temporary deprecated compatibility
-  wrapper.
-- `events.py prioritize --date YYYYMMDD --depthmark-window-ready` reads the
+- The canonical command entry points are the phase-specific scripts:
+  `discover_events.py`, `prioritize_events.py`, `scrape_matches.py`,
+  `run_pipeline.py`, and `status.py`. The former `events.py` umbrella and
+  `football.py` remain deprecated compatibility wrappers.
+- `prioritize_events.py --date YYYYMMDD --silver-reference-window-ready` reads the
   accepted `match_links.json` inventory and the corresponding
   `silver.match` window for the previous, current, and next calendar dates.
   It fails closed without the explicit readiness assertion and emits no new
@@ -60,12 +61,12 @@ page scraping.
   `unmatched`, or `unresolved`. A uniquely matched link receives its FotMob
   coverage tier (`xG`, `ratings`, or `lower`). `ambiguous` and `unresolved`
   are never automatic scrape candidates.
-- `scrape` and `run` select from the priority artifact using
-  `--priority {xG,ratings,lower,unmatched}`. The selection is inclusive:
+- `scrape_matches.py` and `run_pipeline.py` select from the priority artifact
+  using `--priority-tier {xG,ratings,lower,unmatched}`. The selection is inclusive:
   `ratings` includes `xG`, `lower` includes every uniquely matched tier, and
   `unmatched` includes every eligible tier plus unmatched links. The default
   is `lower`.
-- `run` performs `discover -> prioritize -> scrape`. A priority-selected
+- `run_pipeline.py` performs `discover -> prioritize -> scrape`. A priority-selected
   scrape refuses a missing or stale priority artifact whose source-inventory
   checksum or matcher rule version no longer matches `match_links.json` and
   the active resolver policy.
@@ -127,15 +128,15 @@ Costs:
   DepthMark Silver reference window.
 - Priority artifacts and their manifest checks require staleness validation on
   every priority-selected scrape.
-- Existing callers must migrate from `football.py` to `events.py` during the
-  compatibility period.
+- Existing callers should migrate from the deprecated wrappers to the
+  phase-specific scripts during the compatibility period.
 - A policy change invalidates older priority artifacts; regenerate them before
   a priority-selected scrape.
 
 Follow-up constraints:
 
 - Do not infer a completed reference window from `silver.match` row counts;
-  dates with no fixtures are valid. Use `--depthmark-window-ready` until a
+  dates with no fixtures are valid. Use `--silver-reference-window-ready` until a
   durable completion ledger is separately designed.
 - Do not turn `ambiguous` or `unresolved` into an `unmatched` priority tier.
 - Preserve `match_links.json` as source-fidelity input; priority data belongs

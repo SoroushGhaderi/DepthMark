@@ -12,7 +12,8 @@ from src.oddspedia.scraping.cli import main
 
 if __name__ == "__main__":
     print(
-        "scripts/oddspedia/football.py is deprecated; use scripts/oddspedia/events.py",
+        "scripts/oddspedia/football.py is deprecated; use the phase-specific "
+        "Oddspedia scripts such as run_pipeline.py",
         file=sys.stderr,
     )
     main(default_sport="football")
