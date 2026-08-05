@@ -88,6 +88,8 @@ event intake discovers links, validates and prioritizes them against the
 completed three-day `silver.match` reference window, then scrapes the selected
 payloads. Load the resulting Historical artifacts into `oddspedia_bronze.*`
 before resolving each event to the read-only FotMob reference.
+Football matchup links are pinned with Oddspedia's internal `?m=<event_id>`
+selector so repeated or reverse fixtures cannot resolve to the wrong event.
 
 ```bash
 # One date (default priority tier is `lower`)

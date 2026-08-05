@@ -225,11 +225,10 @@ def audit_match_payload(
         if _is_blank(data.get(field_name)):
             audit.reasons.append(f"missing {field_name}")
 
-    identity_reasons = _listing_identity_reasons(data, expected_match)
-    if data.get("identity_validation") == "market_salvaged":
-        audit.observations.extend(f"market salvage: {reason}" for reason in identity_reasons)
-    else:
-        audit.reasons.extend(identity_reasons)
+    # A payload may only represent its requested listing event. Earlier
+    # versions accepted same-team/different-date pages as market salvage,
+    # which made odds, score, and stats belong to different fixtures.
+    audit.reasons.extend(_listing_identity_reasons(data, expected_match))
 
     status_val = _normalize_status(data.get("status", ""))
     is_terminal_no_data = status_val in TERMINAL_NO_DATA_STATUSES
@@ -335,7 +334,6 @@ def _payload_reasons(data: Dict[str, Any]) -> List[str]:
         data.get("sport") == "football"
         and status_val in {"finished", "ft", "aet", "ot", "pen"}
         and not is_result_unavailable
-        and data.get("identity_validation") != "market_salvaged"
         and not has_football_score
     ):
         reasons.append("finished football match is missing a final score")

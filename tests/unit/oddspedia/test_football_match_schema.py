@@ -162,8 +162,8 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertEqual(
             requested_urls,
             [
-                "https://oddspedia.com/football/algeciras-cd-teruel-1660684",
-                "https://oddspedia.com/a/football/cd-teruel-algeciras-cf-1660684",
+                "https://oddspedia.com/football/algeciras-cd-teruel-1660684?m=9955415",
+                "https://oddspedia.com/a/football/cd-teruel-algeciras-cf-1660684?m=9955415",
             ],
         )
         self.assertEqual(result["url"], requested_urls[-1])
@@ -217,10 +217,10 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         self.assertEqual(
             requested_urls,
-            ["https://oddspedia.com/football/celta-de-vigo-olympique-lyon-1178135"],
+            ["https://oddspedia.com/football/celta-de-vigo-olympique-lyon-1178135?m=9956611"],
         )
 
-    def test_same_team_identity_mismatch_salvages_available_football_odds(self):
+    def test_same_team_identity_mismatch_is_rejected_before_odds_score_or_stats(self):
         class DelayedEventDriver(_FootballDriver):
             def execute_script(self, script, *args):
                 if "var d = {" in script:
@@ -242,34 +242,25 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
         with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
-            "src.oddspedia.scraping.match_scraper._scroll_page"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
-        ), patch(
             "src.oddspedia.scraping.match_scraper._extract_football_odds",
-            return_value=available_odds,
-        ), patch("src.oddspedia.scraping.match_scraper.time.sleep"):
-            result = scrape_match(
-                DelayedEventDriver(),
-                {
-                    "id": "listing-event-1",
-                    "sport": "football",
-                    "home": "Home FC",
-                    "away": "Away FC",
-                    "date": "2026-03-13 20:00:00+00",
-                    "full_url": "https://oddspedia.com/football/home-fc-away-fc-1",
-                },
-                sport="football",
-            )
-
-        self.assertEqual(result["odds"], available_odds)
-        self.assertEqual(result["identity_validation"], "market_salvaged")
-        self.assertEqual(result["source_event_id"], "rendered-event-2")
-        self.assertEqual(result["listing_identity"]["id"], "listing-event-1")
-        self.assertEqual(result["rendered_identity"]["date"], "2026-08-01 20:00:00+00")
-        self.assertEqual(result["score"], {"home": "", "away": "", "winner": ""})
+            side_effect=AssertionError("mismatched pages must not reach odds extraction"),
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_overall_stats",
+            side_effect=AssertionError("mismatched pages must not reach stats extraction"),
+        ):
+            with self.assertRaises(MatchIdentityMismatchError):
+                scrape_match(
+                    DelayedEventDriver(),
+                    {
+                        "id": "listing-event-1",
+                        "sport": "football",
+                        "home": "Home FC",
+                        "away": "Away FC",
+                        "date": "2026-03-13 20:00:00+00",
+                        "full_url": "https://oddspedia.com/football/home-fc-away-fc-1",
+                    },
+                    sport="football",
+                )
 
     @patch("src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-07-09T12:00:00Z")
     @patch(
@@ -612,7 +603,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertEqual(click_card.call_args_list[0].args[1], "Double Chance")
         self.assertEqual(wait_card.call_args_list[1].args[1], "Correct Score")
 
-    def test_expands_alternative_lines_within_the_market_card(self):
+    def test_expands_show_more_lines_within_the_market_card(self):
         class Button:
             def __init__(self):
                 self.clicked = False
@@ -625,13 +616,15 @@ class FootballMatchSchemaTests(unittest.TestCase):
                 self.button = Button()
                 self.calls = 0
 
-            def execute_script(self, *_args):
+            def execute_script(self, script, *_args):
                 self.calls += 1
+                self.last_script = script
                 return self.button if self.calls == 1 else None
 
         driver = Driver()
         self.assertEqual(_expand_football_market_card_lines(driver, "Total Corners"), 1)
         self.assertTrue(driver.button.clicked)
+        self.assertIn("show more", driver.last_script.lower())
 
     def test_football_market_list_expansion_uses_one_scoped_control(self):
         from src.oddspedia.scraping.match_scraper import _expand_football_market_list
@@ -647,12 +640,17 @@ class FootballMatchSchemaTests(unittest.TestCase):
             def __init__(self):
                 self.button = Button()
                 self.card_count = 4
+                self.market_list_queries = 0
 
             def execute_script(self, script, *_args):
                 self.last_script = script
                 if "return {button: button" in script:
                     self.selector_script = script
-                    return {"button": self.button, "cards": self.card_count}
+                    self.market_list_queries += 1
+                    return {
+                        "button": self.button if self.market_list_queries == 1 else None,
+                        "cards": self.card_count,
+                    }
                 if "querySelectorAll('.matchup-odds-comparison-card').length" in script:
                     self.card_count = 22
                     return self.card_count
@@ -663,7 +661,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         self.assertEqual(expanded, 18)
         self.assertTrue(driver.button.clicked)
-        self.assertIn("show all markets", driver.selector_script.lower())
+        self.assertIn("show all(?: markets)?", driver.selector_script.lower())
 
     @patch(
         "src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=1
@@ -693,7 +691,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
     @patch(
         "src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before"
     )
-    def test_captured_european_handicap_is_not_clicked_as_a_selector(
+    def test_captured_european_handicap_is_reopened_to_collect_alternative_lines(
         self, _signature, _click, wait_for_market, _expand_lines
     ):
         fixture_path = os.path.join(
@@ -713,8 +711,8 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         odds = _extract_football_odds(Driver(), fixture["initial"], home="Canada", away="Morocco")
 
-        self.assertEqual(odds[0]["lines"], fixture["initial"][0]["lines"])
-        _click.assert_not_called()
+        self.assertEqual(odds[0]["lines"], fixture["expanded"][0]["lines"])
+        _click.assert_called_once_with(unittest.mock.ANY, "European Handicap")
 
     def test_expanded_european_handicap_fixture_preserves_every_line(self):
         fixture_path = os.path.join(
@@ -726,6 +724,25 @@ class FootballMatchSchemaTests(unittest.TestCase):
         normalized = _normalize_football_odds(fixture["expanded"], home="Canada", away="Morocco")
 
         self.assertEqual(normalized[0]["lines"], fixture["expanded"][0]["lines"])
+
+    def test_total_goals_alternative_lines_are_preserved(self):
+        odds = [
+            {
+                "market": "Total Goals",
+                "lines": [
+                    {"type": "main", "label": "2.5", "over": 3.6, "under": 1.2},
+                    {"type": "alternative", "label": "1.5", "over": 1.2, "under": 4.4},
+                    {"type": "alternative", "label": "3.5", "over": 6.0, "under": 1.1},
+                ],
+            }
+        ]
+
+        normalized = _normalize_football_odds(odds, home="PAEEK FC", away="Nea Salamis")
+
+        self.assertEqual(normalized[0]["lines"], odds[0]["lines"])
+
+    def test_odds_extractor_uses_parameterized_market_line_containers(self):
+        self.assertIn(".matchup-handicap-line,", _JS_EXTRACT_ODDS)
 
     @patch(
         "src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0
