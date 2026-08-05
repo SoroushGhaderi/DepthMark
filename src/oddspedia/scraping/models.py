@@ -38,6 +38,7 @@ class MatchResult(BaseModel):
     away_rank: Optional[str] = ""
     category: Optional[str] = ""
     status: str = ""
+    odds_unavailable: bool = False
     winner: Optional[str] = ""
     home_sets: Optional[str] = ""
     away_sets: Optional[str] = ""

@@ -21,6 +21,7 @@ from src.oddspedia.scraping.match_scraper import (
     _expand_football_market_card_lines,
     _expand_football_market_cards,
     _extract_football_odds,
+    _football_odds_not_yet_available,
     _football_selector_rendered,
     _merge_odds_markets,
     _normalize_football_odds,
@@ -72,6 +73,65 @@ class _FootballDriver:
 
 
 class FootballMatchSchemaTests(unittest.TestCase):
+    def test_explicit_no_odds_page_is_detected(self):
+        class Driver:
+            def execute_script(self, script, *args):
+                if "no-results-found" in script:
+                    return True
+                return False
+
+        self.assertTrue(_football_odds_not_yet_available(Driver()))
+
+    @patch(
+        "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
+        return_value=True,
+    )
+    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_list")
+    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_cards")
+    @patch("src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []})
+    @patch("src.oddspedia.scraping.match_scraper._scroll_page")
+    @patch("src.oddspedia.scraping.match_scraper._wait_for_event_metadata")
+    @patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True)
+    def test_explicit_no_odds_page_is_saved_as_a_successful_empty_result(
+        self,
+        _safe_get,
+        wait_metadata,
+        _scroll,
+        _overall_stats,
+        expand_cards,
+        expand_list,
+        _availability,
+    ):
+        wait_metadata.return_value = {
+            "event_id": "9649678",
+            "home": "Wellington Phoenix",
+            "away": "Perth Glory",
+            "league": "A-League",
+            "date": "2026-08-08 09:00:00+00",
+            "status": "scheduled",
+            "home_score": "",
+            "away_score": "",
+        }
+
+        result = scrape_match(
+            _FootballDriver(),
+            {
+                "id": "9649678",
+                "sport": "football",
+                "home": "Wellington Phoenix",
+                "away": "Perth Glory",
+                "date": "2026-08-08 09:00:00+00",
+                "status": "scheduled",
+                "full_url": "https://oddspedia.com/football/wellington-phoenix-perth-glory-141805",
+            },
+            sport="football",
+        )
+
+        self.assertEqual(result["odds"], [])
+        self.assertTrue(result["odds_unavailable"])
+        expand_list.assert_not_called()
+        expand_cards.assert_not_called()
+
     def test_archived_match_url_uses_away_home_route(self):
         url = _archived_match_url(
             "https://oddspedia.com/football/algeciras-cd-teruel-1660684",

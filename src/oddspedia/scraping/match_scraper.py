@@ -54,6 +54,9 @@ class MatchIdentityMismatchError(RuntimeError):
     """Raised when a matchup URL renders a different event than the listing."""
 
 
+_ODDS_NOT_YET_AVAILABLE_MESSAGE = "odds are not yet available from bookies"
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
@@ -198,6 +201,33 @@ def _listing_shell_is_current(driver, sport="football"):
     except Exception:
         return False
     return _is_listing_page_title(title) or current_path == f"/{sport}"
+
+
+def _football_odds_not_yet_available(driver):
+    """Return whether Oddspedia explicitly says that bookie odds are pending.
+
+    This is a valid detail-page response, not a scraper failure. Keep the
+    check scoped to Oddspedia's no-results component and its current message so
+    an unrelated empty section cannot suppress the normal market coverage
+    checks.
+    """
+    try:
+        detected = driver.execute_script(
+            """
+            var expected = arguments[0];
+            var notices = document.querySelectorAll('.no-results-found');
+            for (var i = 0; i < notices.length; i++) {
+                var text = (notices[i].textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+                if (text.indexOf(expected) >= 0) return true;
+            }
+            return false;
+            """,
+            _ODDS_NOT_YET_AVAILABLE_MESSAGE,
+        )
+        return detected is True
+    except WebDriverException as exc:
+        logger.debug("football_odds_availability_check_failed", error=str(exc))
+        return False
 
 
 def _wait_for_event_metadata(driver, max_attempts=15, poll_interval=0.2, sport="football"):
@@ -2310,6 +2340,9 @@ def _football_selector_rendered(markets, selector_text):
 def _extract_football_odds(driver, base_odds, home="", away=""):
     """Click each visible football market selector and merge its rendered odds."""
     odds = _normalize_football_odds(base_odds or [], home=home, away=away)
+    if _football_odds_not_yet_available(driver):
+        logger.info("football_odds_not_yet_available", markets=len(odds))
+        return odds
     try:
         selector_texts = driver.execute_script(_JS_FOOTBALL_MARKET_SELECTOR_TEXTS) or []
     except WebDriverException as exc:
@@ -2854,11 +2887,20 @@ def scrape_match(driver, match_info, sport=None):
         elif match_info.get("status"):
             meta["status"] = match_info["status"]
 
+    odds_unavailable = False
     if sport == "football":
-        logger.info("match_scrape_progress", match_id=match_id, stage="expanding_market_list")
-        _expand_football_market_list(driver)
-        logger.info("match_scrape_progress", match_id=match_id, stage="expanding_market_cards")
-        _expand_football_market_cards(driver)
+        odds_unavailable = _football_odds_not_yet_available(driver)
+        if odds_unavailable:
+            logger.info(
+                "football_odds_not_yet_available",
+                match_id=match_id,
+                source_message=_ODDS_NOT_YET_AVAILABLE_MESSAGE,
+            )
+        else:
+            logger.info("match_scrape_progress", match_id=match_id, stage="expanding_market_list")
+            _expand_football_market_list(driver)
+            logger.info("match_scrape_progress", match_id=match_id, stage="expanding_market_cards")
+            _expand_football_market_cards(driver)
     else:
         _expand_all_odds_lines(driver)
 
@@ -2870,7 +2912,7 @@ def scrape_match(driver, match_info, sport=None):
     )
 
     # Odds
-    raw_markets = driver.execute_script(_JS_EXTRACT_ODDS)
+    raw_markets = [] if odds_unavailable else driver.execute_script(_JS_EXTRACT_ODDS)
     odds = _build_odds(raw_markets or [])
     if sport == "football":
         odds = _normalize_football_odds(odds, home=home, away=away)
@@ -2878,6 +2920,9 @@ def scrape_match(driver, match_info, sport=None):
         # Iterate those selectors after the base extraction, expanding each
         # card's hidden alternative lines before it is merged.
         odds = _extract_football_odds(driver, odds, home=home, away=away)
+        odds_unavailable = odds_unavailable or (
+            not odds and _football_odds_not_yet_available(driver)
+        )
 
     logger.info(
         "match_scrape_progress",
@@ -2902,7 +2947,7 @@ def scrape_match(driver, match_info, sport=None):
             market_names=[m.get("market", "") for m in odds],
         )
 
-    if not odds:
+    if not odds and not odds_unavailable:
         ho = match_info.get("home_odds", "")
         do = match_info.get("draw_odds", "")
         ao = match_info.get("away_odds", "")
@@ -2968,6 +3013,7 @@ def scrape_match(driver, match_info, sport=None):
             "status": football_status,
             "score": football_score,
             "odds": odds,
+            "odds_unavailable": odds_unavailable,
             "stats": stats,
             "stats_source": "Live Stats" if stats else "",
             "scraped_at": now_iso(),
