@@ -79,6 +79,24 @@ with the existing archive. Current-date Live artifacts remain uncompressed.
 
 The Bronze loader and scrape-resume audit read both the date archive and any
 new plain JSON files, so compression does not change retry or loading behavior.
+Before a payload is accepted, its rendered event ID (when available), home and
+away teams, and calendar date are compared with the discovery row. This guard
+is necessary because Oddspedia matchup URLs can advance to a later reverse
+fixture while retaining the same URL. Discovered football links therefore add
+the listing event ID as `?m=<event_id>`, and the scraper adds it defensively for
+older link artifacts before navigation. If the rendered page contains the same
+two teams but a stale event ID/date or reversed order, the scraper rejects the
+payload and marks it for retry; odds, scores, and statistics are never written
+for a different rendered event. A page showing different teams also remains a
+failed scrape and is requeued. The Bronze loader also excludes legacy
+`market_salvaged` payloads produced before this guard was introduced.
+
+Accepted football odds lines also have a non-empty label. Parameterized markets
+retain their observed threshold or handicap; non-parameterized markets use the
+explicit label `Main Line`. Known markets with `schema_status: unmatched`, or
+parameterized lines whose value cannot be recovered, are incomplete and are
+requeued rather than treated as valid Bronze input.
+
 The Bronze loader writes:
 
 - `oddspedia_bronze.event` — discovered event metadata and raw event JSON.
@@ -144,10 +162,17 @@ categories are `xG`, `ratings`, `lower`, and `not_covered`. `not_covered`
 requires an operator-confirmed complete three-day FotMob reference window;
 otherwise an unmatched event remains `unresolved`.
 
-When a new matcher version selects additional links, the scraper reconciles the
-selected IDs with accepted per-event JSON payloads. Existing payloads are not
-scraped again; only newly selected, incomplete, or explicitly retried IDs are
-processed.
+The standalone scraper automatically generates the priority artifact when it
+is missing or stale, using the same three-day Silver reference window as the
+explicit priority command. When a new matcher version selects additional links,
+the scraper reconciles the selected IDs with accepted per-event JSON payloads.
+Existing payloads are not scraped again; only newly selected, incomplete, or
+explicitly retried IDs are processed.
+
+Discovery also refreshes an otherwise valid date inventory when the manifest
+records an incomplete discovery or saved match output. This lets the standard
+`discover_events.py --date ...` command recover rescrape candidates without
+requiring an extra retry flag.
 
 See [`source-artifact-storage.md`](source-artifact-storage.md) for the shared
 Historical/Live artifact hierarchy and
