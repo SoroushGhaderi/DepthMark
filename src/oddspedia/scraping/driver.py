@@ -22,6 +22,45 @@ logger = get_logger(__name__)
 _RECONNECT_DELAY = 3
 _CHROME_PLIST = "/Applications/Google Chrome.app/Contents/Info.plist"
 _CFT_KNOWN_GOOD_URL = "https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json"
+_BLOCKED_RESOURCE_URLS = (
+    "*.jpg",
+    "*.jpeg",
+    "*.png",
+    "*.gif",
+    "*.webp",
+    "*.avif",
+    "*.svg",
+    "*.ico",
+    "*.css",
+    "*.less",
+    "*.scss",
+    "*.woff",
+    "*.woff2",
+    "*.ttf",
+    "*.otf",
+    "*.eot",
+    "*.mp4",
+    "*.webm",
+    "*.ogg",
+    "*.mp3",
+    "*.wav",
+    "*.m4a",
+    "*.m3u",
+    "*.m3u8",
+    "*.flac",
+    "*.aac",
+    "*.avi",
+    "*.mov",
+    "*.mkv",
+    "*google-analytics*",
+    "*googletagmanager*",
+    "*hotjar*",
+    "*facebook*",
+    "*doubleclick*",
+    "*cdn.segment.io*",
+    "*sentry.io*",
+    "*newrelic*",
+)
 
 
 def detect_chrome_version() -> Optional[int]:
@@ -53,14 +92,13 @@ def detect_chrome_version() -> Optional[int]:
     return None
 
 
-def get_driver(headless=False, block_images=True, block_media=True, user_data_dir=None):
+def get_driver(headless=False, load_resources=False, user_data_dir=None):
     """Create an undetected Chrome driver that bypasses Cloudflare.
 
     Args:
         headless:       Run Chrome without a visible window.
-        block_images:   Disable image loading via the Blink renderer flag.
-        block_media:    Block fonts, CSS, and video files at the network layer
-                        using CDP. Further reduces bandwidth and load time.
+        load_resources: Allow nonessential images, styles, fonts, media, and
+                        known third-party tracking resources to load.
         user_data_dir:  Optional Chrome user data directory path. Use separate
                         dirs per worker to avoid session/profile conflicts
                         in concurrent scraping.
@@ -77,10 +115,6 @@ def get_driver(headless=False, block_images=True, block_media=True, user_data_di
     options.add_argument("--no-first-run")
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-plugins-discovery")
-
-    if block_images:
-        options.add_argument("--blink-settings=imagesEnabled=false")
-        logger.info("images_blocked", blink_setting="imagesEnabled=false")
 
     if headless:
         options.add_argument("--headless=new")
@@ -103,42 +137,30 @@ def get_driver(headless=False, block_images=True, block_media=True, user_data_di
         if isinstance(exc, HTTPError) and exc.code != 403:
             raise
         logger.warning("chromedriver_download_failed", version_main=chrome_ver, error=str(exc))
-        driver = _fallback_driver(headless, block_images, user_data_dir, chrome_ver)
+        driver = _fallback_driver(headless, user_data_dir, chrome_ver)
 
     driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
     driver.implicitly_wait(10)
 
-    if block_media:
-        driver.execute_cdp_cmd("Network.enable", {})
-        driver.execute_cdp_cmd("Network.setBlockedURLs", {
-            "urls": [
-                "*.jpg", "*.jpeg", "*.png", "*.gif", "*.webp", "*.svg", "*.ico",
-                "*.css", "*.less", "*.scss",
-                "*.woff", "*.woff2", "*.ttf", "*.otf", "*.eot",
-                "*.mp4", "*.webm", "*.ogg", "*.mp3", "*.wav",
-                "*google-analytics*", "*googletagmanager*",
-                "*hotjar*", "*facebook*", "*doubleclick*",
-                "*cdn.segment.io*", "*sentry.io*", "*newrelic*",
-            ]
-        })
-        logger.info("cdp_blocking_enabled", blocked_types=["fonts", "css", "media", "trackers"])
+    _configure_resource_policy(driver, load_resources)
 
     logger.info(
         "driver_initialized",
         headless=headless,
-        block_images=block_images,
-        block_media=block_media,
+        load_resources=load_resources,
     )
     return driver
 
 
-def _fallback_driver(headless: bool, block_images: bool, user_data_dir: Optional[str], chrome_ver: Optional[int]):
+def _fallback_driver(
+    headless: bool, user_data_dir: Optional[str], chrome_ver: Optional[int]
+):
     """Create a driver after undetected_chromedriver's own download is blocked."""
     if chrome_ver:
         try:
             fallback_driver_path = _ensure_chrome_for_testing_driver(chrome_ver)
             options = uc.ChromeOptions()
-            _apply_common_chrome_options(options, headless, block_images, user_data_dir)
+            _apply_common_chrome_options(options, headless, user_data_dir)
             try:
                 return uc.Chrome(
                     options=options,
@@ -153,7 +175,7 @@ def _fallback_driver(headless: bool, block_images: bool, user_data_dir: Optional
                 )
                 _prepare_chromedriver_binary(fallback_driver_path)
                 options = uc.ChromeOptions()
-                _apply_common_chrome_options(options, headless, block_images, user_data_dir)
+                _apply_common_chrome_options(options, headless, user_data_dir)
                 return uc.Chrome(
                     options=options,
                     version_main=chrome_ver,
@@ -163,12 +185,14 @@ def _fallback_driver(headless: bool, block_images: bool, user_data_dir: Optional
             logger.warning("chromedriver_cft_fallback_failed", error=str(exc), fallback="selenium_manager")
 
     options = SeleniumChromeOptions()
-    _apply_common_chrome_options(options, headless, block_images, user_data_dir)
+    _apply_common_chrome_options(options, headless, user_data_dir)
     logger.info("creating_chrome_driver", driver_type="selenium_manager")
     return webdriver.Chrome(options=options)
 
 
-def _apply_common_chrome_options(options, headless: bool, block_images: bool, user_data_dir: Optional[str]) -> None:
+def _apply_common_chrome_options(
+    options, headless: bool, user_data_dir: Optional[str]
+) -> None:
     options.page_load_strategy = "eager"
     if user_data_dir:
         options.add_argument(f"--user-data-dir={user_data_dir}")
@@ -178,9 +202,6 @@ def _apply_common_chrome_options(options, headless: bool, block_images: bool, us
     options.add_argument("--disable-extensions")
     options.add_argument("--disable-plugins-discovery")
 
-    if block_images:
-        options.add_argument("--blink-settings=imagesEnabled=false")
-
     if headless:
         options.add_argument("--headless=new")
         options.add_argument("--disable-gpu")
@@ -188,6 +209,24 @@ def _apply_common_chrome_options(options, headless: bool, block_images: bool, us
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-software-rasterizer")
         options.add_argument("--mute-audio")
+
+
+def _configure_resource_policy(driver, load_resources: bool) -> None:
+    """Apply the single resource-loading policy before the first navigation."""
+    if load_resources:
+        logger.info("resource_loading_enabled")
+        return
+
+    driver.execute_cdp_cmd("Network.enable", {})
+    driver.execute_cdp_cmd(
+        "Network.setBlockedURLs",
+        {"urls": list(_BLOCKED_RESOURCE_URLS)},
+    )
+    logger.info(
+        "resource_blocking_enabled",
+        blocked_resource_classes=["images", "fonts", "css", "media", "trackers"],
+        blocked_url_patterns=len(_BLOCKED_RESOURCE_URLS),
+    )
 
 
 def _ensure_chrome_for_testing_driver(version_main: int) -> str:
@@ -325,12 +364,16 @@ class DriverManager:
     automatically) to tear down the dead session and start a fresh one.
     """
 
-    def __init__(self, headless: bool = False, block_images: bool = True, block_media: bool = True, user_data_dir: Optional[str] = None):
+    def __init__(
+        self,
+        headless: bool = False,
+        load_resources: bool = False,
+        user_data_dir: Optional[str] = None,
+    ):
         self._headless = headless
-        self._block_images = block_images
-        self._block_media = block_media
+        self._load_resources = load_resources
         self._user_data_dir = user_data_dir
-        self._driver = get_driver(headless, block_images, block_media, user_data_dir)
+        self._driver = get_driver(headless, load_resources, user_data_dir)
 
     def __getattr__(self, name: str):
         return getattr(self._driver, name)
@@ -346,15 +389,18 @@ class DriverManager:
         logger.info(
             "driver_reconnect_start",
             headless=self._headless,
-            block_images=self._block_images,
-            block_media=self._block_media,
+            load_resources=self._load_resources,
         )
         try:
             self._driver.quit()
         except Exception:
             pass
         time.sleep(_RECONNECT_DELAY)
-        self._driver = get_driver(self._headless, self._block_images, self._block_media, self._user_data_dir)
+        self._driver = get_driver(
+            self._headless,
+            self._load_resources,
+            self._user_data_dir,
+        )
         logger.info("driver_reconnected")
 
     def quit(self) -> None:
