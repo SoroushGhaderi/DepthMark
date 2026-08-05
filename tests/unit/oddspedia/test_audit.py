@@ -13,6 +13,30 @@ from src.oddspedia.scraping.audit import audit_match_json
 
 
 class FootballAuditTests(unittest.TestCase):
+    def test_no_odds_yet_payload_is_accepted_as_scraped_data(self):
+        payload = {
+            "sport": "football",
+            "id": "9649678",
+            "home": "Wellington Phoenix",
+            "away": "Perth Glory",
+            "tournament": "A-League",
+            "date": "2026-08-08 09:00:00+00",
+            "status": "scheduled",
+            "url": "https://oddspedia.com/football/example",
+            "score": {"home": "", "away": "", "winner": ""},
+            "odds": [],
+            "odds_unavailable": True,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "9649678.json")
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump(payload, file)
+            audit = audit_match_json("2026-08-08", "9649678", path, sport="football")
+
+        self.assertEqual(audit.status, "accepted_data_present")
+        self.assertEqual(audit.reasons, [])
+        self.assertIn("football odds not yet available from bookies at scrape time", audit.observations)
+
     def test_blank_labels_and_unmatched_schema_are_requeued(self):
         payload = {
             "sport": "football",
