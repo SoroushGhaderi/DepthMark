@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import sys
 import tempfile
 import unittest
@@ -15,15 +15,16 @@ from src.oddspedia.scraping.match_scraper import (
     _JS_FOOTBALL_MARKET_SELECTOR_TEXTS,
     FootballOddsUnavailableError,
     FootballScoreUnavailableError,
-    _expand_football_market_cards,
-    _expand_football_market_card_lines,
+    MatchIdentityMismatchError,
     _apply_football_selector_context,
+    _archived_match_url,
+    _expand_football_market_card_lines,
+    _expand_football_market_cards,
+    _extract_football_odds,
     _football_selector_rendered,
     _merge_odds_markets,
     _normalize_football_odds,
     _parse_football_score_payload,
-    _extract_football_odds,
-    _archived_match_url,
     scrape_match,
 )
 from src.oddspedia.scraping.utils import load_json, save_json
@@ -62,7 +63,10 @@ class _FootballDriver:
             ]
         if "looksLikeMarketText" in script:
             return []
-        if "return Array.from(document.querySelectorAll('.matchup-odds-comparison-card'))" in script:
+        if (
+            "return Array.from(document.querySelectorAll('.matchup-odds-comparison-card'))"
+            in script
+        ):
             return []
         return 1000
 
@@ -109,17 +113,36 @@ class FootballMatchSchemaTests(unittest.TestCase):
             requested_urls.append(requested_url)
             if len(requested_urls) == 1:
                 driver_obj.current_url = "https://oddspedia.com/football"
-                driver_obj.title = "Football Live Scores & Stats » Today's Fixtures, Results and News"
+                driver_obj.title = (
+                    "Football Live Scores & Stats » Today's Fixtures, Results and News"
+                )
                 return False
             driver_obj.current_url = requested_url
             driver_obj.title = "Algeciras vs CD Teruel Live Score"
             return True
 
-        with patch("src.oddspedia.scraping.match_scraper.safe_get", side_effect=fake_safe_get), \
-             patch("src.oddspedia.scraping.match_scraper._scroll_page"), \
-             patch("src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}), \
-             patch("src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]), \
-             patch("src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-08-03T00:00:00Z"):
+        with patch(
+            "src.oddspedia.scraping.match_scraper.safe_get", side_effect=fake_safe_get
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+            return_value={
+                "event_id": "9955415",
+                "home": "Algeciras",
+                "away": "CD Teruel",
+                "date": "2026-07-01",
+                "status": "finished",
+                "home_score": 1,
+                "away_score": 0,
+            },
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._scroll_page"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]
+        ), patch(
+            "src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-08-03T00:00:00Z"
+        ):
             result = scrape_match(
                 driver,
                 {
@@ -145,8 +168,114 @@ class FootballMatchSchemaTests(unittest.TestCase):
         )
         self.assertEqual(result["url"], requested_urls[-1])
 
+    def test_stale_listing_rejects_matchup_page_showing_different_teams(self):
+        class IdentityDriver(_FootballDriver):
+            current_url = ""
+            title = "Oddspedia Football"
+
+            def execute_script(self, script, *args):
+                if "var d = {" in script:
+                    return {
+                        "event_id": "later-fixture",
+                        "home": "Marseille",
+                        "away": "Nice",
+                        "home_slug": "olympique-lyon",
+                        "away_slug": "celta-de-vigo",
+                        "date": "2026-03-19 17:45:00+00",
+                        "status": "finished",
+                        "home_score": 0,
+                        "away_score": 2,
+                    }
+                return super().execute_script(script, *args)
+
+        driver = IdentityDriver()
+        requested_urls = []
+
+        def fake_safe_get(driver_obj, requested_url):
+            requested_urls.append(requested_url)
+            driver_obj.current_url = requested_url
+            return True
+
+        with patch("src.oddspedia.scraping.match_scraper.safe_get", side_effect=fake_safe_get):
+            with self.assertRaises(MatchIdentityMismatchError):
+                scrape_match(
+                    driver,
+                    {
+                        "id": "9956611",
+                        "sport": "football",
+                        "home": "Celta Vigo",
+                        "away": "Lyon",
+                        "date": "2026-03-12 20:00:00+00",
+                        "status": "2HALF",
+                        "matchKey": "celta-de-vigo-olympique-lyon-1178135",
+                        "full_url": (
+                            "https://oddspedia.com/football/" "celta-de-vigo-olympique-lyon-1178135"
+                        ),
+                    },
+                    sport="football",
+                )
+
+        self.assertEqual(
+            requested_urls,
+            ["https://oddspedia.com/football/celta-de-vigo-olympique-lyon-1178135"],
+        )
+
+    def test_same_team_identity_mismatch_salvages_available_football_odds(self):
+        class DelayedEventDriver(_FootballDriver):
+            def execute_script(self, script, *args):
+                if "var d = {" in script:
+                    return {
+                        "event_id": "rendered-event-2",
+                        "home": "Away FC",
+                        "away": "Home FC",
+                        "date": "2026-08-01 20:00:00+00",
+                        "status": "finished",
+                        "home_score": 1,
+                        "away_score": 0,
+                    }
+                return super().execute_script(script, *args)
+
+        available_odds = [
+            {
+                "market": "Full Time Result",
+                "lines": [{"type": "main", "label": "Main Line", "home": 2.1, "away": 3.2}],
+            }
+        ]
+        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
+            "src.oddspedia.scraping.match_scraper._scroll_page"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_football_odds",
+            return_value=available_odds,
+        ), patch("src.oddspedia.scraping.match_scraper.time.sleep"):
+            result = scrape_match(
+                DelayedEventDriver(),
+                {
+                    "id": "listing-event-1",
+                    "sport": "football",
+                    "home": "Home FC",
+                    "away": "Away FC",
+                    "date": "2026-03-13 20:00:00+00",
+                    "full_url": "https://oddspedia.com/football/home-fc-away-fc-1",
+                },
+                sport="football",
+            )
+
+        self.assertEqual(result["odds"], available_odds)
+        self.assertEqual(result["identity_validation"], "market_salvaged")
+        self.assertEqual(result["source_event_id"], "rendered-event-2")
+        self.assertEqual(result["listing_identity"]["id"], "listing-event-1")
+        self.assertEqual(result["rendered_identity"]["date"], "2026-08-01 20:00:00+00")
+        self.assertEqual(result["score"], {"home": "", "away": "", "winner": ""})
+
     @patch("src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-07-09T12:00:00Z")
-    @patch("src.oddspedia.scraping.match_scraper._extract_live_odds", side_effect=AssertionError("football must not scrape live odds"))
+    @patch(
+        "src.oddspedia.scraping.match_scraper._extract_live_odds",
+        side_effect=AssertionError("football must not scrape live odds"),
+    )
     @patch("src.oddspedia.scraping.match_scraper._extract_overall_stats")
     @patch("src.oddspedia.scraping.match_scraper._expand_all_odds_lines", return_value=1)
     @patch("src.oddspedia.scraping.match_scraper._scroll_page")
@@ -167,7 +296,12 @@ class FootballMatchSchemaTests(unittest.TestCase):
                 {
                     "tab": "Live Stats",
                     "metrics": [
-                        {"name": "Ball possession", "home": "43%", "away": "57%", "view": "horizontal"},
+                        {
+                            "name": "Ball possession",
+                            "home": "43%",
+                            "away": "57%",
+                            "view": "horizontal",
+                        },
                         {"name": "Shots on target", "home": "9", "away": "6", "view": "shots"},
                     ],
                 }
@@ -191,7 +325,9 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertEqual(result["sport"], "football")
         self.assertEqual(result["score"], {"home": 1, "away": 1, "winner": "draw"})
         self.assertEqual(result["stats_source"], "Live Stats")
-        self.assertEqual([m["name"] for m in result["stats"]], ["Ball possession", "Shots on target"])
+        self.assertEqual(
+            [m["name"] for m in result["stats"]], ["Ball possession", "Shots on target"]
+        )
         self.assertEqual(len(result["odds"]), 2)
         self.assertNotIn("result_unavailable", result)
         self.assertNotIn("live_odds", result)
@@ -208,7 +344,12 @@ class FootballMatchSchemaTests(unittest.TestCase):
             "date": "2026-07-09",
             "status": "finished",
             "score": {"home": 1, "away": 1, "winner": "draw"},
-            "odds": [{"market": "Full Time Result", "lines": [{"type": "main", "label": "", "home": 2.1, "draw": 3.2, "away": 3.4}]}],
+            "odds": [
+                {
+                    "market": "Full Time Result",
+                    "lines": [{"type": "main", "label": "", "home": 2.1, "draw": 3.2, "away": 3.4}],
+                }
+            ],
             "stats": [{"name": "Ball possession", "home": "43%", "away": "57%"}],
             "scraped_at": "2026-07-09T12:00:00Z",
         }
@@ -238,18 +379,27 @@ class FootballMatchSchemaTests(unittest.TestCase):
                     result.update(home_score="", away_score="", winner="")
                 return result
 
-        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), \
-             patch("src.oddspedia.scraping.match_scraper._scroll_page"), \
-             patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"), \
-             patch("src.oddspedia.scraping.match_scraper._expand_football_market_cards"), \
-             patch("src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]), \
-             patch("src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}), \
-             patch("src.oddspedia.scraping.match_scraper._football_score_from_dom", return_value=None), \
-             patch("src.oddspedia.scraping.match_scraper.time.sleep"):
+        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
+            "src.oddspedia.scraping.match_scraper._scroll_page"
+        ), patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._football_score_from_dom", return_value=None
+        ), patch(
+            "src.oddspedia.scraping.match_scraper.time.sleep"
+        ):
             with self.assertRaises(FootballScoreUnavailableError):
                 scrape_match(
                     BlankScoreDriver(),
-                    {"id": "blank", "sport": "football", "full_url": "https://oddspedia.com/football/test"},
+                    {
+                        "id": "blank",
+                        "sport": "football",
+                        "full_url": "https://oddspedia.com/football/test",
+                    },
                     sport="football",
                 )
 
@@ -279,26 +429,45 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         normalized = _normalize_football_odds(odds, home="Canada", away="Morocco")
 
-        self.assertEqual(normalized[0]["lines"][0], {"type": "main", "label": "", "home": 1.8, "away": 2.0})
+        self.assertEqual(
+            normalized[0]["lines"][0],
+            {"type": "main", "label": "Main Line", "home": 1.8, "away": 2.0},
+        )
         self.assertEqual(
             normalized[1]["lines"][0],
-            {"type": "main", "label": "", "home": 1.9, "away": 2.1, "no_goal": 8.5},
+            {
+                "type": "main",
+                "label": "Main Line",
+                "home": 1.9,
+                "away": 2.1,
+                "no_goal": 8.5,
+            },
         )
 
     def test_full_time_result_keeps_only_the_full_time_line(self):
-        odds = [{
-            "market": "Full Time Result",
-            "lines": [
-                {"type": "main", "label": "", "home": 2.07, "draw": 3.25, "away": 4.5},
-                {"type": "main", "label": "", "home": 2.4, "draw": 2.38, "away": 4.5},
-            ],
-        }]
+        odds = [
+            {
+                "market": "Full Time Result",
+                "lines": [
+                    {"type": "main", "label": "", "home": 2.07, "draw": 3.25, "away": 4.5},
+                    {"type": "main", "label": "", "home": 2.4, "draw": 2.38, "away": 4.5},
+                ],
+            }
+        ]
 
         normalized = _normalize_football_odds(odds, home="Switzerland", away="Algeria")
 
         self.assertEqual(
             normalized[0]["lines"],
-            [{"type": "main", "label": "", "home": 2.07, "draw": 3.25, "away": 4.5}],
+            [
+                {
+                    "type": "main",
+                    "label": "Main Line",
+                    "home": 2.07,
+                    "draw": 3.25,
+                    "away": 4.5,
+                }
+            ],
         )
 
     def test_odds_extractor_keeps_middle_outcomes_and_no_goal(self):
@@ -312,18 +481,18 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertIn("var candidates = Array.from(row.querySelectorAll", _JS_EXTRACT_ODDS)
         self.assertIn("containsOddsChild", _JS_EXTRACT_ODDS)
         self.assertIn("parsedCount >= 2 || entry.outcomes", _JS_EXTRACT_ODDS)
-        self.assertIn("function parseLooseCard(card)", _JS_EXTRACT_ODDS)
+        self.assertIn("function parseLooseCard(card, market)", _JS_EXTRACT_ODDS)
         self.assertIn("var fragmented = lines.length", _JS_EXTRACT_ODDS)
 
     def test_odds_extractor_recovers_nested_threshold_and_handicap_labels(self):
         """Line labels share a wrapper with odds controls on football cards."""
         self.assertIn("function looksLikeLineLabel(text)", _JS_EXTRACT_ODDS)
         self.assertIn('[class*="label"], [class*="line"], [class*="handicap"]', _JS_EXTRACT_ODDS)
-        self.assertIn("if (node.closest('button, a, [role=\"button\"]", _JS_EXTRACT_ODDS)
+        self.assertIn('if (node.closest(\'button, a, [role="button"]', _JS_EXTRACT_ODDS)
         self.assertIn("left every total/handicap line with an empty label", _JS_EXTRACT_ODDS)
         self.assertIn("var node = row", _JS_EXTRACT_ODDS)
         self.assertIn("node = node.parentElement", _JS_EXTRACT_ODDS)
-        self.assertIn(".matchup-handicap-line-info > [class*=\"text-capitalize\"]", _JS_EXTRACT_ODDS)
+        self.assertIn('.matchup-handicap-line-info > [class*="text-capitalize"]', _JS_EXTRACT_ODDS)
 
     def test_odds_extractor_skips_hidden_period_tabs(self):
         """Hidden 1st/2nd-half panes must not be added to Full Time Result."""
@@ -336,17 +505,24 @@ class FootballMatchSchemaTests(unittest.TestCase):
         unmatched = {
             "market": "Half Time / Full Time",
             "schema_status": "unmatched",
-            "lines": [{
-                "type": "main", "label": "", "schema_status": "unmatched",
-                "combinations": {"home_home": 2.0, "draw_draw": 8.5},
-            }],
+            "lines": [
+                {
+                    "type": "main",
+                    "label": "",
+                    "schema_status": "unmatched",
+                    "combinations": {"home_home": 2.0, "draw_draw": 8.5},
+                }
+            ],
         }
         normalized = {
             "market": "Half Time / Full Time",
-            "lines": [{
-                "type": "main", "label": "",
-                "combinations": {"home_home": 2.0, "draw_draw": 8.5},
-            }],
+            "lines": [
+                {
+                    "type": "main",
+                    "label": "",
+                    "combinations": {"home_home": 2.0, "draw_draw": 8.5},
+                }
+            ],
         }
 
         merged = _merge_odds_markets([], [unmatched, normalized])
@@ -358,7 +534,9 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
     def test_odds_extractor_preserves_half_time_full_time_combinations(self):
         self.assertIn("var isCompositeOutcome = /[\\/→>]/.test(explicitLabel);", _JS_EXTRACT_ODDS)
-        self.assertIn("return {dir: 'outcome', outcome: explicitLabel, val: val};", _JS_EXTRACT_ODDS)
+        self.assertIn(
+            "return {dir: 'outcome', outcome: explicitLabel, val: val};", _JS_EXTRACT_ODDS
+        )
 
     def test_market_selector_clicks_the_specific_control(self):
         from src.oddspedia.scraping.match_scraper import _click_football_market_selector
@@ -374,7 +552,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         _click_football_market_selector(driver, "Double Chance")
         self.assertIn("function controlFor(el)", driver.script)
         self.assertIn(".btn-group-item__btn, .btn-group-item, li, [tabindex]", driver.script)
-        self.assertNotIn("[class*=\"market\"], [class*=\"filter\"]", driver.script)
+        self.assertNotIn('[class*="market"], [class*="filter"]', driver.script)
 
     def test_market_selector_uses_native_click(self):
         from src.oddspedia.scraping.match_scraper import _click_football_market_selector
@@ -399,8 +577,12 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertTrue(_click_football_market_selector(driver, "Correct Score"))
         self.assertTrue(driver.element.clicked)
 
-    @patch("src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before")
-    @patch("src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True)
+    @patch(
+        "src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before"
+    )
+    @patch(
+        "src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True
+    )
     @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_odds", return_value=[])
     def test_all_unresolved_exposed_markets_are_terminally_unavailable(
         self, _wait, _click, _signature
@@ -419,7 +601,10 @@ class FootballMatchSchemaTests(unittest.TestCase):
     def test_collapsed_football_cards_are_expanded_before_parsing(self, click_card, wait_card):
         class Driver:
             def execute_script(self, script, *_args):
-                if "return Array.from(document.querySelectorAll('.matchup-odds-comparison-card'))" in script:
+                if (
+                    "return Array.from(document.querySelectorAll('.matchup-odds-comparison-card'))"
+                    in script
+                ):
                     return ["Double Chance", "Correct Score"]
                 return None
 
@@ -480,7 +665,9 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertTrue(driver.button.clicked)
         self.assertIn("show all markets", driver.selector_script.lower())
 
-    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=1)
+    @patch(
+        "src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=1
+    )
     @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_card", return_value=True)
     @patch("src.oddspedia.scraping.match_scraper._click_football_market_card", return_value=True)
     def test_european_handicap_card_expands_its_alternative_lines(
@@ -496,14 +683,22 @@ class FootballMatchSchemaTests(unittest.TestCase):
         wait_card.assert_called_once_with(unittest.mock.ANY, "European Handicap")
         expand_lines.assert_called_once_with(unittest.mock.ANY, "European Handicap")
 
-    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0)
+    @patch(
+        "src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0
+    )
     @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_odds")
-    @patch("src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True)
-    @patch("src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before")
+    @patch(
+        "src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True
+    )
+    @patch(
+        "src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before"
+    )
     def test_captured_european_handicap_is_not_clicked_as_a_selector(
         self, _signature, _click, wait_for_market, _expand_lines
     ):
-        fixture_path = os.path.join(ROOT, "tests", "fixtures", "oddspedia", "european_handicap_markets.json")
+        fixture_path = os.path.join(
+            ROOT, "tests", "fixtures", "oddspedia", "european_handicap_markets.json"
+        )
         with open(fixture_path, encoding="utf-8") as fixture_file:
             fixture = json.load(fixture_file)
         wait_for_market.return_value = fixture["initial"]
@@ -522,7 +717,9 @@ class FootballMatchSchemaTests(unittest.TestCase):
         _click.assert_not_called()
 
     def test_expanded_european_handicap_fixture_preserves_every_line(self):
-        fixture_path = os.path.join(ROOT, "tests", "fixtures", "oddspedia", "european_handicap_markets.json")
+        fixture_path = os.path.join(
+            ROOT, "tests", "fixtures", "oddspedia", "european_handicap_markets.json"
+        )
         with open(fixture_path, encoding="utf-8") as fixture_file:
             fixture = json.load(fixture_file)
 
@@ -530,14 +727,22 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         self.assertEqual(normalized[0]["lines"], fixture["expanded"][0]["lines"])
 
-    @patch("src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0)
+    @patch(
+        "src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0
+    )
     @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_odds")
-    @patch("src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True)
-    @patch("src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before")
+    @patch(
+        "src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True
+    )
+    @patch(
+        "src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before"
+    )
     def test_unlabeled_european_handicap_is_skipped_without_retrying_match(
         self, _signature, _click, wait_for_market, _expand_lines
     ):
-        fixture_path = os.path.join(ROOT, "tests", "fixtures", "oddspedia", "european_handicap_markets.json")
+        fixture_path = os.path.join(
+            ROOT, "tests", "fixtures", "oddspedia", "european_handicap_markets.json"
+        )
         with open(fixture_path, encoding="utf-8") as fixture_file:
             fixture = json.load(fixture_file)
         wait_for_market.return_value = fixture["incomplete"]
@@ -575,7 +780,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertEqual(normalized[0]["lines"][0]["scores"], {"1-0": 7.0, "0-0": 9.5})
         self.assertNotIn("outcomes", normalized[0]["lines"][0])
 
-    def test_football_market_contract_flags_misclassified_lines(self):
+    def test_football_market_contract_drops_ambiguous_parameterized_lines(self):
         odds = [
             {
                 "market": "Total Goals",
@@ -592,12 +797,11 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         normalized = _normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
 
-        self.assertEqual(len(normalized), 2)
+        self.assertEqual(len(normalized), 1)
         self.assertEqual(normalized[0]["market"], "Total Goals")
-        self.assertEqual(normalized[0]["lines"][0], {"type": "main", "label": "2.5", "over": 1.9, "under": 1.9})
-        self.assertEqual(normalized[1]["market"], "Asian Handicap")
-        self.assertEqual(normalized[1]["schema_status"], "unmatched")
-        self.assertEqual(normalized[1]["lines"][0]["schema_status"], "unmatched")
+        self.assertEqual(
+            normalized[0]["lines"][0], {"type": "main", "label": "2.5", "over": 1.9, "under": 1.9}
+        )
 
     def test_football_market_contract_maps_dash_separated_half_time_full_time_outcomes(self):
         odds = [
@@ -623,69 +827,200 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertNotIn("schema_status", normalized[0])
 
     def test_football_half_time_full_time_maps_one_x_two_outcomes(self):
-        odds = [{
-            "market": "Half Time / Full Time",
-            "lines": [{
-                "type": "main",
-                "label": "",
-                "outcomes": {
-                    "1/1": 2.0, "1/X": 12.0, "1/2": 29.0,
-                    "X/1": 7.0, "X/X": 8.5, "X/2": 12.0,
-                    "2/1": 34.0, "2/X": 15.0, "2/2": 5.5,
-                },
-            }],
-        }]
+        odds = [
+            {
+                "market": "Half Time / Full Time",
+                "lines": [
+                    {
+                        "type": "main",
+                        "label": "",
+                        "outcomes": {
+                            "1/1": 2.0,
+                            "1/X": 12.0,
+                            "1/2": 29.0,
+                            "X/1": 7.0,
+                            "X/X": 8.5,
+                            "X/2": 12.0,
+                            "2/1": 34.0,
+                            "2/X": 15.0,
+                            "2/2": 5.5,
+                        },
+                    }
+                ],
+            }
+        ]
 
         normalized = _normalize_football_odds(odds, home="Canada", away="Morocco")
 
         self.assertEqual(
             normalized[0]["lines"][0]["combinations"],
             {
-                "home_home": 2.0, "home_draw": 12.0, "home_away": 29.0,
-                "draw_home": 7.0, "draw_draw": 8.5, "draw_away": 12.0,
-                "away_home": 34.0, "away_draw": 15.0, "away_away": 5.5,
+                "home_home": 2.0,
+                "home_draw": 12.0,
+                "home_away": 29.0,
+                "draw_home": 7.0,
+                "draw_draw": 8.5,
+                "draw_away": 12.0,
+                "away_home": 34.0,
+                "away_draw": 15.0,
+                "away_away": 5.5,
             },
         )
 
+    def test_football_half_time_full_time_preserves_canonical_combination_keys(self):
+        normalized = _normalize_football_odds(
+            [
+                {
+                    "market": "Half Time / Full Time",
+                    "schema_status": "unmatched",
+                    "lines": [
+                        {
+                            "type": "main",
+                            "label": "",
+                            "schema_status": "unmatched",
+                            "combinations": {
+                                "home_home": 2.0,
+                                "draw_draw": 8.5,
+                                "away_away": 5.5,
+                            },
+                        }
+                    ],
+                }
+            ],
+            home="Canada",
+            away="Morocco",
+        )
+
+        self.assertEqual(
+            normalized[0]["lines"][0]["combinations"],
+            {"home_home": 2.0, "draw_draw": 8.5, "away_away": 5.5},
+        )
+        self.assertEqual(normalized[0]["lines"][0]["label"], "Main Line")
+        self.assertNotIn("schema_status", normalized[0])
+        self.assertNotIn("schema_status", normalized[0]["lines"][0])
+
     def test_football_selector_context_does_not_relabel_known_stale_market(self):
-        markets = [{"market": "Both Teams to Score", "lines": [{"type": "main", "label": "", "yes": 1.9, "no": 1.8}]}]
+        markets = [
+            {
+                "market": "Both Teams to Score",
+                "lines": [{"type": "main", "label": "", "yes": 1.9, "no": 1.8}],
+            }
+        ]
 
         contextual = _apply_football_selector_context(markets, "Asian Handicap")
 
         self.assertEqual(contextual[0]["market"], "Both Teams to Score")
 
     def test_football_selector_requires_the_requested_market(self):
-        stale = [{"market": "Total Goals", "lines": [{"type": "main", "label": "2.5", "over": 1.9, "under": 1.9}]}]
-        rendered = [{"market": "Total Corners", "lines": [{"type": "main", "label": "9.5", "over": 1.9, "under": 1.9}]}]
+        stale = [
+            {
+                "market": "Total Goals",
+                "lines": [{"type": "main", "label": "2.5", "over": 1.9, "under": 1.9}],
+            }
+        ]
+        rendered = [
+            {
+                "market": "Total Corners",
+                "lines": [{"type": "main", "label": "9.5", "over": 1.9, "under": 1.9}],
+            }
+        ]
 
         self.assertFalse(_football_selector_rendered(stale, "Total Corners"))
         self.assertTrue(_football_selector_rendered(rendered, "Total Corners"))
 
     def test_period_selector_requires_period_context(self):
-        markets = [{"market": "1st Half - Total Goals", "lines": [{"type": "main", "label": "0.5", "over": 1.8, "under": 2.0}]}]
+        markets = [
+            {
+                "market": "1st Half - Total Goals",
+                "lines": [{"type": "main", "label": "0.5", "over": 1.8, "under": 2.0}],
+            }
+        ]
 
         self.assertTrue(_football_selector_rendered(markets, "1st Half"))
         self.assertFalse(_football_selector_rendered(markets, "2nd Half"))
 
     def test_football_world_cup_market_shapes_are_explicit(self):
         odds = [
-            {"market": "Full Time Result", "lines": [{"type": "main", "label": "", "home": 1.4, "draw": 5.0, "away": 8.0}]},
-            {"market": "1st Half - Total Goals", "lines": [{"type": "main", "label": "1.5", "over": 2.0, "under": 1.8}]},
-            {"market": "Asian Handicap", "lines": [{"type": "main", "label": "-1/+1", "home": 1.9, "away": 1.9}]},
-            {"market": "Both Teams to Score", "lines": [{"type": "main", "label": "", "yes": 1.95, "no": 1.83}]},
-            {"market": "Double Chance", "lines": [{"type": "main", "label": "", "home_draw": 1.1, "draw_away": 3.2, "home_away": 1.2}]},
-            {"market": "Draw No Bet", "lines": [{"type": "main", "label": "", "home": 1.2, "away": 4.5}]},
-            {"market": "First Team to Score", "lines": [{"type": "main", "label": "", "home": 1.4, "away": 3.1, "no_goal": 9.0}]},
-            {"market": "Correct Score", "lines": [{"type": "main", "label": "", "outcomes": {"1-0": 7.0, "2-0": 9.0}}]},
-            {"market": "European Handicap", "lines": [{"type": "main", "label": "-1/+1", "home": 2.1, "draw": 3.7, "away": 3.3}]},
-            {"market": "Half Time / Full Time", "lines": [{"type": "main", "label": "", "outcomes": {"USA/USA": 2.0, "Draw/USA": 4.5}}]},
-            {"market": "Next Goal", "lines": [{"type": "main", "label": "", "home": 1.3, "away": 3.8, "no_goal": 12.0}]},
-            {"market": "Corners Odd or Even", "lines": [{"type": "main", "label": "", "odd": 1.9, "even": 1.9}]},
-            {"market": "Clean Sheet", "lines": [{"type": "main", "label": "", "home": 2.0, "away": 8.0}]},
-            {"market": "To Win Both Halves", "lines": [{"type": "main", "label": "", "home": 3.0, "away": 34.0}]},
-            {"market": "To Score in Both Halves", "lines": [{"type": "main", "label": "", "home": 2.8, "away": 20.0}]},
-            {"market": "To Score a Penalty", "lines": [{"type": "main", "label": "", "home": 5.0, "away": 8.0}]},
-            {"market": "Total Corners", "lines": [{"type": "main", "label": "9.5", "over": 1.9, "under": 1.9}]},
+            {
+                "market": "Full Time Result",
+                "lines": [{"type": "main", "label": "", "home": 1.4, "draw": 5.0, "away": 8.0}],
+            },
+            {
+                "market": "1st Half - Total Goals",
+                "lines": [{"type": "main", "label": "1.5", "over": 2.0, "under": 1.8}],
+            },
+            {
+                "market": "Asian Handicap",
+                "lines": [{"type": "main", "label": "-1/+1", "home": 1.9, "away": 1.9}],
+            },
+            {
+                "market": "Both Teams to Score",
+                "lines": [{"type": "main", "label": "", "yes": 1.95, "no": 1.83}],
+            },
+            {
+                "market": "Double Chance",
+                "lines": [
+                    {
+                        "type": "main",
+                        "label": "",
+                        "home_draw": 1.1,
+                        "draw_away": 3.2,
+                        "home_away": 1.2,
+                    }
+                ],
+            },
+            {
+                "market": "Draw No Bet",
+                "lines": [{"type": "main", "label": "", "home": 1.2, "away": 4.5}],
+            },
+            {
+                "market": "First Team to Score",
+                "lines": [{"type": "main", "label": "", "home": 1.4, "away": 3.1, "no_goal": 9.0}],
+            },
+            {
+                "market": "Correct Score",
+                "lines": [{"type": "main", "label": "", "outcomes": {"1-0": 7.0, "2-0": 9.0}}],
+            },
+            {
+                "market": "European Handicap",
+                "lines": [
+                    {"type": "main", "label": "-1/+1", "home": 2.1, "draw": 3.7, "away": 3.3}
+                ],
+            },
+            {
+                "market": "Half Time / Full Time",
+                "lines": [
+                    {"type": "main", "label": "", "outcomes": {"USA/USA": 2.0, "Draw/USA": 4.5}}
+                ],
+            },
+            {
+                "market": "Next Goal",
+                "lines": [{"type": "main", "label": "", "home": 1.3, "away": 3.8, "no_goal": 12.0}],
+            },
+            {
+                "market": "Corners Odd or Even",
+                "lines": [{"type": "main", "label": "", "odd": 1.9, "even": 1.9}],
+            },
+            {
+                "market": "Clean Sheet",
+                "lines": [{"type": "main", "label": "", "home": 2.0, "away": 8.0}],
+            },
+            {
+                "market": "To Win Both Halves",
+                "lines": [{"type": "main", "label": "", "home": 3.0, "away": 34.0}],
+            },
+            {
+                "market": "To Score in Both Halves",
+                "lines": [{"type": "main", "label": "", "home": 2.8, "away": 20.0}],
+            },
+            {
+                "market": "To Score a Penalty",
+                "lines": [{"type": "main", "label": "", "home": 5.0, "away": 8.0}],
+            },
+            {
+                "market": "Total Corners",
+                "lines": [{"type": "main", "label": "9.5", "over": 1.9, "under": 1.9}],
+            },
         ]
 
         normalized = _normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
@@ -696,20 +1031,40 @@ class FootballMatchSchemaTests(unittest.TestCase):
             set(by_market),
             {market["market"] for market in odds if not market["market"].startswith("1st Half -")},
         )
-        self.assertEqual(by_market["Half Time / Full Time"]["combinations"], {"home_home": 2.0, "draw_home": 4.5})
+        self.assertEqual(
+            by_market["Half Time / Full Time"]["combinations"], {"home_home": 2.0, "draw_home": 4.5}
+        )
         self.assertEqual(by_market["Correct Score"]["scores"], {"1-0": 7.0, "2-0": 9.0})
         self.assertEqual(by_market["Corners Odd or Even"]["odd"], 1.9)
         self.assertNotIn("outcomes", by_market["Half Time / Full Time"])
 
     def test_market_discovery_excludes_period_tabs_and_card_headers(self):
-        self.assertIn("if (/^(1st|2nd) half$/i.test(text)) return;", _JS_FOOTBALL_MARKET_SELECTOR_TEXTS)
-        self.assertIn("control.classList.contains('matchup-odds-comparison-card__header')", _JS_FOOTBALL_MARKET_SELECTOR_TEXTS)
+        self.assertIn(
+            "if (/^(1st|2nd) half$/i.test(text)) return;", _JS_FOOTBALL_MARKET_SELECTOR_TEXTS
+        )
+        self.assertIn(
+            "control.classList.contains('matchup-odds-comparison-card__header')",
+            _JS_FOOTBALL_MARKET_SELECTOR_TEXTS,
+        )
 
     def test_normalization_keeps_only_full_time_markets(self):
         odds = [
-            {"market": "European Handicap", "lines": [{"type": "main", "label": "-1/+1", "home": 3.3, "draw": 3.75, "away": 2.0}]},
-            {"market": "1st Half - European Handicap", "lines": [{"type": "main", "label": "-1/+1", "home": 6.0, "draw": 4.0, "away": 1.5}]},
-            {"market": "2nd Half - Total Goals", "lines": [{"type": "main", "label": "1.5", "over": 1.8, "under": 2.0}]},
+            {
+                "market": "European Handicap",
+                "lines": [
+                    {"type": "main", "label": "-1/+1", "home": 3.3, "draw": 3.75, "away": 2.0}
+                ],
+            },
+            {
+                "market": "1st Half - European Handicap",
+                "lines": [
+                    {"type": "main", "label": "-1/+1", "home": 6.0, "draw": 4.0, "away": 1.5}
+                ],
+            },
+            {
+                "market": "2nd Half - Total Goals",
+                "lines": [{"type": "main", "label": "1.5", "over": 1.8, "under": 2.0}],
+            },
         ]
 
         normalized = _normalize_football_odds(odds, home="Brazil", away="Norway")
@@ -717,14 +1072,18 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertEqual([market["market"] for market in normalized], ["European Handicap"])
 
     def test_european_handicap_maps_live_tie_outcome_to_draw(self):
-        odds = [{
-            "market": "European Handicap",
-            "lines": [{
-                "type": "main",
-                "label": "-1/+1",
-                "outcomes": {"Home": 3.3, "Tie": 3.75, "Away": 2.0},
-            }],
-        }]
+        odds = [
+            {
+                "market": "European Handicap",
+                "lines": [
+                    {
+                        "type": "main",
+                        "label": "-1/+1",
+                        "outcomes": {"Home": 3.3, "Tie": 3.75, "Away": 2.0},
+                    }
+                ],
+            }
+        ]
 
         normalized = _normalize_football_odds(odds, home="Brazil", away="Norway")
 
