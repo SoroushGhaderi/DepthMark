@@ -4,7 +4,7 @@ import tempfile
 import time
 import random
 from datetime import datetime, timezone
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
@@ -19,6 +19,27 @@ logger = get_logger(__name__)
 
 class DataValidationError(ValueError):
     """Raised when a recognised scraper payload does not satisfy its schema."""
+
+
+def pin_oddspedia_event_url(url: str, event_id: object) -> str:
+    """Return a matchup URL pinned to one Oddspedia event via ``?m=``.
+
+    Oddspedia reuses one slug URL for every meeting between two teams.  Without
+    the internal event ID in the query string, that URL can render a newer or
+    reverse fixture instead of the event selected on the listing page.
+    """
+    event_id_text = str(event_id or "").strip()
+    if not url or not event_id_text:
+        return url
+
+    parsed = urlparse(url)
+    query = [
+        (key, value)
+        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key != "m"
+    ]
+    query.append(("m", event_id_text))
+    return urlunparse(parsed._replace(query=urlencode(query)))
 
 
 def random_delay(min_s=MIN_DELAY, max_s=MAX_DELAY):
