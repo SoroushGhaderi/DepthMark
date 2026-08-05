@@ -162,10 +162,12 @@ categories are `xG`, `ratings`, `lower`, and `not_covered`. `not_covered`
 requires an operator-confirmed complete three-day FotMob reference window;
 otherwise an unmatched event remains `unresolved`.
 
-When a new matcher version selects additional links, the scraper reconciles the
-selected IDs with accepted per-event JSON payloads. Existing payloads are not
-scraped again; only newly selected, incomplete, or explicitly retried IDs are
-processed.
+The standalone scraper automatically generates the priority artifact when it
+is missing or stale, using the same three-day Silver reference window as the
+explicit priority command. When a new matcher version selects additional links,
+the scraper reconciles the selected IDs with accepted per-event JSON payloads.
+Existing payloads are not scraped again; only newly selected, incomplete, or
+explicitly retried IDs are processed.
 
 Discovery also refreshes an otherwise valid date inventory when the manifest
 records an incomplete discovery or saved match output. This lets the standard

@@ -20,7 +20,7 @@ import os
 import sys
 import threading
 import time
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 
 # Make the src/ package discoverable when running main.py directly.
 _src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
@@ -32,7 +32,6 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime
 from pathlib import Path
-from typing import Tuple
 
 from selenium.common.exceptions import (
     InvalidSessionIdException,
@@ -214,7 +213,13 @@ def _match_payload_path(matches_dir: str, match_id: str) -> str:
 
 
 def _select_matches_to_scrape(
-    matches, matches_dir, manifest, date_str, retry_failed: bool = False, sport: str = "football"
+    matches,
+    matches_dir,
+    manifest,
+    date_str,
+    retry_failed: bool = False,
+    sport: str = "football",
+    audit_result=None,
 ):
     """Choose matches from link inventory using JSON files as ground truth.
 
@@ -251,16 +256,28 @@ def _select_matches_to_scrape(
 
     matches_to_scrape = []
     skipped_count = 0
+    retry_only = retry_failed and bool(failed_set)
 
-    if retry_failed and failed_set:
-        for match_info in matches:
-            match_id = _match_id(match_info)
-            if match_id in skipped_set:
-                skipped_count += 1
-                continue
+    audited_by_id = {}
+    missing_ids = set()
+    if audit_result is not None:
+        audited_by_id = {
+            audit.match_id: audit
+            for audit in audit_result.incomplete + audit_result.invalid
+        }
+        missing_ids = {audit.match_id for audit in audit_result.missing}
+
+    for match_info in matches:
+        match_id = _match_id(match_info)
+        if match_id in skipped_set:
+            skipped_count += 1
+            continue
+        if audit_result is not None:
+            json_audit = audited_by_id.get(match_id)
+            has_json = match_id not in missing_ids
+        else:
             out_path = _match_payload_path(matches_dir, match_id)
             if os.path.exists(out_path):
-                stored = None
                 has_json = True
                 json_audit = audit_match_json(
                     date_str,
@@ -286,68 +303,7 @@ def _select_matches_to_scrape(
                     else None
                 )
 
-            if has_json and json_audit and json_audit.accepted:
-                if (
-                    match_id not in done_set
-                    or match_id in failed_set
-                    or match_id in in_progress_ids
-                ):
-                    _log_manifest_json_reconciled(
-                        match_id, match_id in done_set, match_id in failed_set, has_json
-                    )
-                    manifest.mark_done(match_id)
-                    reconciled_count += 1
-                skipped_count += 1
-            elif has_json:
-                _log_incomplete_json_rescrape(match_id, json_audit.reasons)
-                manifest.mark_incomplete(match_id)
-                reconciled_count += 1
-                matches_to_scrape.append(match_info)
-            elif (
-                match_id in failed_set or match_id in incomplete_set or match_id in in_progress_ids
-            ):
-                matches_to_scrape.append(match_info)
-            elif match_id in done_set:
-                _log_stale_done_without_json(match_id)
-                manifest.mark_pending(match_id)
-                reconciled_count += 1
-                matches_to_scrape.append(match_info)
-        return matches_to_scrape, skipped_count, reconciled_count
-
-    for match_info in matches:
-        match_id = _match_id(match_info)
-        if match_id in skipped_set:
-            skipped_count += 1
-            continue
-        out_path = _match_payload_path(matches_dir, match_id)
-        if os.path.exists(out_path):
-            stored = None
-            has_json = True
-            json_audit = audit_match_json(
-                date_str,
-                match_id,
-                out_path,
-                sport=sport,
-                expected_match=match_info,
-            )
-        else:
-            stored = read_match_payload(date_str, match_id, sport=sport)
-            has_json = stored is not None
-            json_audit = (
-                audit_match_payload(
-                    date_str,
-                    match_id,
-                    stored.payload,
-                    stored.source_file,
-                    stored.size_bytes,
-                    sport=sport,
-                    expected_match=match_info,
-                )
-                if stored is not None
-                else None
-            )
-
-        if has_json and json_audit and json_audit.accepted:
+        if has_json and (json_audit is None or json_audit.accepted):
             if match_id not in done_set or match_id in failed_set or match_id in in_progress_ids:
                 _log_manifest_json_reconciled(
                     match_id, match_id in done_set, match_id in failed_set, has_json
@@ -367,7 +323,7 @@ def _select_matches_to_scrape(
             manifest.mark_pending(match_id)
             reconciled_count += 1
             matches_to_scrape.append(match_info)
-        else:
+        elif not retry_only:
             matches_to_scrape.append(match_info)
 
     return matches_to_scrape, skipped_count, reconciled_count
@@ -648,6 +604,7 @@ def prioritize_date(
     priority: str = "lower",
     dry_run: bool = False,
     sport: str = "football",
+    source_links=None,
 ):
     """Generate and audit one complete, date-scoped priority decision artifact."""
     sport = normalize_sport(sport)
@@ -656,7 +613,9 @@ def prioritize_date(
     links_file = get_match_links_file(date_str, sport=sport)
     if not os.path.exists(links_file):
         raise FileNotFoundError(f"Cannot prioritize without source links: {links_file}")
-    links = _as_match_list(load_json(links_file))
+    links = _as_match_list(source_links) if source_links is not None else _as_match_list(
+        load_json(links_file)
+    )
     if not listing_matches_target_date(links, date_str):
         raise ValueError(f"Source links do not target {date_str}: {links_file}")
 
@@ -667,10 +626,10 @@ def prioritize_date(
         client.disconnect()
 
     artifact_path = get_prioritized_match_links_file(date_str, sport=sport)
-    summary = priority_run_summary(artifact, artifact_path, priority)
     if not dry_run:
         artifact_path = save_priority_artifact(artifact, date_str, sport=sport)
-        summary = priority_run_summary(artifact, artifact_path, priority)
+    summary = priority_run_summary(artifact, artifact_path, priority)
+    if not dry_run:
         manifest = load_manifest(date_str, sport=sport)
         if manifest is None:
             manifest = create_manifest(date_str, 0, sport=sport)
@@ -694,28 +653,48 @@ def prioritize_date(
     return artifact
 
 
-def _selected_priority_matches(date_str: str, priority: str, sport: str = "football"):
-    """Load and validate the saved priority decision before any page scraping."""
+def _selected_priority_matches(
+    date_str: str, priority: str, sport: str = "football", source_links=None
+):
+    """Ensure, load, and validate the priority decision before page scraping."""
     links_file = get_match_links_file(date_str, sport=sport)
     if not os.path.exists(links_file):
         raise FileNotFoundError(f"Cannot scrape without source links: {links_file}")
-    links = _as_match_list(load_json(links_file))
+    links = _as_match_list(source_links) if source_links is not None else _as_match_list(
+        load_json(links_file)
+    )
     artifact = load_priority_artifact(date_str, sport=sport)
     artifact_path = get_prioritized_match_links_file(date_str, sport=sport)
-    if artifact is None:
-        raise FileNotFoundError(
-            f"Priority artifact is missing: {artifact_path}. Run prioritize first."
+    matcher_rule_version = _priority_resolver().rule_version
+    artifact_needs_refresh = artifact is None or not priority_artifact_is_current(
+        artifact,
+        date_str,
+        links,
+        matcher_rule_version=matcher_rule_version,
+    )
+    if artifact_needs_refresh:
+        logger.info(
+            "priority_artifact_refresh_required",
+            date=date_str,
+            priority=priority,
+            artifact_path=artifact_path,
+            reason="missing" if artifact is None else "stale",
         )
+        if source_links is None:
+            prioritize_date(date_str, priority=priority, sport=sport)
+        else:
+            prioritize_date(date_str, priority=priority, sport=sport, source_links=links)
+        artifact = load_priority_artifact(date_str, sport=sport)
+        if artifact is None:
+            raise FileNotFoundError(f"Priority artifact was not created: {artifact_path}")
+
     if not priority_artifact_is_current(
         artifact,
         date_str,
         links,
-        matcher_rule_version=_priority_resolver().rule_version,
+        matcher_rule_version=matcher_rule_version,
     ):
-        raise ValueError(
-            f"Priority artifact is stale for {date_str}: {artifact_path}. "
-            "Run prioritize again after source or matcher changes."
-        )
+        raise ValueError(f"Priority artifact is stale after refresh: {artifact_path}")
     selected = select_links_for_priority(artifact, priority, links)
     manifest = load_manifest(date_str, sport=sport)
     if manifest is None:
@@ -746,7 +725,7 @@ def _warmup_cloudflare(driver, sport: str = "football"):
 def _audit_before_scrape(date_str, sport: str = "football"):
     """Refresh manifest.incomplete from existing JSON or date archives."""
     audit_result = audit_date(date_str, sport=sport)
-    sync_manifest_incomplete(audit_result)
+    audited_manifest = sync_manifest_incomplete(audit_result)
     logger.info(
         "pre_scrape_audit_complete",
         sport=sport,
@@ -755,6 +734,7 @@ def _audit_before_scrape(date_str, sport: str = "football"):
         incomplete=len(audit_result.incomplete),
         invalid=len(audit_result.invalid),
     )
+    return audit_result, audited_manifest
 
 
 def _compress_completed_date(manifest, date_str: str, sport: str = "football") -> None:
@@ -803,6 +783,8 @@ def phase2_scrape(
     max_retries: int = 3,
     workers: int = 1,
     sport: str = "football",
+    headless: bool = False,
+    load_resources: bool = False,
 ):
     """Run phase 2 for one sport/date."""
     sport = normalize_sport(sport)
@@ -814,6 +796,8 @@ def phase2_scrape(
             workers,
             max_retries=max_retries,
             sport=sport,
+            headless=headless,
+            load_resources=load_resources,
         )
     return _phase2_scrape_sequential(
         driver,
@@ -868,8 +852,8 @@ def _phase2_scrape_sequential(
         manifest.total = len(matches)
         save_manifest(manifest)
 
-    _audit_before_scrape(date_str, sport=sport)
-    manifest = load_manifest(date_str, sport=sport) or manifest
+    audit_result, audited_manifest = _audit_before_scrape(date_str, sport=sport)
+    manifest = audited_manifest or manifest
 
     success_count = 0
     skipped_count = 0
@@ -887,6 +871,7 @@ def _phase2_scrape_sequential(
         date_str,
         retry_failed=retry_failed,
         sport=sport,
+        audit_result=audit_result,
     )
     if reconciled_count:
         save_manifest(manifest)
@@ -1079,7 +1064,14 @@ def _phase2_scrape_sequential(
 
 
 def _phase2_scrape_concurrent(
-    matches, date_str, retry_failed, workers, max_retries: int = 3, sport: str = "football"
+    matches,
+    date_str,
+    retry_failed,
+    workers,
+    max_retries: int = 3,
+    sport: str = "football",
+    headless: bool = False,
+    load_resources: bool = False,
 ):
     """Extract match details concurrently with one Chrome instance per worker.
 
@@ -1109,8 +1101,8 @@ def _phase2_scrape_concurrent(
         manifest.total = len(matches)
         save_manifest(manifest)
 
-    _audit_before_scrape(date_str, sport=sport)
-    manifest = load_manifest(date_str, sport=sport) or manifest
+    audit_result, audited_manifest = _audit_before_scrape(date_str, sport=sport)
+    manifest = audited_manifest or manifest
 
     failed_set = {str(match_id) for match_id in manifest.failed}
     if retry_failed and failed_set:
@@ -1123,6 +1115,7 @@ def _phase2_scrape_concurrent(
         date_str,
         retry_failed=retry_failed,
         sport=sport,
+        audit_result=audit_result,
     )
     if reconciled_count:
         save_manifest(manifest)
@@ -1200,7 +1193,11 @@ def _phase2_scrape_concurrent(
         d = tempfile.mkdtemp(prefix=f"oddspedia_profile_{w}_")
         worker_dirs.append(d)
         try:
-            driver = DriverManager(headless=False, block_images=True, user_data_dir=d)
+            driver = DriverManager(
+                headless=headless,
+                load_resources=load_resources,
+                user_data_dir=d,
+            )
             worker_drivers.append(driver)
         except Exception as e:
             logger.error("worker_driver_init_failed", worker=w, error=str(e))
@@ -1496,7 +1493,8 @@ def _warn_deprecated_options(argv: Sequence[str]) -> None:
         "--priority": "--priority-tier",
         "--depthmark-window-ready": "--silver-reference-window-ready",
         "--reference-window-complete": "--silver-reference-window-ready",
-        "--images": "--load-images",
+        "--images": "--load-resources",
+        "--load-images": "--load-resources",
         "--json-logs": "--log-format json",
         "--collect": "discover_events.py",
         "--scrape": "scrape_matches.py",
@@ -1569,14 +1567,20 @@ def main(
         "--headless", action="store_true", help="Run in headless mode (may fail CF)"
     )
     parser.add_argument(
-        "--load-images",
-        dest="load_images",
+        "--load-resources",
+        dest="load_resources",
         action="store_true",
-        help="Allow Chrome to load images (disabled by default)",
+        help="Allow Chrome to load nonessential images, CSS, fonts, media, and trackers",
+    )
+    parser.add_argument(
+        "--load-images",
+        dest="load_resources",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
     parser.add_argument(
         "--images",
-        dest="load_images",
+        dest="load_resources",
         action="store_true",
         help=argparse.SUPPRESS,
     )
@@ -1737,7 +1741,10 @@ def main(
         def ensure_driver():
             nonlocal driver
             if driver is None:
-                driver = DriverManager(headless=args.headless, block_images=not args.load_images)
+                driver = DriverManager(
+                    headless=args.headless,
+                    load_resources=args.load_resources,
+                )
             return driver
 
         if command == "prioritize":
@@ -1799,7 +1806,9 @@ def main(
                         links_file=links_file,
                     )
                     continue
-                matches = _selected_priority_matches(date_str, args.priority, sport=sport)
+                matches = _selected_priority_matches(
+                    date_str, args.priority, sport=sport, source_links=source_links
+                )
                 if matches:
                     scrape_driver = None if workers > 1 else ensure_driver()
                     manifest = phase2_scrape(
@@ -1809,6 +1818,8 @@ def main(
                         retry_failed=args.retry == "failed",
                         workers=workers,
                         sport=sport,
+                        headless=args.headless,
+                        load_resources=args.load_resources,
                     )
                     _compress_completed_date(manifest, date_str, sport=sport)
                 else:
@@ -1836,8 +1847,18 @@ def main(
                 force=refresh_inventory,
             )
             if matches:
-                prioritize_date(date_str, priority=args.priority, sport=sport)
-                selected_matches = _selected_priority_matches(date_str, args.priority, sport=sport)
+                prioritize_date(
+                    date_str,
+                    priority=args.priority,
+                    sport=sport,
+                    source_links=matches,
+                )
+                selected_matches = _selected_priority_matches(
+                    date_str,
+                    args.priority,
+                    sport=sport,
+                    source_links=matches,
+                )
                 if selected_matches:
                     scrape_driver = None if workers > 1 else ensure_driver()
                     manifest = phase2_scrape(
@@ -1847,6 +1868,8 @@ def main(
                         retry_failed=args.retry == "failed",
                         workers=workers,
                         sport=sport,
+                        headless=args.headless,
+                        load_resources=args.load_resources,
                     )
                     _compress_completed_date(manifest, date_str, sport=sport)
                     logger.info("scrape_json_complete", sport=sport, date=date_str)
