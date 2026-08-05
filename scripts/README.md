@@ -115,8 +115,9 @@ python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run
 
 Priority generation requires `--silver-reference-window-ready` after confirming the
 three-day DepthMark Silver reference window is complete. It writes an auditable
-priority artifact under `data/oddspedia/historical/link_priorities/`; scraping
-rejects a missing or stale artifact. The event scripts use
+priority artifact under `data/oddspedia/historical/link_priorities/`; standalone
+scraping automatically creates or refreshes a missing or stale artifact. The
+event scripts use
 `--retry-failed`, `--retry-incomplete`, and `--priority-tier` as canonical
 operation selectors. The resolver uses the same
 `--silver-reference-window-ready` assertion for persisted resolution outcomes;

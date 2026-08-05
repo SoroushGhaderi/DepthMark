@@ -11,8 +11,13 @@ from src.oddspedia.scraping.config import (
     get_match_links_file,
     normalize_sport,
 )
-from src.oddspedia.scraping.manifest import create_manifest, load_manifest, save_manifest
-from src.oddspedia.scraping.storage import iter_match_payloads, read_match_payload
+from src.oddspedia.scraping.manifest import (
+    ScrapeManifest,
+    create_manifest,
+    load_manifest,
+    save_manifest,
+)
+from src.oddspedia.scraping.storage import iter_match_payloads
 
 MIN_USEFUL_FILE_BYTES = 750
 IDENTITY_FIELDS = ("id", "home", "away", "date", "url")
@@ -113,9 +118,10 @@ def audit_date(date_str: str, sport: str = "football") -> DateAudit:
     result.existing = len(existing_ids)
 
     for match_id in sorted(expected_ids):
-        stored = existing_payloads.get(match_id) or read_match_payload(
-            date_str, match_id, sport=sport
-        )
+        # ``iter_match_payloads`` has already indexed every plain JSON file and
+        # archive member for this date. A second lookup would reopen and scan
+        # the archive for every missing expected ID.
+        stored = existing_payloads.get(match_id)
         if stored is None:
             result.missing.append(
                 MatchAudit(
@@ -264,7 +270,7 @@ def _invalid_audit(
     )
 
 
-def sync_manifest_incomplete(result: DateAudit) -> None:
+def sync_manifest_incomplete(result: DateAudit) -> Optional[ScrapeManifest]:
     """Persist incomplete/invalid IDs into the date manifest.
 
     Missing files are intentionally not stored in ``incomplete``. The scraper
@@ -273,7 +279,7 @@ def sync_manifest_incomplete(result: DateAudit) -> None:
     structurally bad.
     """
     if result.expected == 0:
-        return
+        return None
 
     manifest = load_manifest(result.date, sport=result.sport)
     if manifest is None:
@@ -292,6 +298,7 @@ def sync_manifest_incomplete(result: DateAudit) -> None:
         match_id for match_id in manifest.failed if str(match_id) not in valid_bad_ids
     ]
     save_manifest(manifest)
+    return manifest
 
 
 def _payload_reasons(data: Dict[str, Any]) -> List[str]:
