@@ -82,11 +82,14 @@ new plain JSON files, so compression does not change retry or loading behavior.
 Before a payload is accepted, its rendered event ID (when available), home and
 away teams, and calendar date are compared with the discovery row. This guard
 is necessary because Oddspedia matchup URLs can advance to a later reverse
-fixture while retaining the same URL. If the rendered page contains the same
-two teams but a stale event ID/date or reversed order, the scraper salvages
-odds only, records `identity_validation: market_salvaged` with both identities,
-and omits the rendered score and statistics. A page showing different teams,
-or a same-team page with no odds, remains a failed scrape and is requeued.
+fixture while retaining the same URL. Discovered football links therefore add
+the listing event ID as `?m=<event_id>`, and the scraper adds it defensively for
+older link artifacts before navigation. If the rendered page contains the same
+two teams but a stale event ID/date or reversed order, the scraper rejects the
+payload and marks it for retry; odds, scores, and statistics are never written
+for a different rendered event. A page showing different teams also remains a
+failed scrape and is requeued. The Bronze loader also excludes legacy
+`market_salvaged` payloads produced before this guard was introduced.
 
 Accepted football odds lines also have a non-empty label. Parameterized markets
 retain their observed threshold or handicap; non-parameterized markets use the

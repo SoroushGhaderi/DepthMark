@@ -154,7 +154,22 @@ store/
 *.xlsx
 *.xls
 *.json
+*.json.gz
 *.parquet
+*.feather
+
+# Models and experiment artifacts
+models/
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.h5
+*.onnx
+*.safetensors
+mlruns/
+.dvc/tmp/
+wandb/
 
 # Environment files - EXPLICIT IGNORE
 .env

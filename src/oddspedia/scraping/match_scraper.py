@@ -24,6 +24,7 @@ from src.oddspedia.scraping.utils import (
     _is_error_page,
     _is_listing_page_title,
     now_iso,
+    pin_oddspedia_event_url,
     safe_get,
 )
 
@@ -506,60 +507,70 @@ _JS_FOOTBALL_COLLAPSED_MARKET_TITLES = """
 """
 
 
-def _expand_football_market_list(driver, timeout=10.0):
-    """Reveal collapsed full-time market cards with one scoped click."""
-    state = (
-        driver.execute_script(
-            """
+def _expand_football_market_list(driver, timeout=10.0, max_rounds=8):
+    """Reveal every collapsed full-time market card exposed by the market list."""
+    total_added = 0
+    for _ in range(max_rounds):
+        state = (
+            driver.execute_script(
+                """
         var root = document.querySelector('[data-module-name="Odds Comparison"]');
         if (!root) return {button: null, cards: 0};
-        var button = Array.from(root.querySelectorAll('button.btn-pagination')).find(function(candidate) {
+        var button = Array.from(root.querySelectorAll(
+            'button, a, [role="button"], .btn-pagination, .btn-pagination__label, '
+            + '[class*="pagination"], [class*="show-more"], [class*="show_more"]'
+        )).map(function(candidate) {
+            return candidate.closest('button, a, [role="button"], .btn-pagination') || candidate;
+        }).find(function(candidate) {
             var text = (candidate.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
-            var expandsMarketList = text === 'show more'
-                || text === 'show all markets'
-                || text === 'show all'
-                || text === 'view all';
+            var expandsMarketList = /^(?:show more(?: markets)?|show all(?: markets)?|view all(?: markets)?)$/.test(text);
             return expandsMarketList && !candidate.closest('.matchup-odds-comparison-card');
         }) || null;
         return {button: button, cards: root.querySelectorAll('.matchup-odds-comparison-card').length};
     """
+            )
+            or {}
         )
-        or {}
-    )
-    if not isinstance(state, dict):
-        logger.warning("football_market_list_state_invalid", value_type=type(state).__name__)
-        return 0
-    button = state.get("button")
-    before = int(state.get("cards") or 0)
-    if not button:
-        logger.info("football_market_list_already_expanded", cards=before)
-        return 0
+        if not isinstance(state, dict):
+            logger.warning("football_market_list_state_invalid", value_type=type(state).__name__)
+            break
+        button = state.get("button")
+        before = int(state.get("cards") or 0)
+        if not button:
+            if not total_added:
+                logger.info("football_market_list_already_expanded", cards=before)
+            break
 
-    try:
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-        button.click()
-    except (WebDriverException, StaleElementReferenceException) as exc:
-        logger.warning("football_market_list_expand_failed", error=str(exc))
-        return 0
+        try:
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+            button.click()
+        except (WebDriverException, StaleElementReferenceException) as exc:
+            logger.warning("football_market_list_expand_failed", error=str(exc))
+            break
 
-    deadline = time.monotonic() + timeout
-    current = before
-    while time.monotonic() < deadline:
-        current = int(
-            driver.execute_script(
-                """
+        deadline = time.monotonic() + timeout
+        current = before
+        while time.monotonic() < deadline:
+            current = int(
+                driver.execute_script(
+                    """
             var root = document.querySelector('[data-module-name="Odds Comparison"]');
             return root ? root.querySelectorAll('.matchup-odds-comparison-card').length : 0;
         """
+                )
+                or 0
             )
-            or 0
-        )
-        if current > before:
+            if current > before:
+                break
+            time.sleep(0.1)
+        added = max(0, current - before)
+        total_added += added
+        logger.info("football_market_list_expanded", before=before, after=current, added=added)
+        # A control which remains visible without adding another card is stale;
+        # do not repeatedly click it for the full retry budget.
+        if not added:
             break
-        time.sleep(0.1)
-    added = max(0, current - before)
-    logger.info("football_market_list_expanded", before=before, after=current, added=added)
-    return added
+    return total_added
 
 
 def _click_football_market_card(driver, market_title):
@@ -623,8 +634,14 @@ def _wait_for_football_market_card(driver, market_title, timeout=10.0):
     return False
 
 
-def _expand_football_market_card_lines(driver, market_title, max_rounds=3):
-    """Expand only the alternative-lines controls in one rendered card."""
+def _expand_football_market_card_lines(driver, market_title, max_rounds=12):
+    """Expand every visible alternative-lines control in one rendered card.
+
+    Oddspedia uses both ``Show all lines`` and paginated ``Show more`` controls,
+    and a market can expose several batches.  The control is not consistently a
+    ``button`` element, so resolve the nearest interactive ancestor instead of
+    depending on one tag/class combination.
+    """
     expanded = 0
     for _ in range(max_rounds):
         button = driver.execute_script(
@@ -636,9 +653,21 @@ def _expand_football_market_card_lines(driver, market_title, max_rounds=3):
                 var header = card.querySelector('.matchup-odds-comparison-card__header');
                 var title = header ? header.textContent.replace(/\\s+/g, ' ').trim().toLowerCase() : '';
                 if (title !== target) continue;
-                return Array.from(card.querySelectorAll('button')).find(function(candidate) {
-                    return /show all lines/i.test((candidate.textContent || '').replace(/\\s+/g, ' ').trim());
-                }) || null;
+                var candidates = Array.from(card.querySelectorAll(
+                    'button, a, [role="button"], .btn-pagination, .btn-pagination__label, '
+                    + '[class*="pagination"], [class*="show-more"], [class*="show_more"], '
+                    + '[class*="more-lines"], [class*="all-lines"]'
+                ));
+                for (var c = 0; c < candidates.length; c++) {
+                    var candidate = candidates[c];
+                    var text = (candidate.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+                    if (!/^(?:show more(?: lines)?|show all(?: lines)?|more lines|view all(?: lines)?)$/.test(text)) continue;
+                    var control = candidate.closest('button, a, [role="button"], .btn-pagination') || candidate;
+                    var rect = control.getBoundingClientRect();
+                    var style = window.getComputedStyle(control);
+                    if (rect.width > 0 && rect.height > 0 && style.display !== 'none'
+                        && style.visibility !== 'hidden') return control;
+                }
             }
             return null;
         """,
@@ -650,7 +679,7 @@ def _expand_football_market_card_lines(driver, market_title, max_rounds=3):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
             button.click()
             expanded += 1
-            time.sleep(0.25)
+            time.sleep(0.5)
         except (WebDriverException, StaleElementReferenceException):
             break
     return expanded
@@ -1263,8 +1292,13 @@ _JS_EXTRACT_ODDS = """
         if (!market) continue;
 
         var lines = [];
+        // Parameterized football markets use .matchup-handicap-line for each
+        // full line.  The older flex selector matches its nested responsive
+        // columns instead; those columns are hidden at desktop width and lose
+        // their association with labels such as 1.5 or -0.25/+0.25.
         var rows  = cards[c].querySelectorAll(
-            '.flex-grow-1.flex.align-items-center.justify-content-between'
+            '.matchup-handicap-line, '
+            + '.flex-grow-1.flex.align-items-center.justify-content-between'
         );
         for (var r = 0; r < rows.length; r++) {
             // All Full Time, 1st Half, and 2nd Half panes can remain mounted.
@@ -1291,7 +1325,8 @@ _JS_EXTRACT_ODDS = """
 
     // Fallback: any odds rows not captured inside a recognised card
     var allRows = document.querySelectorAll(
-        '.flex-grow-1.flex.align-items-center.justify-content-between'
+        '.matchup-handicap-line, '
+        + '.flex-grow-1.flex.align-items-center.justify-content-between'
     );
     var curMarket = null, curLines = [];
     for (var r = 0; r < allRows.length; r++) {
@@ -2255,10 +2290,7 @@ def _extract_football_odds(driver, base_odds, home="", away=""):
         return odds
 
     selector_texts = [
-        text
-        for text in selector_texts
-        if str(text).strip().lower() not in {"1st half", "2nd half"}
-        and not _has_football_market(odds, text)
+        text for text in selector_texts if str(text).strip().lower() not in {"1st half", "2nd half"}
     ]
     if not selector_texts:
         return _validate_european_handicap_coverage(odds)
@@ -2300,11 +2332,8 @@ def _extract_football_odds(driver, base_odds, home="", away=""):
                 )
                 time.sleep(0.4)
             if not markets:
-                if _has_football_market(odds, market_text):
-                    logger.debug("football_market_selector_already_captured", market=market_text)
-                else:
-                    logger.warning("football_market_selector_no_lines", market=market_text)
-                    unresolved_markets.append(market_text)
+                logger.warning("football_market_selector_no_lines", market=market_text)
+                unresolved_markets.append(market_text)
             odds = _merge_odds_markets(odds, markets)
         except WebDriverException as exc:
             logger.warning(
@@ -2624,17 +2653,21 @@ def scrape_match(driver, match_info, sport=None):
 
     if not url.startswith("http"):
         url = BASE_URL + url
+    if sport == "football":
+        # Older discovery artifacts contain only the reusable matchup slug.
+        # Pin it at navigation time so they remain safe without migration.
+        url = pin_oddspedia_event_url(url, match_id)
 
     logger.info("match_scrape_start", sport=sport, match_id=match_id, url=url)
 
     archived_url = _archived_match_url(url, match_info, sport=sport)
+    if archived_url and sport == "football":
+        archived_url = pin_oddspedia_event_url(archived_url, match_id)
     candidate_urls = [url]
     if archived_url and archived_url != url:
         candidate_urls.append(archived_url)
 
     meta = {}
-    identity_mismatch_reasons = []
-    market_salvage = False
     loaded_url = None
     for candidate_index, candidate_url in enumerate(candidate_urls):
         if not safe_get(driver, candidate_url):
@@ -2698,24 +2731,20 @@ def scrape_match(driver, match_info, sport=None):
 
         identity_reasons = _event_identity_mismatch_reasons(match_info, meta)
         if identity_reasons:
-            if sport == "football" and _same_team_pair(match_info, meta):
-                identity_mismatch_reasons = identity_reasons
-                market_salvage = True
+            if candidate_index == 0 and archived_url and archived_url != candidate_url:
                 logger.warning(
-                    "match_identity_market_salvage",
+                    "match_detail_url_fallback",
                     match_id=match_id,
-                    url=candidate_url,
+                    requested_url=candidate_url,
+                    fallback_url=archived_url,
+                    reason="identity_mismatch",
                     reasons=identity_reasons,
-                    rendered_event_id=meta.get("event_id", ""),
-                    rendered_date=meta.get("date", ""),
-                    rendered_home=meta.get("home", ""),
-                    rendered_away=meta.get("away", ""),
                 )
-            else:
-                raise MatchIdentityMismatchError(
-                    "Match detail page does not match listing "
-                    f"(match_id={match_id}, url={candidate_url}, reasons={identity_reasons})"
-                )
+                continue
+            raise MatchIdentityMismatchError(
+                "Match detail page does not match listing "
+                f"(match_id={match_id}, url={candidate_url}, reasons={identity_reasons})"
+            )
         loaded_url = candidate_url
         break
 
@@ -2866,12 +2895,6 @@ def scrape_match(driver, match_info, sport=None):
                 }
             )
 
-    if market_salvage and not odds:
-        raise MatchIdentityMismatchError(
-            "Match detail identity mismatched listing and exposed no odds "
-            f"(match_id={match_id}, url={url}, reasons={identity_mismatch_reasons})"
-        )
-
     # Live odds are tennis-only for this scraper. Football pages can expose
     # in-play tabs, but we intentionally do not scrape them.
     live_odds = _extract_live_odds(driver) if sport == "tennis" else []
@@ -2879,7 +2902,7 @@ def scrape_match(driver, match_info, sport=None):
     # Statistics
     stats = _extract_stats(driver) if sport == "tennis" else []
     point_by_point = _extract_point_by_point(driver) if sport == "tennis" else []
-    overall_stats = {"tabs": []} if market_salvage else _extract_overall_stats(driver)
+    overall_stats = _extract_overall_stats(driver)
     if sport == "football":
         live_stats = []
         for tab in (overall_stats or {}).get("tabs", []):
@@ -2900,12 +2923,7 @@ def scrape_match(driver, match_info, sport=None):
         football_status = meta.get("status", "")
         if _parse_football_score_payload(football_status):
             football_status = "finished"
-        if market_salvage:
-            # The rendered page may be a same-team fixture on another date;
-            # keep this fallback odds-only so its result is never attributed
-            # to the listing event.
-            football_score = {"home": "", "away": "", "winner": ""}
-        if not market_salvage and _is_finished_football_status(football_status) and (
+        if _is_finished_football_status(football_status) and (
             football_score["home"] == "" or football_score["away"] == ""
         ):
             raise FootballScoreUnavailableError(
@@ -2927,21 +2945,6 @@ def scrape_match(driver, match_info, sport=None):
             "stats_source": "Live Stats" if stats else "",
             "scraped_at": now_iso(),
         }
-        if market_salvage:
-            result["identity_validation"] = "market_salvaged"
-            result["identity_mismatch_reasons"] = list(identity_mismatch_reasons)
-            result["listing_identity"] = {
-                "id": str(match_info.get("id") or ""),
-                "home": match_info.get("home", ""),
-                "away": match_info.get("away", ""),
-                "date": match_info.get("date", ""),
-            }
-            result["rendered_identity"] = {
-                "id": meta.get("event_id", ""),
-                "home": meta.get("home", ""),
-                "away": meta.get("away", ""),
-                "date": meta.get("date", ""),
-            }
 
         duration_seconds = int(time.time() - t0)
         logger.info(

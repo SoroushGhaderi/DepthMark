@@ -95,7 +95,7 @@ class FootballAuditTests(unittest.TestCase):
         self.assertTrue(any("home does not match listing" in reason for reason in audit.reasons))
         self.assertTrue(any("date does not match listing" in reason for reason in audit.reasons))
 
-    def test_market_salvage_identity_mismatch_is_accepted_with_observations(self):
+    def test_market_salvage_identity_mismatch_is_requeued(self):
         payload = {
             "sport": "football",
             "id": "9956611",
@@ -133,8 +133,9 @@ class FootballAuditTests(unittest.TestCase):
                 expected_match=expected_match,
             )
 
-        self.assertEqual(audit.status, "accepted_data_present")
-        self.assertTrue(any("market salvage:" in observation for observation in audit.observations))
+        self.assertEqual(audit.status, "incomplete")
+        self.assertTrue(any("source_event_id does not match listing" in reason for reason in audit.reasons))
+        self.assertTrue(any("date does not match listing" in reason for reason in audit.reasons))
 
     def test_finished_football_result_without_score_is_requeued(self):
         payload = {
