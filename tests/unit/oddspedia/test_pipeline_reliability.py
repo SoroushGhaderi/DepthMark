@@ -145,7 +145,12 @@ class PipelineReliabilityTests(unittest.TestCase):
             "url": "https://oddspedia.com/football/example",
             "status": "FT",
             "score": {"home": 1, "away": 0},
-            "odds": [{"market": "Full Time Result", "lines": [{"home": 2.0}]}],
+            "odds": [
+                {
+                    "market": "Full Time Result",
+                    "lines": [{"label": "Main Line", "home": 2.0}],
+                }
+            ],
         }
         with tempfile.TemporaryDirectory() as directory:
             with open(os.path.join(directory, "42.json"), "w", encoding="utf-8") as file:
@@ -174,7 +179,12 @@ class PipelineReliabilityTests(unittest.TestCase):
             "url": "https://oddspedia.com/football/completed",
             "status": "FT",
             "score": {"home": 1, "away": 0},
-            "odds": [{"market": "Full Time Result", "lines": [{"home": 2.0}]}],
+            "odds": [
+                {
+                    "market": "Full Time Result",
+                    "lines": [{"label": "Main Line", "home": 2.0}],
+                }
+            ],
         }
         with tempfile.TemporaryDirectory() as directory:
             with open(

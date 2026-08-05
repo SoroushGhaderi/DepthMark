@@ -262,7 +262,13 @@ def _select_matches_to_scrape(
             if os.path.exists(out_path):
                 stored = None
                 has_json = True
-                json_audit = audit_match_json(date_str, match_id, out_path, sport=sport)
+                json_audit = audit_match_json(
+                    date_str,
+                    match_id,
+                    out_path,
+                    sport=sport,
+                    expected_match=match_info,
+                )
             else:
                 stored = read_match_payload(date_str, match_id, sport=sport)
                 has_json = stored is not None
@@ -274,6 +280,7 @@ def _select_matches_to_scrape(
                         stored.source_file,
                         stored.size_bytes,
                         sport=sport,
+                        expected_match=match_info,
                     )
                     if stored is not None
                     else None
@@ -316,7 +323,13 @@ def _select_matches_to_scrape(
         if os.path.exists(out_path):
             stored = None
             has_json = True
-            json_audit = audit_match_json(date_str, match_id, out_path, sport=sport)
+            json_audit = audit_match_json(
+                date_str,
+                match_id,
+                out_path,
+                sport=sport,
+                expected_match=match_info,
+            )
         else:
             stored = read_match_payload(date_str, match_id, sport=sport)
             has_json = stored is not None
@@ -328,6 +341,7 @@ def _select_matches_to_scrape(
                     stored.source_file,
                     stored.size_bytes,
                     sport=sport,
+                    expected_match=match_info,
                 )
                 if stored is not None
                 else None

@@ -79,6 +79,21 @@ with the existing archive. Current-date Live artifacts remain uncompressed.
 
 The Bronze loader and scrape-resume audit read both the date archive and any
 new plain JSON files, so compression does not change retry or loading behavior.
+Before a payload is accepted, its rendered event ID (when available), home and
+away teams, and calendar date are compared with the discovery row. This guard
+is necessary because Oddspedia matchup URLs can advance to a later reverse
+fixture while retaining the same URL. If the rendered page contains the same
+two teams but a stale event ID/date or reversed order, the scraper salvages
+odds only, records `identity_validation: market_salvaged` with both identities,
+and omits the rendered score and statistics. A page showing different teams,
+or a same-team page with no odds, remains a failed scrape and is requeued.
+
+Accepted football odds lines also have a non-empty label. Parameterized markets
+retain their observed threshold or handicap; non-parameterized markets use the
+explicit label `Main Line`. Known markets with `schema_status: unmatched`, or
+parameterized lines whose value cannot be recovered, are incomplete and are
+requeued rather than treated as valid Bronze input.
+
 The Bronze loader writes:
 
 - `oddspedia_bronze.event` — discovered event metadata and raw event JSON.
