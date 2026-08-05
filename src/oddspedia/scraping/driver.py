@@ -140,7 +140,10 @@ def get_driver(headless=False, load_resources=False, user_data_dir=None):
         driver = _fallback_driver(headless, user_data_dir, chrome_ver)
 
     driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
-    driver.implicitly_wait(10)
+    # Optional element searches use bounded explicit polling at their call
+    # sites. A global implicit wait would silently add the same delay to every
+    # absent-element lookup.
+    driver.implicitly_wait(0)
 
     _configure_resource_policy(driver, load_resources)
 
