@@ -30,6 +30,9 @@ from src.oddspedia.scraping.utils import (
 
 logger = get_logger(__name__)
 
+OPTIONAL_CONTROL_WAIT_SECONDS = 2.0
+OPTIONAL_CONTROL_POLL_SECONDS = 0.1
+
 
 class FootballOddsCoverageError(RuntimeError):
     """Raised when Oddspedia exposes a football market that was not saved."""
@@ -283,6 +286,30 @@ def _click_btn_group_item(driver, label):
     return bool(clicked)
 
 
+def _find_optional_elements(
+    driver,
+    by,
+    value,
+    timeout=OPTIONAL_CONTROL_WAIT_SECONDS,
+    poll_interval=OPTIONAL_CONTROL_POLL_SECONDS,
+):
+    """Poll for optional controls without imposing a global implicit wait.
+
+    The caller needs to distinguish "not rendered yet" from "not present" for
+    lazy-loaded controls. This keeps that behavior local and bounded while
+    returning immediately when the controls are already present.
+    """
+    deadline = time.monotonic() + timeout
+    while True:
+        elements = driver.find_elements(by, value)
+        if elements:
+            return elements
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return []
+        time.sleep(min(poll_interval, remaining))
+
+
 def _click_show_more_with_selenium(driver, max_rounds=8):
     """Use trusted Selenium clicks for Oddspedia Show more pagination controls."""
     total = 0
@@ -317,7 +344,7 @@ def _click_show_more_with_selenium(driver, max_rounds=8):
             try:
                 driver.execute_script("window.scrollTo(0, arguments[0]);", y)
                 time.sleep(0.15)
-                elements = driver.find_elements(By.XPATH, xpath)
+                elements = _find_optional_elements(driver, By.XPATH, xpath)
             except WebDriverException:
                 continue
 
