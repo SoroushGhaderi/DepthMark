@@ -122,6 +122,15 @@ class OddspediaBronzeLoader:
             if payload.get("id") is None:
                 logger.warning("Ignoring invalid Oddspedia match payload", path=stored.source_file)
                 continue
+            if payload.get("identity_validation") == "market_salvaged":
+                logger.warning(
+                    "Ignoring mismatched Oddspedia match payload",
+                    path=stored.source_file,
+                    match_id=payload.get("id"),
+                    source_event_id=payload.get("source_event_id"),
+                    reason="market_salvaged",
+                )
+                continue
             match_id = str(payload["id"])
             payload_rows.append(
                 {

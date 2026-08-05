@@ -262,7 +262,13 @@ def _select_matches_to_scrape(
             if os.path.exists(out_path):
                 stored = None
                 has_json = True
-                json_audit = audit_match_json(date_str, match_id, out_path, sport=sport)
+                json_audit = audit_match_json(
+                    date_str,
+                    match_id,
+                    out_path,
+                    sport=sport,
+                    expected_match=match_info,
+                )
             else:
                 stored = read_match_payload(date_str, match_id, sport=sport)
                 has_json = stored is not None
@@ -274,6 +280,7 @@ def _select_matches_to_scrape(
                         stored.source_file,
                         stored.size_bytes,
                         sport=sport,
+                        expected_match=match_info,
                     )
                     if stored is not None
                     else None
@@ -316,7 +323,13 @@ def _select_matches_to_scrape(
         if os.path.exists(out_path):
             stored = None
             has_json = True
-            json_audit = audit_match_json(date_str, match_id, out_path, sport=sport)
+            json_audit = audit_match_json(
+                date_str,
+                match_id,
+                out_path,
+                sport=sport,
+                expected_match=match_info,
+            )
         else:
             stored = read_match_payload(date_str, match_id, sport=sport)
             has_json = stored is not None
@@ -328,6 +341,7 @@ def _select_matches_to_scrape(
                     stored.source_file,
                     stored.size_bytes,
                     sport=sport,
+                    expected_match=match_info,
                 )
                 if stored is not None
                 else None
@@ -537,6 +551,7 @@ def phase1_collect(
         os.path.exists(links_file)
         and not force
         and _existing_inventory_matches_target(links_file, date_str)
+        and not _needs_discovery_retry(date_str, sport)
     ):
         matches = _as_match_list(load_json(links_file))
         logger.info(
@@ -1738,20 +1753,21 @@ def main(
         if command == "discover":
             listing_ready = False
             for date_str in dates:
-                if args.retry == "incomplete" and not _needs_discovery_retry(date_str, sport):
+                refresh_inventory = _needs_discovery_retry(date_str, sport)
+                if args.retry == "incomplete" and not refresh_inventory:
                     logger.info("discovery_retry_not_needed", sport=sport, date=date_str)
                     continue
                 links_file = get_match_links_file(date_str, sport=sport)
                 inventory_valid = _existing_inventory_matches_target(links_file, date_str)
                 collect_driver = (
-                    None if inventory_valid and args.retry != "incomplete" else ensure_driver()
+                    None if inventory_valid and not refresh_inventory else ensure_driver()
                 )
                 matches = phase1_collect(
                     collect_driver,
                     date_str,
                     sport=sport,
                     reuse_listing=listing_ready,
-                    force=args.retry == "incomplete",
+                    force=refresh_inventory or args.retry == "incomplete",
                 )
                 # Existing inventories do not change the browser's location.
                 # Once a discovery succeeds, later dates can stay on this

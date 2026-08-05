@@ -7,24 +7,26 @@ Extracts from each match page:
   - Match statistics (aces, double faults, serve percentages, etc.)
 """
 
-import time
-import re
 import json
+import re
+import time
 import unicodedata
 from urllib.parse import urlparse
 
+from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
+from selenium.webdriver.common.by import By
+
 from src.oddspedia.scraping.config import BASE_URL, SCROLL_PAUSE, normalize_sport
+from src.oddspedia.scraping.logging import get_logger
+from src.oddspedia.scraping.metrics import get_metrics
 from src.oddspedia.scraping.utils import (
     _is_detail_url,
     _is_error_page,
     _is_listing_page_title,
     now_iso,
+    pin_oddspedia_event_url,
     safe_get,
 )
-from src.oddspedia.scraping.logging import get_logger
-from src.oddspedia.scraping.metrics import get_metrics
-from selenium.common.exceptions import WebDriverException, StaleElementReferenceException
-from selenium.webdriver.common.by import By
 
 logger = get_logger(__name__)
 
@@ -45,7 +47,12 @@ class MatchPageNotRenderedError(RuntimeError):
     """Raised when a detail URL renders the listing shell instead of an event."""
 
 
+class MatchIdentityMismatchError(RuntimeError):
+    """Raised when a matchup URL renders a different event than the listing."""
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
 
 def _scroll_page(driver, pause=SCROLL_PAUSE, max_scrolls=10):
     """Scroll incrementally to trigger lazy-loaded content."""
@@ -71,6 +78,76 @@ def _oddspedia_slug(value):
     value = unicodedata.normalize("NFKD", str(value or ""))
     value = value.encode("ascii", "ignore").decode("ascii")
     return re.sub(r"^-+|-+$", "", re.sub(r"[^a-z0-9]+", "-", value.lower()))
+
+
+def _identity_key(value):
+    """Return a conservative comparison key for source-rendered team names."""
+    value = unicodedata.normalize("NFKD", str(value or ""))
+    value = value.encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+
+def _team_names_equivalent(left, right):
+    left_key = _identity_key(left)
+    right_key = _identity_key(right)
+    return bool(left_key and right_key and left_key == right_key)
+
+
+def _same_team_pair(match_info, meta):
+    """Return whether the rendered page contains the same two teams."""
+    expected_home = match_info.get("home", "")
+    expected_away = match_info.get("away", "")
+    rendered_home = meta.get("home", "")
+    rendered_away = meta.get("away", "")
+    if not all((expected_home, expected_away, rendered_home, rendered_away)):
+        return False
+    return (
+        _team_names_equivalent(expected_home, rendered_home)
+        and _team_names_equivalent(expected_away, rendered_away)
+    ) or (
+        _team_names_equivalent(expected_home, rendered_away)
+        and _team_names_equivalent(expected_away, rendered_home)
+    )
+
+
+def _match_date_key(value):
+    match = re.match(r"\s*(\d{4})-(\d{2})-(\d{2})", str(value or ""))
+    return "" if not match else "".join(match.groups())
+
+
+def _event_identity_mismatch_reasons(match_info, meta):
+    """Return strong evidence that page metadata belongs to another event."""
+    reasons = []
+    expected_id = str(match_info.get("id") or "").strip()
+    rendered_id = str(meta.get("event_id") or "").strip()
+    if expected_id and rendered_id and expected_id != rendered_id:
+        reasons.append(f"event_id expected={expected_id} rendered={rendered_id}")
+
+    expected_date = _match_date_key(match_info.get("date"))
+    rendered_date = _match_date_key(meta.get("date"))
+    if expected_date and rendered_date and expected_date != rendered_date:
+        reasons.append(f"date expected={expected_date} rendered={rendered_date}")
+
+    expected_home = match_info.get("home", "")
+    expected_away = match_info.get("away", "")
+    rendered_home = meta.get("home", "")
+    rendered_away = meta.get("away", "")
+    if all((expected_home, expected_away, rendered_home, rendered_away)):
+        same_order = _team_names_equivalent(
+            expected_home, rendered_home
+        ) and _team_names_equivalent(expected_away, rendered_away)
+        reversed_order = _team_names_equivalent(
+            expected_home, rendered_away
+        ) and _team_names_equivalent(expected_away, rendered_home)
+        if reversed_order:
+            reasons.append("home and away teams are reversed")
+        elif not same_order and not (expected_id and rendered_id and expected_id == rendered_id):
+            reasons.append(
+                "teams differ "
+                f"expected={expected_home} vs {expected_away} "
+                f"rendered={rendered_home} vs {rendered_away}"
+            )
+    return reasons
 
 
 def _archived_match_url(url, match_info, sport="football"):
@@ -134,15 +211,20 @@ def _wait_for_event_metadata(driver, max_attempts=15, poll_interval=0.2, sport="
             meta = {}
         if isinstance(meta, dict):
             last_meta = meta
-        if isinstance(meta, dict) and any(meta.get(field) for field in ("home", "away", "date", "status")):
+        if isinstance(meta, dict) and any(
+            meta.get(field) for field in ("home", "away", "date", "status")
+        ):
             # Final football scores are occasionally populated after the rest
             # of Vuex event metadata. Do not snapshot a known-final event
             # before either the direct score or a period-score payload exists.
             score_ready = (
-                meta.get("home_score", "") != ""
-                and meta.get("away_score", "") != ""
+                meta.get("home_score", "") != "" and meta.get("away_score", "") != ""
             ) or _parse_football_score_payload(meta.get("score_payload") or meta.get("raw_status"))
-            if sport != "football" or not _is_finished_football_status(meta.get("status")) or score_ready:
+            if (
+                sport != "football"
+                or not _is_finished_football_status(meta.get("status"))
+                or score_ready
+            ):
                 return meta
         if attempt < max_attempts - 1:
             time.sleep(poll_interval)
@@ -155,7 +237,8 @@ def _click_tab(driver, name):
 
     Returns True if a matching tab was found and clicked.
     """
-    clicked = driver.execute_script("""
+    clicked = driver.execute_script(
+        """
         var target = arguments[0].toLowerCase();
         var els = document.querySelectorAll(
             '[role="tab"], .tab, [class*="tab-item"], [class*="nav-item"], button, a'
@@ -167,7 +250,9 @@ def _click_tab(driver, name):
             }
         }
         return false;
-    """, name)
+    """,
+        name,
+    )
     if clicked:
         time.sleep(1.5)
     return bool(clicked)
@@ -179,7 +264,8 @@ def _click_btn_group_item(driver, label):
     These buttons appear on match pages (e.g. "Live Odds", "Pre-match Odds").
     Returns True if the button was found and clicked.
     """
-    clicked = driver.execute_script("""
+    clicked = driver.execute_script(
+        """
         var target = arguments[0].toLowerCase();
         var btns = document.querySelectorAll('.btn-group-item');
         for (var i = 0; i < btns.length; i++) {
@@ -189,7 +275,9 @@ def _click_btn_group_item(driver, label):
             }
         }
         return false;
-    """, label)
+    """,
+        label,
+    )
     if clicked:
         time.sleep(2)
     return bool(clicked)
@@ -212,9 +300,12 @@ def _click_show_more_with_selenium(driver, max_rounds=8):
     for _ in range(max_rounds):
         clicked_this_round = 0
         try:
-            page_height = driver.execute_script(
-                "return Math.max(document.body.scrollHeight || 0, document.documentElement.scrollHeight || 0);"
-            ) or 0
+            page_height = (
+                driver.execute_script(
+                    "return Math.max(document.body.scrollHeight || 0, document.documentElement.scrollHeight || 0);"
+                )
+                or 0
+            )
             viewport = driver.execute_script("return window.innerHeight || 900;") or 900
         except WebDriverException:
             break
@@ -234,14 +325,19 @@ def _click_show_more_with_selenium(driver, max_rounds=8):
                 try:
                     if not element.is_displayed():
                         continue
-                    clickable = driver.execute_script("""
+                    clickable = driver.execute_script(
+                        """
                         var el = arguments[0];
                         if (!el) return null;
                         return el.closest('button, a, [role="button"], .btn-pagination') || el;
-                    """, element)
+                    """,
+                        element,
+                    )
                     if not clickable:
                         continue
-                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", clickable)
+                    driver.execute_script(
+                        "arguments[0].scrollIntoView({block: 'center'});", clickable
+                    )
                     time.sleep(0.2)
                     clickable.click()
                     clicked_this_round += 1
@@ -275,7 +371,8 @@ def _expand_all_odds_lines(driver):
     last_state = None
     stable_passes = 0
     for _ in range(12):
-        state = driver.execute_script("""
+        state = driver.execute_script(
+            """
         // Keywords that identify an expand/show-all button (lowercase, partial match).
         var KEYWORDS = [
             'show all lines', 'show all', 'all lines',
@@ -376,7 +473,8 @@ def _expand_all_odds_lines(driver):
             marketCards: marketCards,
             lineRows: lineRows
         };
-        """)
+        """
+        )
         clicked = int((state or {}).get("clicked") or 0)
         total += clicked
         state_key = (
@@ -409,55 +507,76 @@ _JS_FOOTBALL_COLLAPSED_MARKET_TITLES = """
 """
 
 
-def _expand_football_market_list(driver, timeout=10.0):
-    """Reveal collapsed full-time market cards with one scoped click."""
-    state = driver.execute_script("""
+def _expand_football_market_list(driver, timeout=10.0, max_rounds=8):
+    """Reveal every collapsed full-time market card exposed by the market list."""
+    total_added = 0
+    for _ in range(max_rounds):
+        state = (
+            driver.execute_script(
+                """
         var root = document.querySelector('[data-module-name="Odds Comparison"]');
         if (!root) return {button: null, cards: 0};
-        var button = Array.from(root.querySelectorAll('button.btn-pagination')).find(function(candidate) {
+        var button = Array.from(root.querySelectorAll(
+            'button, a, [role="button"], .btn-pagination, .btn-pagination__label, '
+            + '[class*="pagination"], [class*="show-more"], [class*="show_more"]'
+        )).map(function(candidate) {
+            return candidate.closest('button, a, [role="button"], .btn-pagination') || candidate;
+        }).find(function(candidate) {
             var text = (candidate.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
-            var expandsMarketList = text === 'show more'
-                || text === 'show all markets'
-                || text === 'show all'
-                || text === 'view all';
+            var expandsMarketList = /^(?:show more(?: markets)?|show all(?: markets)?|view all(?: markets)?)$/.test(text);
             return expandsMarketList && !candidate.closest('.matchup-odds-comparison-card');
         }) || null;
         return {button: button, cards: root.querySelectorAll('.matchup-odds-comparison-card').length};
-    """) or {}
-    if not isinstance(state, dict):
-        logger.warning("football_market_list_state_invalid", value_type=type(state).__name__)
-        return 0
-    button = state.get("button")
-    before = int(state.get("cards") or 0)
-    if not button:
-        logger.info("football_market_list_already_expanded", cards=before)
-        return 0
+    """
+            )
+            or {}
+        )
+        if not isinstance(state, dict):
+            logger.warning("football_market_list_state_invalid", value_type=type(state).__name__)
+            break
+        button = state.get("button")
+        before = int(state.get("cards") or 0)
+        if not button:
+            if not total_added:
+                logger.info("football_market_list_already_expanded", cards=before)
+            break
 
-    try:
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-        button.click()
-    except (WebDriverException, StaleElementReferenceException) as exc:
-        logger.warning("football_market_list_expand_failed", error=str(exc))
-        return 0
+        try:
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+            button.click()
+        except (WebDriverException, StaleElementReferenceException) as exc:
+            logger.warning("football_market_list_expand_failed", error=str(exc))
+            break
 
-    deadline = time.monotonic() + timeout
-    current = before
-    while time.monotonic() < deadline:
-        current = int(driver.execute_script("""
+        deadline = time.monotonic() + timeout
+        current = before
+        while time.monotonic() < deadline:
+            current = int(
+                driver.execute_script(
+                    """
             var root = document.querySelector('[data-module-name="Odds Comparison"]');
             return root ? root.querySelectorAll('.matchup-odds-comparison-card').length : 0;
-        """) or 0)
-        if current > before:
+        """
+                )
+                or 0
+            )
+            if current > before:
+                break
+            time.sleep(0.1)
+        added = max(0, current - before)
+        total_added += added
+        logger.info("football_market_list_expanded", before=before, after=current, added=added)
+        # A control which remains visible without adding another card is stale;
+        # do not repeatedly click it for the full retry budget.
+        if not added:
             break
-        time.sleep(0.1)
-    added = max(0, current - before)
-    logger.info("football_market_list_expanded", before=before, after=current, added=added)
-    return added
+    return total_added
 
 
 def _click_football_market_card(driver, market_title):
     """Return whether a collapsed football market card was expanded."""
-    header = driver.execute_script("""
+    header = driver.execute_script(
+        """
         var target = String(arguments[0] || '').replace(/\\s+/g, ' ').trim().toLowerCase();
         var cards = Array.from(document.querySelectorAll('.matchup-odds-comparison-card'));
         for (var i = 0; i < cards.length; i++) {
@@ -467,7 +586,9 @@ def _click_football_market_card(driver, market_title):
             if (title === target) return button;
         }
         return null;
-    """, market_title)
+    """,
+        market_title,
+    )
     if not header:
         return False
     try:
@@ -483,7 +604,9 @@ def _wait_for_football_market_card(driver, market_title, timeout=10.0):
     deadline = time.time() + timeout
     while time.time() < deadline:
         try:
-            state = driver.execute_script("""
+            state = (
+                driver.execute_script(
+                    """
                 var target = String(arguments[0] || '').replace(/\\s+/g, ' ').trim().toLowerCase();
                 var cards = Array.from(document.querySelectorAll('.matchup-odds-comparison-card'));
                 for (var i = 0; i < cards.length; i++) {
@@ -498,7 +621,11 @@ def _wait_for_football_market_card(driver, market_title, timeout=10.0):
                     };
                 }
                 return {found: false, loading: false, hasOdds: false};
-            """, market_title) or {}
+            """,
+                    market_title,
+                )
+                or {}
+            )
             if state.get("hasOdds") and not state.get("loading"):
                 return True
         except WebDriverException:
@@ -507,11 +634,18 @@ def _wait_for_football_market_card(driver, market_title, timeout=10.0):
     return False
 
 
-def _expand_football_market_card_lines(driver, market_title, max_rounds=3):
-    """Expand only the alternative-lines controls in one rendered card."""
+def _expand_football_market_card_lines(driver, market_title, max_rounds=12):
+    """Expand every visible alternative-lines control in one rendered card.
+
+    Oddspedia uses both ``Show all lines`` and paginated ``Show more`` controls,
+    and a market can expose several batches.  The control is not consistently a
+    ``button`` element, so resolve the nearest interactive ancestor instead of
+    depending on one tag/class combination.
+    """
     expanded = 0
     for _ in range(max_rounds):
-        button = driver.execute_script("""
+        button = driver.execute_script(
+            """
             var target = String(arguments[0] || '').replace(/\\s+/g, ' ').trim().toLowerCase();
             var cards = Array.from(document.querySelectorAll('.matchup-odds-comparison-card'));
             for (var i = 0; i < cards.length; i++) {
@@ -519,19 +653,33 @@ def _expand_football_market_card_lines(driver, market_title, max_rounds=3):
                 var header = card.querySelector('.matchup-odds-comparison-card__header');
                 var title = header ? header.textContent.replace(/\\s+/g, ' ').trim().toLowerCase() : '';
                 if (title !== target) continue;
-                return Array.from(card.querySelectorAll('button')).find(function(candidate) {
-                    return /show all lines/i.test((candidate.textContent || '').replace(/\\s+/g, ' ').trim());
-                }) || null;
+                var candidates = Array.from(card.querySelectorAll(
+                    'button, a, [role="button"], .btn-pagination, .btn-pagination__label, '
+                    + '[class*="pagination"], [class*="show-more"], [class*="show_more"], '
+                    + '[class*="more-lines"], [class*="all-lines"]'
+                ));
+                for (var c = 0; c < candidates.length; c++) {
+                    var candidate = candidates[c];
+                    var text = (candidate.textContent || '').replace(/\\s+/g, ' ').trim().toLowerCase();
+                    if (!/^(?:show more(?: lines)?|show all(?: lines)?|more lines|view all(?: lines)?)$/.test(text)) continue;
+                    var control = candidate.closest('button, a, [role="button"], .btn-pagination') || candidate;
+                    var rect = control.getBoundingClientRect();
+                    var style = window.getComputedStyle(control);
+                    if (rect.width > 0 && rect.height > 0 && style.display !== 'none'
+                        && style.visibility !== 'hidden') return control;
+                }
             }
             return null;
-        """, market_title)
+        """,
+            market_title,
+        )
         if not button:
             break
         try:
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
             button.click()
             expanded += 1
-            time.sleep(0.25)
+            time.sleep(0.5)
         except (WebDriverException, StaleElementReferenceException):
             break
     return expanded
@@ -571,21 +719,25 @@ def _expand_football_market_cards(driver):
             "Collapsed football market cards did not render odds: " + ", ".join(unresolved)
         )
     try:
-        all_titles = driver.execute_script("""
+        all_titles = (
+            driver.execute_script(
+                """
             return Array.from(document.querySelectorAll('.matchup-odds-comparison-card'))
                 .map(function(card) {
                     var header = card.querySelector('.matchup-odds-comparison-card__header');
                     return header ? header.textContent.replace(/\\s+/g, ' ').trim() : '';
                 })
                 .filter(Boolean);
-        """) or []
+        """
+            )
+            or []
+        )
     except WebDriverException as exc:
         logger.warning("football_market_line_discovery_failed", error=str(exc))
         all_titles = []
 
     expanded_lines = sum(
-        _expand_football_market_card_lines(driver, title)
-        for title in dict.fromkeys(all_titles)
+        _expand_football_market_card_lines(driver, title) for title in dict.fromkeys(all_titles)
     )
     if titles or all_titles:
         logger.info(
@@ -601,6 +753,7 @@ def _expand_football_market_cards(driver):
 _JS_EVENT_META = """
     var d = {
         home:'', away:'', date:'', league:'', round:'',
+        event_id:'', home_slug:'', away_slug:'',
         home_rank:'', away_rank:'', category:'', status:'',
         winner:'', home_score:'', away_score:'', raw_status:'', score_payload:null,
         home_sets:'', away_sets:'', set_scores:null,
@@ -610,8 +763,11 @@ _JS_EVENT_META = """
         var ev = document.querySelector('#__nuxt').__vue__.$store.state['event'];
         if (ev && ev.event) {
             var e = ev.event;
+            d.event_id  = (e.id !== undefined) ? String(e.id) : '';
             d.home      = e.ht || '';
             d.away      = e.at || '';
+            d.home_slug = e.ht_slug || '';
+            d.away_slug = e.at_slug || '';
             d.date      = e.md || '';
             d.league    = e.league_name || '';
             d.round     = e.round_name || '';
@@ -888,6 +1044,44 @@ _JS_EXTRACT_ODDS = """
         return 'main';
     }
 
+    function cleanLineLabel(text) {
+        return String(text || '').replace(/\\s+/g, ' ').trim()
+            .replace(/\\s*compare.*$/i, '').trim();
+    }
+
+    function looksLikeLineLabel(text) {
+        // Threshold and handicap labels can be a number ("2.5"), a
+        // signed number ("-1.5"), or paired values ("-1/+1"). Do not
+        // accept arbitrary label elements: outcome labels such as OVER and
+        // HOME live in the same component tree.
+        return /^[+-]?\\d+(?:\\.\\d+)?(?:\\s*(?:\\/|:)\\s*[+-]?\\d+(?:\\.\\d+)?)?(?:\\s+(?:goals?|corners?|cards?|points?|sets?|games?))?$/i.test(text);
+    }
+
+    function findParameterizedLineLabel(root) {
+        var selectors = [
+            '.matchup-handicap-line-info > [class*="text-capitalize"]',
+            '.matchup-handicap-line-info',
+            '[class*="line-info"] > [class*="text-capitalize"]',
+            '[class*="line-info"]',
+            '[class*="handicap"] > [class*="text-capitalize"]'
+        ];
+        for (var i = 0; i < selectors.length; i++) {
+            var nodes = root.querySelectorAll(selectors[i]);
+            for (var n = 0; n < nodes.length; n++) {
+                var candidate = cleanLineLabel(nodes[n].textContent);
+                if (looksLikeLineLabel(candidate)) return candidate;
+            }
+        }
+        return '';
+    }
+
+    function marketNeedsLineLabel(market) {
+        var name = String(market || '').replace(/^\\s*(?:1st|2nd)\\s+half\\s*-\\s*/i, '')
+            .replace(/\\s+/g, ' ').trim().toLowerCase();
+        return ['total goals', 'total corners', 'asian handicap',
+            'asian handicap corners', 'european handicap'].indexOf(name) >= 0;
+    }
+
     // Process a single odds row:
     //   1. Separate odds buttons from the label container using isOddsButton().
     //   2. Extract label text via the text-capitalize descendant (the label span
@@ -897,19 +1091,6 @@ _JS_EXTRACT_ODDS = """
         var children = Array.from(row.children);
         var label   = '';
         var buttons = [];
-
-        function cleanLineLabel(text) {
-            return String(text || '').replace(/\\s+/g, ' ').trim()
-                .replace(/\\s*compare.*$/i, '').trim();
-        }
-
-        function looksLikeLineLabel(text) {
-            // Threshold and handicap labels can be a number ("2.5"), a
-            // signed number ("-1.5"), or paired values ("-1/+1").  Do not
-            // accept arbitrary label elements: outcome labels such as OVER and
-            // HOME live in the same component tree.
-            return /^[+-]?\\d+(?:\\.\\d+)?(?:\\s*(?:\\/|:)\\s*[+-]?\\d+(?:\\.\\d+)?)?(?:\\s+(?:goals?|corners?|cards?|points?|sets?|games?))?$/i.test(text);
-        }
 
         // Oddspedia puts the handicap in this wrapper alongside the Compare
         // odds button. Read its dedicated value span before generic traversal;
@@ -1031,9 +1212,12 @@ _JS_EXTRACT_ODDS = """
         return parsedCount >= 2 || entry.outcomes ? entry : null;
     }
 
-    function parseTextOnlyCard(card) {
+    function parseTextOnlyCard(card, market) {
         var text = card.textContent.replace(/\\s+/g, ' ').trim();
-        var entry = {type: 'main', label: ''};
+        var entry = {
+            type: 'main',
+            label: marketNeedsLineLabel(market) ? findParameterizedLineLabel(card) : ''
+        };
         var count = 0;
         var re = /\\b(Home|Draw|Away|Over|Under|Yes|No|Odd|Even|1X|X2|12)\\s+([+-]\\d{2,5}\\b|\\d+\\.\\d+|\\d+\\s*\\/\\s*\\d+)/gi;
         var match;
@@ -1054,14 +1238,17 @@ _JS_EXTRACT_ODDS = """
     // Some football cards render one outcome per tile rather than a paired
     // row. Collecting all leaf controls from the card preserves these markets
     // (Correct Score, First/Next Team to Score, Clean Sheet, and team props).
-    function parseLooseCard(card) {
+    function parseLooseCard(card, market) {
         var controls = Array.from(card.querySelectorAll(
             'button, a, [role="button"], .odd-box-with-label, .odd-box-with-logo'
         )).filter(function(el) { return isOddsButton(el); });
         controls = controls.filter(function(el) {
             return !controls.some(function(other) { return other !== el && el.contains(other); });
         });
-        var entry = {type: 'main', label: ''};
+        var entry = {
+            type: 'main',
+            label: marketNeedsLineLabel(market) ? findParameterizedLineLabel(card) : ''
+        };
         var count = 0;
         controls.forEach(function(control) {
             var s = parseButton(control);
@@ -1105,8 +1292,13 @@ _JS_EXTRACT_ODDS = """
         if (!market) continue;
 
         var lines = [];
+        // Parameterized football markets use .matchup-handicap-line for each
+        // full line.  The older flex selector matches its nested responsive
+        // columns instead; those columns are hidden at desktop width and lose
+        // their association with labels such as 1.5 or -0.25/+0.25.
         var rows  = cards[c].querySelectorAll(
-            '.flex-grow-1.flex.align-items-center.justify-content-between'
+            '.matchup-handicap-line, '
+            + '.flex-grow-1.flex.align-items-center.justify-content-between'
         );
         for (var r = 0; r < rows.length; r++) {
             // All Full Time, 1st Half, and 2nd Half panes can remain mounted.
@@ -1121,11 +1313,11 @@ _JS_EXTRACT_ODDS = """
             return line.outcomes && Object.keys(line.outcomes).length === 1;
         });
         if (!lines.length || fragmented) {
-            var looseEntry = parseLooseCard(cards[c]);
+            var looseEntry = parseLooseCard(cards[c], market);
             if (looseEntry) lines = [looseEntry];
         }
         if (!lines.length) {
-            var textEntry = parseTextOnlyCard(cards[c]);
+            var textEntry = parseTextOnlyCard(cards[c], market);
             if (textEntry) lines.push(textEntry);
         }
         if (lines.length) markets.push({market: market, lines: lines});
@@ -1133,7 +1325,8 @@ _JS_EXTRACT_ODDS = """
 
     // Fallback: any odds rows not captured inside a recognised card
     var allRows = document.querySelectorAll(
-        '.flex-grow-1.flex.align-items-center.justify-content-between'
+        '.matchup-handicap-line, '
+        + '.flex-grow-1.flex.align-items-center.justify-content-between'
     );
     var curMarket = null, curLines = [];
     for (var r = 0; r < allRows.length; r++) {
@@ -1418,6 +1611,7 @@ _JS_EXTRACT_ACTIVE_OVERALL_STATS_TAB = """
 
 # ── Odds processing ───────────────────────────────────────────────────────────
 
+
 def _build_odds(raw_markets):
     """Pass through raw markets from the JS extractor.
 
@@ -1504,22 +1698,15 @@ def _football_market_has_coverage(market):
     lines = [line for line in market.get("lines") or [] if isinstance(line, dict)]
     if not lines:
         return False
-    if _football_market_family(market.get("market", "")) == "european handicap":
-        return all(
-            str(line.get("label", "")).strip()
-            and all(line.get(field) is not None for field in ("home", "draw", "away"))
-            for line in lines
-        )
-    return True
+    return all(str(line.get("label", "")).strip() for line in lines)
 
 
 def _validate_european_handicap_coverage(odds):
     complete = []
     for market in odds or []:
-        if (
-            _football_market_family(market.get("market", "")) == "european handicap"
-            and not _football_market_has_coverage(market)
-        ):
+        if _football_market_family(
+            market.get("market", "")
+        ) == "european handicap" and not _football_market_has_coverage(market):
             logger.warning(
                 "european_handicap_incomplete_lines_skipped",
                 market=market.get("market", "European Handicap"),
@@ -1565,11 +1752,23 @@ def _football_outcome_field(label, home, away):
 
 
 _FOOTBALL_COMMON_LINE_FIELDS = {"type", "label"}
+_FOOTBALL_PARAMETERIZED_MARKETS = {
+    "total goals",
+    "total corners",
+    "asian handicap",
+    "asian handicap corners",
+    "european handicap",
+}
+_FOOTBALL_DEFAULT_LINE_LABEL = "Main Line"
 
 
 def _football_market_family(market_name):
     name = re.sub(r"^\s*(?:1st|2nd)\s+half\s*-\s*", "", str(market_name or ""), flags=re.I)
     return re.sub(r"\s+", " ", name).strip().lower()
+
+
+def _football_market_requires_label(market_name):
+    return _football_market_family(market_name) in _FOOTBALL_PARAMETERIZED_MARKETS
 
 
 def _football_expected_shape(market_name):
@@ -1617,9 +1816,22 @@ def _football_allowed_fields(shape):
         "combinations": {"combinations"},
         "odd_even": {"odd", "even"},
         "generic": {
-            "home", "draw", "away", "over", "under", "yes", "no", "odd", "even",
-            "home_draw", "draw_away", "home_away", "no_goal", "scores",
-            "combinations", "outcomes",
+            "home",
+            "draw",
+            "away",
+            "over",
+            "under",
+            "yes",
+            "no",
+            "odd",
+            "even",
+            "home_draw",
+            "draw_away",
+            "home_away",
+            "no_goal",
+            "scores",
+            "combinations",
+            "outcomes",
         },
     }
     return fields.get(shape, fields["generic"])
@@ -1645,8 +1857,7 @@ def _football_line_matches_shape(line, shape):
     if shape == "odd_even":
         return all(line.get(key) is not None for key in ("odd", "even"))
     return any(
-        key not in _FOOTBALL_COMMON_LINE_FIELDS and line.get(key) is not None
-        for key in line
+        key not in _FOOTBALL_COMMON_LINE_FIELDS and line.get(key) is not None for key in line
     )
 
 
@@ -1654,6 +1865,9 @@ def _football_combo_key(label, home, away):
     text = str(label or "").strip()
     if not text:
         return ""
+    canonical = re.fullmatch(r"(home|draw|away)_(home|draw|away)", text.lower())
+    if canonical:
+        return f"{canonical.group(1)}_{canonical.group(2)}"
     # Oddspedia renders HT/FT outcomes as either team names, 1/X/2, or
     # Home - Draw. A spaced hyphen is an outcome separator here, unlike the
     # unspaced hyphen in scorelines (which belong to Correct Score).
@@ -1692,7 +1906,9 @@ def _football_apply_market_contract(market, home="", away=""):
             continue
         next_line = {key: line[key] for key in _FOOTBALL_COMMON_LINE_FIELDS if key in line}
         next_line.setdefault("type", "main")
-        next_line.setdefault("label", "")
+        next_line["label"] = str(next_line.get("label", "")).strip()
+        if not next_line["label"] and not _football_market_requires_label(market_name):
+            next_line["label"] = _FOOTBALL_DEFAULT_LINE_LABEL
 
         for key in allowed:
             if key in line:
@@ -1721,17 +1937,17 @@ def _football_apply_market_contract(market, home="", away=""):
             if combinations:
                 next_line["combinations"] = combinations
 
-        if family == "european handicap":
+        if _football_market_requires_label(market_name):
             missing = []
             if not str(next_line.get("label", "")).strip():
                 missing.append("label")
-            missing.extend(
-                field for field in ("home", "draw", "away")
-                if next_line.get(field) is None
-            )
+            if family == "european handicap":
+                missing.extend(
+                    field for field in ("home", "draw", "away") if next_line.get(field) is None
+                )
             if missing:
                 logger.warning(
-                    "european_handicap_line_skipped",
+                    "parameterized_football_line_skipped",
                     market=market_name,
                     label=next_line.get("label", ""),
                     missing=missing,
@@ -1743,6 +1959,7 @@ def _football_apply_market_contract(market, home="", away=""):
     next_market = dict(market)
     next_market["market"] = market_name
     if contracted_lines:
+        next_market.pop("schema_status", None)
         # A Full Time Result card represents one 1X2 price. Some Oddspedia
         # cards keep additional period panes mounted after switching tabs;
         # those rows must never be serialized as extra full-time lines.
@@ -1756,7 +1973,9 @@ def _football_apply_market_contract(market, home="", away=""):
                 continue
             fallback = {key: line[key] for key in _FOOTBALL_COMMON_LINE_FIELDS if key in line}
             fallback.setdefault("type", "main")
-            fallback.setdefault("label", "")
+            fallback["label"] = str(fallback.get("label", "")).strip()
+            if not fallback["label"] and not _football_market_requires_label(market_name):
+                fallback["label"] = _FOOTBALL_DEFAULT_LINE_LABEL
             for key, value in line.items():
                 if key in _FOOTBALL_COMMON_LINE_FIELDS:
                     continue
@@ -1765,7 +1984,7 @@ def _football_apply_market_contract(market, home="", away=""):
             if len(fallback) > len(_FOOTBALL_COMMON_LINE_FIELDS):
                 fallback["schema_status"] = "unmatched"
                 fallback_lines.append(fallback)
-        if family == "european handicap":
+        if shape != "generic":
             return None
         if not fallback_lines:
             return None
@@ -1793,7 +2012,11 @@ def _normalize_football_odds(odds, home="", away=""):
             if isinstance(outcomes, dict):
                 shape = _football_expected_shape(market.get("market", ""))
                 for label, value in outcomes.items():
-                    field = "" if shape in {"scores", "combinations"} else _football_outcome_field(label, home, away)
+                    field = (
+                        ""
+                        if shape in {"scores", "combinations"}
+                        else _football_outcome_field(label, home, away)
+                    )
                     if field and field not in next_line:
                         next_line[field] = value
                     else:
@@ -1902,7 +2125,8 @@ _JS_FOOTBALL_MARKET_SELECTOR_TEXTS = """
 def _click_football_market_selector(driver, market_text):
     if str(market_text or "").strip().lower() in {"1st half", "2nd half"}:
         return False
-    clickable = driver.execute_script("""
+    clickable = driver.execute_script(
+        """
         function cleanText(el) {
             return (el && el.textContent || '').replace(/\\s+/g, ' ').trim();
         }
@@ -1965,7 +2189,9 @@ def _click_football_market_selector(driver, market_text):
             return clickable;
         }
         return null;
-    """, market_text)
+    """,
+        market_text,
+    )
     if not clickable:
         return False
     try:
@@ -1980,11 +2206,16 @@ def _click_football_market_selector(driver, market_text):
 
 
 def _current_odds_dom_signature(driver):
-    return driver.execute_script("""
+    return (
+        driver.execute_script(
+            """
         return Array.from(document.querySelectorAll('.matchup-odds-comparison-card'))
             .map(function(card) { return (card.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 500); })
             .join('|');
-    """) or ""
+    """
+        )
+        or ""
+    )
 
 
 def _wait_for_odds_dom_change(driver, previous_signature, timeout=2.0):
@@ -2035,10 +2266,13 @@ def _football_selector_rendered(markets, selector_text):
     selector = str(selector_text or "").strip().lower()
     if selector in {"1st half", "2nd half"}:
         period_markets = [
-            market for market in markets or []
+            market
+            for market in markets or []
             if str(market.get("market", "")).strip().lower().startswith(f"{selector} -")
         ]
-        return bool(period_markets) and all(_football_market_has_coverage(market) for market in period_markets)
+        return bool(period_markets) and all(
+            _football_market_has_coverage(market) for market in period_markets
+        )
     return any(
         str(market.get("market", "")).strip().lower() == selector
         and _football_market_has_coverage(market)
@@ -2056,14 +2290,14 @@ def _extract_football_odds(driver, base_odds, home="", away=""):
         return odds
 
     selector_texts = [
-        text for text in selector_texts
-        if str(text).strip().lower() not in {"1st half", "2nd half"}
-        and not _has_football_market(odds, text)
+        text for text in selector_texts if str(text).strip().lower() not in {"1st half", "2nd half"}
     ]
     if not selector_texts:
         return _validate_european_handicap_coverage(odds)
 
-    logger.info("football_market_selectors_found", count=len(selector_texts), selectors=selector_texts[:50])
+    logger.info(
+        "football_market_selectors_found", count=len(selector_texts), selectors=selector_texts[:50]
+    )
     unresolved_markets = []
     for market_text in selector_texts:
         try:
@@ -2098,14 +2332,13 @@ def _extract_football_odds(driver, base_odds, home="", away=""):
                 )
                 time.sleep(0.4)
             if not markets:
-                if _has_football_market(odds, market_text):
-                    logger.debug("football_market_selector_already_captured", market=market_text)
-                else:
-                    logger.warning("football_market_selector_no_lines", market=market_text)
-                    unresolved_markets.append(market_text)
+                logger.warning("football_market_selector_no_lines", market=market_text)
+                unresolved_markets.append(market_text)
             odds = _merge_odds_markets(odds, markets)
         except WebDriverException as exc:
-            logger.warning("football_market_selector_extract_failed", market=market_text, error=str(exc))
+            logger.warning(
+                "football_market_selector_extract_failed", market=market_text, error=str(exc)
+            )
             if not _has_football_market(odds, market_text):
                 unresolved_markets.append(market_text)
 
@@ -2123,12 +2356,13 @@ def _extract_football_odds(driver, base_odds, home="", away=""):
 
 # ── Score parsing ─────────────────────────────────────────────────────────────
 
+
 def _parse_set_scores(text):
     """Extract set-by-set scores from a text string (e.g. '6-4 6-2').
 
     Returns (set_scores, home_sets, away_sets).
     """
-    pattern = re.findall(r'\b([0-7])-([0-7])\b', text[:500])
+    pattern = re.findall(r"\b([0-7])-([0-7])\b", text[:500])
     if not pattern:
         return None, "", ""
     set_scores = [{"home": int(a), "away": int(b)} for a, b in pattern[:5]]
@@ -2178,7 +2412,8 @@ def _parse_football_score_payload(value):
 def _football_score_from_dom(driver):
     """Read the final score rendered in the match header as a Vuex fallback."""
     try:
-        result = driver.execute_script("""
+        result = driver.execute_script(
+            """
             function text(el) {
                 return el ? (el.textContent || '').replace(/\\s+/g, ' ').trim() : '';
             }
@@ -2191,7 +2426,8 @@ def _football_score_from_dom(driver):
             if (text(home) !== '' && text(away) !== '') return {home: text(home), away: text(away)};
             var score = text(root).match(/(?:^|\\s)(\\d+)\\s*[-:]\\s*(\\d+)(?:\\s|$)/);
             return score ? {home: score[1], away: score[2]} : null;
-        """)
+        """
+        )
     except WebDriverException:
         return None
     if not isinstance(result, dict):
@@ -2238,6 +2474,7 @@ def _football_score_from_meta(meta):
 
 # ── Live odds extraction ──────────────────────────────────────────────────────
 
+
 def _extract_live_odds(driver):
     """Click the 'Live Odds' btn-group-item button and extract the odds shown.
 
@@ -2266,6 +2503,7 @@ def _extract_live_odds(driver):
 
 # ── Stats extraction ──────────────────────────────────────────────────────────
 
+
 def _extract_stats(driver):
     """Click the Statistics tab (if present) and extract match stats.
 
@@ -2280,7 +2518,9 @@ def _extract_stats(driver):
     if source == "none" or not data:
         return []
 
-    logger.info("stats_extracted", source=source, count=len(data) if isinstance(data, list) else "unknown")
+    logger.info(
+        "stats_extracted", source=source, count=len(data) if isinstance(data, list) else "unknown"
+    )
 
     if isinstance(data, list):
         return data
@@ -2291,17 +2531,24 @@ def _extract_stats(driver):
 
 def _extract_point_by_point(driver):
     """Extract tennis point-by-point timeline by iterating set dropdowns."""
-    has_tennis_timeline = driver.execute_script("""
+    has_tennis_timeline = driver.execute_script(
+        """
         return !!document.querySelector('.event-timeline .highlights-tennis');
-    """)
+    """
+    )
     if not has_tennis_timeline:
         return []
 
-    triggers_count = driver.execute_script("""
+    triggers_count = (
+        driver.execute_script(
+            """
         return document.querySelectorAll(
             '.highlights-tennis .event-timeline-dropdown__trigger'
         ).length;
-    """) or 0
+    """
+        )
+        or 0
+    )
 
     sets = []
     seen = set()
@@ -2312,13 +2559,16 @@ def _extract_point_by_point(driver):
         # are visible after the first click.
         set_data = None
         for attempt in range(2):
-            driver.execute_script("""
+            driver.execute_script(
+                """
                 var i = arguments[0];
                 var btns = document.querySelectorAll('.highlights-tennis .event-timeline-dropdown__trigger');
                 if (!btns || i >= btns.length) return false;
                 btns[i].click();
                 return true;
-            """, idx)
+            """,
+                idx,
+            )
             time.sleep(0.25)
 
             # Poll briefly for async dropdown content rendering.
@@ -2345,14 +2595,17 @@ def _extract_point_by_point(driver):
 
 def _extract_overall_stats(driver):
     """Extract full details from the Oddspedia stats module (Live Stats only)."""
-    has_module = driver.execute_script("""
+    has_module = driver.execute_script(
+        """
         return !!document.querySelector('[data-module-name="Stats"], [data-module-name="Matchup stats"]');
-    """)
+    """
+    )
     if not has_module:
         return {"tabs": []}
 
     # Keep only "Live Stats" (user-requested); ignore Betting/Seasonal/So Far tabs.
-    driver.execute_script("""
+    driver.execute_script(
+        """
         var root = document.querySelector('[data-module-name="Stats"], [data-module-name="Matchup stats"]');
         if (!root) return false;
         var btns = root.querySelectorAll('.btn-group-item .btn-group-item__btn');
@@ -2364,7 +2617,8 @@ def _extract_overall_stats(driver):
             }
         }
         return false;
-    """)
+    """
+    )
     time.sleep(0.5)
 
     tabs = []
@@ -2384,6 +2638,7 @@ def _extract_overall_stats(driver):
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+
 def scrape_match(driver, match_info, sport=None):
     """Visit a single match page and extract all available data."""
     metrics = get_metrics()
@@ -2398,10 +2653,16 @@ def scrape_match(driver, match_info, sport=None):
 
     if not url.startswith("http"):
         url = BASE_URL + url
+    if sport == "football":
+        # Older discovery artifacts contain only the reusable matchup slug.
+        # Pin it at navigation time so they remain safe without migration.
+        url = pin_oddspedia_event_url(url, match_id)
 
     logger.info("match_scrape_start", sport=sport, match_id=match_id, url=url)
 
     archived_url = _archived_match_url(url, match_info, sport=sport)
+    if archived_url and sport == "football":
+        archived_url = pin_oddspedia_event_url(archived_url, match_id)
     candidate_urls = [url]
     if archived_url and archived_url != url:
         candidate_urls.append(archived_url)
@@ -2467,6 +2728,23 @@ def scrape_match(driver, match_info, sport=None):
             raise MatchPageNotRenderedError(
                 f"Match detail page did not expose event metadata (match_id={match_id}, url={candidate_url})"
             )
+
+        identity_reasons = _event_identity_mismatch_reasons(match_info, meta)
+        if identity_reasons:
+            if candidate_index == 0 and archived_url and archived_url != candidate_url:
+                logger.warning(
+                    "match_detail_url_fallback",
+                    match_id=match_id,
+                    requested_url=candidate_url,
+                    fallback_url=archived_url,
+                    reason="identity_mismatch",
+                    reasons=identity_reasons,
+                )
+                continue
+            raise MatchIdentityMismatchError(
+                "Match detail page does not match listing "
+                f"(match_id={match_id}, url={candidate_url}, reasons={identity_reasons})"
+            )
         loaded_url = candidate_url
         break
 
@@ -2485,15 +2763,15 @@ def scrape_match(driver, match_info, sport=None):
 
     # Event metadata from Vuex
 
-    home   = meta.get("home")   or match_info.get("home", "")
-    away   = meta.get("away")   or match_info.get("away", "")
+    home = meta.get("home") or match_info.get("home", "")
+    away = meta.get("away") or match_info.get("away", "")
     league = (
         meta.get("league")
         or match_info.get("league_name")
         or match_info.get("tournament")
         or match_info.get("league", "")
     )
-    date   = meta.get("date")   or match_info.get("date", "")
+    date = meta.get("date") or match_info.get("date", "")
 
     # Tennis score fields are sport-specific. Football should rely on shared
     # metadata/status/odds/stats rather than fake set data.
@@ -2506,12 +2784,17 @@ def scrape_match(driver, match_info, sport=None):
         set_scores = meta.get("set_scores")
 
     if sport == "tennis" and not home_sets and not away_sets:
-        header_text = driver.execute_script("""
+        header_text = (
+            driver.execute_script(
+                """
             var h = document.querySelector(
                 '.match-header, [class*="match-header"], header, [class*="event-header"]'
             );
             return h ? h.textContent.trim().replace(/\\s+/g, ' ').substring(0, 500) : '';
-        """) or ""
+        """
+            )
+            or ""
+        )
         set_scores, home_sets, away_sets = _parse_set_scores(header_text)
 
     # Fallback: try DOM-level status extraction when Vuex/post-match returns empty.
@@ -2519,7 +2802,9 @@ def scrape_match(driver, match_info, sport=None):
     # in phase 1. This keeps tennis aligned with football and lets us decide
     # later which statuses should be scraped without losing the source value.
     if not meta.get("status"):
-        dom_status = driver.execute_script("""
+        dom_status = (
+            driver.execute_script(
+                """
             var pm = document.querySelector('.matchup-header-postmatch-info');
             if (pm) {
                 var txt = pm.textContent.trim().toLowerCase();
@@ -2533,7 +2818,10 @@ def scrape_match(driver, match_info, sport=None):
             var t = document.title.toLowerCase();
             if (t.indexOf('404') >= 0 || t.indexOf('not found') >= 0) return 'page_not_found';
             return '';
-        """) or ""
+        """
+            )
+            or ""
+        )
         if dom_status:
             meta["status"] = dom_status
         elif match_info.get("status"):
@@ -2592,13 +2880,20 @@ def scrape_match(driver, match_info, sport=None):
         do = match_info.get("draw_odds", "")
         ao = match_info.get("away_odds", "")
         if ho and ao:
-            line = {"type": "main", "label": "", "home": float(ho), "away": float(ao)}
+            line = {
+                "type": "main",
+                "label": _FOOTBALL_DEFAULT_LINE_LABEL,
+                "home": float(ho),
+                "away": float(ao),
+            }
             if do:
                 line["draw"] = float(do)
-            odds.append({
-                "market": "Match Winner",
-                "lines": [line],
-            })
+            odds.append(
+                {
+                    "market": "Match Winner",
+                    "lines": [line],
+                }
+            )
 
     # Live odds are tennis-only for this scraper. Football pages can expose
     # in-play tabs, but we intentionally do not scrape them.
@@ -2635,17 +2930,18 @@ def scrape_match(driver, match_info, sport=None):
                 f"Finished football match has no score (match_id={match_id})"
             )
         result = {
-            "sport":      sport,
-            "id":         match_id,
-            "home":       home,
-            "away":       away,
+            "sport": sport,
+            "id": match_id,
+            "source_event_id": meta.get("event_id", ""),
+            "home": home,
+            "away": away,
             "tournament": league,
-            "date":       date,
-            "url":        url,
-            "status":              football_status,
-            "score":      football_score,
-            "odds":       odds,
-            "stats":      stats,
+            "date": date,
+            "url": url,
+            "status": football_status,
+            "score": football_score,
+            "odds": odds,
+            "stats": stats,
             "stats_source": "Live Stats" if stats else "",
             "scraped_at": now_iso(),
         }
@@ -2664,26 +2960,26 @@ def scrape_match(driver, match_info, sport=None):
         return result
 
     result = {
-        "sport":      sport,
-        "id":         match_id,
-        "home":       home,
-        "away":       away,
+        "sport": sport,
+        "id": match_id,
+        "home": home,
+        "away": away,
         "tournament": league,
-        "round":      meta.get("round", ""),
-        "date":       date,
-        "url":        url,
-        "home_rank":  meta.get("home_rank", ""),
-        "away_rank":  meta.get("away_rank", ""),
-        "category":   meta.get("category", ""),
-        "status":              meta.get("status", ""),
-        "winner":              meta.get("winner", ""),
-        "result_unavailable":  meta.get("result_unavailable", False),
-        "home_sets":           home_sets,
-        "away_sets":           away_sets,
-        "set_scores":          set_scores,
-        "odds":                odds,
-        "live_odds":  live_odds,
-        "stats":      stats,
+        "round": meta.get("round", ""),
+        "date": date,
+        "url": url,
+        "home_rank": meta.get("home_rank", ""),
+        "away_rank": meta.get("away_rank", ""),
+        "category": meta.get("category", ""),
+        "status": meta.get("status", ""),
+        "winner": meta.get("winner", ""),
+        "result_unavailable": meta.get("result_unavailable", False),
+        "home_sets": home_sets,
+        "away_sets": away_sets,
+        "set_scores": set_scores,
+        "odds": odds,
+        "live_odds": live_odds,
+        "stats": stats,
         "point_by_point": point_by_point,
         "overall_stats": overall_stats,
         "scraped_at": now_iso(),
@@ -2714,56 +3010,67 @@ def _build_result_from_listing(match_info, sport=None):
     do = match_info.get("draw_odds", "")
     ao = match_info.get("away_odds", "")
     if ho and ao:
-        line = {"type": "main", "label": "", "home": float(ho), "away": float(ao)}
+        line = {
+            "type": "main",
+            "label": _FOOTBALL_DEFAULT_LINE_LABEL,
+            "home": float(ho),
+            "away": float(ao),
+        }
         if do:
             line["draw"] = float(do)
-        odds.append({
-            "market": "Match Winner",
-            "lines": [line],
-        })
+        odds.append(
+            {
+                "market": "Match Winner",
+                "lines": [line],
+            }
+        )
 
     if sport == "football":
         return {
-            "sport":      sport,
-            "id":         match_info["id"],
-            "home":       match_info.get("home", ""),
-            "away":       match_info.get("away", ""),
-            "tournament": match_info.get("league_name", match_info.get("tournament", match_info.get("league", ""))),
-            "date":       match_info.get("date", ""),
-            "url":        match_info.get("full_url", match_info.get("url", "")),
-            "status":              match_info.get("status", ""),
+            "sport": sport,
+            "id": match_info["id"],
+            "home": match_info.get("home", ""),
+            "away": match_info.get("away", ""),
+            "tournament": match_info.get(
+                "league_name", match_info.get("tournament", match_info.get("league", ""))
+            ),
+            "date": match_info.get("date", ""),
+            "url": match_info.get("full_url", match_info.get("url", "")),
+            "status": match_info.get("status", ""),
             "score": {
                 "home": match_info.get("home_score", ""),
                 "away": match_info.get("away_score", ""),
                 "winner": "",
             },
-            "odds":       odds,
-            "stats":      [],
+            "odds": odds,
+            "stats": [],
             "stats_source": "",
             "scraped_at": now_iso(),
         }
 
     return {
-        "sport":      sport,
-        "id":         match_info["id"],
-        "home":       match_info.get("home", ""),
-        "away":       match_info.get("away", ""),
-        "tournament": match_info.get("league_name", match_info.get("tournament", match_info.get("league", ""))),
-        "round":      "",
-        "date":       match_info.get("date", ""),
-        "url":        match_info.get("full_url", match_info.get("url", "")),
-        "home_rank":  "",
-        "away_rank":  "",
-        "category":   "",
-        "status":              match_info.get("status", ""),
-        "winner":              "",
-        "result_unavailable":  False,
-        "home_sets":           "",
-        "away_sets":           "",
-        "set_scores":          None,
-        "odds":                odds,
-        "live_odds":  [],
-        "stats":      [],
+        "sport": sport,
+        "id": match_info["id"],
+        "home": match_info.get("home", ""),
+        "away": match_info.get("away", ""),
+        "tournament": match_info.get(
+            "league_name", match_info.get("tournament", match_info.get("league", ""))
+        ),
+        "round": "",
+        "date": match_info.get("date", ""),
+        "url": match_info.get("full_url", match_info.get("url", "")),
+        "home_rank": "",
+        "away_rank": "",
+        "category": "",
+        "status": match_info.get("status", ""),
+        "winner": "",
+        "result_unavailable": False,
+        "home_sets": "",
+        "away_sets": "",
+        "set_scores": None,
+        "odds": odds,
+        "live_odds": [],
+        "stats": [],
         "point_by_point": [],
         "overall_stats": {"tabs": []},
         "scraped_at": now_iso(),

@@ -16,7 +16,7 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 from src.oddspedia.scraping.config import BASE_URL, get_sport_listing_url, normalize_sport
-from src.oddspedia.scraping.utils import safe_get
+from src.oddspedia.scraping.utils import pin_oddspedia_event_url, safe_get
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
 from selenium.common.exceptions import WebDriverException
@@ -1429,12 +1429,15 @@ def _extract_matches_vuex(driver, sport="football"):
 def _build_urls(matches, sport="football"):
     sport = normalize_sport(sport)
     for m in matches.values():
+        match_id = str(m.get("matchId") or m.get("id") or "")
         if m.get("url") and m.get("full_url"):
             if not m["full_url"].startswith("http"):
                 m["full_url"] = BASE_URL + m["full_url"]
+            if sport == "football":
+                m["url"] = pin_oddspedia_event_url(m["url"], match_id)
+                m["full_url"] = pin_oddspedia_event_url(m["full_url"], match_id)
             continue
         match_key = m.get("matchKey", "")
-        match_id = str(m.get("matchId", ""))
         if match_key and match_id:
             path = f"/{sport}/{match_key}-{match_id}"
         elif match_key:
@@ -1445,6 +1448,9 @@ def _build_urls(matches, sport="football"):
             continue
         m["url"] = path
         m["full_url"] = BASE_URL + path
+        if sport == "football":
+            m["url"] = pin_oddspedia_event_url(m["url"], match_id)
+            m["full_url"] = pin_oddspedia_event_url(m["full_url"], match_id)
 
 
 def _merge_league_names(matches, league_matches, overwrite=False, sport="football"):
@@ -1658,6 +1664,11 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
         m.setdefault("league_slug", "")
         m["league_name"] = _match_league_name(m)
         m["sport"] = sport
+        if sport == "football":
+            # Structured-event enrichment may replace the canonical slug after
+            # _build_urls(), so pin the final persisted URLs as well.
+            m["url"] = pin_oddspedia_event_url(m.get("url", ""), m["id"])
+            m["full_url"] = pin_oddspedia_event_url(m.get("full_url", ""), m["id"])
         m.pop("homeSlug", None)
         m.pop("awaySlug", None)
         m.pop("matchStatus", None)
