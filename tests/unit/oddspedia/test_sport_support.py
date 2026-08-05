@@ -170,9 +170,9 @@ class MatchCollectorUrlTests(unittest.TestCase):
 
         _build_urls(matches, sport="football")
 
-        self.assertEqual(matches["1"]["url"], "/football/arsenal-chelsea-1")
-        self.assertEqual(matches["1"]["full_url"], f"{BASE_URL}/football/arsenal-chelsea-1")
-        self.assertEqual(matches["2"]["url"], "/football/legacy-2")
+        self.assertEqual(matches["1"]["url"], "/football/arsenal-chelsea-1?m=1")
+        self.assertEqual(matches["1"]["full_url"], f"{BASE_URL}/football/arsenal-chelsea-1?m=1")
+        self.assertEqual(matches["2"]["url"], "/football/legacy-2?m=2")
 
     def test_save_json_validates_match_links_list(self):
         data = [

@@ -62,12 +62,14 @@ page scraping.
   coverage tier (`xG`, `ratings`, or `lower`). `ambiguous` and `unresolved`
   are never automatic scrape candidates.
 - `scrape_matches.py` and `run_pipeline.py` select from the priority artifact
-  using `--priority-tier {xG,ratings,lower,unmatched}`. The selection is inclusive:
+  using `--priority-tier {xG,ratings,lower,unmatched}`. A standalone scrape
+  automatically creates or refreshes the artifact before selecting links. The
+  selection is inclusive:
   `ratings` includes `xG`, `lower` includes every uniquely matched tier, and
   `unmatched` includes every eligible tier plus unmatched links. The default
   is `lower`.
 - `run_pipeline.py` performs `discover -> prioritize -> scrape`. A priority-selected
-  scrape refuses a missing or stale priority artifact whose source-inventory
+  scrape refreshes a missing or stale priority artifact whose source-inventory
   checksum or matcher rule version no longer matches `match_links.json` and
   the active resolver policy.
 - When a new matcher version expands a priority selection, the scraper treats
@@ -130,8 +132,8 @@ Costs:
   every priority-selected scrape.
 - Existing callers should migrate from the deprecated wrappers to the
   phase-specific scripts during the compatibility period.
-- A policy change invalidates older priority artifacts; regenerate them before
-  a priority-selected scrape.
+- A policy change invalidates older priority artifacts; a priority-selected
+  scrape regenerates them before selecting links.
 
 Follow-up constraints:
 

@@ -1,5 +1,6 @@
-from pydantic import BaseModel, field_validator, ConfigDict
-from typing import Optional, List, Union, Any, Dict
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class OddsLine(BaseModel):
@@ -26,6 +27,7 @@ class MatchResult(BaseModel):
 
     sport: Optional[str] = "football"
     id: str
+    source_event_id: Optional[str] = ""
     home: str
     away: str
     tournament: str
@@ -36,6 +38,7 @@ class MatchResult(BaseModel):
     away_rank: Optional[str] = ""
     category: Optional[str] = ""
     status: str = ""
+    odds_unavailable: bool = False
     winner: Optional[str] = ""
     home_sets: Optional[str] = ""
     away_sets: Optional[str] = ""
