@@ -1,4 +1,6 @@
-from src.oddspedia.scraping.manifest import ScrapeManifest
+import pytest
+
+from src.oddspedia.scraping.manifest import ManifestCorruptError, ScrapeManifest, load_manifest
 
 
 def test_manifest_round_trips_priority_run_summary():
@@ -15,3 +17,14 @@ def test_manifest_round_trips_priority_run_summary():
 
     assert restored.priority_run["selected_priority"] == "lower"
     assert restored.priority_run["selected_count"] == 7
+
+
+def test_corrupt_manifest_is_fail_closed(monkeypatch, tmp_path):
+    path = tmp_path / "manifest.json"
+    path.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr(
+        "src.oddspedia.scraping.manifest.get_manifest_path", lambda *_args, **_kwargs: str(path)
+    )
+
+    with pytest.raises(ManifestCorruptError):
+        load_manifest("20260301")

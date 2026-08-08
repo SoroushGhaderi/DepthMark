@@ -1,5 +1,5 @@
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -82,7 +82,7 @@ def get_storage_aspect(date_str: str, current_date: Optional[date] = None) -> st
     current date is a refreshable Live snapshot; future dates are rejected.
     """
     target_date = datetime.strptime(normalize_date(date_str), "%Y%m%d").date()
-    today = current_date or datetime.now().date()
+    today = current_date or datetime.now(timezone.utc).date()
     if target_date > today:
         raise ValueError(f"future dates cannot be collected: {date_str}")
     return "live" if target_date == today else "historical"
@@ -91,7 +91,9 @@ def get_storage_aspect(date_str: str, current_date: Optional[date] = None) -> st
 def get_date_dir(date_str=None, sport=None):
     """Return the root directory for a date's storage aspect."""
     normalize_sport(sport)
-    date_id = normalize_date(date_str or datetime.now().strftime("%Y%m%d"))
+    date_id = normalize_date(
+        date_str or datetime.now(timezone.utc).strftime("%Y%m%d")
+    )
     return LIVE_DIR if get_storage_aspect(date_id) == "live" else HISTORICAL_DIR
 
 
@@ -106,7 +108,9 @@ def get_match_links_file(date_str=None, sport=None):
     """Return the match-links JSON path for a given date.
     e.g. data/oddspedia/historical/daily_listings/202602/20260227/match_links.json
     """
-    date_id = normalize_date(date_str or datetime.now().strftime("%Y%m%d"))
+    date_id = normalize_date(
+        date_str or datetime.now(timezone.utc).strftime("%Y%m%d")
+    )
     return os.path.join(
         _get_artifact_date_dir("daily_listings", date_id, sport), "match_links.json"
     )
@@ -151,7 +155,9 @@ def get_matches_dir(date_str=None, sport=None):
     """Return the per-match JSON directory for a given date.
     e.g. data/oddspedia/historical/matches/202602/20260227/
     """
-    date_id = normalize_date(date_str or datetime.now().strftime("%Y%m%d"))
+    date_id = normalize_date(
+        date_str or datetime.now(timezone.utc).strftime("%Y%m%d")
+    )
     return _get_artifact_date_dir("matches", date_id, sport)
 
 

@@ -58,7 +58,30 @@ Oddspedia audit and Bronze loader read both archive members and any new plain
 JSON files; a later priority expansion merges its newly scraped files into the
 existing date archive.
 
-Key classes:
+### Oddspedia Bronze admission and publication
+
+Oddspedia Bronze loading is a source-specific, date-scoped transaction rather
+than a row-by-row append. `load_bronze.py` admits a date only when its discovery
+manifest is accepted, the inventory checksum matches, scraping is terminal, and
+every selected payload passes the rendered-event audit. It stages
+`oddspedia_bronze.event`, `oddspedia_bronze.match_payload`, and
+`oddspedia_bronze.market`, validates the staged date counts, then replaces the
+target ClickHouse partition. The batch marker in
+`oddspedia_bronze.load_status` is written as `staging` before replacement,
+`published` after every table succeeds, or `failed` with the error context.
+`resolve_events.py` consumes only a published date.
+
+```bash
+python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
+python3 scripts/oddspedia/load_bronze.py --month 202603 --dry-run
+```
+
+The loader is intentionally fail-closed for legacy manifests without a
+checksum; run discovery again before loading those dates. Month loads continue
+through independent dates but exit non-zero if any date fails admission or
+publication.
+
+FotMob key classes:
 - `BaseScraper` — retry, rate limiting, health checks
 - `MatchScraper(BaseScraper)` — match detail fetching
 - `DailyScraper(BaseScraper)` — daily listing fetching

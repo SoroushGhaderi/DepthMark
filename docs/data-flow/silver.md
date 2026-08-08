@@ -26,6 +26,23 @@ bronze.* (15 tables)
   → silver.* (8 tables)
 ```
 
+## Oddspedia Silver resolution boundary
+
+The current Oddspedia Silver implementation is the explicit relationship
+`silver.oddspedia_match_resolution`. Before it reads Oddspedia facts,
+`resolve_events.py` requires the date's latest
+`oddspedia_bronze.load_status` row to be `published`; `staging` and `failed`
+batches are not valid Silver input. When the operator supplies
+`--silver-reference-window-ready`, the resolver also machine-verifies exact
+FotMob fixture-ID set equality between `bronze.match_reference` and
+`silver.match` for the previous, current, and following UTC dates. The flag is
+an operator assertion that enables the check; it does not replace the check.
+
+```bash
+python3 scripts/oddspedia/resolve_events.py --date 20260301 --silver-reference-window-ready --dry-run
+python3 scripts/oddspedia/resolve_events.py --month 202603 --silver-reference-window-ready --dry-run
+```
+
 Silver SQL lives under `clickhouse/silver/`:
 - `ddl/` — table creation (8 tables + `00_create_database.sql` + `99_all_tables.sql`)
 - `dml/` — INSERT...SELECT from Bronze (8 scripts)

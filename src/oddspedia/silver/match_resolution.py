@@ -12,10 +12,110 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import yaml
 
-from src.integrations.clickhouse.client import ClickHouseClient
 from src.common.logging import get_logger
+from src.integrations.clickhouse.client import ClickHouseClient
 
 logger = get_logger(__name__)
+
+
+class ReferenceWindowNotReadyError(RuntimeError):
+    """Raised when FotMob Bronze and Silver do not prove a complete date window."""
+
+
+class OddspediaBronzeNotPublishedError(RuntimeError):
+    """Raised when an Oddspedia date has no published Bronze batch marker."""
+
+
+@dataclass(frozen=True)
+class ReferenceWindowVerification:
+    """Machine-verifiable reconciliation evidence for the FotMob reference window."""
+
+    dates: Tuple[date, ...]
+    bronze_counts: Dict[date, int]
+    silver_counts: Dict[date, int]
+    missing_dates: Tuple[date, ...]
+    mismatched_dates: Tuple[date, ...]
+
+    @property
+    def complete(self) -> bool:
+        return not self.missing_dates and not self.mismatched_dates
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {
+            "verified": self.complete,
+            "dates": [value.strftime("%Y%m%d") for value in self.dates],
+            "bronze_counts": {
+                value.strftime("%Y%m%d"): self.bronze_counts.get(value, 0) for value in self.dates
+            },
+            "silver_counts": {
+                value.strftime("%Y%m%d"): self.silver_counts.get(value, 0) for value in self.dates
+            },
+        }
+
+
+class FotMobReferenceWindowVerifier:
+    """Verify exact ID reconciliation between FotMob Bronze and Silver dates."""
+
+    def __init__(self, client: ClickHouseClient):
+        self.client = client
+
+    def verify(self, dates: Iterable[date]) -> ReferenceWindowVerification:
+        expected_dates = tuple(sorted(set(dates)))
+        if not expected_dates:
+            raise ValueError("FotMob reference verification requires at least one date")
+        parameters = {
+            "start": expected_dates[0].isoformat(),
+            "end": expected_dates[-1].isoformat(),
+        }
+        bronze_rows = self.client.execute(
+            """
+            /* oddspedia_reference_window:bronze */
+            SELECT match_id, match_date
+            FROM bronze.match_reference FINAL
+            WHERE match_date BETWEEN {start:Date} AND {end:Date}
+            """,
+            parameters=parameters,
+        ).result_rows
+        silver_rows = self.client.execute(
+            """
+            /* oddspedia_reference_window:silver */
+            SELECT match_id, match_date
+            FROM silver.match FINAL
+            WHERE match_date BETWEEN {start:Date} AND {end:Date}
+            """,
+            parameters=parameters,
+        ).result_rows
+
+        bronze_ids = _ids_by_date(bronze_rows, expected_dates)
+        silver_ids = _ids_by_date(silver_rows, expected_dates)
+        missing_dates = tuple(value for value in expected_dates if not bronze_ids[value])
+        mismatched_dates = tuple(
+            value
+            for value in expected_dates
+            if bronze_ids[value] and bronze_ids[value] != silver_ids[value]
+        )
+        return ReferenceWindowVerification(
+            dates=expected_dates,
+            bronze_counts={value: len(bronze_ids[value]) for value in expected_dates},
+            silver_counts={value: len(silver_ids[value]) for value in expected_dates},
+            missing_dates=missing_dates,
+            mismatched_dates=mismatched_dates,
+        )
+
+    def require_complete(self, dates: Iterable[date]) -> ReferenceWindowVerification:
+        verification = self.verify(dates)
+        if verification.complete:
+            return verification
+        missing = ", ".join(value.isoformat() for value in verification.missing_dates)
+        mismatched = ", ".join(value.isoformat() for value in verification.mismatched_dates)
+        details = []
+        if missing:
+            details.append(f"missing Bronze dates: {missing}")
+        if mismatched:
+            details.append(f"Bronze/Silver ID mismatch: {mismatched}")
+        raise ReferenceWindowNotReadyError(
+            "FotMob Silver reference window is not ready: " + "; ".join(details)
+        )
 
 
 @dataclass(frozen=True)
@@ -385,8 +485,12 @@ class OddspediaResolutionService:
         reference_window_complete: bool,
         persist: bool = True,
     ) -> List[ResolutionResult]:
+        self._require_bronze_published(discovery_date)
+        reference_dates = self.resolver.candidate_dates(discovery_date)
+        if reference_window_complete:
+            FotMobReferenceWindowVerifier(self.client).require_complete(reference_dates)
         events = self._load_events(discovery_date)
-        matches = self._load_fotmob_matches(self.resolver.candidate_dates(discovery_date))
+        matches = self._load_fotmob_matches(reference_dates)
         index = self.resolver.candidate_index(matches)
         results = [
             self.resolver.resolve_from_index(
@@ -397,6 +501,22 @@ class OddspediaResolutionService:
         if persist:
             self._persist(results)
         return results
+
+    def _require_bronze_published(self, discovery_date: date) -> None:
+        query = """
+            SELECT status
+            FROM oddspedia_bronze.load_status FINAL
+            WHERE load_date = {date:Date}
+        """
+        rows = self.client.execute(
+            query, parameters={"date": discovery_date.isoformat()}
+        ).result_rows
+        if rows and str(rows[0][0]) == "published":
+            return
+        status = str(rows[0][0]) if rows else "missing"
+        raise OddspediaBronzeNotPublishedError(
+            f"Oddspedia Bronze batch is not published for {discovery_date.isoformat()}: {status}"
+        )
 
     def _load_events(self, discovery_date: date) -> List[OddspediaEvent]:
         query = """
@@ -457,6 +577,23 @@ class OddspediaResolutionService:
 def _load_yaml(path: Path) -> Dict[str, Any]:
     with path.open(encoding="utf-8") as source:
         return yaml.safe_load(source) or {}
+
+
+def _ids_by_date(
+    rows: Iterable[Tuple[Any, Any]], expected_dates: Tuple[date, ...]
+) -> Dict[date, set]:
+    expected = set(expected_dates)
+    result = {value: set() for value in expected_dates}
+    for match_id, raw_date in rows:
+        if isinstance(raw_date, datetime):
+            row_date = raw_date.date()
+        elif isinstance(raw_date, date):
+            row_date = raw_date
+        else:
+            row_date = date.fromisoformat(str(raw_date))
+        if row_date in expected:
+            result[row_date].add(int(match_id))
+    return result
 
 
 def _simple_text(value: str) -> str:

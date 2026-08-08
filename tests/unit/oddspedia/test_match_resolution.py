@@ -1,10 +1,14 @@
 from datetime import date, datetime
 from pathlib import Path
 
+import pytest
+
 from src.oddspedia.silver.match_resolution import (
     FotMobMatch,
     OddspediaEvent,
+    OddspediaBronzeNotPublishedError,
     OddspediaMatchResolver,
+    OddspediaResolutionService,
 )
 
 
@@ -318,3 +322,14 @@ def test_does_not_use_two_unique_tokens_without_an_exact_or_alias_anchor():
     )
 
     assert result.resolution_status == "unmatched"
+
+
+def test_resolution_requires_a_published_oddspedia_bronze_batch():
+    class _UnpublishedClient:
+        def execute(self, query, parameters):
+            return type("Result", (), {"result_rows": [("staging",)]})()
+
+    with pytest.raises(OddspediaBronzeNotPublishedError):
+        OddspediaResolutionService(_UnpublishedClient(), resolver()).resolve_date(
+            date(2026, 3, 1), reference_window_complete=False, persist=False
+        )
