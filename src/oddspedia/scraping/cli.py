@@ -16,6 +16,7 @@ Alternatively (after ``pip install -e .``):
 
 import argparse
 import calendar
+from contextlib import nullcontext
 import os
 import sys
 import threading
@@ -30,7 +31,7 @@ import random
 import shutil
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from selenium.common.exceptions import (
@@ -45,6 +46,7 @@ from src.oddspedia.scraping.audit import (
     audit_date,
     audit_match_json,
     audit_match_payload,
+    require_accepted_match_json,
     sync_manifest_incomplete,
 )
 from src.oddspedia.scraping.config import (
@@ -70,6 +72,7 @@ from src.oddspedia.scraping.link_prioritization import (
     priority_run_summary,
     save_priority_artifact,
     select_links_for_priority,
+    source_inventory_checksum,
 )
 from src.oddspedia.scraping.logging import configure_logging, get_logger
 from src.oddspedia.scraping.manifest import (
@@ -86,6 +89,7 @@ from src.oddspedia.scraping.match_scraper import (
     scrape_match,
 )
 from src.oddspedia.scraping.metrics import get_metrics, reset_metrics
+from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.scraping.storage import (
     compress_date_files,
@@ -101,6 +105,7 @@ CIRCUIT_BREAKER_FAILURES_BEFORE_PAUSE = 5
 CIRCUIT_BREAKER_COOLDOWN_SECONDS = 120
 CIRCUIT_BREAKER_PAUSE_CYCLES_BEFORE_ABORT = 3
 FOOTBALL_SKIP_STATUSES = {"POSTPONED", "CANCELLED", "CANCELED", "ABANDONED", "SUSPENDED"}
+ACCEPTED_DISCOVERY_STATUSES = {"accepted", "no_events"}
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -450,6 +455,9 @@ def _record_discovery(date_str, sport, discovery, snapshot=""):
     """Store date-level discovery acceptance or recovery evidence."""
     payload = discovery.to_dict()
     payload["snapshot"] = snapshot
+    payload["inventory_checksum"] = source_inventory_checksum(
+        _as_match_list(discovery.matches)
+    )
     manifest = load_manifest(date_str, sport=sport)
     if manifest is None:
         manifest = create_manifest(date_str, 0, sport=sport)
@@ -459,9 +467,13 @@ def _record_discovery(date_str, sport, discovery, snapshot=""):
 
 def _needs_discovery_retry(date_str, sport: str) -> bool:
     manifest = load_manifest(date_str, sport=sport)
-    if manifest and manifest.discovery.get("status") == "rescrape_candidate":
+    if manifest is None:
         return True
-    if manifest and manifest.incomplete:
+    if manifest.discovery.get("status") == "rescrape_candidate":
+        return True
+    if manifest.discovery.get("status") not in ACCEPTED_DISCOVERY_STATUSES:
+        return True
+    if manifest.incomplete:
         logger.info(
             "incomplete_matches_require_link_refresh",
             sport=sport,
@@ -470,9 +482,20 @@ def _needs_discovery_retry(date_str, sport: str) -> bool:
         )
         return True
     links_file = get_match_links_file(date_str, sport=sport)
-    return os.path.exists(links_file) and not _existing_inventory_matches_target(
-        links_file, date_str
-    )
+    if not os.path.exists(links_file):
+        return False
+    if not _existing_inventory_matches_target(links_file, date_str, sport=sport):
+        return True
+    try:
+        links = _as_match_list(load_json(links_file))
+        discovery = manifest.discovery or {}
+        return bool(links) and (
+            int(discovery.get("match_count", -1)) != len(links)
+            or discovery.get("inventory_checksum") != source_inventory_checksum(links)
+        )
+    except Exception as exc:
+        logger.warning("discovery_inventory_validation_failed", date=date_str, error=str(exc))
+        return True
 
 
 def _as_match_list(matches):
@@ -482,14 +505,46 @@ def _as_match_list(matches):
     return list(matches or [])
 
 
-def _existing_inventory_matches_target(links_file, date_str) -> bool:
-    """Reject an on-disk inventory if it was saved from another listing date."""
+def _existing_inventory_matches_target(links_file, date_str, sport: str = "football") -> bool:
+    """Validate an on-disk inventory, including an explicitly confirmed empty day."""
     if not os.path.exists(links_file):
         return False
     try:
-        return listing_matches_target_date(_as_match_list(load_json(links_file)), date_str)
+        links = _as_match_list(load_json(links_file))
+        if links:
+            return listing_matches_target_date(links, date_str)
+        manifest = load_manifest(date_str, sport=sport)
+        discovery = manifest.discovery if manifest else {}
+        return (
+            manifest is not None
+            and normalize_date(manifest.date) == normalize_date(date_str)
+            and discovery.get("status") == "no_events"
+            and bool(discovery.get("empty_confirmed"))
+            and int(discovery.get("match_count", -1)) == 0
+            and discovery.get("inventory_checksum") == source_inventory_checksum([])
+        )
     except Exception as exc:
         logger.warning("existing_inventory_unreadable", links_file=links_file, error=str(exc))
+        return False
+
+
+def _discovery_is_accepted(date_str: str, sport: str = "football") -> bool:
+    """Return whether the manifest has an authoritative result for a date."""
+    manifest = load_manifest(date_str, sport=sport)
+    if not manifest or manifest.discovery.get("status") not in ACCEPTED_DISCOVERY_STATUSES:
+        return False
+    links_file = get_match_links_file(date_str, sport=sport)
+    if not _existing_inventory_matches_target(links_file, date_str, sport=sport):
+        return False
+    try:
+        links = _as_match_list(load_json(links_file))
+        discovery = manifest.discovery or {}
+        return not links or (
+            int(discovery.get("match_count", -1)) == len(links)
+            and discovery.get("inventory_checksum") == source_inventory_checksum(links)
+        )
+    except Exception as exc:
+        logger.warning("accepted_discovery_validation_failed", date=date_str, error=str(exc))
         return False
 
 
@@ -506,7 +561,7 @@ def phase1_collect(
     if (
         os.path.exists(links_file)
         and not force
-        and _existing_inventory_matches_target(links_file, date_str)
+        and _existing_inventory_matches_target(links_file, date_str, sport=sport)
         and not _needs_discovery_retry(date_str, sport)
     ):
         matches = _as_match_list(load_json(links_file))
@@ -533,9 +588,11 @@ def phase1_collect(
         reuse_listing=reuse_listing,
         return_result=True,
     )
-    # A stalled external listing is frequently transient. Retry once from a
-    # fresh page before turning this Sport-Date Run into a Rescrape Candidate.
+    # A stalled listing or date control is frequently transient. Retry once
+    # from a fresh page before turning this Sport-Date Run into a Rescrape
+    # Candidate.
     if not discovery.complete and {
+        "date_navigation_failed",
         "pagination_stalled",
         "listing_target_date_missing",
     }.intersection(discovery.anomalies):
@@ -549,6 +606,17 @@ def phase1_collect(
         )
     matches = _as_match_list(discovery.matches)
     if not matches:
+        if discovery.complete and discovery.empty_confirmed:
+            save_json([], links_file)
+            _record_discovery(date_str, sport, discovery)
+            logger.info(
+                "event_discovery_no_events",
+                sport=sport,
+                date=date_str,
+                expected_pages=discovery.expected_pages,
+                observed_pages=discovery.observed_pages,
+            )
+            return []
         snapshot = get_discovery_snapshot_file(date_str, sport=sport)
         save_json([], snapshot)
         _record_discovery(date_str, sport, discovery, snapshot)
@@ -613,10 +681,12 @@ def prioritize_date(
     links_file = get_match_links_file(date_str, sport=sport)
     if not os.path.exists(links_file):
         raise FileNotFoundError(f"Cannot prioritize without source links: {links_file}")
+    if not _discovery_is_accepted(date_str, sport=sport):
+        raise ValueError(f"Cannot prioritize without an accepted discovery inventory: {date_str}")
     links = _as_match_list(source_links) if source_links is not None else _as_match_list(
         load_json(links_file)
     )
-    if not listing_matches_target_date(links, date_str):
+    if links and not listing_matches_target_date(links, date_str):
         raise ValueError(f"Source links do not target {date_str}: {links_file}")
 
     client, service = _create_priority_service()
@@ -961,6 +1031,13 @@ def _phase2_scrape_sequential(
             try:
                 match_data = scrape_match(driver, match_info, sport=sport)
                 save_json(match_data, out_path)
+                require_accepted_match_json(
+                    date_str,
+                    match_id,
+                    out_path,
+                    sport=sport,
+                    expected_match=match_info,
+                )
 
                 manifest = outcome_checkpoint.done(match_id)
 
@@ -1061,6 +1138,7 @@ def _phase2_scrape_sequential(
         duration_seconds=duration_seconds,
         **progress_reporter.snapshot(),
     )
+    return manifest
 
 
 def _phase2_scrape_concurrent(
@@ -1207,13 +1285,44 @@ def _phase2_scrape_concurrent(
     failed_count = 0
     circuit_breaker = _CircuitBreaker(metrics)
 
+    def _fail_unresolved_batch(batch, reason: str) -> int:
+        """Persist a retryable failure for every batch item without a terminal outcome."""
+        current = load_manifest(date_str, sport=sport)
+        if current is None:
+            raise RuntimeError(f"Cannot recover worker batch without manifest: {sport} {date_str}")
+        terminal_ids = (
+            set(map(str, current.done))
+            | set(map(str, current.skipped))
+            | set(map(str, current.failed))
+            | set(map(str, current.incomplete))
+        )
+        recovered = 0
+        for match_info in batch:
+            match_id = _match_id(match_info)
+            if match_id in terminal_ids:
+                continue
+            outcome_checkpoint.failed(match_id)
+            progress_reporter.record("failed", match_id)
+            metrics.record_scrape_error(reason)
+            terminal_ids.add(match_id)
+            recovered += 1
+        if recovered:
+            logger.error(
+                "worker_batch_recovered_as_failed",
+                reason=reason,
+                recovered=recovered,
+            )
+        return recovered
+
     def _worker_task(batch, worker_id, driver):
         """Long-lived worker: owns one Chrome instance, processes its batch."""
         worker_results = []
         if driver is None:
             logger.error("worker_no_driver", worker=worker_id)
             for match_info in batch:
-                progress_reporter.record("failed", _match_id(match_info))
+                match_id = _match_id(match_info)
+                outcome_checkpoint.failed(match_id)
+                progress_reporter.record("failed", match_id)
             return [
                 (match_id, False, "driver_init_failed")
                 for match_info in batch
@@ -1260,6 +1369,13 @@ def _phase2_scrape_concurrent(
                     try:
                         match_data = scrape_match(driver, match_info, sport=sport)
                         save_json(match_data, out_path)
+                        require_accepted_match_json(
+                            date_str,
+                            match_id,
+                            out_path,
+                            sport=sport,
+                            expected_match=match_info,
+                        )
                         outcome_checkpoint.done(match_id)
                         worker_results.append((match_id, True, None))
                         logger.info("concurrent_match_success", worker=worker_id, match_id=match_id)
@@ -1343,12 +1459,12 @@ def _phase2_scrape_concurrent(
     completed_futures = 0
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {
-            pool.submit(_worker_task, batch, wid, worker_drivers[wid]): wid
+            pool.submit(_worker_task, batch, wid, worker_drivers[wid]): (wid, batch)
             for wid, batch in enumerate(batches)
             if batch
         }
         for future in as_completed(futures):
-            wid = futures[future]
+            wid, batch = futures[future]
             try:
                 results = future.result()
                 for match_id, success, err in results:
@@ -1357,9 +1473,11 @@ def _phase2_scrape_concurrent(
                     elif success is False:
                         failed_count += 1
                 completed_futures += 1
+                failed_count += _fail_unresolved_batch(batch, "worker_incomplete_batch")
                 logger.info("worker_finished", worker=wid, count=len(results))
             except Exception as e:
                 logger.error("worker_crashed", worker=wid, error=str(e))
+                failed_count += _fail_unresolved_batch(batch, "worker_crashed")
 
     update_manifest(date_str, lambda m: m.clear_in_progress(), sport=sport)
     manifest = load_manifest(date_str, sport=sport) or manifest
@@ -1419,14 +1537,14 @@ def _resolve_dates(args):
     if args.month:
         dates = _dates_for_month(args.month)
     else:
-        date_str = args.date or datetime.now().strftime("%Y%m%d")
+        date_str = args.date or datetime.now(timezone.utc).strftime("%Y%m%d")
         try:
             dates = [normalize_date(date_str)]
         except ValueError:
             logger.error("invalid_date_format", date=date_str)
             sys.exit(1)
 
-    today = datetime.now().date()
+    today = datetime.now(timezone.utc).date()
     selected_dates = [datetime.strptime(date_str, "%Y%m%d").date() for date_str in dates]
     if any(selected_date > today for selected_date in selected_dates):
         logger.error("future_collection_date", dates=dates, today=today.strftime("%Y%m%d"))
@@ -1698,7 +1816,7 @@ def main(
     # Persist every terminal event alongside the data being scraped. A month
     # run receives its own directory because its events span multiple dates.
     log_date = dates[0]
-    run_started_at = datetime.now()
+    run_started_at = datetime.now(timezone.utc)
     run_id = run_started_at.strftime("%Y%m%dT%H%M%S")
     run_dir = get_run_logs_dir(log_date, sport=sport)
     log_path = None if args.dry_run else os.path.join(run_dir, f"run_{run_id}.log")
@@ -1738,6 +1856,16 @@ def main(
     driver = None
     try:
 
+        def date_operation(date_str):
+            """Serialize mutating work for one sport/date across processes."""
+            if args.dry_run:
+                return nullcontext()
+            return oddspedia_date_lock(
+                date_str,
+                sport=sport,
+                operation=command,
+            )
+
         def ensure_driver():
             nonlocal driver
             if driver is None:
@@ -1749,132 +1877,183 @@ def main(
 
         if command == "prioritize":
             for date_str in dates:
-                prioritize_date(
-                    date_str,
-                    priority=args.priority,
-                    dry_run=args.dry_run,
-                    sport=sport,
-                )
+                with date_operation(date_str):
+                    prioritize_date(
+                        date_str,
+                        priority=args.priority,
+                        dry_run=args.dry_run,
+                        sport=sport,
+                    )
             return
 
         if command == "discover":
             listing_ready = False
+            failed_dates = []
             for date_str in dates:
-                refresh_inventory = _needs_discovery_retry(date_str, sport)
-                if args.retry == "incomplete" and not refresh_inventory:
-                    logger.info("discovery_retry_not_needed", sport=sport, date=date_str)
-                    continue
-                links_file = get_match_links_file(date_str, sport=sport)
-                inventory_valid = _existing_inventory_matches_target(links_file, date_str)
-                collect_driver = (
-                    None if inventory_valid and not refresh_inventory else ensure_driver()
-                )
-                matches = phase1_collect(
-                    collect_driver,
-                    date_str,
+                with date_operation(date_str):
+                    refresh_inventory = _needs_discovery_retry(date_str, sport)
+                    if args.retry == "incomplete" and not refresh_inventory:
+                        logger.info("discovery_retry_not_needed", sport=sport, date=date_str)
+                        continue
+                    links_file = get_match_links_file(date_str, sport=sport)
+                    inventory_valid = _existing_inventory_matches_target(
+                        links_file, date_str, sport=sport
+                    )
+                    collect_driver = (
+                        None if inventory_valid and not refresh_inventory else ensure_driver()
+                    )
+                    matches = phase1_collect(
+                        collect_driver,
+                        date_str,
+                        sport=sport,
+                        reuse_listing=listing_ready,
+                        force=refresh_inventory or args.retry == "incomplete",
+                    )
+                    # Existing inventories do not change the browser's location.
+                    # Once a discovery succeeds, later dates can stay on this
+                    # listing and change only the date picker.
+                    if collect_driver is not None and matches:
+                        listing_ready = True
+                    if not _discovery_is_accepted(date_str, sport=sport):
+                        failed_dates.append(date_str)
+            if failed_dates:
+                logger.error(
+                    "discovery_dates_failed",
                     sport=sport,
-                    reuse_listing=listing_ready,
-                    force=refresh_inventory or args.retry == "incomplete",
+                    dates=failed_dates,
+                    failed_count=len(failed_dates),
                 )
-                # Existing inventories do not change the browser's location.
-                # Once a discovery succeeds, later dates can stay on this
-                # listing and change only the date picker.
-                if collect_driver is not None and matches:
-                    listing_ready = True
+                sys.exit(1)
             return
 
         if command == "scrape":
             scraped_any = False
+            failed_dates = []
             for date_str in dates:
-                links_file = get_match_links_file(date_str, sport=sport)
-                if not os.path.exists(links_file):
-                    logger.error(
-                        "links_file_not_found",
-                        sport=sport,
-                        links_file=links_file,
-                        date=date_str,
+                with date_operation(date_str):
+                    links_file = get_match_links_file(date_str, sport=sport)
+                    if not os.path.exists(links_file):
+                        logger.error(
+                            "links_file_not_found",
+                            sport=sport,
+                            links_file=links_file,
+                            date=date_str,
+                        )
+                        if not args.month:
+                            sys.exit(1)
+                        failed_dates.append(date_str)
+                        continue
+                    if not _discovery_is_accepted(date_str, sport=sport):
+                        logger.error(
+                            "discovery_not_accepted",
+                            sport=sport,
+                            date=date_str,
+                            links_file=links_file,
+                        )
+                        failed_dates.append(date_str)
+                        continue
+                    source_links = _as_match_list(load_json(links_file))
+                    if not _existing_inventory_matches_target(
+                        links_file, date_str, sport=sport
+                    ):
+                        logger.error(
+                            "links_file_target_date_mismatch",
+                            sport=sport,
+                            date=date_str,
+                            links_file=links_file,
+                        )
+                        failed_dates.append(date_str)
+                        continue
+                    matches = _selected_priority_matches(
+                        date_str, args.priority, sport=sport, source_links=source_links
                     )
-                    if not args.month:
-                        sys.exit(1)
-                    continue
-                source_links = _as_match_list(load_json(links_file))
-                if not listing_matches_target_date(source_links, date_str):
-                    logger.error(
-                        "links_file_target_date_mismatch",
-                        sport=sport,
-                        date=date_str,
-                        links_file=links_file,
-                    )
-                    continue
-                matches = _selected_priority_matches(
-                    date_str, args.priority, sport=sport, source_links=source_links
+                    if matches:
+                        scrape_driver = None if workers > 1 else ensure_driver()
+                        manifest = phase2_scrape(
+                            scrape_driver,
+                            matches,
+                            date_str,
+                            retry_failed=args.retry == "failed",
+                            workers=workers,
+                            sport=sport,
+                            headless=args.headless,
+                            load_resources=args.load_resources,
+                        )
+                        _compress_completed_date(manifest, date_str, sport=sport)
+                    else:
+                        logger.info("priority_selection_empty", sport=sport, date=date_str)
+                    logger.info("scrape_json_complete", sport=sport, date=date_str)
+                    scraped_any = True
+            if failed_dates:
+                logger.error(
+                    "scrape_dates_failed",
+                    sport=sport,
+                    dates=failed_dates,
+                    failed_count=len(failed_dates),
                 )
-                if matches:
-                    scrape_driver = None if workers > 1 else ensure_driver()
-                    manifest = phase2_scrape(
-                        scrape_driver,
-                        matches,
-                        date_str,
-                        retry_failed=args.retry == "failed",
-                        workers=workers,
-                        sport=sport,
-                        headless=args.headless,
-                        load_resources=args.load_resources,
-                    )
-                    _compress_completed_date(manifest, date_str, sport=sport)
-                else:
-                    logger.info("priority_selection_empty", sport=sport, date=date_str)
-                logger.info("scrape_json_complete", sport=sport, date=date_str)
-                scraped_any = True
+                sys.exit(1)
             if not scraped_any:
                 logger.error("no_month_links_found", month=args.month)
                 sys.exit(1)
             return
 
+        failed_dates = []
         for date_str in dates:
-            links_file = get_match_links_file(date_str, sport=sport)
-            refresh_inventory = _needs_discovery_retry(date_str, sport)
-            collect_driver = (
-                None
-                if _existing_inventory_matches_target(links_file, date_str)
-                and not refresh_inventory
-                else ensure_driver()
-            )
-            matches = phase1_collect(
-                collect_driver,
-                date_str,
-                sport=sport,
-                force=refresh_inventory,
-            )
-            if matches:
-                prioritize_date(
-                    date_str,
-                    priority=args.priority,
-                    sport=sport,
-                    source_links=matches,
+            with date_operation(date_str):
+                links_file = get_match_links_file(date_str, sport=sport)
+                refresh_inventory = _needs_discovery_retry(date_str, sport)
+                collect_driver = (
+                    None
+                    if _existing_inventory_matches_target(links_file, date_str, sport=sport)
+                    and not refresh_inventory
+                    else ensure_driver()
                 )
-                selected_matches = _selected_priority_matches(
+                matches = phase1_collect(
+                    collect_driver,
                     date_str,
-                    args.priority,
                     sport=sport,
-                    source_links=matches,
+                    force=refresh_inventory,
                 )
-                if selected_matches:
-                    scrape_driver = None if workers > 1 else ensure_driver()
-                    manifest = phase2_scrape(
-                        scrape_driver,
-                        selected_matches,
+                if matches:
+                    prioritize_date(
                         date_str,
-                        retry_failed=args.retry == "failed",
-                        workers=workers,
+                        priority=args.priority,
                         sport=sport,
-                        headless=args.headless,
-                        load_resources=args.load_resources,
+                        source_links=matches,
                     )
-                    _compress_completed_date(manifest, date_str, sport=sport)
-                    logger.info("scrape_json_complete", sport=sport, date=date_str)
-                else:
-                    logger.info("priority_selection_empty", sport=sport, date=date_str)
+                    selected_matches = _selected_priority_matches(
+                        date_str,
+                        args.priority,
+                        sport=sport,
+                        source_links=matches,
+                    )
+                    if selected_matches:
+                        scrape_driver = None if workers > 1 else ensure_driver()
+                        manifest = phase2_scrape(
+                            scrape_driver,
+                            selected_matches,
+                            date_str,
+                            retry_failed=args.retry == "failed",
+                            workers=workers,
+                            sport=sport,
+                            headless=args.headless,
+                            load_resources=args.load_resources,
+                        )
+                        _compress_completed_date(manifest, date_str, sport=sport)
+                        logger.info("scrape_json_complete", sport=sport, date=date_str)
+                    else:
+                        logger.info("priority_selection_empty", sport=sport, date=date_str)
+                elif not _discovery_is_accepted(date_str, sport=sport):
+                    failed_dates.append(date_str)
+
+        if failed_dates:
+            logger.error(
+                "pipeline_dates_failed",
+                sport=sport,
+                dates=failed_dates,
+                failed_count=len(failed_dates),
+            )
+            sys.exit(1)
 
     except KeyboardInterrupt:
         logger.info("interrupted_by_user")

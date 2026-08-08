@@ -112,6 +112,24 @@ allowed, but these boundaries are required):
 }
 ```
 
+## Operational invariants
+
+- Priority and scraping may consume only an accepted discovery inventory with
+  a matching checksum. A missing or stale checksum refreshes discovery; it is
+  never treated as implicit evidence that the old inventory is still valid.
+- A complete date may be either a fully paginated inventory or a verified empty
+  result represented as `no_events`. Limited fallback snapshots remain
+  diagnostic and retryable rather than accepted source inventories.
+- Priority generation and later resolution machine-verify exact fixture-ID set
+  equality between FotMob Bronze and Silver for every date in the
+  previous/current/following window. The operator flag is required, but it is
+  not a substitute for that verification.
+- Date-scoped mutating commands serialize through the Oddspedia sport/date
+  lock. Month operations report failure if any requested date is not accepted.
+- Oddspedia Bronze stages `event`, `match_payload`, and `market` together and
+  writes `oddspedia_bronze.load_status=published` only after the complete batch
+  is replaced. Resolution refuses `staging` or `failed` dates.
+
 ## Consequences
 
 Benefits:

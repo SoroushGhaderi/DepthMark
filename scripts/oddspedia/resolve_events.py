@@ -3,6 +3,7 @@
 import argparse
 import sys
 from calendar import monthrange
+from contextlib import nullcontext
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Sequence
@@ -14,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.scraping.config import normalize_date, normalize_month
+from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
 from src.oddspedia.silver import OddspediaMatchResolver, OddspediaResolutionService
 
 
@@ -77,11 +79,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     service = OddspediaResolutionService(client, resolver)
     try:
         for date_id in _dates(args):
-            results = service.resolve_date(
-                datetime.strptime(date_id, "%Y%m%d").date(),
-                reference_window_complete=args.reference_window_complete,
-                persist=not args.dry_run,
+            lock = (
+                nullcontext()
+                if args.dry_run
+                else oddspedia_date_lock(date_id, operation="resolve")
             )
+            with lock:
+                results = service.resolve_date(
+                    datetime.strptime(date_id, "%Y%m%d").date(),
+                    reference_window_complete=args.reference_window_complete,
+                    persist=not args.dry_run,
+                )
             summary = {}
             for result in results:
                 summary[result.resolution_status] = summary.get(result.resolution_status, 0) + 1

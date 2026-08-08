@@ -41,6 +41,13 @@ Oddspedia pages  → Oddspedia Bronze    → Oddspedia Silver    → Oddspedia G
 - Documentation must label source and layer together whenever a diagram or tab
   could otherwise be ambiguous, for example `FotMob Silver` and `Oddspedia
   Silver` rather than one global `Silver` stage.
+- Oddspedia date intake and Bronze publication are fail-closed operational
+  boundaries: accepted discovery inventories are checksummed, Bronze facts are
+  staged and published as one batch, and `silver.oddspedia_match_resolution`
+  reads only dates marked `published` in `oddspedia_bronze.load_status`.
+- Date-scoped mutating Oddspedia operations use a sport/date lock, while
+  dry-run and read-only status commands do not acquire that lock. Month
+  commands return non-zero when any requested date fails its phase gate.
 
 ## Implementation status
 

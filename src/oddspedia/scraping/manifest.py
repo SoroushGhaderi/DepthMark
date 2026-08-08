@@ -3,7 +3,7 @@ import os
 import tempfile
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable, Dict, List, Optional
 
 from src.oddspedia.scraping.logging import get_logger
@@ -12,6 +12,14 @@ logger = get_logger(__name__)
 
 # Lock for thread-safe manifest read-modify-write operations inside this process.
 _manifest_lock = threading.Lock()
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class ManifestCorruptError(ValueError):
+    """Raised when a persisted manifest cannot be trusted or reconstructed."""
 
 
 @dataclass
@@ -30,8 +38,8 @@ class ScrapeManifest:
     discovery: Dict = field(default_factory=dict)
     priority_run: Dict = field(default_factory=dict)
     metrics: Dict = field(default_factory=dict)
-    started_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    started_at: str = field(default_factory=lambda: _utc_now().isoformat())
+    updated_at: str = field(default_factory=lambda: _utc_now().isoformat())
 
     @property
     def completed_count(self) -> int:
@@ -76,7 +84,7 @@ class ScrapeManifest:
         self.skipped.pop(match_id, None)
         self._clear_match_in_progress(match_id)
         self.clear_retries(match_id)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def mark_failed(self, match_id: str) -> None:
         match_id = str(match_id)
@@ -88,7 +96,7 @@ class ScrapeManifest:
             self.failed.append(match_id)
         self.skipped.pop(match_id, None)
         self._clear_match_in_progress(match_id)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def mark_incomplete(self, match_id: str) -> None:
         match_id = str(match_id)
@@ -99,7 +107,7 @@ class ScrapeManifest:
         if match_id not in self.incomplete:
             self.incomplete.append(match_id)
         self._clear_match_in_progress(match_id)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def mark_skipped(self, match_id: str, reason: str, **details) -> None:
         match_id = str(match_id)
@@ -112,28 +120,28 @@ class ScrapeManifest:
         self.skipped[match_id] = {
             "reason": str(reason),
             "details": details,
-            "updated_at": datetime.now().isoformat(),
+            "updated_at": _utc_now().isoformat(),
         }
         self._clear_match_in_progress(match_id)
         self.clear_retries(match_id)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def mark_pending(self, match_id: str) -> None:
         match_id = str(match_id)
         if match_id in self.done:
             self.done.remove(match_id)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def set_in_progress(self, match_id: str, worker_id: str = "main") -> None:
         self.in_progress[str(worker_id)] = str(match_id)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def clear_in_progress(self, worker_id: Optional[str] = None) -> None:
         if worker_id is None:
             self.in_progress = {}
         else:
             self.in_progress.pop(str(worker_id), None)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def record_retry(self, match_id: str, error: str) -> None:
         match_id = str(match_id)
@@ -141,7 +149,7 @@ class ScrapeManifest:
         entry["count"] += 1
         entry["last_error"] = str(error)[:500]
         self.retries[match_id] = entry
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def get_retry_count(self, match_id: str) -> int:
         entry = self.retries.get(str(match_id))
@@ -149,21 +157,25 @@ class ScrapeManifest:
 
     def clear_retries(self, match_id: str) -> None:
         self.retries.pop(str(match_id), None)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def record_discovery(self, result: Dict) -> None:
         """Persist the acceptance or recovery state of event discovery."""
         previous = self.discovery or {}
         accepted = bool(result.get("complete"))
-        now = datetime.now().isoformat()
+        no_events = accepted and bool(result.get("empty_confirmed"))
+        now = _utc_now().isoformat()
         attempts = 0 if accepted else int(previous.get("attempts", 0)) + 1
         entry = {
-            "status": "accepted" if accepted else "rescrape_candidate",
+            "status": "no_events" if no_events else "accepted" if accepted else "rescrape_candidate",
             "reasons": list(result.get("anomalies") or []),
             "expected_pages": result.get("expected_pages"),
             "observed_pages": result.get("observed_pages"),
             "match_count": result.get("match_count", 0),
             "dom_count": result.get("dom_count", 0),
+            "empty_confirmed": bool(result.get("empty_confirmed")),
+            "source": result.get("source", "sport_component"),
+            "inventory_checksum": result.get("inventory_checksum", ""),
             "attempts": attempts,
             "snapshot": result.get("snapshot", ""),
             "updated_at": now,
@@ -171,7 +183,7 @@ class ScrapeManifest:
         if not accepted:
             delay_minutes = min(60, 5 * (2 ** max(0, attempts - 1)))
             entry["next_attempt_at"] = result.get(
-                "next_attempt_at", (datetime.now() + timedelta(minutes=delay_minutes)).isoformat()
+                "next_attempt_at", (_utc_now() + timedelta(minutes=delay_minutes)).isoformat()
             )
         self.discovery = entry
         self.updated_at = now
@@ -179,12 +191,12 @@ class ScrapeManifest:
     def record_priority_run(self, summary: Dict) -> None:
         """Persist the audit summary for the priority artifact used by a run."""
         self.priority_run = dict(summary)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     def update_metrics(self, snapshot: Dict) -> None:
         """Store the latest in-memory run summary with this date's progress."""
         self.metrics = dict(snapshot)
-        self.updated_at = datetime.now().isoformat()
+        self.updated_at = _utc_now().isoformat()
 
     @property
     def in_progress_ids(self) -> List[str]:
@@ -232,8 +244,8 @@ class ScrapeManifest:
             discovery=data.get("discovery", {}),
             priority_run=data.get("priority_run", {}),
             metrics=data.get("metrics", {}),
-            started_at=data.get("started_at", datetime.now().isoformat()),
-            updated_at=data.get("updated_at", datetime.now().isoformat()),
+            started_at=data.get("started_at", _utc_now().isoformat()),
+            updated_at=data.get("updated_at", _utc_now().isoformat()),
         )
 
 
@@ -263,6 +275,8 @@ def load_manifest(date_str: str, sport: str = "football") -> Optional[ScrapeMani
     try:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
+        if not isinstance(data, dict) or not data.get("date"):
+            raise ValueError("manifest root must be an object with a date")
         manifest = ScrapeManifest.from_dict(data)
         logger.info(
             "manifest_loaded",
@@ -275,9 +289,9 @@ def load_manifest(date_str: str, sport: str = "football") -> Optional[ScrapeMani
             completed_progress=manifest.completed_progress,
         )
         return manifest
-    except Exception as e:
-        logger.warning("manifest_load_failed", date=date_str, error=str(e))
-        return None
+    except Exception as exc:
+        logger.error("manifest_load_failed", date=date_str, error=str(exc))
+        raise ManifestCorruptError(f"Oddspedia manifest is corrupt: {path}") from exc
 
 
 def save_manifest(manifest: ScrapeManifest) -> None:

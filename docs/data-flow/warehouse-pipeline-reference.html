@@ -1177,7 +1177,7 @@
             <div class="pipe-stage-label">Bronze</div>
             <div class="pipe-stage-title">Isolated raw facts</div>
             <div class="pipe-stage-desc">FotMob Bronze + Oddspedia Bronze, kept separate</div>
-            <div class="pipe-stage-count">15 + 3*</div>
+            <div class="pipe-stage-count">15 + 4*</div>
         </div>
         <div class="pipe-stage s-silver" data-flow-section="silver">
             <div class="pipe-stage-label">Silver</div>
@@ -1204,7 +1204,7 @@
 
     <div class="stats">
         <div class="stat-card bronze"><div class="number">15</div><div class="label">FotMob Bronze tables</div></div>
-        <div class="stat-card bronze"><div class="number">3</div><div class="label">Oddspedia Bronze tables</div></div>
+        <div class="stat-card bronze"><div class="number">4</div><div class="label">Oddspedia Bronze tables</div></div>
         <div class="stat-card silver"><div class="number">8</div><div class="label">FotMob Silver tables</div></div>
         <div class="stat-card gold"><div class="number">48</div><div class="label">FotMob scenario tables</div></div>
         <div class="stat-card gold"><div class="number">344</div><div class="label">FotMob signal tables</div></div>
@@ -1844,7 +1844,7 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
                 <span class="flow-connector">→</span>
                 <div class="flow-node bronze"><strong>data/oddspedia/historical/</strong><span class="sub">source links, payloads, manifests</span></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node bronze"><strong>oddspedia_bronze.*</strong><span class="sub">event, match_payload, market</span></div>
+                <div class="flow-node bronze"><strong>oddspedia_bronze.*</strong><span class="sub">event, match_payload, market, load_status</span></div>
                 <span class="flow-connector">→</span>
                 <div class="flow-node silver"><strong>silver.oddspedia_match_resolution</strong><span class="sub">read-only reference: silver.match</span></div>
                 <span class="flow-connector">→</span>
@@ -1856,17 +1856,21 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
         <table class="data-table">
             <thead><tr><th>Phase</th><th>Command</th><th>Outcome</th></tr></thead>
             <tbody>
-                <tr><td>Discover + prioritize + scrape</td><td><code>python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready</code></td><td>Saved source links, auditable priority decisions, and selected raw payloads</td></tr>
-                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_warehouse.py --dry-run</code></td><td>Plans the implemented Oddspedia Bronze tables plus the current Silver resolution table</td></tr>
-                <tr><td>Load raw facts</td><td><code>python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run</code></td><td>Plans source-faithful event, payload, and market rows</td></tr>
-                <tr><td>Resolve fixtures</td><td><code>python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run</code></td><td>Calculates a match relationship without writing it</td></tr>
+                <tr><td>Discover + prioritize + scrape</td><td><code>python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready</code></td><td>Accepts complete or verified-empty discovery evidence, saves auditable priority decisions, and scrapes selected raw payloads</td></tr>
+                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_warehouse.py --dry-run</code></td><td>Plans the three source fact tables, the <code>load_status</code> publication marker, and the current Silver resolution table</td></tr>
+                <tr><td>Load raw facts</td><td><code>python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run</code></td><td>Plans an audited, staged event/payload/market batch and its published status transition</td></tr>
+                <tr><td>Resolve fixtures</td><td><code>python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run</code></td><td>Reads only a published Bronze batch and calculates a match relationship without writing it</td></tr>
             </tbody>
         </table>
     </div>
 
     <div class="callout note">
         <span class="callout-icon">📅</span>
-        <span><strong>Three-day guardrail:</strong> priority generation requires <code>--silver-reference-window-ready</code> before it reads the prior/current/following <code>silver.match</code> dates. The later resolver uses the same flag before it persists <code>not_covered</code>; otherwise unmatched events remain <code>unresolved</code>.</span>
+        <span><strong>Three-day guardrail:</strong> priority generation requires <code>--silver-reference-window-ready</code> and machine-verifies exact FotMob Bronze/Silver fixture-ID sets for the prior/current/following dates. The later resolver uses the same flag before it persists <code>not_covered</code>; otherwise unmatched events remain <code>unresolved</code>.</span>
+    </div>
+    <div class="callout warning">
+        <span class="callout-icon">⚠</span>
+        <span><strong>Fail-closed publication:</strong> discovery accepts only complete pagination or a verified empty date, and accepted inventories carry checksums. Mutating date commands serialize through <code>data/oddspedia/locks/</code>; dry runs do not create locks. Bronze publishes <code>load_status=published</code> only after all three fact tables are staged, validated, and replaced. Month commands exit non-zero when any date fails.</span>
     </div>
     <div class="callout insight">
         <span class="callout-icon">◌</span>
@@ -2801,8 +2805,10 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'scripts/oddspedia/load_bronze.py',
                 'scripts/oddspedia/resolve_events.py',
                 'src/oddspedia/scraping/',
+                'src/oddspedia/scraping/operation_lock.py',
                 'src/oddspedia/bronze/loader.py',
                 'src/oddspedia/silver/match_resolution.py',
+                'clickhouse/oddspedia_bronze/ddl/04_load_status.sql',
             ],
             commands: [
                 'python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready',
@@ -2810,7 +2816,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run',
                 'python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run',
             ],
-            note: 'Runs independently from pipeline.py. The resolver reads silver.match and writes only silver.oddspedia_match_resolution.',
+            note: 'Runs independently from pipeline.py. Discovery and Bronze admission are fail-closed; date mutations use a sport/date lock, and the resolver reads only published load_status batches before writing silver.oddspedia_match_resolution.',
             sectionTab: 'oddspedia',
         },
         {
