@@ -10,6 +10,7 @@ if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
 from src.oddspedia.scraping.match_collector import (
+    DiscoveryResult,
     _JS_SPORT_STATE,
     _fetch_all_matches,
     _is_full_time_match,
@@ -143,6 +144,67 @@ class FullTimeFilterTests(unittest.TestCase):
         self.assertEqual(result.expected_pages, 2)
         self.assertEqual(result.observed_pages, 1)
         self.assertIn("pagination_stalled", result.anomalies)
+
+    @patch("src.oddspedia.scraping.match_collector._extract_dom_links", return_value={})
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    def test_fetch_result_accepts_verified_empty_component(self, _sleep, _dom_links):
+        class Driver:
+            def execute_script(self, script, *_args):
+                if script == _JS_SPORT_STATE:
+                    return {
+                        "matchList": [],
+                        "currentPage": 1,
+                        "totalPages": 1,
+                        "isLoadingNextPage": False,
+                        "sampleMatches": [],
+                    }
+                return None
+
+        result = _fetch_all_matches(Driver(), sport="football", return_result=True)
+
+        self.assertTrue(result.complete)
+        self.assertTrue(result.empty_confirmed)
+        self.assertEqual(result.matches, {})
+        self.assertEqual(result.anomalies, [])
+
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    @patch("src.oddspedia.scraping.match_collector._build_urls")
+    @patch("src.oddspedia.scraping.match_collector._extract_matches_vuex")
+    @patch("src.oddspedia.scraping.match_collector._extract_matches_from_sports_events")
+    @patch("src.oddspedia.scraping.match_collector._fetch_all_matches")
+    @patch("src.oddspedia.scraping.match_collector._navigate_to_date", return_value=True)
+    @patch("src.oddspedia.scraping.match_collector._dismiss_cookie_popup")
+    @patch("src.oddspedia.scraping.match_collector.safe_get", return_value=True)
+    def test_limited_vuex_fallback_is_not_accepted_as_complete_inventory(
+        self,
+        _safe_get,
+        _dismiss_cookie_popup,
+        _navigate_to_date,
+        fetch_all_matches,
+        extract_sports_events,
+        extract_vuex,
+        _build_urls,
+        _sleep,
+    ):
+        fetch_all_matches.return_value = DiscoveryResult(
+            anomalies=["sport_component_not_found"]
+        )
+        extract_sports_events.return_value = {}
+        extract_vuex.return_value = {
+            "42": {
+                "matchId": "42",
+                "home": "Home",
+                "away": "Away",
+                "date": "2026-07-06",
+            }
+        }
+
+        result = collect_match_links(
+            _FakeDriver(), target_date="20260706", sport="football", return_result=True
+        )
+
+        self.assertFalse(result.complete)
+        self.assertIn("limited_vuex_fallback", result.anomalies)
 
     def test_structured_league_name_overrides_dom_fallback(self):
         matches = {

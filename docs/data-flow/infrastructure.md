@@ -17,6 +17,9 @@ docker compose exec depthmark-scraper python3 scripts/orchestration/setup_clickh
 docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py 20251208
 docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --single-date 20251208
 docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --full-history
+
+# Oddspedia's independent source warehouse setup
+docker compose exec depthmark-scraper python3 scripts/oddspedia/setup_warehouse.py
 ```
 
 Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
@@ -112,6 +115,25 @@ MONGODB_DATABASE=orbit_content
 - `DEPTHMARK_ENV=production` — non-default credentials required.
 - ClickHouse setup rejects placeholder passwords outside local development.
 
+The environment selector is read explicitly from the process environment or
+the project/parent `.env` files. Do not rely on an undeclared default: set
+`DEPTHMARK_ENV=production` in every production deployment.
+
+### Oddspedia Browser Configuration
+
+The Oddspedia driver auto-detects supported Chrome/Chromium and matching
+platform driver candidates. Set an explicit path when the runtime uses a
+non-standard installation or container image:
+
+```bash
+ODDSPEDIA_CHROME_BIN=/usr/bin/chromium
+ODDSPEDIA_CHROMEDRIVER_PATH=/usr/bin/chromedriver
+```
+
+`CHROME_BIN` and `CHROMEDRIVER_PATH` remain accepted compatibility aliases.
+The driver resolves platform and architecture candidates on macOS, Linux, and
+Windows; an unsupported architecture must provide an explicit executable.
+
 ## ClickHouse Setup
 
 ```bash
@@ -125,6 +147,19 @@ Runs DDL in layer order:
    `ddl/signals/{match,team,player}/`, and `ddl/create_table_signal_activations.sql`
 4. Activation stage DDL (`ddl/activations/`) is applied during activation rebuilds,
    not during `setup_clickhouse.py`
+
+Oddspedia has an independent setup command:
+
+```bash
+python3 scripts/oddspedia/setup_warehouse.py
+python3 scripts/oddspedia/setup_warehouse.py --dry-run
+```
+
+It creates `oddspedia_bronze.event`, `oddspedia_bronze.match_payload`,
+`oddspedia_bronze.market`, `oddspedia_bronze.load_status`, and
+`silver.oddspedia_match_resolution`. The source loader publishes a date only
+after all three Bronze fact tables are staged, validated, and replaced; the
+resolver refuses dates without the resulting `published` status.
 
 Setup is schema-only and does not run full-table optimization.
 

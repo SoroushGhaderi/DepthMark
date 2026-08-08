@@ -3,6 +3,7 @@
 from .match_resolution import (
     FotMobMatch,
     OddspediaEvent,
+    OddspediaBronzeNotPublishedError,
     OddspediaMatchResolver,
     OddspediaResolutionService,
     ResolutionResult,
@@ -11,6 +12,7 @@ from .match_resolution import (
 __all__ = [
     "FotMobMatch",
     "OddspediaEvent",
+    "OddspediaBronzeNotPublishedError",
     "OddspediaMatchResolver",
     "OddspediaResolutionService",
     "ResolutionResult",

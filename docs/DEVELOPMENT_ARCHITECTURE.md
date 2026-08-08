@@ -165,12 +165,27 @@ python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
 ```
 
 Oddspedia is an independent source pipeline, not a stage in
-`scripts/orchestration/pipeline.py`. Its setup script creates the three
-`oddspedia_bronze.*` tables and the Silver resolution table. The load and
-resolve scripts also accept `--month YYYYMM`. The canonical Event Intake flow
-is `discover -> prioritize -> scrape`; `prioritize` and `run` require
-`--silver-reference-window-ready` because they query the prior/current/following
-`silver.match` reference dates before selecting source pages.
+`scripts/orchestration/pipeline.py`. Its setup script creates the three source
+fact tables plus `oddspedia_bronze.load_status` and the Silver resolution table.
+The load and resolve scripts also accept `--month YYYYMM`. The canonical Event
+Intake flow is `discover -> prioritize -> scrape`; `prioritize` and `run`
+require `--silver-reference-window-ready`, then machine-verify the
+prior/current/following `silver.match` fixture-ID window before selecting
+source pages. All mutating date commands use a cross-process
+`data/oddspedia/locks/<sport>_<YYYYMMDD>.lock` date lock; dry runs do not
+acquire or create that lock. Discovery accepts only complete target-date
+pagination or a verified empty result, records checksums for accepted
+inventories, and refreshes legacy or stale evidence before downstream use.
+Month commands exit non-zero when any date fails, is missing, or remains
+unaccepted.
+
+`load_bronze.py` requires an accepted discovery manifest, matching inventory
+checksum, terminal scrape state, and accepted payload audits. It stages
+`oddspedia_bronze.event`, `oddspedia_bronze.match_payload`, and
+`oddspedia_bronze.market`, validates the staged date counts, replaces the
+target partition, and records the batch in `oddspedia_bronze.load_status`.
+Only a row with status `published` is consumable by `resolve_events.py`; failed
+or partially replaced batches remain non-admitted.
 
 `resolve_events.py` searches FotMob `silver.match` for the prior, current, and
 following calendar dates. It writes `not_covered` only when the operator

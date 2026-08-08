@@ -13,6 +13,7 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 from src.oddspedia.scraping import cli as main
+from src.oddspedia.scraping.audit import DateAudit
 from src.oddspedia.scraping.metrics import Metrics
 from src.oddspedia.scraping.manifest import ScrapeManifest
 from src.oddspedia.scraping.match_collector import DiscoveryResult
@@ -87,6 +88,52 @@ class PipelineReliabilityTests(unittest.TestCase):
 
         self.assertEqual(matches, [{"id": "42", "home": "Home", "away": "Away"}])
         self.assertIsInstance(save.call_args.args[0], list)
+
+    @patch("src.oddspedia.scraping.cli._record_discovery")
+    @patch("src.oddspedia.scraping.cli.save_json")
+    @patch("src.oddspedia.scraping.cli.collect_match_links")
+    @patch("src.oddspedia.scraping.cli.os.path.exists", return_value=False)
+    def test_phase1_persists_verified_no_events_as_an_accepted_inventory(
+        self, _exists, collect, save, record_discovery
+    ):
+        collect.return_value = DiscoveryResult(
+            matches={},
+            expected_pages=1,
+            observed_pages=1,
+            empty_confirmed=True,
+        )
+
+        matches = main.phase1_collect(object(), "20260706")
+
+        self.assertEqual(matches, [])
+        save.assert_called_once()
+        self.assertEqual(save.call_args.args[0], [])
+        record_discovery.assert_called_once()
+        self.assertTrue(record_discovery.call_args.args[2].complete)
+
+    @patch("src.oddspedia.scraping.cli._record_discovery")
+    @patch("src.oddspedia.scraping.cli.save_json")
+    @patch("src.oddspedia.scraping.cli.collect_match_links")
+    @patch("src.oddspedia.scraping.cli.os.path.exists", return_value=False)
+    def test_phase1_retries_date_navigation_from_fresh_listing(
+        self, _exists, collect, save, _record
+    ):
+        collect.side_effect = [
+            DiscoveryResult(anomalies=["date_navigation_failed"]),
+            DiscoveryResult(
+                matches={"42": {"id": "42", "home": "Home", "away": "Away"}},
+                expected_pages=1,
+                observed_pages=1,
+            ),
+        ]
+
+        matches = main.phase1_collect(object(), "20260706")
+
+        self.assertEqual(matches, [{"id": "42", "home": "Home", "away": "Away"}])
+        self.assertEqual(collect.call_count, 2)
+        self.assertFalse(collect.call_args_list[0].kwargs["reuse_listing"])
+        self.assertFalse(collect.call_args_list[1].kwargs["reuse_listing"])
+        save.assert_called_once()
 
     @patch("src.oddspedia.scraping.cli._needs_discovery_retry", return_value=True)
     @patch("src.oddspedia.scraping.cli._existing_inventory_matches_target", return_value=True)
@@ -275,6 +322,94 @@ class PipelineReliabilityTests(unittest.TestCase):
             with self.assertRaises(DataValidationError):
                 save_json(invalid_payload, path)
             self.assertFalse(os.path.exists(path))
+
+    def test_phase2_does_not_mark_an_incomplete_saved_payload_done(self):
+        match = {
+            "id": "42",
+            "home": "Home",
+            "away": "Away",
+            "date": "2026-07-06",
+            "url": "https://oddspedia.com/football/home-away-42",
+            "status": "FT",
+        }
+        incomplete_payload = {
+            "sport": "football",
+            "id": "42",
+            "home": "Home",
+            "away": "Away",
+            "tournament": "League",
+            "date": "2026-07-06",
+            "url": "https://oddspedia.com/football/home-away-42",
+            "status": "",
+            "score": {"home": "", "away": "", "winner": ""},
+            "odds": [],
+            "scraped_at": "2026-07-07T00:00:00+00:00",
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = os.path.join(directory, "manifest.json")
+            output_path = os.path.join(directory, "match_42.json")
+            manifest = ScrapeManifest(date="20260706", sport="football", total=1)
+            with patch(
+                "src.oddspedia.scraping.manifest.get_manifest_path",
+                return_value=manifest_path,
+            ), patch(
+                "src.oddspedia.scraping.cli.get_matches_dir", return_value=directory
+            ), patch(
+                "src.oddspedia.scraping.cli.get_match_file", return_value=output_path
+            ), patch(
+                "src.oddspedia.scraping.cli._audit_before_scrape",
+                return_value=(DateAudit(date="20260706", sport="football", expected=1), manifest),
+            ), patch(
+                "src.oddspedia.scraping.cli._select_matches_to_scrape",
+                return_value=([match], 0, 0),
+            ), patch(
+                "src.oddspedia.scraping.cli.scrape_match", return_value=incomplete_payload
+            ), patch(
+                "src.oddspedia.scraping.cli._warmup_cloudflare"
+            ):
+                from src.oddspedia.scraping.manifest import save_manifest
+
+                save_manifest(manifest)
+                persisted = main.phase2_scrape(
+                    object(), [match], "20260706", max_retries=0, workers=1
+                )
+
+        self.assertNotIn("42", persisted.done)
+        self.assertIn("42", persisted.failed)
+
+    def test_concurrent_driver_initialization_failure_persists_every_match_failure(self):
+        matches = [
+            {"id": "41", "home": "A", "away": "B", "status": "FT"},
+            {"id": "42", "home": "C", "away": "D", "status": "FT"},
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = os.path.join(directory, "manifest.json")
+            manifest = ScrapeManifest(date="20260706", sport="football", total=2)
+            with patch(
+                "src.oddspedia.scraping.manifest.get_manifest_path",
+                return_value=manifest_path,
+            ), patch(
+                "src.oddspedia.scraping.cli.get_matches_dir", return_value=directory
+            ), patch(
+                "src.oddspedia.scraping.cli._audit_before_scrape",
+                return_value=(DateAudit(date="20260706", sport="football", expected=2), manifest),
+            ), patch(
+                "src.oddspedia.scraping.cli._select_matches_to_scrape",
+                return_value=(matches, 0, 0),
+            ), patch(
+                "src.oddspedia.scraping.cli.DriverManager",
+                side_effect=RuntimeError("driver unavailable"),
+            ):
+                from src.oddspedia.scraping.manifest import save_manifest
+
+                save_manifest(manifest)
+                persisted = main.phase2_scrape(
+                    None, matches, "20260706", max_retries=0, workers=2
+                )
+
+        self.assertEqual(set(persisted.failed), {"41", "42"})
+        self.assertEqual(persisted.in_progress, {})
 
     def test_concurrent_failures_during_cooldown_count_as_one_pause(self):
         metrics = _Metrics()

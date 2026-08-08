@@ -7,12 +7,14 @@ import time
 from pathlib import Path
 from typing import Callable, Iterable, Optional
 
+from dotenv import dotenv_values
+
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.integrations.clickhouse.client import ClickHouseClient
 from src.common.logging import get_logger
+from src.integrations.clickhouse.client import ClickHouseClient
 
 logger = get_logger()
 
@@ -31,6 +33,23 @@ INSECURE_CLICKHOUSE_PASSWORDS = {
     "changeme",
     "your_clickhouse_password_here",
 }
+WAREHOUSE_DATABASES = (
+    "bronze",
+    "oddspedia_bronze",
+    "silver",
+    "gold",
+    "gold_scenarios",
+    "gold_signals",
+)
+RUNTIME_DATABASE_PRIVILEGES = (
+    "SELECT",
+    "INSERT",
+    "ALTER",
+    "CREATE TABLE",
+    "DROP TABLE",
+    "TRUNCATE",
+    "OPTIMIZE",
+)
 
 
 def load_local_env_files() -> None:
@@ -43,21 +62,23 @@ load_local_env_files()
 
 def is_local_development_environment() -> bool:
     """Return whether local-only development credentials are allowed."""
-    environment = (
-        os.getenv("DEPTHMARK_ENV")
-        or os.getenv("ENVIRONMENT")
-        or os.getenv("SCRAPER_ENV")
-        or ""
-    ).strip()
-    if environment.lower() in LOCAL_ENVIRONMENT_VALUES:
-        return True
+    environment_names = ("DEPTHMARK_ENV", "ENVIRONMENT", "SCRAPER_ENV")
+    for name in environment_names:
+        environment = os.getenv(name)
+        if environment:
+            return environment.strip().lower() in LOCAL_ENVIRONMENT_VALUES
 
-    try:
-        settings = get_settings()
-    except Exception:
-        return False
-
-    return settings.environment.value in LOCAL_ENVIRONMENT_VALUES
+    # pydantic-settings reads .env files without exporting their values into
+    # os.environ. Read only the environment selector here so a production
+    # value in either supported .env location cannot be mistaken for the
+    # Settings model's development default.
+    for env_path in (project_root / ".env", project_root.parent / ".env"):
+        values = dotenv_values(env_path)
+        for name in environment_names:
+            environment = values.get(name)
+            if environment:
+                return str(environment).strip().lower() in LOCAL_ENVIRONMENT_VALUES
+    return False
 
 
 def validate_clickhouse_credentials(username: str, password: str) -> None:
@@ -227,15 +248,38 @@ def create_user_if_not_exists(client: ClickHouseClient, username: str, password:
                 f"CREATE USER IF NOT EXISTS {username} IDENTIFIED BY {quote_sql_string(password)}"
             )
 
-        for grant_query in (
-            f"GRANT ALL ON bronze.* TO {username}",
-            f"GRANT ALL ON silver.* TO {username}",
-            f"GRANT ALL ON gold.* TO {username}",
-            f"GRANT ALL ON gold_scenarios.* TO {username}",
-            f"GRANT ALL ON gold_signals.* TO {username}",
-            f"GRANT CREATE DATABASE ON *.* TO {username}",
-            f"GRANT TABLE ENGINE ON ReplacingMergeTree TO {username}",
-        ):
+        # Remove any grants from the former broad-bootstrap policy before
+        # applying the bounded runtime contract. This is intentionally skipped
+        # for the built-in admin account.
+        revoke_queries = []
+        if username != "default":
+            revoke_queries.append(f"REVOKE ALL ON *.* FROM {username}")
+        for database in WAREHOUSE_DATABASES:
+            revoke_queries.append(f"REVOKE ALL ON {database}.* FROM {username}")
+        revoke_queries.extend(
+            (
+                f"REVOKE CREATE DATABASE ON *.* FROM {username}",
+                f"REVOKE TABLE ENGINE ON ReplacingMergeTree FROM {username}",
+            )
+        )
+        for revoke_query in revoke_queries:
+            try:
+                client.execute(revoke_query)
+            except Exception as exc:
+                logger.warning("Could not revoke legacy permission: %s", exc)
+
+        grant_queries = [
+            f"GRANT {', '.join(RUNTIME_DATABASE_PRIVILEGES)} ON {database}.* TO {username}"
+            for database in WAREHOUSE_DATABASES
+        ]
+        if is_local_development_environment():
+            grant_queries.extend(
+                (
+                    f"GRANT CREATE DATABASE ON *.* TO {username}",
+                    f"GRANT TABLE ENGINE ON ReplacingMergeTree TO {username}",
+                )
+            )
+        for grant_query in grant_queries:
             try:
                 client.execute(grant_query)
             except Exception as exc:

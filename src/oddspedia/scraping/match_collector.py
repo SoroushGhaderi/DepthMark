@@ -12,7 +12,7 @@ Strategy:
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import date, datetime, timezone
 from urllib.parse import urlparse
 
 from src.oddspedia.scraping.config import BASE_URL, get_sport_listing_url, normalize_sport
@@ -24,6 +24,11 @@ from selenium.common.exceptions import WebDriverException
 logger = get_logger(__name__)
 
 DOM_RECONCILIATION_MIN_COVERAGE = 0.80
+DATE_PICKER_RETRY_ATTEMPTS = 3
+DATE_PICKER_RETRY_DELAY_SECONDS = 0.6
+DATE_ARROW_DELAY_SECONDS = 1.0
+DATE_ARROW_MAX_NO_PROGRESS = 2
+DATE_ARROW_MAX_UNREADABLE = 3
 
 
 @dataclass
@@ -35,10 +40,17 @@ class DiscoveryResult:
     observed_pages: int = 0
     anomalies: list = field(default_factory=list)
     dom_count: int = 0
+    empty_confirmed: bool = False
+    source: str = "sport_component"
 
     @property
     def complete(self) -> bool:
-        return bool(self.matches) and not self.anomalies and self.observed_pages >= self.expected_pages
+        has_authoritative_result = bool(self.matches) or self.empty_confirmed
+        return (
+            has_authoritative_result
+            and not self.anomalies
+            and self.observed_pages >= self.expected_pages
+        )
 
     def to_dict(self) -> dict:
         return {
@@ -48,6 +60,8 @@ class DiscoveryResult:
             "match_count": len(self.matches),
             "dom_count": self.dom_count,
             "anomalies": list(self.anomalies),
+            "empty_confirmed": self.empty_confirmed,
+            "source": self.source,
         }
 
 
@@ -322,7 +336,7 @@ _MONTH_ABBR = {
 }
 
 
-def _read_displayed_date(driver):
+def _read_displayed_date(driver, reference_date=None):
     """Return the date currently shown in the page's date picker, or None."""
     text = driver.execute_script("""
         var el = document.querySelector('.flex.align-items-center.p-0');
@@ -340,11 +354,16 @@ def _read_displayed_date(driver):
     month = _MONTH_ABBR.get(mon_str)
     if not month:
         return None
-    year = datetime.now().year
-    try:
-        return datetime(year, month, day).date()
-    except ValueError:
+    reference = reference_date or datetime.now(timezone.utc).date()
+    candidates = []
+    for year in (reference.year - 1, reference.year, reference.year + 1):
+        try:
+            candidates.append(date(year, month, day))
+        except ValueError:
+            continue
+    if not candidates:
         return None
+    return min(candidates, key=lambda value: abs(value - reference))
 
 
 def _navigate_to_date(driver, target_date_str):
@@ -356,7 +375,11 @@ def _navigate_to_date(driver, target_date_str):
     """
     target = datetime.strptime(target_date_str, "%Y%m%d").date()
 
-    selected_by_calendar = driver.execute_script("""
+    selected_by_calendar = ""
+    for picker_attempt in range(DATE_PICKER_RETRY_ATTEMPTS):
+        if picker_attempt:
+            time.sleep(DATE_PICKER_RETRY_DELAY_SECONDS)
+        selected_by_calendar = driver.execute_script("""
         var targetIso = arguments[0];
         var d = Number(targetIso.slice(8, 10));
         var pretty = targetIso.replace(/-/g, '/');
@@ -426,19 +449,34 @@ def _navigate_to_date(driver, target_date_str):
             var container = document.querySelector('.match-list-date-picker__calendar-active')
                 || document.querySelector('[class*="match-list-date-picker__calendar-active"]')
                 || document.querySelector('[class*="match-list-date-picker"]');
-            if (!container) return 'no-container';
-
-            var input = container.querySelector('input[type="text"], input');
-            if (!input) return 'no-input';
+            var input = container && container.querySelector(
+                'input[type="date"], input[type="text"], input'
+            );
+            // Some page revisions render the input beside the calendar
+            // overlay, rather than inside it. Keep this fallback scoped to
+            // date-picker controls so search inputs are never modified.
+            if (!input) {
+                input = document.querySelector(
+                    '[class*="date-picker"] input[type="date"],'
+                    + '[class*="date-picker"] input[type="text"],'
+                    + '[class*="date-picker"] input,'
+                    + '[class*="calendar"] input[type="date"]'
+                );
+            }
+            if (!input) return container ? 'no-input' : 'no-container';
 
             try {
                 input.removeAttribute('readonly');
-                input.value = targetIso;
+                var valueSetter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype, 'value'
+                ).set;
+                valueSetter.call(input, targetIso);
                 input.setAttribute('value', targetIso);
                 input.dispatchEvent(new Event('input', { bubbles: true }));
                 input.dispatchEvent(new Event('change', { bubbles: true }));
                 input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
                 input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', bubbles: true }));
+                input.dispatchEvent(new Event('blur', { bubbles: true }));
                 return 'input-set';
             } catch (e) {
                 return 'input-set-error:' + e.message;
@@ -480,17 +518,18 @@ def _navigate_to_date(driver, target_date_str):
             }
         }
 
-        if (!clickDateTrigger()) return 'no-trigger';
+        // The picker is asynchronous. Do not toggle it closed when a retry
+        // already left the overlay open.
+        var existingRoot = getCalendarRoot();
+        if (!existingRoot || !isVisible(existingRoot)) {
+            if (!clickDateTrigger()) return 'no-trigger';
+        }
         var picked = 'no-calendar';
         for (var attempt = 0; attempt < 8; attempt++) {
             var root = getCalendarRoot();
             if (root && isVisible(root)) {
                 picked = clickMatchingDay(root);
                 if (picked.indexOf('picked-') === 0) return picked;
-            }
-            if (attempt === 0) {
-                // Sometimes first click only focuses. Retry opening.
-                clickDateTrigger();
             }
         }
         // last-resort: search globally for the day in visible "calendar-like" overlays
@@ -510,34 +549,53 @@ def _navigate_to_date(driver, target_date_str):
             return vueRes;
         }
         return picked + '|' + inputRes + '|' + vueRes;
-    """, target.isoformat())
+        """, target.isoformat())
+
+        selected_by_calendar = str(selected_by_calendar)
+        if (
+            selected_by_calendar.startswith("picked-")
+            or selected_by_calendar.startswith("input-set")
+            or selected_by_calendar.startswith("vue-")
+        ):
+            time.sleep(2)
+            current = _read_displayed_date(driver, reference_date=target)
+            if current == target:
+                logger.info(
+                    "date_navigation_success_calendar",
+                    target_date=target_date_str,
+                    mode=selected_by_calendar,
+                    attempt=picker_attempt + 1,
+                )
+                return True
+            logger.warning(
+                "calendar_pick_done_but_verification_failed",
+                target_date=target_date_str,
+                mode=selected_by_calendar,
+                displayed_date=str(current) if current else None,
+                attempt=picker_attempt + 1,
+            )
 
     if (
-        str(selected_by_calendar).startswith("picked-")
-        or str(selected_by_calendar).startswith("input-set")
-        or str(selected_by_calendar).startswith("vue-")
+        selected_by_calendar.startswith("picked-")
+        or selected_by_calendar.startswith("input-set")
+        or selected_by_calendar.startswith("vue-")
     ):
-        time.sleep(2)
-        current = _read_displayed_date(driver)
-        if current == target:
-            logger.info("date_navigation_success_calendar", target_date=target_date_str, mode=str(selected_by_calendar))
-            return True
         logger.warning(
-            "calendar_pick_done_but_verification_failed",
+            "calendar_pick_retries_exhausted",
             target_date=target_date_str,
-            mode=str(selected_by_calendar),
-            displayed_date=str(current) if current else None,
+            mode=selected_by_calendar,
         )
     else:
         logger.warning(
             "calendar_pick_failed_falling_back_to_arrows",
             target_date=target_date_str,
-            result=str(selected_by_calendar),
+            result=selected_by_calendar,
+            attempts=DATE_PICKER_RETRY_ATTEMPTS,
         )
 
     # Use the page's displayed date as the base — more reliable than datetime.now()
-    page_date = _read_displayed_date(driver)
-    today = page_date or datetime.now().date()
+    page_date = _read_displayed_date(driver, reference_date=target)
+    today = page_date or datetime.now(timezone.utc).date()
     if page_date:
         logger.info("current_date_displayed", date=str(page_date))
     else:
@@ -553,6 +611,9 @@ def _navigate_to_date(driver, target_date_str):
     steps = abs(offset)
     logger.info("navigating_to_target_date", steps=steps, direction=direction, target_date=target_date_str)
 
+    last_observed = today
+    no_progress_count = 0
+    unreadable_count = 0
     for step in range(steps):
         clicked = driver.execute_script("""
             var dir = arguments[0];
@@ -609,7 +670,7 @@ def _navigate_to_date(driver, target_date_str):
             // Click the first element for prev, last for next
             // Filter out the date display button itself
             var candidates = arrowEls.filter(function(el) {
-                return !el.classList.contains('p-0') || !el.classList.contains('flex');
+                return !(el.classList.contains('p-0') && el.classList.contains('flex'));
             });
             if (candidates.length < 2) candidates = arrowEls;
 
@@ -627,10 +688,50 @@ def _navigate_to_date(driver, target_date_str):
                 _debug_date_nav(driver)
             if clicked == "no-date-btn":
                 logger.error("date_button_not_found")
-                break
+                return False
         else:
             logger.debug("date_navigation_click", step=step + 1, total_steps=steps, result=str(clicked))
-        time.sleep(1.5)
+        time.sleep(DATE_ARROW_DELAY_SECONDS)
+
+        observed = _read_displayed_date(driver, reference_date=target)
+        if observed is None:
+            unreadable_count += 1
+            logger.warning(
+                "date_navigation_date_unreadable",
+                step=step + 1,
+                total_steps=steps,
+                attempt=unreadable_count,
+            )
+            if unreadable_count >= DATE_ARROW_MAX_UNREADABLE:
+                logger.error(
+                    "date_navigation_date_unreadable_exhausted", target_date=target_date_str
+                )
+                return False
+            continue
+        unreadable_count = 0
+        if observed == target:
+            logger.info("date_navigation_success", target_date=target_date_str, step=step + 1)
+            return True
+
+        progressed = (
+            observed < last_observed if direction == "prev" else observed > last_observed
+        )
+        if not progressed:
+            no_progress_count += 1
+            logger.warning(
+                "date_navigation_no_progress",
+                step=step + 1,
+                total_steps=steps,
+                previous_date=str(last_observed),
+                displayed_date=str(observed),
+                attempt=no_progress_count,
+            )
+            if no_progress_count >= DATE_ARROW_MAX_NO_PROGRESS:
+                logger.error("date_navigation_stalled", target_date=target_date_str)
+                return False
+        else:
+            no_progress_count = 0
+            last_observed = observed
 
     time.sleep(2)
 
@@ -640,7 +741,7 @@ def _navigate_to_date(driver, target_date_str):
             var el = document.querySelector('.flex.align-items-center.p-0');
             return el ? el.innerText.trim() : null;
         """)
-        current = _read_displayed_date(driver)
+        current = _read_displayed_date(driver, reference_date=target)
         logger.info(
             "date_navigation_check",
             displayed_text=displayed,
@@ -677,7 +778,7 @@ def _navigate_to_date(driver, target_date_str):
                 container = container.parentElement;
             }
         """, direction)
-        time.sleep(1.5)
+        time.sleep(DATE_ARROW_DELAY_SECONDS)
 
     logger.warning("date_navigation_failed", target_date=target_date_str)
     return False
@@ -716,9 +817,28 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
     sport = normalize_sport(sport)
     metrics = get_metrics()
     state = driver.execute_script(_JS_SPORT_STATE)
-    if not state or not state.get("matchList"):
+    if not state or "matchList" not in state:
         logger.warning("sport_component_not_found")
         result = DiscoveryResult(anomalies=["sport_component_not_found"])
+        return result if return_result else result.matches
+
+    if not state.get("matchList"):
+        try:
+            total_pages = int(state.get("totalPages") or 1)
+            current_page = int(state.get("currentPage") or 1)
+        except (TypeError, ValueError):
+            total_pages = current_page = 1
+        result = DiscoveryResult(
+            expected_pages=total_pages,
+            observed_pages=current_page,
+            empty_confirmed=current_page >= total_pages,
+        )
+        logger.info(
+            "sport_component_empty",
+            expected_pages=total_pages,
+            observed_pages=current_page,
+            complete=result.complete,
+        )
         return result if return_result else result.matches
 
     try:
@@ -1566,7 +1686,7 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
     Args:
         driver: Selenium WebDriver instance.
         target_date: Date identifier in YYYYMMDD format. Defaults to today.
-        sport: Supported sport slug. Defaults to tennis.
+        sport: Supported sport slug. Defaults to football.
         reuse_listing: Change the date on the currently rendered listing page.
             If that navigation fails, reload the listing page and retry once.
 
@@ -1578,7 +1698,7 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
     t0 = time.time()
 
     if target_date is None:
-        target_date = datetime.now().strftime("%Y%m%d")
+        target_date = datetime.now(timezone.utc).strftime("%Y%m%d")
 
     url = get_sport_listing_url(sport)
     logger.info("collecting_matches", sport=sport, url=url, target_date=target_date)
@@ -1622,17 +1742,28 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
     )
     matches = discovery.matches
 
-    if not matches and sport == "football":
+    if not matches and not discovery.empty_confirmed and sport == "football":
         logger.warning("sport_component_empty_trying_sports_events")
         matches = _extract_matches_from_sports_events(driver, sport=sport)
         if matches:
-            discovery = DiscoveryResult(matches=matches, expected_pages=1, observed_pages=1)
+            discovery = DiscoveryResult(
+                matches=matches,
+                expected_pages=1,
+                observed_pages=1,
+                source="structured_events",
+            )
 
-    if not matches:
+    if not matches and not discovery.empty_confirmed:
         logger.warning("api_returns_empty_trying_vuex")
         matches = _extract_matches_vuex(driver, sport=sport)
         if matches:
-            discovery = DiscoveryResult(matches=matches, expected_pages=1, observed_pages=1)
+            discovery = DiscoveryResult(
+                matches=matches,
+                expected_pages=1,
+                observed_pages=1,
+                anomalies=["limited_vuex_fallback"],
+                source="vuex_fallback",
+            )
 
     _clean_match_data(matches)
 

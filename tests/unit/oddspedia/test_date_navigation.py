@@ -9,7 +9,11 @@ SRC = os.path.join(ROOT, "src")
 if SRC not in sys.path:
     sys.path.insert(0, SRC)
 
-from src.oddspedia.scraping.match_collector import _navigate_to_date, collect_match_links
+from src.oddspedia.scraping.match_collector import (
+    _navigate_to_date,
+    _read_displayed_date,
+    collect_match_links,
+)
 
 
 class _FakeDriver:
@@ -27,6 +31,31 @@ class _NavigationDriver:
         if args and args[0] == "next":
             return "ok:BUTTONx2"
         return "Jul 6"
+
+
+class _PickerRetryDriver:
+    def __init__(self):
+        self.execute_script_calls = []
+        self.picker_attempts = 0
+
+    def execute_script(self, script, *args):
+        self.execute_script_calls.append((script, args))
+        if args and args[0] == "2026-07-06":
+            self.picker_attempts += 1
+            return (
+                "no-day-match|no-input|vue-root-missing"
+                if self.picker_attempts == 1
+                else "input-set"
+            )
+        return "Jul 6"
+
+
+class _DisplayedDateDriver:
+    def __init__(self, value):
+        self.value = value
+
+    def execute_script(self, script, *args):
+        return self.value
 
 
 class CollectMatchLinksDateTests(unittest.TestCase):
@@ -126,6 +155,25 @@ class CollectMatchLinksDateTests(unittest.TestCase):
 
         self.assertTrue(_navigate_to_date(driver, "20260706"))
         self.assertEqual(driver.execute_script_calls[0][1], ("2026-07-06",))
+
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    @patch(
+        "src.oddspedia.scraping.match_collector._read_displayed_date",
+        return_value=date(2026, 7, 6),
+    )
+    def test_calendar_picker_retries_transient_dom_failure(self, _read_displayed_date, _sleep):
+        driver = _PickerRetryDriver()
+
+        self.assertTrue(_navigate_to_date(driver, "20260706"))
+        self.assertEqual(driver.picker_attempts, 2)
+
+    def test_displayed_date_uses_nearest_year_at_year_boundary(self):
+        driver = _DisplayedDateDriver("Dec 31")
+
+        self.assertEqual(
+            _read_displayed_date(driver, reference_date=date(2027, 1, 1)),
+            date(2026, 12, 31),
+        )
 
 
 if __name__ == "__main__":

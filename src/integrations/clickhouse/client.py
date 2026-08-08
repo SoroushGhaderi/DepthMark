@@ -50,6 +50,7 @@ class ClickHouseClient:
         "event",
         "match_payload",
         "market",
+        "load_status",
         "oddspedia_match_resolution",
         "scenario_demolition",
         "scenario_defensive_shutdown_win",
@@ -265,17 +266,25 @@ class ClickHouseClient:
         Raises:
             ValueError: If table name not in whitelist
         """
+        table = self._validate_table_name(table)
+        return self.insert_dataframe_qualified_table(table, df, database=database)
+
+    def insert_dataframe_qualified_table(
+        self, table: str, df, database: Optional[str] = None
+    ) -> int:
+        """Insert into a validated database/table pair, including generated stage tables."""
         if not self.client:
             raise RuntimeError("Not connected to ClickHouse. Call connect() first.")
 
-        table = self._validate_table_name(table)
+        table = self._validate_identifier(table, "table")
+        db = database or self.database
+        db = self._validate_identifier(db, "database")
 
         if df.empty:
             self.logger.warning(f"DataFrame is empty, skipping insert to {table}")
             return 0
 
         try:
-            db = database or self.database
             full_table = f"{db}.{table}" if db else table
 
             self.client.insert_df(full_table, df)

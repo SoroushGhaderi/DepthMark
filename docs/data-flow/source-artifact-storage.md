@@ -30,6 +30,11 @@ files are compressed into the FotMob-compatible
 `matches/YYYYMM/YYYYMMDD/YYYYMMDD_matches.tar` archive with
 `<event_id>.json.gz` members; Live artifacts remain uncompressed.
 
+Operational date locks live separately under
+`data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`. They contain short-lived
+process metadata for cross-process serialization and are not source artifacts,
+must not be uploaded to S3, and are not read by Bronze loaders.
+
 The current date is always a refreshable Live snapshot. A completed date is
 Historical. Collection rejects future dates. FotMob exposes these choices with
 `--today` and historical selectors; Oddspedia uses its default current-date

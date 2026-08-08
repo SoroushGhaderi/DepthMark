@@ -6,7 +6,7 @@ import hashlib
 import json
 from collections import Counter
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
@@ -17,6 +17,7 @@ from src.oddspedia.scraping.config import (
     normalize_date,
 )
 from src.oddspedia.silver.match_resolution import (
+    FotMobReferenceWindowVerifier,
     FotMobMatch,
     OddspediaEvent,
     OddspediaMatchResolver,
@@ -124,6 +125,9 @@ class LinkPriorityService:
         date_id = normalize_date(date_str)
         discovery_date = datetime.strptime(date_id, "%Y%m%d").date()
         reference_dates = self.resolver.candidate_dates(discovery_date)
+        reference_verification = FotMobReferenceWindowVerifier(self.client).require_complete(
+            reference_dates
+        )
         fotmob_matches = self._load_fotmob_matches(reference_dates)
         matches_by_id = {match.match_id: match for match in fotmob_matches}
         index = self.resolver.candidate_index(fotmob_matches)
@@ -148,9 +152,10 @@ class LinkPriorityService:
             },
             "reference_window": {
                 "dates": [candidate_date.strftime("%Y%m%d") for candidate_date in reference_dates],
+                "verification": reference_verification.as_dict(),
             },
             "matcher": {"rule_version": self.resolver.rule_version},
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "links": records,
         }
         logger.info(
@@ -256,7 +261,7 @@ def priority_run_summary(
         "match_confidence_counts": dict(confidences),
         "team_match_rule_counts": _team_match_rule_counts(resolutions),
         "no_candidate_count": no_candidate_count,
-        "updated_at": datetime.now().isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
     }
 
 

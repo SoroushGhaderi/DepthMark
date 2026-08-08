@@ -134,6 +134,29 @@ stability rules in DepthMark. The canonical command list lives in
    or other state mutation. It reports context, output scope, selected tables,
    exclusions, and planned operations.
 
+### Oddspedia Source Pipeline
+
+1. Oddspedia event intake is independent of the FotMob orchestration command.
+   Its supported phases are `discover_events.py`, `prioritize_events.py`,
+   `scrape_matches.py`, and `run_pipeline.py`; Bronze loading and resolution
+   are separate `load_bronze.py` and `resolve_events.py` operations.
+2. Discovery is fail-closed. An inventory is accepted only after complete
+   target-date pagination and date validation, or an explicitly verified empty
+   result. Accepted inventories must include a checksum. Missing or stale
+   checksums cause discovery refresh and Bronze admission failure until the
+   refreshed evidence is available.
+3. Mutating date-scoped Oddspedia commands serialize through
+   `data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`. Dry-run and read-only status
+   operations must not create or acquire that lock.
+4. `load_bronze.py` stages all three source fact tables, validates date-scoped
+   counts and payload audits, replaces the target partition only after the
+   staged batch is ready, and records `staging`, `published`, or `failed` in
+   `oddspedia_bronze.load_status`. Silver resolution may consume only a
+   `published` batch.
+5. Month-scoped Oddspedia commands continue processing independent dates but
+   must exit non-zero when any date is missing, unaccepted, or failed. A
+   successful month command means every requested date passed its phase gate.
+
 ### Quality Entry Points
 
 1. `scripts/quality/check_data_quality.py` is the canonical warehouse quality
