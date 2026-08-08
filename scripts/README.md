@@ -113,11 +113,27 @@ python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
 python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run
 ```
 
-Priority generation requires `--silver-reference-window-ready` after confirming the
-three-day DepthMark Silver reference window is complete. It writes an auditable
-priority artifact under `data/oddspedia/historical/link_priorities/`; standalone
-scraping automatically creates or refreshes a missing or stale artifact. The
-event scripts use
+Priority generation requires `--silver-reference-window-ready`; the command
+then machine-verifies the three-day DepthMark Bronze/Silver fixture-ID
+reconciliation before proceeding. It writes an auditable priority artifact
+under `data/oddspedia/historical/link_priorities/`; standalone scraping
+automatically creates or refreshes a missing or stale artifact. Discovery is
+fail-closed, and a genuine empty date is represented as `no_events` in the
+manifest. Accepted inventories carry a checksum; legacy or stale checksums
+are refreshed before they can be admitted. A limited Vuex fallback is retained
+as a rescrape candidate. All mutating date operations serialize through a lock
+under `data/oddspedia/locks/`; dry runs do not create locks, and month commands
+report non-zero when any date fails.
+
+`load_bronze.py` admits only an accepted discovery inventory with a matching
+checksum, terminal scrape state, and accepted payload audits. It stages the
+`event`, `match_payload`, and `market` facts, replaces the target partition
+after validation, and records `staging`, `published`, or `failed` in
+`oddspedia_bronze.load_status`. `resolve_events.py` reads only published
+dates, so an incomplete or partially replaced Bronze batch cannot enter
+Oddspedia Silver.
+
+The event scripts use
 `--retry-failed`, `--retry-incomplete`, and `--priority-tier` as canonical
 operation selectors. The resolver uses the same
 `--silver-reference-window-ready` assertion for persisted resolution outcomes;

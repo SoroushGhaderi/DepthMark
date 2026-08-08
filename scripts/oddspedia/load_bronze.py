@@ -14,6 +14,7 @@ from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.bronze import OddspediaBronzeLoader
 from src.oddspedia.scraping.config import normalize_date, normalize_month
+from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
 
 
 def _dates(args):
@@ -56,7 +57,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     try:
         loader = OddspediaBronzeLoader(client=client)
         for date_id in dates:
-            loader.load_date(date_id)
+            with oddspedia_date_lock(date_id, operation="load_bronze"):
+                loader.load_date(date_id)
         return 0
     finally:
         client.disconnect()

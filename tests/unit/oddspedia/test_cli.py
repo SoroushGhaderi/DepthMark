@@ -97,3 +97,71 @@ def test_selection_reuses_date_audit_without_reloading_payloads(monkeypatch, tmp
     assert selected == []
     assert skipped == 1
     assert reconciled == 1
+
+
+def test_empty_inventory_is_reusable_only_with_accepted_no_events_evidence(
+    monkeypatch, tmp_path
+):
+    links_file = tmp_path / "match_links.json"
+    links_file.write_text("[]", encoding="utf-8")
+    manifest = ScrapeManifest(date="20260314", sport="football", total=0)
+    manifest.discovery = {
+        "status": "no_events",
+        "match_count": 0,
+        "empty_confirmed": True,
+        "inventory_checksum": source_inventory_checksum([]),
+    }
+    monkeypatch.setattr(cli, "load_manifest", lambda date, sport="football": manifest)
+
+    assert cli._existing_inventory_matches_target(str(links_file), "20260314")
+
+
+def test_empty_inventory_without_accepted_evidence_requires_discovery_refresh(
+    monkeypatch, tmp_path
+):
+    links_file = tmp_path / "match_links.json"
+    links_file.write_text("[]", encoding="utf-8")
+    manifest = ScrapeManifest(date="20260314", sport="football", total=0)
+    monkeypatch.setattr(cli, "load_manifest", lambda date, sport="football": manifest)
+
+    assert not cli._existing_inventory_matches_target(str(links_file), "20260314")
+
+
+def test_legacy_accepted_inventory_requires_checksum_refresh(monkeypatch, tmp_path):
+    links = [{"id": "42", "date": "2026-03-14", "home": "Home", "away": "Away"}]
+    links_file = tmp_path / "match_links.json"
+    links_file.write_text(json.dumps(links), encoding="utf-8")
+    manifest = ScrapeManifest(date="20260314", sport="football", total=1)
+    manifest.discovery = {
+        "status": "accepted",
+        "match_count": 1,
+        # Legacy manifests did not persist this checksum.
+    }
+    monkeypatch.setattr(
+        cli, "get_match_links_file", lambda date, sport="football": str(links_file)
+    )
+    monkeypatch.setattr(cli, "load_manifest", lambda date, sport="football": manifest)
+
+    assert cli._needs_discovery_retry("20260314", "football")
+
+
+def test_prioritize_dry_run_does_not_create_date_lock(monkeypatch):
+    prioritize = Mock()
+    lock = Mock(side_effect=AssertionError("dry-run must not acquire a filesystem lock"))
+    monkeypatch.setattr(cli, "prioritize_date", prioritize)
+    monkeypatch.setattr(cli, "oddspedia_date_lock", lock)
+
+    cli.main(
+        [
+            "prioritize",
+            "--date",
+            "20260314",
+            "--dry-run",
+            "--silver-reference-window-ready",
+        ]
+    )
+
+    prioritize.assert_called_once_with(
+        "20260314", priority="lower", dry_run=True, sport="football"
+    )
+    lock.assert_not_called()

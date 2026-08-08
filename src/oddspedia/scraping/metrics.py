@@ -1,6 +1,6 @@
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 from src.oddspedia.scraping.logging import get_logger
@@ -45,7 +45,7 @@ class Metrics:
     circuit_breaker_aborted: bool = False
     link_prioritization: Optional[Dict] = None
 
-    start_time: datetime = field(default_factory=datetime.now)
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
 
     def _increment(self, counter_name: str, value: int = 1) -> None:
@@ -59,7 +59,7 @@ class Metrics:
             d[key] = d.get(key, 0) + value
 
     def phase1_start(self) -> None:
-        self.start_time = datetime.now()
+        self.start_time = datetime.now(timezone.utc)
 
     def phase1_complete(self, total: int, success: int, duration_seconds: int) -> None:
         self.phase_1_total = total
@@ -146,13 +146,13 @@ class Metrics:
             self.link_prioritization = dict(summary)
 
     def finish(self) -> None:
-        self.end_time = datetime.now()
+        self.end_time = datetime.now(timezone.utc)
 
     @property
     def total_duration_seconds(self) -> int:
         if self.end_time:
             return int((self.end_time - self.start_time).total_seconds())
-        return int((datetime.now() - self.start_time).total_seconds())
+        return int((datetime.now(timezone.utc) - self.start_time).total_seconds())
 
     @property
     def avg_page_load_ms(self) -> float:

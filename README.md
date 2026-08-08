@@ -93,6 +93,7 @@ selector so repeated or reverse fixtures cannot resolve to the wrong event.
 
 ```bash
 # One date (default priority tier is `lower`)
+python3 scripts/oddspedia/discover_events.py --date 20260301
 python3 scripts/oddspedia/prioritize_events.py --date 20260301 --silver-reference-window-ready
 python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier xG
 python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready
@@ -110,14 +111,25 @@ Oddspedia uses phase-specific verb-noun scripts: `discover_events.py`,
 `prioritize_events.py`, `scrape_matches.py`, `run_pipeline.py`, and `status.py`.
 The older `events.py`, `setup_clickhouse.py`, `load_clickhouse.py`, and
 `resolve_matches.py` paths remain compatibility wrappers and emit deprecation
-warnings. Discovery automatically refreshes a target-date inventory when its
-manifest marks discovery or saved match output as incomplete; use
-`--retry-failed`, `--retry-incomplete`, and `--priority-tier` for explicit
-operation semantics. Priority generation requires
-`--silver-reference-window-ready`, which asserts the
-corresponding three-day Silver reference window is complete. It writes a
-complete decision ledger under `data/oddspedia/historical/link_priorities/`;
-`scrape` rejects a stale or missing ledger. See
+warnings. Discovery is fail-closed: it accepts only complete target-date
+pagination or a verified empty result, and accepted inventories carry a
+SHA-256 inventory checksum. Limited Vuex fallbacks remain diagnostic rescrape
+candidates; legacy inventories with missing or stale checksums are refreshed
+before they can be used. Use `--retry-failed`, `--retry-incomplete`, and
+`--priority-tier` for explicit operation semantics. Priority generation
+requires `--silver-reference-window-ready`, then machine-verifies the exact
+FotMob fixture-ID sets in Bronze and Silver for the previous/current/following
+dates. It writes a complete decision ledger under
+`data/oddspedia/historical/link_priorities/`; `scrape` rejects a stale or
+missing ledger. All mutating date commands serialize through
+`data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`; dry runs do not create locks.
+Month commands exit non-zero when any date is missing, unaccepted, or failed.
+
+Bronze loading stages `event`, `match_payload`, and `market`, replaces the
+target ClickHouse partition only after validation, and writes
+`oddspedia_bronze.load_status` as `published` only after every replacement
+succeeds. `resolve_events.py` refuses to read a date without that published
+marker. See
 [`docs/data-flow/oddspedia.md`](docs/data-flow/oddspedia.md) for artifact paths,
 tiers, tables, and status definitions.
 

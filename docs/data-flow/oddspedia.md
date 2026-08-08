@@ -54,6 +54,20 @@ python3 scripts/oddspedia/setup_warehouse.py --dry-run
 python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
 ```
 
+Discovery is fail-closed. A date is accepted only when listing pagination and
+target-date checks complete; a verified empty listing is represented as
+`no_events` in the manifest. Vuex or other limited fallbacks are diagnostic
+snapshots and remain rescrape candidates. Accepted inventories include a
+checksum in the manifest. Discovery automatically marks legacy inventories
+with missing or stale checksums for refresh; Bronze remains fail-closed until
+that refreshed evidence exists.
+
+All mutating Oddspedia date operations use the cross-process lock at
+`data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`. Discovery, priority generation,
+scraping, Bronze loading, and resolution refuse to overlap for the same date.
+Month commands continue through all dates but exit non-zero if any date is
+missing, unaccepted, or otherwise failed.
+
 The canonical event-intake scripts are `discover_events.py`,
 `prioritize_events.py`, `scrape_matches.py`, `run_pipeline.py`, and `status.py`.
 `run_pipeline.py` performs discovery, priority generation, then
@@ -102,6 +116,16 @@ The Bronze loader writes:
 - `oddspedia_bronze.event` — discovered event metadata and raw event JSON.
 - `oddspedia_bronze.match_payload` — raw per-event page payloads.
 - `oddspedia_bronze.market` — market names and raw odds lines.
+- `oddspedia_bronze.load_status` — the date-level batch commit marker and row
+  counts. Bronze loading stages all three tables, validates staged date counts,
+  replaces the containing ClickHouse partition, and records `published` only
+  after every table replacement succeeds.
+
+The Bronze loader requires an accepted discovery manifest, matching inventory
+checksum, terminal scrape state, and accepted per-event payload audits.
+`resolve_events.py` additionally requires the latest `load_status` row for the
+date to be `published`, so a partially replaced ClickHouse batch cannot be read
+as complete Silver input.
 
 ## Oddspedia Silver
 
@@ -149,6 +173,11 @@ competition, coverage, and URL fields. `resolution` contains the decision,
 confidence, score, margin, and team-name rules; window and policy metadata live
 at the artifact root.
 
+The `--silver-reference-window-ready` option is an operator gate, not the
+evidence itself. Priority generation and resolution machine-verify that
+FotMob Bronze and Silver contain identical fixture-ID sets for every
+previous/current/following date; priority artifacts retain that verification.
+
 Approximate matching canonicalizes non-identifying club designators and `II` /
 `2` second-team notation, then supplements character similarity with token
 reordering and distinctive-token containment. A unique long token can rescue
@@ -170,9 +199,9 @@ Existing payloads are not scraped again; only newly selected, incomplete, or
 explicitly retried IDs are processed.
 
 Discovery also refreshes an otherwise valid date inventory when the manifest
-records an incomplete discovery or saved match output. This lets the standard
-`discover_events.py --date ...` command recover rescrape candidates without
-requiring an extra retry flag.
+records an incomplete discovery, saved match output, or missing/stale checksum.
+This lets the standard `discover_events.py --date ...` command recover
+rescrape candidates without requiring an extra retry flag.
 
 See [`source-artifact-storage.md`](source-artifact-storage.md) for the shared
 Historical/Live artifact hierarchy and

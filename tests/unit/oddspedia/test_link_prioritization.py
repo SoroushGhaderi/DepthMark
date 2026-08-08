@@ -12,6 +12,7 @@ from src.oddspedia.scraping.link_prioritization import (
     select_links_for_priority,
 )
 from src.oddspedia.silver.match_resolution import OddspediaMatchResolver
+from src.oddspedia.silver.match_resolution import ReferenceWindowNotReadyError
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -29,6 +30,26 @@ class _FakeClient:
 
     def execute(self, query, parameters):
         self.queries.append((query, parameters))
+        if "FROM bronze.match_reference" in query:
+            candidate_rows = [(row[0], row[1]) for row in self.rows]
+            return _QueryResult(
+                [
+                    (900001, date(2026, 2, 28)),
+                    (900000, date(2026, 3, 1)),
+                    *candidate_rows,
+                    (900002, date(2026, 3, 2)),
+                ]
+            )
+        if "oddspedia_reference_window:silver" in query:
+            candidate_rows = [(row[0], row[1]) for row in self.rows]
+            return _QueryResult(
+                [
+                    (900001, date(2026, 2, 28)),
+                    (900000, date(2026, 3, 1)),
+                    *candidate_rows,
+                    (900002, date(2026, 3, 2)),
+                ]
+            )
         return _QueryResult(self.rows)
 
 
@@ -182,7 +203,32 @@ def test_priority_artifact_contains_all_links_and_selects_inclusive_tiers(resolv
         "odd-lower",
         "odd-unmatched",
     ]
-    assert client.queries[0][1] == {"start_date": "2026-02-28", "end_date": "2026-03-02"}
+    assert client.queries[-1][1] == {"start_date": "2026-02-28", "end_date": "2026-03-02"}
+
+
+def test_priority_rejects_an_operator_assertion_when_silver_is_not_reconciled(
+    resolver, source_links
+):
+    class IncompleteReferenceClient:
+        def execute(self, query, parameters):
+            if "FROM bronze.match_reference" in query:
+                return _QueryResult(
+                    [
+                        (1, date(2026, 2, 28)),
+                        (2, date(2026, 3, 1)),
+                        (3, date(2026, 3, 2)),
+                    ]
+                )
+            if "oddspedia_reference_window:silver" in query:
+                return _QueryResult(
+                    [(1, date(2026, 2, 28)), (2, date(2026, 3, 1))]
+                )
+            raise AssertionError("candidate rows must not load before readiness succeeds")
+
+    with pytest.raises(ReferenceWindowNotReadyError, match="2026-03-02"):
+        LinkPriorityService(IncompleteReferenceClient(), resolver).prioritize(
+            "20260301", source_links
+        )
 
 
 def test_priority_artifact_round_trip_detects_stale_source_inventory(

@@ -39,6 +39,11 @@ second source and its isolated contracts exist.
   ambiguous, unmatched, or unresolved.
 - A business coverage category is emitted only from a confirmed match or from
   a complete reference window that safely establishes `not_covered`.
+- Bronze admission is fail-closed: the discovery inventory must be accepted
+  with a matching checksum, scrape outcomes must be terminal and audited, and
+  all three Oddspedia fact tables are published as one date-scoped batch.
+- `oddspedia_bronze.load_status` records `staging`, `published`, or `failed`;
+  the Silver resolution edge may consume only a `published` batch.
 
 ## Consequences
 

@@ -58,6 +58,15 @@ TERMINAL_NO_DATA_STATUSES = {
 }
 
 
+class MatchPayloadAuditError(ValueError):
+    """Raised when a persisted payload fails the accepted scrape contract."""
+
+    def __init__(self, audit: "MatchAudit"):
+        self.audit = audit
+        details = "; ".join(audit.reasons) or audit.status
+        super().__init__(f"Oddspedia payload {audit.match_id} is not accepted: {details}")
+
+
 @dataclass
 class MatchAudit:
     """Validation result for one expected or existing match JSON."""
@@ -197,6 +206,26 @@ def audit_match_json(
         sport=sport,
         expected_match=expected_match,
     )
+
+
+def require_accepted_match_json(
+    date_str: str,
+    match_id: str,
+    path: str,
+    sport: str = "football",
+    expected_match: Optional[Dict[str, Any]] = None,
+) -> MatchAudit:
+    """Return the saved payload audit or raise before a terminal success is recorded."""
+    audit = audit_match_json(
+        date_str,
+        match_id,
+        path,
+        sport=sport,
+        expected_match=expected_match,
+    )
+    if not audit.accepted:
+        raise MatchPayloadAuditError(audit)
+    return audit
 
 
 def audit_match_payload(
