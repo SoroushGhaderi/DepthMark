@@ -32,6 +32,10 @@ LOGS_DIR = str(_PROJECT_ROOT / "logs" / "oddspedia")
 
 BASE_URL = settings.base_url
 FOOTBALL_ODDS_URL = f"{BASE_URL}/football"
+# Odds can be absent while the page is still loading. Keep this policy
+# separate from the broader page/error retry budget so an empty odds result is
+# only accepted after three football extraction attempts.
+FOOTBALL_ODDS_MAX_ATTEMPTS = 3
 DEFAULT_SPORT = "football"
 SCRAPER_ENV = settings.scraper_env
 MIN_DELAY = settings.min_delay

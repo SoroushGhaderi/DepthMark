@@ -50,6 +50,7 @@ from src.oddspedia.scraping.audit import (
     sync_manifest_incomplete,
 )
 from src.oddspedia.scraping.config import (
+    FOOTBALL_ODDS_MAX_ATTEMPTS,
     WORKER_MAX_DELAY,
     WORKER_MIN_DELAY,
     get_discovery_snapshot_file,
@@ -84,6 +85,7 @@ from src.oddspedia.scraping.manifest import (
 from src.oddspedia.scraping.match_collector import collect_match_links, listing_matches_target_date
 from src.oddspedia.scraping.match_scraper import (
     FootballOddsCoverageError,
+    FootballOddsRetryableError,
     FootballOddsUnavailableError,
     MatchPageNotRenderedError,
     scrape_match,
@@ -106,6 +108,10 @@ CIRCUIT_BREAKER_COOLDOWN_SECONDS = 120
 CIRCUIT_BREAKER_PAUSE_CYCLES_BEFORE_ABORT = 3
 FOOTBALL_SKIP_STATUSES = {"POSTPONED", "CANCELLED", "CANCELED", "ABANDONED", "SUSPENDED"}
 ACCEPTED_DISCOVERY_STATUSES = {"accepted", "no_events"}
+# One initial read plus two fresh-listing retries. Partial inventories are
+# diagnostic only, so a date must get multiple chances to produce a complete
+# target-date link set before discovery is allowed to fail closed.
+DISCOVERY_MAX_ATTEMPTS = 3
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
@@ -581,29 +587,35 @@ def phase1_collect(
         )
 
     logger.info("event_discovery_start", sport=sport, date=date_str)
-    discovery = collect_match_links(
-        driver,
-        target_date=date_str,
-        sport=sport,
-        reuse_listing=reuse_listing,
-        return_result=True,
-    )
-    # A stalled listing or date control is frequently transient. Retry once
-    # from a fresh page before turning this Sport-Date Run into a Rescrape
-    # Candidate.
-    if not discovery.complete and {
-        "date_navigation_failed",
-        "pagination_stalled",
-        "listing_target_date_missing",
-    }.intersection(discovery.anomalies):
-        logger.info("event_discovery_retrying_fresh_listing", sport=sport, date=date_str)
+    discovery = None
+    for attempt in range(1, DISCOVERY_MAX_ATTEMPTS + 1):
         discovery = collect_match_links(
             driver,
             target_date=date_str,
             sport=sport,
-            reuse_listing=False,
+            # A retry must rebuild the listing state. Reusing a listing that
+            # already yielded a partial result can reproduce the same gap.
+            reuse_listing=reuse_listing if attempt == 1 else False,
             return_result=True,
         )
+        if discovery.complete:
+            break
+        if attempt == DISCOVERY_MAX_ATTEMPTS:
+            break
+        logger.info(
+            "event_discovery_retrying_fresh_listing",
+            sport=sport,
+            date=date_str,
+            attempt=attempt + 1,
+            max_attempts=DISCOVERY_MAX_ATTEMPTS,
+            anomalies=discovery.anomalies,
+        )
+
+    # A complete result is the only result that can become match_links.json.
+    # Any final incomplete result is retained below as a diagnostic snapshot
+    # and causes the caller to fail the date rather than scrape partial links.
+    if discovery is None:
+        raise RuntimeError(f"Discovery did not run for {sport} {date_str}")
     matches = _as_match_list(discovery.matches)
     if not matches:
         if discovery.complete and discovery.empty_confirmed:
@@ -1006,6 +1018,8 @@ def _phase2_scrape_sequential(
 
     _warmup_cloudflare(driver, sport=sport)
 
+    odds_max_attempts = min(FOOTBALL_ODDS_MAX_ATTEMPTS, max_retries + 1)
+
     for i, match_info in enumerate(matches_to_scrape, 1):
         match_id = _match_id(match_info)
         out_path = get_match_file(date_str, match_id, sport=sport)
@@ -1027,9 +1041,21 @@ def _phase2_scrape_sequential(
         )
 
         last_error = None
+        empty_odds_attempts = 0
+        partial_odds = None
+        retry_market_names = None
         for attempt in range(max_retries + 1):
             try:
-                match_data = scrape_match(driver, match_info, sport=sport)
+                match_data = scrape_match(
+                    driver,
+                    match_info,
+                    sport=sport,
+                    odds_attempt=min(attempt + 1, odds_max_attempts),
+                    odds_max_attempts=odds_max_attempts,
+                    previous_empty_odds_attempts=empty_odds_attempts,
+                    previous_odds=partial_odds,
+                    retry_market_names=retry_market_names,
+                )
                 save_json(match_data, out_path)
                 require_accepted_match_json(
                     date_str,
@@ -1075,6 +1101,17 @@ def _phase2_scrape_sequential(
                 break
             except Exception as e:
                 last_error = e
+                if isinstance(e, FootballOddsRetryableError):
+                    empty_odds_attempts += 1
+                if isinstance(e, FootballOddsCoverageError) and not isinstance(
+                    e, FootballOddsRetryableError
+                ):
+                    if e.partial_odds and e.missing_markets:
+                        partial_odds = e.partial_odds
+                        retry_market_names = e.missing_markets
+                    else:
+                        partial_odds = None
+                        retry_market_names = None
                 if attempt < max_retries:
                     manifest.record_retry(match_id, str(e))
                     save_manifest(manifest)
@@ -1088,6 +1125,7 @@ def _phase2_scrape_sequential(
                         max_retries=max_retries,
                         delay_s=round(delay + jitter, 1),
                         restart_driver=restart_driver,
+                        missing_markets=getattr(e, "missing_markets", None),
                         error=str(e),
                     )
                     if restart_driver and hasattr(driver, "reconnect"):
@@ -1284,6 +1322,7 @@ def _phase2_scrape_concurrent(
     success_count = 0
     failed_count = 0
     circuit_breaker = _CircuitBreaker(metrics)
+    odds_max_attempts = min(FOOTBALL_ODDS_MAX_ATTEMPTS, max_retries + 1)
 
     def _fail_unresolved_batch(batch, reason: str) -> int:
         """Persist a retryable failure for every batch item without a terminal outcome."""
@@ -1365,9 +1404,21 @@ def _phase2_scrape_concurrent(
                 )
 
                 last_error = None
+                empty_odds_attempts = 0
+                partial_odds = None
+                retry_market_names = None
                 for attempt in range(max_retries + 1):
                     try:
-                        match_data = scrape_match(driver, match_info, sport=sport)
+                        match_data = scrape_match(
+                            driver,
+                            match_info,
+                            sport=sport,
+                            odds_attempt=min(attempt + 1, odds_max_attempts),
+                            odds_max_attempts=odds_max_attempts,
+                            previous_empty_odds_attempts=empty_odds_attempts,
+                            previous_odds=partial_odds,
+                            retry_market_names=retry_market_names,
+                        )
                         save_json(match_data, out_path)
                         require_accepted_match_json(
                             date_str,
@@ -1405,6 +1456,17 @@ def _phase2_scrape_concurrent(
                         break
                     except Exception as e:
                         last_error = e
+                        if isinstance(e, FootballOddsRetryableError):
+                            empty_odds_attempts += 1
+                        if isinstance(e, FootballOddsCoverageError) and not isinstance(
+                            e, FootballOddsRetryableError
+                        ):
+                            if e.partial_odds and e.missing_markets:
+                                partial_odds = e.partial_odds
+                                retry_market_names = e.missing_markets
+                            else:
+                                partial_odds = None
+                                retry_market_names = None
                         if attempt < max_retries:
                             update_manifest(
                                 date_str,
@@ -1422,6 +1484,7 @@ def _phase2_scrape_concurrent(
                                 max_retries=max_retries,
                                 delay_s=round(delay + jitter, 1),
                                 restart_driver=restart_driver,
+                                missing_markets=getattr(e, "missing_markets", None),
                                 error=str(e),
                             )
                             if restart_driver and hasattr(driver, "reconnect"):

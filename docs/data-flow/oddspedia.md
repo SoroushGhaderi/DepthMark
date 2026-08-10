@@ -60,7 +60,9 @@ target-date checks complete; a verified empty listing is represented as
 snapshots and remain rescrape candidates. Accepted inventories include a
 checksum in the manifest. Discovery automatically marks legacy inventories
 with missing or stale checksums for refresh; Bronze remains fail-closed until
-that refreshed evidence exists.
+that refreshed evidence exists. Every incomplete discovery receives two fresh
+listing retries before the date is marked failed; `discovery_partial.json` is
+never used as the date's event-link inventory.
 
 All mutating Oddspedia date operations use the cross-process lock at
 `data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`. Discovery, priority generation,
@@ -109,7 +111,23 @@ Accepted football odds lines also have a non-empty label. Parameterized markets
 retain their observed threshold or handicap; non-parameterized markets use the
 explicit label `Main Line`. Known markets with `schema_status: unmatched`, or
 parameterized lines whose value cannot be recovered, are incomplete and are
-requeued rather than treated as valid Bronze input.
+requeued rather than treated as valid Bronze input. Football scraping records
+the total market-card inventory exposed after expansion alongside the number
+of extracted markets. Any non-empty result with fewer extracted markets than
+the exposed total is retried rather than marked complete; the decision is
+based on the observed denominator, not a fixed market count. Empty or
+transiently unloaded odds are retried for up to three football attempts. If all
+three attempts are empty, the payload is saved with `odds_unavailable: true`
+and is accepted as terminal odds-unavailable data. Explicit no-odds notices
+follow the same retry policy. Legacy payloads without coverage metadata are
+requeued for migration when their market count is ambiguous.
+
+When a non-empty football payload is incomplete, the retry state carries the
+partial markets and the inventory names that are missing. The next page load
+expands and selects only those missing markets, then merges them with the
+already extracted markets. If Oddspedia does not expose market names, the
+scraper falls back to the normal full retry because it cannot safely identify a
+smaller target.
 
 The Bronze loader writes:
 
