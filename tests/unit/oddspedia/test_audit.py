@@ -215,6 +215,100 @@ class FootballAuditTests(unittest.TestCase):
         self.assertEqual(audit.status, "accepted_data_present")
         self.assertIn("limited football odds coverage (2 markets)", audit.observations)
 
+    def test_partial_football_market_inventory_is_requeued(self):
+        payload = {
+            "sport": "football",
+            "id": "10128183",
+            "home": "Aston Villa",
+            "away": "Chelsea",
+            "tournament": "Premier League",
+            "date": "2026-07-02",
+            "url": "https://oddspedia.com/football/example",
+            "status": "FT",
+            "score": {"home": 2, "away": 1, "winner": "home"},
+            "odds_total_markets": 6,
+            "odds_extracted_markets": 4,
+            "odds": [
+                {
+                    "market": "Full Time Result",
+                    "lines": [{"label": "Main Line", "home": 1.8, "draw": 3.9, "away": 3.6}],
+                },
+                {
+                    "market": "Total Goals",
+                    "lines": [{"label": "2.5", "over": 1.85, "under": 1.8}],
+                },
+                {
+                    "market": "Asian Handicap",
+                    "lines": [{"label": "-0.5", "home": 1.9, "away": 1.9}],
+                },
+                {
+                    "market": "Both Teams to Score",
+                    "lines": [{"label": "Main Line", "yes": 1.7, "no": 2.1}],
+                },
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "10128183.json")
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump(payload, file)
+            audit = audit_match_json("2026-07-02", "10128183", path, sport="football")
+
+        self.assertEqual(audit.status, "incomplete")
+        self.assertIn("football odds market coverage incomplete (4/6 markets)", audit.reasons)
+
+    def test_four_markets_are_accepted_when_the_tracked_total_is_four(self):
+        payload = {
+            "sport": "football",
+            "id": "10128184",
+            "home": "Home",
+            "away": "Away",
+            "tournament": "Tournament",
+            "date": "2026-07-02",
+            "url": "https://oddspedia.com/football/example",
+            "status": "FT",
+            "score": {"home": 2, "away": 1, "winner": "home"},
+            "odds_total_markets": 4,
+            "odds_extracted_markets": 4,
+            "odds": [
+                {"market": name, "lines": [{"label": "Main Line"}]}
+                for name in (
+                    "Full Time Result",
+                    "Total Goals",
+                    "Asian Handicap",
+                    "Both Teams to Score",
+                )
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "10128184.json")
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump(payload, file)
+            audit = audit_match_json("2026-07-02", "10128184", path, sport="football")
+
+        self.assertEqual(audit.status, "accepted_data_present")
+
+    def test_empty_football_odds_without_terminal_metadata_is_requeued(self):
+        payload = {
+            "sport": "football",
+            "id": "10128185",
+            "home": "Home",
+            "away": "Away",
+            "tournament": "Tournament",
+            "date": "2026-07-02",
+            "url": "https://oddspedia.com/football/example",
+            "status": "scheduled",
+            "score": {"home": "", "away": "", "winner": ""},
+            "odds": [],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "10128185.json")
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump(payload, file)
+            audit = audit_match_json("2026-07-02", "10128185", path, sport="football")
+
+        self.assertEqual(audit.status, "incomplete")
+        self.assertIn("football odds availability was not confirmed after scraping", audit.reasons)
+
     def test_missing_total_corners_is_a_coverage_observation(self):
         payload = {
             "sport": "football",

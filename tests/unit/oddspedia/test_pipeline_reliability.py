@@ -135,6 +135,57 @@ class PipelineReliabilityTests(unittest.TestCase):
         self.assertFalse(collect.call_args_list[1].kwargs["reuse_listing"])
         save.assert_called_once()
 
+    @patch("src.oddspedia.scraping.cli._record_discovery")
+    @patch("src.oddspedia.scraping.cli.save_json")
+    @patch("src.oddspedia.scraping.cli.collect_match_links")
+    @patch("src.oddspedia.scraping.cli.os.path.exists", return_value=False)
+    def test_phase1_retries_every_incomplete_discovery_until_links_are_complete(
+        self, _exists, collect, save, _record
+    ):
+        collect.side_effect = [
+            DiscoveryResult(anomalies=["initial_page_load_failed"]),
+            DiscoveryResult(anomalies=["sport_component_not_found"]),
+            DiscoveryResult(
+                matches={"42": {"id": "42", "home": "Home", "away": "Away"}},
+                expected_pages=1,
+                observed_pages=1,
+            ),
+        ]
+
+        matches = main.phase1_collect(object(), "20260706")
+
+        self.assertEqual(matches, [{"id": "42", "home": "Home", "away": "Away"}])
+        self.assertEqual(collect.call_count, 3)
+        self.assertFalse(collect.call_args_list[0].kwargs["reuse_listing"])
+        self.assertFalse(collect.call_args_list[1].kwargs["reuse_listing"])
+        self.assertFalse(collect.call_args_list[2].kwargs["reuse_listing"])
+        save.assert_called_once()
+
+    @patch("src.oddspedia.scraping.cli._record_discovery")
+    @patch("src.oddspedia.scraping.cli.save_json")
+    @patch("src.oddspedia.scraping.cli.collect_match_links")
+    @patch("src.oddspedia.scraping.cli.os.path.exists", return_value=False)
+    def test_phase1_never_persists_partial_links_as_date_inventory(
+        self, _exists, collect, save, record_discovery
+    ):
+        partial = DiscoveryResult(
+            matches={"42": {"id": "42", "home": "Home", "away": "Away"}},
+            expected_pages=3,
+            observed_pages=1,
+            anomalies=["pagination_stalled"],
+        )
+        collect.side_effect = [partial, partial, partial]
+
+        matches = main.phase1_collect(object(), "20260706")
+
+        self.assertEqual(matches, [])
+        self.assertEqual(collect.call_count, 3)
+        save.assert_called_once()
+        self.assertEqual(save.call_args.args[0], list(partial.matches.values()))
+        self.assertTrue(save.call_args.args[1].endswith("discovery_partial.json"))
+        record_discovery.assert_called_once()
+        self.assertFalse(record_discovery.call_args.args[2].complete)
+
     @patch("src.oddspedia.scraping.cli._needs_discovery_retry", return_value=True)
     @patch("src.oddspedia.scraping.cli._existing_inventory_matches_target", return_value=True)
     @patch("src.oddspedia.scraping.cli.os.path.exists", return_value=True)
@@ -213,6 +264,55 @@ class PipelineReliabilityTests(unittest.TestCase):
         self.assertEqual(selected, [])
         self.assertEqual(skipped, 1)
         self.assertIn("42", manifest.done)
+
+    def test_done_match_with_partial_tracked_market_coverage_is_rescraped(self):
+        manifest = ScrapeManifest(date="2026-07-06", sport="football", total=1)
+        manifest.mark_done("42")
+        payload = {
+            "sport": "football",
+            "id": "42",
+            "home": "Home",
+            "away": "Away",
+            "date": "2026-07-06",
+            "url": "https://oddspedia.com/football/example",
+            "status": "FT",
+            "score": {"home": 1, "away": 0},
+            "odds_total_markets": 6,
+            "odds_extracted_markets": 4,
+            "odds": [
+                {
+                    "market": "Full Time Result",
+                    "lines": [{"label": "Main Line", "home": 2.0, "draw": 3.0, "away": 4.0}],
+                },
+                {
+                    "market": "Total Goals",
+                    "lines": [{"label": "2.5", "over": 2.0, "under": 1.8}],
+                },
+                {
+                    "market": "Asian Handicap",
+                    "lines": [{"label": "-0.5", "home": 2.0, "away": 1.8}],
+                },
+                {
+                    "market": "Both Teams to Score",
+                    "lines": [{"label": "Main Line", "yes": 1.9, "no": 1.9}],
+                },
+            ],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            with open(os.path.join(directory, "42.json"), "w", encoding="utf-8") as file:
+                json.dump(payload, file)
+            selected, skipped, _ = main._select_matches_to_scrape(
+                [{"id": "42", "status": "FT"}],
+                directory,
+                manifest,
+                "2026-07-06",
+                sport="football",
+            )
+
+        self.assertEqual([match["id"] for match in selected], ["42"])
+        self.assertEqual(skipped, 0)
+        self.assertIn("42", manifest.incomplete)
+        self.assertNotIn("42", manifest.done)
 
     def test_priority_expansion_scrapes_only_newly_selected_matches(self):
         manifest = ScrapeManifest(date="2026-07-06", sport="football", total=2)
@@ -377,6 +477,74 @@ class PipelineReliabilityTests(unittest.TestCase):
 
         self.assertNotIn("42", persisted.done)
         self.assertIn("42", persisted.failed)
+
+    def test_partial_football_retry_reuses_saved_markets_and_targets_missing_names(self):
+        match = {
+            "id": "42",
+            "home": "Home",
+            "away": "Away",
+            "date": "2026-07-06",
+            "url": "https://oddspedia.com/football/home-away-42",
+            "status": "FT",
+        }
+        partial_odds = [
+            {"market": "Full Time Result", "lines": [{"label": "Main Line"}]}
+        ]
+        coverage_error = FootballOddsCoverageError(
+            "Football odds market coverage incomplete: extracted 1/2 markets",
+            missing_markets=["Corners Odd or Even"],
+            partial_odds=partial_odds,
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = os.path.join(directory, "manifest.json")
+            output_path = os.path.join(directory, "match_42.json")
+            manifest = ScrapeManifest(date="20260706", sport="football", total=1)
+            with patch(
+                "src.oddspedia.scraping.manifest.get_manifest_path",
+                return_value=manifest_path,
+            ), patch(
+                "src.oddspedia.scraping.cli.get_matches_dir", return_value=directory
+            ), patch(
+                "src.oddspedia.scraping.cli.get_match_file", return_value=output_path
+            ), patch(
+                "src.oddspedia.scraping.cli._audit_before_scrape",
+                return_value=(DateAudit(date="20260706", sport="football", expected=1), manifest),
+            ), patch(
+                "src.oddspedia.scraping.cli._select_matches_to_scrape",
+                return_value=([match], 0, 0),
+            ), patch(
+                "src.oddspedia.scraping.cli.scrape_match",
+                side_effect=[coverage_error, {"id": "42"}],
+            ) as scrape, patch(
+                "src.oddspedia.scraping.cli.save_json"
+            ), patch(
+                "src.oddspedia.scraping.cli.require_accepted_match_json"
+            ), patch(
+                "src.oddspedia.scraping.cli._warmup_cloudflare"
+            ), patch(
+                "src.oddspedia.scraping.cli._retry_delay", return_value=0
+            ), patch(
+                "src.oddspedia.scraping.cli.random.uniform", return_value=0
+            ), patch(
+                "src.oddspedia.scraping.cli.time.sleep"
+            ), patch(
+                "src.oddspedia.scraping.cli.random_delay"
+            ):
+                from src.oddspedia.scraping.manifest import save_manifest
+
+                save_manifest(manifest)
+                persisted = main.phase2_scrape(
+                    object(), [match], "20260706", max_retries=1, workers=1
+                )
+
+        self.assertEqual(scrape.call_count, 2)
+        self.assertIsNone(scrape.call_args_list[0].kwargs["previous_odds"])
+        self.assertIsNone(scrape.call_args_list[0].kwargs["retry_market_names"])
+        self.assertEqual(scrape.call_args_list[1].kwargs["previous_odds"], partial_odds)
+        self.assertEqual(
+            scrape.call_args_list[1].kwargs["retry_market_names"], ["Corners Odd or Even"]
+        )
+        self.assertIn("42", persisted.done)
 
     def test_concurrent_driver_initialization_failure_persists_every_match_failure(self):
         matches = [

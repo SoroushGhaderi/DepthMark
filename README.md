@@ -115,7 +115,16 @@ warnings. Discovery is fail-closed: it accepts only complete target-date
 pagination or a verified empty result, and accepted inventories carry a
 SHA-256 inventory checksum. Limited Vuex fallbacks remain diagnostic rescrape
 candidates; legacy inventories with missing or stale checksums are refreshed
-before they can be used. Use `--retry-failed`, `--retry-incomplete`, and
+before they can be used. Football scraping records the market inventory exposed
+by the page and the number of extracted markets; a partial odds result is
+requeued whenever those counts differ. Empty or transiently unloaded odds are
+retried up to three football attempts, after which an empty result is saved with
+`odds_unavailable: true`. Explicit no-odds notices follow the same retry policy.
+Legacy payloads without coverage metadata are audited for migration, while
+known limited-odds results with matching tracked coverage remain accepted.
+Incomplete discovery receives two fresh-listing
+retries before the date fails; `discovery_partial.json` is never used as a date
+inventory. Use `--retry-failed`, `--retry-incomplete`, and
 `--priority-tier` for explicit operation semantics. Priority generation
 requires `--silver-reference-window-ready`, then machine-verifies the exact
 FotMob fixture-ID sets in Bronze and Silver for the previous/current/following

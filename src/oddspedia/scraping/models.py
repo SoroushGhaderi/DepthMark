@@ -39,6 +39,11 @@ class MatchResult(BaseModel):
     category: Optional[str] = ""
     status: str = ""
     odds_unavailable: bool = False
+    odds_total_markets: Optional[int] = None
+    odds_extracted_markets: Optional[int] = None
+    odds_attempt: Optional[int] = None
+    odds_max_attempts: Optional[int] = None
+    odds_empty_attempts: Optional[int] = None
     winner: Optional[str] = ""
     home_sets: Optional[str] = ""
     away_sets: Optional[str] = ""
