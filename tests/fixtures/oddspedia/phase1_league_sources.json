@@ -1,0 +1,40 @@
+{
+  "matches": {
+    "10128494": {
+      "matchId": "10128494",
+      "matchKey": "",
+      "url": "",
+      "full_url": "",
+      "league_name": ""
+    }
+  },
+  "source_events": {
+    "1979571": {
+      "matchId": "10128494",
+      "slug": "australia-egypt-1979571",
+      "league": {"name": "FIFA World Cup"},
+      "country": {"name": "World"}
+    }
+  },
+  "archived_matches": {
+    "10128475": {
+      "matchId": "10128475",
+      "home": "Boca Juniors Women",
+      "away": "Lanus Women",
+      "date": "2026-07-05 18:30:00+00",
+      "url": "/a/football/lanus-women-boca-juniors-women-175606",
+      "league_name": ""
+    }
+  },
+  "archived_source_events": {
+    "different-source-id": {
+      "matchId": "different-source-id",
+      "home": "Boca Juniors Women",
+      "away": "Lanus Women",
+      "date": "2026-07-05T18:30:00Z",
+      "url": "/football/boca-juniors-women-lanus-women-999999",
+      "league": "Primera A Women",
+      "country": "Argentina"
+    }
+  }
+}
