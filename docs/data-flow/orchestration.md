@@ -10,51 +10,51 @@ pipeline success never depends on S3 availability.
 ## Pipeline Flow
 
 ```text
-pipeline.py [date]
+run_fotmob_pipeline.py [date]
   ├── 1. Bronze Scraping (scrape_fotmob.py)
-  ├── 2. Bronze Loading (load_clickhouse.py)
-  ├── 3. Silver Processing (load_clickhouse.py)
-  ├── 4. Gold Loading (load_clickhouse_gold.py)
+  ├── 2. Bronze Loading (load_fotmob_bronze.py)
+  ├── 3. Silver Processing (load_fotmob_silver.py)
+  ├── 4. Gold Loading (load_fotmob_gold.py)
   │     ├── Scenario SQL jobs
   │     ├── Signal SQL jobs
   │     └── Activation rebuild
   └── Exit code: 0 = success, non-zero = failure
 ```
 
-## Pipeline Script (`scripts/orchestration/pipeline.py`)
+## Pipeline Script (`scripts/orchestration/run_fotmob_pipeline.py`)
 
 ### CLI Interface
 
 ```bash
 # Single date
-python3 scripts/orchestration/pipeline.py 20251208
-python3 scripts/orchestration/pipeline.py --date 20251208
-python3 scripts/orchestration/pipeline.py --single-date 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
 
 # Date range
-python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207
 
 # Full month
-python3 scripts/orchestration/pipeline.py --month 202512
+python3 scripts/orchestration/run_fotmob_pipeline.py --month 202512
 
 # Full history (scraping is intentionally skipped)
-python3 scripts/orchestration/pipeline.py --full-history
+python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
 
 # Partial runs
-python3 scripts/orchestration/pipeline.py 20251208 --bronze-only
-python3 scripts/orchestration/pipeline.py 20251208 --silver-only
-python3 scripts/orchestration/pipeline.py 20251208 --gold-only
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --bronze-only
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --silver-only
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --gold-only
 
 # Skip stages
-python3 scripts/orchestration/pipeline.py 20251208 --skip-bronze
-python3 scripts/orchestration/pipeline.py 20251208 --skip-silver
-python3 scripts/orchestration/pipeline.py 20251208 --skip-gold
-python3 scripts/orchestration/pipeline.py 20251208 --skip-clickhouse
-python3 scripts/orchestration/pipeline.py 20251208 --skip-fotmob
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-bronze
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-silver
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-gold
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-clickhouse
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-fotmob
 
 # Options
-python3 scripts/orchestration/pipeline.py 20251208 --force
-python3 scripts/orchestration/pipeline.py 20251208 --debug
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --force
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --debug
 ```
 
 ### Execution Model
@@ -101,8 +101,8 @@ Before running the full pipeline:
 python3 scripts/health_check.py --json
 
 # Preview Silver and Gold
-python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
 
 # Read-only duplicate checks plus Bronze-to-Silver reconciliation
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
@@ -180,10 +180,10 @@ forwards its compatible options to the unified workflow.
 ```bash
 # 1. Infrastructure
 docker compose up -d
-python3 scripts/orchestration/setup_clickhouse.py
+python3 scripts/orchestration/setup_fotmob_warehouse.py
 
 # 2. Pipeline
-python3 scripts/orchestration/pipeline.py 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
 
 # 3. Catalog sync
 python3 scripts/mongodb/init_indexes.py
@@ -199,10 +199,10 @@ python3 scripts/health_check.py --json
 | Failure | Recovery |
 | --- | ---|
 | Scraping fails (API) | Re-run `scrape_fotmob.py` for affected dates |
-| Bronze load fails | Re-run `load_clickhouse.py --date <date>` or `--single-date <date>` |
-| Silver SQL fails | Fix SQL, re-run `silver/load_clickhouse.py --date <YYYYMMDD>` for the same scope |
+| Bronze load fails | Re-run `load_fotmob_bronze.py --date <date>` or `--single-date <date>` |
+| Silver SQL fails | Fix SQL, re-run `silver/load_fotmob_silver.py --date <YYYYMMDD>` for the same scope |
 | Gold SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind signal --id <id>` |
 | Activation fails | Re-run `build_signal_activations.py --date <YYYYMMDD>` with the same scope |
-| Signal failures skipped activations | Fix signals, rerun `load_clickhouse_gold.py --date <YYYYMMDD> --part signals` |
+| Signal failures skipped activations | Fix signals, rerun `load_fotmob_gold.py --date <YYYYMMDD> --part signals` |
 | Commit fails after some tables changed | Re-run the identical scope; replacement converges safely |
 | MongoDB sync fails | Re-run `sync_signal_catalogs.py` |

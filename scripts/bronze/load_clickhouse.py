@@ -5,22 +5,22 @@ PURPOSE: Transform raw bronze files (JSON/JSON.gz/TAR) into ClickHouse bronze ta
 
 Usage:
     # Load FotMob data for a date
-    python3 scripts/bronze/load_clickhouse.py --date 20251113
+    python3 scripts/bronze/load_fotmob_bronze.py --date 20251113
 
     # Load date range
-    python3 scripts/bronze/load_clickhouse.py --start-date 20251101 --end-date 20251107
+    python3 scripts/bronze/load_fotmob_bronze.py --start-date 20251101 --end-date 20251107
 
     # Load entire month
-    python3 scripts/bronze/load_clickhouse.py --month 202511
+    python3 scripts/bronze/load_fotmob_bronze.py --month 202511
 
     # Load every completed date found in Historical storage
-    python3 scripts/bronze/load_clickhouse.py --full-history
+    python3 scripts/bronze/load_fotmob_bronze.py --full-history
 
     # Show table statistics
-    python3 scripts/bronze/load_clickhouse.py --stats
+    python3 scripts/bronze/load_fotmob_bronze.py --stats
 
     # Preview truncate and reload
-    python3 scripts/bronze/load_clickhouse.py --date 20251113 --truncate --dry-run
+    python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --truncate --dry-run
 
     Note:
     ClickHouse background merges handle routine ReplacingMergeTree storage cleanup.
@@ -57,25 +57,25 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
         epilog="""
 Examples:
   # Load FotMob data for a date
-  python3 scripts/bronze/load_clickhouse.py --date 20251113
+  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113
 
   # Load date range
-  python3 scripts/bronze/load_clickhouse.py --start-date 20251101 --end-date 20251107
+  python3 scripts/bronze/load_fotmob_bronze.py --start-date 20251101 --end-date 20251107
 
   # Load entire month
-  python3 scripts/bronze/load_clickhouse.py --month 202511
+  python3 scripts/bronze/load_fotmob_bronze.py --month 202511
 
   # Load every locally available Historical date
-  python3 scripts/bronze/load_clickhouse.py --full-history
+  python3 scripts/bronze/load_fotmob_bronze.py --full-history
 
   # Show table statistics
-  python3 scripts/bronze/load_clickhouse.py --stats
+  python3 scripts/bronze/load_fotmob_bronze.py --stats
 
   # Truncate and reload
-  python3 scripts/bronze/load_clickhouse.py --date 20251113 --truncate
+  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --truncate
 
   # Preview truncate and reload
-  python3 scripts/bronze/load_clickhouse.py --date 20251113 --truncate --dry-run
+  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --truncate --dry-run
         """,
     )
 
@@ -376,4 +376,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/bronze/load_clickhouse.py is deprecated; use "
+        "scripts/bronze/load_fotmob_bronze.py instead.",
+        file=sys.stderr,
+    )
     raise SystemExit(main())

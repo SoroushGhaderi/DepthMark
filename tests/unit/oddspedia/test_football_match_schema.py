@@ -767,6 +767,19 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertIn("buttons.forEach(function(button)", _JS_EXTRACT_ODDS)
         self.assertIn("entry.no_goal = s.val", _JS_EXTRACT_ODDS)
 
+    def test_european_handicap_extracts_logo_backed_tie_as_draw(self):
+        """European Handicap's logo odds boxes must preserve the third outcome."""
+        self.assertIn(
+            ".odd-box-with-label__label, .odd-box-with-logo__label",
+            _JS_EXTRACT_ODDS,
+        )
+        self.assertIn("hasToken(t, 'TIE') || hasToken(t, 'X')", _JS_EXTRACT_ODDS)
+        self.assertIn(
+            "lbl === 'DRAW' || lbl === 'TIE' || lbl === 'X'",
+            _JS_EXTRACT_ODDS,
+        )
+        self.assertIn("Home|Draw|Tie|X|Away", _JS_EXTRACT_ODDS)
+
     def test_odds_extractor_supports_nested_and_single_outcome_rows(self):
         """Correct Score and Double Chance use non-standard card row layouts."""
         self.assertIn("var candidates = Array.from(row.querySelectorAll", _JS_EXTRACT_ODDS)

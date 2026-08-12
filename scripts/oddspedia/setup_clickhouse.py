@@ -1,4 +1,4 @@
-"""Compatibility wrapper for :mod:`scripts.oddspedia.setup_warehouse`."""
+"""Compatibility wrapper for the canonical Oddspedia warehouse setup command."""
 
 import sys
 from pathlib import Path
@@ -12,7 +12,8 @@ from scripts.oddspedia.setup_warehouse import main
 
 if __name__ == "__main__":
     print(
-        "Warning: setup_clickhouse.py is deprecated; use setup_warehouse.py instead.",
+        "Warning: scripts/oddspedia/setup_clickhouse.py is deprecated; use "
+        "scripts/oddspedia/setup_oddspedia_warehouse.py instead.",
         file=sys.stderr,
     )
     raise SystemExit(main())

@@ -18,7 +18,7 @@ This contract applies to:
 - `clickhouse/gold/dml/signals/*/sig_*.sql`
 - `scripts/gold/run_gold_sql_jobs.py`
 - `src/fotmob/gold/dml_runner.py`
-- `scripts/gold/load_clickhouse_gold.py`
+- `scripts/gold/load_fotmob_gold.py`
 - cross-asset wiring among SQL, table, and catalog files
 
 Compatibility note:
@@ -77,7 +77,7 @@ No package is complete unless all 4 parts are present and consistent.
 
 ## Bulk Execution Contract
 
-`scripts/gold/load_clickhouse_gold.py` is the canonical orchestrator.
+`scripts/gold/load_fotmob_gold.py` is the canonical orchestrator.
 
 1. MUST execute base Gold DDL from `clickhouse/gold/ddl/`.
 2. MUST use the generic Gold SQL runner path for signal SQL jobs in sorted order.
@@ -91,8 +91,8 @@ No package is complete unless all 4 parts are present and consistent.
 
 Before merge or release, run:
 
-1. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run`
-2. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208`
+1. `python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run`
+2. `python3 scripts/gold/load_fotmob_gold.py --date 20251208`
 3. Verify no Gold-layer contract failures, including:
    - invalid `match_id`
    - missing signal tables
@@ -100,8 +100,8 @@ Before merge or release, run:
 
 Recommended focused checks:
 
-1. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals --dry-run`
-2. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals`
+1. `python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals --dry-run`
+2. `python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals`
 3. `python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id <signal_id> --dry-run`
 4. `python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity <entity> --dry-run`
 

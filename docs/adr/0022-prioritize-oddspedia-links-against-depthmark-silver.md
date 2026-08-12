@@ -4,6 +4,9 @@
 
 Accepted
 
+The workflow decision remains current. ADR 0024 later standardized the script
+filenames; this ADR uses those current canonical names.
+
 ## Context
 
 Oddspedia discovery currently produces a source-faithful `match_links.json`
@@ -23,10 +26,11 @@ Oddspedia Event Intake gains a links-layer priority stage between discovery and
 page scraping.
 
 - The canonical command entry points are the phase-specific scripts:
-  `discover_events.py`, `prioritize_events.py`, `scrape_matches.py`,
-  `run_pipeline.py`, and `status.py`. The former `events.py` umbrella and
+  `discover_oddspedia_events.py`, `prioritize_oddspedia_events.py`, `scrape_oddspedia_matches.py`,
+  `run_oddspedia_pipeline.py`. Scraping observation now uses the shared
+  `scripts/report_scraping.py --source oddspedia` interface. The former `events.py` umbrella and
   `football.py` remain deprecated compatibility wrappers.
-- `prioritize_events.py --date YYYYMMDD --silver-reference-window-ready` reads the
+- `prioritize_oddspedia_events.py --date YYYYMMDD --silver-reference-window-ready` reads the
   accepted `match_links.json` inventory and the corresponding
   `silver.match` window for the previous, current, and next calendar dates.
   It fails closed without the explicit readiness assertion and emits no new
@@ -61,14 +65,14 @@ page scraping.
   `unmatched`, or `unresolved`. A uniquely matched link receives its FotMob
   coverage tier (`xG`, `ratings`, or `lower`). `ambiguous` and `unresolved`
   are never automatic scrape candidates.
-- `scrape_matches.py` and `run_pipeline.py` select from the priority artifact
+- `scrape_oddspedia_matches.py` and `run_oddspedia_pipeline.py` select from the priority artifact
   using `--priority-tier {xG,ratings,lower,unmatched}`. A standalone scrape
   automatically creates or refreshes the artifact before selecting links. The
   selection is inclusive:
   `ratings` includes `xG`, `lower` includes every uniquely matched tier, and
   `unmatched` includes every eligible tier plus unmatched links. The default
   is `lower`.
-- `run_pipeline.py` performs `discover -> prioritize -> scrape`. A priority-selected
+- `run_oddspedia_pipeline.py` performs `discover -> prioritize -> scrape`. A priority-selected
   scrape refreshes a missing or stale priority artifact whose source-inventory
   checksum or matcher rule version no longer matches `match_links.json` and
   the active resolver policy.
@@ -125,7 +129,14 @@ allowed, but these boundaries are required):
   previous/current/following window. The operator flag is required, but it is
   not a substitute for that verification.
 - Date-scoped mutating commands serialize through the Oddspedia sport/date
-  lock. Month operations report failure if any requested date is not accepted.
+  lock. Month and inclusive `--start-date/--end-date` operations report failure
+  if any requested date is not accepted. Current-month event intake stops at
+  the current date; explicit future scopes remain invalid.
+- Daily listings, per-event payloads, and manifests retain their existing raw
+  JSON structure. External contracts under `schemas/oddspedia/` validate new
+  writes without adding envelopes or schema markers. Runtime validation does
+  not serialize model defaults back into source artifacts, and manifest
+  read-modify-write preserves unknown compatible top-level fields.
 - Oddspedia Bronze stages `event`, `match_payload`, and `market` together and
   writes `oddspedia_bronze.load_status=published` only after the complete batch
   is replaced. Resolution refuses `staging` or `failed` dates.

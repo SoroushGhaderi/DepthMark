@@ -1,4 +1,4 @@
-"""Compatibility wrapper for :mod:`scripts.oddspedia.resolve_events`."""
+"""Compatibility wrapper for canonical Oddspedia event resolution."""
 
 import sys
 from pathlib import Path
@@ -12,7 +12,8 @@ from scripts.oddspedia.resolve_events import main
 
 if __name__ == "__main__":
     print(
-        "Warning: resolve_matches.py is deprecated; use resolve_events.py instead.",
+        "Warning: scripts/oddspedia/resolve_matches.py is deprecated; use "
+        "scripts/oddspedia/resolve_oddspedia_events.py instead.",
         file=sys.stderr,
     )
     raise SystemExit(main())

@@ -15,15 +15,16 @@ stability rules in DepthMark. The canonical command list lives in
 
 ## Command Surface Rules
 
-1. Layer entry points live under `scripts/bronze`, `scripts/silver`,
-   `scripts/gold`, `scripts/orchestration`, `scripts/quality`, or
-   `scripts/mongodb`.
+1. Layer and source entry points live under `scripts/bronze`, `scripts/silver`,
+   `scripts/gold`, `scripts/oddspedia`, `scripts/orchestration`,
+   `scripts/quality`, or `scripts/mongodb`.
 2. Root-level layer scripts are not part of the command surface.
 3. Root-level utility scripts are allowed for project-wide operations such as
    `ensure_directories.py`, `health_check.py`, and `refresh_turnstile.py`.
 4. Do not add new root-level layer scripts.
-5. Any command-surface change must update `DEVELOPMENT_ARCHITECTURE.md` and
-   `../scripts/README.md`.
+5. Any command-surface change must update `src/cli.py`, its registry contract
+   tests, `DEVELOPMENT_ARCHITECTURE.md`, and `../scripts/README.md` when those
+   surfaces are affected.
 
 ## Handwriting Rules
 
@@ -64,6 +65,55 @@ stability rules in DepthMark. The canonical command list lives in
    - `_sql` for SQL strings
    - `_count` for integer counts
    - `_seconds` for durations
+
+### Operational Script Names
+
+1. Canonical source-owned workflow scripts use
+   `<verb>_<source>[_<layer-or-entity>].py`.
+2. The source token is mandatory even when the containing directory already
+   implies ownership. Examples include `scrape_fotmob.py`,
+   `load_fotmob_bronze.py`, `discover_oddspedia_events.py`, and
+   `resolve_oddspedia_events.py`.
+3. Use a business or warehouse verb (`scrape`, `discover`, `prioritize`,
+   `load`, `resolve`, `run`, `setup`, `status`, or `report`) rather than naming
+   a destination technology when the intent is broader than that technology.
+4. Add the layer or entity suffix only when needed to distinguish the owned
+   output. Do not invent matching phases for another source merely to make the
+   command lists visually identical.
+5. Shared source-neutral utilities may omit a source token. Examples include
+   `health_check.py`, `report_scraping.py`, `check_data_quality.py`, and
+   `optimize_clickhouse.py`.
+6. The package CLI uses the same grammar with hyphens, for example
+   `load-fotmob-bronze` and `resolve-oddspedia-events`. `src/cli.py` is the
+   authoritative package command registry.
+7. A replaced filename may remain as a compatibility adapter. It must delegate
+   to the same implementation, preserve arguments and exit codes, print a
+   deprecation warning to stderr, and name the canonical replacement.
+8. New documentation, orchestration, generated operator guidance, and tests
+   must use canonical names. Compatibility names are documented only in a
+   migration section or historical context.
+
+### Scraping Reporting Interface
+
+1. `scripts/report_scraping.py` is the only canonical scraping-report entry
+   point. It is source-neutral because one operational report owns the shared
+   interface; `--source fotmob`, `--source oddspedia`, and `--source all`
+   select explicit source adapters rather than a generic provider framework.
+2. Every source-date report exposes the same summary contract: discovered,
+   completed, failed, skipped, remaining, progress, artifact count, storage
+   size, and Bronze-admission readiness. Source-specific inventory, priority,
+   audit, log, and storage evidence remains nested under its source report.
+3. Reporting is observational. Without an explicit `--output`, it must not
+   create directories, locks, manifests, metrics, logs, source artifacts, or
+   warehouse rows. An explicit output path may create only that report and its
+   parent directories.
+4. `summary`, `markdown`, and `json` render the same report bundle. Report
+   generation exits `0` when it successfully observes an incomplete run;
+   `--fail-on-attention` opts automation into exit `1` for incomplete, error,
+   or not-started states.
+5. The former Oddspedia status/report scripts and package commands are
+   compatibility adapters to this interface. They must not retain independent
+   reporting logic or appear in current runbooks.
 
 ## Function Design
 
@@ -137,25 +187,34 @@ stability rules in DepthMark. The canonical command list lives in
 ### Oddspedia Source Pipeline
 
 1. Oddspedia event intake is independent of the FotMob orchestration command.
-   Its supported phases are `discover_events.py`, `prioritize_events.py`,
-   `scrape_matches.py`, and `run_pipeline.py`; Bronze loading and resolution
-   are separate `load_bronze.py` and `resolve_events.py` operations.
+   Its supported phases are `discover_oddspedia_events.py`,
+   `prioritize_oddspedia_events.py`, `scrape_oddspedia_matches.py`, and
+   `run_oddspedia_pipeline.py`; Bronze loading and resolution are separate
+   `load_oddspedia_bronze.py` and `resolve_oddspedia_events.py` operations.
 2. Discovery is fail-closed. An inventory is accepted only after complete
    target-date pagination and date validation, or an explicitly verified empty
    result. Accepted inventories must include a checksum. Missing or stale
    checksums cause discovery refresh and Bronze admission failure until the
    refreshed evidence is available.
 3. Mutating date-scoped Oddspedia commands serialize through
-   `data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`. Dry-run and read-only status
+   `data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`. Dry-run and read-only report
    operations must not create or acquire that lock.
-4. `load_bronze.py` stages all three source fact tables, validates date-scoped
-   counts and payload audits, replaces the target partition only after the
-   staged batch is ready, and records `staging`, `published`, or `failed` in
-   `oddspedia_bronze.load_status`. Silver resolution may consume only a
-   `published` batch.
+4. `load_oddspedia_bronze.py` stages all three source fact tables, validates
+   date-scoped counts and payload audits, replaces the target partition only
+   after the staged batch is ready, and records `staging`, `published`, or
+   `failed` in `oddspedia_bronze.load_status`. Silver resolution may consume
+   only a `published` batch.
 5. Month-scoped Oddspedia commands continue processing independent dates but
    must exit non-zero when any date is missing, unaccepted, or failed. A
    successful month command means every requested date passed its phase gate.
+6. Event intake, scraping reports, Bronze loading, and resolution accept an
+   inclusive `--start-date/--end-date` scope. Both arguments are required
+   together. A current-month event-intake selector stops at the machine-local
+   current date; an explicit scope containing a future date fails.
+7. Persisted source JSON is validated at an explicit artifact seam and written
+   without model serialization or structural normalization. Manifest
+   read-modify-write preserves unknown compatible fields. Do not migrate or
+   rewrite existing artifacts merely to adopt a newer runtime contract.
 
 ### Quality Entry Points
 

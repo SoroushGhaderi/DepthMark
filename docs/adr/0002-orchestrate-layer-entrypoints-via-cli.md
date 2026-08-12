@@ -61,7 +61,7 @@ accepted trade-off for CLI boundary clarity.
 
 Subprocess nesting occurs naturally: the pipeline calls layer scripts via
 subprocess, and the Gold loader itself calls activation builders via subprocess
-(`load_clickhouse_gold.py:160-188`). This two-level chain is a consequence of
+(`load_fotmob_gold.py:160-188`). This two-level chain is a consequence of
 ADR 0001 (generic runner) and ADR 0009 (activation builders as separate scripts),
 not an architectural deficiency.
 

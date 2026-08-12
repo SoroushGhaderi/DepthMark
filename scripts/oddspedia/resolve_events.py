@@ -2,9 +2,7 @@
 
 import argparse
 import sys
-from calendar import monthrange
 from contextlib import nullcontext
-from datetime import datetime
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -13,21 +11,20 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.settings import get_settings
+from src.common.dates import resolve_date_scope
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.oddspedia.scraping.config import normalize_date, normalize_month
 from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
 from src.oddspedia.silver import OddspediaMatchResolver, OddspediaResolutionService
 
 
 def _dates(args):
-    if args.date:
-        return [normalize_date(args.date)]
-    month = normalize_month(args.month)
-    year, month_number = int(month[:4]), int(month[4:])
-    return [
-        "%04d%02d%02d" % (year, month_number, day)
-        for day in range(1, monthrange(year, month_number)[1] + 1)
-    ]
+    return resolve_date_scope(
+        date_value=args.date,
+        month=args.month,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        default_to_today=False,
+    )
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
@@ -38,6 +35,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     scope = parser.add_mutually_exclusive_group(required=True)
     scope.add_argument("--date", help="Oddspedia event date in YYYYMMDD format")
     scope.add_argument("--month", help="Oddspedia event month in YYYYMM format")
+    scope.add_argument(
+        "--start-date",
+        help="First Oddspedia date of an inclusive range; requires --end-date",
+    )
+    parser.add_argument(
+        "--end-date",
+        help="Last Oddspedia date of an inclusive range; requires --start-date",
+    )
     parser.add_argument(
         "--dry-run", action="store_true", help="Calculate results without writing them"
     )
@@ -55,6 +60,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     args = parser.parse_args(raw_argv)
+    if args.start_date and not args.end_date:
+        parser.error("--end-date is required with --start-date")
+    if args.end_date and not args.start_date:
+        parser.error("--end-date can only be used with --start-date")
     if args.legacy_reference_window_complete:
         print(
             "Warning: --reference-window-complete is deprecated; use "
@@ -62,6 +71,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             file=sys.stderr,
         )
         args.reference_window_complete = True
+    try:
+        dates = _dates(args)
+    except ValueError as exc:
+        parser.error(str(exc))
     settings = get_settings()
     client = ClickHouseClient(
         host=settings.clickhouse_host,
@@ -78,11 +91,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     service = OddspediaResolutionService(client, resolver)
     try:
-        for date_id in _dates(args):
+        for date_id in dates:
             lock = (
-                nullcontext()
-                if args.dry_run
-                else oddspedia_date_lock(date_id, operation="resolve")
+                nullcontext() if args.dry_run else oddspedia_date_lock(date_id, operation="resolve")
             )
             with lock:
                 results = service.resolve_date(
@@ -100,4 +111,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/oddspedia/resolve_events.py is deprecated; use "
+        "scripts/oddspedia/resolve_oddspedia_events.py instead.",
+        file=sys.stderr,
+    )
     raise SystemExit(main())

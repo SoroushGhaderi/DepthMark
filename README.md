@@ -93,32 +93,62 @@ selector so repeated or reverse fixtures cannot resolve to the wrong event.
 
 ```bash
 # One date (default priority tier is `lower`)
-python3 scripts/oddspedia/discover_events.py --date 20260301
-python3 scripts/oddspedia/prioritize_events.py --date 20260301 --silver-reference-window-ready
-python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier xG
-python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready
-python3 scripts/oddspedia/setup_warehouse.py --dry-run
-python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
-python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
+python3 scripts/oddspedia/discover_oddspedia_events.py --date 20260301
+python3 scripts/oddspedia/prioritize_oddspedia_events.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --priority-tier xG
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready
+python3 scripts/report_scraping.py --source oddspedia --date 20260301 --format markdown --output docs/reports/oddspedia/20260301.md
+python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
+python3 scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --dry-run
 
 # A whole calendar month
-python3 scripts/oddspedia/run_pipeline.py --month 202603 --silver-reference-window-ready
-python3 scripts/oddspedia/load_bronze.py --month 202603 --dry-run
-python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --month 202603 --silver-reference-window-ready
+python3 scripts/oddspedia/load_oddspedia_bronze.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --month 202603 --dry-run
+
+# An inclusive date range (resume-safe; accepted payloads are not scraped again)
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260301 --end-date 20260307 --silver-reference-window-ready
+python3 scripts/report_scraping.py --source oddspedia --start-date 20260301 --end-date 20260307
+python3 scripts/oddspedia/load_oddspedia_bronze.py --start-date 20260301 --end-date 20260307 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --start-date 20260301 --end-date 20260307 --dry-run
 ```
 
-Oddspedia uses phase-specific verb-noun scripts: `discover_events.py`,
-`prioritize_events.py`, `scrape_matches.py`, `run_pipeline.py`, and `status.py`.
-The older `events.py`, `setup_clickhouse.py`, `load_clickhouse.py`, and
-`resolve_matches.py` paths remain compatibility wrappers and emit deprecation
-warnings. Discovery is fail-closed: it accepts only complete target-date
-pagination or a verified empty result, and accepted inventories carry a
-SHA-256 inventory checksum. Limited Vuex fallbacks remain diagnostic rescrape
-candidates; legacy inventories with missing or stale checksums are refreshed
-before they can be used. Football scraping records the market inventory exposed
-by the page and the number of extracted markets; a partial odds result is
-requeued whenever those counts differ. Empty or transiently unloaded odds are
-retried up to three football attempts, after which an empty result is saved with
+Oddspedia artifact contracts are external to the raw JSON and live under
+`schemas/oddspedia/`. Runtime validation checks new listings and payloads before
+atomic writes but serializes the scraper's input unchanged. Manifest validation
+preserves unknown compatible fields during read-modify-write. Existing
+`data/oddspedia/**/*.json` files are not migrated or rewritten.
+
+Canonical source workflow scripts follow
+`<verb>_<source>[_<layer-or-entity>].py`. Oddspedia therefore uses
+`discover_oddspedia_events.py`, `prioritize_oddspedia_events.py`,
+`scrape_oddspedia_matches.py`, `run_oddspedia_pipeline.py`, and
+the source-owned warehouse commands shown above. Scraping observation is a
+project-wide responsibility: use `scripts/report_scraping.py` for FotMob,
+Oddspedia, or a combined report. It reconciles source artifacts without
+acquiring a date lock, writing run logs, or mutating scraper/warehouse state.
+Earlier status/report filenames remain warning-emitting compatibility adapters;
+do not use them in new automation.
+
+Common reporting examples:
+
+```bash
+python3 scripts/report_scraping.py --date 20260301
+python3 scripts/report_scraping.py --source fotmob --month 202608
+python3 scripts/report_scraping.py --source oddspedia --date 20260301 --format json
+python3 scripts/report_scraping.py --source oddspedia --start-date 20260301 --end-date 20260307
+python3 scripts/report_scraping.py --date 20260301 --fail-on-attention
+```
+
+Discovery is fail-closed: it accepts only complete target-date pagination or a
+verified empty result, and accepted inventories carry a SHA-256 inventory
+checksum. Limited Vuex fallbacks remain diagnostic rescrape candidates; legacy
+inventories with missing or stale checksums are refreshed before they can be
+used. Football scraping records the market inventory exposed by the page and
+the number of extracted markets; a partial odds result is requeued whenever
+those counts differ. Empty or transiently unloaded odds are retried up to three
+football attempts, after which an empty result is saved with
 `odds_unavailable: true`. Explicit no-odds notices follow the same retry policy.
 Legacy payloads without coverage metadata are audited for migration, while
 known limited-odds results with matching tracked coverage remain accepted.
@@ -137,8 +167,8 @@ Month commands exit non-zero when any date is missing, unaccepted, or failed.
 Bronze loading stages `event`, `match_payload`, and `market`, replaces the
 target ClickHouse partition only after validation, and writes
 `oddspedia_bronze.load_status` as `published` only after every replacement
-succeeds. `resolve_events.py` refuses to read a date without that published
-marker. See
+succeeds. `resolve_oddspedia_events.py` refuses to read a date without that
+published marker. See
 [`docs/data-flow/oddspedia.md`](docs/data-flow/oddspedia.md) for artifact paths,
 tiers, tables, and status definitions.
 

@@ -1058,7 +1058,8 @@ _JS_EXTRACT_ODDS = """
         var t = el.textContent.replace(/\\s+/g, ' ').trim().toUpperCase();
         var hasDir = t.indexOf('OVER')  >= 0 || t.indexOf('UNDER') >= 0 ||
                      t.indexOf('HOME')  >= 0 || t.indexOf('AWAY')  >= 0 ||
-                     t.indexOf('DRAW')  >= 0 || t.indexOf('YES')   >= 0 ||
+                     t.indexOf('DRAW')  >= 0 || hasToken(t, 'TIE') ||
+                     t.indexOf('YES')   >= 0 ||
                      t.indexOf('NO')    >= 0 || hasToken(t, 'ODD') ||
                      hasToken(t, 'EVEN') || hasToken(t, '1X') ||
                      hasToken(t, 'X2') || hasToken(t, '12');
@@ -1106,7 +1107,14 @@ _JS_EXTRACT_ODDS = """
         var t = el.textContent.replace(/\\s+/g, ' ').trim().toUpperCase();
         var dir = null;
         var outcome = '';
-        var labelEl = el.querySelector('.odd-box-with-label__label');
+        // Logo-backed football odds use the same semantic label/value pair as
+        // regular odds boxes, but with the ``odd-box-with-logo`` prefix.
+        // European Handicap commonly renders its third outcome as ``Tie`` in
+        // this variant; ignoring the logo label leaves the bookmaker name in
+        // the fallback outcome and the Python contract cannot map it to draw.
+        var labelEl = el.querySelector(
+            '.odd-box-with-label__label, .odd-box-with-logo__label'
+        );
         var explicitLabel = labelEl ? labelEl.textContent.trim() : '';
         // Keep HT/FT labels such as "Draw / Home" intact rather than
         // collapsing them to a simple draw outcome below.
@@ -1116,6 +1124,7 @@ _JS_EXTRACT_ODDS = """
         // Check this before generic NO: it is a distinct third outcome.
         else if (t.indexOf('NO GOAL') >= 0) dir = 'no_goal';
         else if (t.indexOf('DRAW')  >= 0) dir = 'draw';
+        else if (hasToken(t, 'TIE') || hasToken(t, 'X')) dir = 'draw';
         else if (t.indexOf('YES')   >= 0) dir = 'yes';
         else if (t.indexOf('NO')    >= 0) dir = 'no';
         else if (hasToken(t, 'ODD')) dir = 'odd';
@@ -1134,7 +1143,7 @@ _JS_EXTRACT_ODDS = """
                 if      (lbl === 'OVER')  dir = 'over';
                 else if (lbl === 'UNDER') dir = 'under';
                 else if (lbl === 'NO GOAL') dir = 'no_goal';
-                else if (lbl === 'DRAW')  dir = 'draw';
+                else if (lbl === 'DRAW' || lbl === 'TIE' || lbl === 'X') dir = 'draw';
                 else if (lbl === 'YES')   dir = 'yes';
                 else if (lbl === 'NO')    dir = 'no';
                 else if (lbl === 'ODD')   dir = 'odd';
@@ -1365,11 +1374,12 @@ _JS_EXTRACT_ODDS = """
             label: marketNeedsLineLabel(market) ? findParameterizedLineLabel(card) : ''
         };
         var count = 0;
-        var re = /\\b(Home|Draw|Away|Over|Under|Yes|No|Odd|Even|1X|X2|12)\\s+([+-]\\d{2,5}\\b|\\d+\\.\\d+|\\d+\\s*\\/\\s*\\d+)/gi;
+        var re = /\\b(Home|Draw|Tie|X|Away|Over|Under|Yes|No|Odd|Even|1X|X2|12)\\s+([+-]\\d{2,5}\\b|\\d+\\.\\d+|\\d+\\s*\\/\\s*\\d+)/gi;
         var match;
         while ((match = re.exec(text)) !== null) {
             var key = match[1].toLowerCase();
-            if (key === '1x') key = 'home_draw';
+            if (key === 'draw' || key === 'tie' || key === 'x') key = 'draw';
+            else if (key === '1x') key = 'home_draw';
             else if (key === 'x2') key = 'draw_away';
             else if (key === '12') key = 'home_away';
             if (entry[key] !== undefined) continue;
@@ -2294,7 +2304,7 @@ _JS_FOOTBALL_MARKET_SELECTOR_TEXTS = """
     }
     function isOddsButtonText(text) {
         var t = text.toUpperCase();
-        var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|YES|NO)\\b/.test(t);
+        var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|TIE|YES|NO)\\b/.test(t);
         var hasOdds = /\\d+\\.\\d+|\\b\\d+\\s*\\/\\s*\\d+\\b|(?:^|\\s)[+-]\\d{2,5}\\b/.test(t);
         return hasDir && hasOdds;
     }
@@ -2365,7 +2375,7 @@ def _click_football_market_selector(driver, market_text):
         }
         function isOddsButtonText(text) {
             var t = text.toUpperCase();
-            var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|YES|NO)\\b/.test(t);
+            var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|TIE|YES|NO)\\b/.test(t);
             var hasOdds = /\\d+\\.\\d+|\\b\\d+\\s*\\/\\s*\\d+\\b|(?:^|\\s)[+-]\\d{2,5}\\b/.test(t);
             return hasDir && hasOdds;
         }

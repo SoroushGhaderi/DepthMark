@@ -65,7 +65,7 @@ Match-level summary fields include:
 ## Execution Order
 
 When running
-`python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals`:
+`python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals`:
 
 1. Signal SQL jobs write `gold_signals.sig_*` tables
 2. The activation builder uses the same scope and replaces the corresponding

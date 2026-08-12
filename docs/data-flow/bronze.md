@@ -61,7 +61,7 @@ existing date archive.
 ### Oddspedia Bronze admission and publication
 
 Oddspedia Bronze loading is a source-specific, date-scoped transaction rather
-than a row-by-row append. `load_bronze.py` admits a date only when its discovery
+than a row-by-row append. `load_oddspedia_bronze.py` admits a date only when its discovery
 manifest is accepted, the inventory checksum matches, scraping is terminal, and
 every selected payload passes the rendered-event audit. It stages
 `oddspedia_bronze.event`, `oddspedia_bronze.match_payload`, and
@@ -69,11 +69,11 @@ every selected payload passes the rendered-event audit. It stages
 target ClickHouse partition. The batch marker in
 `oddspedia_bronze.load_status` is written as `staging` before replacement,
 `published` after every table succeeds, or `failed` with the error context.
-`resolve_events.py` consumes only a published date.
+`resolve_oddspedia_events.py` consumes only a published date.
 
 ```bash
-python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
-python3 scripts/oddspedia/load_bronze.py --month 202603 --dry-run
+python3 scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run
+python3 scripts/oddspedia/load_oddspedia_bronze.py --month 202603 --dry-run
 ```
 
 The loader is intentionally fail-closed for legacy manifests without a
@@ -135,7 +135,7 @@ Both directions support `--date`/`--single-date`,
 `--start-date`/`--end-date`, `--month`, `--all`, and `--dry-run`. Multi-date
 runs continue after independent failures and exit non-zero if any date fails.
 
-### 3. ClickHouse Loading (`scripts/bronze/load_clickhouse.py`)
+### 3. ClickHouse Loading (`scripts/bronze/load_fotmob_bronze.py`)
 
 Raw JSON is parsed and loaded into 15 Bronze ClickHouse tables:
 
@@ -165,14 +165,14 @@ Processing chain:
 
 CLI arguments:
 ```bash
-python3 scripts/bronze/load_clickhouse.py --date 20251208
-python3 scripts/bronze/load_clickhouse.py --single-date 20251208
-python3 scripts/bronze/load_clickhouse.py --start-date 20251201 --end-date 20251207
-python3 scripts/bronze/load_clickhouse.py --month 202512
-python3 scripts/bronze/load_clickhouse.py --date 20251208 --dry-run
-python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate --dry-run
-python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate
-python3 scripts/bronze/load_clickhouse.py --stats
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --single-date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --start-date 20251201 --end-date 20251207
+python3 scripts/bronze/load_fotmob_bronze.py --month 202512
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --truncate --dry-run
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --truncate
+python3 scripts/bronze/load_fotmob_bronze.py --stats
 ```
 
 ### 4. Table Storage Hygiene
@@ -221,7 +221,7 @@ See `CONTEXT.md` for the DLQ Replay glossary entry.
 | --- | --- |
 | API rate limit | Scraper retries with backoff |
 | Invalid JSON | DLQ file written, load continues for other matches |
-| ClickHouse connection | Non-zero exit, re-run `load_clickhouse.py` |
+| ClickHouse connection | Non-zero exit, re-run `load_fotmob_bronze.py` |
 | Token expiry | `refresh_turnstile.py` rotates credentials |
 | Disk full | `health_check.py --disk-path data` detects threshold |
 | S3 transfer failure | Re-run `sync_s3.py` for the affected dates; scraping and warehouse loading are unaffected |
