@@ -161,6 +161,9 @@ store/
 # Versioned JSON contracts are source files, not generated data.
 !schemas/**/*.json
 
+# Deterministic test fixtures are source inputs, not local warehouse data.
+!tests/fixtures/**/*.json
+
 # Models and experiment artifacts
 models/
 *.pkl
