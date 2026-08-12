@@ -165,4 +165,9 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/gold/load_clickhouse_gold.py is deprecated; use "
+        "scripts/gold/load_fotmob_gold.py instead.",
+        file=sys.stderr,
+    )
     raise SystemExit(main())

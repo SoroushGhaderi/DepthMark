@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://depthmark.local/schemas/oddspedia/match_payload.schema.json",
+  "title": "Oddspedia football match payload",
+  "description": "External compatibility contract for matches/YYYYMM/YYYYMMDD/<event_id>.json.",
+  "type": "object",
+  "required": ["sport", "id", "home", "away", "tournament", "date", "url", "status", "odds", "stats", "scraped_at"],
+  "properties": {
+    "sport": {"const": "football"},
+    "id": {"type": "string", "minLength": 1},
+    "source_event_id": {"type": "string"},
+    "home": {"type": "string", "minLength": 1},
+    "away": {"type": "string", "minLength": 1},
+    "tournament": {"type": "string"},
+    "date": {"type": "string", "minLength": 1},
+    "url": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "minLength": 1},
+    "score": {
+      "type": "object",
+      "required": ["home", "away"],
+      "properties": {
+        "home": {"type": ["integer", "number", "string"]},
+        "away": {"type": ["integer", "number", "string"]},
+        "winner": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "odds_unavailable": {"type": "boolean"},
+    "odds_total_markets": {"type": ["integer", "null"], "minimum": 0},
+    "odds_extracted_markets": {"type": "integer", "minimum": 0},
+    "odds_attempt": {"type": "integer", "minimum": 1},
+    "odds_max_attempts": {"type": "integer", "minimum": 1},
+    "odds_empty_attempts": {"type": "integer", "minimum": 0},
+    "odds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["market", "lines"],
+        "properties": {
+          "market": {"type": "string", "minLength": 1},
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "label"],
+              "properties": {
+                "type": {"type": "string"},
+                "label": {"type": "string"},
+                "home": {"type": ["integer", "number"]},
+                "draw": {"type": ["integer", "number"]},
+                "away": {"type": ["integer", "number"]},
+                "over": {"type": ["integer", "number"]},
+                "under": {"type": ["integer", "number"]},
+                "yes": {"type": ["integer", "number"]},
+                "no": {"type": ["integer", "number"]},
+                "odd": {"type": ["integer", "number"]},
+                "even": {"type": ["integer", "number"]},
+                "home_draw": {"type": ["integer", "number"]},
+                "draw_away": {"type": ["integer", "number"]},
+                "home_away": {"type": ["integer", "number"]},
+                "no_goal": {"type": ["integer", "number"]},
+                "combinations": {"type": "object", "additionalProperties": {"type": ["integer", "number"]}},
+                "scores": {"type": "object", "additionalProperties": {"type": ["integer", "number"]}}
+              },
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "stats": {"type": "array", "items": {"type": "object"}},
+    "stats_source": {"type": "string"},
+    "scraped_at": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true
+}

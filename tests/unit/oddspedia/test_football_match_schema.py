@@ -13,6 +13,8 @@ if SRC not in sys.path:
 from src.oddspedia.scraping.match_scraper import (
     _JS_EXTRACT_ODDS,
     _JS_FOOTBALL_MARKET_SELECTOR_TEXTS,
+    FootballOddsCoverageError,
+    FootballOddsRetryableError,
     FootballOddsUnavailableError,
     FootballScoreUnavailableError,
     MatchIdentityMismatchError,
@@ -21,7 +23,10 @@ from src.oddspedia.scraping.match_scraper import (
     _expand_football_market_card_lines,
     _expand_football_market_cards,
     _extract_football_odds,
+    _football_missing_market_names,
+    _football_odds_coverage_error,
     _football_odds_not_yet_available,
+    _is_football_market_selector_text,
     _football_selector_rendered,
     _merge_odds_markets,
     _normalize_football_odds,
@@ -81,6 +86,241 @@ class FootballMatchSchemaTests(unittest.TestCase):
                 return False
 
         self.assertTrue(_football_odds_not_yet_available(Driver()))
+
+    def test_odds_coverage_uses_the_page_market_total(self):
+        odds = [
+            {"market": "Full Time Result", "lines": [{"label": "Main Line"}]},
+            {"market": "Total Goals", "lines": [{"label": "2.5"}]},
+            {"market": "Asian Handicap", "lines": [{"label": "-0.5"}]},
+            {"market": "Both Teams to Score", "lines": [{"label": "Main Line"}]},
+        ]
+
+        self.assertIn(
+            "4/6",
+            _football_odds_coverage_error(odds, total_markets=6),
+        )
+        self.assertIsNone(_football_odds_coverage_error(odds, total_markets=4))
+        self.assertIn(
+            "2/4",
+            _football_odds_coverage_error(odds[:2], total_markets=4),
+        )
+
+    def test_missing_market_inventory_returns_only_uncovered_market_names(self):
+        odds = [
+            {
+                "market": "Full Time Result",
+                "lines": [{"label": "Main Line", "home": 2.0, "draw": 3.0, "away": 4.0}],
+            },
+            {
+                "market": "Both Teams to Score",
+                "lines": [{"label": "Main Line", "yes": 1.8, "no": 2.0}],
+            },
+        ]
+
+        self.assertEqual(
+            _football_missing_market_names(
+                ["Full Time Result", "Both Teams to Score", "Corners Odd or Even"],
+                odds,
+            ),
+            ["Corners Odd or Even"],
+        )
+
+    def test_scrape_match_does_not_return_partial_market_inventory_as_success(self):
+        metadata = {
+            "event_id": "9401941",
+            "home": "Aston Villa",
+            "away": "Chelsea",
+            "league": "Premier League",
+            "date": "2026-03-04 19:30:00+00",
+            "status": "finished",
+            "home_score": 1,
+            "away_score": 0,
+        }
+        truncated_odds = [
+            {"market": "Full Time Result", "lines": [{"label": "Main Line"}]},
+            {"market": "Total Goals", "lines": [{"label": "2.5"}]},
+            {"market": "Asian Handicap", "lines": [{"label": "-0.5"}]},
+            {"market": "Both Teams to Score", "lines": [{"label": "Main Line"}]},
+        ]
+        with patch(
+            "src.oddspedia.scraping.match_scraper.safe_get", return_value=True
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+            return_value=metadata,
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._scroll_page"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._football_market_inventory",
+            return_value={"total_markets": 6, "market_names": []},
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
+            return_value=False,
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_football_odds",
+            return_value=truncated_odds,
+        ):
+            with self.assertRaises(FootballOddsCoverageError):
+                scrape_match(
+                    _FootballDriver(),
+                    {
+                        "id": "9401941",
+                        "sport": "football",
+                        "home": "Aston Villa",
+                        "away": "Chelsea",
+                        "date": "2026-03-04 19:30:00+00",
+                        "full_url": "https://oddspedia.com/football/aston-villa-chelsea-9401941",
+                    },
+                    sport="football",
+                )
+
+    def test_coverage_error_carries_partial_odds_and_missing_market_names(self):
+        metadata = {
+            "event_id": "9401941",
+            "home": "Aston Villa",
+            "away": "Chelsea",
+            "league": "Premier League",
+            "date": "2026-03-04 19:30:00+00",
+            "status": "finished",
+            "home_score": 1,
+            "away_score": 0,
+        }
+        partial_odds = [
+            {
+                "market": name,
+                "lines": [{"label": "Main Line", "home": 2.0, "away": 3.0}],
+            }
+            for name in (
+                "Full Time Result",
+                "Total Goals",
+                "Asian Handicap",
+                "Both Teams to Score",
+                "Double Chance",
+                "Draw No Bet",
+            )
+        ]
+        inventory_names = [*partial_odds, {"market": "Corners Odd or Even"}]
+        with patch(
+            "src.oddspedia.scraping.match_scraper.safe_get", return_value=True
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+            return_value=metadata,
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._scroll_page"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._football_market_inventory",
+            return_value={
+                "total_markets": 7,
+                "market_names": [market["market"] for market in inventory_names],
+            },
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
+            return_value=False,
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_football_odds",
+            return_value=(partial_odds, ["Corners Odd or Even"]),
+        ):
+            with self.assertRaises(FootballOddsCoverageError) as context:
+                scrape_match(
+                    _FootballDriver(),
+                    {
+                        "id": "9401941",
+                        "sport": "football",
+                        "home": "Aston Villa",
+                        "away": "Chelsea",
+                        "date": "2026-03-04 20:00:00+00",
+                        "full_url": "https://oddspedia.com/football/aston-villa-chelsea-9401941",
+                    },
+                    sport="football",
+                )
+
+        self.assertEqual(context.exception.missing_markets, ["Corners Odd or Even"])
+        self.assertEqual(context.exception.partial_odds, partial_odds)
+
+    def test_empty_football_odds_is_retryable_until_the_terminal_attempt(self):
+        metadata = {
+            "event_id": "empty-odds",
+            "home": "Home",
+            "away": "Away",
+            "league": "League",
+            "date": "2026-03-04 19:30:00+00",
+            "status": "scheduled",
+            "home_score": "",
+            "away_score": "",
+        }
+        match_info = {
+            "id": "empty-odds",
+            "sport": "football",
+            "home": "Home",
+            "away": "Away",
+            "date": "2026-03-04 19:30:00+00",
+            "status": "scheduled",
+            "full_url": "https://oddspedia.com/football/home-away-empty-odds",
+        }
+        with patch(
+            "src.oddspedia.scraping.match_scraper.safe_get", return_value=True
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+            return_value=metadata,
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._scroll_page"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._football_market_inventory",
+            return_value={"total_markets": 6, "market_names": []},
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
+            return_value=False,
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_football_odds",
+            return_value=[],
+        ), patch(
+            "src.oddspedia.scraping.match_scraper._extract_overall_stats",
+            return_value={"tabs": []},
+        ):
+            with self.assertRaises(FootballOddsRetryableError):
+                scrape_match(
+                    _FootballDriver(),
+                    match_info,
+                    sport="football",
+                    odds_attempt=1,
+                    odds_max_attempts=3,
+                )
+
+            with self.assertRaises(FootballOddsCoverageError):
+                scrape_match(
+                    _FootballDriver(),
+                    match_info,
+                    sport="football",
+                    odds_attempt=3,
+                    odds_max_attempts=3,
+                    previous_empty_odds_attempts=1,
+                )
+
+            result = scrape_match(
+                _FootballDriver(),
+                match_info,
+                sport="football",
+                odds_attempt=3,
+                odds_max_attempts=3,
+                previous_empty_odds_attempts=2,
+            )
+
+        self.assertEqual(result["odds"], [])
+        self.assertTrue(result["odds_unavailable"])
+        self.assertEqual(result["odds_total_markets"], 6)
+        self.assertEqual(result["odds_extracted_markets"], 0)
+        self.assertEqual(result["odds_empty_attempts"], 3)
 
     @patch(
         "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
@@ -527,6 +767,19 @@ class FootballMatchSchemaTests(unittest.TestCase):
         self.assertIn("buttons.forEach(function(button)", _JS_EXTRACT_ODDS)
         self.assertIn("entry.no_goal = s.val", _JS_EXTRACT_ODDS)
 
+    def test_european_handicap_extracts_logo_backed_tie_as_draw(self):
+        """European Handicap's logo odds boxes must preserve the third outcome."""
+        self.assertIn(
+            ".odd-box-with-label__label, .odd-box-with-logo__label",
+            _JS_EXTRACT_ODDS,
+        )
+        self.assertIn("hasToken(t, 'TIE') || hasToken(t, 'X')", _JS_EXTRACT_ODDS)
+        self.assertIn(
+            "lbl === 'DRAW' || lbl === 'TIE' || lbl === 'X'",
+            _JS_EXTRACT_ODDS,
+        )
+        self.assertIn("Home|Draw|Tie|X|Away", _JS_EXTRACT_ODDS)
+
     def test_odds_extractor_supports_nested_and_single_outcome_rows(self):
         """Correct Score and Double Chance use non-standard card row layouts."""
         self.assertIn("var candidates = Array.from(row.querySelectorAll", _JS_EXTRACT_ODDS)
@@ -662,6 +915,67 @@ class FootballMatchSchemaTests(unittest.TestCase):
         _expand_football_market_cards(Driver())
         self.assertEqual(click_card.call_args_list[0].args[1], "Double Chance")
         self.assertEqual(wait_card.call_args_list[1].args[1], "Correct Score")
+
+    @patch(
+        "src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=1
+    )
+    @patch("src.oddspedia.scraping.match_scraper._wait_for_football_market_card", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._click_football_market_card", return_value=True)
+    def test_targeted_market_card_expansion_skips_completed_markets(
+        self, click_card, wait_card, expand_lines
+    ):
+        class Driver:
+            def execute_script(self, *_args):
+                return ["Double Chance", "Correct Score"]
+
+        _expand_football_market_cards(Driver(), market_names=["Correct Score"])
+
+        click_card.assert_called_once_with(unittest.mock.ANY, "Correct Score")
+        wait_card.assert_called_once_with(unittest.mock.ANY, "Correct Score")
+        expand_lines.assert_called_once_with(unittest.mock.ANY, "Correct Score")
+
+    @patch(
+        "src.oddspedia.scraping.match_scraper._expand_football_market_card_lines", return_value=0
+    )
+    @patch(
+        "src.oddspedia.scraping.match_scraper._wait_for_football_market_odds",
+        return_value=[
+            {"market": "Correct Score", "lines": [{"label": "1-0", "scores": {"1-0": 7.0}}]}
+        ],
+    )
+    @patch("src.oddspedia.scraping.match_scraper._click_football_market_selector", return_value=True)
+    @patch("src.oddspedia.scraping.match_scraper._current_odds_dom_signature", return_value="before")
+    def test_targeted_market_extraction_clicks_only_the_requested_missing_market(
+        self, _signature, click_selector, _wait, _expand_lines
+    ):
+        class Driver:
+            def execute_script(self, script, *_args):
+                if "var texts = []" in script:
+                    return ["Double Chance", "Correct Score"]
+                if script == _JS_EXTRACT_ODDS:
+                    return [
+                        {
+                            "market": "Correct Score",
+                            "lines": [
+                                {"type": "main", "label": "1-0", "outcomes": {"1-0": 7.0}}
+                            ],
+                        }
+                    ]
+                return []
+
+        odds, unresolved = _extract_football_odds(
+            Driver(),
+            [],
+            home="Home",
+            away="Away",
+            target_markets=["Correct Score"],
+            raise_on_unresolved=False,
+            return_unresolved=True,
+        )
+
+        click_selector.assert_called_once_with(unittest.mock.ANY, "Correct Score")
+        self.assertEqual([market["market"] for market in odds], ["Correct Score"])
+        self.assertEqual(unresolved, [])
 
     def test_expands_show_more_lines_within_the_market_card(self):
         class Button:
@@ -1123,6 +1437,33 @@ class FootballMatchSchemaTests(unittest.TestCase):
             "control.classList.contains('matchup-odds-comparison-card__header')",
             _JS_FOOTBALL_MARKET_SELECTOR_TEXTS,
         )
+
+    def test_market_discovery_excludes_money_on_betting_data_links(self):
+        self.assertFalse(_is_football_market_selector_text("44% of Money on Draw Betting data"))
+        self.assertTrue(_is_football_market_selector_text("Draw No Bet"))
+        self.assertIn(r"\bmoney\s+on\b", _JS_FOOTBALL_MARKET_SELECTOR_TEXTS)
+        self.assertIn(r"\bbetting\s+data\b", _JS_FOOTBALL_MARKET_SELECTOR_TEXTS)
+
+    def test_extract_football_odds_does_not_click_money_on_betting_data_link(self):
+        class Driver:
+            def execute_script(self, script, *_args):
+                if script == _JS_FOOTBALL_MARKET_SELECTOR_TEXTS:
+                    return ["44% of Money on Draw Betting data"]
+                return False
+
+        base_odds = [
+            {
+                "market": "Full Time Result",
+                "lines": [{"type": "main", "label": "", "home": 2.1, "draw": 3.2, "away": 3.4}],
+            }
+        ]
+        with patch(
+            "src.oddspedia.scraping.match_scraper._click_football_market_selector"
+        ) as click_selector:
+            odds = _extract_football_odds(Driver(), base_odds, home="Blackburn", away="Portsmouth")
+
+        click_selector.assert_not_called()
+        self.assertEqual([market["market"] for market in odds], ["Full Time Result"])
 
     def test_normalization_keeps_only_full_time_markets(self):
         odds = [

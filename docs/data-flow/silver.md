@@ -30,7 +30,7 @@ bronze.* (15 tables)
 
 The current Oddspedia Silver implementation is the explicit relationship
 `silver.oddspedia_match_resolution`. Before it reads Oddspedia facts,
-`resolve_events.py` requires the date's latest
+`resolve_oddspedia_events.py` requires the date's latest
 `oddspedia_bronze.load_status` row to be `published`; `staging` and `failed`
 batches are not valid Silver input. When the operator supplies
 `--silver-reference-window-ready`, the resolver also machine-verifies exact
@@ -39,8 +39,8 @@ FotMob fixture-ID set equality between `bronze.match_reference` and
 an operator assertion that enables the check; it does not replace the check.
 
 ```bash
-python3 scripts/oddspedia/resolve_events.py --date 20260301 --silver-reference-window-ready --dry-run
-python3 scripts/oddspedia/resolve_events.py --month 202603 --silver-reference-window-ready --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --silver-reference-window-ready --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --month 202603 --silver-reference-window-ready --dry-run
 ```
 
 Silver SQL lives under `clickhouse/silver/`:
@@ -69,15 +69,15 @@ Creates the `silver` database and all 8 tables:
 python3 scripts/silver/setup_clickhouse.py
 ```
 
-### 2. DML Execution (`scripts/silver/load_clickhouse.py`)
+### 2. DML Execution (`scripts/silver/load_fotmob_silver.py`)
 
 Requires one explicit scope and executes all DML scripts in order:
 ```bash
-python3 scripts/silver/load_clickhouse.py --date 20251208
-python3 scripts/silver/load_clickhouse.py --single-date 20251208
-python3 scripts/silver/load_clickhouse.py --month 202512
-python3 scripts/silver/load_clickhouse.py --full-history
-python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
+python3 scripts/silver/load_fotmob_silver.py --date 20251208
+python3 scripts/silver/load_fotmob_silver.py --single-date 20251208
+python3 scripts/silver/load_fotmob_silver.py --month 202512
+python3 scripts/silver/load_fotmob_silver.py --full-history
+python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
 ```
 
 `--single-date` remains a backward-compatible alias for `--date`.
@@ -118,7 +118,7 @@ The scoped function flow is:
 | Failure | Recovery |
 | --- | --- |
 | Bronze tables missing | Run Bronze loader first |
-| SQL syntax error | Fix SQL, re-run `load_clickhouse.py` with the same scope |
+| SQL syntax error | Fix SQL, re-run `load_fotmob_silver.py` with the same scope |
 | Contract assertion fails | Check Bronze data quality, re-run |
 | Staging failure | Targets remain unchanged; inspect retained stage tables and rerun |
 | Partial commit failure | Rerun the identical scope to converge all tables |

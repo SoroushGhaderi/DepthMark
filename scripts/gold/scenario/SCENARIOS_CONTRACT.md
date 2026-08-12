@@ -9,7 +9,7 @@ This contract applies to:
 - `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
 - `scripts/gold/run_gold_sql_jobs.py`
 - `src/fotmob/gold/dml_runner.py`
-- `scripts/gold/load_clickhouse_gold.py`
+- `scripts/gold/load_fotmob_gold.py`
 - `scripts/gold/scenario/SCENARIOS_CATALOG.md`
 
 ## Scenario Unit Contract
@@ -59,7 +59,7 @@ All three parts are required for a production-ready scenario.
 
 ## Bulk Execution Contract
 
-`scripts/gold/load_clickhouse_gold.py` is the canonical layer runner.
+`scripts/gold/load_fotmob_gold.py` is the canonical layer runner.
 
 1. Executes base gold DDL files from `clickhouse/gold/ddl/`.
 2. Scenario bulk execution is enabled through `--part scenarios` or `--part all`.
@@ -83,8 +83,8 @@ Each scenario entry in `SCENARIOS_CATALOG.md` must include:
 
 Minimum operational checks:
 
-1. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run`
-2. `python3 scripts/gold/load_clickhouse_gold.py --date 20251208`
+1. `python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run`
+2. `python3 scripts/gold/load_fotmob_gold.py --date 20251208`
 3. `python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id <scenario_id> --dry-run`
 4. `python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --dry-run`
 5. Verify no gold contract failures (`invalid match_id`, missing scenario tables).

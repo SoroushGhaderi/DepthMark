@@ -11,4 +11,9 @@ from src.oddspedia.scraping.entrypoints import run_event_command
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/oddspedia/prioritize_events.py is deprecated; use "
+        "scripts/oddspedia/prioritize_oddspedia_events.py instead.",
+        file=sys.stderr,
+    )
     run_event_command("prioritize")

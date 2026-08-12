@@ -248,8 +248,8 @@ def test_pipeline_propagates_daily_and_monthly_scopes(monkeypatch):
     pipeline.run_silver_process("20251208")
     pipeline.run_gold_process_month("202512")
     assert calls == [
-        ("load_clickhouse.py", ["--date", "20251208"]),
-        ("load_clickhouse_gold.py", ["--month", "202512"]),
+        ("load_fotmob_silver.py", ["--date", "20251208"]),
+        ("load_fotmob_gold.py", ["--month", "202512"]),
     ]
 
 
@@ -316,8 +316,8 @@ def test_pipeline_skips_gold_after_daily_silver_failure(monkeypatch, tmp_path):
     assert pipeline.run_pipeline(args) == 1
     assert calls == [
         ("scrape_fotmob.py", ["20251208"]),
-        ("load_clickhouse.py", ["--date", "20251208"]),
-        ("load_clickhouse.py", ["--date", "20251208"]),
+        ("load_fotmob_bronze.py", ["--date", "20251208"]),
+        ("load_fotmob_silver.py", ["--date", "20251208"]),
     ]
 
 
@@ -328,7 +328,7 @@ def test_pipeline_full_history_skips_silver_and_gold_after_clickhouse_failure(
 
     def fake_run_script(script_path: Path, args):
         calls.append((str(script_path), args))
-        return 1 if "bronze/load_clickhouse.py" in str(script_path) else 0
+        return 1 if "bronze/load_fotmob_bronze.py" in str(script_path) else 0
 
     monkeypatch.setattr(pipeline, "_run_script", fake_run_script)
     monkeypatch.setattr(pipeline, "_send_step_failure_alert", lambda result: None)

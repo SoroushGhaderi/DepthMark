@@ -158,6 +158,9 @@ store/
 *.parquet
 *.feather
 
+# Versioned JSON contracts are source files, not generated data.
+!schemas/**/*.json
+
 # Models and experiment artifacts
 models/
 *.pkl

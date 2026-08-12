@@ -1,24 +1,33 @@
 import json
 import os
+import random
 import tempfile
 import time
-import random
 from datetime import datetime, timezone
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
-from src.oddspedia.scraping.config import MIN_DELAY, MAX_DELAY
+from src.oddspedia.scraping.config import MAX_DELAY, MIN_DELAY
 from src.oddspedia.scraping.driver import wait_for_cloudflare
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
-from src.oddspedia.scraping.models import validate_match_result, validate_match_links
+from src.oddspedia.scraping.models import (
+    validate_match_link_list,
+    validate_match_links,
+    validate_match_result,
+    validate_match_result_list,
+)
 
 logger = get_logger(__name__)
 
 
 class DataValidationError(ValueError):
     """Raised when a recognised scraper payload does not satisfy its schema."""
+
+
+MATCH_LINKS_ARTIFACT = "match_links"
+MATCH_PAYLOAD_ARTIFACT = "match_payload"
 
 
 def pin_oddspedia_event_url(url: str, event_id: object) -> str:
@@ -34,9 +43,7 @@ def pin_oddspedia_event_url(url: str, event_id: object) -> str:
 
     parsed = urlparse(url)
     query = [
-        (key, value)
-        for key, value in parse_qsl(parsed.query, keep_blank_values=True)
-        if key != "m"
+        (key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True) if key != "m"
     ]
     query.append(("m", event_id_text))
     return urlunparse(parsed._replace(query=urlencode(query)))
@@ -164,7 +171,9 @@ def safe_get(driver, url, retries=3):
                         if hasattr(driver, "reconnect"):
                             try:
                                 driver.reconnect()
-                                logger.info("cloudflare_retry_reconnected", url=url, attempt=attempt)
+                                logger.info(
+                                    "cloudflare_retry_reconnected", url=url, attempt=attempt
+                                )
                             except Exception as reconnect_err:
                                 logger.warning(
                                     "cloudflare_retry_reconnect_failed",
@@ -196,45 +205,59 @@ def safe_get(driver, url, retries=3):
     return False
 
 
-def save_json(data, path):
-    """Write *data* as pretty-printed JSON to *path* atomically via write-then-replace."""
-    metrics = get_metrics()
-    validated = None
-    if isinstance(data, list) and data and "id" in data[0] and "odds" in data[0]:
-        try:
-            validated = [validate_match_result(item).model_dump(exclude_unset=True) for item in data]
-            logger.debug("validated_match_results", count=len(data))
-        except Exception as e:
-            logger.warning("validation_failed", error=str(e), record_type="match_result")
-            metrics.record_validation_failure()
-            raise DataValidationError("match_result validation failed") from e
-    elif isinstance(data, list) and data and any(key in data[0] for key in ("url", "full_url")):
-        try:
-            validated = [validate_match_links(item).model_dump() for item in data]
-            logger.debug("validated_match_links", count=len(data))
-        except Exception as e:
-            logger.warning("validation_failed", error=str(e), record_type="match_link_list")
-            metrics.record_validation_failure()
-            raise DataValidationError("match_link_list validation failed") from e
-    elif isinstance(data, dict):
-        if "odds" in data or "live_odds" in data:
-            try:
-                validated = validate_match_result(data).model_dump(exclude_unset=True)
-                logger.debug("validated_match_result")
-            except Exception as e:
-                logger.warning("validation_failed", error=str(e), record_type="match_result")
-                metrics.record_validation_failure()
-                raise DataValidationError("match_result validation failed") from e
-        elif "url" in data or "full_url" in data:
-            try:
-                validated = validate_match_links(data).model_dump()
-                logger.debug("validated_match_link")
-            except Exception as e:
-                logger.warning("validation_failed", error=str(e), record_type="match_link")
-                metrics.record_validation_failure()
-                raise DataValidationError("match_link validation failed") from e
+def _validate_json_artifact(data, artifact_type=None):
+    """Validate a known artifact without normalizing or serializing the model.
 
-    output_data = validated if validated is not None else data
+    ``artifact_type`` is explicit at production call sites. Shape detection is
+    retained only for backward-compatible callers of ``save_json``.
+    """
+    metrics = get_metrics()
+    record_type = artifact_type
+    try:
+        if artifact_type == MATCH_LINKS_ARTIFACT:
+            if not isinstance(data, list):
+                raise TypeError("match_links must be a list")
+            validate_match_link_list(data)
+        elif artifact_type == MATCH_PAYLOAD_ARTIFACT:
+            if not isinstance(data, dict):
+                raise TypeError("match_payload must be an object")
+            validate_match_result(data)
+        elif artifact_type is not None:
+            raise ValueError(f"unsupported Oddspedia artifact type: {artifact_type}")
+        elif isinstance(data, list) and data and "id" in data[0] and "odds" in data[0]:
+            record_type = "match_result_list"
+            validate_match_result_list(data)
+        elif isinstance(data, list) and data and any(key in data[0] for key in ("url", "full_url")):
+            record_type = MATCH_LINKS_ARTIFACT
+            validate_match_link_list(data)
+        elif isinstance(data, dict) and ("odds" in data or "live_odds" in data):
+            record_type = MATCH_PAYLOAD_ARTIFACT
+            validate_match_result(data)
+        elif isinstance(data, dict) and ("url" in data or "full_url" in data):
+            record_type = "match_link"
+            validate_match_links(data)
+        else:
+            return
+    except Exception as exc:
+        logger.warning(
+            "validation_failed",
+            error=str(exc),
+            record_type=record_type or "unknown",
+        )
+        metrics.record_validation_failure()
+        raise DataValidationError(f"{record_type or 'json'} validation failed") from exc
+
+    logger.debug("artifact_validated", record_type=record_type)
+
+
+def save_json(data, path, artifact_type=None):
+    """Validate and atomically write JSON without changing the caller's structure."""
+    _validate_json_artifact(data, artifact_type=artifact_type)
+
+    # Source artifacts are written exactly as supplied. Pydantic is only the
+    # contract checker: serializing its model would add defaults, coerce values,
+    # and silently change the raw provider shape.
+    output_data = data
     os.makedirs(os.path.dirname(path), exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(dir=os.path.dirname(path), suffix=".tmp")
     try:
@@ -278,9 +301,7 @@ def get_performance_logs(driver):
 def extract_network_response_body(driver, request_id):
     """Use CDP to fetch the response body for a given *request_id*."""
     try:
-        resp = driver.execute_cdp_cmd(
-            "Network.getResponseBody", {"requestId": request_id}
-        )
+        resp = driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
         body = resp.get("body", "")
         return json.loads(body)
     except Exception:

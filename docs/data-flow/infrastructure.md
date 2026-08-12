@@ -13,13 +13,13 @@ cp .env.example .env
 # keep DEPTHMARK_ENV=local only for the tracked local Docker workflow
 
 docker compose up -d
-docker compose exec depthmark-scraper python3 scripts/orchestration/setup_clickhouse.py
-docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py 20251208
-docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --single-date 20251208
-docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --full-history
+docker compose exec depthmark-scraper python3 scripts/orchestration/setup_fotmob_warehouse.py
+docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
 
 # Oddspedia's independent source warehouse setup
-docker compose exec depthmark-scraper python3 scripts/oddspedia/setup_warehouse.py
+docker compose exec depthmark-scraper python3 scripts/oddspedia/setup_oddspedia_warehouse.py
 ```
 
 Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
@@ -48,8 +48,8 @@ Run pipeline commands inside the scraper service (see
 command surface):
 
 ```bash
-docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py 20251208
-docker compose exec depthmark-scraper python3 scripts/orchestration/pipeline.py --single-date 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
+docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
 ```
 
 ## TouchDesk Integration
@@ -137,7 +137,7 @@ Windows; an unsupported architecture must provide an explicit executable.
 ## ClickHouse Setup
 
 ```bash
-python3 scripts/orchestration/setup_clickhouse.py
+python3 scripts/orchestration/setup_fotmob_warehouse.py
 ```
 
 Runs DDL in layer order:
@@ -151,8 +151,8 @@ Runs DDL in layer order:
 Oddspedia has an independent setup command:
 
 ```bash
-python3 scripts/oddspedia/setup_warehouse.py
-python3 scripts/oddspedia/setup_warehouse.py --dry-run
+python3 scripts/oddspedia/setup_oddspedia_warehouse.py
+python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
 ```
 
 It creates `oddspedia_bronze.event`, `oddspedia_bronze.match_payload`,

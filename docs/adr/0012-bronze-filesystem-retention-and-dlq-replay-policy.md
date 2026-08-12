@@ -18,7 +18,7 @@ indefinitely. The DLQ class docstring claims "replay" capability, but no
 automated reprocessing code exists — only `get_dlq_records()` for reading records
 back.
 
-The Bronze loader (`scripts/bronze/load_clickhouse.py`) does not track which
+The Bronze loader (`scripts/bronze/load_fotmob_bronze.py`) does not track which
 filesystem files have been loaded to ClickHouse. It relies on
 `ReplacingMergeTree` deduplication at the ClickHouse level. There is no
 filesystem-side load-confirmation marker.

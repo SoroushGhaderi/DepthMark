@@ -53,6 +53,8 @@ trade-off.
 | `0021-add-oddspedia-as-source-domain.md`                               | Oddspedia is an isolated source domain; FotMob remains the canonical fixture reference and matching is a Silver conformance output. | Oddspedia raw facts remain outside `bronze.*`; ambiguous cross-source matches are never auto-selected. |
 | `0022-prioritize-oddspedia-links-against-depthmark-silver.md`          | Oddspedia link selection is a pre-scrape, fail-closed decision against the completed canonical DepthMark window. | Keep source links immutable, use the shared resolver policy, and make priority artifacts and manifests auditable. |
 | `0023-parallel-source-medallion-pipelines.md`                         | FotMob and Oddspedia are parallel Bronze → Silver → Gold source pipelines; cross-source matching is a separate Silver integration edge. | Label source and layer together in docs and keep Oddspedia implementation status distinct from its target architecture. |
+| `0024-source-qualified-operational-script-names.md`                  | Source workflow scripts use a verb-source grammar, with explicit tested adapters for earlier names. | Keep the package registry, orchestration, compatibility warnings, tests, and command docs synchronized. |
+| `0025-unify-scraping-status-and-reports.md`                         | FotMob and Oddspedia scraping observation uses one read-only report interface with explicit source adapters. | Keep source contracts isolated; add formats and metrics to `report_scraping.py`, not source-specific reporting scripts. |
 
 
 ## Queue
@@ -87,3 +89,5 @@ trade-off.
 | 7       | Logical duplicates vs physical versions | Accepted in `0019-separate-logical-duplicates-from-physical-versions.md` |
 | 8       | Isolated Oddspedia source domain | Accepted in `0021-add-oddspedia-as-source-domain.md`; supersedes FotMob-only scope |
 | 9       | Prioritize Oddspedia links against DepthMark Silver | Accepted in `0022-prioritize-oddspedia-links-against-depthmark-silver.md` |
+| 10      | Source-qualified operational script names | Accepted in `0024-source-qualified-operational-script-names.md`; compatibility adapters retained |
+| 11      | Unified scraping status and reports | Accepted in `0025-unify-scraping-status-and-reports.md`; one read-only command covers both sources |

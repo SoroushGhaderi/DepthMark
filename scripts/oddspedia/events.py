@@ -1,7 +1,6 @@
 """Compatibility umbrella for the phase-specific Oddspedia commands.
 
-Use ``discover_events.py``, ``prioritize_events.py``, ``scrape_matches.py``,
-``run_pipeline.py``, and ``status.py`` for new automation.
+Use the source-qualified, phase-specific Oddspedia scripts for new automation.
 """
 
 import sys
@@ -16,7 +15,7 @@ from src.oddspedia.scraping.cli import main
 
 if __name__ == "__main__":
     print(
-        "scripts/oddspedia/events.py is a compatibility entry point; use the "
+        "Warning: scripts/oddspedia/events.py is deprecated; use the source-qualified "
         "phase-specific Oddspedia scripts for new automation.",
         file=sys.stderr,
     )
