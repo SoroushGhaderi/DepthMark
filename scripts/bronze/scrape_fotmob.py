@@ -405,9 +405,9 @@ def print_next_steps(stats: ScrapingStats) -> None:
         logger.info("Next steps:")
         logger.info(
             "  Load to ClickHouse:  "
-            "python3 scripts/bronze/load_clickhouse.py --scraper fotmob --date <date>"
+            "python3 scripts/bronze/load_fotmob_bronze.py --date <date>"
         )
-        logger.info("  View profiling:  python3 manage.py bronze view-profiling")
+        logger.info("  Review raw artifacts under data/fotmob/historical/")
 
 
 # ============================================================================

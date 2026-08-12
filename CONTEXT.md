@@ -68,6 +68,28 @@ implementation work.
 
 ## Glossary
 
+### Scraping Report Interface
+
+The single read-only operational surface for reconciling FotMob and Oddspedia
+scraping state: `scripts/report_scraping.py` or `depthmark report-scraping`.
+It owns date/month/range scope, common summary fields, aggregation, rendering, and
+automation exit policy. Explicit source adapters own source-specific artifact
+reads; they do not merge raw contracts or create a provider abstraction.
+
+Avoid saying: status script, provider report framework.
+Related terms: Historical Scrape, Live Scrape, Bronze Layer.
+
+### Oddspedia Artifact Contract
+
+The immutable top-level and nested JSON structures for Oddspedia daily
+listings, per-event payloads, and scrape manifests. Runtime models validate new
+writes while external schemas under `schemas/oddspedia/` document compatibility.
+Validation never serializes its model back over raw source data; manifest
+updates preserve unknown compatible fields.
+
+Avoid saying: normalized payload, migrated raw JSON.
+Related terms: Source Event, Bronze Layer, Scraping Report Interface.
+
 ### Logical Duplicate Identity
 
 More than one current row for the same declared row identity in ClickHouse's
@@ -340,11 +362,34 @@ Related terms: Link Validation, Link Priority, Source Event.
 ### Oddspedia Event Intake
 
 The Oddspedia command workflow that discovers event links, generates Link
-Priorities, and scrapes selected event pages. Its canonical script entry point
-is `scripts/oddspedia/events.py`; the legacy `football.py` entry point is a
-temporary compatibility wrapper rather than the public process name.
+Priorities, and scrapes selected event pages. Its canonical entry points are
+`discover_oddspedia_events.py`, `prioritize_oddspedia_events.py`,
+`scrape_oddspedia_matches.py`, and `run_oddspedia_pipeline.py`. The earlier
+umbrella and phase-only filenames are Compatibility Script Aliases, not public
+process names for new automation.
 
 Related terms: Source Event, Priority Generation.
+
+### Canonical Source Command
+
+A supported operational script whose filename exposes action and source using
+`<verb>_<source>[_<layer-or-entity>].py`, or the equivalent hyphenated package
+command. Canonical Source Commands are the only names used by current runbooks,
+internal orchestration, generated operator guidance, and new automation.
+
+Avoid saying: preferred alias, generic provider command.
+Related terms: Compatibility Script Alias, Application Service, Source Domain Scope.
+
+### Compatibility Script Alias
+
+An earlier script path or package command retained to protect existing
+automation while the Canonical Source Command is adopted. It delegates to the
+same implementation, preserves arguments and exit codes, and emits a
+deprecation warning naming its replacement. It is not a second canonical
+interface.
+
+Avoid saying: canonical wrapper, alternate supported name.
+Related terms: Canonical Source Command, Application Service.
 
 ### Bronze Retention
 
@@ -385,7 +430,7 @@ Related terms: Script Entry Point, Layer.
 ### Gold Scenario Bulk Loading
 
 The execution of all scenario SQL jobs through the bulk Gold loader
-(`scripts/gold/load_clickhouse_gold.py`). Scenarios follow the same failure
+(`scripts/gold/load_fotmob_gold.py`). Scenarios follow the same failure
 pattern as signals: a scenario failure blocks signal activation builders and
 produces a non-zero exit code. The `--part` flag accepts `scenarios` as an
 explicit selector, and every run also requires a Warehouse Execution Scope.
@@ -450,7 +495,7 @@ Related terms: Telegram Client, Telegram Message Template.
 
 A Telegram message family (currently missing) that reports per-step status,
 duration, and success/failure for the full pipeline run. Emitted by
-`scripts/orchestration/pipeline.py` after all steps complete.
+`scripts/orchestration/run_fotmob_pipeline.py` after all steps complete.
 
 Avoid saying: pipeline completion alert, pipeline final message.
 Related terms: Telegram Message Template, Layer Alert.

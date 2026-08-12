@@ -1,7 +1,7 @@
 import os
 import subprocess
-import tempfile
 import sys
+import tempfile
 import unittest
 from datetime import date
 from unittest.mock import patch
@@ -18,12 +18,18 @@ from src.oddspedia.scraping.config import (
     get_match_links_file,
     get_matches_dir,
     get_prioritized_match_links_file,
-    get_storage_aspect,
     get_sport_listing_url,
+    get_storage_aspect,
     normalize_sport,
 )
 from src.oddspedia.scraping.match_collector import _build_urls
-from src.oddspedia.scraping.utils import load_json, save_json
+from src.oddspedia.scraping.utils import (
+    MATCH_LINKS_ARTIFACT,
+    MATCH_PAYLOAD_ARTIFACT,
+    DataValidationError,
+    load_json,
+    save_json,
+)
 
 
 class SportConfigTests(unittest.TestCase):
@@ -110,14 +116,13 @@ class SportConfigTests(unittest.TestCase):
 
     def test_canonical_oddspedia_scripts_expose_phase_specific_help(self):
         scripts = (
-            "discover_events.py",
-            "prioritize_events.py",
-            "scrape_matches.py",
-            "run_pipeline.py",
-            "status.py",
-            "setup_warehouse.py",
-            "load_bronze.py",
-            "resolve_events.py",
+            "discover_oddspedia_events.py",
+            "prioritize_oddspedia_events.py",
+            "scrape_oddspedia_matches.py",
+            "run_oddspedia_pipeline.py",
+            "setup_oddspedia_warehouse.py",
+            "load_oddspedia_bronze.py",
+            "resolve_oddspedia_events.py",
         )
         for script in scripts:
             with self.subTest(script=script):
@@ -130,10 +135,20 @@ class SportConfigTests(unittest.TestCase):
                 )
                 self.assertIn("usage:", result.stdout)
 
+        report_result = subprocess.run(
+            [sys.executable, os.path.join(ROOT, "scripts", "report_scraping.py"), "--help"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        self.assertIn("usage:", report_result.stdout)
+        self.assertNotIn("deprecated", report_result.stderr.lower())
+
         result = subprocess.run(
             [
                 sys.executable,
-                os.path.join(ROOT, "scripts", "oddspedia", "run_pipeline.py"),
+                os.path.join(ROOT, "scripts", "oddspedia", "run_oddspedia_pipeline.py"),
                 "--help",
             ],
             cwd=ROOT,
@@ -191,12 +206,81 @@ class MatchCollectorUrlTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "match_links.json")
-            save_json(data, path)
+            save_json(data, path, artifact_type=MATCH_LINKS_ARTIFACT)
             saved = load_json(path)
 
         self.assertEqual(saved[0]["league_name"], "FIFA World Cup")
         self.assertNotIn("league", saved[0])
         self.assertNotIn("tournament", saved[0])
+
+    def test_save_json_preserves_listing_structure_without_model_defaults(self):
+        data = [
+            {
+                "sport": "football",
+                "id": "42",
+                "home": "Home",
+                "away": "Away",
+                "date": "2026-03-01 12:00:00+00",
+                "url": "/football/home-away-42?m=42",
+                "source_only": {"unchanged": True},
+            }
+        ]
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "match_links.json")
+            save_json(data, path, artifact_type=MATCH_LINKS_ARTIFACT)
+            saved = load_json(path)
+
+        self.assertEqual(saved, data)
+
+    def test_save_json_preserves_match_payload_structure_without_model_defaults(self):
+        data = {
+            "sport": "football",
+            "id": "42",
+            "home": "Home",
+            "away": "Away",
+            "tournament": "League",
+            "date": "2026-03-01 12:00:00+00",
+            "url": "/football/home-away-42?m=42",
+            "status": "finished",
+            "odds": [
+                {
+                    "market": "Both Teams to Score",
+                    "lines": [{"type": "main", "label": "Full Time", "yes": 1.8, "no": 2.0}],
+                }
+            ],
+            "stats": [],
+            "scraped_at": "2026-08-12T00:00:00+00:00",
+            "source_only": {"unchanged": True},
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "42.json")
+            save_json(data, path, artifact_type=MATCH_PAYLOAD_ARTIFACT)
+            saved = load_json(path)
+
+        self.assertEqual(saved, data)
+
+    def test_save_json_rejects_invalid_nested_odds_before_creating_a_file(self):
+        data = {
+            "sport": "football",
+            "id": "42",
+            "home": "Home",
+            "away": "Away",
+            "tournament": "League",
+            "date": "2026-03-01 12:00:00+00",
+            "url": "/football/home-away-42?m=42",
+            "status": "finished",
+            "odds": [{"market": "Result", "lines": [{"label": "Full Time", "home": 2.0}]}],
+            "stats": [],
+            "scraped_at": "2026-08-12T00:00:00+00:00",
+        }
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "42.json")
+            with self.assertRaises(DataValidationError):
+                save_json(data, path, artifact_type=MATCH_PAYLOAD_ARTIFACT)
+            self.assertFalse(os.path.exists(path))
 
 
 if __name__ == "__main__":

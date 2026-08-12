@@ -39,20 +39,30 @@ layer and keep the source name visible in table, script, and catalog contracts.
 ## Event intake and Bronze
 
 Oddspedia collection is independent of
-`scripts/orchestration/pipeline.py`. The intake flow is:
+`scripts/orchestration/run_fotmob_pipeline.py`. The intake flow is:
 
 ```text
 discover → prioritize → scrape → load Oddspedia Bronze
 ```
 
 ```bash
-python3 scripts/oddspedia/discover_events.py --date 20260301
-python3 scripts/oddspedia/prioritize_events.py --date 20260301 --silver-reference-window-ready
-python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier lower
-python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready
-python3 scripts/oddspedia/setup_warehouse.py --dry-run
-python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
+python3 scripts/oddspedia/discover_oddspedia_events.py --date 20260301
+python3 scripts/oddspedia/prioritize_oddspedia_events.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --priority-tier lower
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready
+python3 scripts/report_scraping.py --source oddspedia --date 20260301 --format markdown --output docs/reports/oddspedia/20260301.md
+python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
+python3 scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run
+
+# Continue a bounded slice without changing or re-scraping accepted payloads
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260301 --end-date 20260307 --silver-reference-window-ready
+python3 scripts/oddspedia/load_oddspedia_bronze.py --start-date 20260301 --end-date 20260307 --dry-run
 ```
+
+Event intake, read-only reporting, Bronze loading, and resolution accept the
+same inclusive `--start-date/--end-date` scope. Existing `--date` and `--month`
+selectors remain stable. A current-month event-intake scope stops at the
+machine-local current date; explicit future dates and ranges still fail.
 
 Discovery is fail-closed. A date is accepted only when listing pagination and
 target-date checks complete; a verified empty listing is represented as
@@ -70,9 +80,24 @@ scraping, Bronze loading, and resolution refuse to overlap for the same date.
 Month commands continue through all dates but exit non-zero if any date is
 missing, unaccepted, or otherwise failed.
 
-The canonical event-intake scripts are `discover_events.py`,
-`prioritize_events.py`, `scrape_matches.py`, `run_pipeline.py`, and `status.py`.
-`run_pipeline.py` performs discovery, priority generation, then
+Raw JSON structure is an immutable source contract. External Draft 2020-12
+schemas under `schemas/oddspedia/` describe `match_links.json`, match payloads,
+and `manifest.json`; the schema is not embedded into those artifacts. New
+listing and payload writes use an explicit contract at the atomic persistence
+seam and write the scraper's object unchanged after validation. Manifests
+validate known state types and retain unknown compatible top-level fields.
+`total` remains the full discovered-inventory count, while
+`priority_run.selected_count` describes the selected scrape scope.
+
+The canonical event-intake scripts are `discover_oddspedia_events.py`,
+`prioritize_oddspedia_events.py`, `scrape_oddspedia_matches.py`, and
+`run_oddspedia_pipeline.py`. `scripts/report_scraping.py --source oddspedia`
+is the read-only reporting interface. It combines inventory, priority,
+manifest, payload-audit, and run-log evidence into summary, Markdown, or JSON;
+it does not acquire the date lock, create a status run log, or write pipeline
+state. The former Oddspedia status/report paths are compatibility adapters to
+this one interface.
+`run_oddspedia_pipeline.py` performs discovery, priority generation, then
 priority-selected scraping. It requires `--silver-reference-window-ready`
 because priority generation reads the previous, current, and following
 `silver.match` dates. `football.py` and the former umbrella `events.py` remain
@@ -141,7 +166,7 @@ The Bronze loader writes:
 
 The Bronze loader requires an accepted discovery manifest, matching inventory
 checksum, terminal scrape state, and accepted per-event payload audits.
-`resolve_events.py` additionally requires the latest `load_status` row for the
+`resolve_oddspedia_events.py` additionally requires the latest `load_status` row for the
 date to be `published`, so a partially replaced ClickHouse batch cannot be read
 as complete Silver input.
 
@@ -165,8 +190,9 @@ canonical FotMob fixture. An Oddspedia Silver table is not the same thing as
 the shared FotMob `silver.match` table.
 
 ```bash
-python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
-python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --start-date 20260301 --end-date 20260307 --dry-run
 ```
 
 ## Oddspedia Gold
@@ -218,7 +244,7 @@ explicitly retried IDs are processed.
 
 Discovery also refreshes an otherwise valid date inventory when the manifest
 records an incomplete discovery, saved match output, or missing/stale checksum.
-This lets the standard `discover_events.py --date ...` command recover
+This lets the standard `discover_oddspedia_events.py --date ...` command recover
 rescrape candidates without requiring an extra retry flag.
 
 See [`source-artifact-storage.md`](source-artifact-storage.md) for the shared

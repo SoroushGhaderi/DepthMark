@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://depthmark.local/schemas/oddspedia/scrape_manifest.schema.json",
+  "title": "Oddspedia date scrape manifest",
+  "description": "External state contract. Unknown top-level fields are allowed and preserved by ScrapeManifest.",
+  "type": "object",
+  "required": ["date", "sport", "total", "done", "failed", "skipped", "incomplete", "in_progress", "retries", "discovery", "priority_run", "metrics", "started_at", "updated_at"],
+  "properties": {
+    "date": {"type": "string", "minLength": 1},
+    "sport": {"const": "football"},
+    "total": {"type": "integer", "minimum": 0},
+    "done": {"$ref": "#/$defs/idList"},
+    "failed": {"$ref": "#/$defs/idList"},
+    "incomplete": {"$ref": "#/$defs/idList"},
+    "skipped": {"type": "object", "additionalProperties": {"type": "object"}},
+    "in_progress": {"type": "object", "additionalProperties": {"type": "string"}},
+    "retries": {"type": "object", "additionalProperties": {"type": "object"}},
+    "discovery": {"type": "object"},
+    "priority_run": {"type": "object"},
+    "metrics": {"type": "object"},
+    "completed_progress": {"type": "number", "minimum": 0, "maximum": 100},
+    "started_at": {"type": "string", "minLength": 1},
+    "updated_at": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "idList": {
+      "type": "array",
+      "items": {"type": ["string", "integer", "number"]}
+    }
+  },
+  "additionalProperties": true
+}

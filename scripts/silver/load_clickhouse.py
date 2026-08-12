@@ -133,4 +133,9 @@ def main(argv=None) -> int:
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/silver/load_clickhouse.py is deprecated; use "
+        "scripts/silver/load_fotmob_silver.py instead.",
+        file=sys.stderr,
+    )
     raise SystemExit(main())

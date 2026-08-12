@@ -52,7 +52,7 @@ ADR 0018 later made one execution scope mandatory. Omitted job selectors still
 mean all jobs, but omitted scope selectors are rejected.
 
 This decision does not re-enable scenario execution inside
-`scripts/gold/load_clickhouse_gold.py`. That loader decision remains governed by
+`scripts/gold/load_fotmob_gold.py`. That loader decision remains governed by
 ADR 0004.
 
 ## Consequences

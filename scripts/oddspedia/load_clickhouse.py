@@ -1,4 +1,4 @@
-"""Compatibility wrapper for :mod:`scripts.oddspedia.load_bronze`."""
+"""Compatibility wrapper for the canonical Oddspedia Bronze loader."""
 
 import sys
 from pathlib import Path
@@ -12,7 +12,8 @@ from scripts.oddspedia.load_bronze import main
 
 if __name__ == "__main__":
     print(
-        "Warning: load_clickhouse.py is deprecated; use load_bronze.py instead.",
+        "Warning: scripts/oddspedia/load_clickhouse.py is deprecated; use "
+        "scripts/oddspedia/load_oddspedia_bronze.py instead.",
         file=sys.stderr,
     )
     raise SystemExit(main())

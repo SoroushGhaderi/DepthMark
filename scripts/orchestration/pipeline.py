@@ -10,16 +10,13 @@ This script runs all steps sequentially, handling errors gracefully
 and providing a comprehensive summary at the end.
 
 Usage:
-    python3 scripts/orchestration/pipeline.py 20251113
-    python3 scripts/orchestration/pipeline.py --date 20251113
-    python3 scripts/orchestration/pipeline.py --start-date 20251101 --end-date 20251107
-    python3 scripts/orchestration/pipeline.py --month 202511
-    python3 scripts/orchestration/pipeline.py --full-history
-    python3 scripts/orchestration/pipeline.py 20251113 --skip-bronze
-    python3 scripts/orchestration/pipeline.py 20251113 --skip-clickhouse
-    python3 scripts/orchestration/pipeline.py 20251113 --bronze-only
-    python3 scripts/orchestration/pipeline.py 20251113 --silver-only
-    python3 scripts/orchestration/pipeline.py 20251113 --gold-only
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113
+    python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251113
+    python3 scripts/orchestration/run_fotmob_pipeline.py --month 202511
+    python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --bronze-only
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --silver-only
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --gold-only
 """
 import argparse
 import logging
@@ -132,19 +129,19 @@ def create_argument_parser() -> argparse.ArgumentParser:
         epilog="""
 Examples:
   Full Pipeline:
-    python3 scripts/orchestration/pipeline.py 20251113
-    python3 scripts/orchestration/pipeline.py --date 20251113
-    python3 scripts/orchestration/pipeline.py --start-date 20251101 --end-date 20251107
-    python3 scripts/orchestration/pipeline.py --month 202511
-    python3 scripts/orchestration/pipeline.py --full-history
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113
+    python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251113
+    python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251101 --end-date 20251107
+    python3 scripts/orchestration/run_fotmob_pipeline.py --month 202511
+    python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
   Partial Pipeline:
-    python3 scripts/orchestration/pipeline.py 20251113 --bronze-only
-    python3 scripts/orchestration/pipeline.py 20251113 --silver-only
-    python3 scripts/orchestration/pipeline.py 20251113 --gold-only
-    python3 scripts/orchestration/pipeline.py 20251113 --skip-bronze
-    python3 scripts/orchestration/pipeline.py 20251113 --skip-fotmob
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --bronze-only
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --silver-only
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --gold-only
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --skip-bronze
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --skip-fotmob
   Options:
-    python3 scripts/orchestration/pipeline.py 20251113 --force
+    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --force
         """,
     )
     _add_date_arguments(parser)
@@ -469,7 +466,7 @@ def run_clickhouse_load(
     config: PipelineConfig,
 ) -> StepResult:
     """Load data to ClickHouse for a scraper and date."""
-    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_clickhouse.py"
+    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_fotmob_bronze.py"
     argv = ["--date", date_str]
     if config.force:
         argv.append("--force")
@@ -487,7 +484,7 @@ def run_clickhouse_load_month(
     config: PipelineConfig,
 ) -> StepResult:
     """Load data to ClickHouse for a scraper and month."""
-    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_clickhouse.py"
+    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_fotmob_bronze.py"
     argv = ["--month", month_str]
     if config.force:
         argv.append("--force")
@@ -503,7 +500,7 @@ def run_silver_process(
     date_str: str,
 ) -> StepResult:
     """Run silver processing for a date."""
-    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
+    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_fotmob_silver.py"
     argv: List[str] = ["--date", date_str]
     return run_step(
         f"Silver Process - {date_str}",
@@ -517,7 +514,7 @@ def run_silver_process_month(
     month_str: str,
 ) -> StepResult:
     """Run silver processing for a month."""
-    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
+    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_fotmob_silver.py"
     argv: List[str] = ["--month", month_str]
     return run_step(
         f"Silver Process - Month {month_str}",
@@ -531,7 +528,7 @@ def run_gold_process(
     date_str: str,
 ) -> StepResult:
     """Run gold processing for a date."""
-    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
+    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_fotmob_gold.py"
     argv: List[str] = ["--date", date_str]
     return run_step(
         f"Gold Process - {date_str}",
@@ -545,7 +542,7 @@ def run_gold_process_month(
     month_str: str,
 ) -> StepResult:
     """Run gold processing for a month."""
-    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
+    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_fotmob_gold.py"
     argv: List[str] = ["--month", month_str]
     return run_step(
         f"Gold Process - Month {month_str}",
@@ -695,7 +692,7 @@ def process_full_history(
         and not config.silver_only
         and not config.gold_only
     ):
-        script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_clickhouse.py"
+        script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_fotmob_bronze.py"
         argv = ["--full-history"]
         if config.force:
             argv.append("--force")
@@ -716,7 +713,7 @@ def process_full_history(
         and not config.bronze_only
         and not config.gold_only
     ):
-        script_path = PROJECT_ROOT / "scripts" / "silver" / "load_clickhouse.py"
+        script_path = PROJECT_ROOT / "scripts" / "silver" / "load_fotmob_silver.py"
         silver_result = run_step(
             "Silver Process - Full History",
             f"{script_path} --full-history",
@@ -733,7 +730,7 @@ def process_full_history(
         and not config.bronze_only
         and not config.silver_only
     ):
-        script_path = PROJECT_ROOT / "scripts" / "gold" / "load_clickhouse_gold.py"
+        script_path = PROJECT_ROOT / "scripts" / "gold" / "load_fotmob_gold.py"
         results.add_result(
             "fotmob_gold",
             run_step(
@@ -895,15 +892,24 @@ def main() -> int:
     return run_pipeline(args)
 
 
-if __name__ == "__main__":
+def cli_main() -> int:
+    """Run the pipeline with stable CLI-level error handling."""
     try:
-        exit_code = main()
-        sys.exit(exit_code)
+        return main()
     except KeyboardInterrupt:
         logger = get_logger("pipeline")
         logger.warning("\n\nPipeline interrupted by user. Exiting...")
-        sys.exit(130)
+        return 130
     except (RuntimeError, OSError, ValueError) as e:
         logger = get_logger("pipeline")
         logger.error(f"\nFatal error: {e}", exc_info=True)
-        sys.exit(1)
+        return 1
+
+
+if __name__ == "__main__":
+    print(
+        "Warning: scripts/orchestration/pipeline.py is deprecated; use "
+        "scripts/orchestration/run_fotmob_pipeline.py instead.",
+        file=sys.stderr,
+    )
+    raise SystemExit(cli_main())

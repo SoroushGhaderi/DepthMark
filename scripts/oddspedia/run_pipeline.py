@@ -11,4 +11,9 @@ from src.oddspedia.scraping.entrypoints import run_event_command
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/oddspedia/run_pipeline.py is deprecated; use "
+        "scripts/oddspedia/run_oddspedia_pipeline.py instead.",
+        file=sys.stderr,
+    )
     run_event_command("run")

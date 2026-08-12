@@ -1,0 +1,192 @@
+"""Contract tests for the package-level DepthMark command registry."""
+
+import subprocess
+import sys
+from pathlib import Path
+
+from src import cli
+
+EXPECTED_CANONICAL_COMMANDS = {
+    "health-check": "health_check.py",
+    "report-scraping": "report_scraping.py",
+    "scrape-fotmob": "bronze/scrape_fotmob.py",
+    "load-fotmob-bronze": "bronze/load_fotmob_bronze.py",
+    "load-fotmob-silver": "silver/load_fotmob_silver.py",
+    "load-fotmob-gold": "gold/load_fotmob_gold.py",
+    "run-fotmob-pipeline": "orchestration/run_fotmob_pipeline.py",
+    "setup-fotmob-warehouse": "orchestration/setup_fotmob_warehouse.py",
+    "discover-oddspedia-events": "oddspedia/discover_oddspedia_events.py",
+    "prioritize-oddspedia-events": "oddspedia/prioritize_oddspedia_events.py",
+    "scrape-oddspedia-matches": "oddspedia/scrape_oddspedia_matches.py",
+    "run-oddspedia-pipeline": "oddspedia/run_oddspedia_pipeline.py",
+    "setup-oddspedia-warehouse": "oddspedia/setup_oddspedia_warehouse.py",
+    "load-oddspedia-bronze": "oddspedia/load_oddspedia_bronze.py",
+    "resolve-oddspedia-events": "oddspedia/resolve_oddspedia_events.py",
+}
+
+EXPECTED_SCRIPT_COMPATIBILITY = {
+    "bronze/load_clickhouse.py": "load_fotmob_bronze.py",
+    "silver/load_clickhouse.py": "load_fotmob_silver.py",
+    "gold/load_clickhouse_gold.py": "load_fotmob_gold.py",
+    "orchestration/pipeline.py": "run_fotmob_pipeline.py",
+    "orchestration/setup_clickhouse.py": "setup_fotmob_warehouse.py",
+    "oddspedia/discover_events.py": "discover_oddspedia_events.py",
+    "oddspedia/prioritize_events.py": "prioritize_oddspedia_events.py",
+    "oddspedia/scrape_matches.py": "scrape_oddspedia_matches.py",
+    "oddspedia/run_pipeline.py": "run_oddspedia_pipeline.py",
+    "oddspedia/status_oddspedia.py": "report_scraping.py",
+    "oddspedia/report_oddspedia.py": "report_scraping.py",
+    "oddspedia/status.py": "report_scraping.py",
+    "oddspedia/report.py": "report_scraping.py",
+    "oddspedia/setup_warehouse.py": "setup_oddspedia_warehouse.py",
+    "oddspedia/load_bronze.py": "load_oddspedia_bronze.py",
+    "oddspedia/resolve_events.py": "resolve_oddspedia_events.py",
+    "oddspedia/events.py": "source-qualified",
+    "oddspedia/football.py": "run_oddspedia_pipeline.py",
+    "oddspedia/setup_clickhouse.py": "setup_oddspedia_warehouse.py",
+    "oddspedia/load_clickhouse.py": "load_oddspedia_bronze.py",
+    "oddspedia/resolve_matches.py": "resolve_oddspedia_events.py",
+}
+
+
+def test_canonical_commands_use_existing_scripts() -> None:
+    assert {
+        command: spec.script for command, spec in cli.CANONICAL_COMMANDS.items()
+    } == EXPECTED_CANONICAL_COMMANDS
+
+    for script_name in EXPECTED_CANONICAL_COMMANDS.values():
+        assert (cli.SCRIPTS_DIR / script_name).is_file()
+
+
+def test_simple_compatibility_aliases_dispatch_to_canonical_scripts() -> None:
+    aliases = {
+        "scrape": "scrape-fotmob",
+        "load": "load-fotmob-bronze",
+        "pipeline": "run-fotmob-pipeline",
+        "setup-clickhouse": "setup-fotmob-warehouse",
+        "oddspedia-discover-events": "discover-oddspedia-events",
+        "oddspedia-prioritize-events": "prioritize-oddspedia-events",
+        "oddspedia-scrape-matches": "scrape-oddspedia-matches",
+        "oddspedia-run-pipeline": "run-oddspedia-pipeline",
+        "oddspedia-setup-warehouse": "setup-oddspedia-warehouse",
+        "oddspedia-load-bronze": "load-oddspedia-bronze",
+        "oddspedia-resolve-events": "resolve-oddspedia-events",
+    }
+
+    for alias, canonical in aliases.items():
+        alias_spec = cli.COMPATIBILITY_COMMANDS[alias]
+        canonical_spec = cli.CANONICAL_COMMANDS[canonical]
+        assert alias_spec.script == canonical_spec.script
+        assert alias_spec.replacement == canonical
+
+
+def test_reporting_compatibility_commands_target_one_unified_script() -> None:
+    expected_arguments = {
+        "status-oddspedia": ("--source", "oddspedia", "--format", "summary"),
+        "report-oddspedia": ("--source", "oddspedia", "--format", "markdown"),
+        "oddspedia-status": ("--source", "oddspedia", "--format", "summary"),
+        "oddspedia-report": ("--source", "oddspedia", "--format", "markdown"),
+    }
+
+    for command, arguments in expected_arguments.items():
+        spec = cli.COMPATIBILITY_COMMANDS[command]
+        assert spec.script == "report_scraping.py"
+        assert spec.replacement == "report-scraping"
+        assert spec.arguments == arguments
+
+
+def test_every_compatibility_command_has_an_existing_target_and_replacement() -> None:
+    for spec in cli.COMPATIBILITY_COMMANDS.values():
+        assert (cli.SCRIPTS_DIR / spec.script).is_file()
+        assert spec.replacement
+
+
+def test_every_canonical_command_exposes_help_without_a_deprecation_warning() -> None:
+    for command in EXPECTED_CANONICAL_COMMANDS:
+        result = subprocess.run(
+            [sys.executable, "-m", "src.cli", command, "--help"],
+            cwd=cli.PROJECT_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, (command, result.stderr)
+        assert "usage:" in result.stdout.lower(), command
+        assert "deprecated" not in result.stderr.lower(), command
+
+
+def test_every_compatibility_script_warns_and_preserves_help() -> None:
+    for script_name, replacement in EXPECTED_SCRIPT_COMPATIBILITY.items():
+        result = subprocess.run(
+            [sys.executable, str(cli.SCRIPTS_DIR / script_name), "--help"],
+            cwd=cli.PROJECT_ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
+        assert result.returncode == 0, (script_name, result.stderr)
+        assert "usage:" in result.stdout.lower(), script_name
+        assert "deprecated" in result.stderr.lower(), script_name
+        assert replacement in result.stderr, script_name
+
+
+def test_main_dispatches_a_canonical_command(monkeypatch) -> None:
+    invocation = {}
+
+    def fake_run_script(script_name: str, script_args: list[str]) -> int:
+        invocation["script"] = script_name
+        invocation["args"] = script_args
+        return 17
+
+    monkeypatch.setattr(cli, "_run_script", fake_run_script)
+
+    result = cli.main(["scrape-fotmob", "--today"])
+
+    assert result == 17
+    assert invocation == {"script": "bronze/scrape_fotmob.py", "args": ["--today"]}
+
+
+def test_main_warns_when_dispatching_a_compatibility_alias(monkeypatch, capsys) -> None:
+    invocation = {}
+
+    def fake_run_script(script_name: str, script_args: list[str]) -> int:
+        invocation["script"] = script_name
+        invocation["args"] = script_args
+        return 0
+
+    monkeypatch.setattr(cli, "_run_script", fake_run_script)
+
+    assert cli.main(["oddspedia-status", "--date", "20260301"]) == 0
+
+    assert invocation == {
+        "script": "report_scraping.py",
+        "args": [
+            "--source",
+            "oddspedia",
+            "--format",
+            "summary",
+            "--date",
+            "20260301",
+        ],
+    }
+    stderr = capsys.readouterr().err
+    assert "deprecated" in stderr.lower()
+    assert "report-scraping" in stderr
+
+
+def test_run_script_reports_a_missing_registry_target(monkeypatch, tmp_path, capsys) -> None:
+    subprocess_run_called = False
+
+    def unexpected_subprocess_run(*args, **kwargs):
+        nonlocal subprocess_run_called
+        subprocess_run_called = True
+        raise AssertionError("missing script targets must fail before subprocess execution")
+
+    monkeypatch.setattr(cli, "SCRIPTS_DIR", Path(tmp_path))
+    monkeypatch.setattr(cli.subprocess, "run", unexpected_subprocess_run)
+
+    assert cli._run_script("missing.py", []) == 2
+    assert not subprocess_run_called
+    assert "missing.py" in capsys.readouterr().err

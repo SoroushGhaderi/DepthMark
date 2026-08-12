@@ -3,7 +3,7 @@ Orchestrator for parallel match scraping and processing.
 
 SCRAPER: FotMob
 PURPOSE: Orchestrate the entire scraping and processing pipeline.
-         Saves to Bronze layer only. Use load_clickhouse.py to load to ClickHouse.
+         Saves to Bronze only. Use load_fotmob_bronze.py to load ClickHouse.
 """
 
 import threading
@@ -37,7 +37,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
 
     SCRAPER: FotMob
     PURPOSE: Scrapes match data and saves to Bronze layer (JSON files).
-             ClickHouse loading is done separately via load_clickhouse.py
+             ClickHouse loading is done separately via load_fotmob_bronze.py
     """
 
     def __init__(
@@ -85,7 +85,9 @@ class FotMobOrchestrator(OrchestratorProtocol):
 
         self.logger.info("FotMob Orchestrator initialized", extra={"bronze_only": bronze_only})
         if bronze_only:
-            self.logger.info("Note: Use load_clickhouse.py to load data from bronze to ClickHouse")
+            self.logger.info(
+                "Note: Use scripts/bronze/load_fotmob_bronze.py to load Bronze into ClickHouse"
+            )
 
     def scrape_date(
         self,
@@ -786,7 +788,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
         Returns:
             Raw match data (dict) or None if not found
 
-        Note: For processed data, use load_clickhouse.py to query ClickHouse.
+        Note: For processed data, use load_fotmob_bronze.py to populate ClickHouse.
         """
 
         return self.bronze_storage.load_raw_match_data(str(match_id), date_str)

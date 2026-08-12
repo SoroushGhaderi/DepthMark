@@ -2,12 +2,12 @@
 """Oddspedia event-intake command implementation.
 
 Usage:
-    python scripts/oddspedia/run_pipeline.py --date 20260227 --silver-reference-window-ready
-    python scripts/oddspedia/run_pipeline.py --headless --date 20260227 --silver-reference-window-ready
-    python scripts/oddspedia/discover_events.py --month 202607      # Event discovery only
-    python scripts/oddspedia/prioritize_events.py --date 20260711 --silver-reference-window-ready
-    python scripts/oddspedia/scrape_matches.py --date 20260711       # Priority-selected extraction
-    python scripts/oddspedia/run_pipeline.py --month 202607 --silver-reference-window-ready
+    python scripts/oddspedia/run_oddspedia_pipeline.py --date 20260227 --silver-reference-window-ready
+    python scripts/oddspedia/run_oddspedia_pipeline.py --headless --date 20260227 --silver-reference-window-ready
+    python scripts/oddspedia/discover_oddspedia_events.py --month 202607
+    python scripts/oddspedia/prioritize_oddspedia_events.py --date 20260711 --silver-reference-window-ready
+    python scripts/oddspedia/scrape_oddspedia_matches.py --date 20260711
+    python scripts/oddspedia/run_oddspedia_pipeline.py --month 202607 --silver-reference-window-ready
     python scripts/oddspedia/events.py --collect --month 202607      # Legacy alias for discover
 
 Alternatively (after ``pip install -e .``):
@@ -15,12 +15,11 @@ Alternatively (after ``pip install -e .``):
 """
 
 import argparse
-import calendar
-from contextlib import nullcontext
 import os
 import sys
 import threading
 import time
+from contextlib import nullcontext
 from typing import Optional, Sequence, Tuple
 
 # Make the src/ package discoverable when running main.py directly.
@@ -31,7 +30,7 @@ import random
 import shutil
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from selenium.common.exceptions import (
@@ -41,6 +40,7 @@ from selenium.common.exceptions import (
 )
 
 from config.settings import get_settings as get_depthmark_settings
+from src.common.dates import resolve_date_scope
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.scraping.audit import (
     audit_date,
@@ -62,7 +62,6 @@ from src.oddspedia.scraping.config import (
     get_sport_listing_url,
     get_storage_aspect,
     normalize_date,
-    normalize_month,
     normalize_sport,
 )
 from src.oddspedia.scraping.driver import DriverManager
@@ -97,7 +96,13 @@ from src.oddspedia.scraping.storage import (
     compress_date_files,
     read_match_payload,
 )
-from src.oddspedia.scraping.utils import load_json, random_delay, save_json
+from src.oddspedia.scraping.utils import (
+    MATCH_LINKS_ARTIFACT,
+    MATCH_PAYLOAD_ARTIFACT,
+    load_json,
+    random_delay,
+    save_json,
+)
 from src.oddspedia.silver.match_resolution import OddspediaMatchResolver
 
 configure_logging()
@@ -273,8 +278,7 @@ def _select_matches_to_scrape(
     missing_ids = set()
     if audit_result is not None:
         audited_by_id = {
-            audit.match_id: audit
-            for audit in audit_result.incomplete + audit_result.invalid
+            audit.match_id: audit for audit in audit_result.incomplete + audit_result.invalid
         }
         missing_ids = {audit.match_id for audit in audit_result.missing}
 
@@ -461,9 +465,7 @@ def _record_discovery(date_str, sport, discovery, snapshot=""):
     """Store date-level discovery acceptance or recovery evidence."""
     payload = discovery.to_dict()
     payload["snapshot"] = snapshot
-    payload["inventory_checksum"] = source_inventory_checksum(
-        _as_match_list(discovery.matches)
-    )
+    payload["inventory_checksum"] = source_inventory_checksum(_as_match_list(discovery.matches))
     manifest = load_manifest(date_str, sport=sport)
     if manifest is None:
         manifest = create_manifest(date_str, 0, sport=sport)
@@ -619,7 +621,7 @@ def phase1_collect(
     matches = _as_match_list(discovery.matches)
     if not matches:
         if discovery.complete and discovery.empty_confirmed:
-            save_json([], links_file)
+            save_json([], links_file, artifact_type=MATCH_LINKS_ARTIFACT)
             _record_discovery(date_str, sport, discovery)
             logger.info(
                 "event_discovery_no_events",
@@ -630,13 +632,13 @@ def phase1_collect(
             )
             return []
         snapshot = get_discovery_snapshot_file(date_str, sport=sport)
-        save_json([], snapshot)
+        save_json([], snapshot, artifact_type=MATCH_LINKS_ARTIFACT)
         _record_discovery(date_str, sport, discovery, snapshot)
         logger.error("no_matches_found", anomalies=discovery.anomalies)
         return []
     if not discovery.complete:
         snapshot = get_discovery_snapshot_file(date_str, sport=sport)
-        save_json(matches, snapshot)
+        save_json(matches, snapshot, artifact_type=MATCH_LINKS_ARTIFACT)
         _record_discovery(date_str, sport, discovery, snapshot)
         logger.warning(
             "event_discovery_unaccepted",
@@ -648,7 +650,7 @@ def phase1_collect(
             partial_snapshot=snapshot,
         )
         return []
-    save_json(matches, links_file)
+    save_json(matches, links_file, artifact_type=MATCH_LINKS_ARTIFACT)
     _record_discovery(date_str, sport, discovery)
     logger.info("event_links_saved", sport=sport, links_file=links_file, links_count=len(matches))
     for m in matches[:3]:
@@ -695,8 +697,10 @@ def prioritize_date(
         raise FileNotFoundError(f"Cannot prioritize without source links: {links_file}")
     if not _discovery_is_accepted(date_str, sport=sport):
         raise ValueError(f"Cannot prioritize without an accepted discovery inventory: {date_str}")
-    links = _as_match_list(source_links) if source_links is not None else _as_match_list(
-        load_json(links_file)
+    links = (
+        _as_match_list(source_links)
+        if source_links is not None
+        else _as_match_list(load_json(links_file))
     )
     if links and not listing_matches_target_date(links, date_str):
         raise ValueError(f"Source links do not target {date_str}: {links_file}")
@@ -742,8 +746,10 @@ def _selected_priority_matches(
     links_file = get_match_links_file(date_str, sport=sport)
     if not os.path.exists(links_file):
         raise FileNotFoundError(f"Cannot scrape without source links: {links_file}")
-    links = _as_match_list(source_links) if source_links is not None else _as_match_list(
-        load_json(links_file)
+    links = (
+        _as_match_list(source_links)
+        if source_links is not None
+        else _as_match_list(load_json(links_file))
     )
     artifact = load_priority_artifact(date_str, sport=sport)
     artifact_path = get_prioritized_match_links_file(date_str, sport=sport)
@@ -1056,7 +1062,7 @@ def _phase2_scrape_sequential(
                     previous_odds=partial_odds,
                     retry_market_names=retry_market_names,
                 )
-                save_json(match_data, out_path)
+                save_json(match_data, out_path, artifact_type=MATCH_PAYLOAD_ARTIFACT)
                 require_accepted_match_json(
                     date_str,
                     match_id,
@@ -1419,7 +1425,7 @@ def _phase2_scrape_concurrent(
                             previous_odds=partial_odds,
                             retry_market_names=retry_market_names,
                         )
-                        save_json(match_data, out_path)
+                        save_json(match_data, out_path, artifact_type=MATCH_PAYLOAD_ARTIFACT)
                         require_accepted_match_json(
                             date_str,
                             match_id,
@@ -1578,93 +1584,27 @@ def _phase2_scrape_concurrent(
     return manifest
 
 
-def _parse_month(month_str):
-    """Parse a YYYYMM month argument and return (year, month)."""
+def _resolve_dates(args, current_date=None):
+    """Resolve date, month, or range arguments into one or more date strings."""
     try:
-        parsed = datetime.strptime(normalize_month(month_str), "%Y%m")
-    except ValueError:
-        logger.error("invalid_month_format", month=month_str)
+        return resolve_date_scope(
+            date_value=getattr(args, "date", None),
+            month=getattr(args, "month", None),
+            current_date=current_date,
+            start_date=getattr(args, "start_date", None),
+            end_date=getattr(args, "end_date", None),
+        )
+    except ValueError as exc:
+        logger.error("invalid_collection_date_scope", error=str(exc))
         sys.exit(1)
-    return parsed.year, parsed.month
-
-
-def _dates_for_month(month_str):
-    """Return every YYYYMMDD date identifier in a YYYYMM month."""
-    year, month = _parse_month(month_str)
-    last_day = calendar.monthrange(year, month)[1]
-    return [date(year, month, day).strftime("%Y%m%d") for day in range(1, last_day + 1)]
-
-
-def _resolve_dates(args):
-    """Resolve CLI date/month arguments into one or more date strings."""
-    if args.month:
-        dates = _dates_for_month(args.month)
-    else:
-        date_str = args.date or datetime.now(timezone.utc).strftime("%Y%m%d")
-        try:
-            dates = [normalize_date(date_str)]
-        except ValueError:
-            logger.error("invalid_date_format", date=date_str)
-            sys.exit(1)
-
-    today = datetime.now(timezone.utc).date()
-    selected_dates = [datetime.strptime(date_str, "%Y%m%d").date() for date_str in dates]
-    if any(selected_date > today for selected_date in selected_dates):
-        logger.error("future_collection_date", dates=dates, today=today.strftime("%Y%m%d"))
-        sys.exit(1)
-    return [date_str for date_str in dates if datetime.strptime(date_str, "%Y%m%d").date() <= today]
 
 
 def _print_status(date_str, sport: str = "football"):
-    """Print scrape status for one date."""
-    sport = normalize_sport(sport)
-    manifest = load_manifest(date_str, sport=sport)
-    if manifest is None:
-        logger.info("no_manifest_found", sport=sport, date=date_str)
-        print(f"No manifest found for {sport} on {date_str}")
-        return
-    print(f"\n=== Scrape Status for {sport} on {date_str} ===")
-    print(f"Total: {manifest.total}")
-    print(f"Done: {manifest.completed_count} ({manifest.completed_progress}%)")
-    print(f"Skipped: {manifest.skipped_count}")
-    print(f"Failed: {manifest.failed_count}")
-    print(f"Incomplete: {manifest.incomplete_count}")
-    if manifest.in_progress:
-        active = ", ".join(
-            f"{worker_id}:{match_id}"
-            for worker_id, match_id in sorted(manifest.in_progress.items())
-        )
-    else:
-        active = "None"
-    print(f"In Progress: {active}")
-    print(f"Remaining: {manifest.remaining}")
-    if manifest.failed:
-        print(f"\nFailed match IDs: {', '.join(manifest.failed)}")
-    if manifest.incomplete:
-        print(f"\nIncomplete match IDs: {', '.join(manifest.incomplete)}")
-    if manifest.discovery:
-        discovery = manifest.discovery
-        print(
-            "\nEvent Discovery: "
-            f"{discovery.get('status', 'unknown')} "
-            f"({discovery.get('observed_pages', 0)}/{discovery.get('expected_pages', 0)} pages)"
-        )
-        if discovery.get("reasons"):
-            print(f"Discovery reasons: {', '.join(discovery['reasons'])}")
-    if manifest.priority_run:
-        priority_run = manifest.priority_run
-        print(
-            "Priority run: "
-            f"{priority_run.get('selected_priority', 'unknown')} "
-            f"({priority_run.get('selected_count', 0)} selected)"
-        )
-    if manifest.skipped:
-        skipped = ", ".join(
-            f"{match_id} ({entry.get('reason', 'unknown')})"
-            for match_id, entry in manifest.skipped.items()
-        )
-        print(f"\nSkipped matches: {skipped}")
-    logger.info("manifest_status_shown", **manifest.to_dict())
+    """Compatibility helper backed by the unified, read-only report."""
+    normalize_sport(sport)
+    from src.operations.scraping_reporting import build_scraping_report, render_summary
+
+    print(render_summary(build_scraping_report("oddspedia", [date_str])), end="")
 
 
 def _warn_deprecated_options(argv: Sequence[str]) -> None:
@@ -1677,9 +1617,9 @@ def _warn_deprecated_options(argv: Sequence[str]) -> None:
         "--images": "--load-resources",
         "--load-images": "--load-resources",
         "--json-logs": "--log-format json",
-        "--collect": "discover_events.py",
-        "--scrape": "scrape_matches.py",
-        "--status": "status.py",
+        "--collect": "discover_oddspedia_events.py",
+        "--scrape": "scrape_oddspedia_matches.py",
+        "--status": "report_scraping.py --source oddspedia",
     }
     for argument in argv:
         option = argument.split("=", 1)[0]
@@ -1711,8 +1651,9 @@ def main(
         epilog=(
             None
             if fixed_command
-            else "Canonical phase scripts: discover_events.py, prioritize_events.py, "
-            "scrape_matches.py, run_pipeline.py, and status.py."
+            else "Canonical phase scripts: discover_oddspedia_events.py, "
+            "prioritize_oddspedia_events.py, scrape_oddspedia_matches.py, "
+            "and run_oddspedia_pipeline.py. Use ../report_scraping.py for reporting."
         ),
     )
     if fixed_command is None:
@@ -1776,7 +1717,19 @@ def main(
         "--month",
         default=None,
         metavar="YYYYMM",
-        help="Target month for the selected command. Runs each day in the month.",
+        help="Target month. A current-month run stops at the machine-local current date.",
+    )
+    date_group.add_argument(
+        "--start-date",
+        default=None,
+        metavar="YYYYMMDD",
+        help="First date of an inclusive range; requires --end-date.",
+    )
+    parser.add_argument(
+        "--end-date",
+        default=None,
+        metavar="YYYYMMDD",
+        help="Last date of an inclusive range; valid only with --start-date.",
     )
     log_format = parser.add_mutually_exclusive_group()
     log_format.add_argument(
@@ -1857,6 +1810,10 @@ def main(
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     args = parser.parse_args(raw_argv)
     _warn_deprecated_options(raw_argv)
+    if args.start_date and not args.end_date:
+        parser.error("--end-date is required with --start-date")
+    if args.end_date and not args.start_date:
+        parser.error("--end-date can only be used with --start-date")
     if args.legacy_retry:
         args.retry = args.legacy_retry
     if fixed_command is None and args.command and args.legacy_command:
@@ -1876,6 +1833,14 @@ def main(
 
     dates = _resolve_dates(args)
 
+    # Legacy umbrella status is an observational compatibility path. Route it
+    # before run-log setup so a report cannot mutate scraper state or logs.
+    if command == "status":
+        from src.operations.scraping_reporting import build_scraping_report, render_summary
+
+        print(render_summary(build_scraping_report("oddspedia", dates)), end="")
+        return
+
     # Persist every terminal event alongside the data being scraped. A month
     # run receives its own directory because its events span multiple dates.
     log_date = dates[0]
@@ -1892,14 +1857,6 @@ def main(
         dates=dates,
     )
     persist_manifest_metrics = False
-
-    if command == "status":
-        for date_str in dates:
-            _print_status(date_str, sport=sport)
-        metrics = get_metrics()
-        metrics.finish()
-        metrics.log_summary()
-        return
 
     workers = args.workers or 1
     if workers < 1:
@@ -2002,7 +1959,7 @@ def main(
                             links_file=links_file,
                             date=date_str,
                         )
-                        if not args.month:
+                        if len(dates) == 1:
                             sys.exit(1)
                         failed_dates.append(date_str)
                         continue
@@ -2016,9 +1973,7 @@ def main(
                         failed_dates.append(date_str)
                         continue
                     source_links = _as_match_list(load_json(links_file))
-                    if not _existing_inventory_matches_target(
-                        links_file, date_str, sport=sport
-                    ):
+                    if not _existing_inventory_matches_target(links_file, date_str, sport=sport):
                         logger.error(
                             "links_file_target_date_mismatch",
                             sport=sport,
@@ -2056,7 +2011,7 @@ def main(
                 )
                 sys.exit(1)
             if not scraped_any:
-                logger.error("no_month_links_found", month=args.month)
+                logger.error("no_scope_links_found", dates=dates)
                 sys.exit(1)
             return
 

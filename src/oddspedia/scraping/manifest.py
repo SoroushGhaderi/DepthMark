@@ -2,9 +2,10 @@ import json
 import os
 import tempfile
 import threading
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Mapping, Optional
 
 from src.oddspedia.scraping.logging import get_logger
 
@@ -12,6 +13,24 @@ logger = get_logger(__name__)
 
 # Lock for thread-safe manifest read-modify-write operations inside this process.
 _manifest_lock = threading.Lock()
+
+_MANIFEST_FIELDS = {
+    "date",
+    "sport",
+    "total",
+    "done",
+    "failed",
+    "skipped",
+    "incomplete",
+    "in_progress",
+    "retries",
+    "discovery",
+    "priority_run",
+    "metrics",
+    "completed_progress",
+    "started_at",
+    "updated_at",
+}
 
 
 def _utc_now() -> datetime:
@@ -24,7 +43,13 @@ class ManifestCorruptError(ValueError):
 
 @dataclass
 class ScrapeManifest:
-    """Manifest for tracking incremental scraping progress."""
+    """Manifest for tracking full-inventory and priority-selected progress.
+
+    ``total`` is the full accepted discovery inventory. The currently selected
+    scrape scope remains in ``priority_run.selected_count``. Unknown top-level
+    fields are retained so a read-modify-write cycle cannot erase metadata
+    authored by a newer compatible scraper.
+    """
 
     date: str
     sport: str = "football"
@@ -40,6 +65,7 @@ class ScrapeManifest:
     metrics: Dict = field(default_factory=dict)
     started_at: str = field(default_factory=lambda: _utc_now().isoformat())
     updated_at: str = field(default_factory=lambda: _utc_now().isoformat())
+    extra_fields: Dict[str, Any] = field(default_factory=dict, repr=False)
 
     @property
     def completed_count(self) -> int:
@@ -167,7 +193,11 @@ class ScrapeManifest:
         now = _utc_now().isoformat()
         attempts = 0 if accepted else int(previous.get("attempts", 0)) + 1
         entry = {
-            "status": "no_events" if no_events else "accepted" if accepted else "rescrape_candidate",
+            "status": "no_events"
+            if no_events
+            else "accepted"
+            if accepted
+            else "rescrape_candidate",
             "reasons": list(result.get("anomalies") or []),
             "expected_pages": result.get("expected_pages"),
             "observed_pages": result.get("observed_pages"),
@@ -211,42 +241,90 @@ class ScrapeManifest:
         }
 
     def to_dict(self) -> Dict:
-        return {
-            "date": self.date,
-            "sport": self.sport,
-            "total": self.total,
-            "done": self.done,
-            "failed": self.failed,
-            "skipped": self.skipped,
-            "incomplete": self.incomplete,
-            "in_progress": self.in_progress,
-            "retries": self.retries,
-            "discovery": self.discovery,
-            "priority_run": self.priority_run,
-            "metrics": self.metrics,
-            "completed_progress": self.completed_progress,
-            "started_at": self.started_at,
-            "updated_at": self.updated_at,
-        }
+        payload = deepcopy(self.extra_fields)
+        payload.update(
+            {
+                "date": self.date,
+                "sport": self.sport,
+                "total": self.total,
+                "done": self.done,
+                "failed": self.failed,
+                "skipped": self.skipped,
+                "incomplete": self.incomplete,
+                "in_progress": self.in_progress,
+                "retries": self.retries,
+                "discovery": self.discovery,
+                "priority_run": self.priority_run,
+                "metrics": self.metrics,
+                "completed_progress": self.completed_progress,
+                "started_at": self.started_at,
+                "updated_at": self.updated_at,
+            }
+        )
+        _validate_manifest_document(payload)
+        return payload
 
     @classmethod
     def from_dict(cls, data: Dict) -> "ScrapeManifest":
+        _validate_manifest_document(data)
         return cls(
-            date=data.get("date", ""),
-            sport=data.get("sport", "football"),
-            total=data.get("total", 0),
-            done=data.get("done", []),
-            failed=data.get("failed", []),
-            skipped=data.get("skipped", {}),
-            incomplete=data.get("incomplete", []),
+            date=str(data.get("date", "")),
+            sport=str(data.get("sport", "football")),
+            total=int(data.get("total", 0)),
+            done=_normalize_id_list(data.get("done")),
+            failed=_normalize_id_list(data.get("failed")),
+            skipped=deepcopy(data.get("skipped", {})),
+            incomplete=_normalize_id_list(data.get("incomplete")),
             in_progress=_normalize_in_progress(data.get("in_progress")),
-            retries=data.get("retries", {}),
-            discovery=data.get("discovery", {}),
-            priority_run=data.get("priority_run", {}),
-            metrics=data.get("metrics", {}),
-            started_at=data.get("started_at", _utc_now().isoformat()),
-            updated_at=data.get("updated_at", _utc_now().isoformat()),
+            retries=deepcopy(data.get("retries", {})),
+            discovery=deepcopy(data.get("discovery", {})),
+            priority_run=deepcopy(data.get("priority_run", {})),
+            metrics=deepcopy(data.get("metrics", {})),
+            started_at=str(data.get("started_at", _utc_now().isoformat())),
+            updated_at=str(data.get("updated_at", _utc_now().isoformat())),
+            extra_fields={
+                key: deepcopy(value) for key, value in data.items() if key not in _MANIFEST_FIELDS
+            },
         )
+
+
+def _validate_manifest_document(data: Mapping[str, Any]) -> None:
+    """Fail early on malformed field types while accepting legacy state overlap."""
+    if not isinstance(data, Mapping):
+        raise TypeError("manifest root must be an object")
+    if not isinstance(data.get("date"), str) or not str(data.get("date")).strip():
+        raise ValueError("manifest date must be a non-empty string")
+    if "sport" in data and not isinstance(data["sport"], str):
+        raise TypeError("manifest sport must be a string")
+    total = data.get("total", 0)
+    if isinstance(total, bool) or not isinstance(total, int) or total < 0:
+        raise TypeError("manifest total must be a non-negative integer")
+    for field_name in ("done", "failed", "incomplete"):
+        value = data.get(field_name, [])
+        if not isinstance(value, list):
+            raise TypeError(f"manifest {field_name} must be a list")
+        if any(isinstance(item, (bool, dict, list)) or item is None for item in value):
+            raise TypeError(f"manifest {field_name} values must be scalar event IDs")
+    for field_name in ("skipped", "retries", "discovery", "priority_run", "metrics"):
+        if not isinstance(data.get(field_name, {}), Mapping):
+            raise TypeError(f"manifest {field_name} must be an object")
+    in_progress = data.get("in_progress", {})
+    if not isinstance(in_progress, (Mapping, list, str, int)) and in_progress is not None:
+        raise TypeError("manifest in_progress must be an object or a supported legacy value")
+    for field_name in ("started_at", "updated_at"):
+        if field_name in data and not isinstance(data[field_name], str):
+            raise TypeError(f"manifest {field_name} must be a string")
+    completed_progress = data.get("completed_progress")
+    if completed_progress is not None and (
+        isinstance(completed_progress, bool) or not isinstance(completed_progress, (int, float))
+    ):
+        raise TypeError("manifest completed_progress must be numeric")
+
+
+def _normalize_id_list(value) -> List[str]:
+    if not value:
+        return []
+    return [str(item) for item in value]
 
 
 def get_manifest_path(date_str: str, sport: str = "football") -> str:

@@ -16,6 +16,16 @@ short project overview; use this folder for setup, commands, and operations.
   Bronze-to-Silver reconciliation workflow, scopes, and exit behavior.
 - `PRODUCTION_READINESS_REVIEW.md`: full DE review report with evidence-based
   findings, remediation plan, and work tracking checklist.
+- `reviews/architecture-review-depthmark-20260811.html`: script naming review
+  for the FotMob and Oddspedia command surfaces; it also records the unified
+  scraping-report refinement.
+- `reviews/architecture-review-oddspedia-artifacts-20260812.html`: completed
+  review and remediation record for Oddspedia JSON contracts, manifests, and
+  multi-date continuation.
+- `adr/0024-source-qualified-operational-script-names.md`: accepted naming
+  grammar, package registry, and compatibility-adapter policy.
+- `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting
+  interface for FotMob and Oddspedia, with explicit source adapters.
 
 Source-specific flows:
 

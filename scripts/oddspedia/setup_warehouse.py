@@ -47,4 +47,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/oddspedia/setup_warehouse.py is deprecated; use "
+        "scripts/oddspedia/setup_oddspedia_warehouse.py instead.",
+        file=sys.stderr,
+    )
     raise SystemExit(main())
