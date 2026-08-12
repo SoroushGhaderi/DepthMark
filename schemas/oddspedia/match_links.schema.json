@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://depthmark.local/schemas/oddspedia/match_links.schema.json",
+  "title": "Oddspedia daily match-link inventory",
+  "description": "External contract for match_links.json. The raw artifact remains a top-level array.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["sport", "id", "home", "away", "date", "url"],
+    "properties": {
+      "sport": {"const": "football"},
+      "id": {"type": "string", "minLength": 1},
+      "home": {"type": "string", "minLength": 1},
+      "away": {"type": "string", "minLength": 1},
+      "league_name": {"type": "string"},
+      "league_slug": {"type": "string"},
+      "country": {"type": "string"},
+      "country_slug": {"type": "string"},
+      "date": {"type": "string", "minLength": 1},
+      "url": {"type": "string", "minLength": 1},
+      "full_url": {"type": ["string", "null"]},
+      "status": {"type": ["string", "null"]},
+      "matchKey": {"type": "string"},
+      "home_slug": {"type": "string"},
+      "away_slug": {"type": "string"}
+    },
+    "additionalProperties": true
+  }
+}

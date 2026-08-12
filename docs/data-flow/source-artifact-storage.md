@@ -30,6 +30,12 @@ files are compressed into the FotMob-compatible
 `matches/YYYYMM/YYYYMMDD/YYYYMMDD_matches.tar` archive with
 `<event_id>.json.gz` members; Live artifacts remain uncompressed.
 
+The JSON structures are documented externally under `schemas/oddspedia/`.
+Those schemas do not introduce an envelope, `$schema` field, or version field
+into raw files. New scraper writes validate source artifacts before atomic
+replacement and preserve the caller's JSON structure. Existing scraped JSON
+and manifests require no migration.
+
 Operational date locks live separately under
 `data/oddspedia/locks/<sport>_<YYYYMMDD>.lock`. They contain short-lived
 process metadata for cross-process serialization and are not source artifacts,
@@ -44,11 +50,22 @@ Historical collection.
 ```bash
 # Live/current-date discovery snapshots
 python3 scripts/bronze/scrape_fotmob.py --today
-python3 scripts/oddspedia/discover_events.py
+python3 scripts/oddspedia/discover_oddspedia_events.py
 
 # Historical/completed-date priority-selected artifacts
 python3 scripts/bronze/scrape_fotmob.py --single-date 20260710
-python3 scripts/oddspedia/run_pipeline.py --date 20260710 --silver-reference-window-ready
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260710 --silver-reference-window-ready
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260701 --end-date 20260710 --silver-reference-window-ready
+```
+
+Inspect either source or reconcile both through the same read-only reporting
+interface. Reporting reads these aspect/date partitions directly and does not
+create locks, logs, manifests, or warehouse state.
+
+```bash
+python3 scripts/report_scraping.py --date 20260710
+python3 scripts/report_scraping.py --source fotmob --month 202607 --format json
+python3 scripts/report_scraping.py --source oddspedia --start-date 20260701 --end-date 20260710
 ```
 
 ## Migration

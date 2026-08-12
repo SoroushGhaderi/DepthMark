@@ -180,6 +180,26 @@
             align-items: stretch;
             padding: 0 1.5rem;
         }
+        .pipeline-nav-group {
+            display: flex;
+            align-items: flex-end;
+            position: relative;
+            padding: 1.05rem 0.35rem 0;
+            border-right: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .pipeline-nav-group:last-child { border-right: none; }
+        .pipeline-nav-label {
+            position: absolute;
+            top: 0.18rem;
+            left: 0.75rem;
+            color: var(--text-dim);
+            font-size: 0.57rem;
+            font-weight: 800;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
         .pipeline-step {
             display: flex;
             align-items: center;
@@ -190,7 +210,7 @@
             display: flex;
             align-items: center;
             gap: 0.55rem;
-            padding: 0.8rem 1.1rem;
+            padding: 0.6rem 0.8rem 0.72rem;
             background: transparent;
             border: none;
             color: var(--text-muted);
@@ -221,6 +241,12 @@
         .pipeline-step-btn[data-tab="signals"].active .pipeline-step-dot { opacity: 1; box-shadow: 0 0 6px var(--gold); }
         .pipeline-step-btn[data-tab="orchestration"] .pipeline-step-dot { background: var(--accent); opacity: 0.5; }
         .pipeline-step-btn[data-tab="orchestration"].active .pipeline-step-dot { opacity: 1; }
+        .pipeline-step-btn[data-tab="oddspedia"] .pipeline-step-dot,
+        .pipeline-step-btn[data-tab="infrastructure"] .pipeline-step-dot { background: var(--accent); opacity: 0.5; }
+        .pipeline-step-btn[data-tab="oddspedia"].active .pipeline-step-dot,
+        .pipeline-step-btn[data-tab="infrastructure"].active .pipeline-step-dot { opacity: 1; box-shadow: 0 0 6px var(--accent); }
+        .pipeline-step-btn[data-tab="mongodb"] .pipeline-step-dot { background: var(--red); opacity: 0.5; }
+        .pipeline-step-btn[data-tab="mongodb"].active .pipeline-step-dot { opacity: 1; box-shadow: 0 0 6px var(--red); }
 
         .pipeline-arrow {
             color: var(--text-dim);
@@ -999,6 +1025,21 @@
         .mini-card h4 { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.3rem; }
         .mini-card p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
 
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.12rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.62rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .status-chip.implemented { color: var(--silver); background: var(--silver-dim); border: 1px solid rgba(62,207,115,0.3); }
+        .status-chip.planned { color: var(--yellow); background: var(--bronze-dim); border: 1px solid rgba(229,166,35,0.3); }
+        .status-chip.external { color: var(--accent); background: var(--accent-dim); border: 1px solid rgba(77,159,255,0.3); }
+
         /* ── RESPONSIVE ── */
         @media (max-width: 640px) {
             .header-inner { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
@@ -1008,6 +1049,7 @@
             .pipeline-visual { flex-direction: column; }
             .pipe-stage { border-right: none; border-bottom: 1px solid var(--border); }
             .pipe-stage::after { display: none; }
+            .pipeline-nav-group { padding-top: 1rem; }
         }
 
         /* ── TOOLTIP ── */
@@ -1041,7 +1083,7 @@
             <div class="header-logo">DM</div>
             <div>
                 <h1>DepthMark — Warehouse Pipeline Reference</h1>
-                <div class="header-meta">Two source pipelines · FotMob Bronze → Silver → Gold · Oddspedia Bronze → Silver → Gold</div>
+                <div class="header-meta">Architecture map · source domains × warehouse layers × runtime platforms · updated 12 August 2026</div>
             </div>
         </div>
         <div class="header-right">
@@ -1060,58 +1102,67 @@
 </div>
 
 <!-- ══════════════════ PIPELINE NAV ══════════════════ -->
-<nav class="pipeline-nav" role="navigation" aria-label="Pipeline stages">
+<nav class="pipeline-nav" role="navigation" aria-label="Architecture dimensions">
     <div class="pipeline-steps" role="tablist">
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn active" role="tab" data-tab="overview" aria-selected="true" aria-controls="overview">
-                <span class="pipeline-step-dot"></span>Overview
-            </button>
-            <span class="pipeline-arrow">›</span>
+        <div class="pipeline-nav-group">
+            <span class="pipeline-nav-label">Map</span>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn active" role="tab" data-tab="overview" aria-selected="true" aria-controls="overview">
+                    <span class="pipeline-step-dot"></span>Overview
+                </button>
+            </div>
         </div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="bronze" aria-selected="false" aria-controls="bronze">
-                <span class="pipeline-step-dot"></span>FotMob Bronze
-            </button>
-            <span class="pipeline-arrow">›</span>
+        <div class="pipeline-nav-group">
+            <span class="pipeline-nav-label">Source domains</span>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="oddspedia" aria-selected="false" aria-controls="oddspedia">
+                    <span class="pipeline-step-dot"></span>Oddspedia
+                </button>
+            </div>
         </div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="oddspedia" aria-selected="false" aria-controls="oddspedia">
-                <span class="pipeline-step-dot"></span>Oddspedia
-            </button>
-            <span class="pipeline-arrow">›</span>
+        <div class="pipeline-nav-group">
+            <span class="pipeline-nav-label">Warehouse layers</span>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="bronze" aria-selected="false" aria-controls="bronze">
+                    <span class="pipeline-step-dot"></span>Bronze
+                </button>
+            </div>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="silver" aria-selected="false" aria-controls="silver">
+                    <span class="pipeline-step-dot"></span>Silver
+                </button>
+            </div>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="gold" aria-selected="false" aria-controls="gold">
+                    <span class="pipeline-step-dot"></span>Gold
+                </button>
+            </div>
         </div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="silver" aria-selected="false" aria-controls="silver">
-                <span class="pipeline-step-dot"></span>FotMob Silver
-            </button>
-            <span class="pipeline-arrow">›</span>
+        <div class="pipeline-nav-group">
+            <span class="pipeline-nav-label">Products</span>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="signals" aria-selected="false" aria-controls="signals">
+                    <span class="pipeline-step-dot"></span>Signals
+                </button>
+            </div>
         </div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="gold" aria-selected="false" aria-controls="gold">
-                <span class="pipeline-step-dot"></span>FotMob Gold
-            </button>
-            <span class="pipeline-arrow">›</span>
-        </div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="signals" aria-selected="false" aria-controls="signals">
-                <span class="pipeline-step-dot"></span>FotMob Signals
-            </button>
-        </div>
-        <div class="pipeline-divider"></div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="orchestration" aria-selected="false" aria-controls="orchestration">
-                <span class="pipeline-step-dot"></span>Orchestration
-            </button>
-        </div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="infrastructure" aria-selected="false" aria-controls="infrastructure">
-                <span class="pipeline-step-dot"></span>Infrastructure
-            </button>
-        </div>
-        <div class="pipeline-step">
-            <button type="button" class="pipeline-step-btn" role="tab" data-tab="mongodb" aria-selected="false" aria-controls="mongodb">
-                <span class="pipeline-step-dot"></span>MongoDB
-            </button>
+        <div class="pipeline-nav-group">
+            <span class="pipeline-nav-label">Operations &amp; platforms</span>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="orchestration" aria-selected="false" aria-controls="orchestration">
+                    <span class="pipeline-step-dot"></span>Operations
+                </button>
+            </div>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="infrastructure" aria-selected="false" aria-controls="infrastructure">
+                    <span class="pipeline-step-dot"></span>Platforms
+                </button>
+            </div>
+            <div class="pipeline-step">
+                <button type="button" class="pipeline-step-btn" role="tab" data-tab="mongodb" aria-selected="false" aria-controls="mongodb">
+                    <span class="pipeline-step-dot"></span>Content store
+                </button>
+            </div>
         </div>
     </div>
 </nav>
@@ -1125,12 +1176,46 @@
             <h2>System at a glance</h2>
         </div>
         <p>
-            DepthMark follows two parallel medallion pipelines: one for FotMob and one for Oddspedia.
-            Each source owns Bronze, Silver, and Gold. Bronze is the only filesystem-backed layer and preserves
-            that source's artifacts; Silver and Gold live in ClickHouse. The sources meet only through explicit,
-            auditable integration relationships such as match resolution. SQL owns analytical logic; Python
-            discovers jobs, executes, validates, and reports.
+            Read this reference across three independent axes: <strong>source domains</strong> own raw contracts,
+            <strong>warehouse layers</strong> define transformation responsibility, and <strong>runtime platforms</strong>
+            store or execute the work. FotMob and Oddspedia each own a Bronze → Silver → Gold path, but implementation
+            maturity differs: FotMob is complete through Gold; Oddspedia Bronze and the Silver resolution edge are
+            implemented, while further Oddspedia Silver entities and Gold products remain planned.
         </p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>How to read this architecture</h3>
+            <div class="subtitle">Do not confuse a source, a layer, a platform, and a product — each answers a different question</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Axis</th><th>Question answered</th><th>DepthMark values</th><th>Rule</th></tr></thead>
+            <tbody>
+                <tr><td>Source domain</td><td>Who owns the raw contract?</td><td>FotMob · Oddspedia</td><td>Raw contracts never merge; no generic provider module</td></tr>
+                <tr><td>Warehouse layer</td><td>What transformation responsibility applies?</td><td>Bronze · Silver · Gold</td><td>Bronze preserves, Silver conforms, Gold materializes products</td></tr>
+                <tr><td>Runtime platform</td><td>Where does state live or computation run?</td><td>Filesystem · Python · ClickHouse · MongoDB · optional S3</td><td>Platform boundaries do not redefine source or layer ownership</td></tr>
+                <tr><td>Operational interface</td><td>How is a bounded run controlled?</td><td>Canonical scripts · reporting · quality checks</td><td>Date, month, and range scopes are explicit and rerunnable</td></tr>
+                <tr><td>Product surface</td><td>What do consumers query?</td><td>Gold signals/scenarios/activations · MongoDB catalogs</td><td>Serving is downstream of warehouse truth, not a raw contract</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Platforms and responsibilities</h3>
+            <div class="subtitle">Runtime placement is explicit; only the filesystem-backed Bronze artifacts preserve source payloads</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Platform</th><th>Responsibility</th><th>Owned state</th><th>Not responsible for</th></tr></thead>
+            <tbody>
+                <tr><td>Filesystem</td><td>Canonical raw Bronze artifacts and operational evidence</td><td><code>data/fotmob/</code>, <code>data/oddspedia/</code>, manifests, archives, run logs</td><td>Silver or Gold analytical tables</td></tr>
+                <tr><td>Python runtime</td><td>Scrape, orchestrate, validate contracts, execute SQL, and report</td><td>Source modules, workflow services, explicit platform adapters</td><td>Silver/Gold analytical business logic</td></tr>
+                <tr><td>ClickHouse</td><td>Structured Bronze facts plus all Silver and Gold analytical state</td><td><code>bronze.*</code>, <code>oddspedia_bronze.*</code>, <code>silver.*</code>, Gold namespaces</td><td>Raw artifact authority or content catalog authoring</td></tr>
+                <tr><td>MongoDB</td><td>Product-facing synchronized content/catalog metadata</td><td><code>orbit_content</code> collections</td><td>Analytical transformations or raw facts</td></tr>
+                <tr><td>Optional S3</td><td>Operator-controlled FotMob Historical archive transfer</td><td><code>bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz</code></td><td>Pipeline success, Live storage, or Oddspedia raw mutation</td></tr>
+            </tbody>
+        </table>
     </div>
 
     <div class="diagram-card" style="margin-top:1.5rem">
@@ -1153,9 +1238,9 @@
                 <span class="flow-connector">→</span>
                 <div class="flow-node bronze"><strong>Oddspedia Bronze</strong><span class="sub">data/oddspedia + oddspedia_bronze.*</span></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node silver"><strong>Oddspedia Silver</strong><span class="sub">events, odds, resolutions</span></div>
+                <div class="flow-node silver"><strong>Oddspedia Silver</strong><span class="sub">resolution implemented · entities planned</span></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node gold"><strong>Oddspedia Gold</strong><span class="sub">odds-derived outputs</span></div>
+                <div class="flow-node gold"><strong>Oddspedia Gold</strong><span class="sub">planned odds-derived outputs</span></div>
             </div>
             <div class="callout note" style="margin-top:1rem">
                 <span class="callout-icon">↔</span>
@@ -1177,19 +1262,19 @@
             <div class="pipe-stage-label">Bronze</div>
             <div class="pipe-stage-title">Isolated raw facts</div>
             <div class="pipe-stage-desc">FotMob Bronze + Oddspedia Bronze, kept separate</div>
-            <div class="pipe-stage-count">15 + 4*</div>
+            <div class="pipe-stage-count">15 + 4</div>
         </div>
         <div class="pipe-stage s-silver" data-flow-section="silver">
             <div class="pipe-stage-label">Silver</div>
             <div class="pipe-stage-title">Conformed analytics</div>
             <div class="pipe-stage-desc">Each source has its own conformed analytical path</div>
-            <div class="pipe-stage-count">8 + 1*</div>
+            <div class="pipe-stage-count">8 + 1</div>
         </div>
         <div class="pipe-stage s-gold" data-flow-section="gold">
             <div class="pipe-stage-label">Gold</div>
             <div class="pipe-stage-title">Product outputs</div>
-            <div class="pipe-stage-desc">FotMob outputs now; Oddspedia outputs follow the same boundary</div>
-            <div class="pipe-stage-count">392*</div>
+            <div class="pipe-stage-desc">FotMob products implemented; Oddspedia products planned</div>
+            <div class="pipe-stage-count">392 + planned</div>
         </div>
         <div class="pipe-stage s-serve" data-flow-section="mongodb">
             <div class="pipe-stage-label">Serve</div>
@@ -1205,7 +1290,7 @@
     <div class="stats">
         <div class="stat-card bronze"><div class="number">15</div><div class="label">FotMob Bronze tables</div></div>
         <div class="stat-card bronze"><div class="number">4</div><div class="label">Oddspedia Bronze tables</div></div>
-        <div class="stat-card silver"><div class="number">8</div><div class="label">FotMob Silver tables</div></div>
+        <div class="stat-card silver"><div class="number">8 + 1</div><div class="label">FotMob Silver + Oddspedia resolution</div></div>
         <div class="stat-card gold"><div class="number">48</div><div class="label">FotMob scenario tables</div></div>
         <div class="stat-card gold"><div class="number">344</div><div class="label">FotMob signal tables</div></div>
         <div class="stat-card meta"><div class="number">1</div><div class="label">Activation serving table</div></div>
@@ -1221,7 +1306,7 @@
             <thead><tr><th>Module</th><th>Owns</th><th>Key paths</th></tr></thead>
             <tbody>
                 <tr><td>FotMob domain</td><td>API scraping, Bronze loading and archives, canonical Silver, and Gold execution</td><td><code>src/fotmob/scraping/</code>, <code>src/fotmob/bronze/</code>, <code>src/fotmob/silver/</code>, <code>src/fotmob/gold/</code></td></tr>
-                <tr><td>Oddspedia domain</td><td>Browser scraping, Bronze loading, Silver conformation/resolution, and future Gold coordination</td><td><code>src/oddspedia/scraping/</code>, <code>src/oddspedia/bronze/</code>, <code>src/oddspedia/silver/</code>, <code>src/oddspedia/gold/</code></td></tr>
+                <tr><td>Oddspedia domain</td><td>Browser scraping, Bronze loading, current Silver resolution, and planned Silver/Gold expansion</td><td><code>src/oddspedia/scraping/</code>, <code>src/oddspedia/bronze/</code>, <code>src/oddspedia/silver/</code></td></tr>
                 <tr><td>Warehouse shared</td><td>Execution scopes, staged replacement, layer contracts, quality checks, and database naming</td><td><code>src/warehouse/</code></td></tr>
                 <tr><td>Shared adapters</td><td>ClickHouse, MongoDB, S3, Telegram, logging, dates, and operational health checks</td><td><code>src/integrations/</code>, <code>src/common/</code>, <code>src/operations/</code></td></tr>
             </tbody>
@@ -1240,17 +1325,17 @@
         <div class="principle">
             <div class="eyebrow">Boundary 1</div>
             <h4>Bronze = source fidelity</h4>
-            <p>Preserve FotMob and Oddspedia artifacts as-is, in their own paths and raw databases. No business logic, typing, or source mixing.</p>
+            <p>Preserve FotMob and Oddspedia artifacts as-is in their own paths and raw databases. Validate structure and load types without business joins, analytical reshaping, or source mixing.</p>
         </div>
         <div class="principle">
             <div class="eyebrow">Boundary 2</div>
             <h4>Silver = conformed analytics</h4>
-            <p>Standardize keys, types, and entities. Full-table SQL reloads from the complete Bronze dataset — no incremental watermarks.</p>
+            <p>Standardize keys, types, and entities. FotMob uses deterministic scoped replacement with full-history context; Oddspedia currently publishes the explicit resolution relationship.</p>
         </div>
         <div class="principle">
             <div class="eyebrow">Boundary 3</div>
             <h4>Gold = product outputs</h4>
-            <p>Scenarios and signals materialize business-facing tables. One activation serving table unifies all signals into a single queryable surface.</p>
+            <p>Scenarios and signals materialize business-facing tables. FotMob Gold is implemented; Oddspedia Gold remains a source-owned planned capability.</p>
         </div>
         <div class="principle">
             <div class="eyebrow">Ownership</div>
@@ -1276,8 +1361,8 @@
 
     <div class="diagram-card" id="full-warehouse-route">
         <div class="card-header">
-            <h3>Complete warehouse route</h3>
-            <div class="subtitle">Create empty tables in every layer, then fill them with data — commands from first setup through validation</div>
+            <h3>Implemented warehouse routes</h3>
+            <div class="subtitle">Bootstrap shared platforms once, then operate each source-owned path without merging contracts</div>
         </div>
         <div class="flow-diagram">
             <div class="flow-phases">
@@ -1293,28 +1378,37 @@
                 <div class="flow-group bronze">
                     <div class="flow-group-label">1 · Create empty tables (DDL)</div>
                     <div class="flow-row">
-                        <div class="flow-node bronze"><strong>setup_clickhouse.py</strong><span class="sub">bronze · silver · gold</span></div>
-                        <span class="flow-connector">→</span>
+                        <div class="flow-node bronze"><strong>setup_fotmob_warehouse.py</strong><span class="sub">FotMob Bronze · Silver · Gold</span></div>
+                        <span class="flow-connector">+</span>
+                        <div class="flow-node bronze"><strong>setup_oddspedia_warehouse.py</strong><span class="sub">Oddspedia Bronze · resolution</span></div>
+                        <span class="flow-connector">+</span>
                         <div class="flow-node silver"><strong>mongodb/init_indexes.py</strong></div>
                     </div>
                 </div>
                 <div class="flow-connector down">↓</div>
                 <div class="flow-group silver">
-                    <div class="flow-group-label">2 · Fill warehouse data</div>
+                    <div class="flow-group-label">2a · Run FotMob warehouse path</div>
                     <div class="flow-row">
                         <div class="flow-node accent"><strong>scrape_fotmob.py</strong></div>
                         <span class="flow-connector">→</span>
-                        <div class="flow-node bronze"><strong>bronze/load_clickhouse.py</strong></div>
+                        <div class="flow-node bronze"><strong>bronze/load_fotmob_bronze.py</strong></div>
                         <span class="flow-connector">→</span>
-                        <div class="flow-node silver"><strong>silver/load_clickhouse.py</strong></div>
+                        <div class="flow-node silver"><strong>silver/load_fotmob_silver.py</strong></div>
                         <span class="flow-connector">→</span>
-                        <div class="flow-node gold"><strong>gold/load_clickhouse_gold.py</strong><span class="sub">scenarios + signals + activations</span></div>
+                        <div class="flow-node gold"><strong>gold/load_fotmob_gold.py</strong><span class="sub">scenarios + signals + activations</span></div>
                     </div>
                 </div>
                 <div class="flow-shortcut">
-                    <div class="flow-node accent"><strong>pipeline.py</strong><span class="sub">steps 2 in one command</span></div>
+                    <div class="flow-node accent"><strong>run_fotmob_pipeline.py</strong><span class="sub">steps 2 in one command</span></div>
                     <span class="flow-connector dashed">⇢ shortcut ⇢</span>
                     <span class="flow-connector">→ scrape_fotmob.py</span>
+                </div>
+                <div class="flow-shortcut">
+                    <div class="flow-node accent"><strong>run_oddspedia_pipeline.py</strong><span class="sub">2b · discover → prioritize → scrape</span></div>
+                    <span class="flow-connector dashed">⇢ then ⇢</span>
+                    <div class="flow-node bronze"><strong>load_oddspedia_bronze.py</strong></div>
+                    <span class="flow-connector">→</span>
+                    <div class="flow-node silver"><strong>resolve_oddspedia_events.py</strong></div>
                 </div>
                 <div class="flow-connector down">↓</div>
                 <div class="flow-group gold">
@@ -1331,28 +1425,28 @@
             <thead><tr><th>Step</th><th>Layer</th><th>Tables / collections</th><th>Command</th></tr></thead>
             <tbody>
                 <tr><td>0</td><td>Infra</td><td>Docker services</td><td><code>docker compose up -d</code></td></tr>
-                <tr><td>1</td><td>FotMob ClickHouse</td><td>15 <code>bronze.*</code> + 8 FotMob <code>silver.*</code> + Gold tables</td><td><code>python3 scripts/orchestration/setup_clickhouse.py</code></td></tr>
-                <tr><td>2</td><td>MongoDB</td><td>5 collections (empty indexes)</td><td><code>python3 scripts/mongodb/init_indexes.py</code></td></tr>
-                <tr><td>3</td><td>Bronze (disk)</td><td>Historical JSON or Live snapshots per match</td><td><code>python3 scripts/bronze/scrape_fotmob.py &lt;YYYYMMDD&gt;</code> or <code>python3 scripts/bronze/scrape_fotmob.py --today</code></td></tr>
-                <tr><td>4</td><td>Bronze (CH)</td><td>15 <code>bronze.*</code> tables</td><td><code>python3 scripts/bronze/load_clickhouse.py --date &lt;YYYYMMDD&gt;</code></td></tr>
-                <tr><td>5</td><td>Silver</td><td>8 <code>silver.*</code> tables (scoped staged replacement)</td><td><code>python3 scripts/silver/load_clickhouse.py --full-history</code></td></tr>
-                <tr><td>6</td><td>Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python3 scripts/gold/load_clickhouse_gold.py --full-history</code></td></tr>
-                <tr><td>7</td><td>Quality</td><td>Logical duplicate identities and physical-version diagnostics in all layers; Bronze↔Silver identity reconciliation</td><td><code>python3 scripts/quality/check_data_quality.py --full-history --strict</code></td></tr>
-                <tr><td>8</td><td>MongoDB</td><td>Catalog metadata from Git</td><td><code>python3 scripts/mongodb/sync_signal_catalogs.py</code></td></tr>
-                <tr><td>9</td><td>Maintenance</td><td>Optional ClickHouse storage optimization after reviewing physical-version diagnostics</td><td><code>python3 scripts/maintenance/optimize_clickhouse.py --layer bronze</code></td></tr>
-                <tr><td>10</td><td>Oddspedia source route</td><td>Oddspedia Bronze facts + Oddspedia Silver resolution today; source Silver/Gold expansion follows the same path</td><td><code>python3 scripts/oddspedia/setup_warehouse.py</code>, then source-specific discover → prioritize → scrape → load → resolve</td></tr>
+                <tr><td>1</td><td>FotMob ClickHouse</td><td>15 <code>bronze.*</code> + 8 FotMob <code>silver.*</code> + Gold tables</td><td><code>python3 scripts/orchestration/setup_fotmob_warehouse.py</code></td></tr>
+                <tr><td>2</td><td>Oddspedia ClickHouse</td><td>4 <code>oddspedia_bronze.*</code> interfaces + current Silver resolution</td><td><code>python3 scripts/oddspedia/setup_oddspedia_warehouse.py</code></td></tr>
+                <tr><td>3</td><td>MongoDB platform</td><td>5 collections (empty indexes)</td><td><code>python3 scripts/mongodb/init_indexes.py</code></td></tr>
+                <tr><td>4</td><td>FotMob Bronze</td><td>Historical/Live files + 15 <code>bronze.*</code> tables</td><td><code>scrape_fotmob.py</code> → <code>load_fotmob_bronze.py</code></td></tr>
+                <tr><td>5</td><td>FotMob Silver</td><td>8 <code>silver.*</code> tables (scoped staged replacement)</td><td><code>python3 scripts/silver/load_fotmob_silver.py --full-history</code></td></tr>
+                <tr><td>6</td><td>FotMob Gold</td><td>48 <code>gold_scenarios.*</code> + 344 <code>gold_signals.*</code> + activations</td><td><code>python3 scripts/gold/load_fotmob_gold.py --full-history</code></td></tr>
+                <tr><td>7</td><td>Oddspedia Bronze</td><td>Source artifacts + published structured facts</td><td><code>run_oddspedia_pipeline.py</code> → <code>load_oddspedia_bronze.py</code></td></tr>
+                <tr><td>8</td><td>Oddspedia Silver</td><td><code>silver.oddspedia_match_resolution</code></td><td><code>python3 scripts/oddspedia/resolve_oddspedia_events.py --date &lt;YYYYMMDD&gt;</code></td></tr>
+                <tr><td>9</td><td>Quality &amp; serving</td><td>Warehouse checks + Git-authored catalogs synchronized to MongoDB</td><td><code>check_data_quality.py</code> → <code>sync_signal_catalogs.py</code></td></tr>
+                <tr><td>10</td><td>Maintenance</td><td>Optional ClickHouse optimization after reviewing diagnostics</td><td><code>python3 scripts/maintenance/optimize_clickhouse.py --layer bronze</code></td></tr>
             </tbody>
         </table>
         <div class="callout note">
             <span class="callout-icon">📋</span>
-            <span><strong>Shortcut:</strong> After steps 0–2, <code>python3 scripts/orchestration/pipeline.py --date &lt;YYYYMMDD&gt;</code> runs scrape → bronze load → date-scoped Silver → date-scoped Gold (including activation replacement) in one pass. Use <code>--full-history</code> to skip scraping and rebuild every available warehouse date.</span>
+            <span><strong>FotMob shortcut:</strong> After platform and FotMob DDL setup, <code>python3 scripts/orchestration/run_fotmob_pipeline.py --date &lt;YYYYMMDD&gt;</code> runs scrape → Bronze load → date-scoped Silver → date-scoped Gold (including activation replacement) in one pass. Use <code>--full-history</code> to skip scraping and rebuild every available warehouse date.</span>
         </div>
         <div class="callout insight">
             <span class="callout-icon">☁️</span>
             <span><strong>S3 is outside this route:</strong> run <code>scripts/bronze/sync_s3.py</code> separately when Bronze archives need to move between local storage and S3. A transfer failure does not change pipeline success.</span>
         </div>
         <details class="cmd-block">
-            <summary>▸ Phase 1 — first-time setup (create all empty tables)</summary>
+            <summary>▸ Phase 1 — first-time platform and source setup</summary>
             <pre># From project root. In Docker: prefix with `docker compose exec depthmark-scraper`
 cp .env.example .env
 # Edit .env: FOTMOB_X_MAS_TOKEN, ClickHouse, MongoDB credentials
@@ -1361,45 +1455,48 @@ docker compose up -d
 python3 scripts/health_check.py --json
 
 # Creates bronze (15) + silver (8) + gold (48 scenarios + 344 signals + activations DDL)
-python3 scripts/orchestration/setup_clickhouse.py
+python3 scripts/orchestration/setup_fotmob_warehouse.py
+
+# Creates Oddspedia Bronze facts, publication state, and the current Silver resolution table
+python3 scripts/oddspedia/setup_oddspedia_warehouse.py
 
 # MongoDB collection indexes (catalog serving layer)
 python3 scripts/mongodb/init_indexes.py</pre>
         </details>
         <details class="cmd-block">
-            <summary>▸ Phase 2 — fill all layers (one command)</summary>
+            <summary>▸ Phase 2 — fill the FotMob path (one command)</summary>
             <pre># Scrape → bronze.* → silver.* → gold_scenarios.* + gold_signals.* + gold.signal_activations
-python3 scripts/orchestration/pipeline.py 20251208
-python3 scripts/orchestration/pipeline.py --date 20251208
-python3 scripts/orchestration/pipeline.py --single-date 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
 
 # Multiple dates (scrape + bronze load per day; silver + gold run once at the end)
-python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
-python3 scripts/orchestration/pipeline.py --month 202512
-python3 scripts/orchestration/pipeline.py --full-history</pre>
+python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/orchestration/run_fotmob_pipeline.py --month 202512
+python3 scripts/orchestration/run_fotmob_pipeline.py --full-history</pre>
         </details>
         <details class="cmd-block">
-            <summary>▸ Phase 2 — fill all layers (step by step)</summary>
+            <summary>▸ Phase 2 — fill the FotMob path (step by step)</summary>
             <pre># Bronze: ingest raw FotMob payloads
 python3 scripts/bronze/scrape_fotmob.py 20251208
 python3 scripts/bronze/scrape_fotmob.py --single-date 20251208
 python3 scripts/bronze/scrape_fotmob.py --yesterday
 python3 scripts/bronze/scrape_fotmob.py --today  # Live only; no warehouse load
-python3 scripts/bronze/load_clickhouse.py --date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208
 
 # Optional, independent Bronze archive transfer (not a pipeline stage)
 python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 
 # Silver: explicit full-history staged exchange (8 tables)
-python3 scripts/silver/load_clickhouse.py --full-history
+python3 scripts/silver/load_fotmob_silver.py --full-history
 
 # Gold: all scenario SQL (48) + signal SQL (344) + activation rebuild
-python3 scripts/gold/load_clickhouse_gold.py --full-history
+python3 scripts/gold/load_fotmob_gold.py --full-history
 
 # Or run gold parts individually:
-python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios
-python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals
+python3 scripts/gold/load_fotmob_gold.py --full-history --part scenarios
+python3 scripts/gold/load_fotmob_gold.py --full-history --part signals
 
 # Rebuild activations only (after signals are populated)
 python3 scripts/gold/activations/build_signal_activations.py --full-history</pre>
@@ -1407,8 +1504,8 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
         <details class="cmd-block">
             <summary>▸ Phase 3 — validate and sync serving catalogs</summary>
             <pre># Preflight (safe — no mutations)
-python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
 
 # Post-load quality gate (read-only)
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
@@ -1432,13 +1529,13 @@ python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --tab
         </details>
         <div class="callout success">
             <span class="callout-icon">✓</span>
-            <span><strong>Done when:</strong> <code>bronze.*</code> (15), <code>silver.*</code> (8), <code>gold_scenarios.*</code> (48), <code>gold_signals.*</code> (344), and <code>gold.signal_activations</code> all contain rows; logical duplicate checks pass in every layer; physical-version diagnostics are reviewed; Bronze↔Silver reconciliation passes; MongoDB catalogs are synced.</span>
+            <span><strong>Done when:</strong> the selected FotMob route is validated through Gold; each selected Oddspedia date has a published <code>oddspedia_bronze.load_status</code> batch and, when requested, an audited resolution row; physical-version diagnostics are reviewed; and MongoDB catalogs are synchronized. Planned Oddspedia Silver entities and Gold outputs are not completion criteria yet.</span>
         </div>
     </div>
 
     <div class="diagram-card">
         <div class="card-header">
-            <h3>End-to-end pipeline</h3>
+            <h3>FotMob implemented end-to-end route</h3>
             <div class="subtitle">From FotMob API to warehouse tables and product consumption surfaces</div>
         </div>
         <div class="flow-diagram">
@@ -1529,18 +1626,18 @@ python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --tab
         </div>
         <div class="diagram-card" style="margin-bottom:0">
             <div class="card-header">
-                <h3>Layer responsibilities</h3>
-                <div class="subtitle">What each layer does — and explicitly does not do</div>
+                <h3>Layer responsibilities across source domains</h3>
+                <div class="subtitle">Layer semantics stay stable even when source maturity and table counts differ</div>
             </div>
             <div class="flow-diagram">
                 <div class="flow-row">
                     <div class="flow-group bronze" style="flex:1">
                         <div class="flow-group-label">Bronze — preserve &amp; load</div>
                         <div class="flow-stack">
-                            <div class="flow-node bronze"><strong>Raw JSON on disk</strong></div>
-                            <div class="flow-node bronze"><strong>15 ClickHouse tables</strong></div>
-                            <div class="flow-node bronze"><strong>DLQ for failed inserts</strong></div>
-                            <div class="flow-node bronze"><strong>No typing / no joins</strong></div>
+                            <div class="flow-node bronze"><strong>Source JSON on disk</strong></div>
+                            <div class="flow-node bronze"><strong>FotMob + Oddspedia raw facts</strong></div>
+                            <div class="flow-node bronze"><strong>Validate without reshaping artifacts</strong></div>
+                            <div class="flow-node bronze"><strong>No business joins</strong></div>
                         </div>
                     </div>
                     <span class="flow-connector">→</span>
@@ -1548,19 +1645,19 @@ python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --tab
                         <div class="flow-group-label">Silver — conform &amp; clean</div>
                         <div class="flow-stack">
                             <div class="flow-node silver"><strong>Standardize keys &amp; types</strong></div>
-                            <div class="flow-node silver"><strong>8 analytical tables</strong></div>
-                            <div class="flow-node silver"><strong>Full-table reload</strong></div>
-                            <div class="flow-node silver"><strong>Pure SQL INSERT…SELECT</strong></div>
+                            <div class="flow-node silver"><strong>8 FotMob tables + resolution edge</strong></div>
+                            <div class="flow-node silver"><strong>Scoped staged replacement</strong></div>
+                            <div class="flow-node silver"><strong>Explicit cross-source relationship</strong></div>
                         </div>
                     </div>
                     <span class="flow-connector">→</span>
                     <div class="flow-group gold" style="flex:1">
                         <div class="flow-group-label">Gold — materialize &amp; serve</div>
                         <div class="flow-stack">
-                            <div class="flow-node gold"><strong>48 scenario tables</strong></div>
-                            <div class="flow-node gold"><strong>344 signal tables</strong></div>
+                            <div class="flow-node gold"><strong>FotMob: 48 scenarios</strong></div>
+                            <div class="flow-node gold"><strong>FotMob: 344 signals</strong></div>
                             <div class="flow-node red"><strong>Activation serving table</strong></div>
-                            <div class="flow-node gold"><strong>Business-facing outputs</strong></div>
+                            <div class="flow-node dim"><strong>Oddspedia outputs planned</strong></div>
                         </div>
                     </div>
                 </div>
@@ -1579,7 +1676,7 @@ python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --tab
                 <span class="flow-connector">→</span>
                 <div class="flow-node accent"><strong>Preflight OK?</strong></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node accent"><strong>pipeline.py</strong></div>
+                <div class="flow-node accent"><strong>run_fotmob_pipeline.py</strong></div>
             </div>
             <div class="flow-branch">
                 <div class="flow-branch-arm">
@@ -1605,8 +1702,8 @@ python3 scripts/maintenance/optimize_clickhouse.py --database gold_signals --tab
         <details class="cmd-block">
             <summary>▸ Canonical preflight commands</summary>
             <pre>python3 scripts/health_check.py --json
-python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
         </details>
         <div class="callout note">
@@ -1634,25 +1731,42 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
 <div class="diagram-section" id="bronze" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge bronze">FotMob Bronze</span> Source fidelity</h2>
+            <h2><span class="layer-badge bronze">Bronze layer</span> Source-fidelity contracts</h2>
         </div>
         <p>
-            The only filesystem-backed layer. Scrapes FotMob API payloads to disk sequentially, then
-            parses them into 15 raw ClickHouse tables via Pydantic extraction. Failed inserts land in a
-            dead-letter queue — no data is silently dropped. Bronze has no business logic, typing, or joins;
-            those belong in Silver. S3 archive transfer is an independent operator action and is never part
-            of scraping or the warehouse pipeline.
+            Bronze is the only filesystem-backed warehouse layer. FotMob and Oddspedia preserve independent
+            raw contracts under separate paths and load them into separate ClickHouse databases. This tab first
+            compares both source implementations, then documents the mature FotMob Bronze path in detail.
+            Cross-source matching and business logic belong outside Bronze.
         </p>
         <p class="doc-link">Deep dive: <a href="bronze.md">bronze.md</a></p>
     </div>
 
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Bronze by source</h3>
+            <div class="subtitle">Same layer responsibility, different source-owned contracts and loaders</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Source</th><th>Filesystem contract</th><th>ClickHouse facts</th><th>Admission / persistence</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr><td>FotMob</td><td><code>data/fotmob/{historical,live}/</code></td><td>15 tables in <code>bronze.*</code></td><td>Pydantic extraction, dataframe contracts, DLQ, <code>ReplacingMergeTree</code></td><td><span class="status-chip implemented">Implemented</span></td></tr>
+                <tr><td>Oddspedia</td><td><code>data/oddspedia/{historical,live}/</code></td><td><code>event</code>, <code>match_payload</code>, <code>market</code>, <code>load_status</code> in <code>oddspedia_bronze.*</code></td><td>External JSON contracts, unchanged atomic writes, manifest/checksum audit, staged partition publication</td><td><span class="status-chip implemented">Implemented</span></td></tr>
+            </tbody>
+        </table>
+        <div class="callout note">
+            <span class="callout-icon">◇</span>
+            <span><strong>Oddspedia raw contract:</strong> <code>schemas/oddspedia/</code> documents listings, per-event payloads, and manifests externally. Runtime validation checks new writes but never serializes model defaults or migrates existing raw JSON.</span>
+        </div>
+    </div>
+
     <div class="three-col">
         <div class="mini-card">
-            <h4>🌐 Source</h4>
+            <h4>🌐 FotMob source</h4>
             <p>FotMob API — one JSON payload per match, fetched sequentially to reduce rate-limit and ban risk</p>
         </div>
         <div class="mini-card">
-            <h4>💾 Storage</h4>
+            <h4>💾 FotMob storage</h4>
             <p>Historical match files at <code>data/fotmob/historical/matches/YYYYMM/YYYYMMDD/</code>, listings at <code>data/fotmob/historical/daily_listings/YYYYMM/YYYYMMDD/</code>. Live files remain isolated under <code>data/fotmob/live/</code>. Failed inserts → <code>data/dlq/</code></p>
         </div>
         <div class="mini-card">
@@ -1668,7 +1782,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
         </div>
         <div class="flow-seq">
             <div class="flow-seq-participants">
-                <div class="flow-seq-participant">pipeline.py</div>
+                <div class="flow-seq-participant">run_fotmob_pipeline.py</div>
                 <div class="flow-seq-participant">scrape_fotmob.py</div>
                 <div class="flow-seq-participant">FotMobOrchestrator</div>
                 <div class="flow-seq-participant">DailyScraper</div>
@@ -1677,7 +1791,7 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict</pre>
                 <div class="flow-seq-participant">Filesystem</div>
             </div>
             <div class="flow-seq-body">
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → scrape_fotmob.py</span><span class="flow-seq-detail">subprocess</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_fotmob_pipeline.py</em> → scrape_fotmob.py</span><span class="flow-seq-detail">subprocess</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>scrape_fotmob.py</em> → FotMobOrchestrator</span><span class="flow-seq-detail">orchestrate(date)</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>FotMobOrchestrator</em> → DailyScraper</span><span class="flow-seq-detail">fetch daily listing</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>DailyScraper</em> → FotMob API</span><span class="flow-seq-detail">GET /matches?date=YYYYMMDD</span></div>
@@ -1804,9 +1918,10 @@ python3 scripts/bronze/scrape_fotmob.py --yesterday
 python3 scripts/bronze/scrape_fotmob.py --today
 python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
-python3 scripts/bronze/load_clickhouse.py --date 20251208
-python3 scripts/bronze/load_clickhouse.py --single-date 20251208
-python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
+python3 scripts/report_scraping.py --source fotmob --date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --single-date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --truncate</pre>
         </details>
     </div>
 </div>
@@ -1815,13 +1930,13 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
 <div class="diagram-section" id="oddspedia" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge bronze">Oddspedia</span> Complete source pipeline</h2>
+            <h2><span class="layer-badge bronze">Oddspedia</span> Source-owned medallion path</h2>
         </div>
         <p>
-            Oddspedia owns a complete Bronze → Silver → Gold path. Its source artifacts are stored separately
-            from FotMob and loaded into <code>oddspedia_bronze.*</code>; source-specific Silver owns cleaned
-            event/odds entities and the audited relationship to canonical FotMob <code>silver.match</code>.
-            Oddspedia Gold owns future odds-derived scenarios, signals, and serving outputs. Nothing in this
+            Oddspedia owns a distinct Bronze → Silver → Gold architecture path. Its source artifacts are stored
+            separately from FotMob and loaded into <code>oddspedia_bronze.*</code>. The audited relationship to
+            canonical FotMob <code>silver.match</code> is implemented; additional source-specific Silver event/odds
+            entities and Gold odds products are planned. Nothing in this
             path modifies FotMob Bronze or Silver match data.
         </p>
         <p class="doc-link">Deep dive: <a href="oddspedia.md">oddspedia.md</a></p>
@@ -1848,20 +1963,40 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
                 <span class="flow-connector">→</span>
                 <div class="flow-node silver"><strong>silver.oddspedia_match_resolution</strong><span class="sub">read-only reference: silver.match</span></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node silver"><strong>Oddspedia Silver</strong><span class="sub">conformed odds/event entities</span></div>
+                <div class="flow-node silver"><strong>Oddspedia Silver expansion</strong><span class="sub">planned conformed odds/event entities</span></div>
                 <span class="flow-connector">→</span>
-                <div class="flow-node gold"><strong>Oddspedia Gold</strong><span class="sub">scenarios · signals · serving</span></div>
+                <div class="flow-node gold"><strong>Oddspedia Gold</strong><span class="sub">planned scenarios · signals · serving</span></div>
             </div>
         </div>
         <table class="data-table">
             <thead><tr><th>Phase</th><th>Command</th><th>Outcome</th></tr></thead>
             <tbody>
-                <tr><td>Discover + prioritize + scrape</td><td><code>python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready</code></td><td>Accepts complete or verified-empty discovery evidence, saves auditable priority decisions, and scrapes selected raw payloads</td></tr>
-                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_warehouse.py --dry-run</code></td><td>Plans the three source fact tables, the <code>load_status</code> publication marker, and the current Silver resolution table</td></tr>
-                <tr><td>Load raw facts</td><td><code>python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run</code></td><td>Plans an audited, staged event/payload/market batch and its published status transition</td></tr>
-                <tr><td>Resolve fixtures</td><td><code>python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run</code></td><td>Reads only a published Bronze batch and calculates a match relationship without writing it</td></tr>
+                <tr><td>Discover + prioritize + scrape</td><td><code>python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready</code></td><td>Accepts complete or verified-empty discovery evidence, saves auditable priority decisions, and scrapes selected raw payloads</td></tr>
+                <tr><td>Inspect scraping</td><td><code>python3 scripts/report_scraping.py --source oddspedia --date 20260301</code></td><td>Reads inventory, priority, manifest, payload-audit, and run-log evidence through the same report interface used by FotMob; it creates no lock or run log</td></tr>
+                <tr><td>Create tables</td><td><code>python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run</code></td><td>Plans the three source fact tables, the <code>load_status</code> publication marker, and the current Silver resolution table</td></tr>
+                <tr><td>Load raw facts</td><td><code>python3 scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run</code></td><td>Plans an audited, staged event/payload/market batch and its published status transition</td></tr>
+                <tr><td>Resolve fixtures</td><td><code>python3 scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --dry-run</code></td><td>Reads only a published Bronze batch and calculates a match relationship without writing it</td></tr>
             </tbody>
         </table>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Persisted artifact contracts</h3>
+            <div class="subtitle">External schemas describe the existing JSON shape; no envelope or schema field is added to scraped files</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Artifact</th><th>Persisted structure</th><th>Contract</th><th>Compatibility policy</th></tr></thead>
+            <tbody>
+                <tr><td><code>match_links.json</code></td><td>Top-level list of source event links</td><td><code>schemas/oddspedia/match_links.schema.json</code></td><td>Explicit validation; an accepted empty inventory remains <code>[]</code></td></tr>
+                <tr><td><code>matches/.../&lt;event_id&gt;.json</code></td><td>One top-level football event payload</td><td><code>schemas/oddspedia/match_payload.schema.json</code></td><td>Observed score, odds-line, coverage, and statistics shapes; compatible extra source fields retained</td></tr>
+                <tr><td><code>manifest.json</code></td><td>One mutable date-state object</td><td><code>schemas/oddspedia/scrape_manifest.schema.json</code></td><td>Known state types validated; unknown compatible top-level fields round-trip</td></tr>
+            </tbody>
+        </table>
+        <div class="callout success">
+            <span class="callout-icon">✓</span>
+            <span><strong>Immutability:</strong> contract adoption does not rewrite existing scraped files. Pydantic validates at the persistence seam; serialization writes the caller's mapping or list unchanged.</span>
+        </div>
     </div>
 
     <div class="callout note">
@@ -1870,19 +2005,28 @@ python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate</pre>
     </div>
     <div class="callout warning">
         <span class="callout-icon">⚠</span>
-        <span><strong>Fail-closed publication:</strong> discovery accepts only complete pagination or a verified empty date, and accepted inventories carry checksums. Mutating date commands serialize through <code>data/oddspedia/locks/</code>; dry runs do not create locks. Bronze publishes <code>load_status=published</code> only after all three fact tables are staged, validated, and replaced. Month commands exit non-zero when any date fails.</span>
+        <span><strong>Fail-closed publication:</strong> discovery accepts only complete pagination or a verified empty date, and accepted inventories carry checksums. Mutating date commands serialize through <code>data/oddspedia/locks/</code>; dry runs do not create locks. Bronze publishes <code>load_status=published</code> only after all three fact tables are staged, validated, and replaced. Month and range commands exit non-zero when any date fails.</span>
     </div>
     <div class="callout insight">
         <span class="callout-icon">◌</span>
         <span><strong>Architecture status:</strong> Oddspedia Bronze and Silver match resolution are implemented. Additional source-specific Silver entities and Oddspedia Gold outputs are planned within this same three-layer path; the current FotMob Gold commands must not be used as their substitute.</span>
     </div>
+    <div class="callout note">
+        <span class="callout-icon">◎</span>
+        <span><strong>One reporting seam:</strong> <code>report_scraping.py</code> selects FotMob, Oddspedia, or both and renders summary, Markdown, or JSON from one common contract. Source-specific evidence remains behind explicit adapters; this is not a generic provider pipeline.</span>
+    </div>
     <details class="cmd-block">
-        <summary>▸ Month scope and recovery commands</summary>
-        <pre>python3 scripts/oddspedia/run_pipeline.py --month 202603 --silver-reference-window-ready
-python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier lower --retry-failed
-python3 scripts/oddspedia/discover_events.py --date 20260301 --retry-incomplete
-python3 scripts/oddspedia/load_bronze.py --month 202603 --dry-run
-python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run</pre>
+        <summary>▸ Date, month, range, and recovery commands</summary>
+        <pre>python3 scripts/oddspedia/run_oddspedia_pipeline.py --month 202603 --silver-reference-window-ready
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260301 --end-date 20260307 --silver-reference-window-ready
+python3 scripts/report_scraping.py --source oddspedia --month 202603
+python3 scripts/report_scraping.py --source oddspedia --start-date 20260301 --end-date 20260307
+python3 scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --priority-tier lower --retry-failed
+python3 scripts/oddspedia/discover_oddspedia_events.py --date 20260301 --retry-incomplete
+python3 scripts/oddspedia/load_oddspedia_bronze.py --month 202603 --dry-run
+python3 scripts/oddspedia/load_oddspedia_bronze.py --start-date 20260301 --end-date 20260307 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --month 202603 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --start-date 20260301 --end-date 20260307 --dry-run</pre>
     </details>
 </div>
 
@@ -1890,18 +2034,30 @@ python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run</pre>
 <div class="diagram-section" id="silver" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge silver">FotMob Silver</span> Conformed analytics</h2>
+            <h2><span class="layer-badge silver">Silver layer</span> Conformed source entities and explicit integration</h2>
         </div>
         <p>
-            FotMob Bronze tables are joined, typed, and cleaned into 8 reusable FotMob Silver analytical tables. FotMob Silver always
-            reloads from the complete Bronze dataset — there is no incremental watermark. Every Silver run is
-            deterministic and safe to re-run. All 344 signals and 48 scenarios read exclusively from these
-            8 FotMob analytical tables, never directly from Bronze. Oddspedia
-            match resolution belongs to the Oddspedia Silver/integration edge
-            documented in its own source tab; it is not a ninth FotMob Silver
-            table or a hidden Gold input.
+            Silver standardizes keys, types, and entities within each source domain. FotMob currently owns eight
+            conformed analytical tables and remains the canonical fixture reference. Oddspedia currently owns the
+            explicit <code>silver.oddspedia_match_resolution</code> relationship; additional conformed event and odds
+            entities are planned. The relationship reads <code>silver.match</code> but never mutates or merges raw sources.
         </p>
         <p class="doc-link">Deep dive: <a href="silver.md">silver.md</a></p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Silver by source and seam</h3>
+            <div class="subtitle">Source-owned conformation stays separate; only the relationship edge crosses domains</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Owner</th><th>Current interface</th><th>Inputs</th><th>Role</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr><td>FotMob Silver</td><td>8 tables in <code>silver.*</code>, including <code>silver.match</code></td><td><code>bronze.*</code></td><td>Canonical conformed football analytics and fixture reference</td><td><span class="status-chip implemented">Implemented</span></td></tr>
+                <tr><td>Oddspedia Silver</td><td><code>silver.oddspedia_match_resolution</code></td><td>Published <code>oddspedia_bronze.*</code> plus read-only <code>silver.match</code></td><td>Audited at-most-one relationship from an Oddspedia event to a FotMob fixture</td><td><span class="status-chip implemented">Implemented</span></td></tr>
+                <tr><td>Oddspedia Silver expansion</td><td>Source-specific event and odds entities</td><td><code>oddspedia_bronze.*</code></td><td>Conformed odds/event analytics without copying FotMob tables</td><td><span class="status-chip planned">Planned</span></td></tr>
+            </tbody>
+        </table>
     </div>
 
     <div class="callout insight">
@@ -1959,7 +2115,7 @@ python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run</pre>
         </div>
         <div class="callout note" style="margin-top:1rem">
             <span class="callout-icon">📌</span>
-            <span>4 Bronze tables (<code>goal</code>, <code>red_card</code>, <code>starters</code>, <code>match_reference</code>) feed Silver indirectly or are not Silver inputs — they're available for Gold SQL to join directly if needed.</span>
+            <span>4 FotMob Bronze tables (<code>goal</code>, <code>red_card</code>, <code>starters</code>, <code>match_reference</code>) feed Silver indirectly or are not current Silver inputs. They remain Bronze-owned facts, not default direct inputs to Gold; any future use should be introduced through an explicit layer contract.</span>
         </div>
     </div>
 
@@ -1970,14 +2126,14 @@ python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run</pre>
         </div>
         <div class="flow-seq">
             <div class="flow-seq-participants">
-                <div class="flow-seq-participant">pipeline.py</div>
-                <div class="flow-seq-participant">silver/load_clickhouse.py</div>
+                <div class="flow-seq-participant">run_fotmob_pipeline.py</div>
+                <div class="flow-seq-participant">silver/load_fotmob_silver.py</div>
                 <div class="flow-seq-participant">SilverService</div>
                 <div class="flow-seq-participant">ClickHouse</div>
             </div>
             <div class="flow-seq-body">
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → silver/load_clickhouse.py</span><span class="flow-seq-detail">subprocess</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">silver/load_clickhouse.py → <em>WarehouseExecutionScope</em></span><span class="flow-seq-detail">validate date / month / full-history</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_fotmob_pipeline.py</em> → silver/load_fotmob_silver.py</span><span class="flow-seq-detail">subprocess</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">silver/load_fotmob_silver.py → <em>WarehouseExecutionScope</em></span><span class="flow-seq-detail">validate date / month / full-history</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em></span><span class="flow-seq-detail">build ScopedSqlJob values</span></div>
                 <div class="flow-seq-loop">
                     <div class="flow-seq-block-label">For each DML script (ordered)</div>
@@ -1985,7 +2141,7 @@ python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run</pre>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">ClickHouse → <em>ScopedReplacementBatch</em></span><span class="flow-seq-detail">REPLACE PARTITION or EXCHANGE TABLES</span></div>
                 </div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em></span><span class="flow-seq-detail">assert_silver_layer_contracts()</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em> → silver/load_clickhouse.py</span><span class="flow-seq-detail">summary report</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>SilverService</em> → silver/load_fotmob_silver.py</span><span class="flow-seq-detail">summary report</span></div>
             </div>
         </div>
         <div class="callout success">
@@ -1994,8 +2150,8 @@ python3 scripts/oddspedia/resolve_events.py --month 202603 --dry-run</pre>
         </div>
         <details class="cmd-block">
             <summary>▸ Silver commands</summary>
-            <pre>python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
-python3 scripts/silver/load_clickhouse.py --full-history</pre>
+            <pre>python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/silver/load_fotmob_silver.py --full-history</pre>
         </details>
     </div>
 </div>
@@ -2004,15 +2160,36 @@ python3 scripts/silver/load_clickhouse.py --full-history</pre>
 <div class="diagram-section" id="gold" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2><span class="layer-badge gold">FotMob Gold</span> Product outputs</h2>
+            <h2><span class="layer-badge gold">Gold layer</span> Source-owned product outputs</h2>
         </div>
         <p>
-            FotMob Gold uses three ClickHouse namespaces with deliberate independence: <code>gold_scenarios.*</code> for narrative analysis,
+            Gold materializes consumer-facing scenarios, signals, and serving outputs from source-owned Silver
+            data. FotMob Gold is implemented and uses three ClickHouse namespaces with deliberate independence:
+            <code>gold_scenarios.*</code> for narrative analysis,
             <code>gold_signals.*</code> for granular detections, and <code>gold.*</code> for shared serving metadata.
             A single activation table (<code>gold.signal_activations</code>) unifies all active signals into one
-            queryable surface for product and BI consumers.
+            queryable surface. Oddspedia Gold is planned as a separate odds-derived product path and must not
+            write to the FotMob namespaces shown below.
         </p>
         <p class="doc-link">Deep dive: <a href="gold.md">gold.md</a></p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Gold by source</h3>
+            <div class="subtitle">Product outputs follow source ownership; shared naming does not imply shared raw contracts</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Source</th><th>Outputs</th><th>Namespaces / interface</th><th>Status</th></tr></thead>
+            <tbody>
+                <tr><td>FotMob</td><td>48 scenarios, 344 signals, unified activations</td><td><code>gold_scenarios.*</code>, <code>gold_signals.*</code>, <code>gold.signal_activations</code></td><td><span class="status-chip implemented">Implemented</span></td></tr>
+                <tr><td>Oddspedia</td><td>Odds-derived scenarios, signals, and serving outputs</td><td>Source-qualified DDL, SQL, catalog, and CLI surface to be designed together</td><td><span class="status-chip planned">Planned</span></td></tr>
+            </tbody>
+        </table>
+        <div class="callout warning">
+            <span class="callout-icon">!</span>
+            <span><strong>No substitution:</strong> <code>load_fotmob_gold.py</code> is not an Oddspedia Gold runner. New Oddspedia products require explicit source ownership in tables, SQL, catalogs, and commands.</span>
+        </div>
     </div>
 
     <div class="diagram-card">
@@ -2063,35 +2240,35 @@ python3 scripts/silver/load_clickhouse.py --full-history</pre>
         </div>
         <div class="flow-seq">
             <div class="flow-seq-participants">
-                <div class="flow-seq-participant">pipeline.py</div>
-                <div class="flow-seq-participant">load_clickhouse_gold.py</div>
+                <div class="flow-seq-participant">run_fotmob_pipeline.py</div>
+                <div class="flow-seq-participant">load_fotmob_gold.py</div>
                 <div class="flow-seq-participant">run_gold_sql_jobs.py</div>
                 <div class="flow-seq-participant">GoldSqlJob</div>
                 <div class="flow-seq-participant">ClickHouse</div>
             </div>
             <div class="flow-seq-body">
-                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>pipeline.py</em> → load_clickhouse_gold.py</span><span class="flow-seq-detail">subprocess</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_gold_sql_jobs.py</em></span><span class="flow-seq-detail">scenario jobs</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_fotmob_pipeline.py</em> → load_fotmob_gold.py</span><span class="flow-seq-detail">subprocess</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_fotmob_gold.py → <em>run_gold_sql_jobs.py</em></span><span class="flow-seq-detail">scenario jobs</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_gold_sql_jobs.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover scenario_*.sql</span></div>
                 <div class="flow-seq-loop">
                     <div class="flow-seq-block-label">Each scenario (48 files)</div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">GoldSqlJob → ClickHouse</span><span class="flow-seq-detail">execute SQL</span></div>
                 </div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → <em>run_gold_sql_jobs.py</em></span><span class="flow-seq-detail">signal jobs</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_fotmob_gold.py → <em>run_gold_sql_jobs.py</em></span><span class="flow-seq-detail">signal jobs</span></div>
                 <div class="flow-seq-msg"><span class="flow-seq-actors"><em>run_gold_sql_jobs.py</em> → GoldSqlJob</span><span class="flow-seq-detail">discover sig_*.sql</span></div>
                 <div class="flow-seq-loop">
                     <div class="flow-seq-block-label">Each signal (344 files)</div>
                     <div class="flow-seq-msg"><span class="flow-seq-actors">GoldSqlJob → ClickHouse</span><span class="flow-seq-detail">execute SQL</span></div>
                 </div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py</span><span class="flow-seq-detail">build_signal_activations.py</span></div>
-                <div class="flow-seq-msg"><span class="flow-seq-actors">load_clickhouse_gold.py → ClickHouse</span><span class="flow-seq-detail">rebuild gold.signal_activations</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_fotmob_gold.py</span><span class="flow-seq-detail">build_signal_activations.py</span></div>
+                <div class="flow-seq-msg"><span class="flow-seq-actors">load_fotmob_gold.py → ClickHouse</span><span class="flow-seq-detail">rebuild gold.signal_activations</span></div>
             </div>
         </div>
         <details class="cmd-block">
             <summary>▸ Gold commands</summary>
-            <pre>python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios
-python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals
+            <pre>python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
+python3 scripts/gold/load_fotmob_gold.py --full-history --part scenarios
+python3 scripts/gold/load_fotmob_gold.py --full-history --part signals
 python3 scripts/gold/activations/build_signal_activations.py --full-history
 python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
 python3 scripts/gold/setup_clickhouse_gold.py --part signals</pre>
@@ -2123,7 +2300,7 @@ python3 scripts/gold/setup_clickhouse_gold.py --part signals</pre>
         </div>
         <div class="callout note">
             <span class="callout-icon">🔑</span>
-            <span><strong>ADR 0006, 0018:</strong> Activation identity uses version prefix <code>v1</code> in the SHA-256 hash — this is a scheme version, not a signal definition version. The builder calculates from all selected signal history, then replaces the requested date/month partition or exchanges the whole table for explicit full history. <code>load_clickhouse_gold.py</code> skips activation replacement when any signal SQL job fails.</span>
+            <span><strong>ADR 0006, 0018:</strong> Activation identity uses version prefix <code>v1</code> in the SHA-256 hash — this is a scheme version, not a signal definition version. The builder calculates from all selected signal history, then replaces the requested date/month partition or exchanges the whole table for explicit full history. <code>load_fotmob_gold.py</code> skips activation replacement when any signal SQL job fails.</span>
         </div>
         <details class="cmd-block">
             <summary>▸ Activation rebuild commands</summary>
@@ -2278,38 +2455,55 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
 <div class="diagram-section" id="orchestration" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2>Pipeline orchestration</h2>
+            <h2>Source-owned operations</h2>
         </div>
         <p>
-            <code>pipeline.py</code> coordinates all layers via subprocess calls (ADR 0002). Any non-zero exit halts the run
-            immediately — there is no partial-success state. Skip and partial-run flags support fast iterative
-            development without rerunning the full pipeline. Bronze S3 sync is deliberately outside this boundary;
-            pipeline success never depends on S3 availability.
+            Operations are explicit per source. <code>run_fotmob_pipeline.py</code> coordinates the complete FotMob
+            Bronze → Silver → Gold route via subprocess calls (ADR 0002). <code>run_oddspedia_pipeline.py</code>
+            coordinates discovery, prioritization, and raw scraping; separate canonical commands publish Oddspedia
+            Bronze facts and resolve the current Silver relationship. Both command families accept bounded date scopes
+            and stop non-zero on failure. Bronze S3 sync remains outside either pipeline boundary.
         </p>
         <p class="doc-link">Deep dive: <a href="orchestration.md">orchestration.md</a></p>
     </div>
 
     <div class="callout insight">
         <span class="callout-icon">☁️</span>
-        <span><strong>Not a pipeline stage:</strong> use <code>scripts/bronze/sync_s3.py</code> independently for local/remote Bronze transfer. The scraper no longer uploads archives, and <code>pipeline.py</code> never invokes S3.</span>
+        <span><strong>Not a pipeline stage:</strong> use <code>scripts/bronze/sync_s3.py</code> independently for local/remote Bronze transfer. The scraper no longer uploads archives, and <code>run_fotmob_pipeline.py</code> never invokes S3.</span>
     </div>
 
     <div class="diagram-card">
         <div class="card-header">
-            <h3>Pipeline execution flow</h3>
-            <div class="subtitle">Sequential stages with optional skip paths shown as dashed lines</div>
+            <h3>Operational surfaces by source</h3>
+            <div class="subtitle">A shared date-scope utility does not imply a shared provider pipeline</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Source</th><th>Canonical run surface</th><th>Implemented stages</th><th>Date scopes</th><th>Failure rule</th></tr></thead>
+            <tbody>
+                <tr><td>FotMob</td><td><code>scripts/orchestration/run_fotmob_pipeline.py</code></td><td>Scrape → Bronze load → Silver → Gold</td><td>Date · inclusive range · month · full history</td><td>First failing stage halts the run</td></tr>
+                <tr><td>Oddspedia scrape</td><td><code>scripts/oddspedia/run_oddspedia_pipeline.py</code></td><td>Discover → prioritize → scrape</td><td>Date · inclusive range · month</td><td>Each date is isolated; any failed date makes the command non-zero</td></tr>
+                <tr><td>Oddspedia warehouse</td><td><code>load_oddspedia_bronze.py</code> + <code>resolve_oddspedia_events.py</code></td><td>Publish Bronze → resolve Silver relationship</td><td>Date · inclusive range · month</td><td>Resolver reads published batches only</td></tr>
+                <tr><td>Cross-source reporting</td><td><code>scripts/report_scraping.py --source …</code></td><td>Read-only evidence aggregation</td><td>Date · inclusive range · month</td><td>No locks, manifests, or run logs are created</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>FotMob execution flow</h3>
+            <div class="subtitle">Complete sequential warehouse route with optional skip paths shown as dashed lines</div>
         </div>
         <div class="flow-diagram">
             <div class="flow-stack" style="width:100%;align-items:center">
-                <div class="flow-node accent"><strong>pipeline.py</strong><span class="sub">date argument</span></div>
+                <div class="flow-node accent"><strong>run_fotmob_pipeline.py</strong><span class="sub">date argument</span></div>
                 <span class="flow-connector down">↓</span>
                 <div class="flow-node bronze"><strong>1. Scrape</strong><span class="sub">scrape_fotmob.py</span></div>
                 <span class="flow-connector down">↓</span>
-                <div class="flow-node bronze"><strong>2. Bronze load</strong><span class="sub">load_clickhouse.py</span></div>
+                <div class="flow-node bronze"><strong>2. Bronze load</strong><span class="sub">load_fotmob_bronze.py</span></div>
                 <span class="flow-connector down">↓</span>
-                <div class="flow-node silver"><strong>3. Silver</strong><span class="sub">load_clickhouse.py</span></div>
+                <div class="flow-node silver"><strong>3. Silver</strong><span class="sub">load_fotmob_silver.py</span></div>
                 <span class="flow-connector down">↓</span>
-                <div class="flow-node gold"><strong>4. Gold</strong><span class="sub">load_clickhouse_gold.py</span></div>
+                <div class="flow-node gold"><strong>4. Gold</strong><span class="sub">load_fotmob_gold.py</span></div>
                 <div class="flow-branch">
                     <div class="flow-branch-arm">
                         <span class="flow-connector down">↓</span>
@@ -2345,7 +2539,7 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
             <table class="data-table">
                 <thead><tr><th>Mode</th><th>Command</th></tr></thead>
                 <tbody>
-                    <tr><td>Single date</td><td><code>pipeline.py 20251208</code></td></tr>
+                    <tr><td>Single date</td><td><code>run_fotmob_pipeline.py 20251208</code></td></tr>
                     <tr><td>Date range</td><td><code>--start-date 20251201 --end-date 20251207</code></td></tr>
                     <tr><td>Full month</td><td><code>--month 202512</code></td></tr>
                     <tr><td>Bronze only</td><td><code>--bronze-only</code></td></tr>
@@ -2381,9 +2575,9 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
             <thead><tr><th>Failure point</th><th>Recovery command</th></tr></thead>
             <tbody>
                 <tr><td>Scraping (API block / turnstile)</td><td><code>scrape_fotmob.py</code> for affected dates</td></tr>
-                <tr><td>Bronze ClickHouse load</td><td><code>load_clickhouse.py --date &lt;date&gt;</code></td></tr>
+                <tr><td>Bronze ClickHouse load</td><td><code>load_fotmob_bronze.py --date &lt;date&gt;</code></td></tr>
                 <tr><td>S3 archive transfer</td><td>Re-run <code>sync_s3.py</code> for affected dates; scraping and warehouse loading remain unaffected</td></tr>
-                <tr><td>Silver SQL error</td><td>Fix SQL → re-run <code>silver/load_clickhouse.py</code></td></tr>
+                <tr><td>Silver SQL error</td><td>Fix SQL → re-run <code>silver/load_fotmob_silver.py</code></td></tr>
                 <tr><td>Single signal failure</td><td><code>run_gold_sql_jobs.py --date &lt;YYYYMMDD&gt; --kind signal --id &lt;id&gt;</code></td></tr>
                 <tr><td>Single scenario failure</td><td><code>run_gold_sql_jobs.py --date &lt;YYYYMMDD&gt; --kind scenario --id &lt;id&gt;</code></td></tr>
                 <tr><td>Activation replacement</td><td><code>build_signal_activations.py --date &lt;YYYYMMDD&gt;</code></td></tr>
@@ -2427,16 +2621,33 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
 <div class="diagram-section" id="infrastructure" role="tabpanel" aria-hidden="true">
     <div class="section-lead">
         <div class="section-lead-title">
-            <h2>Infrastructure</h2>
+            <h2>Runtime platforms</h2>
         </div>
         <p>
-            Local development runs via Docker Compose. ClickHouse holds all warehouse layers (<code>bronze</code>,
-            <code>silver</code>, <code>gold_scenarios</code>, <code>gold_signals</code>, <code>gold</code>). MongoDB
-            holds content catalogs in the <code>orbit_content</code> database. Credential policy differs
-            significantly between local and production — never expose ports in production. Optional S3-compatible
-            storage is used only by the standalone Bronze archive sync command.
+            Local execution spans host filesystem state, the Python runtime, Docker Compose services, and an optional
+            external archive. ClickHouse holds structured source facts and analytical layers
+            (<code>bronze</code>, <code>oddspedia_bronze</code>, <code>silver</code>, <code>gold_scenarios</code>,
+            <code>gold_signals</code>, <code>gold</code>). MongoDB holds content catalogs in <code>orbit_content</code>.
+            These platforms host source-owned workflows; they do not collapse FotMob and Oddspedia contracts.
         </p>
         <p class="doc-link">Deep dive: <a href="infrastructure.md">infrastructure.md</a></p>
+    </div>
+
+    <div class="diagram-card">
+        <div class="card-header">
+            <h3>Platform topology</h3>
+            <div class="subtitle">State ownership and execution boundaries</div>
+        </div>
+        <table class="data-table">
+            <thead><tr><th>Platform</th><th>Deployment</th><th>State / responsibility</th><th>Primary interfaces</th></tr></thead>
+            <tbody>
+                <tr><td>Host filesystem</td><td>Persistent local volume</td><td>Source-fidelity Bronze files, manifests, priorities, locks, and logs</td><td><code>data/fotmob/</code> · <code>data/oddspedia/</code> · <code>logs/</code></td></tr>
+                <tr><td>Python runtime</td><td>Host or <code>depthmark-scraper</code> container</td><td>Scrape, orchestrate, validate, report, execute SQL</td><td><code>scripts/</code> + source/workflow modules in <code>src/</code></td></tr>
+                <tr><td>ClickHouse</td><td><code>depthmark-clickhouse</code></td><td>Structured Bronze plus all Silver and Gold analytical tables</td><td>HTTP <code>:8123</code> · native <code>:9000</code></td></tr>
+                <tr><td>MongoDB</td><td><code>depthmark-mongodb</code></td><td>Synchronized content/catalog serving state</td><td><code>:27017</code> · <code>orbit_content</code></td></tr>
+                <tr><td>S3-compatible storage</td><td>Optional external service</td><td>Explicit FotMob Historical archive transfer only</td><td><code>scripts/bronze/sync_s3.py</code></td></tr>
+            </tbody>
+        </table>
     </div>
 
     <div class="diagram-card">
@@ -2453,7 +2664,7 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
                         <div class="flow-stack">
                             <div class="flow-node bronze"><span class="sub">:8123 HTTP</span></div>
                             <div class="flow-node bronze"><span class="sub">:9000 native</span></div>
-                            <div class="flow-node bronze"><strong>bronze + silver</strong><span class="sub">gold_scenarios + gold_signals + gold</span></div>
+                            <div class="flow-node bronze"><strong>bronze + oddspedia_bronze</strong><span class="sub">silver + gold_scenarios + gold_signals + gold</span></div>
                         </div>
                     </div>
                     <div class="flow-group silver" style="flex:1">
@@ -2467,7 +2678,7 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
                         <div class="flow-group-label">depthmark-scraper</div>
                         <div class="flow-stack">
                             <div class="flow-node accent"><strong>Python scripts</strong></div>
-                            <div class="flow-node accent"><span class="sub">data/fotmob/historical/ + live/</span></div>
+                            <div class="flow-node accent"><span class="sub">data/fotmob/ + data/oddspedia/</span></div>
                             <div class="flow-node red"><span class="sub">data/dlq/</span></div>
                         </div>
                     </div>
@@ -2511,7 +2722,7 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
                 <div class="flow-row">
                     <div class="flow-node accent"><strong>docker-compose up -d</strong></div>
                     <span class="flow-connector">→</span>
-                    <div class="flow-node bronze"><strong>setup_clickhouse.py</strong></div>
+                    <div class="flow-node bronze"><strong>source setup commands</strong></div>
                 </div>
                 <div class="flow-branch" style="margin-top:0.5rem">
                     <div class="flow-branch-arm">
@@ -2536,7 +2747,8 @@ python3 scripts/gold/activations/build_signal_activations.py --full-history</pre
                 <summary>▸ Setup commands</summary>
                 <pre>cp .env.example .env
 docker compose up -d
-docker compose exec depthmark-scraper python3 scripts/orchestration/setup_clickhouse.py
+docker compose exec depthmark-scraper python3 scripts/orchestration/setup_fotmob_warehouse.py
+docker compose exec depthmark-scraper python3 scripts/oddspedia/setup_oddspedia_warehouse.py
 docker compose exec depthmark-scraper python3 scripts/mongodb/init_indexes.py</pre>
             </details>
         </div>
@@ -2726,11 +2938,17 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             ],
         },
         {
-            match: ['setup_clickhouse.py', 'setup_clickhouse'],
-            title: 'ClickHouse DDL setup (all layers)',
-            scripts: ['scripts/orchestration/setup_clickhouse.py'],
-            commands: ['python3 scripts/orchestration/setup_clickhouse.py'],
-            note: 'Creates bronze (15) + silver (8) + gold scenario/signal DDL + signal_activations table.',
+            match: ['setup_fotmob_warehouse.py', 'setup_oddspedia_warehouse.py', 'source setup commands', 'setup_clickhouse.py', 'setup_clickhouse'],
+            title: 'Source-owned ClickHouse DDL setup',
+            scripts: [
+                'scripts/orchestration/setup_fotmob_warehouse.py',
+                'scripts/oddspedia/setup_oddspedia_warehouse.py',
+            ],
+            commands: [
+                'python3 scripts/orchestration/setup_fotmob_warehouse.py',
+                'python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run',
+            ],
+            note: 'FotMob and Oddspedia setup commands are explicit. They share ClickHouse, not one raw contract.',
             sectionTab: 'infrastructure',
         },
         {
@@ -2784,26 +3002,28 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'bronze',
         },
         {
-            match: ['bronze/load_clickhouse', 'load_clickhouse.py --date', '2. bronze load'],
+            match: ['bronze/load_fotmob_bronze', 'load_fotmob_bronze.py --date', '2. bronze load'],
             title: 'Bronze ClickHouse load',
-            scripts: ['scripts/bronze/load_clickhouse.py'],
+            scripts: ['scripts/bronze/load_fotmob_bronze.py'],
             commands: [
-                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
-                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD> --truncate',
+                'python3 scripts/bronze/load_fotmob_bronze.py --date <YYYYMMDD>',
+                'python3 scripts/bronze/load_fotmob_bronze.py --date <YYYYMMDD> --truncate',
             ],
             sectionTab: 'bronze',
         },
         {
-            match: ['oddspedia', 'oddspedia_bronze', 'link priorities', 'match resolution', 'resolve_events.py', 'run_pipeline.py'],
+            match: ['oddspedia', 'oddspedia_bronze', 'link priorities', 'match resolution', 'resolve_oddspedia_events.py', 'run_oddspedia_pipeline.py', 'report_scraping.py'],
             title: 'Oddspedia source-domain workflow',
             scripts: [
-                'scripts/oddspedia/discover_events.py',
-                'scripts/oddspedia/prioritize_events.py',
-                'scripts/oddspedia/scrape_matches.py',
-                'scripts/oddspedia/run_pipeline.py',
-                'scripts/oddspedia/setup_warehouse.py',
-                'scripts/oddspedia/load_bronze.py',
-                'scripts/oddspedia/resolve_events.py',
+                'scripts/oddspedia/discover_oddspedia_events.py',
+                'scripts/oddspedia/prioritize_oddspedia_events.py',
+                'scripts/oddspedia/scrape_oddspedia_matches.py',
+                'scripts/oddspedia/run_oddspedia_pipeline.py',
+                'scripts/report_scraping.py',
+                'src/operations/scraping_reporting.py',
+                'scripts/oddspedia/setup_oddspedia_warehouse.py',
+                'scripts/oddspedia/load_oddspedia_bronze.py',
+                'scripts/oddspedia/resolve_oddspedia_events.py',
                 'src/oddspedia/scraping/',
                 'src/oddspedia/scraping/operation_lock.py',
                 'src/oddspedia/bronze/loader.py',
@@ -2811,42 +3031,48 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'clickhouse/oddspedia_bronze/ddl/04_load_status.sql',
             ],
             commands: [
-                'python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready',
-                'python3 scripts/oddspedia/setup_warehouse.py --dry-run',
-                'python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run',
-                'python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run',
+                'python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready',
+                'python3 scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260301 --end-date 20260307 --silver-reference-window-ready',
+                'python3 scripts/oddspedia/run_oddspedia_pipeline.py --month 202603 --silver-reference-window-ready',
+                'python3 scripts/report_scraping.py --source oddspedia --date 20260301',
+                'python3 scripts/report_scraping.py --source oddspedia --start-date 20260301 --end-date 20260307',
+                'python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run',
+                'python3 scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run',
+                'python3 scripts/oddspedia/load_oddspedia_bronze.py --start-date 20260301 --end-date 20260307 --dry-run',
+                'python3 scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --dry-run',
+                'python3 scripts/oddspedia/resolve_oddspedia_events.py --start-date 20260301 --end-date 20260307 --dry-run',
             ],
-            note: 'Runs independently from pipeline.py. Discovery and Bronze admission are fail-closed; date mutations use a sport/date lock, and the resolver reads only published load_status batches before writing silver.oddspedia_match_resolution.',
+            note: 'Runs independently from run_fotmob_pipeline.py. Date, inclusive range, and month scopes share validation and fail the command if any date fails. Discovery and Bronze admission are fail-closed; date mutations use a sport/date lock, and the resolver reads only published load_status batches before writing silver.oddspedia_match_resolution.',
             sectionTab: 'oddspedia',
         },
         {
             match: ['silver/load_clickhouse', '3. silver', 'silverservice'],
             title: 'Silver scoped staged replacement',
             scripts: [
-                'scripts/silver/load_clickhouse.py',
+                'scripts/silver/load_fotmob_silver.py',
                 'src/fotmob/silver/service.py',
                 'src/warehouse/scoped_replace.py',
             ],
             sql: ['clickhouse/silver/dml/'],
             commands: [
-                'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
-                'python3 scripts/silver/load_clickhouse.py --full-history',
+                'python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run',
+                'python3 scripts/silver/load_fotmob_silver.py --full-history',
             ],
             sectionTab: 'silver',
         },
         {
-            match: ['gold/load_clickhouse_gold', '4. gold', 'load_clickhouse_gold.py'],
+            match: ['gold/load_clickhouse_gold', '4. gold', 'load_fotmob_gold.py'],
             title: 'Gold load (scenarios + signals + activations)',
             scripts: [
-                'scripts/gold/load_clickhouse_gold.py',
+                'scripts/gold/load_fotmob_gold.py',
                 'src/fotmob/gold/service.py',
                 'src/warehouse/scoped_replace.py',
             ],
             commands: [
-                'python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run',
-                'python3 scripts/gold/load_clickhouse_gold.py --full-history',
-                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios',
-                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals',
+                'python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run',
+                'python3 scripts/gold/load_fotmob_gold.py --full-history',
+                'python3 scripts/gold/load_fotmob_gold.py --full-history --part scenarios',
+                'python3 scripts/gold/load_fotmob_gold.py --full-history --part signals',
             ],
             sectionTab: 'gold',
         },
@@ -2878,18 +3104,18 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'gold',
         },
         {
-            match: ['pipeline.py', 'preflight ok'],
+            match: ['run_fotmob_pipeline.py', 'preflight ok'],
             title: 'Full pipeline orchestration',
-            scripts: ['scripts/orchestration/pipeline.py'],
+            scripts: ['scripts/orchestration/run_fotmob_pipeline.py'],
             commands: [
-                'python3 scripts/orchestration/pipeline.py <YYYYMMDD>',
-                'python3 scripts/orchestration/pipeline.py --date 20251208',
-                'python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207',
-                'python3 scripts/orchestration/pipeline.py --month 202512',
-                'python3 scripts/orchestration/pipeline.py --full-history',
-                'python3 scripts/orchestration/pipeline.py --date 20251208 --bronze-only',
-                'python3 scripts/orchestration/pipeline.py --date 20251208 --silver-only',
-                'python3 scripts/orchestration/pipeline.py --date 20251208 --gold-only',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py <YYYYMMDD>',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py --month 202512',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py --full-history',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208 --bronze-only',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208 --silver-only',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208 --gold-only',
             ],
             note: 'Skip flags: --skip-fotmob, --skip-bronze, --skip-clickhouse, --skip-silver, --skip-gold',
             sectionTab: 'orchestration',
@@ -2932,19 +3158,19 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['assert_bronze_dataframe_contract', 'bronze contract', 'fotmobbronze'],
             title: 'Bronze contract assertion (runtime)',
             scripts: [
-                'scripts/bronze/load_clickhouse.py',
+                'scripts/bronze/load_fotmob_bronze.py',
                 'src/fotmob/bronze/match_processor.py',
                 'src/warehouse/contracts.py',
             ],
-            commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            commands: ['python3 scripts/bronze/load_fotmob_bronze.py --date <YYYYMMDD>'],
             note: 'Contract runs automatically during bronze load — not a standalone CLI.',
             sectionTab: 'bronze',
         },
         {
             match: ['assert_silver_layer_contracts', 'silver contract'],
             title: 'Silver contract assertion (runtime)',
-            scripts: ['scripts/silver/load_clickhouse.py', 'src/warehouse/contracts.py'],
-            commands: ['python3 scripts/silver/load_clickhouse.py --full-history'],
+            scripts: ['scripts/silver/load_fotmob_silver.py', 'src/warehouse/contracts.py'],
+            commands: ['python3 scripts/silver/load_fotmob_silver.py --full-history'],
             note: 'Contract runs automatically after Silver DML scripts complete.',
             sectionTab: 'silver',
         },
@@ -2989,59 +3215,59 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
                 'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
                 'python3 scripts/bronze/scrape_fotmob.py --today',
             ],
-            note: 'Only Historical files are consumed by bronze/load_clickhouse.py and S3 sync.',
+            note: 'Only Historical files are consumed by bronze/load_fotmob_bronze.py and S3 sync.',
             sectionTab: 'bronze',
         },
         {
             match: ['fotmobbronze', 'pydantic', '14 entity', 'clickhouseclient.upsert'],
             title: 'Bronze parse & load pipeline',
             scripts: [
-                'scripts/bronze/load_clickhouse.py',
+                'scripts/bronze/load_fotmob_bronze.py',
                 'src/fotmob/bronze/match_processor.py',
                 'src/warehouse/contracts.py',
                 'src/integrations/clickhouse/client.py',
             ],
-            commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            commands: ['python3 scripts/bronze/load_fotmob_bronze.py --date <YYYYMMDD>'],
             sectionTab: 'bronze',
         },
         {
             match: ['data/dlq', 'dlq'],
             title: 'Dead-letter queue (failed bronze inserts)',
             paths: ['data/dlq/'],
-            commands: ['python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>'],
+            commands: ['python3 scripts/bronze/load_fotmob_bronze.py --date <YYYYMMDD>'],
             note: 'Re-run bronze load after fixing parse/contract issues.',
             sectionTab: 'bronze',
         },
         {
             match: ['bronze.*', 'bronze.', '15 clickhouse tables', '15 tables', 'source fidelity'],
             title: 'Bronze layer',
-            scripts: ['scripts/bronze/scrape_fotmob.py', 'scripts/bronze/load_clickhouse.py'],
+            scripts: ['scripts/bronze/scrape_fotmob.py', 'scripts/bronze/load_fotmob_bronze.py'],
             sql: ['clickhouse/bronze/ddl/'],
             commands: [
                 'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
                 'python3 scripts/bronze/scrape_fotmob.py --today',
-                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
+                'python3 scripts/bronze/load_fotmob_bronze.py --date <YYYYMMDD>',
             ],
             sectionTab: 'bronze',
         },
         {
             match: ['silver.*', 'silver.', '8 tables', '8 analytical', 'conformed analytics', 'scoped replacement', 'insert…select', 'bronze → silver dml'],
             title: 'Silver layer',
-            scripts: ['scripts/silver/load_clickhouse.py'],
+            scripts: ['scripts/silver/load_fotmob_silver.py'],
             sql: ['clickhouse/silver/dml/'],
             commands: [
-                'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
-                'python3 scripts/silver/load_clickhouse.py --full-history',
+                'python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run',
+                'python3 scripts/silver/load_fotmob_silver.py --full-history',
             ],
             sectionTab: 'silver',
         },
         {
             match: ['gold_signals', '344 tables', '344 signal', 'sig_*.sql', 'sig_*_ddl'],
             title: 'Gold signals',
-            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_gold_sql_jobs.py'],
+            scripts: ['scripts/gold/load_fotmob_gold.py', 'scripts/gold/run_gold_sql_jobs.py'],
             sql: ['clickhouse/gold/dml/signals/'],
             commands: [
-                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part signals',
+                'python3 scripts/gold/load_fotmob_gold.py --full-history --part signals',
                 'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id <signal_id>',
             ],
             sectionTab: 'gold',
@@ -3049,10 +3275,10 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['gold_scenarios', '48 scenario', '48 tables', 'scenario_demolition', 'scenario sql', 'gold scenario sql'],
             title: 'Gold scenarios',
-            scripts: ['scripts/gold/load_clickhouse_gold.py', 'scripts/gold/run_gold_sql_jobs.py'],
+            scripts: ['scripts/gold/load_fotmob_gold.py', 'scripts/gold/run_gold_sql_jobs.py'],
             sql: ['clickhouse/gold/dml/scenarios/'],
             commands: [
-                'python3 scripts/gold/load_clickhouse_gold.py --full-history --part scenarios',
+                'python3 scripts/gold/load_fotmob_gold.py --full-history --part scenarios',
                 'python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id <scenario_id>',
             ],
             sectionTab: 'gold',
@@ -3082,7 +3308,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             scripts: ['docker-compose.yml'],
             commands: [
                 'docker compose up -d',
-                'docker compose exec depthmark-scraper python3 scripts/orchestration/setup_clickhouse.py',
+                'docker compose exec depthmark-scraper python3 scripts/orchestration/setup_fotmob_warehouse.py',
             ],
             sectionTab: 'infrastructure',
         },
@@ -3091,13 +3317,13 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Python orchestration responsibilities',
             scripts: [
                 'scripts/bronze/scrape_fotmob.py',
-                'scripts/gold/load_clickhouse_gold.py',
+                'scripts/gold/load_fotmob_gold.py',
                 'scripts/mongodb/sync_signal_catalogs.py',
             ],
             commands: [
                 'python3 scripts/bronze/scrape_fotmob.py <YYYYMMDD>',
                 'python3 scripts/bronze/scrape_fotmob.py --today',
-                'python3 scripts/gold/load_clickhouse_gold.py --full-history',
+                'python3 scripts/gold/load_fotmob_gold.py --full-history',
                 'python3 scripts/mongodb/sync_signal_catalogs.py',
             ],
         },
@@ -3105,13 +3331,13 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             match: ['contract assertions', 'activation rebuild'],
             title: 'Python validation & serving glue',
             scripts: [
-                'scripts/bronze/load_clickhouse.py',
-                'scripts/silver/load_clickhouse.py',
+                'scripts/bronze/load_fotmob_bronze.py',
+                'scripts/silver/load_fotmob_silver.py',
                 'scripts/gold/activations/build_signal_activations.py',
             ],
             commands: [
-                'python3 scripts/bronze/load_clickhouse.py --date <YYYYMMDD>',
-                'python3 scripts/silver/load_clickhouse.py --full-history',
+                'python3 scripts/bronze/load_fotmob_bronze.py --date <YYYYMMDD>',
+                'python3 scripts/silver/load_fotmob_silver.py --full-history',
                 'python3 scripts/gold/activations/build_signal_activations.py --full-history',
             ],
         },
@@ -3120,14 +3346,14 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             title: 'Preflight & validation',
             scripts: [
                 'scripts/health_check.py',
-                'scripts/silver/load_clickhouse.py',
-                'scripts/gold/load_clickhouse_gold.py',
+                'scripts/silver/load_fotmob_silver.py',
+                'scripts/gold/load_fotmob_gold.py',
                 'scripts/quality/check_data_quality.py',
             ],
             commands: [
                 'python3 scripts/health_check.py --json',
-                'python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run',
-                'python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run',
+                'python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run',
+                'python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run',
                 'python3 scripts/quality/check_data_quality.py --date 20251208 --strict',
             ],
         },
@@ -3139,13 +3365,13 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         {
             match: ['--skip-'],
             title: 'Pipeline skip flags',
-            scripts: ['scripts/orchestration/pipeline.py'],
+            scripts: ['scripts/orchestration/run_fotmob_pipeline.py'],
             commands: [
-                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-fotmob',
-                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-bronze',
-                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-clickhouse',
-                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-silver',
-                'python3 scripts/orchestration/pipeline.py <YYYYMMDD> --skip-gold',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py <YYYYMMDD> --skip-fotmob',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py <YYYYMMDD> --skip-bronze',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py <YYYYMMDD> --skip-clickhouse',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py <YYYYMMDD> --skip-silver',
+                'python3 scripts/orchestration/run_fotmob_pipeline.py <YYYYMMDD> --skip-gold',
             ],
             sectionTab: 'orchestration',
         },
@@ -3183,19 +3409,30 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
             sectionTab: 'signals',
         },
         {
-            match: ['clickhouse'],
+            match: ['clickhouse', 'bronze + oddspedia_bronze'],
             title: 'ClickHouse warehouse',
-            scripts: ['scripts/orchestration/setup_clickhouse.py'],
-            commands: ['python3 scripts/orchestration/setup_clickhouse.py'],
+            scripts: [
+                'scripts/orchestration/setup_fotmob_warehouse.py',
+                'scripts/oddspedia/setup_oddspedia_warehouse.py',
+            ],
+            commands: [
+                'python3 scripts/orchestration/setup_fotmob_warehouse.py',
+                'python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run',
+            ],
             sectionTab: 'infrastructure',
         },
         {
             match: ['bronze ddl', 'silver ddl', 'gold ddl', 'bootstrap'],
             title: 'First-time warehouse bootstrap',
-            scripts: ['scripts/orchestration/setup_clickhouse.py', 'scripts/mongodb/init_indexes.py'],
+            scripts: [
+                'scripts/orchestration/setup_fotmob_warehouse.py',
+                'scripts/oddspedia/setup_oddspedia_warehouse.py',
+                'scripts/mongodb/init_indexes.py',
+            ],
             commands: [
                 'docker compose up -d',
-                'python3 scripts/orchestration/setup_clickhouse.py',
+                'python3 scripts/orchestration/setup_fotmob_warehouse.py',
+                'python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run',
                 'python3 scripts/mongodb/init_indexes.py',
             ],
             sectionTab: 'infrastructure',
@@ -3413,10 +3650,13 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
     // ── Search index ──
     const SEARCH_INDEX = [
         // Overview
-        { title: 'Complete warehouse route', section: 'overview', sectionLabel: 'Overview', keywords: 'setup fill all tables layers create ddl pipeline scrape load bronze silver gold validation sync catalogs start end runbook' },
-        { title: 'End-to-end pipeline', section: 'overview', sectionLabel: 'Overview', keywords: 'pipeline fotmob bronze silver gold activation product' },
+        { title: 'Architecture dimensions', section: 'overview', sectionLabel: 'Map', keywords: 'axis source domain warehouse layer runtime platform operations product surface maturity status' },
+        { title: 'Platforms and responsibilities', section: 'overview', sectionLabel: 'Map', keywords: 'filesystem python clickhouse mongodb optional s3 owned state boundaries' },
+        { title: 'Two source-owned medallion paths', section: 'overview', sectionLabel: 'Map', keywords: 'fotmob oddspedia isolated raw contracts bronze silver gold integration edge' },
+        { title: 'Implemented warehouse routes', section: 'overview', sectionLabel: 'Map', keywords: 'setup source tables ddl pipeline scrape load bronze silver gold validation sync catalogs start end runbook' },
+        { title: 'FotMob implemented end-to-end route', section: 'overview', sectionLabel: 'Map', keywords: 'pipeline fotmob bronze silver gold activation product' },
         { title: 'Quality gates & preflight', section: 'overview', sectionLabel: 'Overview', keywords: 'health_check preflight contract duplicate identities bronze silver gold reconciliation strict exit codes validated' },
-        { title: 'ClickHouse optimization maintenance', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'optimize_clickhouse maintenance physical row versions storage diagnostics execute dry-run' },
+        { title: 'ClickHouse optimization maintenance', section: 'infrastructure', sectionLabel: 'Platforms', keywords: 'optimize_clickhouse maintenance physical row versions storage diagnostics execute dry-run' },
         { title: 'SQL vs Python ownership', section: 'overview', sectionLabel: 'Overview', keywords: 'sql python3 ownership adr 0001 0009 generic runner' },
         // Bronze
         { title: 'Scraping flow', section: 'bronze', sectionLabel: 'Bronze', keywords: 'scrape_fotmob fotmorchestrator dailyscraper matchscraper api json' },
@@ -3424,32 +3664,41 @@ python3 scripts/mongodb/sync_signal_catalogs.py</pre>
         { title: 'ClickHouse loading', section: 'bronze', sectionLabel: 'Bronze', keywords: 'load clickhouse pydantic safeFieldExtractor contract dlq dead letter queue' },
         { title: 'Bronze table inventory', section: 'bronze', sectionLabel: 'Bronze', keywords: 'general timeline venue player shotmap goal cards red_card period momentum starters substitutes coaches team_form match_reference' },
         { title: 'ReplacingMergeTree (Bronze)', section: 'bronze', sectionLabel: 'Bronze', keywords: 'replacingmergetree idempotent physical row versions inserted_at storage diagnostics' },
+        { title: 'Bronze by source', section: 'bronze', sectionLabel: 'Bronze', keywords: 'fotmob oddspedia raw contracts filesystem schemas manifest published facts' },
+        // Oddspedia source domain
+        { title: 'Oddspedia source-owned path', section: 'oddspedia', sectionLabel: 'Oddspedia', keywords: 'discover prioritize scrape load bronze resolve silver planned gold source isolated' },
+        { title: 'Oddspedia persisted artifact contracts', section: 'oddspedia', sectionLabel: 'Oddspedia', keywords: 'json schema match_links match payload manifest pydantic unchanged unknown fields compatibility' },
+        { title: 'Oddspedia date scopes', section: 'oddspedia', sectionLabel: 'Oddspedia', keywords: 'date month inclusive range start-date end-date failure recovery retry' },
         // Silver
         { title: 'Bronze → Silver lineage', section: 'silver', sectionLabel: 'Silver', keywords: 'lineage match period_stat player_match_stat momentum shot card match_personnel team_form' },
         { title: 'Silver execution flow', section: 'silver', sectionLabel: 'Silver', keywords: 'dml script 01 08 ordered insert select assert_silver_layer_contracts' },
+        { title: 'Silver by source and seam', section: 'silver', sectionLabel: 'Silver', keywords: 'fotmob oddspedia match resolution integration edge implemented planned' },
         // Gold
         { title: 'Three Gold namespaces', section: 'gold', sectionLabel: 'Gold', keywords: 'gold_scenarios gold_signals gold signal_activations namespace' },
         { title: 'Gold SQL job execution', section: 'gold', sectionLabel: 'Gold', keywords: 'load_clickhouse_gold run_sql_job goldsqljob discover scenario signal' },
         { title: 'Activation rebuild', section: 'gold', sectionLabel: 'Gold', keywords: 'build_signal_activations signal_activations_stage signal_activation_final_insert sha256 full table rebuild row_identity' },
+        { title: 'Gold by source', section: 'gold', sectionLabel: 'Gold', keywords: 'fotmob implemented oddspedia planned scenarios signals odds outputs status' },
         // Signals
         { title: 'Signal lifecycle', section: 'signals', sectionLabel: 'Signals', keywords: 'sql ddl catalog md sync lifecycle four artifacts' },
         { title: 'Signal taxonomy', section: 'signals', sectionLabel: 'Signals', keywords: 'entity family subfamily match player team shooting creativity possession discipline goalkeeping' },
         { title: 'Signal identity hash', section: 'signals', sectionLabel: 'Signals', keywords: 'sha256 signal_instance_id v1 hash deterministic identity' },
         { title: 'Required catalog frontmatter', section: 'signals', sectionLabel: 'Signals', keywords: 'signal_id status grain row_identity asset_paths entity family subfamily' },
         // Orchestration
-        { title: 'Pipeline execution flow', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'pipeline sequential stages skip exit 0 subprocess adr 0002' },
-        { title: 'Pipeline modes', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'single date range month bronze-only silver-only gold-only' },
-        { title: 'Skip flags', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'skip-fotmob skip-bronze skip-clickhouse skip-silver skip-gold' },
-        { title: 'Failure recovery', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'recovery failure scraping bronze silver signal scenario activation catalog sync' },
-        { title: 'Sequential scraping', section: 'orchestration', sectionLabel: 'Orchestration', keywords: 'sequential fotmoborchestrator rate limit matchscraper live historical today' },
+        { title: 'Operational surfaces by source', section: 'orchestration', sectionLabel: 'Operations', keywords: 'fotmob oddspedia canonical run commands date range month reporting fail closed' },
+        { title: 'FotMob execution flow', section: 'orchestration', sectionLabel: 'Operations', keywords: 'pipeline sequential stages skip exit 0 subprocess adr 0002' },
+        { title: 'Pipeline modes', section: 'orchestration', sectionLabel: 'Operations', keywords: 'single date range month bronze-only silver-only gold-only' },
+        { title: 'Skip flags', section: 'orchestration', sectionLabel: 'Operations', keywords: 'skip-fotmob skip-bronze skip-clickhouse skip-silver skip-gold' },
+        { title: 'Failure recovery', section: 'orchestration', sectionLabel: 'Operations', keywords: 'recovery failure scraping bronze silver signal scenario activation catalog sync' },
+        { title: 'Sequential scraping', section: 'orchestration', sectionLabel: 'Operations', keywords: 'sequential fotmoborchestrator rate limit matchscraper live historical today' },
         // Infrastructure
-        { title: 'Service layout', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'docker compose depthmark-clickhouse depthmark-mongodb depthmark-scraper depthmark_network 8123 9000 27017' },
-        { title: 'Bootstrap sequence', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'setup_clickhouse init_indexes docker-compose first time setup ddl' },
-        { title: 'Credential policy', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 'adr 0005 depthmark_env local production passwords secrets ports' },
-        { title: 'Bronze S3 configuration & storage policy', section: 'infrastructure', sectionLabel: 'Infrastructure', keywords: 's3_endpoint s3_access_key s3_secret_key s3_bucket infer virtual hosted s3_region ir-tbz-sh1 object key archive' },
+        { title: 'Platform topology', section: 'infrastructure', sectionLabel: 'Platforms', keywords: 'filesystem python runtime clickhouse mongodb s3 deployment state ownership ports' },
+        { title: 'Service layout', section: 'infrastructure', sectionLabel: 'Platforms', keywords: 'docker compose depthmark-clickhouse depthmark-mongodb depthmark-scraper depthmark_network 8123 9000 27017' },
+        { title: 'Bootstrap sequence', section: 'infrastructure', sectionLabel: 'Platforms', keywords: 'setup_fotmob_warehouse setup_oddspedia_warehouse init_indexes docker-compose first time setup ddl' },
+        { title: 'Credential policy', section: 'infrastructure', sectionLabel: 'Platforms', keywords: 'adr 0005 depthmark_env local production passwords secrets ports' },
+        { title: 'Bronze S3 configuration & storage policy', section: 'infrastructure', sectionLabel: 'Platforms', keywords: 's3_endpoint s3_access_key s3_secret_key s3_bucket infer virtual hosted s3_region ir-tbz-sh1 object key archive' },
         // MongoDB
-        { title: 'Catalog sync flow', section: 'mongodb', sectionLabel: 'MongoDB', keywords: 'sync_signal_catalogs validate upsert sha256 frontmatter yaml' },
-        { title: 'MongoDB collections', section: 'mongodb', sectionLabel: 'MongoDB', keywords: 'signals scenarios channel_templates content_versions scenario_signal_map orbit_content' },
+        { title: 'Catalog sync flow', section: 'mongodb', sectionLabel: 'Content store', keywords: 'sync_signal_catalogs validate upsert sha256 frontmatter yaml' },
+        { title: 'MongoDB collections', section: 'mongodb', sectionLabel: 'Content store', keywords: 'signals scenarios channel_templates content_versions scenario_signal_map orbit_content' },
     ];
 
     const searchInput = document.getElementById('searchInput');

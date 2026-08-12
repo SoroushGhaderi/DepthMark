@@ -56,36 +56,40 @@ If these files conflict with code, resolve the mismatch intentionally and mentio
 - A useful local setup starts with:
   - `cp .env.example .env`
   - `docker compose up -d`
-  - `python scripts/orchestration/setup_clickhouse.py`
+  - `python scripts/orchestration/setup_fotmob_warehouse.py`
 
 ## Canonical Commands
 
 Run commands from the `depthmark` directory.
 
 ```bash
-python scripts/orchestration/setup_clickhouse.py
+python scripts/orchestration/setup_fotmob_warehouse.py
 python scripts/mongodb/init_indexes.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/bronze/scrape_fotmob.py 20251208
+python scripts/report_scraping.py --date 20251208
 python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python scripts/bronze/load_clickhouse.py --date 20251208
-python scripts/silver/load_clickhouse.py --date 20251208 --dry-run
-python scripts/silver/load_clickhouse.py --month 202512 --dry-run
-python scripts/silver/load_clickhouse.py --full-history --dry-run
-python scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
-python scripts/gold/load_clickhouse_gold.py --month 202512 --dry-run
-python scripts/gold/load_clickhouse_gold.py --full-history --dry-run
-python scripts/gold/load_clickhouse_gold.py --date 20251208 --part scenarios --dry-run
-python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python scripts/bronze/load_fotmob_bronze.py --date 20251208
+python scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python scripts/silver/load_fotmob_silver.py --month 202512 --dry-run
+python scripts/silver/load_fotmob_silver.py --full-history --dry-run
+python scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
+python scripts/gold/load_fotmob_gold.py --month 202512 --dry-run
+python scripts/gold/load_fotmob_gold.py --full-history --dry-run
+python scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
+python scripts/quality/check_data_quality.py --full-history --strict
 python scripts/quality/check_logging_style.py
-python scripts/orchestration/pipeline.py 20251208
-python scripts/orchestration/pipeline.py --single-date 20251208
-python scripts/oddspedia/events.py discover --date 20260301
-python scripts/oddspedia/events.py prioritize --date 20260301 --depthmark-window-ready
-python scripts/oddspedia/events.py scrape --date 20260301 --priority lower
-python scripts/oddspedia/setup_clickhouse.py --dry-run
-python scripts/oddspedia/load_clickhouse.py --date 20260301 --dry-run
-python scripts/oddspedia/resolve_matches.py --date 20260301 --dry-run
+python scripts/orchestration/run_fotmob_pipeline.py 20251208
+python scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
+python scripts/oddspedia/discover_oddspedia_events.py --date 20260301
+python scripts/oddspedia/prioritize_oddspedia_events.py --date 20260301 --silver-reference-window-ready
+python scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --priority-tier lower
+python scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready
+python scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260301 --end-date 20260307 --silver-reference-window-ready
+python scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
+python scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run
+python scripts/oddspedia/load_oddspedia_bronze.py --start-date 20260301 --end-date 20260307 --dry-run
+python scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --dry-run
 ```
 
 Use dry-run modes first for loaders, destructive operations, and catalog syncs when available.
@@ -102,6 +106,12 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
   `gold_scenarios.*`, `gold_signals.*`, and Gold metadata tables in `gold.*`.
 - Keep SQL deterministic and rerunnable.
 - Preserve script entry points and CLI behavior unless the task explicitly asks for a breaking change.
+- Name canonical source workflow scripts
+  `<verb>_<source>[_<layer-or-entity>].py`; old names may remain only as
+  warning-emitting compatibility adapters.
+- Use `scripts/report_scraping.py` as the only canonical scraping-report entry
+  point. It selects `fotmob`, `oddspedia`, or `all` through `--source`; source
+  adapters remain explicit and read-only.
 
 ## Code Style
 
@@ -149,8 +159,8 @@ Use the narrowest verification that proves the change.
 pytest
 python scripts/quality/check_logging_style.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
-python scripts/silver/load_clickhouse.py --date 20251208 --dry-run
-python scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 ```
 

@@ -1,9 +1,10 @@
 import os
-from datetime import date, datetime, timezone
+from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
-from config.settings import OddspediaSettings, get_settings as get_depthmark_settings
+from config.settings import OddspediaSettings
+from config.settings import get_settings as get_depthmark_settings
 
 
 def get_settings() -> OddspediaSettings:
@@ -32,6 +33,10 @@ LOGS_DIR = str(_PROJECT_ROOT / "logs" / "oddspedia")
 
 BASE_URL = settings.base_url
 FOOTBALL_ODDS_URL = f"{BASE_URL}/football"
+# Odds can be absent while the page is still loading. Keep this policy
+# separate from the broader page/error retry budget so an empty odds result is
+# only accepted after three football extraction attempts.
+FOOTBALL_ODDS_MAX_ATTEMPTS = 3
 DEFAULT_SPORT = "football"
 SCRAPER_ENV = settings.scraper_env
 MIN_DELAY = settings.min_delay
@@ -82,7 +87,7 @@ def get_storage_aspect(date_str: str, current_date: Optional[date] = None) -> st
     current date is a refreshable Live snapshot; future dates are rejected.
     """
     target_date = datetime.strptime(normalize_date(date_str), "%Y%m%d").date()
-    today = current_date or datetime.now(timezone.utc).date()
+    today = current_date or date.today()
     if target_date > today:
         raise ValueError(f"future dates cannot be collected: {date_str}")
     return "live" if target_date == today else "historical"
@@ -91,9 +96,7 @@ def get_storage_aspect(date_str: str, current_date: Optional[date] = None) -> st
 def get_date_dir(date_str=None, sport=None):
     """Return the root directory for a date's storage aspect."""
     normalize_sport(sport)
-    date_id = normalize_date(
-        date_str or datetime.now(timezone.utc).strftime("%Y%m%d")
-    )
+    date_id = normalize_date(date_str or date.today().strftime("%Y%m%d"))
     return LIVE_DIR if get_storage_aspect(date_id) == "live" else HISTORICAL_DIR
 
 
@@ -108,9 +111,7 @@ def get_match_links_file(date_str=None, sport=None):
     """Return the match-links JSON path for a given date.
     e.g. data/oddspedia/historical/daily_listings/202602/20260227/match_links.json
     """
-    date_id = normalize_date(
-        date_str or datetime.now(timezone.utc).strftime("%Y%m%d")
-    )
+    date_id = normalize_date(date_str or date.today().strftime("%Y%m%d"))
     return os.path.join(
         _get_artifact_date_dir("daily_listings", date_id, sport), "match_links.json"
     )
@@ -155,9 +156,7 @@ def get_matches_dir(date_str=None, sport=None):
     """Return the per-match JSON directory for a given date.
     e.g. data/oddspedia/historical/matches/202602/20260227/
     """
-    date_id = normalize_date(
-        date_str or datetime.now(timezone.utc).strftime("%Y%m%d")
-    )
+    date_id = normalize_date(date_str or date.today().strftime("%Y%m%d"))
     return _get_artifact_date_dir("matches", date_id, sport)
 
 

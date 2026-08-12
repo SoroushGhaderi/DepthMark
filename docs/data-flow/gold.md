@@ -100,18 +100,18 @@ Job discovery uses `GoldSqlJob` in `src/fotmob/gold/dml_runner.py`:
 - Files prefixed `scenario_*.sql` → scenario jobs
 - Selection by `--id`, `--entity`, `--family`, or `--kind`
 
-### 3. Bulk Loading (`scripts/gold/load_clickhouse_gold.py`)
+### 3. Bulk Loading (`scripts/gold/load_fotmob_gold.py`)
 
 Runs all Gold SQL jobs and scoped activation replacement. One explicit scope is
 required:
 ```bash
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208
-python3 scripts/gold/load_clickhouse_gold.py --single-date 20251208
-python3 scripts/gold/load_clickhouse_gold.py --month 202512
-python3 scripts/gold/load_clickhouse_gold.py --full-history
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part scenarios
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208
+python3 scripts/gold/load_fotmob_gold.py --single-date 20251208
+python3 scripts/gold/load_fotmob_gold.py --month 202512
+python3 scripts/gold/load_fotmob_gold.py --full-history
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
 ```
 
 Execution order:
@@ -163,7 +163,7 @@ python3 scripts/gold/activations/build_signal_activations.py --date 20251208 --d
 
 Serving-table DDL: `clickhouse/gold/ddl/create_table_signal_activations.sql`
 
-`load_clickhouse_gold.py` invokes the builder after successful signal runs.
+`load_fotmob_gold.py` invokes the builder after successful signal runs.
 If any signal SQL job fails, activation rebuild is skipped until signals succeed
 or you rerun the builder manually.
 
@@ -205,7 +205,7 @@ python3 scripts/gold/drop_clickhouse_scenarios.py --part all
 | Signal SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind signal --id <signal>` |
 | Scenario SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind scenario --id <scenario>` |
 | Activation replacement fails | Re-run `build_signal_activations.py` with the same scope |
-| Signal SQL failures block activations | Fix signals and rerun `load_clickhouse_gold.py` with the same scope |
+| Signal SQL failures block activations | Fix signals and rerun `load_fotmob_gold.py` with the same scope |
 | Staging fails | Existing targets remain unchanged; inspect retained stage tables |
 | Commit partially fails | Rerun the identical scope to converge committed and pending tables |
 | DDL mismatch | Re-run `setup_clickhouse_gold.py` |

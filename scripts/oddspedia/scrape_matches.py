@@ -11,4 +11,9 @@ from src.oddspedia.scraping.entrypoints import run_event_command
 
 
 if __name__ == "__main__":
+    print(
+        "Warning: scripts/oddspedia/scrape_matches.py is deprecated; use "
+        "scripts/oddspedia/scrape_oddspedia_matches.py instead.",
+        file=sys.stderr,
+    )
     run_event_command("scrape")

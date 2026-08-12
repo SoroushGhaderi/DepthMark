@@ -741,7 +741,8 @@ def process_fotmob_table(
     if schema_rows is None:
         log.error(
             f"Table {BRONZE_DATABASE}.{physical_table} does not exist. "
-            f"Please run 'python scripts/orchestration/setup_clickhouse.py' to create all required tables."
+            "Please run 'python scripts/orchestration/setup_fotmob_warehouse.py' "
+            "to create all required tables."
         )
         return 0
 
@@ -808,7 +809,8 @@ def _process_special_fotmob_table(
     if schema_rows is None:
         log.error(
             f"Table {BRONZE_DATABASE}.{physical_table} does not exist. "
-            f"Please run 'python scripts/orchestration/setup_clickhouse.py' to create all required tables."
+            "Please run 'python scripts/orchestration/setup_fotmob_warehouse.py' "
+            "to create all required tables."
         )
         return 0
 

@@ -16,7 +16,12 @@ from urllib.parse import urlparse
 from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
 from selenium.webdriver.common.by import By
 
-from src.oddspedia.scraping.config import BASE_URL, SCROLL_PAUSE, normalize_sport
+from src.oddspedia.scraping.config import (
+    BASE_URL,
+    FOOTBALL_ODDS_MAX_ATTEMPTS,
+    SCROLL_PAUSE,
+    normalize_sport,
+)
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
 from src.oddspedia.scraping.utils import (
@@ -36,6 +41,19 @@ OPTIONAL_CONTROL_POLL_SECONDS = 0.1
 
 class FootballOddsCoverageError(RuntimeError):
     """Raised when Oddspedia exposes a football market that was not saved."""
+
+    def __init__(self, message, *, missing_markets=None, partial_odds=None):
+        super().__init__(message)
+        self.missing_markets = list(
+            dict.fromkeys(
+                str(name).strip() for name in (missing_markets or []) if str(name).strip()
+            )
+        )
+        self.partial_odds = list(partial_odds or [])
+
+
+class FootballOddsRetryableError(FootballOddsCoverageError):
+    """Raised when football odds may appear on a subsequent page attempt."""
 
 
 class FootballOddsUnavailableError(RuntimeError):
@@ -564,6 +582,59 @@ _JS_FOOTBALL_COLLAPSED_MARKET_TITLES = """
 """
 
 
+_JS_FOOTBALL_MARKET_INVENTORY = """
+    var root = document.querySelector('[data-module-name="Odds Comparison"]') || document;
+    var cards = Array.from(root.querySelectorAll('.matchup-odds-comparison-card'));
+    var names = cards.map(function(card) {
+        var header = card.querySelector(
+            '.matchup-odds-comparison-card__header, [class*="market-header"], '
+            + '[class*="market-name"], [class*="title"], h2, h3, h4'
+        );
+        return header ? header.textContent.replace(/\\s+/g, ' ').trim() : '';
+    }).filter(Boolean);
+    return {total_markets: cards.length, market_names: names};
+"""
+
+
+def _football_market_inventory(driver):
+    """Return the market-card inventory exposed after page expansion.
+
+    The card count is the source-side denominator for odds coverage. It is
+    intentionally collected separately from the extracted odds count because
+    Oddspedia can render the market inventory before the individual card odds
+    finish loading.
+    """
+    try:
+        inventory = driver.execute_script(_JS_FOOTBALL_MARKET_INVENTORY) or {}
+    except WebDriverException as exc:
+        logger.warning("football_market_inventory_failed", error=str(exc))
+        return {"total_markets": None, "market_names": []}
+
+    if not isinstance(inventory, dict):
+        logger.warning(
+            "football_market_inventory_invalid",
+            value_type=type(inventory).__name__,
+        )
+        return {"total_markets": None, "market_names": []}
+
+    names = []
+    for value in inventory.get("market_names") or []:
+        name = re.sub(r"\\s+", " ", str(value or "")).strip()
+        if name and name not in names:
+            names.append(name)
+
+    try:
+        total_markets = int(inventory.get("total_markets"))
+    except (TypeError, ValueError):
+        total_markets = None
+    if total_markets is not None and total_markets <= 0:
+        total_markets = None
+    if total_markets is not None and len(names) > total_markets:
+        total_markets = len(names)
+
+    return {"total_markets": total_markets, "market_names": names}
+
+
 def _expand_football_market_list(driver, timeout=10.0, max_rounds=8):
     """Reveal every collapsed full-time market card exposed by the market list."""
     total_added = 0
@@ -742,13 +813,23 @@ def _expand_football_market_card_lines(driver, market_title, max_rounds=12):
     return expanded
 
 
-def _expand_football_market_cards(driver):
-    """Expand football cards and every visible card's alternative lines."""
+def _expand_football_market_cards(driver, market_names=None):
+    """Expand football cards and alternative lines, optionally for named markets only."""
     try:
         titles = driver.execute_script(_JS_FOOTBALL_COLLAPSED_MARKET_TITLES) or []
     except WebDriverException as exc:
         logger.warning("football_market_card_discovery_failed", error=str(exc))
         return
+
+    target_markets = list(
+        dict.fromkeys(str(name).strip() for name in (market_names or []) if str(name).strip())
+    )
+    if target_markets:
+        titles = [
+            title
+            for title in titles
+            if any(_football_market_names_match(title, target) for target in target_markets)
+        ]
 
     unresolved = []
     unique_titles = list(dict.fromkeys(titles))
@@ -793,6 +874,13 @@ def _expand_football_market_cards(driver):
         logger.warning("football_market_line_discovery_failed", error=str(exc))
         all_titles = []
 
+    if target_markets:
+        all_titles = [
+            title
+            for title in all_titles
+            if any(_football_market_names_match(title, target) for target in target_markets)
+        ]
+
     expanded_lines = sum(
         _expand_football_market_card_lines(driver, title) for title in dict.fromkeys(all_titles)
     )
@@ -801,6 +889,7 @@ def _expand_football_market_cards(driver):
             "football_market_cards_expanded",
             count=len(all_titles),
             alternative_line_buttons=expanded_lines,
+            targeted_markets=target_markets or None,
         )
 
 
@@ -969,7 +1058,8 @@ _JS_EXTRACT_ODDS = """
         var t = el.textContent.replace(/\\s+/g, ' ').trim().toUpperCase();
         var hasDir = t.indexOf('OVER')  >= 0 || t.indexOf('UNDER') >= 0 ||
                      t.indexOf('HOME')  >= 0 || t.indexOf('AWAY')  >= 0 ||
-                     t.indexOf('DRAW')  >= 0 || t.indexOf('YES')   >= 0 ||
+                     t.indexOf('DRAW')  >= 0 || hasToken(t, 'TIE') ||
+                     t.indexOf('YES')   >= 0 ||
                      t.indexOf('NO')    >= 0 || hasToken(t, 'ODD') ||
                      hasToken(t, 'EVEN') || hasToken(t, '1X') ||
                      hasToken(t, 'X2') || hasToken(t, '12');
@@ -1017,7 +1107,14 @@ _JS_EXTRACT_ODDS = """
         var t = el.textContent.replace(/\\s+/g, ' ').trim().toUpperCase();
         var dir = null;
         var outcome = '';
-        var labelEl = el.querySelector('.odd-box-with-label__label');
+        // Logo-backed football odds use the same semantic label/value pair as
+        // regular odds boxes, but with the ``odd-box-with-logo`` prefix.
+        // European Handicap commonly renders its third outcome as ``Tie`` in
+        // this variant; ignoring the logo label leaves the bookmaker name in
+        // the fallback outcome and the Python contract cannot map it to draw.
+        var labelEl = el.querySelector(
+            '.odd-box-with-label__label, .odd-box-with-logo__label'
+        );
         var explicitLabel = labelEl ? labelEl.textContent.trim() : '';
         // Keep HT/FT labels such as "Draw / Home" intact rather than
         // collapsing them to a simple draw outcome below.
@@ -1027,6 +1124,7 @@ _JS_EXTRACT_ODDS = """
         // Check this before generic NO: it is a distinct third outcome.
         else if (t.indexOf('NO GOAL') >= 0) dir = 'no_goal';
         else if (t.indexOf('DRAW')  >= 0) dir = 'draw';
+        else if (hasToken(t, 'TIE') || hasToken(t, 'X')) dir = 'draw';
         else if (t.indexOf('YES')   >= 0) dir = 'yes';
         else if (t.indexOf('NO')    >= 0) dir = 'no';
         else if (hasToken(t, 'ODD')) dir = 'odd';
@@ -1045,7 +1143,7 @@ _JS_EXTRACT_ODDS = """
                 if      (lbl === 'OVER')  dir = 'over';
                 else if (lbl === 'UNDER') dir = 'under';
                 else if (lbl === 'NO GOAL') dir = 'no_goal';
-                else if (lbl === 'DRAW')  dir = 'draw';
+                else if (lbl === 'DRAW' || lbl === 'TIE' || lbl === 'X') dir = 'draw';
                 else if (lbl === 'YES')   dir = 'yes';
                 else if (lbl === 'NO')    dir = 'no';
                 else if (lbl === 'ODD')   dir = 'odd';
@@ -1276,11 +1374,12 @@ _JS_EXTRACT_ODDS = """
             label: marketNeedsLineLabel(market) ? findParameterizedLineLabel(card) : ''
         };
         var count = 0;
-        var re = /\\b(Home|Draw|Away|Over|Under|Yes|No|Odd|Even|1X|X2|12)\\s+([+-]\\d{2,5}\\b|\\d+\\.\\d+|\\d+\\s*\\/\\s*\\d+)/gi;
+        var re = /\\b(Home|Draw|Tie|X|Away|Over|Under|Yes|No|Odd|Even|1X|X2|12)\\s+([+-]\\d{2,5}\\b|\\d+\\.\\d+|\\d+\\s*\\/\\s*\\d+)/gi;
         var match;
         while ((match = re.exec(text)) !== null) {
             var key = match[1].toLowerCase();
-            if (key === '1x') key = 'home_draw';
+            if (key === 'draw' || key === 'tie' || key === 'x') key = 'draw';
+            else if (key === '1x') key = 'home_draw';
             else if (key === 'x2') key = 'draw_away';
             else if (key === '12') key = 'home_away';
             if (entry[key] !== undefined) continue;
@@ -1774,6 +1873,31 @@ def _validate_european_handicap_coverage(odds):
     return complete
 
 
+def _football_odds_coverage_error(odds, total_markets=None, odds_unavailable=False):
+    """Return an error when fewer odds markets were extracted than exposed."""
+    # Preserve compatibility with callers that passed the former boolean
+    # second positional argument while the denominator was not tracked yet.
+    if isinstance(total_markets, bool) and odds_unavailable is False:
+        odds_unavailable = total_markets
+        total_markets = None
+    if odds_unavailable or total_markets is None:
+        return None
+    try:
+        expected_count = int(total_markets)
+    except (TypeError, ValueError):
+        return None
+    if expected_count <= 0:
+        return None
+
+    extracted_count = len(odds or [])
+    if extracted_count >= expected_count:
+        return None
+    return (
+        "Football odds market coverage incomplete: "
+        f"extracted {extracted_count}/{expected_count} markets; retry required"
+    )
+
+
 def _football_label_key(value):
     return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
 
@@ -1822,6 +1946,49 @@ _FOOTBALL_DEFAULT_LINE_LABEL = "Main Line"
 def _football_market_family(market_name):
     name = re.sub(r"^\s*(?:1st|2nd)\s+half\s*-\s*", "", str(market_name or ""), flags=re.I)
     return re.sub(r"\s+", " ", name).strip().lower()
+
+
+def _football_market_family_key(market_name):
+    """Return a stable key for equivalent source labels."""
+    family = _football_market_family(market_name)
+    return {
+        "match winner": "full time result",
+        "1x2": "full time result",
+    }.get(family, family)
+
+
+def _football_market_names_match(left, right):
+    """Return whether two Oddspedia labels describe the same market family."""
+    left_key = _football_market_family_key(left)
+    right_key = _football_market_family_key(right)
+    return bool(left and right) and left_key == right_key
+
+
+def _football_filter_markets(markets, target_markets):
+    """Keep only markets matching the requested source labels."""
+    targets = list(target_markets or [])
+    if not targets:
+        return list(markets or [])
+    return [
+        market
+        for market in markets or []
+        if any(_football_market_names_match(market.get("market"), target) for target in targets)
+    ]
+
+
+def _football_missing_market_names(market_names, odds):
+    """Return inventory labels that do not have a complete saved market."""
+    missing = []
+    for market_name in dict.fromkeys(str(name).strip() for name in (market_names or [])):
+        if not market_name:
+            continue
+        if not any(
+            _football_market_names_match(market.get("market"), market_name)
+            and _football_market_has_coverage(market)
+            for market in odds or []
+        ):
+            missing.append(market_name)
+    return missing
 
 
 def _football_market_requires_label(market_name):
@@ -2120,13 +2287,24 @@ def _apply_football_selector_context(markets, selector_text):
     return contextual
 
 
+_FOOTBALL_NON_MARKET_SELECTOR_PATTERN = re.compile(
+    r"(?:\bmoney\s+on\b|\bbetting\s+data\b)", flags=re.I
+)
+
+
+def _is_football_market_selector_text(value):
+    """Return whether *value* looks like a market selector rather than a stats link."""
+    text = re.sub(r"\s+", " ", str(value or "")).strip()
+    return bool(text) and not _FOOTBALL_NON_MARKET_SELECTOR_PATTERN.search(text)
+
+
 _JS_FOOTBALL_MARKET_SELECTOR_TEXTS = """
     function cleanText(el) {
         return (el && el.textContent || '').replace(/\\s+/g, ' ').trim();
     }
     function isOddsButtonText(text) {
         var t = text.toUpperCase();
-        var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|YES|NO)\\b/.test(t);
+        var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|TIE|YES|NO)\\b/.test(t);
         var hasOdds = /\\d+\\.\\d+|\\b\\d+\\s*\\/\\s*\\d+\\b|(?:^|\\s)[+-]\\d{2,5}\\b/.test(t);
         return hasDir && hasOdds;
     }
@@ -2140,6 +2318,7 @@ _JS_FOOTBALL_MARKET_SELECTOR_TEXTS = """
     function looksLikeMarketText(text) {
         if (!text || text.length < 3 || text.length > 80) return false;
         var lower = text.toLowerCase();
+        if (/\\bmoney\\s+on\\b|\\bbetting\\s+data\\b/.test(lower)) return false;
         if (/show more|show all|view all|compare|betting stats|live stats|seasonal stats/.test(lower)) return false;
         if (isOddsButtonText(text)) return false;
         if (/^\\d+(?:\\.\\d+)?$/.test(text)) return false;
@@ -2196,13 +2375,14 @@ def _click_football_market_selector(driver, market_text):
         }
         function isOddsButtonText(text) {
             var t = text.toUpperCase();
-            var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|YES|NO)\\b/.test(t);
+            var hasDir = /\\b(OVER|UNDER|HOME|AWAY|DRAW|TIE|YES|NO)\\b/.test(t);
             var hasOdds = /\\d+\\.\\d+|\\b\\d+\\s*\\/\\s*\\d+\\b|(?:^|\\s)[+-]\\d{2,5}\\b/.test(t);
             return hasDir && hasOdds;
         }
         function looksLikeMarketText(text) {
             if (!text || text.length < 3 || text.length > 80) return false;
             var lower = text.toLowerCase();
+            if (/\\bmoney\\s+on\\b|\\bbetting\\s+data\\b/.test(lower)) return false;
             if (/show more|show all|view all|compare|betting stats|live stats|seasonal stats/.test(lower)) return false;
             if (isOddsButtonText(text)) return false;
             if (/^\\d+(?:\\.\\d+)?$/.test(text)) return false;
@@ -2337,23 +2517,57 @@ def _football_selector_rendered(markets, selector_text):
     )
 
 
-def _extract_football_odds(driver, base_odds, home="", away=""):
-    """Click each visible football market selector and merge its rendered odds."""
+def _extract_football_odds(
+    driver,
+    base_odds,
+    home="",
+    away="",
+    target_markets=None,
+    raise_on_unresolved=True,
+    return_unresolved=False,
+):
+    """Click football market selectors and merge their rendered odds.
+
+    ``target_markets`` is used by the retry path to limit DOM interaction to
+    markets that were absent from an earlier extraction. The default keeps the
+    original all-selector behavior for first attempts and direct callers.
+    """
+
+    def extraction_result(markets, unresolved):
+        return (markets, unresolved) if return_unresolved else markets
+
     odds = _normalize_football_odds(base_odds or [], home=home, away=away)
+    target_markets = list(
+        dict.fromkeys(str(name).strip() for name in (target_markets or []) if str(name).strip())
+    )
     if _football_odds_not_yet_available(driver):
         logger.info("football_odds_not_yet_available", markets=len(odds))
-        return odds
+        unresolved = _football_missing_market_names(target_markets, odds)
+        return extraction_result(odds, unresolved)
     try:
         selector_texts = driver.execute_script(_JS_FOOTBALL_MARKET_SELECTOR_TEXTS) or []
     except WebDriverException as exc:
         logger.warning("football_market_selector_count_failed", error=str(exc))
-        return odds
+        unresolved = _football_missing_market_names(target_markets, odds)
+        return extraction_result(odds, unresolved)
 
     selector_texts = [
-        text for text in selector_texts if str(text).strip().lower() not in {"1st half", "2nd half"}
+        text
+        for text in selector_texts
+        if _is_football_market_selector_text(text)
+        and str(text).strip().lower() not in {"1st half", "2nd half"}
     ]
+    if target_markets:
+        selector_texts = [
+            text
+            for text in selector_texts
+            if any(_football_market_names_match(text, target) for target in target_markets)
+            and not _has_football_market(odds, text)
+        ]
     if not selector_texts:
-        return _validate_european_handicap_coverage(odds)
+        odds = _validate_european_handicap_coverage(odds)
+        unresolved = _football_missing_market_names(target_markets, odds)
+        return extraction_result(odds, unresolved)
 
     logger.info(
         "football_market_selectors_found", count=len(selector_texts), selectors=selector_texts[:50]
@@ -2403,15 +2617,19 @@ def _extract_football_odds(driver, base_odds, home="", away=""):
                 unresolved_markets.append(market_text)
 
     if unresolved_markets and not odds:
-        raise FootballOddsUnavailableError(
-            "All football odds are unavailable: " + ", ".join(unresolved_markets)
-        )
-    if unresolved_markets:
+        if raise_on_unresolved:
+            raise FootballOddsUnavailableError(
+                "All football odds are unavailable: " + ", ".join(unresolved_markets)
+            )
+    if unresolved_markets and raise_on_unresolved:
         raise FootballOddsCoverageError(
             "Unresolved football odds markets: " + ", ".join(unresolved_markets)
         )
+    if target_markets:
+        unresolved_markets = _football_missing_market_names(target_markets, odds)
     logger.info("football_odds_after_market_iteration", markets=len(odds))
-    return _validate_european_handicap_coverage(odds)
+    odds = _validate_european_handicap_coverage(odds)
+    return extraction_result(odds, unresolved_markets)
 
 
 # ── Score parsing ─────────────────────────────────────────────────────────────
@@ -2699,13 +2917,55 @@ def _extract_overall_stats(driver):
 # ── Public API ────────────────────────────────────────────────────────────────
 
 
-def scrape_match(driver, match_info, sport=None):
-    """Visit a single match page and extract all available data."""
+def scrape_match(
+    driver,
+    match_info,
+    sport=None,
+    odds_attempt=FOOTBALL_ODDS_MAX_ATTEMPTS,
+    odds_max_attempts=FOOTBALL_ODDS_MAX_ATTEMPTS,
+    previous_empty_odds_attempts=None,
+    previous_odds=None,
+    retry_market_names=None,
+):
+    """Visit a single match page and extract all available data.
+
+    The phase-two orchestrator passes the current odds attempt so an empty
+    football odds render can be retried without accepting a false empty
+    result. Direct callers default to the terminal attempt for backwards
+    compatibility; the orchestrator owns the page-level retry loop.
+
+    ``previous_odds`` and ``retry_market_names`` are supplied by the phase-two
+    retry loop after a partial football extraction. The page still has to be
+    loaded again, but only the named missing markets are expanded and selected;
+    already saved markets are carried forward in memory.
+    """
     metrics = get_metrics()
     sport = normalize_sport(sport or match_info.get("sport", "football"))
+    try:
+        odds_max_attempts = max(1, int(odds_max_attempts))
+    except (TypeError, ValueError):
+        odds_max_attempts = FOOTBALL_ODDS_MAX_ATTEMPTS
+    try:
+        odds_attempt = int(odds_attempt)
+    except (TypeError, ValueError):
+        odds_attempt = odds_max_attempts
+    odds_attempt = max(1, min(odds_attempt, odds_max_attempts))
+    if previous_empty_odds_attempts is None:
+        # Direct callers historically received a terminal empty result. Treat
+        # omitted state as the earlier attempts having already been empty,
+        # while the orchestrator passes the real per-match counter.
+        previous_empty_odds_attempts = max(0, odds_attempt - 1)
+    else:
+        try:
+            previous_empty_odds_attempts = max(0, int(previous_empty_odds_attempts))
+        except (TypeError, ValueError):
+            previous_empty_odds_attempts = 0
     t0 = time.time()
     match_id = match_info["id"]
     url = match_info.get("full_url") or match_info.get("url", "")
+    retry_market_names = list(
+        dict.fromkeys(str(name).strip() for name in (retry_market_names or []) if str(name).strip())
+    )
 
     if not url:
         logger.warning("no_url_for_match", match_id=match_id)
@@ -2832,6 +3092,8 @@ def scrape_match(driver, match_info, sport=None):
         or match_info.get("league", "")
     )
     date = meta.get("date") or match_info.get("date", "")
+    carried_odds = _normalize_football_odds(previous_odds or [], home=home, away=away)
+    targeted_market_retry = sport == "football" and bool(carried_odds) and bool(retry_market_names)
 
     # Tennis score fields are sport-specific. Football should rely on shared
     # metadata/status/odds/stats rather than fake set data.
@@ -2888,6 +3150,8 @@ def scrape_match(driver, match_info, sport=None):
             meta["status"] = match_info["status"]
 
     odds_unavailable = False
+    total_markets = None
+    market_names = []
     if sport == "football":
         odds_unavailable = _football_odds_not_yet_available(driver)
         if odds_unavailable:
@@ -2900,7 +3164,20 @@ def scrape_match(driver, match_info, sport=None):
             logger.info("match_scrape_progress", match_id=match_id, stage="expanding_market_list")
             _expand_football_market_list(driver)
             logger.info("match_scrape_progress", match_id=match_id, stage="expanding_market_cards")
-            _expand_football_market_cards(driver)
+            _expand_football_market_cards(
+                driver,
+                market_names=retry_market_names if targeted_market_retry else None,
+            )
+            inventory = _football_market_inventory(driver)
+            total_markets = inventory.get("total_markets")
+            market_names = inventory.get("market_names", [])
+            logger.info(
+                "football_market_inventory",
+                match_id=match_id,
+                total_markets=total_markets,
+                market_names=market_names,
+                targeted_markets=retry_market_names if targeted_market_retry else None,
+            )
     else:
         _expand_all_odds_lines(driver)
 
@@ -2911,43 +3188,51 @@ def scrape_match(driver, match_info, sport=None):
         elapsed_seconds=round(time.time() - t0, 1),
     )
 
-    # Odds
+    # Odds. On a targeted retry, preserve the already extracted markets and
+    # only use the current DOM's base read for the named missing markets.
     raw_markets = [] if odds_unavailable else driver.execute_script(_JS_EXTRACT_ODDS)
-    odds = _build_odds(raw_markets or [])
+    current_odds = _normalize_football_odds(_build_odds(raw_markets or []), home=home, away=away)
+    if targeted_market_retry:
+        current_odds = _football_filter_markets(current_odds, retry_market_names)
+        odds = _merge_odds_markets(list(carried_odds), current_odds)
+    else:
+        odds = current_odds
+    extraction_error = None
+    unresolved_markets = []
     if sport == "football":
-        odds = _normalize_football_odds(odds, home=home, away=away)
         # The first rendered cards do not include every selector-only market.
         # Iterate those selectors after the base extraction, expanding each
         # card's hidden alternative lines before it is merged.
-        odds = _extract_football_odds(driver, odds, home=home, away=away)
+        try:
+            extracted = _extract_football_odds(
+                driver,
+                odds,
+                home=home,
+                away=away,
+                target_markets=retry_market_names if targeted_market_retry else None,
+                raise_on_unresolved=False,
+                return_unresolved=True,
+            )
+            if isinstance(extracted, tuple) and len(extracted) == 2:
+                odds, unresolved_markets = extracted
+            else:
+                # Keep compatibility with test doubles and older direct
+                # implementations that returned only the market list.
+                odds = extracted
+        except FootballOddsUnavailableError as exc:
+            # An empty selector render is often a transient page state. Keep
+            # it retryable until the configured terminal odds attempt.
+            extraction_error = exc
+            odds = []
         odds_unavailable = odds_unavailable or (
             not odds and _football_odds_not_yet_available(driver)
         )
+        if odds:
+            odds_unavailable = False
 
-    logger.info(
-        "match_scrape_progress",
-        match_id=match_id,
-        stage="odds_extracted",
-        markets=len(odds),
-        elapsed_seconds=round(time.time() - t0, 1),
-    )
-
-    if odds:
-        metrics.record_odds_extraction(success=True)
-        for mkt in odds:
-            metrics.record_odds_market(mkt.get("market", "unknown"))
-    else:
-        metrics.record_odds_extraction(success=False)
-
-    if sport == "football" and 0 < len(odds) <= 4:
-        logger.warning(
-            "football_odds_markets_may_be_truncated",
-            match_id=match_id,
-            markets=len(odds),
-            market_names=[m.get("market", "") for m in odds],
-        )
-
-    if not odds and not odds_unavailable:
+    # A listing row can carry a small 1X2 fallback. Use it before deciding
+    # that a detail-page empty render needs another attempt.
+    if sport == "football" and not odds:
         ho = match_info.get("home_odds", "")
         do = match_info.get("draw_odds", "")
         ao = match_info.get("away_odds", "")
@@ -2966,6 +3251,103 @@ def scrape_match(driver, match_info, sport=None):
                     "lines": [line],
                 }
             )
+            odds_unavailable = False
+            extraction_error = None
+
+    if sport == "football":
+        if not odds:
+            empty_odds_attempts = previous_empty_odds_attempts + 1
+            if odds_attempt < odds_max_attempts:
+                metrics.record_odds_extraction(success=False)
+                logger.warning(
+                    "football_odds_empty_retry",
+                    match_id=match_id,
+                    odds_attempt=odds_attempt,
+                    odds_max_attempts=odds_max_attempts,
+                    empty_odds_attempts=empty_odds_attempts,
+                    total_markets=total_markets,
+                    error=str(extraction_error) if extraction_error else "no odds extracted",
+                )
+                raise FootballOddsRetryableError(
+                    "Football odds were empty on attempt "
+                    f"{odds_attempt}/{odds_max_attempts}; retry required"
+                ) from extraction_error
+
+            if empty_odds_attempts < odds_max_attempts:
+                logger.warning(
+                    "football_odds_empty_attempts_mixed",
+                    match_id=match_id,
+                    odds_attempt=odds_attempt,
+                    odds_max_attempts=odds_max_attempts,
+                    empty_odds_attempts=empty_odds_attempts,
+                    total_markets=total_markets,
+                )
+                raise FootballOddsCoverageError(
+                    "Football odds remained empty after the final attempt, but "
+                    f"only {empty_odds_attempts}/{odds_max_attempts} attempts were empty"
+                ) from extraction_error
+
+            odds_unavailable = True
+            logger.warning(
+                "football_odds_unavailable_after_retries",
+                match_id=match_id,
+                odds_attempt=odds_attempt,
+                odds_max_attempts=odds_max_attempts,
+                empty_odds_attempts=empty_odds_attempts,
+                total_markets=total_markets,
+            )
+        else:
+            coverage_error = _football_odds_coverage_error(
+                odds,
+                total_markets=total_markets,
+                odds_unavailable=odds_unavailable,
+            )
+            if coverage_error:
+                missing_market_names = list(
+                    dict.fromkeys(
+                        _football_missing_market_names(market_names, odds)
+                        + list(unresolved_markets)
+                    )
+                )
+                logger.warning(
+                    "football_odds_markets_incomplete",
+                    match_id=match_id,
+                    total_markets=total_markets,
+                    extracted_markets=len(odds),
+                    market_names=market_names,
+                    missing_markets=missing_market_names,
+                    retryable=True,
+                )
+                raise FootballOddsCoverageError(
+                    coverage_error,
+                    missing_markets=missing_market_names,
+                    partial_odds=odds,
+                )
+            logger.info(
+                "football_odds_market_coverage",
+                match_id=match_id,
+                total_markets=total_markets,
+                extracted_markets=len(odds),
+                complete=(total_markets is None or len(odds) >= total_markets),
+            )
+
+    logger.info(
+        "match_scrape_progress",
+        match_id=match_id,
+        stage="odds_extracted",
+        markets=len(odds),
+        total_markets=total_markets,
+        odds_attempt=odds_attempt,
+        odds_max_attempts=odds_max_attempts,
+        elapsed_seconds=round(time.time() - t0, 1),
+    )
+
+    if odds:
+        metrics.record_odds_extraction(success=True)
+        for mkt in odds:
+            metrics.record_odds_market(mkt.get("market", "unknown"))
+    else:
+        metrics.record_odds_extraction(success=False)
 
     # Live odds are tennis-only for this scraper. Football pages can expose
     # in-play tabs, but we intentionally do not scrape them.
@@ -3014,6 +3396,11 @@ def scrape_match(driver, match_info, sport=None):
             "score": football_score,
             "odds": odds,
             "odds_unavailable": odds_unavailable,
+            "odds_total_markets": total_markets,
+            "odds_extracted_markets": len(odds),
+            "odds_attempt": odds_attempt,
+            "odds_max_attempts": odds_max_attempts,
+            "odds_empty_attempts": (previous_empty_odds_attempts + (0 if odds else 1)),
             "stats": stats,
             "stats_source": "Live Stats" if stats else "",
             "scraped_at": now_iso(),
@@ -3027,6 +3414,9 @@ def scrape_match(driver, match_info, sport=None):
             home=home,
             away=away,
             odds_markets=len(odds),
+            odds_total_markets=total_markets,
+            odds_attempt=odds_attempt,
+            odds_empty_attempts=(previous_empty_odds_attempts + (0 if odds else 1)),
             stats_count=len(stats),
             duration_seconds=duration_seconds,
         )

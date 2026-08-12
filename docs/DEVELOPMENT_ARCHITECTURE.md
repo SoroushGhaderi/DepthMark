@@ -97,7 +97,7 @@ boundaries:
   `gold.signal_activations`.
 
 Scenario SQL targets `gold_scenarios.scenario_*`. Scenario bulk execution is
-enabled in `scripts/gold/load_clickhouse_gold.py` and can be run with
+enabled in `scripts/gold/load_fotmob_gold.py` and can be run with
 `--part all` or `--part scenarios`. See
 `docs/adr/0004-keep-gold-scenario-bulk-disabled-until-validated.md`.
 
@@ -124,10 +124,68 @@ the local Docker stack, prefix commands with
 `docker compose exec depthmark-scraper` (see
 `docs/data-flow/infrastructure.md` for setup and lifecycle).
 
+Source-owned workflow scripts follow
+`<verb>_<source>[_<layer-or-entity>].py`. Package commands use the equivalent
+hyphenated form. The grammar makes ownership visible without forcing both
+sources to have the same phases. `src/cli.py` is the package-command registry,
+and its contract tests require every canonical target to exist.
+
+Replaced paths remain executable compatibility adapters and print a deprecation
+warning naming the replacement. Internal orchestration, generated guidance,
+runbooks, and new automation use only canonical names. See ADR 0024 and
+`SCRIPTS_CONTRACT.md` for the migration contract. ADR 0025 defines the one
+source-neutral exception: scraping observation is exposed through a shared
+reporting command with explicit FotMob and Oddspedia adapters.
+
+### Package CLI
+
+```bash
+depthmark scrape-fotmob --today
+depthmark load-fotmob-bronze --date 20251208 --dry-run
+depthmark load-fotmob-silver --date 20251208 --dry-run
+depthmark load-fotmob-gold --date 20251208 --dry-run
+depthmark run-fotmob-pipeline --date 20251208
+depthmark discover-oddspedia-events --date 20260301
+depthmark run-oddspedia-pipeline --date 20260301 --silver-reference-window-ready
+depthmark report-scraping --date 20260301
+```
+
+### Scraping Reports
+
+`scripts/report_scraping.py` is the only canonical status/report command for
+scraping. It uses one deep operational interface and two explicit source
+adapters; it does not merge source contracts or introduce a provider
+abstraction. The default source is `all`, and omission of both date selectors
+means today.
+
+```bash
+# Concise terminal view across both sources
+python3 scripts/report_scraping.py --date 20260301
+
+# One source over a month (a current month stops at today)
+python3 scripts/report_scraping.py --source fotmob --month 202608
+
+# Portable reports
+python3 scripts/report_scraping.py --source oddspedia --date 20260301 --format markdown --output docs/reports/oddspedia/20260301.md
+python3 scripts/report_scraping.py --date 20260301 --format json --output reports/scraping-20260301.json
+
+# CI/cron policy: generation succeeds, but incomplete/error state exits 1
+python3 scripts/report_scraping.py --date 20260301 --fail-on-attention
+```
+
+All formats come from the same report bundle. The common summary includes
+discovered, completed, failed, skipped, remaining, progress, artifact count,
+storage size, and Bronze-admission readiness. FotMob then exposes listing and
+storage reconciliation; Oddspedia exposes priority, manifest, payload-audit,
+and run-log evidence. Observation never creates a lock, manifest, metrics, run
+log, source artifact, or warehouse row. Only an explicit `--output` writes a
+report file. The former Oddspedia status/report scripts and package commands
+delegate here with deprecation warnings.
+
 ### Setup
 
 ```bash
-python3 scripts/orchestration/setup_clickhouse.py
+python3 scripts/orchestration/setup_fotmob_warehouse.py
 python3 scripts/bronze/setup_clickhouse.py
 python3 scripts/silver/setup_clickhouse.py
 python3 scripts/gold/setup_clickhouse_gold.py
@@ -144,34 +202,41 @@ python3 scripts/bronze/scrape_fotmob.py --today
 python3 scripts/bronze/scrape_fotmob.py --yesterday
 python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
-python3 scripts/bronze/load_clickhouse.py --date 20251208
-python3 scripts/bronze/load_clickhouse.py --date 20251208 --dry-run
-python3 scripts/bronze/load_clickhouse.py --date 20251208 --truncate --dry-run
-python3 scripts/bronze/load_clickhouse.py --single-date 20251208
-python3 scripts/bronze/load_clickhouse.py --full-history
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --truncate --dry-run
+python3 scripts/bronze/load_fotmob_bronze.py --single-date 20251208
+python3 scripts/bronze/load_fotmob_bronze.py --full-history
 python3 scripts/bronze/drop_clickhouse.py --dry-run
 ```
 
 ### Oddspedia Pipeline
 
 ```bash
-python3 scripts/oddspedia/discover_events.py --date 20260301
-python3 scripts/oddspedia/prioritize_events.py --date 20260301 --silver-reference-window-ready
-python3 scripts/oddspedia/scrape_matches.py --date 20260301 --priority-tier lower
-python3 scripts/oddspedia/run_pipeline.py --date 20260301 --silver-reference-window-ready
-python3 scripts/oddspedia/setup_warehouse.py --dry-run
-python3 scripts/oddspedia/load_bronze.py --date 20260301 --dry-run
-python3 scripts/oddspedia/resolve_events.py --date 20260301 --dry-run
+python3 scripts/oddspedia/discover_oddspedia_events.py --date 20260301
+python3 scripts/oddspedia/prioritize_oddspedia_events.py --date 20260301 --silver-reference-window-ready
+python3 scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --priority-tier lower
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready
+python3 scripts/report_scraping.py --source oddspedia --date 20260301 --format markdown --output docs/reports/oddspedia/20260301.md
+python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
+python3 scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --dry-run
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260301 --end-date 20260307 --silver-reference-window-ready
+python3 scripts/oddspedia/load_oddspedia_bronze.py --start-date 20260301 --end-date 20260307 --dry-run
+python3 scripts/oddspedia/resolve_oddspedia_events.py --start-date 20260301 --end-date 20260307 --dry-run
 ```
 
 Oddspedia is an independent source pipeline, not a stage in
-`scripts/orchestration/pipeline.py`. Its setup script creates the three source
-fact tables plus `oddspedia_bronze.load_status` and the Silver resolution table.
-The load and resolve scripts also accept `--month YYYYMM`. The canonical Event
-Intake flow is `discover -> prioritize -> scrape`; `prioritize` and `run`
-require `--silver-reference-window-ready`, then machine-verify the
-prior/current/following `silver.match` fixture-ID window before selecting
-source pages. All mutating date commands use a cross-process
+`scripts/orchestration/run_fotmob_pipeline.py`. Its setup script creates the
+three source fact tables plus `oddspedia_bronze.load_status` and the Silver
+resolution table. The load and resolve scripts also accept `--month YYYYMM`.
+All date-oriented Oddspedia phases, reporting, loading, and resolution accept
+inclusive `--start-date/--end-date` ranges. A current month stops at today;
+explicit future scopes remain invalid.
+The canonical Event Intake flow is `discover -> prioritize -> scrape`;
+`prioritize` and `run` require `--silver-reference-window-ready`, then
+machine-verify the prior/current/following `silver.match` fixture-ID window
+before selecting source pages. All mutating date commands use a cross-process
 `data/oddspedia/locks/<sport>_<YYYYMMDD>.lock` date lock; dry runs do not
 acquire or create that lock. Discovery accepts only complete target-date
 pagination or a verified empty result, records checksums for accepted
@@ -179,38 +244,49 @@ inventories, and refreshes legacy or stale evidence before downstream use.
 Month commands exit non-zero when any date fails, is missing, or remains
 unaccepted.
 
-`load_bronze.py` requires an accepted discovery manifest, matching inventory
-checksum, terminal scrape state, and accepted payload audits. It stages
-`oddspedia_bronze.event`, `oddspedia_bronze.match_payload`, and
+The immutable raw JSON structures are documented by external schemas under
+`schemas/oddspedia/`. Runtime Pydantic validation and atomic persistence are
+separate: validation does not serialize the model or add defaults to source
+files. Manifests validate known state types and preserve unknown compatible
+top-level fields across updates, so no existing scraped file needs migration.
+
+The shared `report_scraping.py --source oddspedia` view reads the accepted
+inventory, priority ledger, manifest, saved payloads, and run logs. It
+distinguishes selected-priority completion from full-date Bronze readiness.
+
+`load_oddspedia_bronze.py` requires an accepted discovery manifest, matching
+inventory checksum, terminal scrape state, and accepted payload audits. It
+stages `oddspedia_bronze.event`, `oddspedia_bronze.match_payload`, and
 `oddspedia_bronze.market`, validates the staged date counts, replaces the
 target partition, and records the batch in `oddspedia_bronze.load_status`.
-Only a row with status `published` is consumable by `resolve_events.py`; failed
-or partially replaced batches remain non-admitted.
+Only a row with status `published` is consumable by
+`resolve_oddspedia_events.py`; failed or partially replaced batches remain
+non-admitted.
 
-`resolve_events.py` searches FotMob `silver.match` for the prior, current, and
-following calendar dates. It writes `not_covered` only when the operator
-asserts a complete reference window with `--silver-reference-window-ready`;
-otherwise an unmatched event remains `unresolved`. The former
-`events.py`, `setup_clickhouse.py`, `load_clickhouse.py`, and
-`resolve_matches.py` paths remain compatibility wrappers.
+`resolve_oddspedia_events.py` searches FotMob `silver.match` for the prior,
+current, and following calendar dates. It writes `not_covered` only when the
+operator asserts a complete reference window with
+`--silver-reference-window-ready`; otherwise an unmatched event remains
+`unresolved`. Earlier phase-only, umbrella, and ClickHouse-named paths remain
+compatibility adapters.
 
 ### FotMob Silver
 
 ```bash
-python3 scripts/silver/load_clickhouse.py --date 20251208
-python3 scripts/silver/load_clickhouse.py --month 202512 --dry-run
-python3 scripts/silver/load_clickhouse.py --full-history --dry-run
+python3 scripts/silver/load_fotmob_silver.py --date 20251208
+python3 scripts/silver/load_fotmob_silver.py --month 202512 --dry-run
+python3 scripts/silver/load_fotmob_silver.py --full-history --dry-run
 python3 scripts/silver/drop_clickhouse.py --dry-run
 ```
 
 ### FotMob Gold
 
 ```bash
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208
-python3 scripts/gold/load_clickhouse_gold.py --month 202512 --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --full-history --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part signals --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --part scenarios --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208
+python3 scripts/gold/load_fotmob_gold.py --month 202512 --dry-run
+python3 scripts/gold/load_fotmob_gold.py --full-history --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
 python3 scripts/gold/activations/build_signal_activations.py --full-history
 python3 scripts/gold/activations/build_signal_activations.py --date 20251208 --dry-run
 python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --dry-run
@@ -225,10 +301,10 @@ python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ### Orchestration, Quality, and Ops
 
 ```bash
-python3 scripts/orchestration/pipeline.py 20251208
-python3 scripts/orchestration/pipeline.py --date 20251208
-python3 scripts/orchestration/pipeline.py --single-date 20251208
-python3 scripts/orchestration/pipeline.py --full-history
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_data_quality.py --month 202512 --strict
 python3 scripts/quality/check_data_quality.py --full-history --strict
@@ -248,28 +324,28 @@ python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
 ### Standard Runs
 
 ```bash
-python3 scripts/orchestration/pipeline.py 20251208
-python3 scripts/orchestration/pipeline.py --single-date 20251208
-python3 scripts/orchestration/pipeline.py --start-date 20251201 --end-date 20251207
-python3 scripts/orchestration/pipeline.py --month 202512
-python3 scripts/orchestration/pipeline.py --full-history
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
+python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/orchestration/run_fotmob_pipeline.py --month 202512
+python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
 ```
 
 ### Partial Runs
 
 ```bash
-python3 scripts/orchestration/pipeline.py 20251208 --bronze-only
-python3 scripts/orchestration/pipeline.py 20251208 --silver-only
-python3 scripts/orchestration/pipeline.py 20251208 --gold-only
-python3 scripts/orchestration/pipeline.py 20251208 --skip-bronze
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --bronze-only
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --silver-only
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --gold-only
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-bronze
 ```
 
 ### Recommended Preflight and Validation
 
 ```bash
 python3 scripts/health_check.py --json
-python3 scripts/silver/load_clickhouse.py --date 20251208 --dry-run
-python3 scripts/gold/load_clickhouse_gold.py --date 20251208 --dry-run
+python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_logging_style.py
 ```
@@ -522,7 +598,7 @@ Creation flow:
    `activated_signal_ids`, `activated_signal_entities`,
    `activated_signal_tags`, `activated_signal_names`, `total_signal_rows`, and
    `unique_signal_count`.
-7. `scripts/gold/load_clickhouse_gold.py` runs the activation builder after
+7. `scripts/gold/load_fotmob_gold.py` runs the activation builder after
    successful signal execution (`--part signals` or `--part all`). Signal SQL
    failures skip activation rebuild until signals succeed or the builder is
    rerun manually.

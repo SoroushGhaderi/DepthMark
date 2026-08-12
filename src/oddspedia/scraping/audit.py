@@ -281,6 +281,7 @@ def audit_match_payload(
     payload_reasons = _payload_reasons(data)
     audit.reasons.extend(payload_reasons)
     audit.reasons.extend(_football_odds_schema_reasons(data))
+    audit.reasons.extend(_football_coverage_reasons(data))
     audit.observations.extend(_football_coverage_observations(data))
 
     if audit.reasons:
@@ -423,6 +424,69 @@ def _football_coverage_observations(data: Dict[str, Any]) -> List[str]:
         if missing_markets:
             observations.append("football rich-page markets missing: " + ", ".join(missing_markets))
     return observations
+
+
+def _football_coverage_reasons(data: Dict[str, Any]) -> List[str]:
+    """Return retry reasons for missing or incomplete football market coverage."""
+    if data.get("sport") != "football":
+        return []
+    if data.get("odds_unavailable"):
+        empty_attempts = data.get("odds_empty_attempts")
+        if empty_attempts is not None:
+            try:
+                empty_attempts = int(empty_attempts)
+                max_attempts = int(data.get("odds_max_attempts") or 3)
+            except (TypeError, ValueError):
+                return ["invalid football odds-unavailable attempt metadata"]
+            if empty_attempts < max_attempts:
+                return [
+                    "football odds marked unavailable before all configured "
+                    f"attempts were empty ({empty_attempts}/{max_attempts})"
+                ]
+        return []
+    markets = data.get("odds", []) if isinstance(data.get("odds"), list) else []
+    status_val = _normalize_status(data.get("status", ""))
+    if status_val in TERMINAL_NO_DATA_STATUSES or (
+        data.get("result_unavailable") and status_val == "finished"
+    ):
+        return []
+
+    total_value = data.get("odds_total_markets")
+    extracted_value = data.get("odds_extracted_markets")
+    if total_value is not None:
+        try:
+            total_markets = int(total_value)
+        except (TypeError, ValueError):
+            return ["invalid football odds total-market metadata"]
+        actual_extracted = len(markets)
+        if extracted_value is None:
+            extracted_markets = actual_extracted
+        else:
+            try:
+                extracted_markets = int(extracted_value)
+            except (TypeError, ValueError):
+                return ["invalid football odds extracted-market metadata"]
+            if extracted_markets != actual_extracted:
+                return [
+                    "football odds extracted-market metadata does not match payload "
+                    f"({extracted_markets} recorded, {actual_extracted} present)"
+                ]
+        if total_markets > 0 and extracted_markets < total_markets:
+            return [
+                "football odds market coverage incomplete "
+                f"({extracted_markets}/{total_markets} markets)"
+            ]
+        return []
+
+    if not markets:
+        return ["football odds availability was not confirmed after scraping"]
+
+    # Legacy payloads have no denominator. Requeue the old four-card footprint
+    # once so it can be rewritten with the dynamic coverage metadata; this is
+    # only a migration fallback, not the live completion rule.
+    if len(markets) == 4:
+        return ["legacy football odds payload has four markets without total-market metadata"]
+    return []
 
 
 def _listing_identity_reasons(

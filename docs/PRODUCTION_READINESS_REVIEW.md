@@ -22,7 +22,7 @@ presented as a complete date.
 | Incorrect or incomplete rendered payloads | Event ID, date, team, market-schema, and terminal scrape audits run before payload acceptance and again before a completed scrape is recorded. |
 | Concurrent workers hiding failures | Failed worker outcomes, driver-init failures, and incomplete futures are persisted in the manifest and remain retryable. |
 | Cross-process date races | Mutating Oddspedia date commands serialize through `data/oddspedia/locks/`; UTC is used for operational timestamps and date boundaries; month commands exit non-zero when any date fails. |
-| Partial ClickHouse Bronze loads | `load_bronze.py` stages all three source fact tables, validates counts, replaces the target partition, and records `staging`, `published`, or `failed` in `oddspedia_bronze.load_status`. Resolution reads only `published` batches. |
+| Partial ClickHouse Bronze loads | `load_oddspedia_bronze.py` stages all three source fact tables, validates counts, replaces the target partition, and records `staging`, `published`, or `failed` in `oddspedia_bronze.load_status`. Resolution reads only `published` batches. |
 | Unsafe cross-source reference assumptions | Priority and resolution machine-verify exact FotMob Bronze/Silver fixture-ID sets for the previous/current/following date window. |
 
 The full repository test suite passes (`227 passed`); logging-style and Python
@@ -46,7 +46,7 @@ quality improvements, not unaddressed Oddspedia P0/P1 blockers.
 3. **ClickHouse bootstrap was overly permissive** — the previous setup path fell back to the `default` user in local development and granted broad access (`GRANT ALL` on Bronze/Silver/Gold databases plus `CREATE DATABASE` and `TABLE ENGINE`) once a user was created.
    - Status: **Fixed**. Runtime users receive explicit per-database SELECT/INSERT/ALTER/schema-operation grants; `CREATE DATABASE` and table-engine bootstrap privileges are local-development-only.
 
-4. **Bronze truncate path has no preview mode** — `scripts/bronze/load_clickhouse.py` exposes `--truncate`, and the destructive reload path previously had no dry-run branch. That made reload rehearsal harder even though the docs encourage previewing destructive actions first.
+4. **Bronze truncate path has no preview mode** — `scripts/bronze/load_fotmob_bronze.py` exposes `--truncate`, and the destructive reload path previously had no dry-run branch. That made reload rehearsal harder even though the docs encourage previewing destructive actions first.
    - Status: **Fixed**. Bronze ClickHouse loading now supports `--dry-run`, including `--truncate --dry-run`, and skips truncation, loading, ClickHouse connection setup, and Telegram notification in preview mode.
 
 5. **Pytest discovery is broken from the repo root** — `pytest.ini:1-16` configures pytest but does not add the project root to `PYTHONPATH`, while the test files import `src...` and `scripts...` modules directly. A baseline `pytest -q tests/unit` run currently fails during collection with `ModuleNotFoundError` for both package roots.
