@@ -82,8 +82,10 @@ COPY --from=builder /opt/venv /opt/venv
 RUN /opt/venv/bin/playwright install chromium && \
     chmod -R o+rx /ms-playwright
 
-# Create app user (non-root for security)
-RUN useradd --create-home --shell /bin/bash appuser && \
+# Create app user (non-root for security). APP_UID matches the host user that owns
+# the mounted data/ and logs/ directories; scripts/bootstrap.sh sets it (ADR 0030).
+ARG APP_UID=1000
+RUN useradd --uid "${APP_UID}" --create-home --shell /bin/bash appuser && \
     mkdir -p /app/data /app/logs /app/config && \
     chown -R appuser:appuser /app
 

@@ -1,25 +1,49 @@
 # Infrastructure
 
-DepthMark runs on Docker Compose with ClickHouse, MongoDB, and an optional
-scraper container.
+DepthMark runs on Docker Compose with ClickHouse, MongoDB, and a scraper
+container. The same Compose stack serves servers and local development
+(ADR 0030).
 
 ## Quick Start
 
+One command initializes a new server; it needs only Docker with Compose v2 and
+a checkout. It is safe to rerun, for example after `git pull`:
+
 ```bash
-git clone <repository-url>
+git clone <repository-url> DepthMark
 cd DepthMark
-cp .env.example .env
-# edit .env and set FOTMOB_X_MAS_TOKEN, ClickHouse, and MongoDB values
-# keep DEPTHMARK_ENV=local only for the tracked local Docker workflow
+FOTMOB_X_MAS_TOKEN=<token> scripts/bootstrap.sh
+```
 
-docker compose up -d
-docker compose exec depthmark-scraper python3 scripts/orchestration/setup_fotmob_warehouse.py
+`scripts/bootstrap.sh`:
+
+1. Creates `.env` from `.env.example` (or adds keys a newer template
+   introduced), generates the ClickHouse application, ClickHouse maintenance,
+   and MongoDB passwords when they are missing or placeholders, writes any
+   exported `FOTMOB_X_MAS_TOKEN`, `TELEGRAM_*`, or `S3_*` secrets, and sets
+   `DEPTHMARK_ENV=production` and `DEPTHMARK_UID`.
+2. Builds the image, starts the stack, and waits for ClickHouse and MongoDB to
+   report healthy.
+3. Runs FotMob and Oddspedia warehouse setup, MongoDB index setup, and the
+   signal catalog sync inside the scraper container, then the health check.
+4. Installs the recurring schedule in the user's crontab (see
+   [Scheduling](#scheduling)).
+
+It also creates the paths Compose bind-mounts (`data/`, `logs/`, and an empty
+`credentials.json`), because Docker would otherwise create them as root-owned
+directories.
+
+Options: `--local` sets `DEPTHMARK_ENV=local` for development,
+`--no-schedule` skips the crontab, and `--env-only` only prepares `.env` and
+the local files without touching Docker.
+Existing real values in `.env` are never replaced, so reruns keep database
+credentials stable.
+
+Run pipelines inside the scraper container:
+
+```bash
 docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
-docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
 docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
-
-# Oddspedia's independent source warehouse setup
-docker compose exec depthmark-scraper python3 scripts/oddspedia/setup_oddspedia_warehouse.py
 ```
 
 Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
@@ -43,8 +67,7 @@ exits with an error when it cannot find the checkout.
 ## Docker Lifecycle
 
 ```bash
-cp .env.example .env
-docker compose up -d
+scripts/bootstrap.sh          # first start and every upgrade
 docker compose ps
 docker compose down
 docker compose down -v   # also removes volumes (destructive)
@@ -103,34 +126,37 @@ Local development uses the root `docker-compose.yml` for `depthmark-clickhouse`,
 
 ## Scheduling
 
-DepthMark does not ship a scheduler (ADR 0027). Recurring runs come from an
-external scheduler on the host, such as cron or systemd timers, which runs the
-canonical pipeline commands inside the running scraper container:
+DepthMark has no scheduler service (ADR 0027). `scripts/bootstrap.sh` installs
+the recurring jobs into the host user's crontab through
+`scripts/install_schedule.sh`, which can also be run on its own:
 
-- Wrap every job in `flock -n` so a run that is still going makes the next
-  start skip instead of overlapping. Oddspedia commands also take their own
-  per-date locks under `data/oddspedia/locks/`.
-- Use `docker compose exec -T` (no TTY) and an absolute path to
-  `docker-compose.yml`.
-- A non-zero exit code is the failure signal. Send scheduler output to a log
-  or mail; FotMob layer completion alerts also go to Telegram when configured.
-- FotMob historical runs accept only completed dates, so schedule yesterday.
-  Oddspedia priority and resolution need FotMob Silver for the previous,
-  current, and following date, so schedule two days ago, after the FotMob run.
-  Oddspedia uses UTC date boundaries; run the host in UTC or adjust the dates.
-
-Example host crontab (GNU `date`; `%` must be escaped in crontab):
-
-```cron
-# FotMob: yesterday through Bronze, Silver, and Gold.
-0 3 * * * flock -n /tmp/depthmark-fotmob.lock docker compose -f /srv/DepthMark/docker-compose.yml exec -T depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py "$(date -d yesterday +\%Y\%m\%d)" >> /var/log/depthmark/fotmob.log 2>&1
-# Oddspedia: two days ago, once its FotMob Silver window is complete.
-0 5 * * * flock -n /tmp/depthmark-oddspedia.lock docker compose -f /srv/DepthMark/docker-compose.yml exec -T depthmark-scraper python3 scripts/oddspedia/run_oddspedia_pipeline.py --date "$(date -d '2 days ago' +\%Y\%m\%d)" --silver-reference-window-ready >> /var/log/depthmark/oddspedia.log 2>&1
+```bash
+scripts/install_schedule.sh            # install or refresh
+scripts/install_schedule.sh --remove   # remove
 ```
 
-`--silver-reference-window-ready` asserts the operator's schedule ordering;
-the command still verifies the FotMob reference window and fails closed when
-it is incomplete.
+The installer writes one marked block keyed by the checkout path and replaces
+it on every run, so jobs are never duplicated and other crontab entries are
+kept. Each job runs `scripts/orchestration/run_scheduled_job.py` inside the
+scraper container, which owns the job's date and overlap lock (ADR 0030):
+
+| Time (host clock) | Job | Runs |
+| --- | --- | --- |
+| 03:00 | `fotmob-daily` | `run_fotmob_pipeline.py` for yesterday (completed dates only) |
+| 05:00 | `oddspedia-daily` | `run_oddspedia_pipeline.py --date <two days ago, UTC> --silver-reference-window-ready` |
+
+- A job whose previous run still holds its lock under
+  `data/locks/scheduled/` is skipped with exit code 0. Oddspedia commands also
+  take their own per-date locks under `data/oddspedia/locks/`.
+- Otherwise the exit code is the pipeline's exit code. Output goes to
+  `logs/scheduler/<job>.log`; FotMob layer completion alerts also go to
+  Telegram when configured.
+- Oddspedia priority and resolution need FotMob Silver for the previous,
+  current, and following date, so it runs two days back, after FotMob.
+  `--silver-reference-window-ready` asserts that ordering; the command still
+  verifies the FotMob reference window and fails closed when it is incomplete.
+- Preview a job without running it:
+  `docker compose exec depthmark-scraper python3 scripts/orchestration/run_scheduled_job.py fotmob-daily --dry-run`.
 
 ## Environment Configuration
 
@@ -143,8 +169,9 @@ it is incomplete.
 
 ```bash
 FOTMOB_X_MAS_TOKEN=your_token_here
-DEPTHMARK_ENV=local
+DEPTHMARK_ENV=production   # bootstrap sets local with --local
 DEPTHMARK_BIND_ADDRESS=127.0.0.1
+DEPTHMARK_UID=1000          # bootstrap sets the host UID
 CLICKHOUSE_HOST=depthmark-clickhouse
 CLICKHOUSE_PORT=8123
 CLICKHOUSE_USER=fotmob_user
@@ -353,12 +380,16 @@ the scraper's local compression state or delete canonical local artifacts.
 
 ## Production Deployment
 
-The tracked Docker Compose files are **local-development manifests**. They
-publish database ports on loopback only and read credentials from `.env`.
+The tracked Compose stack is the supported server deployment (ADR 0030). Run
+`scripts/bootstrap.sh` on the server; it sets `DEPTHMARK_ENV=production`,
+generates strong database passwords into `.env` (mode `600`), and keeps the
+database ports on `127.0.0.1`.
 
-For production:
-1. Use separate deployment configuration.
-2. Set `DEPTHMARK_ENV=production`.
-3. Provide non-default database credentials.
-4. Do not expose database ports externally.
-5. Use proper secrets management.
+- Keep `.env` on the server only and back it up with the data volumes; the
+  generated passwords are the only copy.
+- Expose ClickHouse or MongoDB beyond the host only over a trusted private
+  network (`DEPTHMARK_BIND_ADDRESS`) or a TLS-terminating proxy.
+- Containers restart with Docker (`restart: unless-stopped`); enable the
+  Docker service at boot so the stack returns after a reboot.
+- Upgrades: `git pull && scripts/bootstrap.sh`. Setup fails closed on schema
+  drift (ADR 0026); apply it with Table Recreation, then rerun the bootstrap.

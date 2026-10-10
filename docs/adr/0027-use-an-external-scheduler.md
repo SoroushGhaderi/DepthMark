@@ -46,3 +46,12 @@ because the FotMob orchestrator has no process lock of its own.
 
 If DepthMark later needs a self-contained schedule, a new ADR should define the
 runner, schedule file, locks, and health behavior together.
+
+## Update (2026-10-10)
+
+ADR 0030 automates this contract. `scripts/install_schedule.sh` (run by
+`scripts/bootstrap.sh`) installs the jobs as one marked crontab block, and each
+job runs `scripts/orchestration/run_scheduled_job.py` inside the container,
+which computes the date and takes a non-blocking lock under
+`data/locks/scheduled/`. That replaces the host `flock` and `date` arithmetic
+described above; the scheduler is still external to the Compose stack.

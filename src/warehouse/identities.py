@@ -116,13 +116,13 @@ def provision_application_user(client: Any, username: str, password: str) -> Non
 
     ``client`` must be connected as an identity with access management. Raises on
     the first failed statement so setup never reports success with stale grants.
-    An existing user keeps its password; rotate it with ALTER USER.
+    The password is reset on every run, so ``.env`` stays the source of truth.
     """
     if not SAFE_IDENTIFIER_PATTERN.fullmatch(username):
         raise ValueError(f"Unsafe ClickHouse user name: {username}")
-    client.execute(
-        f"CREATE USER IF NOT EXISTS {username} IDENTIFIED BY {quote_sql_string(password)}"
-    )
+    password_literal = quote_sql_string(password)
+    client.execute(f"CREATE USER IF NOT EXISTS {username} IDENTIFIED BY {password_literal}")
+    client.execute(f"ALTER USER {username} IDENTIFIED BY {password_literal}")
     for statement in application_revoke_statements(username):
         client.execute(statement)
     for statement in application_grant_statements(username):

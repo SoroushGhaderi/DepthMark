@@ -181,9 +181,8 @@ forwards its compatible options to the unified workflow.
 ## Full Operational Sequence
 
 ```bash
-# 1. Infrastructure
-docker compose up -d
-python3 scripts/orchestration/setup_fotmob_warehouse.py
+# 1. Infrastructure (stack, setup, indexes, catalogs, schedule)
+scripts/bootstrap.sh
 
 # 2. Pipeline
 python3 scripts/orchestration/run_fotmob_pipeline.py 20251208

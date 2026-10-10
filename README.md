@@ -42,6 +42,21 @@ python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python3 scripts/bronze/sync_s3.py download --date 20251208
 ```
 
+## Quick Start
+
+On a new server (Docker with Compose v2 is the only prerequisite), one command
+creates `.env` with generated database passwords, starts the stack, runs the
+warehouse and MongoDB setup, and installs the recurring schedule. Rerun it
+after every `git pull`:
+
+```bash
+FOTMOB_X_MAS_TOKEN=<token> scripts/bootstrap.sh
+```
+
+Use `scripts/bootstrap.sh --local` for local development. See
+[`docs/data-flow/infrastructure.md`](docs/data-flow/infrastructure.md) for
+options, scheduling, and production notes.
+
 ## Documentation
 
 Start with the [Warehouse Knowledge Reference](docs/data-flow/warehouse-pipeline-reference.html)

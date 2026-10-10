@@ -44,6 +44,8 @@ the detailed interfaces that govern execution.
   status for scoped Silver/Gold batches and the reader rule.
 - `adr/0029-split-clickhouse-identities-and-isolate-staging.md`: application
   and maintenance ClickHouse identities and the `warehouse_stage` database.
+- `adr/0030-automate-server-bootstrap.md`: one-command server initialization
+  and upgrade with generated secrets and the installed schedule.
 
 Source-specific flows:
 
