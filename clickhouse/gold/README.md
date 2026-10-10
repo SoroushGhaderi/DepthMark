@@ -27,5 +27,5 @@ clickhouse/gold/
       signal_activation_final_insert.sql
 ```
 
-`gold.signal_activations_stage` is ephemeral: the activation builder creates it
+`warehouse_stage.signal_activations_stage` is ephemeral: the activation builder creates it
 from `ddl/activations/` during rebuilds and drops it after the final insert.

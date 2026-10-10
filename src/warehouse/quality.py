@@ -12,6 +12,13 @@ import yaml
 from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.contracts import BRONZE_REQUIRED_KEYS, SILVER_TABLE_KEYS
+from src.warehouse.publication import (
+    FULL_HISTORY_PARTITION,
+    GOLD_PUBLICATION_TABLE,
+    SILVER_PUBLICATION_TABLE,
+    UnpublishedPartition,
+    find_unpublished_partitions,
+)
 
 WAREHOUSE_DATABASES = ("bronze", "silver", "gold_scenarios", "gold_signals", "gold")
 _SAFE_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
@@ -21,6 +28,7 @@ _SCENARIO_TABLE = re.compile(
     re.DOTALL,
 )
 _SQL_FUNCTIONS = {"assumeNotNull", "ifNull", "toDateOrZero"}
+PUBLICATION_TABLES = {"silver": SILVER_PUBLICATION_TABLE, "gold": GOLD_PUBLICATION_TABLE}
 
 
 @dataclass(frozen=True)
@@ -95,6 +103,7 @@ class DataQualitySummary:
     duplicate_results: List[DuplicateResult] = field(default_factory=list)
     skipped_tables: List[SkippedTable] = field(default_factory=list)
     reconciliation_results: List[ReconciliationResult] = field(default_factory=list)
+    unpublished_partitions: List[UnpublishedPartition] = field(default_factory=list)
 
     @property
     def duplicate_failure_count(self) -> int:
@@ -106,7 +115,11 @@ class DataQualitySummary:
 
     @property
     def has_failures(self) -> bool:
-        return self.duplicate_failure_count > 0 or self.reconciliation_failure_count > 0
+        return (
+            self.duplicate_failure_count > 0
+            or self.reconciliation_failure_count > 0
+            or bool(self.unpublished_partitions)
+        )
 
 
 @dataclass(frozen=True)
@@ -487,10 +500,7 @@ class DataQualityService:
             database = table.split(".", 1)[0]
             if database not in selected_databases:
                 continue
-            if table == "gold.signal_activations_stage":
-                skipped.append(
-                    SkippedTable(table, "ephemeral activation staging table is not a stable target")
-                )
+            if table in PUBLICATION_TABLES.values():
                 continue
             identity = self.identities.get(table)
             if identity is None or not identity.columns:
@@ -592,8 +602,36 @@ class DataQualityService:
     ) -> DataQualitySummary:
         duplicate_results, skipped_tables = self.run_duplicates(scope, layers, sample_limit)
         reconciliation_results = self.run_reconciliation(scope, reconciliation_checks, sample_limit)
+        unpublished_partitions = self.run_publication(scope, layers, skipped_tables)
         return DataQualitySummary(
             duplicate_results=duplicate_results,
             skipped_tables=skipped_tables,
             reconciliation_results=reconciliation_results,
+            unpublished_partitions=unpublished_partitions,
         )
+
+    def run_publication(
+        self,
+        scope: WarehouseExecutionScope,
+        layers: Sequence[str],
+        skipped_tables: List[SkippedTable],
+    ) -> List[UnpublishedPartition]:
+        """Return unpublished Silver/Gold partitions that overlap the selected scope."""
+        unpublished: List[UnpublishedPartition] = []
+        for layer in layers:
+            table = PUBLICATION_TABLES.get(layer)
+            if table is None:
+                continue
+            exists = _rows(self.client.execute(f"EXISTS TABLE {table}", log_query=False))
+            if not exists or not int(exists[0][0]):
+                skipped_tables.append(
+                    SkippedTable(table, "publication log is missing; run warehouse setup")
+                )
+                continue
+            for partition in find_unpublished_partitions(self.client, table):
+                if scope.partition_id is None or partition.partition_id in (
+                    scope.partition_id,
+                    FULL_HISTORY_PARTITION,
+                ):
+                    unpublished.append(partition)
+        return unpublished

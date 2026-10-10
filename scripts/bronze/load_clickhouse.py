@@ -41,6 +41,7 @@ sys.path.insert(0, str(project_root))
 
 from src.fotmob.bronze import BronzeRunResult, BronzeService
 from src.integrations.telegram import ErrorAlertData, TelegramClient
+from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.common.dates import DATE_FORMAT_COMPACT, extract_year_month
 from src.warehouse.contracts import LayerContractError
@@ -304,11 +305,23 @@ def main(argv: Optional[List[str]] = None) -> int:
             logger.info("Bronze dry-run completed successfully")
         return result.exit_code
 
+    username, password = args.username, args.password
+    if args.truncate:
+        # TRUNCATE on warehouse tables is reserved for the maintenance identity (ADR 0029).
+        settings = get_settings()
+        if not settings.clickhouse_maintenance_user:
+            logger.error(
+                "--truncate needs the ClickHouse maintenance identity; set "
+                "CLICKHOUSE_MAINTENANCE_USER and CLICKHOUSE_MAINTENANCE_PASSWORD"
+            )
+            return 1
+        username = settings.clickhouse_maintenance_user
+        password = settings.clickhouse_maintenance_password
     client = ClickHouseClient(
         host=args.host,
         port=args.port,
-        username=args.username,
-        password=args.password,
+        username=username,
+        password=password,
         database="bronze",
     )
 

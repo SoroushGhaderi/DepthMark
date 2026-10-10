@@ -53,16 +53,19 @@ If these files conflict with code, resolve the mismatch intentionally and mentio
 - Never commit `.env`, credentials, tokens, generated data, logs, or local warehouse artifacts.
 - Use `.env.example` for documenting required configuration.
 - Required local services come from the root `docker-compose.yml`.
-- A useful local setup starts with:
-  - `cp .env.example .env`
-  - `docker compose up -d`
-  - `python scripts/orchestration/setup_fotmob_warehouse.py`
+- `scripts/bootstrap.sh` initializes a server end to end (generated `.env`
+  secrets, stack, setup, MongoDB, schedule); use `scripts/bootstrap.sh --local`
+  for local development. Never hard-code secrets or require hand-edited
+  commands; new setup steps belong in the bootstrap (ADR 0030).
 
 ## Canonical Commands
 
 Run commands from the `depthmark` directory.
 
 ```bash
+scripts/bootstrap.sh --local
+scripts/install_schedule.sh
+python scripts/orchestration/run_scheduled_job.py fotmob-daily --dry-run
 python scripts/orchestration/setup_fotmob_warehouse.py
 python scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python scripts/mongodb/init_indexes.py

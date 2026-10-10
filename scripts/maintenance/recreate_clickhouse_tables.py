@@ -23,9 +23,9 @@ if str(scripts_root) not in sys.path:
     sys.path.insert(0, str(scripts_root))
 
 from clickhouse_setup_common import LAYER_ORDER, get_layer_sql_files, resolve_clickhouse_root
-from config.settings import get_settings
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import maintenance_client
 from src.warehouse.schema_drift import (
     ExpectedTable,
     find_schema_drift,
@@ -183,14 +183,11 @@ def run(argv: Optional[Sequence[str]] = None, client: Optional[Any] = None) -> i
 
     owns_client = client is None
     if client is None:
-        settings = get_settings()
-        client = ClickHouseClient(
-            host=settings.clickhouse_host,
-            port=settings.clickhouse_port,
-            username=settings.clickhouse_user,
-            password=settings.clickhouse_password,
-            database="default",
-        )
+        try:
+            client = maintenance_client()
+        except RuntimeError as identity_error:
+            logger.error(str(identity_error))
+            return 1
         if not client.connect():
             logger.error("Failed to connect to ClickHouse")
             return 1

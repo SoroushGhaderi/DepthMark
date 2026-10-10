@@ -74,12 +74,15 @@ cloudflare = []
 depthmark = "src.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/SoroushGhaderi/depth_mark"
-Repository = "https://github.com/SoroushGhaderi/depth_mark"
-Issues = "https://github.com/SoroushGhaderi/depth_mark/issues"
+Homepage = "https://github.com/SoroushGhaderi/DepthMark"
+Repository = "https://github.com/SoroushGhaderi/DepthMark"
+Issues = "https://github.com/SoroushGhaderi/DepthMark/issues"
 
-[tool.setuptools]
-packages = ["src", "scripts"]
+[tool.setuptools.packages.find]
+# DepthMark runs from a source checkout (`pip install -e .`): the CLI dispatches to
+# scripts by path and reads clickhouse/ SQL and config files from the checkout.
+include = ["src*", "scripts*", "config*"]
+namespaces = true
 
 [tool.setuptools.package-data]
 src = ["py.typed"]

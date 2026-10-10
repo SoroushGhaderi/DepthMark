@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS gold.signal_activations_stage;
+DROP TABLE IF EXISTS warehouse_stage.signal_activations_stage;
 
-CREATE TABLE gold.signal_activations_stage (
+CREATE TABLE warehouse_stage.signal_activations_stage (
     signal_instance_id String,
     signal_id String,
     signal_id_version String,

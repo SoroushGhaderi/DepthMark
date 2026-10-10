@@ -19,7 +19,7 @@ from src.warehouse.scope import (
     add_warehouse_scope_arguments,
     execution_scope_from_args,
 )
-from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import client_for_scope
 from src.warehouse.contracts import LayerContractError
 from src.common.logging import get_logger, setup_logging
 
@@ -65,13 +65,11 @@ def main(argv=None) -> int:
             logger.info("Silver dry-run completed successfully")
         return result.exit_code
 
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
+    try:
+        client = client_for_scope(scope)
+    except RuntimeError as identity_error:
+        logger.error(str(identity_error))
+        return 1
     if not client.connect():
         logger.error("Failed to connect to ClickHouse")
         telegram_client = TelegramClient()
