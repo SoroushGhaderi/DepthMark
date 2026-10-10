@@ -3,15 +3,23 @@
 Project-wide documentation lives in this folder. The root `README.md` stays a
 short project overview; use this folder for setup, commands, and operations.
 
+Start with [Warehouse Knowledge Reference](data-flow/warehouse-pipeline-reference.html),
+the central source of truth for project concepts, source ownership, layers, and
+system relationships. Its glossary and contract index connect definitions to
+the detailed interfaces that govern execution.
+
 - `DEVELOPMENT_ARCHITECTURE.md`: two-source architecture, layer boundaries,
   command surface, runbook, operations, and documentation ownership.
 - `data-flow/infrastructure.md`: Docker Compose setup, quick start, environment
   configuration, and TouchDesk integration.
 - `SCRIPTS_CONTRACT.md`: standards for script behavior, style, CLI semantics,
   logging, safety, and command-surface changes.
-- `data-flow/`: source of truth for system data flow, layer diagrams, and
-  interactive wireframes. Start with `data-flow/warehouse-pipeline-reference.html` for a visual
-  overview.
+- `data-flow/warehouse-pipeline-reference.html`: Documentation Atlas with source
+  and layer navigation, concept definitions, heading links, topic search,
+  a canonical command reference with script equivalents, quality and acceptance
+  guidance, command panels, and an authoritative contract/decision index. Existing links
+  such as `#gold` remain valid; headings also accept `#gold/activation-rebuild`.
+- `data-flow/`: detailed source/layer flows supporting the central reference.
 - `data-flow/orchestration.md#post-load-data-quality`: canonical duplicate and
   Bronze-to-Silver reconciliation workflow, scopes, and exit behavior.
 - `PRODUCTION_READINESS_REVIEW.md`: full DE review report with evidence-based
@@ -22,10 +30,14 @@ short project overview; use this folder for setup, commands, and operations.
 - `reviews/architecture-review-oddspedia-artifacts-20260812.html`: completed
   review and remediation record for Oddspedia JSON contracts, manifests, and
   multi-date continuation.
+- `reviews/architecture-review-depthmark-20261002.html`: whole-repository
+  review with prioritized P0–P3 findings; its P0 is resolved by ADR 0026.
 - `adr/0024-source-qualified-operational-script-names.md`: accepted naming
   grammar, package registry, and compatibility-adapter policy.
 - `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting
   interface for FotMob and Oddspedia, with explicit source adapters.
+- `adr/0026-make-warehouse-setup-non-destructive.md`: create-only setup,
+  fail-closed schema drift, and explicit Table Recreation.
 
 Source-specific flows:
 

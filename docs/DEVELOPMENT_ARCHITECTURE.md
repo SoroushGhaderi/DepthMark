@@ -1,8 +1,11 @@
 # DepthMark Development Architecture
 
-This is the project-wide reference for how DepthMark is built and operated. It
-owns architecture, layer boundaries, command surface, and runbook guidance.
-Script coding standards live in `SCRIPTS_CONTRACT.md`.
+Start with [Warehouse Knowledge Reference](data-flow/warehouse-pipeline-reference.html)
+for the central source of truth on DepthMark concepts, source ownership, layer
+boundaries, and system relationships. This document provides the detailed
+implementation architecture, canonical command surface, and operational runbook.
+Script coding standards remain authoritative in `SCRIPTS_CONTRACT.md`;
+subsystem contracts stay beside the interfaces they govern.
 
 ## Scope
 
@@ -193,6 +196,10 @@ python3 scripts/gold/setup_clickhouse_gold.py --part scenarios
 python3 scripts/gold/setup_clickhouse_gold.py --part signals
 ```
 
+Setup only creates missing databases and tables. It never drops or alters a
+table, and it exits non-zero without creating anything when an existing table
+has schema drift (see [Explicit Table Recreation](#explicit-table-recreation)).
+
 ### Bronze
 
 ```bash
@@ -312,6 +319,7 @@ python3 scripts/quality/check_logging_style.py
 python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
 python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
 python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
+python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python3 scripts/health_check.py --json
 python3 scripts/ensure_directories.py
 python3 scripts/refresh_turnstile.py
@@ -415,6 +423,32 @@ Omitting `--execute` is a dry run that logs the planned
 `OPTIMIZE TABLE ... FINAL DEDUPLICATE` statements without mutating ClickHouse.
 Use this command as explicit maintenance, not as part of routine setup or
 normal pipeline execution.
+
+### Explicit Table Recreation
+
+Setup DDL may contain only `CREATE DATABASE IF NOT EXISTS` and
+`CREATE TABLE IF NOT EXISTS` statements; setup refuses any other statement.
+Before creating anything, setup compares every existing table with its DDL.
+Schema drift (a different column name, column type, or `ORDER BY` key) makes
+setup exit non-zero and print the drifted tables. Setup never applies the
+change itself (ADR 0026).
+
+Apply a schema change with a Table Recreation, which drops the selected tables
+and recreates them empty from setup DDL. Plan first, execute the same
+selection, then reload the affected scope with the normal layer loader:
+
+```bash
+python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
+python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute
+python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold_signals --table sig_team_shooting_goals_efficiency_peak
+python3 scripts/gold/load_fotmob_gold.py --full-history
+```
+
+Omitting `--execute` logs the selected tables with their current row counts
+without mutating ClickHouse. `--execute` requires `--drifted`, `--table`,
+`--database`, or a specific `--layer`. A change confined to a `DEFAULT`
+expression, such as an activation identity scheme version, is not drift; select
+those tables explicitly with `--table` or `--database`.
 
 ## SQL Layout
 
@@ -574,9 +608,11 @@ Creation flow:
 2. Gold signal SQL jobs populate `gold_signals.sig_*` tables. Signal table DDL
    defines `signal_instance_id` with a deterministic `DEFAULT` expression based
    on the catalog `row_identity`, so existing signal INSERT SQL keeps its stable
-   column list. Signal DDL drops and recreates derived `gold_signals.sig_*`
-   tables for this contract; do not use `ALTER TABLE` to patch the
-   `signal_instance_id` column in place.
+   column list. Setup only creates missing signal tables. To apply a changed
+   `row_identity` or `signal_instance_id` contract to existing tables, use an
+   explicit Table Recreation of the affected `gold_signals.sig_*` tables and
+   reload them; do not use `ALTER TABLE` to patch the `signal_instance_id`
+   column in place.
 3. `scripts/gold/activations/build_signal_activations.py` scans active signal
    catalogs and reads each catalog `row_identity`.
 4. The builder stages one row per signal output in ephemeral
@@ -603,10 +639,11 @@ Creation flow:
    failures skip activation rebuild until signals succeed or the builder is
    rerun manually.
 
-To drop, recreate, and repopulate `gold.signal_activations` from scratch:
+To recreate `gold.signal_activations` empty from its DDL and repopulate it:
 
 ```bash
-docker compose exec depthmark-clickhouse clickhouse-client --multiquery < clickhouse/gold/ddl/create_table_signal_activations.sql
+python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold --table signal_activations
+python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold --table signal_activations --execute
 python3 scripts/gold/activations/build_signal_activations.py --full-history
 ```
 
@@ -634,9 +671,11 @@ one activation row.
    `send_layer_completion_alert`.
 6. Bronze runtime supports turnstile refresh automation through
    `scripts/refresh_turnstile.py`.
-7. Layer setup is schema-only. It does not run full-table ClickHouse
-   optimization or compaction. Physical `ReplacingMergeTree` versions are
-   reported by warehouse quality checks as diagnostics.
+7. Layer setup is schema-only and non-destructive. It only creates missing
+   databases and tables, fails closed on schema drift, and never drops,
+   alters, optimizes, or compacts tables; containers do not run setup on
+   start. Physical `ReplacingMergeTree` versions are reported by warehouse
+   quality checks as diagnostics.
 8. Bronze S3 upload/download is operator-invoked through
    `scripts/bronze/sync_s3.py`; neither scraping nor the pipeline invokes it.
 9. Historical scraping writes beneath `data/fotmob/historical/` and compresses
@@ -681,8 +720,11 @@ one activation row.
    `scripts/gold/scenario/SCENARIOS_CONTRACT.md` and
    `scripts/gold/signal/contracts/`.
 5. Keep the source of truth for data flow and system diagrams in
-   `docs/data-flow/`. Update `data-flow/` in the same change when layer
-   boundaries, scripts, SQL jobs, or infrastructure change.
+   `docs/data-flow/warehouse-pipeline-reference.html`. It owns the central
+   concept definitions and links detailed layer documentation, runbooks,
+   subsystem contracts, and accepted decisions. Update the reference and affected
+   deep dives in the same change when layer boundaries, source maturity, scripts,
+   SQL jobs, or infrastructure change.
 
 When architecture boundaries, commands, or layer ownership change, update this
 file in the same change.

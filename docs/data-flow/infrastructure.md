@@ -146,7 +146,10 @@ Runs DDL in layer order:
 3. `clickhouse/gold/ddl/` — databases, scenario tables, signal table DDL under
    `ddl/signals/{match,team,player}/`, and `ddl/create_table_signal_activations.sql`
 4. Activation stage DDL (`ddl/activations/`) is applied during activation rebuilds,
-   not during `setup_clickhouse.py`
+   not during setup
+
+Setup runs explicitly, once for a new warehouse and again after setup DDL
+changes; containers do not run it on start.
 
 Oddspedia has an independent setup command:
 
@@ -161,7 +164,26 @@ It creates `oddspedia_bronze.event`, `oddspedia_bronze.match_payload`,
 after all three Bronze fact tables are staged, validated, and replaced; the
 resolver refuses dates without the resulting `published` status.
 
-Setup is schema-only and does not run full-table optimization.
+Setup is schema-only and non-destructive: both setup commands only create
+missing databases and tables, and never drop, alter, or optimize a table.
+Before creating anything they compare existing tables with their DDL. Schema
+drift (a different column name, column type, or `ORDER BY` key) stops setup
+with a non-zero exit and a list of the drifted tables.
+
+## ClickHouse Table Recreation
+
+Apply schema drift with an explicit Table Recreation. It drops the selected
+tables, recreates them empty from setup DDL, and never reloads rows. The command
+plans by default:
+
+```bash
+python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
+python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute
+```
+
+The plan lists each selected table with its current row count. After
+`--execute`, reload the affected scope with the normal layer loader (the
+command logs the matching loader command).
 
 ## ClickHouse Optimization Maintenance
 

@@ -3,11 +3,11 @@
 Date: 2026-08-08
 Reviewer: Codex
 Project: DepthMark
-Last updated: 2026-08-08
+Last updated: 2026-10-10
 
 ## Executive Summary
 
-DepthMark has two parallel source medallion paths with isolated FotMob and Oddspedia contracts, and the codebase is well documented. This review's implementation findings primarily concern the currently deployed FotMob warehouse path; Oddspedia currently has source-specific Bronze ingestion and Silver resolution, while its additional Silver entities and Gold outputs remain follow-up work under ADR 0023. The previous ClickHouse setup-time `OPTIMIZE ... FINAL DEDUPLICATE` risk is fixed by ADR 0020 and the explicit maintenance command. The remaining open findings are now limited to the explicitly deferred P2/P3 quality work. Root test collection passes, upstream pipeline failures gate downstream work, and ClickHouse bootstrap grants are bounded by database and runtime operation. Local default-user bootstrap remains available only for the explicit local-development environment.
+DepthMark has two parallel source medallion paths with isolated FotMob and Oddspedia contracts, and the codebase is well documented. This review's implementation findings primarily concern the currently deployed FotMob warehouse path; Oddspedia currently has source-specific Bronze ingestion and Silver resolution, while its additional Silver entities and Gold outputs remain follow-up work under ADR 0023. The previous ClickHouse setup-time `OPTIMIZE ... FINAL DEDUPLICATE` risk is fixed by ADR 0020 and the explicit maintenance command. The 2026-10-02 whole-repository review (`docs/reviews/architecture-review-depthmark-20261002.html`) found that setup still dropped populated Gold tables; ADR 0026 fixes that P0 by making setup create-only and fail closed on schema drift. Its P1 findings (container startup, scheduler ownership, Compose secrets, runtime grants, cross-table publication, packaging) remain open and are tracked there and in `docs/adr/ADR_BACKLOG.md`. Root test collection passes, upstream pipeline failures gate downstream work, and ClickHouse bootstrap grants are bounded by database and runtime operation. Local default-user bootstrap remains available only for the explicit local-development environment.
 
 ## Oddspedia P0/P1 Hardening Update
 
@@ -37,6 +37,8 @@ quality improvements, not unaddressed Oddspedia P0/P1 blockers.
 
 1. **Routine full-table compaction in setup flow** — normal setup previously selected `99_optimize_tables.sql` and ran full-table `OPTIMIZE TABLE ... FINAL DEDUPLICATE` across Bronze, causing setup to rewrite populated tables and clear physical-version diagnostics.
    - Status: **Fixed in ADR 0020**. Setup discovery now excludes `optimize` SQL files, and the legacy Bronze optimization SQL file was removed.
+9. **Setup dropped populated Gold tables** (found 2026-10-02) — Gold setup DDL ran `DROP TABLE IF EXISTS` before every `gold_signals.sig_*` table and `gold.signal_activations`, so each setup run, including the Docker entrypoint, could erase Gold rows.
+   - Status: **Fixed in ADR 0026**. Setup accepts only `CREATE DATABASE/TABLE IF NOT EXISTS`, compares existing tables with their DDL and exits non-zero on schema drift before creating anything, and no longer runs on container start. Schema changes are applied through `scripts/maintenance/recreate_clickhouse_tables.py`.
 
 ### P1 (This sprint)
 
@@ -75,6 +77,7 @@ quality improvements, not unaddressed Oddspedia P0/P1 blockers.
 ## SQL Quality
 
 - Routine `OPTIMIZE TABLE ... FINAL DEDUPLICATE` is no longer part of the normal setup path.
+- Setup DDL is create-only; a unit test rejects any `DROP`, `ALTER`, `TRUNCATE`, or `RENAME` in setup SQL.
 - `SELECT *` remains in some production Gold queries and in the data-quality helper.
 - Silver and Gold use explicit `ReplacingMergeTree` / partitioning patterns, which is a solid base.
 
@@ -124,6 +127,7 @@ quality improvements, not unaddressed Oddspedia P0/P1 blockers.
 - [x] P0.1 Remove routine `OPTIMIZE ... FINAL` from runtime setup
 - [x] P0.2 Repair pytest collection/import path configuration
 - [x] P0.3 Make orchestrator failure handling explicit and safe
+- [x] P0.4 Make setup non-destructive and fail closed on schema drift (ADR 0026)
 - [x] P1.1 Restrict ClickHouse default-user fallback to local development
 - [x] P1.2 Refactor grants toward least privilege
 - [x] P1.3 Add dry-run for Bronze truncate path

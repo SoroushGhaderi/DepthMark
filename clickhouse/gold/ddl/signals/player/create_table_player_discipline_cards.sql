@@ -1,7 +1,5 @@
 -- Signal tables for entity=player, family=discipline, subfamily=cards
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_walking_tightrope;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_walking_tightrope (
     match_id Int32,
     match_date Date,
@@ -49,8 +47,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_walking_tigh
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_iron_man_discipline;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_iron_man_discipline (
     match_id Int32,
@@ -101,8 +97,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_iron_man_dis
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_foul_magnet;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_foul_magnet (
     match_id Int32,
     match_date Date,
@@ -142,8 +136,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_foul_magnet 
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_heavy_hitter;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_heavy_hitter (
     match_id Int32,
@@ -189,8 +181,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_heavy_hitter
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_dirty_half_dozen;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_dirty_half_dozen (
     match_id Int32,
     match_date Date,
@@ -234,8 +224,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_dirty_half_d
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_penalty_conceder;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_penalty_conceder (
     match_id Int32,
@@ -284,8 +272,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_penalty_conc
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_early_bath;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_early_bath (
     match_id Int32,
     match_date Date,
@@ -327,8 +313,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_early_bath (
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_late_red_drama;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_late_red_drama (
     match_id Int32,
     match_date Date,
@@ -369,8 +353,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_late_red_dra
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_captain_reprimand;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_captain_reprimand (
     match_id Int32,
@@ -423,8 +405,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_captain_repr
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_double_yellow_dismissal;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_double_yellow_dismissal (
     match_id Int32,
     match_date Date,
@@ -476,8 +456,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_double_yello
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_sub_card_speedrun;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_sub_card_speedrun (
     match_id Int32,
     match_date Date,
@@ -528,8 +506,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_sub_card_spe
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_instant_impact_red;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_instant_impact_red (
     match_id Int32,
     match_date Date,
@@ -579,8 +555,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_instant_impa
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_bench_discipline;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_bench_discipline (
     match_id Int32,
@@ -633,8 +607,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_bench_discip
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_keeper_reckless;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_keeper_reckless (
     match_id Int32,
     match_date Date,
@@ -680,8 +652,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_keeper_reckl
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_discipline_cards_unnecessary_card;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_discipline_cards_unnecessary_card (
     match_id Int32,

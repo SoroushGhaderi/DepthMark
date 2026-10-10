@@ -143,9 +143,11 @@ the exposed total is retried rather than marked complete; the decision is
 based on the observed denominator, not a fixed market count. Empty or
 transiently unloaded odds are retried for up to three football attempts. If all
 three attempts are empty, the payload is saved with `odds_unavailable: true`
-and is accepted as terminal odds-unavailable data. Explicit no-odds notices
-follow the same retry policy. Legacy payloads without coverage metadata are
-requeued for migration when their market count is ambiguous.
+and is accepted as terminal odds-unavailable data. Oddspedia's explicit
+`odds are not yet available from bookies` notice is stronger evidence: it is
+saved immediately with `odds_unavailable_reason: source_notice` and is not
+retried or re-scraped. Legacy payloads without coverage metadata are requeued
+for migration when their market count is ambiguous.
 
 When a non-empty football payload is incomplete, the retry state carries the
 partial markets and the inventory names that are missing. The next page load

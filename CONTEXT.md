@@ -119,6 +119,27 @@ identity from `signal_instance_id`.
 
 Related terms: Logical Duplicate Identity, Physical Row Version.
 
+### Schema Drift
+
+A difference between an existing warehouse table and its setup DDL in column
+names, column types, or `ORDER BY` sorting key. Normal setup fails closed on
+schema drift instead of changing the table. A change confined to a `DEFAULT`
+expression, such as an activation identity scheme version, is not schema drift;
+applying it is a deliberate operator action.
+
+Avoid saying: stale table, schema mismatch, outdated DDL.
+Related terms: Table Recreation, Row Identity, Signal Identity Scheme Version.
+
+### Table Recreation
+
+An explicit operator maintenance action that drops selected warehouse tables
+and creates them again, empty, from their setup DDL. It is the only supported
+way to apply schema drift. Table recreation never repopulates rows; the operator
+reloads the affected scope through the normal layer loader afterward.
+
+Avoid saying: table rebuild, schema reset, schema migration.
+Related terms: Schema Drift, Gold Activation Rebuild.
+
 ### Historical Scrape
 
 A FotMob Bronze scrape whose scope contains only completed calendar dates,
@@ -173,7 +194,7 @@ activation rows outside the selected output scope.
 
 Avoid saying: unbounded activation rebuild, incremental activation patch.
 Related terms: Signal Activation, Signal Activation ID, Warehouse Execution
-Scope.
+Scope, Table Recreation.
 
 ### Warehouse Execution Scope
 

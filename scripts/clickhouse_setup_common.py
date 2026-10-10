@@ -15,11 +15,18 @@ sys.path.insert(0, str(project_root))
 from config.settings import get_settings
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.schema_drift import (
+    assert_setup_sql_is_non_destructive,
+    find_schema_drift,
+    format_drift_report,
+    parse_expected_tables,
+)
 
 logger = get_logger()
 
 LAYER_ORDER = ("bronze", "silver", "gold")
 SETUP_EXCLUDED_SQL_NAME_PARTS = ("optimize",)
+TABLE_RECREATION_COMMAND = "python scripts/maintenance/recreate_clickhouse_tables.py --drifted"
 CREATE_TABLE_PATTERN = re.compile(
     r"^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([`\"\w.]+)",
     re.IGNORECASE,
@@ -319,9 +326,10 @@ def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None)
     # - finally support flat layer directory for existing bronze/gold layouts
     candidate_dirs = [layer_dir / "ddl", layer_dir / "create", layer_dir]
     if layer_name == "gold":
+        # `ddl/activations/` holds the activation builder's ephemeral stage table,
+        # which the builder drops and recreates itself; it is not setup DDL.
         candidate_dirs.extend(
             [
-                layer_dir / "ddl" / "activations",
                 layer_dir / "ddl" / "signals" / "match",
                 layer_dir / "ddl" / "signals" / "player",
                 layer_dir / "ddl" / "signals" / "team",
@@ -453,12 +461,54 @@ def execute_sql_file(
         return False
 
 
+def verify_setup_sql(client: ClickHouseClient, sql_files: list[Path]) -> bool:
+    """Fail closed unless setup SQL is create-only and existing tables match it."""
+    try:
+        assert_setup_sql_is_non_destructive(sql_files)
+    except ValueError as exc:
+        logger.error("Refusing to run setup: %s", exc)
+        return False
+    drifts = find_schema_drift(client, parse_expected_tables(sql_files))
+    if drifts:
+        logger.error(
+            "Refusing to run setup: %s existing table(s) drifted from their setup DDL.\n%s\n"
+            "Setup never drops or alters tables. Plan the Table Recreation with `%s`, "
+            "rerun it with --execute, then reload the affected scope.",
+            len(drifts),
+            format_drift_report(drifts),
+            TABLE_RECREATION_COMMAND,
+        )
+        return False
+    return True
+
+
+def _execute_layer_sql_files(
+    client: ClickHouseClient, layer_name: str, sql_files: list[Path]
+) -> int:
+    """Execute already-verified setup SQL files for one layer."""
+    if not sql_files:
+        logger.warning("No SQL files selected for %s layer setup", layer_name)
+        return 0
+    logger.info("Executing %s layer SQL...", layer_name.upper())
+    for sql_file in sql_files:
+        logger.info("Running %s", sql_file.name)
+        file_start = time.perf_counter()
+        succeeded = execute_sql_file(client, sql_file)
+        elapsed_seconds = time.perf_counter() - file_start
+        if not succeeded:
+            logger.error("Failed %s in %.2f seconds", sql_file.name, elapsed_seconds)
+            return 1
+        logger.info("Completed %s in %.2f seconds", sql_file.name, elapsed_seconds)
+    logger.info("%s layer setup completed", layer_name.upper())
+    return 0
+
+
 def run_clickhouse_layer_setup(
     layer_name: str,
     client: Optional[ClickHouseClient] = None,
     sql_file_filter: Optional[Callable[[Path], bool]] = None,
 ) -> int:
-    """Create one ClickHouse medallion layer."""
+    """Create the missing tables of one ClickHouse medallion layer."""
     owns_client = client is None
     active_client = client or connect_clickhouse()
     try:
@@ -467,32 +517,29 @@ def run_clickhouse_layer_setup(
         if sql_file_filter is not None:
             sql_files = [sql_file for sql_file in sql_files if sql_file_filter(sql_file)]
         logger.info("Using ClickHouse SQL root: %s", clickhouse_root)
-        if not sql_files:
-            logger.warning("No SQL files selected for %s layer setup", layer_name)
-            return 0
-        logger.info("Executing %s layer SQL...", layer_name.upper())
-        for sql_file in sql_files:
-            logger.info("Running %s", sql_file.name)
-            file_start = time.perf_counter()
-            succeeded = execute_sql_file(active_client, sql_file)
-            elapsed_seconds = time.perf_counter() - file_start
-            if not succeeded:
-                logger.error("Failed %s in %.2f seconds", sql_file.name, elapsed_seconds)
-                return 1
-            logger.info("Completed %s in %.2f seconds", sql_file.name, elapsed_seconds)
-        logger.info("%s layer setup completed", layer_name.upper())
-        return 0
+        if not verify_setup_sql(active_client, sql_files):
+            return 1
+        return _execute_layer_sql_files(active_client, layer_name, sql_files)
     finally:
         if owns_client:
             active_client.disconnect()
 
 
 def run_clickhouse_layers(layer_names: Iterable[str]) -> int:
-    """Create multiple ClickHouse layers with one shared connection."""
+    """Create missing tables for multiple layers after verifying all of them first."""
     client = connect_clickhouse()
     try:
-        for layer_name in layer_names:
-            if run_clickhouse_layer_setup(layer_name, client=client) != 0:
+        clickhouse_root = resolve_clickhouse_root()
+        logger.info("Using ClickHouse SQL root: %s", clickhouse_root)
+        layer_sql_files = {
+            layer_name: get_layer_sql_files(layer_name, clickhouse_root=clickhouse_root)
+            for layer_name in layer_names
+        }
+        all_sql_files = [path for paths in layer_sql_files.values() for path in paths]
+        if not verify_setup_sql(client, all_sql_files):
+            return 1
+        for layer_name, sql_files in layer_sql_files.items():
+            if _execute_layer_sql_files(client, layer_name, sql_files) != 0:
                 return 1
         return 0
     finally:

@@ -67,6 +67,7 @@ class MatchResult(_SourceArtifactModel):
     category: Optional[str] = ""
     status: str = ""
     odds_unavailable: bool = False
+    odds_unavailable_reason: Optional[Literal["source_notice", "empty_attempts_exhausted"]] = None
     odds_total_markets: Optional[int] = None
     odds_extracted_markets: Optional[int] = None
     odds_attempt: Optional[int] = None
