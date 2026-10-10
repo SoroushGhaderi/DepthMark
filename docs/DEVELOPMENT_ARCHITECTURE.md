@@ -110,9 +110,12 @@ source-qualified DDL, SQL, catalogs, and execution surface as it is built.
 
 ## Credential Policy
 
-The tracked Docker Compose files are local-development manifests. They may keep
-local defaults for fast bootstrap, but production deployments must use separate
-deployment configuration, non-default secrets, and `DEPTHMARK_ENV=production`.
+The tracked Docker Compose files are local-development manifests. They read
+database passwords from `.env` (Compose refuses to start without
+`CLICKHOUSE_PASSWORD` and `MONGODB_PASSWORD`) and publish database ports on
+`DEPTHMARK_BIND_ADDRESS`, default `127.0.0.1`. Production deployments must use
+separate deployment configuration, non-default secrets, and
+`DEPTHMARK_ENV=production`.
 
 Use `DEPTHMARK_ENV=local` only for local Docker development. ClickHouse setup
 rejects empty, placeholder, or known local-development passwords outside local

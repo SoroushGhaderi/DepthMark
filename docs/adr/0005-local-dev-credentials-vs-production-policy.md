@@ -54,3 +54,14 @@ The setup helper now owns a small amount of credential-policy enforcement in
 addition to connection orchestration. If DepthMark later adds dedicated
 production deployment manifests, those manifests should set
 `DEPTHMARK_ENV=production` and provide their own secrets.
+
+## Update (2026-10-10)
+
+The 2026-10-02 review found that the tracked Compose file still booted
+MongoDB and ClickHouse with `orbit_pass` / `fotmob_pass` when variables were
+missing, and published their ports on every host interface. The local
+manifest now has no password defaults: Compose refuses to start unless
+`CLICKHOUSE_PASSWORD` and `MONGODB_PASSWORD` are set, which the documented
+`cp .env.example .env` step provides. Database ports publish on
+`DEPTHMARK_BIND_ADDRESS`, default `127.0.0.1`; widening it is an explicit,
+local-network decision. The rest of this decision is unchanged.
