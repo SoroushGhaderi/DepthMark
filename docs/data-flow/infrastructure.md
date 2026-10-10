@@ -26,6 +26,20 @@ Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
 outside Docker, a valid `FOTMOB_X_MAS_TOKEN`, and ClickHouse and MongoDB
 credentials in `.env`.
 
+To run commands outside Docker, install DepthMark in editable mode from the
+repository root. This also provides the `depthmark` command:
+
+```bash
+python3 -m pip install -r requirements.txt
+python3 -m pip install -e .
+depthmark --help
+```
+
+DepthMark runs from a source checkout: the `depthmark` command dispatches to
+scripts by path and reads `clickhouse/` SQL and configuration files from the
+checkout. A non-editable wheel install is not supported, and the command
+exits with an error when it cannot find the checkout.
+
 ## Docker Lifecycle
 
 ```bash
