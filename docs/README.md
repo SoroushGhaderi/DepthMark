@@ -30,10 +30,14 @@ the detailed interfaces that govern execution.
 - `reviews/architecture-review-oddspedia-artifacts-20260812.html`: completed
   review and remediation record for Oddspedia JSON contracts, manifests, and
   multi-date continuation.
+- `reviews/architecture-review-depthmark-20261002.html`: whole-repository
+  review with prioritized P0–P3 findings; its P0 is resolved by ADR 0026.
 - `adr/0024-source-qualified-operational-script-names.md`: accepted naming
   grammar, package registry, and compatibility-adapter policy.
 - `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting
   interface for FotMob and Oddspedia, with explicit source adapters.
+- `adr/0026-make-warehouse-setup-non-destructive.md`: create-only setup,
+  fail-closed schema drift, and explicit Table Recreation.
 
 Source-specific flows:
 

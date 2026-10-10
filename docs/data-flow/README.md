@@ -19,8 +19,9 @@ subsystem contracts remain authoritative for their detailed interfaces.
 | `infrastructure.md` | Docker Compose, ClickHouse setup, MongoDB, environment configuration, and credential policy. |
 | `mongodb.md` | Signal catalog sync: markdown frontmatter → MongoDB serving copy. |
 
-Maintenance commands such as `scripts/maintenance/optimize_clickhouse.py` are
-documented in `infrastructure.md` and the interactive warehouse reference.
+Maintenance commands such as `scripts/maintenance/optimize_clickhouse.py` and
+`scripts/maintenance/recreate_clickhouse_tables.py` are documented in
+`infrastructure.md` and the interactive warehouse reference.
 
 ## How To Use
 
