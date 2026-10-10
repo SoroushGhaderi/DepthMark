@@ -14,11 +14,10 @@ the detailed interfaces that govern execution.
   configuration, and TouchDesk integration.
 - `SCRIPTS_CONTRACT.md`: standards for script behavior, style, CLI semantics,
   logging, safety, and command-surface changes.
-- `data-flow/warehouse-pipeline-reference.html`: Documentation Atlas with source
-  and layer navigation, concept definitions, heading links, topic search,
-  a canonical command reference with script equivalents, quality and acceptance
-  guidance, command panels, and an authoritative contract/decision index. Existing links
-  such as `#gold` remain valid; headings also accept `#gold/activation-rebuild`.
+- `data-flow/warehouse-pipeline-reference.html`: the warehouse source of truth.
+  One self-contained file with 15 pages (concepts, sources, layers, products,
+  operations, contracts), diagrams, command cards, and search. Page and section
+  anchors such as `#gold` or `#cmd-fotmob-gold` are stable link targets.
 - `data-flow/`: detailed source/layer flows supporting the central reference.
 - `data-flow/orchestration.md#post-load-data-quality`: canonical duplicate and
   Bronze-to-Silver reconciliation workflow, scopes, and exit behavior.
@@ -54,9 +53,8 @@ Source-specific flows:
 - `data-flow/oddspedia.md`: Oddspedia discovery, source Bronze, Silver, and Gold
   boundaries, links-layer prioritization, and the separate cross-source
   resolution edge.
-- `data-flow/warehouse-pipeline-reference.html#oddspedia`: interactive
-  warehouse view for the complete Oddspedia source pipeline and its explicit
-  cross-source integration edge.
+- `data-flow/warehouse-pipeline-reference.html#oddspedia`: the Oddspedia source
+  pipeline and its explicit cross-source integration edge.
 
 Keep active subsystem contracts next to the code they govern. Current examples:
 
