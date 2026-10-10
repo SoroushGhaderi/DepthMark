@@ -1,7 +1,5 @@
 -- Signal tables for entity=team, family=goalkeeping, subfamily=defense
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_parking_the_bus;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_parking_the_bus (
     match_id Int32,
     match_date Date,
@@ -70,8 +68,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_parking_the
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_discipline;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_discipline (
     match_id Int32,
     match_date Date,
@@ -137,8 +133,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_d
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_low_block_success;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_low_block_success (
     match_id Int32,
@@ -208,8 +202,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_low_block_s
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_wide_blockade;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_wide_blockade (
     match_id Int32,
     match_date Date,
@@ -274,8 +266,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_wide_blocka
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_clearance_barrage;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clearance_barrage (
     match_id Int32,
     match_date Date,
@@ -330,8 +320,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clearance_b
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_offside_trap_mastery;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_offside_trap_mastery (
     match_id Int32,
@@ -398,8 +386,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_offside_tra
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit (
     match_id Int32,
     match_date Date,
@@ -458,8 +444,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_blocki
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_the_great_wall;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_the_great_wall (
     match_id Int32,
@@ -527,8 +511,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_the_great_w
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index (
     match_id Int32,
     match_date Date,
@@ -595,8 +577,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_keeper_reli
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge (
     match_id Int32,
     match_date Date,
@@ -658,8 +638,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_tackle_volu
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak (
     match_id Int32,
@@ -733,8 +711,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_defensive_p
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_dominance;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_dominance (
     match_id Int32,
     match_date Date,
@@ -797,8 +773,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_do
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_marathon;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_marathon (
     match_id Int32,
     match_date Date,
@@ -860,8 +834,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_recovery_ma
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_box_evacuation;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_box_evacuation (
     match_id Int32,
@@ -942,8 +914,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_box_evacuat
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency (
     match_id Int32,
     match_date Date,
@@ -1023,8 +993,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_clean_sheet
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_early_lockdown;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_early_lockdown (
     match_id Int32,
     match_date Date,
@@ -1088,8 +1056,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_early_lockd
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_unbroken_structure;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_unbroken_structure (
     match_id Int32,
@@ -1171,8 +1137,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_unbroken_st
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_aerial_fortress;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_aerial_fortress (
     match_id Int32,
     match_date Date,
@@ -1238,8 +1202,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_aerial_fort
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery (
     match_id Int32,
@@ -1311,8 +1273,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_shot_suppre
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective (
     match_id Int32,

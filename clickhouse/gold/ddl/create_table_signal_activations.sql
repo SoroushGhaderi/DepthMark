@@ -1,7 +1,3 @@
-DROP TABLE IF EXISTS gold.signal_activations_match;
-DROP TABLE IF EXISTS gold.match_reference;
-DROP TABLE IF EXISTS gold.signal_activations;
-
 CREATE TABLE IF NOT EXISTS gold.signal_activations (
     signal_instance_id String,
     signal_id LowCardinality(String),
