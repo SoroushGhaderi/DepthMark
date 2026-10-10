@@ -26,6 +26,10 @@ class FootballAuditTests(unittest.TestCase):
             "score": {"home": "", "away": "", "winner": ""},
             "odds": [],
             "odds_unavailable": True,
+            "odds_unavailable_reason": "source_notice",
+            "odds_attempt": 1,
+            "odds_max_attempts": 3,
+            "odds_empty_attempts": 1,
         }
         with tempfile.TemporaryDirectory() as directory:
             path = os.path.join(directory, "9649678.json")
@@ -35,7 +39,9 @@ class FootballAuditTests(unittest.TestCase):
 
         self.assertEqual(audit.status, "accepted_data_present")
         self.assertEqual(audit.reasons, [])
-        self.assertIn("football odds not yet available from bookies at scrape time", audit.observations)
+        self.assertIn(
+            "football odds not yet available from bookies at scrape time", audit.observations
+        )
 
     def test_blank_labels_and_unmatched_schema_are_requeued(self):
         payload = {
@@ -158,7 +164,9 @@ class FootballAuditTests(unittest.TestCase):
             )
 
         self.assertEqual(audit.status, "incomplete")
-        self.assertTrue(any("source_event_id does not match listing" in reason for reason in audit.reasons))
+        self.assertTrue(
+            any("source_event_id does not match listing" in reason for reason in audit.reasons)
+        )
         self.assertTrue(any("date does not match listing" in reason for reason in audit.reasons))
 
     def test_finished_football_result_without_score_is_requeued(self):
