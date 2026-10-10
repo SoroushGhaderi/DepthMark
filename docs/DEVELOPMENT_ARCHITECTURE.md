@@ -1,8 +1,11 @@
 # DepthMark Development Architecture
 
-This is the project-wide reference for how DepthMark is built and operated. It
-owns architecture, layer boundaries, command surface, and runbook guidance.
-Script coding standards live in `SCRIPTS_CONTRACT.md`.
+Start with [Warehouse Knowledge Reference](data-flow/warehouse-pipeline-reference.html)
+for the central source of truth on DepthMark concepts, source ownership, layer
+boundaries, and system relationships. This document provides the detailed
+implementation architecture, canonical command surface, and operational runbook.
+Script coding standards remain authoritative in `SCRIPTS_CONTRACT.md`;
+subsystem contracts stay beside the interfaces they govern.
 
 ## Scope
 
@@ -681,8 +684,11 @@ one activation row.
    `scripts/gold/scenario/SCENARIOS_CONTRACT.md` and
    `scripts/gold/signal/contracts/`.
 5. Keep the source of truth for data flow and system diagrams in
-   `docs/data-flow/`. Update `data-flow/` in the same change when layer
-   boundaries, scripts, SQL jobs, or infrastructure change.
+   `docs/data-flow/warehouse-pipeline-reference.html`. It owns the central
+   concept definitions and links detailed layer documentation, runbooks,
+   subsystem contracts, and accepted decisions. Update the reference and affected
+   deep dives in the same change when layer boundaries, source maturity, scripts,
+   SQL jobs, or infrastructure change.
 
 When architecture boundaries, commands, or layer ownership change, update this
 file in the same change.

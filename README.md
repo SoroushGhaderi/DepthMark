@@ -44,10 +44,13 @@ python3 scripts/bronze/sync_s3.py download --date 20251208
 
 ## Documentation
 
-Start with [`docs/README.md`](docs/README.md) for the documentation map.
+Start with the [Warehouse Knowledge Reference](docs/data-flow/warehouse-pipeline-reference.html)
+for project concepts and architecture boundaries, or [`docs/README.md`](docs/README.md)
+for the documentation map.
 
 | Topic | Location |
 | --- | --- |
+| Concepts, source ownership, and system relationships | [`Warehouse Knowledge Reference`](docs/data-flow/warehouse-pipeline-reference.html) |
 | Architecture, commands, and runbook | [`docs/DEVELOPMENT_ARCHITECTURE.md`](docs/DEVELOPMENT_ARCHITECTURE.md) |
 | Script behavior and CLI contract | [`docs/SCRIPTS_CONTRACT.md`](docs/SCRIPTS_CONTRACT.md) |
 | Data flow, layer diagrams, and infrastructure | [`docs/data-flow/`](docs/data-flow/) |
