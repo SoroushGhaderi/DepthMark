@@ -26,6 +26,7 @@
       "additionalProperties": true
     },
     "odds_unavailable": {"type": "boolean"},
+    "odds_unavailable_reason": {"enum": ["source_notice", "empty_attempts_exhausted"]},
     "odds_total_markets": {"type": ["integer", "null"], "minimum": 0},
     "odds_extracted_markets": {"type": "integer", "minimum": 0},
     "odds_attempt": {"type": "integer", "minimum": 1},
