@@ -431,6 +431,8 @@ def _football_coverage_reasons(data: Dict[str, Any]) -> List[str]:
     if data.get("sport") != "football":
         return []
     if data.get("odds_unavailable"):
+        if data.get("odds_unavailable_reason") == "source_notice":
+            return []
         empty_attempts = data.get("odds_empty_attempts")
         if empty_attempts is not None:
             try:

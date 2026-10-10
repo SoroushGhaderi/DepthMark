@@ -64,6 +64,7 @@ Run commands from the `depthmark` directory.
 
 ```bash
 python scripts/orchestration/setup_fotmob_warehouse.py
+python scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python scripts/mongodb/init_indexes.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/bronze/scrape_fotmob.py 20251208
@@ -143,6 +144,10 @@ For files under `scripts/`, script-oriented helpers under `src/`, and source or 
 
 ## SQL And Catalog Work
 
+- Setup DDL is create-only: `CREATE DATABASE IF NOT EXISTS` and
+  `CREATE TABLE IF NOT EXISTS`, never `DROP`, `ALTER`, `TRUNCATE`, or `RENAME`.
+  Setup fails on schema drift; apply schema changes to existing tables with
+  `scripts/maintenance/recreate_clickhouse_tables.py` (ADR 0026).
 - Silver SQL lives under `clickhouse/silver/ddl` and `clickhouse/silver/dml`.
 - Gold scenario/signal SQL lives under `clickhouse/gold/dml/`; Gold DDL under `clickhouse/gold/ddl/`.
 - New or changed scenario work should update SQL, runner code, DDL/contracts, and the relevant catalog docs.

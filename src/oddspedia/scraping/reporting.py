@@ -494,8 +494,8 @@ def _findings(report: Dict[str, Any]) -> List[str]:
     if payloads["odds_unavailable_count"]:
         findings.append(
             "**Suggestion — odds availability:** "
-            f"{payloads['odds_unavailable_count']} accepted payload(s) exhausted the configured "
-            "empty-odds retries: " + ", ".join(payloads["odds_unavailable_ids"]) + "."
+            f"{payloads['odds_unavailable_count']} accepted payload(s) were marked terminal "
+            "odds-unavailable: " + ", ".join(payloads["odds_unavailable_ids"]) + "."
         )
     if audit["coverage_observation_payloads"]:
         findings.append(

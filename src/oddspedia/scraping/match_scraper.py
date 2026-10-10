@@ -1427,7 +1427,12 @@ _JS_EXTRACT_ODDS = """
                 entry.outcomes[s.outcome] = s.val;
             } else entry.home = s.val;
         });
-        return count >= 2 ? entry : null;
+        // A loose card can legitimately expose only one named outcome. This
+        // occurs on sparse Correct Score markets (for example, one remaining
+        // "4 : 4" price). Keep the same acceptance rule as processRow: one
+        // direction-only control is ambiguous, but one named outcome is a
+        // complete line.
+        return count >= 2 || entry.outcomes ? entry : null;
     }
 
     function getMarketName(card) {
@@ -3150,11 +3155,13 @@ def scrape_match(
             meta["status"] = match_info["status"]
 
     odds_unavailable = False
+    odds_unavailable_reason = ""
     total_markets = None
     market_names = []
     if sport == "football":
         odds_unavailable = _football_odds_not_yet_available(driver)
         if odds_unavailable:
+            odds_unavailable_reason = "source_notice"
             logger.info(
                 "football_odds_not_yet_available",
                 match_id=match_id,
@@ -3224,11 +3231,13 @@ def scrape_match(
             # it retryable until the configured terminal odds attempt.
             extraction_error = exc
             odds = []
-        odds_unavailable = odds_unavailable or (
-            not odds and _football_odds_not_yet_available(driver)
-        )
+        source_notice_detected = not odds and _football_odds_not_yet_available(driver)
+        odds_unavailable = odds_unavailable or source_notice_detected
+        if source_notice_detected:
+            odds_unavailable_reason = "source_notice"
         if odds:
             odds_unavailable = False
+            odds_unavailable_reason = ""
 
     # A listing row can carry a small 1X2 fallback. Use it before deciding
     # that a detail-page empty render needs another attempt.
@@ -3252,12 +3261,22 @@ def scrape_match(
                 }
             )
             odds_unavailable = False
+            odds_unavailable_reason = ""
             extraction_error = None
 
     if sport == "football":
         if not odds:
             empty_odds_attempts = previous_empty_odds_attempts + 1
-            if odds_attempt < odds_max_attempts:
+            if odds_unavailable_reason == "source_notice":
+                logger.info(
+                    "football_odds_unavailable_terminal",
+                    match_id=match_id,
+                    reason=odds_unavailable_reason,
+                    odds_attempt=odds_attempt,
+                    odds_max_attempts=odds_max_attempts,
+                    empty_odds_attempts=empty_odds_attempts,
+                )
+            elif odds_attempt < odds_max_attempts:
                 metrics.record_odds_extraction(success=False)
                 logger.warning(
                     "football_odds_empty_retry",
@@ -3273,7 +3292,7 @@ def scrape_match(
                     f"{odds_attempt}/{odds_max_attempts}; retry required"
                 ) from extraction_error
 
-            if empty_odds_attempts < odds_max_attempts:
+            elif empty_odds_attempts < odds_max_attempts:
                 logger.warning(
                     "football_odds_empty_attempts_mixed",
                     match_id=match_id,
@@ -3287,15 +3306,17 @@ def scrape_match(
                     f"only {empty_odds_attempts}/{odds_max_attempts} attempts were empty"
                 ) from extraction_error
 
-            odds_unavailable = True
-            logger.warning(
-                "football_odds_unavailable_after_retries",
-                match_id=match_id,
-                odds_attempt=odds_attempt,
-                odds_max_attempts=odds_max_attempts,
-                empty_odds_attempts=empty_odds_attempts,
-                total_markets=total_markets,
-            )
+            else:
+                odds_unavailable = True
+                odds_unavailable_reason = "empty_attempts_exhausted"
+                logger.warning(
+                    "football_odds_unavailable_after_retries",
+                    match_id=match_id,
+                    odds_attempt=odds_attempt,
+                    odds_max_attempts=odds_max_attempts,
+                    empty_odds_attempts=empty_odds_attempts,
+                    total_markets=total_markets,
+                )
         else:
             coverage_error = _football_odds_coverage_error(
                 odds,
@@ -3405,6 +3426,8 @@ def scrape_match(
             "stats_source": "Live Stats" if stats else "",
             "scraped_at": now_iso(),
         }
+        if odds_unavailable_reason:
+            result["odds_unavailable_reason"] = odds_unavailable_reason
 
         duration_seconds = int(time.time() - t0)
         logger.info(

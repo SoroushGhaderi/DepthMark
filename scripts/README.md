@@ -36,6 +36,7 @@ Use these paths for new automation and daily runs:
 - `scripts/orchestration/setup_fotmob_warehouse.py`
 - `scripts/report_scraping.py`
 - `scripts/maintenance/optimize_clickhouse.py`
+- `scripts/maintenance/recreate_clickhouse_tables.py`
 - `scripts/oddspedia/discover_oddspedia_events.py`
 - `scripts/oddspedia/prioritize_oddspedia_events.py`
 - `scripts/oddspedia/scrape_oddspedia_matches.py`
@@ -271,6 +272,7 @@ unless `--allow-incomplete` is explicitly supplied.
 - `scripts/health_check.py`
 - `scripts/refresh_turnstile.py`
 - `scripts/maintenance/optimize_clickhouse.py`
+- `scripts/maintenance/recreate_clickhouse_tables.py`
 - `scripts/mongodb/init_indexes.py`
 - `scripts/mongodb/sync_signal_catalogs.py`
 
@@ -281,6 +283,17 @@ maintenance. It is dry-run by default and only mutates tables with `--execute`:
 python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
 python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
 python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
+```
+
+`scripts/maintenance/recreate_clickhouse_tables.py` is the explicit Table
+Recreation command. Setup never drops or alters tables and fails on schema
+drift. This command drops the selected tables and recreates them empty from
+setup DDL. It is dry-run by default and only mutates tables with `--execute`;
+reload the affected scope with the normal layer loader afterward:
+
+```bash
+python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
+python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute
 ```
 - `scripts/gold/activations/build_signal_activations.py`
 
