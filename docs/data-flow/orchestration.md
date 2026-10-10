@@ -169,7 +169,8 @@ python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --str
 
 The script reports existing tables whose grain or row identity is undefined.
 On a completed run, exit `0` means clean or non-strict findings; strict mode
-exits `1` when logical duplicates or Bronze-to-Silver mismatches exist. Physical
+exits `1` when logical duplicates, Bronze-to-Silver mismatches, or unpublished
+Silver/Gold partitions (ADR 0028) exist in the selected scope. Physical
 row versions never cause strict failure. Argument errors
 exit `2`; connection or query errors exit `1`. The legacy
 `check_bronze_to_silver_reconciliation.py` command remains available and

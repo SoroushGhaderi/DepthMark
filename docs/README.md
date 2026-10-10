@@ -40,6 +40,8 @@ the detailed interfaces that govern execution.
   fail-closed schema drift, and explicit Table Recreation.
 - `adr/0027-use-an-external-scheduler.md`: no in-repo scheduler; host
   scheduler contract, run order, and overlap rule.
+- `adr/0028-record-scoped-publication-status.md`: per-partition publication
+  status for scoped Silver/Gold batches and the reader rule.
 
 Source-specific flows:
 

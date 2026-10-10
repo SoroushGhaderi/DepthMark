@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional
 
+from src.warehouse.publication import COMMITTING, FAILED, PUBLISHED, PublicationLog
 from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
 
@@ -45,7 +46,12 @@ def replace_insert_target(sql: str, target_table: str, stage_table: str) -> str:
 
 
 class ScopedReplacementBatch:
-    """Stage all selected jobs, then commit them one table at a time."""
+    """Stage all selected jobs, then commit them one table at a time.
+
+    With a ``publication`` log, the batch records ``committing`` before the
+    first commit and ``published`` or ``failed`` afterward, so readers can tell
+    a fully committed scope from a partially committed one (ADR 0028).
+    """
 
     def __init__(
         self,
@@ -55,12 +61,14 @@ class ScopedReplacementBatch:
         dry_run: bool = False,
         log,
         run_id: Optional[str] = None,
+        publication: Optional[PublicationLog] = None,
     ):
         self.client = client
         self.scope = scope
         self.dry_run = dry_run
         self.log = log
         self.run_id = run_id or uuid.uuid4().hex[:10]
+        self.publication = publication
 
     def log_plan(self, job: ScopedSqlJob) -> None:
         """Report deterministic dry-run and runtime planning details."""
@@ -91,6 +99,8 @@ class ScopedReplacementBatch:
             return []
         if self.client is None:
             raise RuntimeError("ClickHouse client is required outside dry-run mode")
+        if self.publication is not None:
+            self.publication.assert_ready(self.client)
 
         prepared: list[PreparedReplacement] = []
         try:
@@ -104,23 +114,52 @@ class ScopedReplacementBatch:
             )
             raise
 
+        target_tables = [item.job.target_table for item in prepared]
+        self._record_publication(COMMITTING, target_tables)
         committed: list[str] = []
         try:
             for replacement in prepared:
                 self._commit(replacement)
                 committed.append(replacement.job.target_table)
-        except Exception:
-            pending = [
-                item.job.target_table for item in prepared if item.job.target_table not in committed
-            ]
+        except Exception as error:
+            pending = [table for table in target_tables if table not in committed]
             self.log.error(
                 "Scoped commit failed; rerun the same scope to converge",
                 scope=self.scope.label,
                 committed_tables=committed,
                 pending_tables=pending,
             )
+            try:
+                self._record_publication(FAILED, target_tables, committed, error=str(error))
+            except Exception as status_error:
+                self.log.error(
+                    "Scoped publication failure status could not be recorded",
+                    scope=self.scope.label,
+                    error=str(status_error),
+                )
             raise
+        self._record_publication(PUBLISHED, target_tables, committed)
         return prepared
+
+    def _record_publication(
+        self,
+        status: str,
+        tables: list[str],
+        committed: Optional[list[str]] = None,
+        *,
+        error: Optional[str] = None,
+    ) -> None:
+        if self.publication is None:
+            return
+        self.publication.record(
+            self.client,
+            self.scope,
+            run_id=self.run_id,
+            status=status,
+            tables=tables,
+            committed_tables=committed or (),
+            error=error,
+        )
 
     def _stage_names(self, target_table: str) -> tuple[str, str]:
         match = SAFE_QUALIFIED_TABLE_RE.match(target_table)
