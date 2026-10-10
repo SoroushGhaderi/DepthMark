@@ -50,11 +50,8 @@ docker compose down
 docker compose down -v   # also removes volumes (destructive)
 ```
 
-Optional scheduler profile:
-
-```bash
-docker compose --profile scheduler up -d
-```
+Compose has no scheduler service; recurring runs come from an external
+scheduler (see [Scheduling](#scheduling)).
 
 Run pipeline commands inside the scraper service (see
 [`orchestration.md`](orchestration.md) and
@@ -101,6 +98,37 @@ can join it optionally via `docker-compose.override.yml`.
 Local development uses the root `docker-compose.yml` for `depthmark-clickhouse`,
 `depthmark-mongodb`, and `depthmark-scraper`. Image build assets live under
 `docker/` (`Dockerfile`, `docker-entrypoint.sh`).
+
+## Scheduling
+
+DepthMark does not ship a scheduler (ADR 0027). Recurring runs come from an
+external scheduler on the host, such as cron or systemd timers, which runs the
+canonical pipeline commands inside the running scraper container:
+
+- Wrap every job in `flock -n` so a run that is still going makes the next
+  start skip instead of overlapping. Oddspedia commands also take their own
+  per-date locks under `data/oddspedia/locks/`.
+- Use `docker compose exec -T` (no TTY) and an absolute path to
+  `docker-compose.yml`.
+- A non-zero exit code is the failure signal. Send scheduler output to a log
+  or mail; FotMob layer completion alerts also go to Telegram when configured.
+- FotMob historical runs accept only completed dates, so schedule yesterday.
+  Oddspedia priority and resolution need FotMob Silver for the previous,
+  current, and following date, so schedule two days ago, after the FotMob run.
+  Oddspedia uses UTC date boundaries; run the host in UTC or adjust the dates.
+
+Example host crontab (GNU `date`; `%` must be escaped in crontab):
+
+```cron
+# FotMob: yesterday through Bronze, Silver, and Gold.
+0 3 * * * flock -n /tmp/depthmark-fotmob.lock docker compose -f /srv/DepthMark/docker-compose.yml exec -T depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py "$(date -d yesterday +\%Y\%m\%d)" >> /var/log/depthmark/fotmob.log 2>&1
+# Oddspedia: two days ago, once its FotMob Silver window is complete.
+0 5 * * * flock -n /tmp/depthmark-oddspedia.lock docker compose -f /srv/DepthMark/docker-compose.yml exec -T depthmark-scraper python3 scripts/oddspedia/run_oddspedia_pipeline.py --date "$(date -d '2 days ago' +\%Y\%m\%d)" --silver-reference-window-ready >> /var/log/depthmark/oddspedia.log 2>&1
+```
+
+`--silver-reference-window-ready` asserts the operator's schedule ordering;
+the command still verifies the FotMob reference window and fails closed when
+it is incomplete.
 
 ## Environment Configuration
 

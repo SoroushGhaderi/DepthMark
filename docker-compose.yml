@@ -126,37 +126,6 @@ services:
     command: ["tail", "-f", "/dev/null"]
     user: appuser
 
-  depthmark-scheduler:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    container_name: depthmark-scheduler
-    profiles:
-      - scheduler
-    depends_on:
-      depthmark-clickhouse:
-        condition: service_healthy
-    volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./config:/app/config:ro
-      - ./scripts:/app/scripts
-      - ./crontab:/etc/cron.d/scraper-cron:ro
-    environment:
-      PYTHONUNBUFFERED: "1"
-      PYTHONPATH: /app
-      DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
-      HEADLESS: "true"
-      CLICKHOUSE_HOST: depthmark-clickhouse
-      CLICKHOUSE_PORT: "8123"
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Set CLICKHOUSE_PASSWORD in .env}
-    env_file:
-      - .env
-    networks:
-      - depthmark_network
-    restart: unless-stopped
-
 volumes:
   mongodb_data:
   clickhouse_data:
