@@ -10,12 +10,21 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.settings import get_settings
+from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.integrations.clickhouse.sql import split_sql_statements
+from src.warehouse.schema_drift import (
+    assert_setup_sql_is_non_destructive,
+    find_schema_drift,
+    format_drift_report,
+    parse_expected_tables,
+)
+
+logger = get_logger(__name__)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
-    """Create Oddspedia warehouse tables or print the planned SQL files."""
+    """Create missing Oddspedia warehouse tables or print the planned SQL files."""
     parser = argparse.ArgumentParser(description="Create Oddspedia warehouse tables")
     parser.add_argument("--dry-run", action="store_true", help="Print planned SQL files only")
     args = parser.parse_args(argv)
@@ -23,6 +32,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     sql_paths.append(
         PROJECT_ROOT / "clickhouse" / "silver" / "ddl" / "09_oddspedia_match_resolution.sql"
     )
+    try:
+        assert_setup_sql_is_non_destructive(sql_paths)
+    except ValueError as error:
+        logger.error("Refusing to run Oddspedia setup", error=str(error))
+        return 1
     if args.dry_run:
         for path in sql_paths:
             print(path.relative_to(PROJECT_ROOT))
@@ -38,6 +52,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if not client.connect():
         return 1
     try:
+        drifts = find_schema_drift(client, parse_expected_tables(sql_paths))
+        if drifts:
+            logger.error(
+                "Refusing to run Oddspedia setup: existing tables drifted from their setup DDL. "
+                "Setup never drops or alters tables; plan a Table Recreation with "
+                "scripts/maintenance/recreate_clickhouse_tables.py --drifted.\n"
+                + format_drift_report(drifts),
+                drifted_tables=len(drifts),
+            )
+            return 1
         for path in sql_paths:
             for statement in split_sql_statements(path.read_text(encoding="utf-8")):
                 client.execute(statement)
