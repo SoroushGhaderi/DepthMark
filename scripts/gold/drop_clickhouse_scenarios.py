@@ -8,8 +8,8 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import maintenance_client
 from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
 from src.common.logging import get_logger
 
@@ -52,22 +52,21 @@ def _find_tables(client: ClickHouseClient, database: str, part: str) -> list[str
         WHERE database = %(database)s
           AND ({prefix_filter})
         ORDER BY name
-    """.format(prefix_filter=prefix_filter)
+    """.format(
+        prefix_filter=prefix_filter
+    )
     result = client.execute(query, {"database": database})
     return [row[0] for row in result.result_rows]
 
 
 def main(argv=None) -> int:
     args = parse_args(argv)
-    settings = get_settings()
 
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
+    try:
+        client = maintenance_client()
+    except RuntimeError as identity_error:
+        logger.error(str(identity_error))
+        return 1
 
     if not client.connect():
         logger.error("Failed to connect to ClickHouse")

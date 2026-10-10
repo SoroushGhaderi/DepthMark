@@ -190,3 +190,31 @@ def test_run_script_reports_a_missing_registry_target(monkeypatch, tmp_path, cap
     assert cli._run_script("missing.py", []) == 2
     assert not subprocess_run_called
     assert "missing.py" in capsys.readouterr().err
+
+
+def test_run_script_requires_a_source_checkout(monkeypatch, tmp_path, capsys) -> None:
+    monkeypatch.setattr(cli, "PROJECT_ROOT", Path(tmp_path))
+    monkeypatch.setattr(cli, "SCRIPTS_DIR", Path(tmp_path) / "scripts")
+    monkeypatch.setattr(cli, "CLICKHOUSE_SQL_DIR", Path(tmp_path) / "clickhouse")
+
+    assert cli._run_script("health_check.py", []) == 2
+    assert "pip install -e ." in capsys.readouterr().err
+
+
+def test_package_discovery_declares_every_code_directory() -> None:
+    from setuptools.config.pyprojecttoml import read_configuration
+
+    project_root = Path(cli.__file__).resolve().parents[1]
+    configuration = read_configuration(project_root / "pyproject.toml", expand=True)
+    packages = set(configuration["tool"]["setuptools"]["packages"])
+    code_directories = {
+        ".".join(directory.relative_to(project_root).parts)
+        for top_level in ("src", "scripts", "config")
+        for directory in [project_root / top_level, *(project_root / top_level).rglob("*")]
+        if directory.is_dir()
+        and "__pycache__" not in directory.parts
+        and any(directory.glob("*.py"))
+    }
+
+    assert {"src.warehouse", "src.fotmob.bronze", "config"} <= packages
+    assert code_directories <= packages

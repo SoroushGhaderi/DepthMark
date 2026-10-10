@@ -1963,7 +1963,7 @@
 <div class="flow-row">
 <div class="flow-node gold"><strong>gold_signals.sig_*</strong><span class="sub">344 tables</span></div>
 <span class="flow-connector">→</span>
-<div class="flow-node dim"><strong>gold.signal_activations_stage</strong><span class="sub">ephemeral build buffer</span></div>
+<div class="flow-node dim"><strong>warehouse_stage.signal_activations_stage</strong><span class="sub">ephemeral build buffer</span></div>
 <span class="flow-connector">→</span>
 <div class="flow-node gold"><strong>signal_activation_final_insert.sql</strong><span class="sub">match-level summaries</span></div>
 <span class="flow-connector">→</span>
@@ -2585,7 +2585,7 @@ python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute</p
 <div class="flow-group accent">
 <div class="flow-group-label">0 · Prerequisites</div>
 <div class="flow-row">
-<div class="flow-node accent"><strong>cp .env.example .env</strong><span class="sub">docker compose up -d</span></div>
+<div class="flow-node accent"><strong>scripts/bootstrap.sh</strong><span class="sub">generated .env · docker compose up -d</span></div>
 <span class="flow-connector">→</span>
 <div class="flow-node accent"><strong>health_check.py</strong></div>
 </div>
@@ -2835,13 +2835,9 @@ python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute</p
 </div>
 </div>
 <div class="command-preview"><p class="eyebrow">Commands for this workflow</p><div class="command-links"><a href="#commands/fotmob-setup">FotMob warehouse setup <span aria-hidden="true">↗</span></a><a href="#commands/oddspedia-setup">Oddspedia warehouse setup <span aria-hidden="true">↗</span></a><a href="#commands/indexes">MongoDB index bootstrap <span aria-hidden="true">↗</span></a></div></div>
-<pre data-command="">cp .env.example .env
-# Configure .env locally before starting services.
-docker compose up -d
-docker compose exec depthmark-scraper python3 scripts/orchestration/setup_fotmob_warehouse.py
-docker compose exec depthmark-scraper python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
-docker compose exec depthmark-scraper python3 scripts/oddspedia/setup_oddspedia_warehouse.py
-docker compose exec depthmark-scraper python3 scripts/mongodb/init_indexes.py</pre></div>
+<pre data-command="">scripts/bootstrap.sh            # server: generated .env, stack, setup, MongoDB, schedule
+scripts/bootstrap.sh --local    # local development
+scripts/bootstrap.sh --env-only # only prepare .env</pre></div>
 <div class="diagram-card" style="margin-bottom:0">
 <div class="card-header">
 <h3>Credential policy</h3>
@@ -2851,8 +2847,8 @@ docker compose exec depthmark-scraper python3 scripts/mongodb/init_indexes.py</p
 <thead><tr><th></th><th>Local</th><th>Production</th></tr></thead>
 <tbody>
 <tr><td>Env var</td><td><code>DEPTHMARK_ENV=local</code></td><td><code>DEPTHMARK_ENV=production</code></td></tr>
-<tr><td>Passwords</td><td>Defaults allowed</td><td>Non-default required</td></tr>
-<tr><td>Ports</td><td>Published by the local Compose file</td><td>Explicit deployment/network policy required; DEPTHMARK_ENV does not disable published ports</td></tr>
+<tr><td>Passwords</td><td>Required from <code>.env</code>; Compose has no defaults</td><td>Non-default required</td></tr>
+<tr><td>Ports</td><td>Published on <code>DEPTHMARK_BIND_ADDRESS</code> (default 127.0.0.1)</td><td>Explicit deployment/network policy required; DEPTHMARK_ENV does not disable published ports</td></tr>
 <tr><td>Secrets</td><td><code>.env</code> file</td><td>Secrets management</td></tr>
 </tbody>
 </table>
@@ -2893,7 +2889,7 @@ docker compose exec depthmark-scraper python3 scripts/mongodb/init_indexes.py</p
 <tr><td>Why was a boundary chosen?</td><td>Accepted architecture decisions below</td><td>Record a superseding decision when the contract changes</td></tr>
 </tbody></table></div>
 <div class="diagram-card"><div class="card-header"><h3>Source ownership</h3></div><ul class="reference-list"><li><a href="../adr/0021-add-oddspedia-as-source-domain.md">ADR 0021 · Oddspedia as a source domain</a></li><li><a href="../adr/0023-parallel-source-medallion-pipelines.md">ADR 0023 · Parallel source medallion pipelines</a></li><li><a href="../adr/0022-prioritize-oddspedia-links-against-depthmark-silver.md">ADR 0022 · Prioritization against FotMob Silver</a></li><li><a href="source-artifact-storage.md">Historical/Live artifact storage convention</a></li></ul></div>
-<div class="diagram-card"><div class="card-header"><h3>Execution, safety, and quality</h3></div><ul class="reference-list"><li><a href="../adr/0007-sql-owns-analytical-transformations.md">ADR 0007 · SQL owns analytical transformations</a></li><li><a href="../adr/0010-introduce-src-application-services-behind-script-entrypoints.md">ADR 0010 · Workflow services behind script entry points</a></li><li><a href="../adr/0018-use-scope-aware-warehouse-replacement.md">ADR 0018 · Scoped replacement (supersedes ADR 0011 for scoped activations)</a></li><li><a href="../adr/0019-separate-logical-duplicates-from-physical-versions.md">ADR 0019 · Logical duplicates vs physical versions</a></li><li><a href="../adr/0020-keep-clickhouse-optimization-out-of-setup.md">ADR 0020 · Optimization is explicit maintenance</a></li><li><a href="../adr/0024-source-qualified-operational-script-names.md">ADR 0024 · Canonical script names</a></li><li><a href="../adr/0025-unify-scraping-status-and-reports.md">ADR 0025 · Shared read-only scraping reports</a></li><li><a href="../adr/0026-make-warehouse-setup-non-destructive.md">ADR 0026 · Setup is create-only; drift needs explicit recreation</a></li><li><a href="orchestration.md#post-load-data-quality">Post-load data-quality workflow</a></li></ul></div>
+<div class="diagram-card"><div class="card-header"><h3>Execution, safety, and quality</h3></div><ul class="reference-list"><li><a href="../adr/0007-sql-owns-analytical-transformations.md">ADR 0007 · SQL owns analytical transformations</a></li><li><a href="../adr/0010-introduce-src-application-services-behind-script-entrypoints.md">ADR 0010 · Workflow services behind script entry points</a></li><li><a href="../adr/0018-use-scope-aware-warehouse-replacement.md">ADR 0018 · Scoped replacement (supersedes ADR 0011 for scoped activations)</a></li><li><a href="../adr/0019-separate-logical-duplicates-from-physical-versions.md">ADR 0019 · Logical duplicates vs physical versions</a></li><li><a href="../adr/0020-keep-clickhouse-optimization-out-of-setup.md">ADR 0020 · Optimization is explicit maintenance</a></li><li><a href="../adr/0024-source-qualified-operational-script-names.md">ADR 0024 · Canonical script names</a></li><li><a href="../adr/0025-unify-scraping-status-and-reports.md">ADR 0025 · Shared read-only scraping reports</a></li><li><a href="../adr/0026-make-warehouse-setup-non-destructive.md">ADR 0026 · Setup is create-only; drift needs explicit recreation</a></li><li><a href="../adr/0027-use-an-external-scheduler.md">ADR 0027 · Scheduling is external; jobs run under flock</a></li><li><a href="../adr/0028-record-scoped-publication-status.md">ADR 0028 · Readers consume only published partitions</a></li><li><a href="../adr/0029-split-clickhouse-identities-and-isolate-staging.md">ADR 0029 · Narrow application user; staging in warehouse_stage</a></li><li><a href="../adr/0030-automate-server-bootstrap.md">ADR 0030 · One-command server bootstrap</a></li><li><a href="orchestration.md#post-load-data-quality">Post-load data-quality workflow</a></li></ul></div>
 <div class="diagram-card"><div class="card-header"><h3>Products, identity, and platform policy</h3></div><ul class="reference-list"><li><a href="../adr/0003-split-gold-clickhouse-namespaces.md">ADR 0003 · Separate Gold namespaces</a></li><li><a href="../adr/0006-version-signal-activation-identity-scheme.md">ADR 0006 · Versioned activation identity</a></li><li><a href="../adr/0008-author-signal-catalogs-in-markdown.md">ADR 0008 · Catalog authoring in markdown</a></li><li><a href="../adr/0014-use-single-enriched-signal-activation-serving-table.md">ADR 0014 · Enriched activation serving table</a></li><li><a href="../adr/0012-bronze-filesystem-retention-and-dlq-replay-policy.md">ADR 0012 · Bronze retention and DLQ replay</a></li><li><a href="../adr/0016-unify-configuration-systems.md">ADR 0016 · Configuration systems</a></li><li><a href="../adr/0005-local-dev-credentials-vs-production-policy.md">ADR 0005 · Local vs production credentials</a></li><li><a href="../adr/0015-redesign-telegram-notification-module.md">ADR 0015 · Telegram notification ownership</a></li></ul></div>
 <div class="diagram-card"><div class="card-header"><h3>Keeping the reference accurate</h3></div><p>Update this page in the same change as concept definitions, source maturity, layer ownership, scripts, SQL jobs, or platform boundaries. Check statements against implementation and accepted decisions; resolve conflicts explicitly. Inventory counts describe checked-in assets, not live warehouse health or architectural limits.</p><p class="reference-note">Local navigation, heading links, search, and command panels work without external assets or services. Opening a command panel only displays instructions; it does not execute a command.</p></div>
 <div class="related-reading"><p class="eyebrow">Continue reading</p><div class="command-links"><a href="../README.md">Documentation map →</a><a href="../DEVELOPMENT_ARCHITECTURE.md">Development architecture →</a><a href="#commands">Verified commands →</a></div></div><nav aria-label="Adjacent chapters" class="chapter-pager"><a href="#infrastructure"><span>Previous chapter · 14</span><strong>Platforms &amp; setup <span aria-hidden="true">←</span></strong></a></nav></div><footer class="reference-footer"><span>DepthMark · Warehouse knowledge reference</span><span>Concepts · lineage · contracts</span></footer>
@@ -3148,11 +3144,11 @@ docker compose exec depthmark-scraper python3 scripts/mongodb/init_indexes.py</p
             sectionTab: 'gold',
         },
         {
-            match: ['cp .env.example', 'docker compose up'],
+            match: ['bootstrap.sh', 'cp .env.example', 'docker compose up'],
             title: 'Environment & Docker',
             scripts: ['docker-compose.yml', '.env.example'],
             commandIds: ["environment"],
-            note: 'Edit .env with FOTMOB_X_MAS_TOKEN, ClickHouse, and MongoDB credentials before running loaders.',
+            note: 'scripts/bootstrap.sh creates .env with generated database passwords; export FOTMOB_X_MAS_TOKEN before running it.',
             sectionTab: 'infrastructure',
         },
         {

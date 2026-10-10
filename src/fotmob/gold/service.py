@@ -6,6 +6,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from src.warehouse.publication import (
+    assert_upstream_published,
+    gold_outputs_publication,
+    silver_publication,
+)
 from src.warehouse.scoped_replace import ScopedReplacementBatch
 from src.fotmob.gold.dml_runner import (
     GoldSqlJob,
@@ -120,6 +125,7 @@ class GoldService:
                 scope,
                 dry_run=dry_run,
                 log=logger,
+                publication=gold_outputs_publication(),
             ).run(scoped_jobs)
         except Exception as error:
             logger.error("Gold %s scoped batch failed: %s", job_name, error)
@@ -175,6 +181,7 @@ class GoldService:
                 scope,
                 dry_run=dry_run,
                 log=logger,
+                publication=gold_outputs_publication(),
             ).run(scoped_jobs)
         except Exception as error:
             logger.error("Gold scoped staging or commit failed: %s", error)
@@ -264,6 +271,14 @@ class GoldService:
         - Mapping the result to an exit code
         """
         result = GoldRunResult(exit_code=0)
+
+        if not dry_run:
+            try:
+                assert_upstream_published(self.client, silver_publication(), consumer="Gold load")
+            except RuntimeError as error:
+                logger.error("Gold load blocked: %s", error)
+                result.exit_code = 1
+                return result
 
         sql_files = self.discover_sql_files()
         result.sql_file_count = len(sql_files)

@@ -33,6 +33,9 @@ Use these paths for new automation and daily runs:
 - `scripts/gold/drop_clickhouse_scenarios.py`
 - `scripts/gold/setup_clickhouse_gold.py`
 - `scripts/orchestration/run_fotmob_pipeline.py`
+- `scripts/bootstrap.sh` (one-command server or `--local` initialization)
+- `scripts/install_schedule.sh` (host crontab block for recurring jobs)
+- `scripts/orchestration/run_scheduled_job.py` (recurring job runner with dates and lock)
 - `scripts/orchestration/setup_fotmob_warehouse.py`
 - `scripts/report_scraping.py`
 - `scripts/maintenance/optimize_clickhouse.py`
@@ -344,7 +347,7 @@ per-signal runner files. Use `--id` for one exact signal; use `--entity` or
 Every execution also requires `--date`, `--month`, or `--full-history`.
 After successful signal SQL execution, the loader runs `scripts/gold/activations/build_signal_activations.py`
 to populate deterministic per-match activation IDs in `gold.signal_activations`.
-The builder stages rows in ephemeral `gold.signal_activations_stage`, then runs
+The builder stages rows in ephemeral `warehouse_stage.signal_activations_stage`, then runs
 `clickhouse/gold/dml/activations/signal_activation_final_insert.sql` into a
 calculation table and commits the same output scope as the signal run. Signal
 SQL failures skip activation replacement until signals succeed or the builder

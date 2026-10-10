@@ -152,8 +152,10 @@ classes of read-only SQL validation:
 | Gold signals | Each catalog's ordered `row_identity` columns |
 | `gold.signal_activations` | `signal_instance_id` |
 
-The ephemeral `gold.signal_activations_stage` rebuild table is not a stable
-quality target; if present during a check, it is reported as skipped.
+Staging tables, including the ephemeral activation rebuild table, live in the
+`warehouse_stage` database (ADR 0029), which quality checks do not scan. The
+`silver.scope_publication` and `gold.scope_publication` logs are checked for
+unpublished partitions instead of duplicates.
 
 Gold is not reconciled to either upstream layer. Gold outputs apply separate
 business logic, filters, aggregation, and entity grains, so row-count or key
@@ -169,7 +171,8 @@ python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --str
 
 The script reports existing tables whose grain or row identity is undefined.
 On a completed run, exit `0` means clean or non-strict findings; strict mode
-exits `1` when logical duplicates or Bronze-to-Silver mismatches exist. Physical
+exits `1` when logical duplicates, Bronze-to-Silver mismatches, or unpublished
+Silver/Gold partitions (ADR 0028) exist in the selected scope. Physical
 row versions never cause strict failure. Argument errors
 exit `2`; connection or query errors exit `1`. The legacy
 `check_bronze_to_silver_reconciliation.py` command remains available and
@@ -178,9 +181,8 @@ forwards its compatible options to the unified workflow.
 ## Full Operational Sequence
 
 ```bash
-# 1. Infrastructure
-docker compose up -d
-python3 scripts/orchestration/setup_fotmob_warehouse.py
+# 1. Infrastructure (stack, setup, indexes, catalogs, schedule)
+scripts/bootstrap.sh
 
 # 2. Pipeline
 python3 scripts/orchestration/run_fotmob_pipeline.py 20251208

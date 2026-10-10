@@ -31,13 +31,21 @@ the detailed interfaces that govern execution.
   review and remediation record for Oddspedia JSON contracts, manifests, and
   multi-date continuation.
 - `reviews/architecture-review-depthmark-20261002.html`: whole-repository
-  review with prioritized P0–P3 findings; its P0 is resolved by ADR 0026.
+  review with prioritized P0–P3 findings and a remediation log.
 - `adr/0024-source-qualified-operational-script-names.md`: accepted naming
   grammar, package registry, and compatibility-adapter policy.
 - `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting
   interface for FotMob and Oddspedia, with explicit source adapters.
 - `adr/0026-make-warehouse-setup-non-destructive.md`: create-only setup,
   fail-closed schema drift, and explicit Table Recreation.
+- `adr/0027-use-an-external-scheduler.md`: no in-repo scheduler; host
+  scheduler contract, run order, and overlap rule.
+- `adr/0028-record-scoped-publication-status.md`: per-partition publication
+  status for scoped Silver/Gold batches and the reader rule.
+- `adr/0029-split-clickhouse-identities-and-isolate-staging.md`: application
+  and maintenance ClickHouse identities and the `warehouse_stage` database.
+- `adr/0030-automate-server-bootstrap.md`: one-command server initialization
+  and upgrade with generated secrets and the installed schedule.
 
 Source-specific flows:
 

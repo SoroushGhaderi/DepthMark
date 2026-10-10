@@ -73,7 +73,7 @@ WITH match_summary AS (
         arraySort(groupUniqArray(signal_name)) AS activated_signal_names,
         toUInt32(count()) AS total_signal_rows,
         toUInt16(length(groupUniqArray(signal_id))) AS unique_signal_count
-    FROM gold.signal_activations_stage
+    FROM warehouse_stage.signal_activations_stage
     GROUP BY match_id, match_date
 )
 SELECT
@@ -137,7 +137,7 @@ SELECT
     stage.source_row_json,
     stage.source_row_columns,
     stage.inserted_at
-FROM gold.signal_activations_stage AS stage
+FROM warehouse_stage.signal_activations_stage AS stage
 INNER JOIN match_summary
     ON match_summary.match_id = stage.match_id
    AND match_summary.match_date = stage.match_date;

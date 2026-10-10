@@ -110,15 +110,25 @@ source-qualified DDL, SQL, catalogs, and execution surface as it is built.
 
 ## Credential Policy
 
-The tracked Docker Compose files are local-development manifests. They may keep
-local defaults for fast bootstrap, but production deployments must use separate
-deployment configuration, non-default secrets, and `DEPTHMARK_ENV=production`.
+The tracked Docker Compose files are local-development manifests. They read
+database passwords from `.env` (Compose refuses to start without
+`CLICKHOUSE_PASSWORD` and `MONGODB_PASSWORD`) and publish database ports on
+`DEPTHMARK_BIND_ADDRESS`, default `127.0.0.1`. Production deployments must use
+separate deployment configuration, non-default secrets, and
+`DEPTHMARK_ENV=production`.
 
 Use `DEPTHMARK_ENV=local` only for local Docker development. ClickHouse setup
 rejects empty, placeholder, or known local-development passwords outside local
-development and limits the empty-password `default` user bootstrap path to local
 development. See
 `docs/adr/0005-local-dev-credentials-vs-production-policy.md`.
+
+ClickHouse access uses two identities (ADR 0029). The application user
+(`CLICKHOUSE_USER`) has `SELECT, INSERT, ALTER DELETE` on warehouse databases and
+creates, optimizes, and drops tables only in the `warehouse_stage` staging
+database. The maintenance user (`CLICKHOUSE_MAINTENANCE_USER`) runs setup, which
+also provisions the application user, plus full-history loads, Table
+Recreation, optimization, drop scripts, and Bronze `--truncate`. See
+`docs/data-flow/infrastructure.md` for the identity table.
 
 ## Canonical Command Surface
 
@@ -186,6 +196,10 @@ report file. The former Oddspedia status/report scripts and package commands
 delegate here with deprecation warnings.
 
 ### Setup
+
+`scripts/bootstrap.sh` runs the whole initialization on a server (generated
+`.env` secrets, stack, both warehouse setups, MongoDB, health check, schedule);
+see `docs/data-flow/infrastructure.md`. The individual setup commands are:
 
 ```bash
 python3 scripts/orchestration/setup_fotmob_warehouse.py
@@ -534,15 +548,35 @@ Scoped derived loads share this function flow:
 2. Silver and Gold workflow modules convert SQL files into `ScopedSqlJob` values with a
    target table and match-date expression.
 3. `ScopedReplacementBatch.run()` stages all selected jobs before any commit.
-4. `_prepare()` redirects each `INSERT INTO` to a calculation table, builds the
-   requested monthly replacement, and validates row counts.
+4. `_prepare()` redirects each `INSERT INTO` to a calculation table in the
+   `warehouse_stage` database, builds the requested monthly replacement there,
+   and validates row counts.
 5. `_commit()` uses `REPLACE PARTITION` for date/month scopes or
    `EXCHANGE TABLES` for full history.
+6. The batch records its publication status (ADR 0028) in
+   `silver.scope_publication` or `gold.scope_publication`: `committing` before
+   the first commit, then `published` or `failed` with the committed tables.
 
 Date scopes reconstruct the containing month by copying unaffected target rows
 and taking the selected date from the fresh calculation. A staging failure
-leaves targets unchanged. ClickHouse has no cross-table transaction, so a
-commit failure can be partial; rerunning the identical scope converges safely.
+leaves targets and publication status unchanged. ClickHouse has no
+cross-table transaction, so a commit failure can be partial; the partition's
+latest status then stays `committing` or `failed`, and rerunning the identical
+scope converges and publishes it.
+
+Readers must not consume a partition whose latest publication status is not
+`published` (full-history batches record partition `0`, meaning every
+partition). Gold loads refuse to start while any Silver partition is
+unpublished, the activation builder refuses unpublished Gold outputs, and
+`check_data_quality.py --strict` fails on unpublished partitions in its scope.
+External readers such as TouchDesk can apply the same rule:
+
+```sql
+SELECT batch, partition_id, argMax(status, updated_at) AS status
+FROM gold.scope_publication
+GROUP BY batch, partition_id
+HAVING status != 'published'
+```
 
 Programmatic callers must pass the scope explicitly:
 
@@ -616,7 +650,7 @@ Creation flow:
 3. `scripts/gold/activations/build_signal_activations.py` scans active signal
    catalogs and reads each catalog `row_identity`.
 4. The builder stages one row per signal output in ephemeral
-   `gold.signal_activations_stage` (DDL:
+   `warehouse_stage.signal_activations_stage` (DDL:
    `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`),
    calculates the serving rows with
    `clickhouse/gold/dml/activations/signal_activation_final_insert.sql`, and

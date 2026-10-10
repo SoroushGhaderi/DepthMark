@@ -64,14 +64,15 @@ quality improvements, not unaddressed Oddspedia P0/P1 blockers.
 7. **No CI workflow files detected** — the repository still has no visible GitHub Actions, GitLab CI, Jenkins, or CircleCI config. That leaves linting, tests, and schema validation dependent on manual execution.
    - Status: **Open**.
 
-8. **No scheduler lockfile or overlap guard visible in the repo** — the optional cron container still needs a deployment-specific schedule, but source commands now use a cross-process sport/date lock and document the external scheduler contract.
-   - Status: **Mitigated**. Scheduler overlap is protected by `data/oddspedia/locks/`; choosing and deploying a cron schedule remains an operator concern.
+8. **No scheduler lockfile or overlap guard visible in the repo** — the Compose scheduler profile never ran a schedule and was removed by ADR 0027; source commands use a cross-process sport/date lock and the external scheduler contract is documented.
+   - Status: **Resolved by ADR 0027**. DepthMark uses an external scheduler; every scheduled job runs under `flock -n`, Oddspedia dates also lock under `data/oddspedia/locks/`, and `docs/data-flow/infrastructure.md` documents the run order and an example crontab.
 
 ## Security Audit
 
-- Default-user ClickHouse bootstrap is restricted to the explicit local-dev path.
-- New ClickHouse users receive database-scoped grants for the warehouse runtime;
-  schema-bootstrap privileges are not granted in production.
+- The passwordless default-user ClickHouse bootstrap path was removed; setup always runs as the maintenance identity (ADR 0029).
+- ClickHouse access is split (ADR 0029): the application user has `SELECT, INSERT, ALTER DELETE`
+  on warehouse databases and DDL rights only in `warehouse_stage`; a maintenance user runs setup,
+  full-history swaps, and maintenance commands.
 - `.env`-style secrets are documented, but production hardening still depends on external discipline rather than runtime enforcement.
 
 ## SQL Quality

@@ -130,6 +130,16 @@ def _log_summary(summary: DataQualitySummary, scope: WarehouseExecutionScope) ->
             logger.warning("Missing from Silver sample", check=result.name, sample=list(sample))
         for sample in result.unexpected_samples:
             logger.warning("Unexpected in Silver sample", check=result.name, sample=list(sample))
+    for partition in summary.unpublished_partitions:
+        logger.warning(
+            "Unpublished warehouse partition",
+            batch=partition.batch,
+            partition=partition.partition_label,
+            status=partition.status,
+            run_id=partition.run_id,
+            scope=partition.scope_label,
+            committed_tables=len(partition.committed_tables),
+        )
 
 
 def strict_exit_code(summary: DataQualitySummary, strict: bool) -> int:
@@ -185,6 +195,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "Unified warehouse data quality completed",
             logical_duplicate_failures=summary.duplicate_failure_count,
             reconciliation_failures=summary.reconciliation_failure_count,
+            unpublished_partitions=len(summary.unpublished_partitions),
             unvalidated_tables=len(summary.skipped_tables),
             exit_code=exit_code,
         )

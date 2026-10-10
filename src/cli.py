@@ -15,6 +15,7 @@ from typing import Dict, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
+CLICKHOUSE_SQL_DIR = PROJECT_ROOT / "clickhouse"
 
 
 @dataclass(frozen=True)
@@ -101,6 +102,14 @@ SCRIPT_MAP: Dict[str, str] = {command: spec.script for command, spec in COMMANDS
 
 def _run_script(script_name: str, script_args: list[str]) -> int:
     """Execute a script from the scripts directory."""
+    if not SCRIPTS_DIR.is_dir() or not CLICKHOUSE_SQL_DIR.is_dir():
+        print(
+            f"DepthMark commands run from a source checkout, but {PROJECT_ROOT} has no "
+            "scripts/ or clickhouse/ directory. Install with `pip install -e .` from the "
+            "repository root.",
+            file=sys.stderr,
+        )
+        return 2
     script_path = SCRIPTS_DIR / script_name
     if not script_path.is_file():
         print(

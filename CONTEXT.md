@@ -140,6 +140,64 @@ reloads the affected scope through the normal layer loader afterward.
 Avoid saying: table rebuild, schema reset, schema migration.
 Related terms: Schema Drift, Gold Activation Rebuild.
 
+### Scope Publication
+
+The durable status of one scoped Silver or Gold batch for one month partition
+(or partition `0` for full history): `committing`, then `published` once every
+target table committed, or `failed` with the tables that did commit. A
+partition whose latest status is not `published` may mix table versions, and
+readers must not consume it until a rerun publishes it.
+
+Avoid saying: load status, watermark, commit marker.
+Related terms: Warehouse Execution Scope, Gold Activation Rebuild.
+
+### Application Identity
+
+The ClickHouse user that routine loads, resolution, and quality checks run as.
+It reads, inserts, and replaces or drops partitions in warehouse databases, and
+creates, optimizes, and drops tables only in the Staging Database. It cannot
+drop, truncate, optimize, rename, or alter columns of a warehouse table.
+
+Avoid saying: runtime user, service account, admin user.
+Related terms: Maintenance Identity, Staging Database.
+
+### Maintenance Identity
+
+The ClickHouse user that runs setup (which provisions the Application
+Identity), full-history table swaps, Table Recreation, optimization, drop
+scripts, and Bronze truncation.
+
+Avoid saying: root user, default user, superuser.
+Related terms: Application Identity, Table Recreation.
+
+### Staging Database
+
+`warehouse_stage`, the only database where scoped loads create calculation,
+replacement, and activation staging tables. Warehouse databases hold only
+setup-declared tables.
+
+Avoid saying: temp tables, scratch schema.
+Related terms: Application Identity, Scope Publication.
+
+### Server Bootstrap
+
+The single idempotent command, `scripts/bootstrap.sh`, that initializes or
+upgrades a DepthMark host: it prepares `.env` with generated database secrets,
+starts the stack, runs warehouse and MongoDB setup, checks health, and installs
+the schedule. Any new initialization step belongs in it.
+
+Avoid saying: install script, manual setup, provisioning runbook.
+Related terms: Maintenance Identity, Scheduled Job.
+
+### Scheduled Job
+
+A recurring job (`fotmob-daily`, `oddspedia-daily`) run by
+`scripts/orchestration/run_scheduled_job.py`, which computes its target date and
+holds its own overlap lock. The host crontab only invokes it.
+
+Avoid saying: cron script, timer job.
+Related terms: Server Bootstrap.
+
 ### Historical Scrape
 
 A FotMob Bronze scrape whose scope contains only completed calendar dates,

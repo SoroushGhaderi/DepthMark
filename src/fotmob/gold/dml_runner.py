@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 
+from src.warehouse.publication import gold_outputs_publication
 from src.warehouse.scoped_replace import (
     ScopedReplacementBatch,
     ScopedSqlJob,
@@ -204,7 +205,9 @@ def execute_gold_sql_job(
     """Execute one Gold SQL job through staged scope replacement."""
     started_at = time.perf_counter()
     scoped_job = build_scoped_gold_job(job)
-    ScopedReplacementBatch(client, scope, dry_run=dry_run, log=log).run([scoped_job])
+    ScopedReplacementBatch(
+        client, scope, dry_run=dry_run, log=log, publication=gold_outputs_publication()
+    ).run([scoped_job])
     log.info(
         "Gold %s SQL job completed for scope %s: %s in %.2f seconds",
         job.kind,
