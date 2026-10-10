@@ -2851,8 +2851,8 @@ docker compose exec depthmark-scraper python3 scripts/mongodb/init_indexes.py</p
 <thead><tr><th></th><th>Local</th><th>Production</th></tr></thead>
 <tbody>
 <tr><td>Env var</td><td><code>DEPTHMARK_ENV=local</code></td><td><code>DEPTHMARK_ENV=production</code></td></tr>
-<tr><td>Passwords</td><td>Defaults allowed</td><td>Non-default required</td></tr>
-<tr><td>Ports</td><td>Published by the local Compose file</td><td>Explicit deployment/network policy required; DEPTHMARK_ENV does not disable published ports</td></tr>
+<tr><td>Passwords</td><td>Required from <code>.env</code>; Compose has no defaults</td><td>Non-default required</td></tr>
+<tr><td>Ports</td><td>Published on <code>DEPTHMARK_BIND_ADDRESS</code> (default 127.0.0.1)</td><td>Explicit deployment/network policy required; DEPTHMARK_ENV does not disable published ports</td></tr>
 <tr><td>Secrets</td><td><code>.env</code> file</td><td>Secrets management</td></tr>
 </tbody>
 </table>

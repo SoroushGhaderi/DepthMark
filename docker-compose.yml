@@ -1,6 +1,9 @@
-# DepthMark — standalone local development stack.
-# TouchDesk (separate repo) reads ClickHouse/MongoDB via published host ports or a shared Docker network.
-# Production: deploy this stack on the DepthMark server; expose ClickHouse/MongoDB to TouchDesk over the network.
+# DepthMark — standalone local development stack (ADR 0005). Not a production manifest.
+# Database ports bind to DEPTHMARK_BIND_ADDRESS (default 127.0.0.1, this host only).
+# TouchDesk (separate repo) reads ClickHouse/MongoDB through those loopback ports or the
+# shared depthmark_network Docker network. Compose refuses to start without
+# CLICKHOUSE_PASSWORD and MONGODB_PASSWORD; copy .env.example to .env first.
+# Production deployments use their own manifests, secrets, and private networking/TLS.
 
 name: depthmark
 
@@ -9,11 +12,11 @@ services:
     image: mongo:8.0
     container_name: depthmark-mongodb
     ports:
-      - "${MONGODB_PUBLISH_PORT:-27017}:27017"
+      - "${DEPTHMARK_BIND_ADDRESS:-127.0.0.1}:${MONGODB_PUBLISH_PORT:-27017}:27017"
     environment:
       DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
       MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER:-orbit_admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:-orbit_pass}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD:?Set MONGODB_PASSWORD in .env}
       MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-orbit_content}
     volumes:
       - mongodb_data:/data/db
@@ -25,7 +28,7 @@ services:
           "--username",
           "${MONGODB_USER:-orbit_admin}",
           "--password",
-          "${MONGODB_PASSWORD:-orbit_pass}",
+          "${MONGODB_PASSWORD:?Set MONGODB_PASSWORD in .env}",
           "--authenticationDatabase",
           "admin",
           "--eval",
@@ -43,8 +46,8 @@ services:
     image: clickhouse/clickhouse-server:24
     container_name: depthmark-clickhouse
     ports:
-      - "${CLICKHOUSE_HTTP_PORT:-8123}:8123"
-      - "${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
+      - "${DEPTHMARK_BIND_ADDRESS:-127.0.0.1}:${CLICKHOUSE_HTTP_PORT:-8123}:8123"
+      - "${DEPTHMARK_BIND_ADDRESS:-127.0.0.1}:${CLICKHOUSE_NATIVE_PORT:-9000}:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - clickhouse_logs:/var/log/clickhouse-server
@@ -52,7 +55,7 @@ services:
       DEPTHMARK_ENV: ${DEPTHMARK_ENV:-local}
       CLICKHOUSE_DB: ${CLICKHOUSE_DB:-fotmob}
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Set CLICKHOUSE_PASSWORD in .env}
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ulimits:
       nofile:
@@ -97,12 +100,12 @@ services:
       CLICKHOUSE_HOST: depthmark-clickhouse
       CLICKHOUSE_PORT: "8123"
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Set CLICKHOUSE_PASSWORD in .env}
       CLICKHOUSE_DB_FOTMOB: ${CLICKHOUSE_DB:-fotmob}
       MONGODB_HOST: depthmark-mongodb
       MONGODB_PORT: "27017"
       MONGODB_USER: ${MONGODB_USER:-orbit_admin}
-      MONGODB_PASSWORD: ${MONGODB_PASSWORD:-orbit_pass}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD:?Set MONGODB_PASSWORD in .env}
       MONGODB_DATABASE: ${MONGODB_DATABASE:-orbit_content}
       MONGODB_AUTH_SOURCE: ${MONGODB_AUTH_SOURCE:-admin}
       LOG_LEVEL: INFO
@@ -147,7 +150,7 @@ services:
       CLICKHOUSE_HOST: depthmark-clickhouse
       CLICKHOUSE_PORT: "8123"
       CLICKHOUSE_USER: ${CLICKHOUSE_USER:-fotmob_user}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-fotmob_pass}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?Set CLICKHOUSE_PASSWORD in .env}
     env_file:
       - .env
     networks:

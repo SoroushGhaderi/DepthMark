@@ -63,7 +63,9 @@ cd ../TouchDesk && docker compose up -d --build
 ```
 
 TouchDesk `docker-compose.override.yml` joins `depthmark_network` for
-service-name access (`depthmark-clickhouse`, `depthmark-mongodb`). See the
+service-name access (`depthmark-clickhouse`, `depthmark-mongodb`). Published
+database ports bind to `127.0.0.1` by default, so a TouchDesk on another host
+needs `DEPTHMARK_BIND_ADDRESS` set to a trusted private interface. See the
 TouchDesk README for remote-host options.
 
 DepthMark does not call TouchDesk. TouchDesk reads `gold.*` / `gold_signals.*`
@@ -73,8 +75,8 @@ from ClickHouse and the signal catalog from MongoDB.
 
 | Service | Image | Port | Purpose |
 | --- | --- | --- | --- |
-| depthmark-clickhouse | `clickhouse/clickhouse-server:24` | 8123 (HTTP), 9000 (native) | Data warehouse |
-| depthmark-mongodb | `mongo:8.0` | 27017 | Content catalog |
+| depthmark-clickhouse | `clickhouse/clickhouse-server:24` | 127.0.0.1:8123 (HTTP), 127.0.0.1:9000 (native) | Data warehouse |
+| depthmark-mongodb | `mongo:8.0` | 127.0.0.1:27017 | Content catalog |
 | depthmark-scraper | Custom Python image | — | Runs pipeline scripts |
 
 **Network:** creates Docker network `depthmark_network` (fixed name). TouchDesk
@@ -98,6 +100,7 @@ Local development uses the root `docker-compose.yml` for `depthmark-clickhouse`,
 ```bash
 FOTMOB_X_MAS_TOKEN=your_token_here
 DEPTHMARK_ENV=local
+DEPTHMARK_BIND_ADDRESS=127.0.0.1
 CLICKHOUSE_HOST=depthmark-clickhouse
 CLICKHOUSE_PORT=8123
 CLICKHOUSE_USER=fotmob_user
@@ -114,6 +117,9 @@ MONGODB_DATABASE=orbit_content
 - `DEPTHMARK_ENV=local` — local Docker development only.
 - `DEPTHMARK_ENV=production` — non-default credentials required.
 - ClickHouse setup rejects placeholder passwords outside local development.
+- Compose has no password defaults: `docker compose` refuses to start unless
+  `CLICKHOUSE_PASSWORD` and `MONGODB_PASSWORD` are set in `.env`.
+- Database ports publish on `DEPTHMARK_BIND_ADDRESS` (default `127.0.0.1`).
 
 The environment selector is read explicitly from the process environment or
 the project/parent `.env` files. Do not rely on an undeclared default: set
@@ -288,7 +294,7 @@ the scraper's local compression state or delete canonical local artifacts.
 ## Production Deployment
 
 The tracked Docker Compose files are **local-development manifests**. They
-expose database ports and keep local bootstrap defaults.
+publish database ports on loopback only and read credentials from `.env`.
 
 For production:
 1. Use separate deployment configuration.
