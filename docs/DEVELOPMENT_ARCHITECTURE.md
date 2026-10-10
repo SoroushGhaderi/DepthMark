@@ -197,6 +197,10 @@ delegate here with deprecation warnings.
 
 ### Setup
 
+`scripts/bootstrap.sh` runs the whole initialization on a server (generated
+`.env` secrets, stack, both warehouse setups, MongoDB, health check, schedule);
+see `docs/data-flow/infrastructure.md`. The individual setup commands are:
+
 ```bash
 python3 scripts/orchestration/setup_fotmob_warehouse.py
 python3 scripts/bronze/setup_clickhouse.py

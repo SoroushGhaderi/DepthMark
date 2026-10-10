@@ -33,6 +33,9 @@ Use these paths for new automation and daily runs:
 - `scripts/gold/drop_clickhouse_scenarios.py`
 - `scripts/gold/setup_clickhouse_gold.py`
 - `scripts/orchestration/run_fotmob_pipeline.py`
+- `scripts/bootstrap.sh` (one-command server or `--local` initialization)
+- `scripts/install_schedule.sh` (host crontab block for recurring jobs)
+- `scripts/orchestration/run_scheduled_job.py` (recurring job runner with dates and lock)
 - `scripts/orchestration/setup_fotmob_warehouse.py`
 - `scripts/report_scraping.py`
 - `scripts/maintenance/optimize_clickhouse.py`

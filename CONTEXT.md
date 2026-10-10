@@ -179,6 +179,25 @@ setup-declared tables.
 Avoid saying: temp tables, scratch schema.
 Related terms: Application Identity, Scope Publication.
 
+### Server Bootstrap
+
+The single idempotent command, `scripts/bootstrap.sh`, that initializes or
+upgrades a DepthMark host: it prepares `.env` with generated database secrets,
+starts the stack, runs warehouse and MongoDB setup, checks health, and installs
+the schedule. Any new initialization step belongs in it.
+
+Avoid saying: install script, manual setup, provisioning runbook.
+Related terms: Maintenance Identity, Scheduled Job.
+
+### Scheduled Job
+
+A recurring job (`fotmob-daily`, `oddspedia-daily`) run by
+`scripts/orchestration/run_scheduled_job.py`, which computes its target date and
+holds its own overlap lock. The host crontab only invokes it.
+
+Avoid saying: cron script, timer job.
+Related terms: Server Bootstrap.
+
 ### Historical Scrape
 
 A FotMob Bronze scrape whose scope contains only completed calendar dates,

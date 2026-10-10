@@ -66,8 +66,9 @@ def test_provisioning_revokes_before_granting():
     assert client.queries[0] == (
         "CREATE USER IF NOT EXISTS depthmark_app IDENTIFIED BY 'it\\'s-secret'"
     )
+    assert client.queries[1] == "ALTER USER depthmark_app IDENTIFIED BY 'it\\'s-secret'"
     first_grant = next(i for i, q in enumerate(client.queries) if q.startswith("GRANT"))
-    assert all(q.startswith("REVOKE") for q in client.queries[1:first_grant])
+    assert all(q.startswith("REVOKE") for q in client.queries[2:first_grant])
 
 
 def test_provisioning_rejects_unsafe_user_names():

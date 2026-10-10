@@ -1,9 +1,10 @@
-# DepthMark — standalone local development stack (ADR 0005). Not a production manifest.
+# DepthMark stack for servers and local development (ADR 0030).
+# Initialize or upgrade with scripts/bootstrap.sh (add --local for development).
 # Database ports bind to DEPTHMARK_BIND_ADDRESS (default 127.0.0.1, this host only).
 # TouchDesk (separate repo) reads ClickHouse/MongoDB through those loopback ports or the
 # shared depthmark_network Docker network. Compose refuses to start without
-# CLICKHOUSE_PASSWORD and MONGODB_PASSWORD; copy .env.example to .env first.
-# Production deployments use their own manifests, secrets, and private networking/TLS.
+# CLICKHOUSE_PASSWORD, CLICKHOUSE_MAINTENANCE_PASSWORD, and MONGODB_PASSWORD, which
+# scripts/bootstrap.sh generates into .env.
 
 name: depthmark
 
@@ -77,6 +78,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        APP_UID: ${DEPTHMARK_UID:-1000}
     container_name: depthmark-scraper
     depends_on:
       depthmark-mongodb:

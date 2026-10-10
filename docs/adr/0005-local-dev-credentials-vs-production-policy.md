@@ -71,3 +71,9 @@ the ClickHouse container from `CLICKHOUSE_MAINTENANCE_USER` /
 `CLICKHOUSE_MAINTENANCE_PASSWORD`) and a narrow application identity that
 setup provisions. The passwordless `default` user bootstrap path described
 above was removed; setup always runs as the maintenance identity.
+
+ADR 0030 then made the tracked Compose stack the supported server deployment:
+`scripts/bootstrap.sh` generates strong database passwords into `.env` and sets
+`DEPTHMARK_ENV=production` (or `local` with `--local`). The statement above that
+the tracked Compose files must not be used as production manifests is
+superseded.

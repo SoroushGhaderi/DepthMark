@@ -59,6 +59,7 @@ trade-off.
 | `0027-use-an-external-scheduler.md`                                  | DepthMark ships no scheduler; an external host scheduler runs canonical commands under `flock`. | Keep the documented run order, dates, and overlap rule in `docs/data-flow/infrastructure.md` accurate. |
 | `0028-record-scoped-publication-status.md`                          | Scoped Silver/Gold batches record committing/published/failed per partition; readers consume only published partitions. | Gold loads, the activation builder, and strict quality checks fail closed on unpublished partitions; external readers apply the same query. |
 | `0029-split-clickhouse-identities-and-isolate-staging.md`           | Staging lives in `warehouse_stage`; the application user has no DDL or truncate rights on warehouse tables; a maintenance user runs setup, full-history swaps, and maintenance. | Setup re-provisions the application user each run; full-history loads and maintenance commands need maintenance credentials. |
+| `0030-automate-server-bootstrap.md`                                 | `scripts/bootstrap.sh` initializes or upgrades a server with generated secrets, setup, MongoDB, and the schedule; the tracked Compose stack is the deployment. | New setup steps belong in the bootstrap; real `.env` values are never replaced; scheduled jobs own their dates and locks. |
 
 
 ## Queue
@@ -105,6 +106,7 @@ here only after pressure-testing against the code:
 | 9       | Prioritize Oddspedia links against DepthMark Silver | Accepted in `0022-prioritize-oddspedia-links-against-depthmark-silver.md` |
 | 10      | Source-qualified operational script names | Accepted in `0024-source-qualified-operational-script-names.md`; compatibility adapters retained |
 | 11      | Unified scraping status and reports | Accepted in `0025-unify-scraping-status-and-reports.md`; one read-only command covers both sources |
+| 16      | Automated server bootstrap | Accepted in `0030-automate-server-bootstrap.md`; supersedes ADR 0005's local-only Compose stance and refines ADR 0027 scheduling |
 | 15      | ClickHouse identity and role split | Accepted in `0029-split-clickhouse-identities-and-isolate-staging.md`; verified against ClickHouse 24.10 |
 | 14      | Scoped publication status | Accepted in `0028-record-scoped-publication-status.md`; Gold, activations, and strict quality checks fail closed on unpublished partitions |
 | 13      | Scheduler ownership | Accepted in `0027-use-an-external-scheduler.md`; broken Compose scheduler profile removed |
