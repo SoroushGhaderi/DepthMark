@@ -12,8 +12,8 @@ project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import maintenance_client
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
@@ -125,14 +125,11 @@ def run(argv: Optional[Sequence[str]] = None) -> int:
         logger.error(str(error))
         return 2
 
-    settings = get_settings()
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
+    try:
+        client = maintenance_client()
+    except RuntimeError as identity_error:
+        logger.error(str(identity_error))
+        return 1
     if not client.connect():
         logger.error("Failed to connect to ClickHouse")
         return 1

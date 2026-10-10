@@ -149,6 +149,8 @@ CLICKHOUSE_HOST=depthmark-clickhouse
 CLICKHOUSE_PORT=8123
 CLICKHOUSE_USER=fotmob_user
 CLICKHOUSE_PASSWORD=your_clickhouse_password_here
+CLICKHOUSE_MAINTENANCE_USER=depthmark_admin
+CLICKHOUSE_MAINTENANCE_PASSWORD=your_clickhouse_maintenance_password_here
 MONGODB_HOST=depthmark-mongodb
 MONGODB_PORT=27017
 MONGODB_USER=orbit_admin
@@ -156,13 +158,27 @@ MONGODB_PASSWORD=your_mongodb_password_here
 MONGODB_DATABASE=orbit_content
 ```
 
+### ClickHouse Identities (ADR 0029)
+
+| Identity | Variables | Rights | Used by |
+| --- | --- | --- | --- |
+| Application | `CLICKHOUSE_USER` / `CLICKHOUSE_PASSWORD` | `SELECT, INSERT, ALTER DELETE` on warehouse databases; create, drop, optimize, and truncate only in `warehouse_stage` | Bronze loads, date/month Silver and Gold loads, activations, Oddspedia loads and resolution, quality checks |
+| Maintenance | `CLICKHOUSE_MAINTENANCE_USER` / `CLICKHOUSE_MAINTENANCE_PASSWORD` | Full access with access management | Both setup commands, full-history loads (`EXCHANGE TABLES`), Table Recreation, optimization, drop scripts, `load_fotmob_bronze.py --truncate` |
+
+The ClickHouse container creates the maintenance user from these variables.
+Setup connects as the maintenance user and creates or resets the application
+user to its narrow grants on every run, so the two names must differ. All
+staging tables live in `warehouse_stage`; the application user cannot drop,
+truncate, optimize, rename, or alter columns of a warehouse table.
+
 ### Credential Policy (ADR 0005)
 
 - `DEPTHMARK_ENV=local` — local Docker development only.
 - `DEPTHMARK_ENV=production` — non-default credentials required.
 - ClickHouse setup rejects placeholder passwords outside local development.
 - Compose has no password defaults: `docker compose` refuses to start unless
-  `CLICKHOUSE_PASSWORD` and `MONGODB_PASSWORD` are set in `.env`.
+  `CLICKHOUSE_PASSWORD`, `CLICKHOUSE_MAINTENANCE_PASSWORD`, and
+  `MONGODB_PASSWORD` are set in `.env`.
 - Database ports publish on `DEPTHMARK_BIND_ADDRESS` (default `127.0.0.1`).
 
 The environment selector is read explicitly from the process environment or

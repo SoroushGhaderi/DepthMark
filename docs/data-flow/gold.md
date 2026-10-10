@@ -131,7 +131,7 @@ Builds `gold.signal_activations` from all active signal catalogs, then replaces
 only the requested output scope:
 
 1. **Stage** — insert one enriched row per `gold_signals.sig_*` output into ephemeral
-   `gold.signal_activations_stage` (created from
+   `warehouse_stage.signal_activations_stage` (created from
    `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`).
 2. **Calculate** — run
    `clickhouse/gold/dml/activations/signal_activation_final_insert.sql` into a

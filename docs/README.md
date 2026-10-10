@@ -42,6 +42,8 @@ the detailed interfaces that govern execution.
   scheduler contract, run order, and overlap rule.
 - `adr/0028-record-scoped-publication-status.md`: per-partition publication
   status for scoped Silver/Gold batches and the reader rule.
+- `adr/0029-split-clickhouse-identities-and-isolate-staging.md`: application
+  and maintenance ClickHouse identities and the `warehouse_stage` database.
 
 Source-specific flows:
 

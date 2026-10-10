@@ -194,7 +194,7 @@ def test_full_history_uses_staged_exchange():
 
 
 def test_staging_failure_leaves_all_targets_uncommitted():
-    client = RecordingClient(fail_on="silver._depthmark_test_period_stat_calc")
+    client = RecordingClient(fail_on="warehouse_stage._depthmark_test_silver__period_stat_calc")
     batch = ScopedReplacementBatch(
         client,
         WarehouseExecutionScope.full_history(),

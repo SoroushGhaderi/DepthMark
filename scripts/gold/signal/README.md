@@ -43,7 +43,7 @@ Assets:
 
 The activation builder rebuilds `gold.signal_activations` from all active signal
 catalogs and source signal tables. During the rebuild it briefly materializes
-ephemeral `gold.signal_activations_stage`, then drops that table after the
+ephemeral `warehouse_stage.signal_activations_stage`, then drops that table after the
 serving table is populated. The serving table includes:
 
 - stable identity and signal catalog metadata

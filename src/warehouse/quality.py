@@ -500,11 +500,6 @@ class DataQualityService:
             database = table.split(".", 1)[0]
             if database not in selected_databases:
                 continue
-            if table == "gold.signal_activations_stage":
-                skipped.append(
-                    SkippedTable(table, "ephemeral activation staging table is not a stable target")
-                )
-                continue
             if table in PUBLICATION_TABLES.values():
                 continue
             identity = self.identities.get(table)

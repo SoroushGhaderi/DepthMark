@@ -152,8 +152,10 @@ classes of read-only SQL validation:
 | Gold signals | Each catalog's ordered `row_identity` columns |
 | `gold.signal_activations` | `signal_instance_id` |
 
-The ephemeral `gold.signal_activations_stage` rebuild table is not a stable
-quality target; if present during a check, it is reported as skipped.
+Staging tables, including the ephemeral activation rebuild table, live in the
+`warehouse_stage` database (ADR 0029), which quality checks do not scan. The
+`silver.scope_publication` and `gold.scope_publication` logs are checked for
+unpublished partitions instead of duplicates.
 
 Gold is not reconciled to either upstream layer. Gold outputs apply separate
 business logic, filters, aggregation, and entity grains, so row-count or key

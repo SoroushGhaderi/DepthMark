@@ -15,6 +15,7 @@ sys.path.insert(0, str(project_root))
 from config.settings import get_settings
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import provision_application_user
 from src.warehouse.schema_drift import (
     assert_setup_sql_is_non_destructive,
     find_schema_drift,
@@ -39,24 +40,8 @@ INSECURE_CLICKHOUSE_PASSWORDS = {
     "password",
     "changeme",
     "your_clickhouse_password_here",
+    "your_clickhouse_maintenance_password_here",
 }
-WAREHOUSE_DATABASES = (
-    "bronze",
-    "oddspedia_bronze",
-    "silver",
-    "gold",
-    "gold_scenarios",
-    "gold_signals",
-)
-RUNTIME_DATABASE_PRIVILEGES = (
-    "SELECT",
-    "INSERT",
-    "ALTER",
-    "CREATE TABLE",
-    "DROP TABLE",
-    "TRUNCATE",
-    "OPTIMIZE",
-)
 
 
 def load_local_env_files() -> None:
@@ -88,11 +73,13 @@ def is_local_development_environment() -> bool:
     return False
 
 
-def validate_clickhouse_credentials(username: str, password: str) -> None:
+def validate_clickhouse_credentials(
+    username: str, password: str, variable: str = "CLICKHOUSE_USER"
+) -> None:
     """Reject unsafe ClickHouse setup credentials outside explicit local development."""
     if not CLICKHOUSE_IDENTIFIER_PATTERN.fullmatch(username):
         raise RuntimeError(
-            "CLICKHOUSE_USER must be a simple ClickHouse identifier containing only "
+            f"{variable} must be a simple ClickHouse identifier containing only "
             "letters, numbers, and underscores, and must not start with a number."
         )
 
@@ -104,196 +91,91 @@ def validate_clickhouse_credentials(username: str, password: str) -> None:
             "Refusing to run ClickHouse setup with empty, placeholder, or local-dev "
             "credentials outside local development. Set DEPTHMARK_ENV=local for the "
             "tracked Docker/local-dev workflow, or provide production-grade "
-            "CLICKHOUSE_PASSWORD credentials."
+            f"{variable.replace('_USER', '_PASSWORD')} credentials."
         )
 
 
-def quote_sql_string(value: str) -> str:
-    """Quote a SQL string literal for ClickHouse setup statements."""
-    return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'"
+def _host_candidates(host: str) -> list[str]:
+    """Prefer published local ports for host-side runs, then the Docker DNS name."""
+    if Path("/.dockerenv").exists():
+        return [host]
+    if host in ("clickhouse", "depthmark-clickhouse"):
+        return ["localhost", "127.0.0.1", host]
+    if host == "localhost":
+        return ["localhost", "127.0.0.1"]
+    return [host]
+
+
+def maintenance_credentials() -> tuple[str, str]:
+    """Return the validated maintenance identity that setup runs as (ADR 0029)."""
+    settings = get_settings()
+    if not settings.clickhouse_maintenance_user:
+        raise RuntimeError(
+            "ClickHouse setup runs as the maintenance identity; set "
+            "CLICKHOUSE_MAINTENANCE_USER and CLICKHOUSE_MAINTENANCE_PASSWORD (ADR 0029)."
+        )
+    username = settings.clickhouse_maintenance_user
+    password = settings.clickhouse_maintenance_password
+    validate_clickhouse_credentials(username, password, "CLICKHOUSE_MAINTENANCE_USER")
+    return username, password
 
 
 def connect_clickhouse() -> ClickHouseClient:
-    """Connect to ClickHouse, creating the configured user when needed."""
-    host = os.getenv("CLICKHOUSE_HOST", "localhost")
-    port = int(os.getenv("CLICKHOUSE_PORT", "8123"))
-    username = os.getenv("CLICKHOUSE_USER", "fotmob_user")
-    password = os.getenv("CLICKHOUSE_PASSWORD", "fotmob_pass")
-    validate_clickhouse_credentials(username, password)
-    allows_local_bootstrap = is_local_development_environment()
-    is_docker_runtime = Path("/.dockerenv").exists()
-    host_candidates = [host]
-    if not is_docker_runtime:
-        # Host-side runs should prefer local port mapping first, then docker DNS alias.
-        if host == "clickhouse":
-            host_candidates = ["localhost", "127.0.0.1", "clickhouse"]
-        elif host == "localhost":
-            host_candidates = ["localhost", "127.0.0.1"]
+    """Connect as the maintenance identity and provision the application identity.
 
-    # Keep order stable while removing duplicates.
-    host_candidates = list(dict.fromkeys(host_candidates))
+    Setup creates databases and tables as the maintenance user, then creates or
+    resets the application user (CLICKHOUSE_USER) to its narrow grant set.
+    """
+    settings = get_settings()
+    app_username = settings.clickhouse_user
+    app_password = settings.clickhouse_password
+    validate_clickhouse_credentials(app_username, app_password)
+    username, password = maintenance_credentials()
+    if username == app_username:
+        raise RuntimeError(
+            "CLICKHOUSE_USER must differ from the maintenance identity so the application "
+            "user can be granted narrower privileges (ADR 0029)."
+        )
 
-    attempted_hosts: list[str] = []
-    for candidate_host in host_candidates:
+    attempted_hosts = []
+    for candidate_host in dict.fromkeys(_host_candidates(settings.clickhouse_host)):
         attempted_hosts.append(candidate_host)
-        logger.info("Connecting to ClickHouse at %s:%s", candidate_host, port)
+        logger.info(
+            "Connecting to ClickHouse at %s:%s as %s",
+            candidate_host,
+            settings.clickhouse_port,
+            username,
+        )
         client = ClickHouseClient(
             host=candidate_host,
-            port=port,
+            port=settings.clickhouse_port,
             username=username,
             password=password,
             database="default",
         )
-
         if client.connect():
-            # User can authenticate, but may still miss newer grants.
-            # Try to reconcile grants via default admin user in local development.
-            if allows_local_bootstrap and username != "default":
-                try:
-                    grant_client = ClickHouseClient(
-                        host=candidate_host,
-                        port=port,
-                        username="default",
-                        password="",
-                        database="default",
-                    )
-                    if grant_client.connect():
-                        try:
-                            if not create_user_if_not_exists(grant_client, username, password):
-                                logger.warning(
-                                    "Could not reconcile grants for user '%s' on host '%s'",
-                                    username,
-                                    candidate_host,
-                                )
-                        finally:
-                            grant_client.disconnect()
-                except Exception as exc:
-                    logger.warning(
-                        "Skipped grant reconciliation for user '%s' on host '%s': %s",
-                        username,
-                        candidate_host,
-                        exc,
-                    )
-            return client
-
-        if not allows_local_bootstrap:
-            logger.warning(
-                "Failed to connect with configured ClickHouse user '%s' on host '%s'. "
-                "Default-user bootstrap is local-development only.",
-                username,
-                candidate_host,
-            )
-            continue
-
-        logger.warning("Failed to connect with user '%s', trying default user...", username)
-        default_client = ClickHouseClient(
-            host=candidate_host,
-            port=port,
-            username="default",
-            password="",
-            database="default",
-        )
-
-        default_connected = default_client.connect()
-        if not default_connected:
-            try:
-                import clickhouse_connect
-
-                default_client.client = clickhouse_connect.get_client(
-                    host=candidate_host,
-                    port=port,
-                    username="default",
-                    database="default",
+            if not create_user_if_not_exists(client, app_username, app_password):
+                client.disconnect()
+                raise RuntimeError(
+                    f"Failed to provision ClickHouse application user '{app_username}'"
                 )
-                default_client.client.query("SELECT 1")
-                default_connected = True
-                logger.info("Connected with default user (no password)")
-            except Exception as exc:
-                logger.debug("Default user connection without password failed: %s", exc)
-
-        if not default_connected:
-            continue
-
-        try:
-            if not create_user_if_not_exists(default_client, username, password):
-                raise RuntimeError(f"Failed to create ClickHouse user '{username}'")
-        finally:
-            default_client.disconnect()
-
-        if client.connect():
             return client
-        logger.warning(
-            "Still failed to connect with user '%s' after creation on host '%s'",
-            username,
-            candidate_host,
-        )
 
     raise RuntimeError(
-        "Failed to connect to ClickHouse even with default user. Tried hosts: "
+        f"Failed to connect to ClickHouse as '{username}'. Tried hosts: "
         f"{', '.join(attempted_hosts)}"
     )
 
 
 def create_user_if_not_exists(client: ClickHouseClient, username: str, password: str) -> bool:
-    """Create ClickHouse user if it does not exist."""
+    """Create the application user if missing and reset it to its narrow grants."""
     try:
         validate_clickhouse_credentials(username, password)
-        result = client.execute(
-            f"SELECT name FROM system.users WHERE name = {quote_sql_string(username)}"
-        )
-        user_exists = False
-        if hasattr(result, "result_rows") and result.result_rows:
-            user_exists = True
-        elif hasattr(result, "result_columns") and result.result_columns:
-            user_exists = len(result.result_columns[0]) > 0
-
-        if user_exists:
-            logger.info("User '%s' already exists, ensuring grants...", username)
-        else:
-            logger.info("Creating user '%s'...", username)
-            client.execute(
-                f"CREATE USER IF NOT EXISTS {username} IDENTIFIED BY {quote_sql_string(password)}"
-            )
-
-        # Remove any grants from the former broad-bootstrap policy before
-        # applying the bounded runtime contract. This is intentionally skipped
-        # for the built-in admin account.
-        revoke_queries = []
-        if username != "default":
-            revoke_queries.append(f"REVOKE ALL ON *.* FROM {username}")
-        for database in WAREHOUSE_DATABASES:
-            revoke_queries.append(f"REVOKE ALL ON {database}.* FROM {username}")
-        revoke_queries.extend(
-            (
-                f"REVOKE CREATE DATABASE ON *.* FROM {username}",
-                f"REVOKE TABLE ENGINE ON ReplacingMergeTree FROM {username}",
-            )
-        )
-        for revoke_query in revoke_queries:
-            try:
-                client.execute(revoke_query)
-            except Exception as exc:
-                logger.warning("Could not revoke legacy permission: %s", exc)
-
-        grant_queries = [
-            f"GRANT {', '.join(RUNTIME_DATABASE_PRIVILEGES)} ON {database}.* TO {username}"
-            for database in WAREHOUSE_DATABASES
-        ]
-        if is_local_development_environment():
-            grant_queries.extend(
-                (
-                    f"GRANT CREATE DATABASE ON *.* TO {username}",
-                    f"GRANT TABLE ENGINE ON ReplacingMergeTree TO {username}",
-                )
-            )
-        for grant_query in grant_queries:
-            try:
-                client.execute(grant_query)
-            except Exception as exc:
-                logger.warning("Could not grant permission (may already exist): %s", exc)
+        logger.info("Provisioning ClickHouse application user '%s'", username)
+        provision_application_user(client, username, password)
         return True
     except Exception as exc:
-        logger.error("Failed to create user '%s': %s", username, exc)
+        logger.error("Failed to provision user '%s': %s", username, exc)
         return False
 
 

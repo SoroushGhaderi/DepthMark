@@ -151,6 +151,34 @@ readers must not consume it until a rerun publishes it.
 Avoid saying: load status, watermark, commit marker.
 Related terms: Warehouse Execution Scope, Gold Activation Rebuild.
 
+### Application Identity
+
+The ClickHouse user that routine loads, resolution, and quality checks run as.
+It reads, inserts, and replaces or drops partitions in warehouse databases, and
+creates, optimizes, and drops tables only in the Staging Database. It cannot
+drop, truncate, optimize, rename, or alter columns of a warehouse table.
+
+Avoid saying: runtime user, service account, admin user.
+Related terms: Maintenance Identity, Staging Database.
+
+### Maintenance Identity
+
+The ClickHouse user that runs setup (which provisions the Application
+Identity), full-history table swaps, Table Recreation, optimization, drop
+scripts, and Bronze truncation.
+
+Avoid saying: root user, default user, superuser.
+Related terms: Application Identity, Table Recreation.
+
+### Staging Database
+
+`warehouse_stage`, the only database where scoped loads create calculation,
+replacement, and activation staging tables. Warehouse databases hold only
+setup-declared tables.
+
+Avoid saying: temp tables, scratch schema.
+Related terms: Application Identity, Scope Publication.
+
 ### Historical Scrape
 
 A FotMob Bronze scrape whose scope contains only completed calendar dates,

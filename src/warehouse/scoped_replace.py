@@ -5,6 +5,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Optional
 
+from src.warehouse.databases import STAGING_DATABASE
 from src.warehouse.publication import COMMITTING, FAILED, PUBLISHED, PublicationLog
 from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
@@ -167,8 +168,8 @@ class ScopedReplacementBatch:
             raise ValueError(f"Unsafe qualified table name: {target_table}")
         database = match.group("database")
         table = match.group("table")
-        prefix = f"_depthmark_{self.run_id}_{table}"
-        return f"{database}.{prefix}_calc", f"{database}.{prefix}_replace"
+        prefix = f"_depthmark_{self.run_id}_{database}__{table}"
+        return f"{STAGING_DATABASE}.{prefix}_calc", f"{STAGING_DATABASE}.{prefix}_replace"
 
     def _prepare(self, job: ScopedSqlJob) -> PreparedReplacement:
         calculation_table, replacement_table = self._stage_names(job.target_table)
