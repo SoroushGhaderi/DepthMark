@@ -81,8 +81,8 @@ stability rules in DepthMark. The canonical command list lives in
    output. Do not invent matching phases for another source merely to make the
    command lists visually identical.
 5. Shared source-neutral utilities may omit a source token. Examples include
-   `health_check.py`, `report_scraping.py`, `check_data_quality.py`, and
-   `optimize_clickhouse.py`.
+   `health_check.py`, `report_scraping.py`, `check_data_quality.py`,
+   `optimize_clickhouse.py`, and `recreate_clickhouse_tables.py`.
 6. The package CLI uses the same grammar with hyphens, for example
    `load-fotmob-bronze` and `resolve-oddspedia-events`. `src/cli.py` is the
    authoritative package command registry.

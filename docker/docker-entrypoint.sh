@@ -1,25 +1,12 @@
 #!/bin/bash
-# Docker entrypoint script for the scraper container
+# Docker entrypoint script for the DepthMark containers.
+#
+# Warehouse setup is an explicit operator step and never runs on container
+# start (ADR 0026). Run it once, and after setup DDL changes, with:
+#   docker compose exec depthmark-scraper python scripts/orchestration/setup_fotmob_warehouse.py
+# Compose already waits for ClickHouse to report healthy before starting the
+# scraper, so the entrypoint only executes the requested command.
 
 set -e
 
-# Wait for ClickHouse to be ready
-echo "Waiting for ClickHouse to be ready..."
-until python -c "import requests; requests.get('http://clickhouse:8123/ping')" 2>/dev/null; do
-  echo "ClickHouse is unavailable - sleeping"
-  sleep 2
-done
-
-echo "ClickHouse is ready!"
-
-# Check and create databases/tables if they don't exist
-echo "Checking ClickHouse databases..."
-python scripts/orchestration/setup_clickhouse.py
-if [ $? -eq 0 ]; then
-  echo "✓ Database check completed"
-else
-  echo "⚠ Warning: Database check/creation may have failed. Check logs for details."
-fi
-
-# Execute the command passed to the container
 exec "$@"

@@ -1,7 +1,5 @@
 -- Signal tables for entity=player, family=creativity, subfamily=playmaking
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_maestro_output;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_maestro_output (
     match_id Int32,
     match_date Date,
@@ -46,8 +44,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_maestro
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_box_penetrator;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_box_penetrator (
     match_id Int32,
@@ -95,8 +91,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_box_pen
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_cross_perfection;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_cross_perfection (
     match_id Int32,
@@ -154,8 +148,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_cross_p
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_chance_machine;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_chance_machine (
     match_id Int32,
     match_date Date,
@@ -204,8 +196,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_chance_
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_line_breaker;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_line_breaker (
     match_id Int32,
@@ -260,8 +250,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_line_br
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker (
     match_id Int32,
@@ -327,8 +315,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_box_to_
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_final_third_monopoly;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_final_third_monopoly (
     match_id Int32,
     match_date Date,
@@ -373,8 +359,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_final_t
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_fullback_playmaker;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_fullback_playmaker (
     match_id Int32,
@@ -428,8 +412,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_fullbac
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_assist_brace;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_assist_brace (
     match_id Int32,
     match_date Date,
@@ -482,8 +464,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_assist_
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_deadball_wizard;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_deadball_wizard (
     match_id Int32,
@@ -553,8 +533,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_deadbal
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_assist_hat_trick;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_assist_hat_trick (
     match_id Int32,
     match_date Date,
@@ -607,8 +585,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_assist_
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_clutch_vision;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_clutch_vision (
     match_id Int32,
@@ -675,8 +651,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_clutch_
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_unselfish_forward;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_unselfish_forward (
     match_id Int32,
     match_date Date,
@@ -742,8 +716,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_unselfi
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_expected_wizard;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_expected_wizard (
     match_id Int32,
     match_date Date,
@@ -792,8 +764,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_expecte
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_isolated_creativity;
-
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_isolated_creativity (
     match_id Int32,
     match_date Date,
@@ -840,8 +810,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_isolate
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_the_quarterback;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_the_quarterback (
     match_id Int32,
@@ -900,8 +868,6 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_the_qua
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
-
-DROP TABLE IF EXISTS gold_signals.sig_player_creativity_playmaking_high_value_turnover;
 
 CREATE TABLE IF NOT EXISTS gold_signals.sig_player_creativity_playmaking_high_value_turnover (
     match_id Int32,
