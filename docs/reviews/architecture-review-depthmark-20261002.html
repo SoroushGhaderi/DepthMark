@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DepthMark whole-repository review - 2026-10-02</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #0f172a;
+        --muted: #475569;
+        --line: #cbd5e1;
+        --paper: #ffffff;
+        --canvas: #f8fafc;
+        --indigo: #3730a3;
+        --rose: #be123c;
+        --amber: #b45309;
+        --emerald: #047857;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.5;
+      }
+      h1, h2, h3, p { margin: 0; }
+      a { color: #4338ca; text-decoration: underline; text-underline-offset: 2px; }
+      a:hover { color: #312e81; }
+      code {
+        padding: 0.08rem 0.28rem;
+        border-radius: 0.3rem;
+        background: #e2e8f0;
+        color: #1e293b;
+        font: 0.9em ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        overflow-wrap: anywhere;
+      }
+
+      .mx-auto { margin-left: auto; margin-right: auto; }
+      .max-w-6xl { max-width: 72rem; }
+      .max-w-4xl { max-width: 56rem; }
+      .space-y-1 > * + * { margin-top: 0.25rem; }
+      .space-y-4 > * + * { margin-top: 1rem; }
+      .space-y-6 > * + * { margin-top: 1.5rem; }
+      .space-y-8 > * + * { margin-top: 2rem; }
+      .space-y-12 > * + * { margin-top: 3rem; }
+      .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+      .py-12 { padding-top: 3rem; padding-bottom: 3rem; }
+      .p-4 { padding: 1rem; }
+      .p-5 { padding: 1.25rem; }
+      .p-6 { padding: 1.5rem; }
+      .p-8 { padding: 2rem; }
+      .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+      .px-4 { padding-left: 1rem; padding-right: 1rem; }
+      .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+      .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+      .pl-5 { padding-left: 1.25rem; }
+      .pt-6 { padding-top: 1.5rem; }
+      .mt-1 { margin-top: 0.25rem; }
+      .mt-2 { margin-top: 0.5rem; }
+      .mt-3 { margin-top: 0.75rem; }
+      .mt-4 { margin-top: 1rem; }
+      .mt-5 { margin-top: 1.25rem; }
+      .mt-6 { margin-top: 1.5rem; }
+      .mb-2 { margin-bottom: 0.5rem; }
+      .grid { display: grid; }
+      .flex { display: flex; }
+      .flex-wrap { flex-wrap: wrap; }
+      .items-center { align-items: center; }
+      .gap-3 { gap: 0.75rem; }
+      .gap-4 { gap: 1rem; }
+      .overflow-x-auto { overflow-x: auto; }
+      .min-w-full { min-width: 100%; }
+      .list-disc { list-style-type: disc; }
+      .leading-6 { line-height: 1.5rem; }
+      .leading-7 { line-height: 1.75rem; }
+      .leading-8 { line-height: 2rem; }
+      .text-left { text-align: left; }
+      .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+      .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+      .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+      .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+      .text-3xl { font-size: 1.875rem; line-height: 2.25rem; }
+      .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+      .font-sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .font-semibold { font-weight: 600; }
+      .font-bold { font-weight: 700; }
+      .uppercase { text-transform: uppercase; }
+      .tracking-tight { letter-spacing: -0.025em; }
+      .tracking-\[0\.2em\] { letter-spacing: 0.2em; }
+      .tracking-\[0\.25em\] { letter-spacing: 0.25em; }
+
+      .rounded-full { border-radius: 9999px; }
+      .rounded-xl { border-radius: 0.75rem; }
+      .rounded-2xl { border-radius: 1rem; }
+      .rounded-3xl { border-radius: 1.5rem; }
+      .border { border: 1px solid var(--line); }
+      .border-2 { border-width: 2px; border-style: solid; }
+      .border-t { border-top: 1px solid var(--line); }
+      .border-l-4 { border-left: 4px solid; }
+      .shadow-sm { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06); }
+      .shadow-lg { box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18); }
+
+      .bg-stone-50, .bg-slate-50 { background: #f8fafc; }
+      .bg-white { background: var(--paper); }
+      .bg-slate-100 { background: #f1f5f9; }
+      .bg-slate-700 { background: #334155; }
+      .bg-rose-50 { background: #fff1f2; }
+      .bg-rose-100 { background: #ffe4e6; }
+      .bg-rose-600 { background: #e11d48; }
+      .bg-amber-50 { background: #fffbeb; }
+      .bg-amber-100 { background: #fef3c7; }
+      .bg-amber-500 { background: #f59e0b; }
+      .bg-amber-600 { background: #d97706; }
+      .bg-emerald-50 { background: #ecfdf5; }
+      .bg-emerald-100 { background: #d1fae5; }
+      .bg-emerald-600 { background: #059669; }
+      .bg-indigo-50 { background: #eef2ff; }
+      .bg-indigo-700 { background: #4338ca; }
+      .border-slate-200 { border-color: #e2e8f0; }
+      .border-slate-300 { border-color: #cbd5e1; }
+      .border-rose-200, .border-rose-300 { border-color: #fda4af; }
+      .border-amber-200, .border-amber-300, .border-amber-500 { border-color: #fbbf24; }
+      .border-emerald-200 { border-color: #a7f3d0; }
+      .border-indigo-200 { border-color: #c7d2fe; }
+      .text-white { color: #fff; }
+      .text-slate-200 { color: #e2e8f0; }
+      .text-slate-600 { color: #475569; }
+      .text-slate-700 { color: #334155; }
+      .text-slate-900 { color: #0f172a; }
+      .text-rose-700, .text-rose-800 { color: #be123c; }
+      .text-rose-900 { color: #881337; }
+      .text-amber-700, .text-amber-800 { color: #b45309; }
+      .text-amber-900 { color: #78350f; }
+      .text-emerald-700, .text-emerald-800 { color: #047857; }
+      .text-emerald-900, .text-emerald-950 { color: #064e3b; }
+      .text-indigo-200 { color: #c7d2fe; }
+      .text-indigo-300 { color: #a5b4fc; }
+      .text-indigo-700, .text-indigo-800 { color: #4338ca; }
+      .text-indigo-900 { color: #312e81; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+      .divide-y > * + * { border-top: 1px solid #e2e8f0; }
+
+      .mermaid {
+        min-height: 4rem;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #c7d2fe;
+        border-radius: 0.75rem;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      .diagram-node {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.25rem;
+        padding: 0.45rem 0.7rem;
+        border: 1px solid #94a3b8;
+        border-radius: 0.55rem;
+        background: #fff;
+        font-size: 0.82rem;
+        font-weight: 600;
+        line-height: 1.2;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+      }
+      .diagram-arrow { color: #6366f1; font-weight: 800; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { vertical-align: top; }
+
+      @media (min-width: 640px) {
+        .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .md\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      }
+      @media (min-width: 1024px) {
+        .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      @media (max-width: 639px) {
+        .px-6 { padding-left: 1rem; padding-right: 1rem; }
+        .py-12 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+        .p-8 { padding: 1.25rem; }
+        .text-4xl { font-size: 1.9rem; line-height: 2.25rem; }
+        .text-3xl { font-size: 1.55rem; line-height: 2rem; }
+        .tracking-\[0\.2em\], .tracking-\[0\.25em\] { letter-spacing: 0.12em; }
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="mx-auto max-w-6xl space-y-12 px-6 py-12">
+      <header class="space-y-4">
+        <p class="text-sm font-semibold uppercase tracking-[0.25em] text-indigo-700">DepthMark · senior software &amp; data engineering review</p>
+        <h1 class="text-4xl font-bold tracking-tight">Whole-repository review</h1>
+        <p class="max-w-4xl text-lg leading-8 text-slate-700">Review date: 2026-10-02. The repository has a thoughtful source-isolated Bronze → Silver → Gold model and strong Oddspedia intake controls, but its repeatable setup and deployment surfaces are not yet safe enough for unattended production operation.</p>
+        <div class="flex flex-wrap gap-3 text-sm">
+          <span class="rounded-full bg-rose-100 px-3 py-1 font-semibold text-rose-800">Critical: stop data loss</span>
+          <span class="rounded-full bg-amber-100 px-3 py-1 font-semibold text-amber-800">Warning: production risk</span>
+          <span class="rounded-full bg-emerald-100 px-3 py-1 font-semibold text-emerald-800">Suggestion: deepen modules</span>
+          <span class="rounded-full border border-slate-300 px-3 py-1 text-slate-700">Solid box = Module · dashed line = seam · red arrow = leakage · dark box = deep Module</span>
+        </div>
+      </header>
+
+      <section class="grid gap-4 md:grid-cols-4">
+        <div class="rounded-2xl border border-rose-200 bg-rose-50 p-5"><div class="text-sm font-semibold text-rose-800">P0</div><div class="mt-2 text-2xl font-bold">1</div><p class="mt-1 text-sm text-rose-900">Repeatable setup can drop Gold data.</p></div>
+        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5"><div class="text-sm font-semibold text-amber-800">P1</div><div class="mt-2 text-2xl font-bold">5</div><p class="mt-1 text-sm text-amber-900">Runtime, access, publication, and packaging risks.</p></div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5"><div class="text-sm font-semibold text-slate-600">Evidence</div><div class="mt-2 text-2xl font-bold">286 pass</div><p class="mt-1 text-sm text-slate-700">Full pytest suite passes; coverage is 52%.</p></div>
+        <div class="rounded-2xl border border-indigo-200 bg-indigo-50 p-5"><div class="text-sm font-semibold text-indigo-800">Scale</div><div class="mt-2 text-2xl font-bold">455 SQL</div><p class="mt-1 text-sm text-indigo-900">The repo needs generated contracts and automated gates.</p></div>
+      </section>
+
+      <section id="findings" class="space-y-6">
+        <h2 class="text-2xl font-bold">Findings, ordered by severity</h2>
+
+        <article class="rounded-2xl border-2 border-rose-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-rose-600 px-3 py-1 text-sm font-bold text-white">Critical · P0</span><h3 class="text-xl font-bold">Repeatable warehouse setup is data-destructive</h3></div>
+          <p class="mt-4 leading-7"><strong>Evidence:</strong> Gold setup collects every SQL file below <code>gold/ddl</code> and excludes only filenames containing <code>optimize</code> or beginning with <code>scenario_</code> (<a href="../../scripts/clickhouse_setup_common.py#L331-L340">scripts/clickhouse_setup_common.py:331-340</a>). Seventeen selected files contain <code>DROP TABLE</code>; for example, signal DDL drops tables before creating them (<a href="../../clickhouse/gold/ddl/signals/match/create_table_match_shooting_goals.sql#L3-L5">create_table_match_shooting_goals.sql:3-5</a>) and activation DDL drops the serving table (<a href="../../clickhouse/gold/ddl/create_table_signal_activations.sql#L1-L5">create_table_signal_activations.sql:1-5</a>). The Docker entrypoint invokes setup on startup (<a href="../../docker/docker-entrypoint.sh#L15-L17">docker/docker-entrypoint.sh:15-17</a>).</p>
+          <p class="mt-3 leading-7"><strong>Impact:</strong> a routine container restart or schema setup can erase Gold signal and activation rows. The existing production-readiness note addresses routine <code>OPTIMIZE</code>, but does not remove these destructive Gold DDL statements (<a href="../PRODUCTION_READINESS_REVIEW.md#L36-L40">docs/PRODUCTION_READINESS_REVIEW.md:36-40</a>).</p>
+          <p class="mt-3 leading-7"><strong>Recommendation:</strong> make normal setup strictly idempotent and limited to <code>CREATE DATABASE IF NOT EXISTS</code>, <code>CREATE TABLE IF NOT EXISTS</code>, and safe additive migrations. Move drops/rebuilds into a separately named, explicitly confirmed migration or rebuild command. Add an integration test that inserts a sentinel Gold row, runs setup twice, and asserts the row survives.</p>
+        </article>
+
+        <article class="rounded-2xl border border-amber-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-amber-500 px-3 py-1 text-sm font-bold text-white">Warning · P1</span><h3 class="text-xl font-bold">The default Docker entrypoint waits on the wrong hostname and has no timeout</h3></div>
+          <p class="mt-4 leading-7">The entrypoint polls <code>http://clickhouse:8123/ping</code> forever (<a href="../../docker/docker-entrypoint.sh#L6-L11">docker/docker-entrypoint.sh:6-11</a>), while Compose defines the service as <code>depthmark-clickhouse</code> (<a href="../../docker-compose.yml#L42-L48">docker-compose.yml:42-48</a>) and does not declare a <code>clickhouse</code> network alias. A failed setup also exits because of <code>set -e</code>, so the warning branch at lines 18-22 cannot provide recovery. Use the actual service name or an explicit alias, perform an authenticated health check, and fail with a bounded timeout and actionable diagnostics.</p>
+        </article>
+
+        <article class="rounded-2xl border border-amber-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-amber-500 px-3 py-1 text-sm font-bold text-white">Warning · P1</span><h3 class="text-xl font-bold">The scheduler profile does not actually run a scheduler</h3></div>
+          <p class="mt-4 leading-7">The scheduler service mounts a missing <code>./crontab</code> path (<a href="../../docker-compose.yml#L126-L155">docker-compose.yml:126-155</a>), has no command that starts cron, and does not mount the <code>clickhouse/</code> SQL tree. The image default is only <code>python -m src.cli --help</code> (<a href="../../docker/Dockerfile#L103-L110">docker/Dockerfile:103-110</a>). Choose one deployment model: remove this profile and document an external scheduler, or add a real scheduler image/command, an existing schedule file, lock/overlap policy, and health/alert behavior.</p>
+        </article>
+
+        <article class="rounded-2xl border border-amber-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-amber-500 px-3 py-1 text-sm font-bold text-white">Warning · P1</span><h3 class="text-xl font-bold">Production Compose defaults expose databases with predictable credentials</h3></div>
+          <p class="mt-4 leading-7">Compose publishes MongoDB and ClickHouse ports on all host interfaces (<a href="../../docker-compose.yml#L8-L17">docker-compose.yml:8-17</a>, <a href="../../docker-compose.yml#L42-L56">docker-compose.yml:42-56</a>) and falls back to <code>orbit_pass</code>/<code>fotmob_pass</code> when variables are absent. The file explicitly discusses production deployment at lines 1-3. The setup script rejects insecure ClickHouse credentials outside local development, but the database containers themselves still boot with these defaults (<a href="../../scripts/clickhouse_setup_common.py#L63-L115">scripts/clickhouse_setup_common.py:63-115</a>). Require production secrets at Compose/config validation time, bind local ports to loopback, and keep production exposure behind private networking/TLS.</p>
+        </article>
+
+        <article class="rounded-2xl border border-amber-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-amber-500 px-3 py-1 text-sm font-bold text-white">Warning · P1</span><h3 class="text-xl font-bold">Warehouse runtime grants are still broader than an application identity should have</h3></div>
+          <p class="mt-4 leading-7"><code>RUNTIME_DATABASE_PRIVILEGES</code> grants <code>DROP TABLE</code>, <code>TRUNCATE</code>, and <code>OPTIMIZE</code> across every warehouse database (<a href="../../scripts/clickhouse_setup_common.py#L36-L52">scripts/clickhouse_setup_common.py:36-52</a>, <a href="../../scripts/clickhouse_setup_common.py#L271-L284">scripts/clickhouse_setup_common.py:271-284</a>). Split identities into bootstrap/migration, ingestion, derived-load, reporting, and maintenance roles. This also makes accidental destructive calls fail closed.</p>
+        </article>
+
+        <article class="rounded-2xl border border-amber-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-amber-500 px-3 py-1 text-sm font-bold text-white">Warning · P1</span><h3 class="text-xl font-bold">Scoped publication is staged, but not atomic across tables</h3></div>
+          <p class="mt-4 leading-7">The warehouse replacement Module stages all jobs, then commits target tables one at a time (<a href="../../src/warehouse/scoped_replace.py#L86-L123">src/warehouse/scoped_replace.py:86-123</a>). If a later commit fails, earlier tables remain committed and the system only logs “rerun the same scope to converge.” Readers can therefore observe a mixed-version Silver/Gold scope. Add a durable run/batch manifest and a publication marker; make consumers read only the last published run, or publish per-layer watermarks after every table has passed validation.</p>
+        </article>
+
+        <article class="rounded-2xl border border-amber-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-amber-500 px-3 py-1 text-sm font-bold text-white">Warning · P1</span><h3 class="text-xl font-bold">The built wheel omits most runtime packages</h3></div>
+          <p class="mt-4 leading-7">The packaging configuration declares only <code>src</code> and <code>scripts</code> (<a href="../../pyproject.toml#L73-L85">pyproject.toml:73-85</a>). A local wheel build confirmed that nested packages such as <code>src.fotmob</code>, <code>src.integrations</code>, and <code>src.warehouse</code> are not in the wheel, even though the CLI dispatches to them (<a href="../../src/cli.py#L102-L151">src/cli.py:102-151</a>). Use package discovery, add an install smoke test that runs <code>depthmark --help</code> and one dry-run command from a clean environment, and make the Docker build use the same installable artifact.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-slate-700 px-3 py-1 text-sm font-bold text-white">Warning · P2</span><h3 class="text-xl font-bold">There is no automated CI/CD or SQL/migration test gate</h3></div>
+          <p class="mt-4 leading-7">The prior readiness record still reports no CI workflow and no SQL logic or migration-idempotency tests (<a href="../PRODUCTION_READINESS_REVIEW.md#L81-L90">docs/PRODUCTION_READINESS_REVIEW.md:81-90</a>). The repository scan found no GitHub/GitLab/Jenkins configuration and no SQL test files. Add a PR gate for package build/import, Ruff, Black, mypy, unit tests, SQL parsing/linting, schema bootstrap idempotence, and a small ClickHouse integration suite. Add a deployment gate for destructive DDL and credential validation.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-slate-700 px-3 py-1 text-sm font-bold text-white">Warning · P2</span><h3 class="text-xl font-bold">The quality baseline is not clean and coverage is not enforced</h3></div>
+          <p class="mt-4 leading-7">The full suite passes, but generated coverage is 52%; critical modules such as <code>src/fotmob/bronze/match_processor.py</code> and <code>src/fotmob/bronze/storage.py</code> are mostly unexecuted. Ruff reports 162 errors, Black would reformat 33 files, and mypy reports 205 errors in 30 source files. The configuration has no <code>fail-under</code> threshold (<a href="../../pyproject.toml#L151-L169">pyproject.toml:151-169</a>). Establish a staged baseline: first clean the import-path and typing contract, then enforce formatting/lint, then require targeted coverage for ingestion, staging, publication, and failure paths.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-slate-700 px-3 py-1 text-sm font-bold text-white">Warning · P2</span><h3 class="text-xl font-bold">Dependencies are floating and the image is not reproducible</h3></div>
+          <p class="mt-4 leading-7">Both the project metadata and requirements file use open-ended <code>&gt;=</code> constraints (<a href="../../pyproject.toml#L28-L52">pyproject.toml:28-52</a>, <a href="../../requirements.txt#L5-L66">requirements.txt:5-66</a>), while Docker installs the latest matching versions at build time (<a href="../../docker/Dockerfile#L22-L25">docker/Dockerfile:22-25</a>). Generate a lock file with hashes, separate runtime and development dependencies, and build/publish from a pinned lock in CI.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-slate-700 px-3 py-1 text-sm font-bold text-white">Warning · P2</span><h3 class="text-xl font-bold">The source interfaces drift from concrete implementations</h3></div>
+          <p class="mt-4 leading-7">The shared protocols require methods such as <code>save_match</code>/<code>load_match</code> and <code>process</code>/<code>validate</code> (<a href="../../src/core/interfaces.py#L29-L169">src/core/interfaces.py:29-169</a>), while concrete FotMob classes expose different operations such as <code>save_matches_batch</code>, <code>process_all</code>, and <code>fetch_match_details</code> (<a href="../../src/fotmob/bronze/base_storage.py#L34-L69">src/fotmob/bronze/base_storage.py:34-69</a>, <a href="../../src/fotmob/bronze/match_processor.py#L108-L110">src/fotmob/bronze/match_processor.py:108-110</a>). This is why mypy reports abstract/incompatible implementations. Define interfaces around real workflow behavior, or stop inheriting from protocols and use narrow internal seams.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-300 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-slate-700 px-3 py-1 text-sm font-bold text-white">Warning · P2</span><h3 class="text-xl font-bold">Repeated FINAL scans and SELECT * will become expensive as Gold grows</h3></div>
+          <p class="mt-4 leading-7">The repository scan found <code>FINAL</code> in 40 source/SQL files and <code>SELECT *</code> in five. The scoped replacement path copies whole rows with <code>SELECT *</code> and <code>FINAL</code> (<a href="../../src/warehouse/scoped_replace.py#L154-L176">src/warehouse/scoped_replace.py:154-176</a>), while Gold SQL also uses wide intermediate projections (<a href="../../clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql#L98-L130">representative Gold SQL:98-130</a>). Prefer explicit columns, validate schema drift, and reserve <code>FINAL</code> for controlled reconciliation or pre-merged source views.</p>
+        </article>
+
+        <article class="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-emerald-600 px-3 py-1 text-sm font-bold text-white">Suggestion · P3</span><h3 class="text-xl font-bold">Retention and storage policy are implicit</h3></div>
+          <p class="mt-4 leading-7">No ClickHouse SQL file declares a TTL. Representative Bronze, Silver, and Gold tables define partitions and ordering but no retention policy (<a href="../../clickhouse/bronze/01_general.sql#L36-L43">bronze.general:36-43</a>, <a href="../../clickhouse/silver/ddl/01_match.sql#L51-L55">silver.match:51-55</a>, <a href="../../clickhouse/gold/ddl/01_create_scenario_tables.sql#L15-L18">gold_scenarios:15-18</a>). Decide and document whether history is permanent, tiered, or retained by source/date; then add TTL or an explicit archive/maintenance contract where appropriate.</p>
+        </article>
+      </section>
+
+      <section id="verified" class="space-y-4">
+        <h2 class="text-2xl font-bold">Verified strengths and clean checks</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><h3 class="font-bold text-emerald-900">No issues found: tracked-secret scan</h3><p class="mt-2 text-sm leading-6 text-emerald-950">No hardcoded credential value was found in tracked source files. <code>.env</code> and <code>credentials.json</code> are ignored (<a href="../../.gitignore#L180-L215">.gitignore:180-215</a>). Keep treating local credential files as operational secrets and add secret scanning to CI.</p></div>
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><h3 class="font-bold text-emerald-900">No issues found: source isolation</h3><p class="mt-2 text-sm leading-6 text-emerald-950">The documented architecture clearly keeps FotMob and Oddspedia raw contracts isolated and makes cross-source matching explicit (<a href="../../README.md#L3-L13">README.md:3-13</a>). Do not replace this with a generic provider framework.</p></div>
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><h3 class="font-bold text-emerald-900">No issues found: baseline runtime checks</h3><p class="mt-2 text-sm leading-6 text-emerald-950">Observed checks passed: <code>python3 -m pytest -q</code> (286 passed), Python compilation, logging-style validation, quality CLI import/help, and <code>docker compose config --quiet</code>.</p></div>
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><h3 class="font-bold text-emerald-900">No issues found: Oddspedia control direction</h3><p class="mt-2 text-sm leading-6 text-emerald-950">The source-specific path already has date locks, accepted-inventory checksums, audit gates, and published Bronze admission markers. Preserve those explicit controls while extracting a better workflow seam.</p></div>
+        </div>
+      </section>
+
+      <section id="candidates" class="space-y-8">
+        <h2 class="text-2xl font-bold">Architecture-deepening candidates</h2>
+        <p class="max-w-4xl leading-7 text-slate-700">Each candidate is a proposal to make a Module deeper: a smaller Interface with more behavior hidden behind it. These are not final interfaces yet; they are the seams worth exploring.</p>
+
+        <article class="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-indigo-700 px-3 py-1 text-sm font-bold text-white">Strong</span><span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">Local-substitutable</span><h3 class="text-xl font-bold">1. Make warehouse setup a deep, non-destructive Module</h3></div>
+          <p class="mt-4"><strong>Files:</strong> <code>scripts/clickhouse_setup_common.py</code>, <code>clickhouse/gold/ddl/**</code>, <code>docker/docker-entrypoint.sh</code>.</p>
+          <p class="mt-3 leading-7"><strong>Problem:</strong> the setup caller must understand file discovery, legacy folders, exclusions, DDL ordering, and which SQL files are destructive. <strong>Solution:</strong> concentrate admission, idempotence checks, migration classification, and safety confirmation behind one setup workflow.</p>
+          <div class="mt-5 grid gap-4 lg:grid-cols-2"><div><p class="mb-2 text-sm font-semibold text-slate-600">Before</p><div class="mermaid">flowchart LR
+            A[Docker restart] --> B[setup all gold/ddl SQL]
+            B --> C[DROP TABLE]
+            C --> D[CREATE TABLE]
+            B --> E[No publication marker]
+          </div></div><div><p class="mb-2 text-sm font-semibold text-slate-600">After</p><div class="mermaid">flowchart LR
+            A[Restart] --> B[Safe setup Module]
+            B -. seam .-> C[Idempotent bootstrap adapter]
+            B -. seam .-> D[Explicit migration adapter]
+            B --> E[Schema/version check]
+            E --> F[Ready marker]
+          </div></div></div>
+          <ul class="mt-5 list-disc space-y-1 pl-5 text-sm leading-6"><li>Locality: destructive SQL and setup policy live in one place.</li><li>Leverage: every container, operator command, and CI test gets the same safety behavior.</li><li>Interface: callers ask for a safe setup or an explicitly approved migration.</li><li>Tests: run setup twice against a local ClickHouse substitute and preserve sentinel rows.</li></ul>
+          <div class="mt-5 rounded-xl border-l-4 border-amber-500 bg-amber-50 p-4 text-sm leading-6"><strong>ADR callout:</strong> revisit the setup contract documented as safe in <code>docs/PRODUCTION_READINESS_REVIEW.md</code>; the current DDL inventory still contains destructive Gold operations.</div>
+        </article>
+
+        <article class="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-indigo-700 px-3 py-1 text-sm font-bold text-white">Strong</span><span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">Local-substitutable</span><h3 class="text-xl font-bold">2. Make date-scoped publication a deep Module</h3></div>
+          <p class="mt-4"><strong>Files:</strong> <code>src/warehouse/scoped_replace.py</code>, Silver/Gold services, load-status tables.</p>
+          <p class="mt-3 leading-7"><strong>Problem:</strong> staging, row-count checks, replacement, cleanup, and partial-failure semantics are implemented, but readers have no durable publication marker. <strong>Solution:</strong> let one Module own run identity, stage cleanup, validation evidence, publish state, and recovery.</p>
+          <div class="mt-5 grid gap-4 lg:grid-cols-2"><div><p class="mb-2 text-sm font-semibold text-slate-600">Before</p><div class="mermaid">flowchart LR
+            A[SQL job] --> B[Stage]
+            B --> C[Commit table 1]
+            C --> D[Commit table 2]
+            D --> E[Failure]
+            E --> F[Mixed-version readers]
+          </div></div><div><p class="mb-2 text-sm font-semibold text-slate-600">After</p><div class="mermaid">flowchart LR
+            A[SQL jobs] --> B[Publication Module]
+            B --> C[Stage all]
+            C --> D[Validate batch]
+            D --> E[Publish marker]
+            E --> F[Readers select published run]
+          </div></div></div>
+          <ul class="mt-5 list-disc space-y-1 pl-5 text-sm leading-6"><li>Locality: recovery and cleanup logic stop leaking into callers.</li><li>Leverage: one publication contract serves Bronze admission, Silver, Gold, and activation rebuilds.</li><li>Tests: interface tests cover empty scope, partial commit, retry, and stale stage cleanup.</li></ul>
+        </article>
+
+        <article class="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-indigo-700 px-3 py-1 text-sm font-bold text-white">Strong</span><span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">True external</span><h3 class="text-xl font-bold">3. Split Oddspedia intake into a deep workflow Module</h3></div>
+          <p class="mt-4"><strong>Files:</strong> <code>src/oddspedia/scraping/cli.py</code> (2,106 lines), <code>match_scraper.py</code> (3,563 lines), <code>match_collector.py</code> (1,848 lines).</p>
+          <p class="mt-3 leading-7"><strong>Problem:</strong> CLI parsing, browser lifecycle, discovery, extraction, retries, audit, metrics, manifest updates, and persistence are spread across very large Modules; the CLI configures logging at import time (<a href="../../src/oddspedia/scraping/cli.py#L25-L109">cli.py:25-109</a>). <strong>Solution:</strong> keep Selenium as an Adapter behind a workflow seam that owns the accepted inventory → scrape → audit → manifest contract.</p>
+          <div class="mt-5 grid gap-4 lg:grid-cols-2"><div><p class="mb-2 text-sm font-semibold text-slate-600">Before</p><div class="mermaid">flowchart LR
+            A[CLI] --> B[Browser]
+            A --> C[Discovery]
+            A --> D[Audit]
+            A --> E[Manifest]
+            A --> F[Persistence]
+            B -. leakage .-> D
+            C -. leakage .-> E
+          </div></div><div><p class="mb-2 text-sm font-semibold text-slate-600">After</p><div class="mermaid">flowchart LR
+            A[Thin CLI] --> B[Oddspedia intake Module]
+            B -. seam .-> C[Browser Adapter]
+            B --> D[Inventory contract]
+            B --> E[Audit + retry policy]
+            B --> F[Manifest/storage Adapter]
+          </div></div></div>
+          <ul class="mt-5 list-disc space-y-1 pl-5 text-sm leading-6"><li>Locality: external browser quirks remain in one Adapter.</li><li>Leverage: discovery, retry, and manifest invariants can be tested without Selenium.</li><li>Interface: callers receive a deterministic date outcome, not browser details.</li></ul>
+        </article>
+
+        <article class="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-indigo-700 px-3 py-1 text-sm font-bold text-white">Strong</span><span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">In-process</span><h3 class="text-xl font-bold">4. Make the installable command surface real</h3></div>
+          <p class="mt-4"><strong>Files:</strong> <code>pyproject.toml</code>, <code>src/cli.py</code>, canonical script wrappers under <code>scripts/</code>.</p>
+          <p class="mt-3 leading-7"><strong>Problem:</strong> the package CLI is a stable facade, but packaging omits nested packages and the scripts still own path bootstrapping. <strong>Solution:</strong> use package discovery, move reusable command behavior behind a package seam, and keep thin compatibility wrappers only at the filesystem edge.</p>
+          <div class="mt-5 grid gap-4 lg:grid-cols-2"><div><p class="mb-2 text-sm font-semibold text-slate-600">Before</p><div class="mermaid">flowchart LR
+            A[depthmark] --> B[src/cli.py]
+            B --> C[filesystem script]
+            C --> D[sys.path mutation]
+            D --> E[nested source package]
+          </div></div><div><p class="mb-2 text-sm font-semibold text-slate-600">After</p><div class="mermaid">flowchart LR
+            A[depthmark] --> B[Command Module]
+            B --> C[Workflow Module]
+            C -. seam .-> D[ClickHouse / browser / storage adapters]
+            E[compatibility script] --> B
+          </div></div></div>
+          <ul class="mt-5 list-disc space-y-1 pl-5 text-sm leading-6"><li>Locality: import paths and packaging rules are solved once.</li><li>Leverage: clean-environment smoke tests prove the command contract.</li><li>Tests: invoke commands through the installed entrypoint, not only the checkout.</li></ul>
+        </article>
+
+        <article class="rounded-2xl border border-indigo-200 bg-white p-6 shadow-sm">
+          <div class="flex flex-wrap items-center gap-3"><span class="rounded-full bg-amber-600 px-3 py-1 text-sm font-bold text-white">Worth exploring</span><span class="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">In-process</span><h3 class="text-xl font-bold">5. Let Gold catalogs generate and validate their contracts</h3></div>
+          <p class="mt-4"><strong>Files:</strong> <code>scripts/gold/signal/catalogs/*.md</code>, <code>clickhouse/gold/ddl/signals/**</code>, <code>clickhouse/gold/dml/signals/**</code>, and warehouse contracts.</p>
+          <p class="mt-3 leading-7"><strong>Problem:</strong> the repository documents hundreds of signals and keeps metadata, DDL, DML, and row identities in separate surfaces. <strong>Solution:</strong> treat catalog frontmatter as the contract source and generate or validate DDL/identity projections, while keeping business transformation SQL explicit.</p>
+          <div class="mt-5"><div class="mermaid">flowchart LR
+            A[Signal catalog] --> B[Contract validator]
+            B --> C[DDL identity]
+            B --> D[DML target]
+            B --> E[Activation metadata]
+            F[Business SQL] --> D
+          </div></div>
+          <ul class="mt-5 list-disc space-y-1 pl-5 text-sm leading-6"><li>Locality: one catalog change drives its dependent contract checks.</li><li>Leverage: missing columns, wrong row identity, and stale tables fail before runtime.</li><li>Keep the source-domain separation intact; this is a catalog seam, not a provider framework.</li></ul>
+        </article>
+      </section>
+
+      <section id="actions" class="space-y-4">
+        <h2 class="text-2xl font-bold">Prioritized action plan</h2>
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <table class="min-w-full text-left text-sm"><thead class="bg-slate-100 text-slate-700"><tr><th class="px-4 py-3">Priority</th><th class="px-4 py-3">Do next</th><th class="px-4 py-3">Done when</th></tr></thead><tbody class="divide-y divide-slate-200"><tr><td class="px-4 py-3 font-bold text-rose-700">P0</td><td class="px-4 py-3">Remove destructive Gold drops from normal setup; separate explicit migrations/rebuilds.</td><td class="px-4 py-3">Repeated setup preserves sentinel rows and no startup path can drop a populated table.</td></tr><tr><td class="px-4 py-3 font-bold text-amber-700">P1</td><td class="px-4 py-3">Fix Docker healthcheck/entrypoint, decide scheduler ownership, and require production secrets.</td><td class="px-4 py-3">Clean Compose start is bounded, authenticated, and either runs a real scheduler or clearly delegates it.</td></tr><tr><td class="px-4 py-3 font-bold text-amber-700">P1</td><td class="px-4 py-3">Split ClickHouse roles and add a durable publication marker for scoped loads.</td><td class="px-4 py-3">Application identities cannot drop/truncate, and readers never observe an unpublished mixed-version run.</td></tr><tr><td class="px-4 py-3 font-bold text-slate-700">P2</td><td class="px-4 py-3">Fix package discovery, pin dependencies, add CI, SQL/migration tests, and clean static gates.</td><td class="px-4 py-3">A clean environment installs the wheel, CI proves the command/warehouse contract, and quality gates are enforceable.</td></tr><tr><td class="px-4 py-3 font-bold text-emerald-700">P3</td><td class="px-4 py-3">Define retention/TTL, reduce uncontrolled FINAL scans, and deepen Oddspedia/catalog seams.</td><td class="px-4 py-3">Storage/query budgets and the next architectural seam are explicit and measured.</td></tr></tbody></table>
+        </div>
+      </section>
+
+      <section id="top-recommendation" class="deep rounded-3xl p-8 text-white shadow-lg">
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-300">Top recommendation</p>
+        <h2 class="mt-3 text-3xl font-bold">Fix setup safety before adding more warehouse surface area</h2>
+        <p class="mt-4 max-w-4xl leading-8 text-slate-200">The source-isolated architecture is a good foundation, and the test suite is active. The highest-leverage next move is to make schema setup non-destructive and publication state explicit. Once those two seams are trustworthy, CI, packaging, and catalog generation can safely accelerate the project instead of amplifying operational risk.</p>
+        <p class="mt-6 font-semibold text-indigo-200">Which of these candidates would you like to explore?</p>
+      </section>
+
+      <footer class="border-t border-slate-200 pt-6 text-sm leading-6 text-slate-600">
+        <p>Review scope: repository tree, source modules, scripts, ClickHouse DDL/DML, Compose/Docker, tests, packaging, configuration, and project documentation. Existing user changes in the working tree were preserved and not reviewed as intentional fixes.</p>
+      </footer>
+    </main>
+    <script>
+      // Keep diagrams readable when this report is opened directly from disk.
+      document.querySelectorAll(".mermaid").forEach((diagram) => {
+        const labels = [];
+        const pattern = /[A-Za-z0-9_]+\[([^\]]+)\]/g;
+        let match;
+        while ((match = pattern.exec(diagram.textContent)) !== null) {
+          const label = match[1].trim();
+          if (!labels.includes(label)) labels.push(label);
+        }
+        if (!labels.length) return;
+        diagram.replaceChildren();
+        labels.forEach((label, index) => {
+          const node = document.createElement("span");
+          node.className = "diagram-node";
+          node.textContent = label;
+          diagram.appendChild(node);
+          if (index < labels.length - 1) {
+            const arrow = document.createElement("span");
+            arrow.className = "diagram-arrow";
+            arrow.textContent = "→";
+            diagram.appendChild(arrow);
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
