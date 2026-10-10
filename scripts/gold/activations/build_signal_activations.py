@@ -13,6 +13,11 @@ project_root = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
+from src.warehouse.publication import (
+    assert_upstream_published,
+    gold_activations_publication,
+    gold_outputs_publication,
+)
 from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
 from src.warehouse.scope import (
     WarehouseExecutionScope,
@@ -466,6 +471,9 @@ def build_signal_activations(
     skipped = 0
 
     if not dry_run:
+        assert_upstream_published(
+            client, gold_outputs_publication(), consumer="Signal activation build"
+        )
         _create_stage_table(client)
 
     for catalog in catalogs:
@@ -518,6 +526,7 @@ def build_signal_activations(
         scope,
         dry_run=dry_run,
         log=logger,
+        publication=gold_activations_publication(),
     ).run([activation_job])
 
     if not dry_run:

@@ -140,6 +140,17 @@ reloads the affected scope through the normal layer loader afterward.
 Avoid saying: table rebuild, schema reset, schema migration.
 Related terms: Schema Drift, Gold Activation Rebuild.
 
+### Scope Publication
+
+The durable status of one scoped Silver or Gold batch for one month partition
+(or partition `0` for full history): `committing`, then `published` once every
+target table committed, or `failed` with the tables that did commit. A
+partition whose latest status is not `published` may mix table versions, and
+readers must not consume it until a rerun publishes it.
+
+Avoid saying: load status, watermark, commit marker.
+Related terms: Warehouse Execution Scope, Gold Activation Rebuild.
+
 ### Historical Scrape
 
 A FotMob Bronze scrape whose scope contains only completed calendar dates,

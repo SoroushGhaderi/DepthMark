@@ -11,6 +11,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
+from src.warehouse.publication import gold_outputs_publication
 from src.warehouse.scoped_replace import ScopedReplacementBatch
 from src.fotmob.gold.dml_runner import (
     GoldJobKind,
@@ -125,6 +126,7 @@ def _run_jobs(
             scope,
             dry_run=dry_run,
             log=logger,
+            publication=gold_outputs_publication(),
         ).run(scoped_jobs)
         success_count = total_jobs
         failed_count = 0

@@ -80,7 +80,9 @@ needs `DEPTHMARK_BIND_ADDRESS` set to a trusted private interface. See the
 TouchDesk README for remote-host options.
 
 DepthMark does not call TouchDesk. TouchDesk reads `gold.*` / `gold_signals.*`
-from ClickHouse and the signal catalog from MongoDB.
+from ClickHouse and the signal catalog from MongoDB. Before trusting a month
+partition, TouchDesk should check that its latest status in
+`gold.scope_publication` is `published` (ADR 0028).
 
 ## Services
 

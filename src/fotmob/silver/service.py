@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
+from src.warehouse.publication import silver_publication
 from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
 from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
@@ -132,6 +133,7 @@ class SilverService:
             scope,
             dry_run=dry_run,
             log=logger,
+            publication=silver_publication(),
         )
         try:
             batch.run(load_jobs)

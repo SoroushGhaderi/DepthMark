@@ -541,11 +541,30 @@ Scoped derived loads share this function flow:
    requested monthly replacement, and validates row counts.
 5. `_commit()` uses `REPLACE PARTITION` for date/month scopes or
    `EXCHANGE TABLES` for full history.
+6. The batch records its publication status (ADR 0028) in
+   `silver.scope_publication` or `gold.scope_publication`: `committing` before
+   the first commit, then `published` or `failed` with the committed tables.
 
 Date scopes reconstruct the containing month by copying unaffected target rows
 and taking the selected date from the fresh calculation. A staging failure
-leaves targets unchanged. ClickHouse has no cross-table transaction, so a
-commit failure can be partial; rerunning the identical scope converges safely.
+leaves targets and publication status unchanged. ClickHouse has no
+cross-table transaction, so a commit failure can be partial; the partition's
+latest status then stays `committing` or `failed`, and rerunning the identical
+scope converges and publishes it.
+
+Readers must not consume a partition whose latest publication status is not
+`published` (full-history batches record partition `0`, meaning every
+partition). Gold loads refuse to start while any Silver partition is
+unpublished, the activation builder refuses unpublished Gold outputs, and
+`check_data_quality.py --strict` fails on unpublished partitions in its scope.
+External readers such as TouchDesk can apply the same rule:
+
+```sql
+SELECT batch, partition_id, argMax(status, updated_at) AS status
+FROM gold.scope_publication
+GROUP BY batch, partition_id
+HAVING status != 'published'
+```
 
 Programmatic callers must pass the scope explicitly:
 
