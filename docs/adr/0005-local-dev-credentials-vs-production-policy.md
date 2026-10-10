@@ -65,3 +65,9 @@ manifest now has no password defaults: Compose refuses to start unless
 `cp .env.example .env` step provides. Database ports publish on
 `DEPTHMARK_BIND_ADDRESS`, default `127.0.0.1`; widening it is an explicit,
 local-network decision. The rest of this decision is unchanged.
+
+ADR 0029 later split ClickHouse access into a maintenance identity (created by
+the ClickHouse container from `CLICKHOUSE_MAINTENANCE_USER` /
+`CLICKHOUSE_MAINTENANCE_PASSWORD`) and a narrow application identity that
+setup provisions. The passwordless `default` user bootstrap path described
+above was removed; setup always runs as the maintenance identity.

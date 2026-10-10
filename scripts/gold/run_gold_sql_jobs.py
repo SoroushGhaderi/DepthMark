@@ -24,6 +24,7 @@ from src.warehouse.scope import (
     execution_scope_from_args,
 )
 from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import client_for_scope
 from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -175,13 +176,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         _, failed_count = _run_jobs(None, jobs, scope=scope, dry_run=True)
         return 0 if failed_count == 0 else 1
 
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
+    try:
+        client = client_for_scope(scope)
+    except RuntimeError as identity_error:
+        logger.error(str(identity_error))
+        return 1
 
     if not client.connect():
         logger.error("Failed to connect to ClickHouse")

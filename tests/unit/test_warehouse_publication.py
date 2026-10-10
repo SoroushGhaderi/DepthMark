@@ -93,7 +93,9 @@ def test_full_history_batch_records_partition_zero():
 
 
 def test_partial_commit_records_failed_with_committed_tables():
-    client = PublicationClient(fail_on="REPLACE PARTITION 202512 FROM silver._depthmark_run1_shot")
+    client = PublicationClient(
+        fail_on="REPLACE PARTITION 202512 FROM warehouse_stage._depthmark_run1_silver__shot"
+    )
 
     with pytest.raises(RuntimeError, match="injected failure"):
         _batch(client).run([_job("silver.match"), _job("silver.shot")])
@@ -106,7 +108,7 @@ def test_partial_commit_records_failed_with_committed_tables():
 
 
 def test_staging_failure_records_no_status():
-    client = PublicationClient(fail_on="silver._depthmark_run1_shot_calc")
+    client = PublicationClient(fail_on="warehouse_stage._depthmark_run1_silver__shot_calc")
 
     with pytest.raises(RuntimeError):
         _batch(client).run([_job("silver.match"), _job("silver.shot")])

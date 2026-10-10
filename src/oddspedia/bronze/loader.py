@@ -11,6 +11,7 @@ import pandas as pd
 
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.databases import STAGING_DATABASE
 from src.oddspedia.scraping.audit import audit_match_payload
 from src.oddspedia.scraping.config import get_match_links_file, normalize_date
 from src.oddspedia.scraping.link_prioritization import source_inventory_checksum
@@ -141,7 +142,7 @@ class OddspediaBronzeLoader:
                 stage = f"_oddspedia_{table}_{run_id}"
                 stages.append(stage)
                 target = f"{self.database}.{table}"
-                stage_table = f"{self.database}.{stage}"
+                stage_table = f"{STAGING_DATABASE}.{stage}"
                 self.client.execute(f"CREATE TABLE {stage_table} AS {target}")
                 self.client.execute(
                     f"INSERT INTO {stage_table} "
@@ -153,7 +154,7 @@ class OddspediaBronzeLoader:
                 self._assert_stage_count(stage_table, date_column, date_iso, len(rows))
 
             for (table, _date_column, _rows, _count_field), stage_name in zip(specs, stages):
-                stage = f"{self.database}.{stage_name}"
+                stage = f"{STAGING_DATABASE}.{stage_name}"
                 self.client.execute(
                     f"ALTER TABLE {self.database}.{table} "
                     f"REPLACE PARTITION {partition} FROM {stage}"
@@ -197,11 +198,11 @@ class OddspediaBronzeLoader:
         finally:
             for stage in stages:
                 try:
-                    self.client.execute(f"DROP TABLE IF EXISTS {self.database}.{stage}")
+                    self.client.execute(f"DROP TABLE IF EXISTS {STAGING_DATABASE}.{stage}")
                 except Exception as exc:
                     logger.warning(
                         "Oddspedia Bronze staging table cleanup failed",
-                        table=f"{self.database}.{stage}",
+                        table=f"{STAGING_DATABASE}.{stage}",
                         error=str(exc),
                     )
 
@@ -211,7 +212,7 @@ class OddspediaBronzeLoader:
         self.client.insert_dataframe_qualified_table(
             stage,
             pd.DataFrame(rows),
-            database=self.database,
+            database=STAGING_DATABASE,
         )
 
     def _assert_stage_count(

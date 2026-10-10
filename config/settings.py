@@ -385,6 +385,10 @@ class Settings(BaseSettings):
     clickhouse_port: int = 8123
     clickhouse_user: str = "default"
     clickhouse_password: str = ""
+    # Maintenance identity (ADR 0029): setup, full-history swaps, and maintenance
+    # commands. The application identity above has no DDL rights on warehouse tables.
+    clickhouse_maintenance_user: Optional[str] = None
+    clickhouse_maintenance_password: str = ""
     clickhouse_database: str = "default"
     clickhouse_db_fotmob: str = "fotmob"
     clickhouse_db_gold: str = "gold"

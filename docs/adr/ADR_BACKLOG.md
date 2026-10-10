@@ -58,6 +58,7 @@ trade-off.
 | `0026-make-warehouse-setup-non-destructive.md`                      | Setup is create-only for every layer and fails closed on schema drift; Table Recreation is the explicit way to apply DDL changes. | Setup SQL may contain only `CREATE ... IF NOT EXISTS`; containers do not run setup on start; recreation never reloads rows. |
 | `0027-use-an-external-scheduler.md`                                  | DepthMark ships no scheduler; an external host scheduler runs canonical commands under `flock`. | Keep the documented run order, dates, and overlap rule in `docs/data-flow/infrastructure.md` accurate. |
 | `0028-record-scoped-publication-status.md`                          | Scoped Silver/Gold batches record committing/published/failed per partition; readers consume only published partitions. | Gold loads, the activation builder, and strict quality checks fail closed on unpublished partitions; external readers apply the same query. |
+| `0029-split-clickhouse-identities-and-isolate-staging.md`           | Staging lives in `warehouse_stage`; the application user has no DDL or truncate rights on warehouse tables; a maintenance user runs setup, full-history swaps, and maintenance. | Setup re-provisions the application user each run; full-history loads and maintenance commands need maintenance credentials. |
 
 
 ## Queue
@@ -74,35 +75,19 @@ trade-off.
 | P3       | Bronze filesystem retention and DLQ replay policy                 | Accepted in `0012-bronze-filesystem-retention-and-dlq-replay-policy.md`                                    | Bronze is the only filesystem-backed layer, and DLQ fallback exists under `src/fotmob/bronze/dead_letter.py`, but retention and replay contracts are not documented as an architectural decision.                                                                                                           | ADR defining local/raw payload retention, DLQ replay ownership, and safe cleanup constraints.                                                      |
 | P0       | Non-destructive warehouse setup                                   | Accepted in `0026-make-warehouse-setup-non-destructive.md`                                                  | Gold setup DDL dropped every signal and activation table on each run. Making setup create-only removes automatic schema application, so the drift policy and the explicit recreation path are hard to reverse and surprising without context. | ADR 0026 plus setup, maintenance command, tests, and runbook changes. |
 | P1       | Durable publication marker for scoped Silver/Gold loads           | Accepted in `0028-record-scoped-publication-status.md`                                                     | `src/warehouse/scoped_replace.py` stages every job but commits target tables one at a time, so a failed commit leaves readers on a mixed-version scope. A run manifest with a publication marker versus per-layer watermarks changes the reader contract of ADR 0018 for every consumer. | ADR choosing the publication contract and how readers select the last published run. |
-| P1       | ClickHouse identity and role split                                | Unresolved                                                                                                 | `RUNTIME_DATABASE_PRIVILEGES` grants `DROP TABLE`, `TRUNCATE`, and `OPTIMIZE` on every warehouse database to the one application identity. Splitting bootstrap/migration, ingestion, derived-load, reporting, and maintenance roles changes credentials, setup, and ADR 0005 configuration. | ADR defining the identities, their grants, and which commands use each. |
+| P1       | ClickHouse identity and role split                                | Accepted in `0029-split-clickhouse-identities-and-isolate-staging.md`                                      | `RUNTIME_DATABASE_PRIVILEGES` grants `DROP TABLE`, `TRUNCATE`, and `OPTIMIZE` on every warehouse database to the one application identity. Splitting bootstrap/migration, ingestion, derived-load, reporting, and maintenance roles changes credentials, setup, and ADR 0005 configuration. | ADR defining the identities, their grants, and which commands use each. |
 | P1       | Scheduler ownership                                               | Accepted in `0027-use-an-external-scheduler.md`                                                            | The Compose `scheduler` profile mounts a missing `./crontab` and never starts cron. Choosing an external scheduler or an in-repo scheduler image decides lock/overlap policy, health, and alert ownership. | ADR choosing the scheduler model, plus Compose and runbook changes. |
 
 
 ## Recommended Next Session
 
-Start with **P1: ClickHouse identity and role split**.
+No unresolved P0/P1 decisions remain. Candidate future topics, each to be added
+here only after pressure-testing against the code:
 
-Recommended default decision: move all staging tables (scoped replacement,
-Oddspedia Bronze, activation stage) into a dedicated staging database so the
-application identity can create, optimize, and drop tables only there, and
-keep target-table `DROP`, `TRUNCATE`, and `OPTIMIZE` for a separate
-maintenance identity.
-
-Key files to inspect:
-
-- `scripts/clickhouse_setup_common.py` (`RUNTIME_DATABASE_PRIVILEGES`, grants)
-- `src/warehouse/scoped_replace.py` (stage tables, `EXCHANGE TABLES`)
-- `src/oddspedia/bronze/loader.py` (Oddspedia stage tables)
-- `scripts/gold/activations/build_signal_activations.py` (activation stage)
-- `docs/adr/0005-local-dev-credentials-vs-production-policy.md`
-
-Suggested verification:
-
-```bash
-pytest tests/unit/test_warehouse_scoped_loading.py tests/unit/test_clickhouse_setup_common.py
-```
-
-Still deferred: **P2: Signal definition versioning** (needs a product/audit requirement).
+- A read-only reporting identity for TouchDesk and other external readers
+  (follow-up from ADR 0029).
+- **P2: Signal definition versioning** — still deferred (needs a product/audit
+  requirement).
 
 ## Completed Sessions
 
@@ -120,6 +105,7 @@ Still deferred: **P2: Signal definition versioning** (needs a product/audit requ
 | 9       | Prioritize Oddspedia links against DepthMark Silver | Accepted in `0022-prioritize-oddspedia-links-against-depthmark-silver.md` |
 | 10      | Source-qualified operational script names | Accepted in `0024-source-qualified-operational-script-names.md`; compatibility adapters retained |
 | 11      | Unified scraping status and reports | Accepted in `0025-unify-scraping-status-and-reports.md`; one read-only command covers both sources |
+| 15      | ClickHouse identity and role split | Accepted in `0029-split-clickhouse-identities-and-isolate-staging.md`; verified against ClickHouse 24.10 |
 | 14      | Scoped publication status | Accepted in `0028-record-scoped-publication-status.md`; Gold, activations, and strict quality checks fail closed on unpublished partitions |
 | 13      | Scheduler ownership | Accepted in `0027-use-an-external-scheduler.md`; broken Compose scheduler profile removed |
 | 12      | Non-destructive warehouse setup | Accepted in `0026-make-warehouse-setup-non-destructive.md`; P1 publication, role-split, and scheduler decisions queued |

@@ -69,9 +69,10 @@ quality improvements, not unaddressed Oddspedia P0/P1 blockers.
 
 ## Security Audit
 
-- Default-user ClickHouse bootstrap is restricted to the explicit local-dev path.
-- New ClickHouse users receive database-scoped grants for the warehouse runtime;
-  schema-bootstrap privileges are not granted in production.
+- The passwordless default-user ClickHouse bootstrap path was removed; setup always runs as the maintenance identity (ADR 0029).
+- ClickHouse access is split (ADR 0029): the application user has `SELECT, INSERT, ALTER DELETE`
+  on warehouse databases and DDL rights only in `warehouse_stage`; a maintenance user runs setup,
+  full-history swaps, and maintenance commands.
 - `.env`-style secrets are documented, but production hardening still depends on external discipline rather than runtime enforcement.
 
 ## SQL Quality

@@ -228,6 +228,13 @@ def test_bronze_publication_stages_all_tables_before_first_partition_replace():
     assert len(create_positions) == 3
     assert len(replace_positions) == 3
     assert max(create_positions) < min(replace_positions)
+    assert all(
+        operation[1].startswith("CREATE TABLE warehouse_stage._oddspedia_")
+        for operation in (operations[index] for index in create_positions)
+    )
+    assert all(
+        " FROM warehouse_stage._oddspedia_" in operations[index][1] for index in replace_positions
+    )
     status_inserts = [operation for operation in operations if operation[0] == "insert"]
     assert [operation[2] for operation in status_inserts] == ["staging", "published"]
 

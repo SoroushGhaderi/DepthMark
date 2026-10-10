@@ -25,7 +25,8 @@ from src.warehouse.scope import (
     execution_scope_from_args,
 )
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.databases import gold_db, gold_signals_db
+from src.warehouse.identities import client_for_scope
+from src.warehouse.databases import STAGING_DATABASE, gold_db, gold_signals_db
 from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -282,7 +283,7 @@ def _source_row_json_expr(available_columns: set[str], table_alias: str = "") ->
 
 
 def _stage_table_name() -> str:
-    return f"gold.{STAGE_TABLE}"
+    return f"{STAGING_DATABASE}.{STAGE_TABLE}"
 
 
 def _create_stage_table(client: ClickHouseClient) -> None:
@@ -530,7 +531,7 @@ def build_signal_activations(
     ).run([activation_job])
 
     if not dry_run:
-        client.execute("DROP TABLE IF EXISTS gold.signal_activations_stage")
+        client.execute(f"DROP TABLE IF EXISTS {_stage_table_name()}")
 
     return processed, skipped
 
@@ -566,13 +567,11 @@ def main(argv: Optional[list[str]] = None) -> int:
         logger.warning("No active signal catalogs found", catalog_dir=str(catalog_dir))
         return 0
 
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
+    try:
+        client = client_for_scope(scope)
+    except RuntimeError as identity_error:
+        logger.error(str(identity_error))
+        return 1
 
     if not client.connect():
         logger.error("Failed to connect to ClickHouse")

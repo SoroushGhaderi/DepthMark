@@ -119,9 +119,16 @@ separate deployment configuration, non-default secrets, and
 
 Use `DEPTHMARK_ENV=local` only for local Docker development. ClickHouse setup
 rejects empty, placeholder, or known local-development passwords outside local
-development and limits the empty-password `default` user bootstrap path to local
 development. See
 `docs/adr/0005-local-dev-credentials-vs-production-policy.md`.
+
+ClickHouse access uses two identities (ADR 0029). The application user
+(`CLICKHOUSE_USER`) has `SELECT, INSERT, ALTER DELETE` on warehouse databases and
+creates, optimizes, and drops tables only in the `warehouse_stage` staging
+database. The maintenance user (`CLICKHOUSE_MAINTENANCE_USER`) runs setup, which
+also provisions the application user, plus full-history loads, Table
+Recreation, optimization, drop scripts, and Bronze `--truncate`. See
+`docs/data-flow/infrastructure.md` for the identity table.
 
 ## Canonical Command Surface
 
@@ -537,8 +544,9 @@ Scoped derived loads share this function flow:
 2. Silver and Gold workflow modules convert SQL files into `ScopedSqlJob` values with a
    target table and match-date expression.
 3. `ScopedReplacementBatch.run()` stages all selected jobs before any commit.
-4. `_prepare()` redirects each `INSERT INTO` to a calculation table, builds the
-   requested monthly replacement, and validates row counts.
+4. `_prepare()` redirects each `INSERT INTO` to a calculation table in the
+   `warehouse_stage` database, builds the requested monthly replacement there,
+   and validates row counts.
 5. `_commit()` uses `REPLACE PARTITION` for date/month scopes or
    `EXCHANGE TABLES` for full history.
 6. The batch records its publication status (ADR 0028) in
@@ -638,7 +646,7 @@ Creation flow:
 3. `scripts/gold/activations/build_signal_activations.py` scans active signal
    catalogs and reads each catalog `row_identity`.
 4. The builder stages one row per signal output in ephemeral
-   `gold.signal_activations_stage` (DDL:
+   `warehouse_stage.signal_activations_stage` (DDL:
    `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`),
    calculates the serving rows with
    `clickhouse/gold/dml/activations/signal_activation_final_insert.sql`, and
