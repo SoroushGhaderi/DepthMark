@@ -15,22 +15,16 @@ the detailed interfaces that govern execution.
 - `SCRIPTS_CONTRACT.md`: standards for script behavior, style, CLI semantics,
   logging, safety, and command-surface changes.
 - `data-flow/warehouse-pipeline-reference.html`: the warehouse source of truth.
-  One self-contained file with 15 pages (concepts, sources, layers, products,
-  operations, contracts), diagrams, command cards, and search. Page and section
-  anchors such as `#gold` or `#cmd-fotmob-gold` are stable link targets.
+  One self-contained file with 19 pages: task runbooks (load a date, fix a
+  failed run, edit a signal, check the warehouse), concepts, sources, layers,
+  products, operations, and contracts, with diagrams and search. Page and
+  section anchors such as `#gold` or `#cmd-fotmob-gold` are stable link targets.
 - `data-flow/`: detailed source/layer flows supporting the central reference.
 - `data-flow/orchestration.md#post-load-data-quality`: canonical duplicate and
   Bronze-to-Silver reconciliation workflow, scopes, and exit behavior.
-- `PRODUCTION_READINESS_REVIEW.md`: full DE review report with evidence-based
-  findings, remediation plan, and work tracking checklist.
-- `reviews/architecture-review-depthmark-20260811.html`: script naming review
-  for the FotMob and Oddspedia command surfaces; it also records the unified
-  scraping-report refinement.
-- `reviews/architecture-review-oddspedia-artifacts-20260812.html`: completed
-  review and remediation record for Oddspedia JSON contracts, manifests, and
-  multi-date continuation.
-- `reviews/architecture-review-depthmark-20261002.html`: whole-repository
-  review with prioritized P0–P3 findings and a remediation log.
+- `REVIEW.md`: the single current repository review with resolved history,
+  prioritized open findings, and remediation order. Earlier reviews were merged
+  into it and remain in git history.
 - `adr/0024-source-qualified-operational-script-names.md`: accepted naming
   grammar, package registry, and compatibility-adapter policy.
 - `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting
