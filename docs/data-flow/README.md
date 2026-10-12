@@ -11,7 +11,7 @@ subsystem contracts remain authoritative for their detailed interfaces.
 
 | File | Purpose |
 | --- | --- |
-| `warehouse-pipeline-reference.html` | Documentation Atlas: glossary, independent source paths, warehouse layers, scenarios/signals, operations, platforms, and contract/decision index. Open locally; sidebar routes preserve `#gold`, and heading links support `#gold/activation-rebuild`. The command reference (`#commands`) covers installed CLI commands, script equivalents, scope compatibility, prerequisites, and effects; `#quality` defines acceptance gates. Source filters, command search/copying, chapter navigation, maturity badges, artifact layouts, and troubleshooting guides work offline alongside the diagram panels. |
+| `warehouse-pipeline-reference.html` | Source of truth. One self-contained file with 19 pages: task runbooks, concepts, FotMob, Oddspedia, Bronze, Silver, Gold, scenarios, signals, MongoDB catalogs, commands, orchestration, quality, infrastructure, and contracts, with diagrams and search. Edit it directly; there is no build step. |
 | `bronze.md` | Bronze layer for both sources: source-faithful storage, raw loading, and recovery boundaries. |
 | `silver.md` | Silver layer for both sources: SQL-driven cleaning, typing, conformation, and source ownership. |
 | `gold.md` | Gold layer for both sources: source-specific scenarios, signals, serving outputs, and execution boundaries. |
@@ -21,11 +21,11 @@ subsystem contracts remain authoritative for their detailed interfaces.
 
 Maintenance commands such as `scripts/maintenance/optimize_clickhouse.py` and
 `scripts/maintenance/recreate_clickhouse_tables.py` are documented in
-`infrastructure.md` and the interactive warehouse reference.
+`infrastructure.md` and the warehouse reference's command matrix.
 
 ## How To Use
 
-1. Start with `warehouse-pipeline-reference.html` for concept definitions, the two parallel source pipelines, their integration edge, and the contract index.
+1. Start with `warehouse-pipeline-reference.html` for the pipeline map, then open the page for the question you have.
 2. Read the layer-specific `.md` files for detailed flow, scripts, tables, and
    edge cases.
 3. Cross-reference `docs/DEVELOPMENT_ARCHITECTURE.md` for canonical commands
@@ -37,15 +37,17 @@ Maintenance commands such as `scripts/maintenance/optimize_clickhouse.py` and
    layer script, SQL job, ClickHouse table, or MongoDB collection.
 2. **Keep diagrams accurate.** If the code and a diagram disagree, the code
    wins — update the diagram in the same change.
-3. **Open `warehouse-pipeline-reference.html` locally** after editing to verify
-   flow diagrams and click-to-command panels render correctly.
+3. **Check the reference after editing.** `warehouse-pipeline-reference.html` is a
+   single hand-maintained file with its CSS and JavaScript inline. Every
+   `href="#x"` needs an element with `id="x"`, and each page is an
+   `<article class="page" id="slug">` shown with CSS `:target`, so it also works
+   inside sandboxed previews. Open it after editing to check the diagrams,
+   anchors, and phone-width layout.
 4. **No stale inventory counts.** Update table counts in `bronze.md`,
    `silver.md`, and `gold.md` when the inventory changes.
 
 ## Diagram Conventions
 
-- Copper, slate, and amber label Bronze, Silver, and Gold respectively in the Atlas.
-- Green callouts/status labels indicate successful or implemented state; red denotes failure paths.
-- Planned status is explicitly labeled; color alone never defines implementation maturity.
-- Dashed arrows: optional or conditional flows.
-- Solid arrows: mandatory sequential flows.
+- Copper, slate, and amber label Bronze, Silver, and Gold respectively in the reference.
+- Status badges use text as well as color: Implemented, Partial, Planned, and Destructive. Color alone never defines maturity.
+- Flows are numbered steps. An optional or skipped path is named in the text, not drawn as a dashed arrow.

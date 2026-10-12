@@ -3,8 +3,6 @@
 import re
 from typing import Any, Dict, List, Optional
 
-import pandas as pd
-
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 
@@ -45,7 +43,7 @@ SILVER_TABLE_KEYS: Dict[str, List[str]] = {
 }
 
 _SAFE_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
-_NUMERIC_KEY_COLUMNS = {
+NUMERIC_KEY_COLUMNS = {
     "match_id",
     "player_id",
     "shot_id",
@@ -89,40 +87,19 @@ def _table_exists(client: ClickHouseClient, database: str, table: str) -> bool:
     return _query_scalar(client, query) > 0
 
 
-def assert_bronze_dataframe_contract(
-    table_name: str,
-    dataframe: pd.DataFrame,
-    log=logger,
-) -> None:
-    """Validate lightweight bronze contract against an in-memory dataframe."""
-    required_keys = BRONZE_REQUIRED_KEYS.get(table_name)
-    if not required_keys or dataframe.empty:
-        return
-
-    missing_columns = [col for col in required_keys if col not in dataframe.columns]
-    if missing_columns:
-        raise LayerContractError(
-            f"Bronze contract failed for {table_name}: missing key columns {missing_columns}"
-        )
-
-    null_counts = {
-        col: int(dataframe[col].isna().sum())
-        for col in required_keys
-        if dataframe[col].isna().any()
-    }
-    if null_counts:
-        raise LayerContractError(
-            f"Bronze contract failed for {table_name}: nulls in key columns {null_counts}"
-        )
-
-    duplicate_count = int(dataframe.duplicated(subset=required_keys).sum())
-    if duplicate_count > 0:
-        log.warning(
-            "Bronze dataframe contains duplicate key rows prior to ClickHouse dedup",
-            table_name=table_name,
-            duplicate_rows=duplicate_count,
-            key_columns=required_keys,
-        )
+def count_invalid_key_rows(
+    client: ClickHouseClient, database: str, table: str, keys: List[str]
+) -> int:
+    """Count rows whose identity keys are null, or non-positive where numeric."""
+    db = _safe_identifier(database)
+    tbl = _safe_identifier(table)
+    null_predicates = [f"isNull({_safe_identifier(col)})" for col in keys]
+    numeric_key_predicates = [f"{col} <= 0" for col in keys if col in NUMERIC_KEY_COLUMNS]
+    return _query_scalar(
+        client,
+        f"SELECT count() FROM {db}.{tbl} "
+        f"WHERE {' OR '.join(null_predicates + numeric_key_predicates)}",
+    )
 
 
 def assert_bronze_layer_contracts(
@@ -147,13 +124,7 @@ def assert_bronze_layer_contracts(
         if not _table_exists(client, db, table):
             raise LayerContractError(f"Bronze contract failed: missing table {db}.{table}")
 
-        null_predicates = [f"isNull({col})" for col in keys]
-        numeric_key_predicates = [f"{col} <= 0" for col in keys if col in _NUMERIC_KEY_COLUMNS]
-        bad_rows_query = (
-            f"SELECT count() FROM {db}.{table} "
-            f"WHERE {' OR '.join(null_predicates + numeric_key_predicates)}"
-        )
-        invalid_key_rows = _query_scalar(client, bad_rows_query)
+        invalid_key_rows = count_invalid_key_rows(client, db, table, keys)
         baseline_invalid_rows = 0
         if baseline_invalid_rows_by_table:
             baseline_invalid_rows = int(baseline_invalid_rows_by_table.get(table, 0))
@@ -184,13 +155,7 @@ def get_bronze_invalid_key_rows(
         if not _table_exists(client, db, table):
             continue
 
-        null_predicates = [f"isNull({col})" for col in keys]
-        numeric_key_predicates = [f"{col} <= 0" for col in keys if col in _NUMERIC_KEY_COLUMNS]
-        bad_rows_query = (
-            f"SELECT count() FROM {db}.{table} "
-            f"WHERE {' OR '.join(null_predicates + numeric_key_predicates)}"
-        )
-        counts[table] = _query_scalar(client, bad_rows_query)
+        counts[table] = count_invalid_key_rows(client, db, table, keys)
 
     return counts
 
@@ -214,7 +179,7 @@ def assert_silver_layer_contracts(
             continue
 
         invalid_conditions = [f"isNull({col})" for col in keys]
-        invalid_conditions.extend(f"{col} <= 0" for col in keys if col in _NUMERIC_KEY_COLUMNS)
+        invalid_conditions.extend(f"{col} <= 0" for col in keys if col in NUMERIC_KEY_COLUMNS)
         invalid_key_rows = _query_scalar(
             client,
             f"SELECT count() FROM {db}.{table} WHERE {' OR '.join(invalid_conditions)}",

@@ -287,7 +287,7 @@ class TeamCoach(BaseModel):
 
     match_id: int = Field(..., description="Unique match identifier")
     team_side: str = Field(..., description="Team side: 'home' or 'away'")
-    id: int = Field(..., description="Unique identifier for the coach")
+    coach_id: int = Field(..., description="Unique identifier for the coach")
     age: Optional[int] = Field(None, description="Age of the coach")
     name: Optional[str] = Field(None, description="Name of the coach")
     first_name: Optional[str] = Field(None, description="First name of the coach")

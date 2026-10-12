@@ -83,6 +83,29 @@ def test_parse_create_table_reads_columns_and_sorting_key(tmp_path: Path):
         ("inserted_at", "DateTime"),
     )
     assert table.sorting_key == ("match_id", "ifNull(player_id,-1)", "signal_instance_id")
+    assert table.column_defaults == (
+        ("signal_instance_id", "DEFAULT"),
+        ("inserted_at", "DEFAULT"),
+    )
+
+
+def test_parse_create_table_reads_materialized_and_alias_columns(tmp_path: Path):
+    ddl = """
+    CREATE TABLE IF NOT EXISTS bronze.example (
+        match_id Int32,
+        label String DEFAULT 'x y',
+        match_month UInt32 MATERIALIZED toYYYYMM(now()),
+        match_key String ALIAS toString(match_id),
+        note Nullable(String) COMMENT 'not a default'
+    ) ENGINE = MergeTree ORDER BY match_id;
+    """
+    table = parse_expected_tables([_write_ddl(tmp_path, ddl)])[0]
+
+    assert dict(table.column_defaults) == {
+        "label": "DEFAULT",
+        "match_month": "MATERIALIZED",
+        "match_key": "ALIAS",
+    }
 
 
 def test_unqualified_or_unconditional_create_is_not_parsed(tmp_path: Path):

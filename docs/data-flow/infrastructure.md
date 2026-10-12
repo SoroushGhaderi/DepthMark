@@ -189,8 +189,8 @@ MONGODB_DATABASE=orbit_content
 
 | Identity | Variables | Rights | Used by |
 | --- | --- | --- | --- |
-| Application | `CLICKHOUSE_USER` / `CLICKHOUSE_PASSWORD` | `SELECT, INSERT, ALTER DELETE` on warehouse databases; create, drop, optimize, and truncate only in `warehouse_stage` | Bronze loads, date/month Silver and Gold loads, activations, Oddspedia loads and resolution, quality checks |
-| Maintenance | `CLICKHOUSE_MAINTENANCE_USER` / `CLICKHOUSE_MAINTENANCE_PASSWORD` | Full access with access management | Both setup commands, full-history loads (`EXCHANGE TABLES`), Table Recreation, optimization, drop scripts, `load_fotmob_bronze.py --truncate` |
+| Application | `CLICKHOUSE_USER` / `CLICKHOUSE_PASSWORD` | `SELECT, INSERT, ALTER DELETE` on warehouse databases; create, drop, optimize, and truncate only in `warehouse_stage` | Bronze loads and `--replace`, scoped `remove_fotmob_bronze.py`, date/month Silver and Gold loads, activations, Oddspedia loads and resolution, quality checks |
+| Maintenance | `CLICKHOUSE_MAINTENANCE_USER` / `CLICKHOUSE_MAINTENANCE_PASSWORD` | Full access with access management | Both setup commands, full-history loads (`EXCHANGE TABLES`) including `load_fotmob_bronze.py --full-history --rebuild`, `remove_fotmob_bronze.py --full-history` (truncate), Table Recreation, optimization, drop scripts |
 
 The ClickHouse container creates the maintenance user from these variables.
 Setup connects as the maintenance user and creates or resets the application
