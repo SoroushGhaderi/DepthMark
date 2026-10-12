@@ -42,6 +42,21 @@ python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python3 scripts/bronze/sync_s3.py download --date 20251208
 ```
 
+FotMob Bronze loading is fail-closed: every value is checked against its
+table's setup DDL before anything is inserted, and a date that cannot be read
+or admitted fails on its own while the other dates load (ADR 0031). Bronze
+commands are scoped by Source Date, the Historical folder name. Reload a scope,
+clear it, or rebuild all history without an empty window (ADR 0032):
+
+```bash
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --replace
+python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild
+```
+
+See [`docs/data-flow/bronze.md`](docs/data-flow/bronze.md) for the admission
+rules, failure classes, and recovery steps.
+
 ## Quick Start
 
 On a new server (Docker with Compose v2 is the only prerequisite), one command

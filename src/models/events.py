@@ -153,7 +153,7 @@ class CardEventMatchFacts(BaseModel):
     event_id: int = Field(
         ..., description="Unique identifier for the card event"
     )
-    time: int = Field(..., description="Minute when card was given")
+    event_time: int = Field(..., description="Minute when card was given")
     added_time: Optional[int] = Field(None, description="Stoppage time minute")
     player_id: Optional[int] = Field(
         None, description="Player ID who received card"
@@ -167,7 +167,7 @@ class CardEventMatchFacts(BaseModel):
     team: str = Field(..., description="Home or Away team")
     card_type: str = Field(..., description="Type of card (Yellow, Red)")
     description: Optional[str] = Field(None, description="Card description")
-    score: str = Field(..., description="Score at time of card")
+    score_at_event: str = Field(..., description="Score at time of card")
 
 
 class SubstitutionEvent(BaseModel):

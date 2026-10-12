@@ -14,24 +14,20 @@ the detailed interfaces that govern execution.
   configuration, and TouchDesk integration.
 - `SCRIPTS_CONTRACT.md`: standards for script behavior, style, CLI semantics,
   logging, safety, and command-surface changes.
-- `data-flow/warehouse-pipeline-reference.html`: Documentation Atlas with source
-  and layer navigation, concept definitions, heading links, topic search,
-  a canonical command reference with script equivalents, quality and acceptance
-  guidance, command panels, and an authoritative contract/decision index. Existing links
-  such as `#gold` remain valid; headings also accept `#gold/activation-rebuild`.
+- `data-flow/warehouse-pipeline-reference.html`: the warehouse source of truth.
+  One self-contained file with 19 pages: task runbooks (load a date, fix a
+  failed run, edit a signal, check the warehouse), concepts, sources, layers,
+  products, operations, and contracts, with diagrams and search. Page and
+  section anchors such as `#gold` or `#cmd-fotmob-gold` are stable link targets.
 - `data-flow/`: detailed source/layer flows supporting the central reference.
 - `data-flow/orchestration.md#post-load-data-quality`: canonical duplicate and
   Bronze-to-Silver reconciliation workflow, scopes, and exit behavior.
-- `PRODUCTION_READINESS_REVIEW.md`: full DE review report with evidence-based
-  findings, remediation plan, and work tracking checklist.
-- `reviews/architecture-review-depthmark-20260811.html`: script naming review
-  for the FotMob and Oddspedia command surfaces; it also records the unified
-  scraping-report refinement.
-- `reviews/architecture-review-oddspedia-artifacts-20260812.html`: completed
-  review and remediation record for Oddspedia JSON contracts, manifests, and
-  multi-date continuation.
-- `reviews/architecture-review-depthmark-20261002.html`: whole-repository
-  review with prioritized P0–P3 findings and a remediation log.
+- `REVIEW.md`: the single current repository review with resolved history,
+  prioritized open findings, and remediation order. Earlier reviews were merged
+  into it and remain in git history.
+- `ARCHITECTURE_REVIEW.html`: architecture refactoring candidates (deeper
+  modules, seams, and code-quality fixes) that complement `REVIEW.md`. One
+  self-contained file; open it in a browser.
 - `adr/0024-source-qualified-operational-script-names.md`: accepted naming
   grammar, package registry, and compatibility-adapter policy.
 - `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting
@@ -46,6 +42,12 @@ the detailed interfaces that govern execution.
   and maintenance ClickHouse identities and the `warehouse_stage` database.
 - `adr/0030-automate-server-bootstrap.md`: one-command server initialization
   and upgrade with generated secrets and the installed schedule.
+- `adr/0031-fail-closed-fotmob-bronze-admission.md`: FotMob Bronze rows are
+  admitted against their setup DDL before any insert; a Date-Level Failure fails
+  its date and the run continues, a Run-Level Failure stops the run.
+- `adr/0032-scoped-fotmob-bronze-removal-replace-and-rebuild.md`: Source Date
+  scoped removal and replace, staged full-history rebuild, and the Bronze write
+  lock; `--truncate` is deprecated.
 
 Source-specific flows:
 
@@ -54,9 +56,8 @@ Source-specific flows:
 - `data-flow/oddspedia.md`: Oddspedia discovery, source Bronze, Silver, and Gold
   boundaries, links-layer prioritization, and the separate cross-source
   resolution edge.
-- `data-flow/warehouse-pipeline-reference.html#oddspedia`: interactive
-  warehouse view for the complete Oddspedia source pipeline and its explicit
-  cross-source integration edge.
+- `data-flow/warehouse-pipeline-reference.html#oddspedia`: the Oddspedia source
+  pipeline and its explicit cross-source integration edge.
 
 Keep active subsystem contracts next to the code they govern. Current examples:
 
