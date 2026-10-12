@@ -19,8 +19,11 @@ Usage:
     # Show table statistics
     python3 scripts/bronze/load_fotmob_bronze.py --stats
 
-    # Preview truncate and reload
-    python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --truncate --dry-run
+    # Replace one date: admit it, remove its matches, then insert (ADR 0032)
+    python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --replace
+
+    # Rebuild all history into staging and swap it in (maintenance identity)
+    python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run
 
     Note:
     ClickHouse background merges handle routine ReplacingMergeTree storage cleanup.
@@ -31,8 +34,6 @@ import argparse
 import logging
 import os
 import sys
-from calendar import monthrange
-from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
@@ -43,7 +44,12 @@ from src.fotmob.bronze import BronzeRunResult, BronzeService
 from src.integrations.telegram import ErrorAlertData, TelegramClient
 from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.common.dates import DATE_FORMAT_COMPACT, extract_year_month
+from src.common.dates import extract_year_month
+from src.fotmob.bronze.source_dates import (
+    discover_historical_dates,
+    generate_date_range,
+    generate_month_dates,
+)
 from src.warehouse.contracts import LayerContractError
 from src.common.logging import get_logger, setup_logging
 
@@ -72,11 +78,15 @@ Examples:
   # Show table statistics
   python3 scripts/bronze/load_fotmob_bronze.py --stats
 
-  # Truncate and reload
-  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --truncate
+  # Replace one date or a month (admit, remove its matches, insert)
+  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --replace
+  python3 scripts/bronze/load_fotmob_bronze.py --month 202511 --replace
 
-  # Preview truncate and reload
-  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --truncate --dry-run
+  # Rebuild all history without an empty window (maintenance identity)
+  python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run
+  python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild
+
+  # Clear data without reloading: see scripts/bronze/remove_fotmob_bronze.py
         """,
     )
 
@@ -123,7 +133,27 @@ Examples:
         help="ClickHouse password",
     )
 
-    parser.add_argument("--truncate", action="store_true", help="Truncate tables before loading")
+    parser.add_argument(
+        "--replace",
+        action="store_true",
+        help=(
+            "Replace each Source Date: admit its payloads, remove its matches from every "
+            "Bronze table, then insert (ADR 0032). A date that fails admission keeps its rows."
+        ),
+    )
+    parser.add_argument(
+        "--rebuild",
+        action="store_true",
+        help=(
+            "With --full-history: load every Source Date into staging clones and swap them in "
+            "only if every date loads (ADR 0032). Uses the maintenance identity."
+        ),
+    )
+    parser.add_argument(
+        "--truncate",
+        action="store_true",
+        help="Deprecated: with --full-history it runs --rebuild; rejected for narrower scopes",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -147,48 +177,24 @@ def validate_arguments(args: argparse.Namespace) -> None:
 
         if args.end_date:
             raise SystemExit("Cannot use --end-date with --month option")
-
-
-def generate_date_range(start_date: str, end_date: str) -> List[str]:
-    """Generate list of dates between start and end (inclusive)."""
-    start = datetime.strptime(start_date, DATE_FORMAT_COMPACT)
-    end = datetime.strptime(end_date, DATE_FORMAT_COMPACT)
-
-    dates = []
-    current = start
-    while current <= end:
-        dates.append(current.strftime(DATE_FORMAT_COMPACT))
-        current += timedelta(days=1)
-
-    return dates
-
-
-def generate_month_dates(month_str: str) -> List[str]:
-    """Generate all dates in a month."""
-    year = int(month_str[:4])
-    month = int(month_str[4:6])
-
-    _, last_day = monthrange(year, month)
-    return [f"{year}{month:02d}{day:02d}" for day in range(1, last_day + 1)]
-
-
-def discover_historical_dates(historical_root: Path) -> List[str]:
-    """Return valid completed-date directories available in Historical storage."""
-    discovered: set[str] = set()
-    for parent_name in ("matches", "daily_listings"):
-        parent = historical_root / parent_name
-        if not parent.exists():
-            continue
-        for path in parent.glob("??????/????????"):
-            if not path.is_dir() or len(path.name) != 8 or not path.name.isdigit():
-                continue
-            try:
-                candidate_date = datetime.strptime(path.name, DATE_FORMAT_COMPACT).date()
-            except ValueError:
-                continue
-            if candidate_date < date.today():
-                discovered.add(path.name)
-    return sorted(discovered)
+    if args.truncate:
+        if not args.full_history:
+            raise SystemExit(
+                "--truncate is no longer accepted with --date, --month, or a range: it erased "
+                "every Source Date to reload a few. Use --replace to reload the scope, or "
+                "remove_fotmob_bronze.py to clear it (ADR 0032)."
+            )
+        print(
+            "Warning: --truncate is deprecated; running --full-history --rebuild instead.",
+            file=sys.stderr,
+        )
+        args.rebuild = True
+    if args.rebuild and not args.full_history:
+        raise SystemExit("--rebuild requires --full-history")
+    if args.replace and args.rebuild:
+        raise SystemExit("--replace and --rebuild cannot be combined")
+    if args.replace and args.full_history:
+        raise SystemExit("Use --rebuild to reload full history; --replace is for narrower scopes")
 
 
 def get_dates_to_process(
@@ -246,14 +252,13 @@ def get_dates_to_process(
 
 def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
     """Show table statistics."""
-    from src.fotmob.bronze.loader import FOTMOB_TABLES, to_bronze_table_name
+    from src.fotmob.bronze.loader import FOTMOB_TABLES
 
     log.info("=" * 80)
     log.info("Database statistics", extra={"database": "BRONZE"})
     log.info("=" * 80)
 
-    for table in FOTMOB_TABLES:
-        physical_table = to_bronze_table_name(table)
+    for physical_table in FOTMOB_TABLES:
         stats = client.get_table_stats(physical_table, database="bronze")
         if "error" not in stats:
             log.info(
@@ -274,6 +279,12 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
                     "error": stats.get("error", "Unknown error"),
                 },
             )
+
+
+def _write_mode(args: argparse.Namespace) -> str:
+    if args.rebuild:
+        return "rebuild"
+    return "replace" if args.replace else "append"
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -300,18 +311,18 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "One of --date, --start-date, --month, or --full-history must be provided"
             )
         service = BronzeService(client=None, force=args.force)
-        result = service.run(dates=dates, truncate=args.truncate, dry_run=True)
+        result = service.run(dates=dates, dry_run=True, mode=_write_mode(args))
         if result.exit_code == 0:
             logger.info("Bronze dry-run completed successfully")
         return result.exit_code
 
     username, password = args.username, args.password
-    if args.truncate:
-        # TRUNCATE on warehouse tables is reserved for the maintenance identity (ADR 0029).
+    if args.rebuild:
+        # Swapping whole tables is reserved for the maintenance identity (ADR 0029).
         settings = get_settings()
         if not settings.clickhouse_maintenance_user:
             logger.error(
-                "--truncate needs the ClickHouse maintenance identity; set "
+                "--rebuild needs the ClickHouse maintenance identity; set "
                 "CLICKHOUSE_MAINTENANCE_USER and CLICKHOUSE_MAINTENANCE_PASSWORD"
             )
             return 1
@@ -345,6 +356,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
 
     result = BronzeRunResult(exit_code=1)
+    dates: List[str] = []
     try:
         if args.stats:
             show_statistics(client, logger)
@@ -357,7 +369,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
 
         service = BronzeService(client=client, force=args.force)
-        result = service.run(dates=dates, truncate=args.truncate, dry_run=False)
+        result = service.run(dates=dates, dry_run=False, mode=_write_mode(args))
         return result.exit_code
 
     except LayerContractError as exc:
@@ -373,8 +385,11 @@ def main(argv: Optional[List[str]] = None) -> int:
                 level="INFO" if result.exit_code == 0 else "ERROR",
                 title=f"ClickHouse Loading {'Succeeded' if result.exit_code == 0 else 'Failed'} — FOTMOB — {date_range}",
                 message=(
-                    f"Loaded {result.total_rows} rows across {result.tables_loaded} tables "
-                    f"for {result.dates_processed} date(s)."
+                    f"{result.mode.capitalize()}: loaded {result.total_rows} rows across "
+                    f"{result.tables_loaded} tables for {result.dates_processed} date(s). "
+                    f"Failed dates: {len(result.failed_dates)}."
+                    + (f" Run stopped: {result.run_error}" if result.run_error else "")
+                    + (" Rebuild not swapped." if result.swapped is False else "")
                 ),
                 context={
                     "date": date_range,
@@ -383,6 +398,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                     "step": "ClickHouse Loading — fotmob",
                     "total_rows": str(result.total_rows),
                     "tables_loaded": str(result.tables_loaded),
+                    "failed_dates": ",".join(sorted(result.failed_dates)) or "none",
                 },
             ),
         )

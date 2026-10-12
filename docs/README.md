@@ -25,6 +25,9 @@ the detailed interfaces that govern execution.
 - `REVIEW.md`: the single current repository review with resolved history,
   prioritized open findings, and remediation order. Earlier reviews were merged
   into it and remain in git history.
+- `ARCHITECTURE_REVIEW.html`: architecture refactoring candidates (deeper
+  modules, seams, and code-quality fixes) that complement `REVIEW.md`. One
+  self-contained file; open it in a browser.
 - `adr/0024-source-qualified-operational-script-names.md`: accepted naming
   grammar, package registry, and compatibility-adapter policy.
 - `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting
@@ -39,6 +42,12 @@ the detailed interfaces that govern execution.
   and maintenance ClickHouse identities and the `warehouse_stage` database.
 - `adr/0030-automate-server-bootstrap.md`: one-command server initialization
   and upgrade with generated secrets and the installed schedule.
+- `adr/0031-fail-closed-fotmob-bronze-admission.md`: FotMob Bronze rows are
+  admitted against their setup DDL before any insert; a Date-Level Failure fails
+  its date and the run continues, a Run-Level Failure stops the run.
+- `adr/0032-scoped-fotmob-bronze-removal-replace-and-rebuild.md`: Source Date
+  scoped removal and replace, staged full-history rebuild, and the Bronze write
+  lock; `--truncate` is deprecated.
 
 Source-specific flows:
 

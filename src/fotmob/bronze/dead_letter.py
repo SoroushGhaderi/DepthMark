@@ -6,7 +6,7 @@ Stores failed records that couldn't be inserted to ClickHouse for later analysis
 
 import json
 import math
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -114,7 +114,7 @@ class DeadLetterQueue:
             return {k: self._replace_nan(v) for k, v in value.items()}
         if isinstance(value, list):
             return [self._replace_nan(item) for item in value]
-        if isinstance(value, (datetime,)):
+        if isinstance(value, (datetime, date)):
             return value.isoformat()
         if isinstance(value, pd.Timestamp):
             return value.isoformat()

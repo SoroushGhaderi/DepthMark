@@ -30,12 +30,17 @@ CLAUSE_AFTER_ORDER_BY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 NON_COLUMN_ELEMENT_KEYWORDS = ("INDEX", "PROJECTION", "CONSTRAINT", "PRIMARY")
+COLUMN_DEFAULT_KINDS = ("DEFAULT", "MATERIALIZED", "ALIAS", "EPHEMERAL")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 
 
 @dataclass(frozen=True)
 class ExpectedTable:
-    """One table as declared by setup DDL."""
+    """One table as declared by setup DDL.
+
+    ``column_defaults`` maps each column that declares a default expression to its
+    kind (``DEFAULT``, ``MATERIALIZED``, ``ALIAS``, or ``EPHEMERAL``).
+    """
 
     database: str
     table: str
@@ -43,6 +48,7 @@ class ExpectedTable:
     sorting_key: tuple[str, ...]
     create_statement: str
     source_file: Path
+    column_defaults: tuple[tuple[str, str], ...] = ()
 
     @property
     def qualified_name(self) -> str:
@@ -155,6 +161,18 @@ def _parse_column(element: str) -> Optional[tuple[str, str]]:
     return name, normalize_sql_fragment(_first_top_level_token(name_and_rest[1]))
 
 
+def _column_default_kind(element: str) -> Optional[str]:
+    """Return the default kind a column definition declares after its type, if any."""
+    name_and_rest = element.split(None, 1)
+    if len(name_and_rest) != 2:
+        return None
+    column_type = _first_top_level_token(name_and_rest[1])
+    modifiers = name_and_rest[1][len(column_type) :].split()
+    if modifiers and modifiers[0].upper() in COLUMN_DEFAULT_KINDS:
+        return modifiers[0].upper()
+    return None
+
+
 def parse_sorting_key(text: str) -> tuple[str, ...]:
     """Parse the ``ORDER BY`` expression list that follows a column definition."""
     match = ORDER_BY_PATTERN.search(text)
@@ -178,21 +196,24 @@ def parse_create_table(statement: str, source_file: Path) -> Optional[ExpectedTa
         return None
     open_index = header.end() - 1
     close_index = _matching_paren_index(statement, open_index)
-    columns = tuple(
-        column
-        for column in (
-            _parse_column(element)
-            for element in _split_top_level(statement[open_index + 1 : close_index])
-        )
-        if column is not None
-    )
+    columns: list[tuple[str, str]] = []
+    column_defaults: list[tuple[str, str]] = []
+    for element in _split_top_level(statement[open_index + 1 : close_index]):
+        column = _parse_column(element)
+        if column is None:
+            continue
+        columns.append(column)
+        default_kind = _column_default_kind(element)
+        if default_kind is not None:
+            column_defaults.append((column[0], default_kind))
     return ExpectedTable(
         database=header.group("database"),
         table=header.group("table"),
-        columns=columns,
+        columns=tuple(columns),
         sorting_key=parse_sorting_key(statement[close_index + 1 :]),
         create_statement=statement,
         source_file=source_file,
+        column_defaults=tuple(column_defaults),
     )
 
 

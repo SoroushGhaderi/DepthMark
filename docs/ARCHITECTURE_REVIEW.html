@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DepthMark Architecture Review</title>
+<style>
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #e2e8f0;
+  --border-strong: #94a3b8;
+  --accent: #0e7490;
+  --accent-soft: #cffafe;
+  --deep-bg: #0f172a;
+  --deep-text: #f8fafc;
+  --deep-muted: #cbd5e1;
+  --deep-chip: #1e293b;
+  --leak: #dc2626;
+  --leak-soft: #fee2e2;
+  --warn-bg: #fffbeb;
+  --warn-border: #f59e0b;
+  --warn-text: #78350f;
+  --note-bg: #f0f9ff;
+  --note-border: #7dd3fc;
+  --strong-bg: #d1fae5;
+  --strong-text: #065f46;
+  --explore-bg: #e0f2fe;
+  --explore-text: #075985;
+  --code-bg: #eef2f7;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1120;
+    --surface: #111827;
+    --surface-2: #1f2937;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --border: #1f2937;
+    --border-strong: #4b5563;
+    --accent: #22d3ee;
+    --accent-soft: #164e63;
+    --deep-bg: #020617;
+    --deep-text: #f8fafc;
+    --deep-muted: #cbd5e1;
+    --deep-chip: #1e293b;
+    --leak: #f87171;
+    --leak-soft: #450a0a;
+    --warn-bg: #2a1d05;
+    --warn-border: #b45309;
+    --warn-text: #fde68a;
+    --note-bg: #0c1f2e;
+    --note-border: #0369a1;
+    --strong-bg: #064e3b;
+    --strong-text: #a7f3d0;
+    --explore-bg: #0c4a6e;
+    --explore-text: #bae6fd;
+    --code-bg: #1f2937;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b1120;
+  --surface: #111827;
+  --surface-2: #1f2937;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #1f2937;
+  --border-strong: #4b5563;
+  --accent: #22d3ee;
+  --accent-soft: #164e63;
+  --deep-bg: #020617;
+  --leak: #f87171;
+  --leak-soft: #450a0a;
+  --warn-bg: #2a1d05;
+  --warn-border: #b45309;
+  --warn-text: #fde68a;
+  --note-bg: #0c1f2e;
+  --note-border: #0369a1;
+  --strong-bg: #064e3b;
+  --strong-text: #a7f3d0;
+  --explore-bg: #0c4a6e;
+  --explore-text: #bae6fd;
+  --code-bg: #1f2937;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+main { max-width: 1040px; margin: 0 auto; padding: 40px 16px 64px; }
+h1 { font-size: 30px; line-height: 1.2; margin: 0 0 8px; }
+h2 { font-size: 20px; line-height: 1.3; margin: 0; }
+p { margin: 8px 0; }
+a { color: var(--accent); }
+ul { margin: 8px 0; padding-left: 22px; }
+li { margin: 4px 0; }
+code {
+  font: 0.86em/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--code-bg);
+  padding: 1px 5px;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+.xs { font-size: 12px; }
+
+/* Header and navigation */
+.meta { color: var(--muted); font-size: 14px; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 13px; color: var(--muted); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 0; padding: 0; list-style: none; }
+.toc a {
+  display: inline-block; padding: 4px 10px; border: 1px solid var(--border-strong);
+  border-radius: 999px; font-size: 13px; color: var(--text); text-decoration: none; background: var(--surface);
+}
+.toc a:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Cards */
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 22px; margin-top: 28px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.card-head h2 { margin-right: 6px; }
+.badge { font-size: 12px; padding: 2px 9px; border-radius: 6px; font-weight: 600; white-space: nowrap; }
+.b-strong { background: var(--strong-bg); color: var(--strong-text); }
+.b-explore { background: var(--explore-bg); color: var(--explore-text); }
+.b-done { background: var(--accent-soft); color: var(--text); }
+.ok { background: var(--note-bg); border: 1px solid var(--note-border); }
+.b-cat { background: var(--surface-2); color: var(--muted); }
+.files { font-size: 13px; color: var(--muted); }
+.label { font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+
+.callout { border-radius: 8px; padding: 12px 14px; font-size: 14px; margin-top: 12px; }
+.warn { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text); }
+.warn code { background: rgba(0, 0, 0, 0.06); }
+.note { background: var(--note-bg); border: 1px solid var(--note-border); }
+
+/* Diagrams */
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 16px 0; }
+@media (max-width: 720px) { .compare { grid-template-columns: 1fr; } }
+.panel { background: var(--surface-2); border-radius: 10px; padding: 14px; min-width: 0; }
+
+.node {
+  display: block; border: 1.5px solid var(--border-strong); border-radius: 7px; background: var(--surface);
+  padding: 6px 10px; font-size: 12.5px; line-height: 1.35; text-align: center;
+}
+.node small { display: block; color: var(--muted); font-size: 11px; }
+.node.bad { border-color: var(--leak); color: var(--leak); background: var(--leak-soft); }
+.node.bad small { color: var(--leak); }
+.flow { display: flex; flex-direction: column; align-items: stretch; }
+.arrow { text-align: center; color: var(--muted); font-size: 14px; line-height: 1.1; padding: 2px 0; }
+.arrow.bad { color: var(--leak); font-weight: 700; }
+.arrow small { font-size: 11px; }
+
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.row .node { flex: 1 1 120px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.grid3 .node { font-size: 11px; padding: 5px 4px; }
+.span3 { grid-column: 1 / -1; }
+
+.deep {
+  background: var(--deep-bg); color: var(--deep-text); border: 3px solid var(--deep-bg);
+  outline: 1px solid var(--border-strong); border-radius: 10px; padding: 12px 14px;
+}
+.deep .sig { font: 600 13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; overflow-wrap: anywhere; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.chip {
+  font-size: 11px; color: var(--deep-muted); background: var(--deep-chip);
+  border: 1px dashed #64748b; border-radius: 5px; padding: 2px 8px;
+}
+.seam { border-top: 2px dashed var(--accent); margin: 12px 0 10px; position: relative; }
+.seam::after {
+  content: "seam"; position: absolute; right: 0; top: -9px; font-size: 10px; padding: 0 6px;
+  background: var(--surface-2); color: var(--accent); font-weight: 700; letter-spacing: 0.05em;
+}
+.adapters { display: flex; flex-wrap: wrap; gap: 6px; }
+.adapters .node { flex: 1 1 140px; }
+.consumers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.consumers .node { flex: 1 1 90px; }
+
+.bar { border: 1.5px solid var(--border-strong); border-radius: 6px; padding: 5px 8px; font-size: 12px; background: var(--surface); margin-bottom: 6px; }
+.bar.bad { border-color: var(--leak); color: var(--leak); background: var(--leak-soft); }
+
+.legend-box { display: inline-block; width: 28px; height: 16px; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--surface); }
+.legend-seam { display: inline-block; width: 30px; border-top: 2px dashed var(--accent); }
+.legend-deep { display: inline-block; width: 28px; height: 16px; border-radius: 4px; background: var(--deep-bg); outline: 1px solid var(--border-strong); }
+.legend-leak { color: var(--leak); font-weight: 700; }
+
+.top {
+  background: var(--deep-bg); color: var(--deep-text); border-radius: 12px; padding: 24px; margin-top: 32px;
+}
+.top h2 { font-size: 22px; }
+.top p { color: var(--deep-muted); }
+.top code { background: var(--deep-chip); color: var(--deep-text); }
+.closing { text-align: center; color: var(--muted); margin-top: 28px; }
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>DepthMark: architecture review</h1>
+  <p class="meta">2026-10-11 · branch <code>fix/non-destructive-warehouse-setup</code> · ~37k lines Python, 690 SQL files, 344 signal catalogs, 31 ADRs · updated after candidate 1 was implemented</p>
+  <p class="small">This review adds to <a href="REVIEW.md"><code>docs/REVIEW.md</code></a> and does not repeat it. Items already listed there (no CI, floating dependencies, lint baseline, <code>SELECT *</code>, TTL) are mentioned only where a candidate below fixes them as a side effect.</p>
+  <div class="legend">
+    <span><span class="legend-box"></span> module</span>
+    <span><span class="legend-seam"></span> seam</span>
+    <span><span class="legend-leak">red</span> leakage or defect</span>
+    <span><span class="legend-deep"></span> deep module</span>
+  </div>
+  <ul class="toc">
+    <li><a href="#c1">1 Bronze admission ✓</a></li>
+    <li><a href="#c2">2 Signal catalog</a></li>
+    <li><a href="#c3">3 Thin entry points</a></li>
+    <li><a href="#c4">4 Pipeline plan</a></li>
+    <li><a href="#c5">5 Warehouse session</a></li>
+    <li><a href="#c6">6 Run scope</a></li>
+    <li><a href="#c7">7 Oddspedia split</a></li>
+    <li><a href="#c8">8 Settings</a></li>
+    <li><a href="#c9">9 src/core</a></li>
+    <li><a href="#hygiene">Code quality</a></li>
+    <li><a href="#top-recommendation">Start here</a></li>
+  </ul>
+</header>
+
+<div class="callout ok" style="margin-top:24px">
+  <strong>Resolved: failed Bronze inserts were reported as success.</strong>
+  <code>insert_dataframe_with_dlq</code> wrote the DLQ and re-raised, but its callers caught <code>Exception</code> and returned 0 rows, so the run exited 0 and Silver and Gold published the scope without that table. Candidate 1 below is now implemented (ADR 0031): every failure stops the date and exits non-zero.
+</div>
+
+<!-- 1 -->
+<article class="card" id="c1">
+  <div class="card-head">
+    <h2>1. Fail-closed Bronze table admission</h2>
+    <span class="badge b-done">Done · ADR 0031, 0032</span>
+    <span class="badge b-cat">Local-substitutable</span>
+  </div>
+  <p class="files">New <code>src/fotmob/bronze/admission.py</code>; rewritten <code>src/fotmob/bronze/loader.py</code> (1,115 → 452 lines); <code>match_processor.py</code>; <code>src/models/{events,player,shot}.py</code>; <code>src/warehouse/schema_drift.py</code> (column defaults); <code>clickhouse/bronze/*.sql</code> unchanged</p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before: each table's shape is defined in 4 places, and failures are swallowed</p>
+      <div class="flow">
+        <span class="node">match_processor<small>raw keys · section errors and rejected rows logged and dropped</small></span>
+        <span class="arrow">↓</span>
+        <span class="node">rename_columns_for_table<small>if/elif per table</small></span>
+        <span class="arrow">↓</span>
+        <span class="node">prepare_int64 / nullable / temporal</span>
+        <span class="arrow">↓</span>
+        <span class="node bad">validate_and_fix_schema<small>live DESCRIBE · clips, rounds, fills 0 / "" / 1970-01-01, drops columns</small></span>
+        <span class="arrow">↓</span>
+        <span class="node">assert_bronze_contract → insert_with_dlq</span>
+        <span class="arrow bad">↓ <small>raises</small></span>
+        <span class="node bad">except Exception: return 0</span>
+        <span class="arrow bad">↓ <small>exit 0</small></span>
+        <span class="node bad">Silver and Gold run anyway</span>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="label">After: read → process → admit every table → insert</p>
+      <div class="flow">
+        <span class="node">iter_match_payloads<small>unreadable file → BronzeSourceError</small></span>
+        <span class="arrow">↓</span>
+        <span class="node">process_match<small>rows keyed by Bronze table with DDL column names · section error → BronzeProcessingError · model rejection → RowRejection</small></span>
+        <span class="arrow">↓</span>
+      </div>
+      <div class="deep">
+        <div class="sig">admit_rows(spec, rows) → AdmittedTable | BronzeAdmissionError</div>
+        <div class="chips"><span class="chip">spec parsed from setup DDL</span><span class="chip">lossless conversions only</span><span class="chip">undeclared keys rejected</span><span class="chip">DEFAULT columns omitted</span><span class="chip">identity positive and unique</span><span class="chip">exact duplicates collapse</span><span class="chip">all violations in one error</span></div>
+      </div>
+      <div class="flow" style="margin-top:8px">
+        <span class="arrow">↓ <small>only when every table of the date is admitted</small></span>
+        <span class="node">insert_admitted_table<small>failure → DLQ + BronzeInsertError · count must match</small></span>
+      </div>
+      <div class="seam"></div>
+      <div class="adapters"><span class="node">clickhouse-connect client</span><span class="node">FakeClickHouse (tests)</span></div>
+    </div>
+  </div>
+  <p><strong>Problem (was):</strong> the shape of each Bronze table was defined in four places (processor keys, a hard-coded rename map, live <code>DESCRIBE</code> coercion, and the layer contract). The coercion clipped, rounded, and filled values, and every failure path ended in <code>return 0</code>.</p>
+  <p><strong>What changed:</strong> the setup DDL is now the only table definition. The processor emits DDL column names (model fields renamed: <code>event_time</code>, <code>score_at_event</code>, <code>shot_id</code>, <code>minute</code>, <code>minute_added</code>, <code>coach_id</code>). <code>admit_rows</code> checks every value of a date before any insert. The loader checks once per run that every Bronze table exists and matches its DDL. Failures are classified (ADR 0031). A <strong>Date-Level Failure</strong> (unreadable payload, processor error, rejected row, inadmissible value, conflicting identity) fails only its date: nothing is written for it, the run continues, and the result lists every failed date with a message naming the file, match, table, column, and rule. A <strong>Run-Level Failure</strong> (drifted table, failed insert, held write lock) stops the run. Either exits non-zero.</p>
+  <ul class="small">
+    <li><strong>Locality:</strong> a column change touches the processor and the DDL only. The rename map, <code>INT64_COLUMNS</code>, <code>UNIQUE_KEY_COLUMNS</code>, the <code>cards_only</code>/<code>lineup_data</code> special cases, and <code>assert_bronze_dataframe_contract</code> are gone.</li>
+    <li><strong>Leverage:</strong> closes the open "Bronze admission fail-closed" item in REVIEW.md. The processor no longer swallows section errors, and a match without a date is rejected instead of being stored as <code>1970-01-01</code>. Three source quirks are resolved explicitly in the processor: fractional possession is rounded half to even, different events sharing an id get distinct deterministic ids, and a repeated lineup player keeps the first entry.</li>
+    <li><strong>Tests:</strong> 71 new tests (admission rules, warehouse-schema check, the source-quirk rules, both failure classes, replace, removal, rebuild, and the write lock against an in-memory fake warehouse, and a processor ↔ DDL contract test on a synthetic payload fixture). Full suite: 403 tests.</li>
+    <li><strong>Verified on real data:</strong> three real dates loaded through the new path into scratch tables matched the existing <code>bronze.*</code> rows exactly in all 15 tables (about 130k rows).</li>
+  </ul>
+  <div class="callout note">
+    <strong>Clearing and reloading data (ADR 0032).</strong> The old <code>--truncate</code> emptied every table whatever the scope, before loading, so a failure left Bronze empty. Bronze data operations are now scoped by Source Date (the Historical folder name): <code>load-fotmob-bronze --replace</code> admits a date before removing and reinserting its matches; <code>remove-fotmob-bronze</code> deletes a date, range, or month (full history truncates) and prints the Silver and Gold commands for the stale Match Dates; <code>--full-history --rebuild</code> is truncate-and-reload without the empty window: it loads staging copies and swaps them in only if every date loaded. One non-blocking write lock keeps Bronze writers from interleaving. <code>--truncate</code> is deprecated.
+  </div>
+  <div class="callout note">
+    <strong>Full-history check.</strong> The new read → process → admit path ran over every stored payload: 4,719 dates and 661,837 matches. No file was unreadable, no processor section failed, and no value needed clipping, rounding, or filling. The strict rules first failed 443 dates. Each was a place where the old loader had been silently losing data: 663 cards and 52 goals that shared an id with a different event, 29 repeated lineup entries, and 169 period rows dropped for fractional possession. The processor now gives colliding events distinct deterministic ids, keeps the first lineup entry, and rounds possession half to even. All 4,719 dates admit (35.9M rows). Reloading Bronze restores the lost rows.
+  </div>
+</article>
+
+<!-- 2 -->
+<article class="card" id="c2">
+  <div class="card-head">
+    <h2>2. One Signal Catalog module</h2>
+    <span class="badge b-strong">Strong</span>
+    <span class="badge b-cat">In-process</span>
+  </div>
+  <p class="files"><code>scripts/gold/activations/build_signal_activations.py:135-230</code>, <code>scripts/mongodb/sync_signal_catalogs.py:54-200</code>, <code>src/warehouse/quality.py:229</code>, <code>src/fotmob/gold/dml_runner.py:132</code></p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before: three parsers, three failure policies</p>
+      <div class="flow">
+        <span class="node">344 catalog .md files</span>
+        <span class="arrow">↓ ↓ ↓</span>
+      </div>
+      <div class="row">
+        <span class="node">activations<small>warns on mismatch</small></span>
+        <span class="node">Mongo sync<small>raises on missing key</small></span>
+        <span class="node bad">quality identity<small>silently continue</small></span>
+      </div>
+      <div class="flow" style="margin-top:12px">
+        <span class="node">dml/signals/*.sql</span>
+        <span class="arrow">↓</span>
+        <span class="node bad">Gold runner<small>rglob, ignores catalog status</small></span>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="label">After</p>
+      <div class="deep">
+        <div class="sig">load_signal_catalog(dir) → tuple[SignalDefinition]</div>
+        <div class="chips"><span class="chip">frontmatter parse</span><span class="chip">required keys</span><span class="chip">id ↔ entity/family</span><span class="chip">asset path checks</span><span class="chip">status filter</span><span class="chip">row_identity ↔ DDL ORDER BY</span></div>
+      </div>
+      <div class="consumers"><span class="node">activations</span><span class="node">Mongo sync</span><span class="node">quality gate</span><span class="node">Gold job list</span></div>
+    </div>
+  </div>
+  <p><strong>Problem:</strong> three modules parse the same frontmatter in different ways. The quality gate skips malformed files without logging (<code>except: continue</code>), so a broken catalog quietly removes its signal from the duplicate-identity check. All 93 <code>sig_match_*</code> catalogs declare <code>entity: team</code>, and the activation builder logs a warning for each one on every run. The Gold runner finds SQL by glob, so <code>status</code> has no effect on what runs.</p>
+  <p><strong>Solution:</strong> add one module that returns validated, immutable <code>SignalDefinition</code> records and is the only reader of catalogs. Every consumer and the Gold job list are built from it.</p>
+  <ul class="small">
+    <li><strong>Leverage:</strong> each new signal is validated once, the same way everywhere.</li>
+    <li><strong>Tests:</strong> one contract test over the real catalog directory checks catalog ↔ SQL ↔ DDL identity. This is the "catalogs generate DDL identity checks" idea REVIEW.md left unscheduled.</li>
+    <li><strong>Decision needed:</strong> is <code>entity</code> the signal scope (<code>match</code>) or the row grain (<code>team</code>)? <code>grain: match_team</code> already holds the grain, so <code>entity</code> should probably match the id.</li>
+  </ul>
+  <div class="callout note">ADR 0008 (catalogs in markdown) still holds. This only centralizes how they are read. Consider also moving <code>scripts/gold/signal/catalogs/</code> out of <code>scripts/</code>: catalogs are content, not scripts.</div>
+</article>
+
+<!-- 3 -->
+<article class="card" id="c3">
+  <div class="card-head">
+    <h2>3. Thin entry points: move script logic into <code>src/</code></h2>
+    <span class="badge b-strong">Strong</span>
+    <span class="badge b-cat">In-process</span>
+  </div>
+  <p class="files"><code>src/cli.py</code>, <code>scripts/**</code> (58 files use <code>sys.path.insert</code>), <code>scripts/utils/script_utils.py</code>, <code>scripts/clickhouse_setup_common.py</code>, 12 test files that load scripts by path</p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before: canonical name → deprecated name holds the code</p>
+      <div class="flow">
+        <span class="node">depthmark load-fotmob-bronze</span>
+        <span class="arrow">↓ <small>subprocess</small></span>
+        <span class="node bad">scripts/bronze/load_fotmob_bronze.py<small>7-line canonical shim</small></span>
+        <span class="arrow bad">↓ <small>from load_clickhouse import main (script-dir sys.path)</small></span>
+        <span class="node">scripts/bronze/load_clickhouse.py<small>397 lines: dates, stats, identity checks</small></span>
+        <span class="arrow">↓</span>
+        <span class="node">src/fotmob/bronze/loader.py</span>
+      </div>
+      <p class="xs" style="color:var(--leak);margin-top:8px">Tests reach the middle file with <code>spec_from_file_location</code>.</p>
+    </div>
+    <div class="panel">
+      <p class="label">After</p>
+      <div class="row">
+        <span class="node">depthmark CLI<small>import + main(argv)</small></span>
+        <span class="node">canonical script<small>3-line shim</small></span>
+        <span class="node">legacy script<small>warns, removal date</small></span>
+        <span class="node">tests<small>normal import</small></span>
+      </div>
+      <div class="arrow">↓ ↓ ↓ ↓</div>
+      <div class="deep">
+        <div class="sig">src/fotmob/bronze/cli.py · main(argv) → int</div>
+        <div class="chips"><span class="chip">parse args</span><span class="chip">build service</span><span class="chip">run</span><span class="chip">report + exit code</span></div>
+      </div>
+    </div>
+  </div>
+  <p><strong>Problem:</strong> the canonical entry points are shims that import from the deprecated files, which hold the real code. That code (date expansion, identity checks, catalog SQL generation in the 606-line activation builder, setup helpers) can only be reached with path tricks.</p>
+  <p><strong>Solution:</strong> each command gets <code>main(argv) -&gt; int</code> in a <code>src/</code> module. Canonical and legacy scripts become shims around it. <code>depthmark</code> calls it in-process. The editable install replaces every <code>sys.path.insert</code>.</p>
+  <ul class="small">
+    <li><strong>Locality:</strong> each command's logic lives in one importable file. 20+ Oddspedia compatibility adapters can share one deprecation helper with a stated removal version.</li>
+    <li><strong>Tests:</strong> tests import modules normally, and mypy and coverage see the code. Right now <code>--cov=src</code> leaves out most script logic, which is part of the 52% figure.</li>
+  </ul>
+  <div class="callout warn"><strong>ADR 0002 / 0010:</strong> ADR 0002 keeps subprocesses as the boundary for orchestrating layers. That can stay for <code>run_fotmob_pipeline</code>, where process isolation helps. The <code>depthmark</code> → script hop is only an extra process. ADR 0010 already points to <code>src/</code> services; this finishes that move.</div>
+</article>
+
+<!-- 4 -->
+<article class="card" id="c4">
+  <div class="card-head">
+    <h2>4. FotMob pipeline as a stage × scope plan</h2>
+    <span class="badge b-strong">Strong</span>
+    <span class="badge b-cat">Local-substitutable</span>
+  </div>
+  <p class="files"><code>scripts/orchestration/pipeline.py</code> (915 lines), <code>scripts/utils/script_utils.py</code> (<code>StepResult</code>, <code>DateRangeInfo</code>, <code>ScraperType</code>), <code>src/warehouse/scope.py</code></p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before: 15 near-identical functions</p>
+      <div class="grid3">
+        <span class="node">run_clickhouse_load</span><span class="node">run_silver_process</span><span class="node">run_gold_process</span>
+        <span class="node">…_load_month</span><span class="node">…_process_month</span><span class="node">…_process_month</span>
+        <span class="node">process_…_per_date</span><span class="node">process_…_per_date</span><span class="node">process_…_per_date</span>
+        <span class="node">process_…_monthly</span><span class="node">process_…_monthly</span><span class="node">process_…_monthly</span>
+        <span class="node bad span3">process_full_history (its own copy of the gating rules)</span>
+      </div>
+      <p class="xs" style="color:var(--leak);margin-top:8px">Leftover <code>skip_fotmob</code> and <code>scraper="fotmob"</code> parameters in a FotMob-only pipeline. No subprocess timeout.</p>
+    </div>
+    <div class="panel">
+      <p class="label">After</p>
+      <div class="deep">
+        <div class="sig">run_plan(scope, options) → PipelineReport</div>
+        <div class="chips"><span class="chip">STAGES = [bronze, silver, gold]</span><span class="chip">scope.cli_args()</span><span class="chip">upstream gating</span><span class="chip">timeout + process group</span><span class="chip">alerting</span></div>
+      </div>
+      <div class="seam"></div>
+      <div class="adapters"><span class="node">subprocess runner</span><span class="node">recording fake</span></div>
+    </div>
+  </div>
+  <p><strong>Problem:</strong> each layer × scope pair has its own pair of functions. The gating rules are written again in full-history mode. <code>WarehouseExecutionScope</code> exists but the pipeline uses its own date types.</p>
+  <p><strong>Solution:</strong> build the plan as data: a list of stages plus one <code>WarehouseExecutionScope</code>. A single runner applies gating, timeout, and alerts.</p>
+  <ul class="small">
+    <li><strong>Leverage:</strong> adding a stage (for example Oddspedia Silver later) is one line. The open P3 timeout item is fixed once.</li>
+    <li><strong>Tests:</strong> "which commands run for <code>--month 202512 --silver-only</code>" becomes a pure assertion with no subprocess.</li>
+  </ul>
+</article>
+
+<!-- 5 -->
+<article class="card" id="c5">
+  <div class="card-head">
+    <h2>5. Identity-aware warehouse session</h2>
+    <span class="badge b-strong">Strong</span>
+    <span class="badge b-cat">Remote but owned</span>
+  </div>
+  <p class="files"><code>src/warehouse/identities.py</code>; hand-built clients in <code>scripts/bronze/load_clickhouse.py:320</code>, <code>scripts/oddspedia/load_bronze.py:61</code>, <code>scripts/oddspedia/resolve_events.py:79</code>, <code>scripts/quality/check_data_quality.py:168</code>, <code>src/oddspedia/scraping/cli.py:664</code>; raw <code>clickhouse_connect</code> in <code>src/operations/health.py:145</code></p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before: six call sites build their own client</p>
+      <div class="row">
+        <span class="node bad">bronze load<small>re-implements maintenance check</small></span>
+        <span class="node">oddspedia load</span>
+        <span class="node">resolve</span>
+        <span class="node">quality</span>
+        <span class="node">oddspedia cli</span>
+        <span class="node">health</span>
+      </div>
+      <div class="arrow">↓ ↓ ↓ ↓ ↓ ↓</div>
+      <span class="node">ClickHouse</span>
+      <p class="xs muted" style="margin-top:8px"><code>identities.py</code> (<code>application_client</code>, <code>maintenance_client</code>) sits unused beside them.</p>
+    </div>
+    <div class="panel">
+      <p class="label">After</p>
+      <div class="deep">
+        <div class="sig">with warehouse_session(scope | Identity.MAINTENANCE) as ch:</div>
+        <div class="chips"><span class="chip">ADR 0029 identity choice</span><span class="chip">connect or raise</span><span class="chip">close</span><span class="chip">query_id tagging</span><span class="chip">retry policy</span></div>
+      </div>
+      <div class="seam"></div>
+      <div class="adapters"><span class="node">clickhouse-connect adapter</span><span class="node">fake client (tests)</span></div>
+    </div>
+  </div>
+  <p><strong>Problem:</strong> <code>identities.py</code> already defines the ADR 0029 rule, but six call sites build clients themselves, repeat the connect-returns-bool and close steps, and one repeats the maintenance-identity check.</p>
+  <p><strong>Solution:</strong> make a context manager the only way to get a warehouse connection, with the identity picked from scope or intent.</p>
+  <ul class="small">
+    <li><strong>Locality:</strong> credentials and grants live in one place, which makes it safe to change ADR 0029 later.</li>
+    <li><strong>Tests:</strong> one fake adapter behind the seam replaces per-test client mocks.</li>
+  </ul>
+</article>
+
+<!-- 6 -->
+<article class="card" id="c6">
+  <div class="card-head">
+    <h2>6. One run-scope module for dates</h2>
+    <span class="badge b-explore">Worth exploring</span>
+    <span class="badge b-cat">In-process</span>
+  </div>
+  <p class="files">Date parsing and expansion is in about 10 places: <code>src/warehouse/scope.py</code>, <code>src/common/dates.py</code>, <code>scripts/utils/script_utils.py</code> (<code>validate_date_format</code>, <code>generate_date_range</code>, <code>generate_month_dates</code>), <code>scripts/bronze/load_clickhouse.py</code> (its own copies of both), <code>scripts/oddspedia/{load_bronze,resolve_events}.py</code> (<code>_dates</code>), <code>scripts/bronze/sync_s3.py</code>, <code>src/fotmob/bronze/s3_sync.py</code>, <code>src/oddspedia/scraping/config.py</code> (<code>normalize_date</code>/<code>normalize_month</code>), <code>pipeline.py</code> validators</p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before</p>
+      <div class="row">
+        <span class="node">scope.py</span><span class="node">dates.py</span><span class="node">script_utils</span><span class="node">load_clickhouse</span><span class="node">oddspedia _dates ×2</span><span class="node">sync_s3</span><span class="node">s3_sync</span><span class="node">oddspedia config</span><span class="node">pipeline validators</span>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="label">After</p>
+      <div class="deep">
+        <div class="sig">RunScope.from_args(args) · .dates() · .partition_id · add_scope_arguments(parser, allow=…)</div>
+        <div class="chips"><span class="chip">date</span><span class="chip">month</span><span class="chip">range</span><span class="chip">full history</span><span class="chip">current month stops at today</span></div>
+      </div>
+    </div>
+  </div>
+  <p><strong>Problem:</strong> each CLI checks and expands <code>--date/--month/--start-date/--end-date</code> its own way, so error messages and edge cases (a current month stopping at today, invalid days) differ between commands.</p>
+  <p><strong>Solution:</strong> extend <code>WarehouseExecutionScope</code> into one <code>RunScope</code> that covers ranges and expands to dates. Every CLI and the pipeline plan (candidate 4) use it.</p>
+  <ul class="small"><li><strong>Tests:</strong> one table-driven test file replaces scattered date tests such as <code>test_script_date_ranges.py</code> and <code>test_common_date_scope.py</code>.</li></ul>
+</article>
+
+<!-- 7 -->
+<article class="card" id="c7">
+  <div class="card-head">
+    <h2>7. Oddspedia: a pure odds contract and one worker loop</h2>
+    <span class="badge b-explore">Worth exploring</span>
+    <span class="badge b-cat">True external</span>
+  </div>
+  <p class="files"><code>src/oddspedia/scraping/match_scraper.py</code> (3,563 lines, <code>scrape_match</code> ≈ 565 lines), <code>cli.py</code> (2,106: <code>_phase2_scrape_sequential</code> ≈ 290 and <code>_phase2_scrape_concurrent</code> ≈ 400), <code>match_collector.py</code> (1,848)</p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before: match_scraper.py by function lines</p>
+      <div class="bar" style="width:100%">Selenium-touching code: about 1,620 lines</div>
+      <div class="bar" style="width:46%">pure odds rules: about 740 lines, mixed in</div>
+      <div class="bar bad" style="width:70%">sequential and concurrent copies of the per-match flow (cli.py)</div>
+    </div>
+    <div class="panel">
+      <p class="label">After</p>
+      <div class="deep">
+        <div class="sig">odds_contract.normalize(raw_markets, teams) → FootballOdds | CoverageError</div>
+        <div class="chips"><span class="chip">market families</span><span class="chip">outcome mapping</span><span class="chip">handicap coverage</span><span class="chip">merge/dedupe</span></div>
+      </div>
+      <div class="seam"></div>
+      <div class="adapters"><span class="node">MatchPage<small>Selenium adapter</small></span><span class="node">scrape_one(match)<small>→ Outcome</small></span><span class="node">executor<small>workers = N</small></span></div>
+    </div>
+  </div>
+  <p><strong>Problem:</strong> the odds rules that define the Bronze payload can only be tested alongside DOM driving, and the per-match retry and manifest flow exists twice. There is still tennis and set-score code (<code>_parse_set_scores</code>, <code>_extract_point_by_point</code>) in a scraper that handles football only.</p>
+  <p><strong>Solution:</strong> split out a pure odds-contract module tested with recorded fixtures. Add a <code>MatchPage</code> adapter for Selenium, and one <code>scrape_one</code> run by an executor where <code>workers=1</code> is the sequential case.</p>
+  <ul class="small"><li>REVIEW.md P3 says to split only when the next Oddspedia change touches these files. I agree, and this card gives the split lines. FotMob <code>FotMobOrchestrator</code> has the same sequential/parallel copy (<code>src/fotmob/orchestration.py:403</code>, <code>:480</code>).</li></ul>
+</article>
+
+<!-- 8 -->
+<article class="card" id="c8">
+  <div class="card-head">
+    <h2>8. Settings as the only reader of config</h2>
+    <span class="badge b-explore">Worth exploring</span>
+    <span class="badge b-cat">In-process</span>
+  </div>
+  <p class="files"><code>config/settings.py</code> (hand-written <code>_BOOL_KEYS/_INT_KEYS/_FLOAT_KEYS</code> coercion), <code>config/fotmob.py</code> (<code>FotMobConfig</code> adapter), <code>config/base.py</code> (legacy dataclasses, not imported outside <code>config/</code>), <code>src/oddspedia/scraping/config.py</code> (settings frozen into module constants at import, plus path layout and date normalizing), <code>os.getenv</code> in <code>mongodb/client.py</code> (7), <code>sync_s3.py</code>, <code>driver.py</code>, <code>health_check.py</code>, <code>logging.py</code></p>
+  <div class="compare">
+    <div class="panel">
+      <p class="label">Before: four config surfaces plus direct env reads</p>
+      <div class="row">
+        <span class="node">Settings</span><span class="node">FotMobConfig</span><span class="node">legacy dataclasses</span><span class="node bad">oddspedia constants<small>frozen at import</small></span><span class="node bad">os.getenv ×17</span>
+      </div>
+    </div>
+    <div class="panel">
+      <p class="label">After</p>
+      <div class="deep">
+        <div class="sig">get_settings() → Settings</div>
+        <div class="chips"><span class="chip">env + YAML</span><span class="chip">env_nested_delimiter</span><span class="chip">validation</span></div>
+      </div>
+      <div class="consumers"><span class="node">fotmob/bronze/paths.py</span><span class="node">oddspedia/scraping/paths.py</span></div>
+    </div>
+  </div>
+  <p><strong>Problem:</strong> Oddspedia constants such as <code>MIN_DELAY</code> are fixed when the module is imported, so tests and overrides must patch module globals, and several modules read the environment directly.</p>
+  <p><strong>Solution:</strong> let pydantic-settings own env and YAML (<code>env_nested_delimiter</code> replaces the coercion tables). Move the Oddspedia path layout to <code>oddspedia/scraping/paths.py</code> to match <code>fotmob/bronze/paths.py</code>, and delete <code>config/base.py</code> and <code>FotMobConfig</code> once no callers remain.</p>
+  <div class="callout note">This finishes ADR 0016 (unify configuration). It does not conflict with it.</div>
+</article>
+
+<!-- 9 -->
+<article class="card" id="c9">
+  <div class="card-head">
+    <h2>9. Delete unused protocols in <code>src/core</code></h2>
+    <span class="badge b-strong">Strong (cheap)</span>
+    <span class="badge b-cat">In-process</span>
+  </div>
+  <p class="files"><code>src/core/interfaces.py</code> (8 protocols), <code>types.py</code> (283 lines, no importers), <code>exceptions.py</code> (378 lines, only <code>StorageError</code> used), <code>constants.py</code></p>
+  <p><strong>Problem:</strong> under the deletion test, <code>Cache/Config/Logger/Metrics/OrchestratorProtocol</code> each have zero or one implementation, and <code>FotMobOrchestrator</code> doesn't fully satisfy its protocol (the mypy errors in REVIEW.md P2 #6).</p>
+  <p><strong>Solution:</strong> delete them. Keep a protocol only where a fake is used in tests. Move <code>StorageError</code> and the constants into the FotMob package that uses them.</p>
+</article>
+
+<section class="card" id="hygiene">
+  <h2>Code quality and repo hygiene</h2>
+  <p class="small muted">Not refactors, but best-practice fixes.</p>
+  <ul class="small">
+    <li><strong>Two dependency lists that disagree.</strong> <code>jinja2</code> is only in <code>requirements.txt</code>. <code>requirements.txt</code> also installs pytest, mypy, pylint and black into the production image. Make <code>pyproject.toml</code> the single source and generate a hashed lock (<code>uv lock</code> or <code>pip-compile</code>). This also closes REVIEW P2 #4.</li>
+    <li><strong>Python version claim.</strong> <code>requires-python = "&gt;=3.8"</code>, but 16 modules use runtime <code>list[...]</code>/<code>tuple[...]</code> without the <code>__future__</code> import, and the image is 3.11. Set <code>&gt;=3.11</code>, align Black/mypy targets, and drop the <code>typing.List/Dict</code> style over time.</li>
+    <li><strong>Two pytest configs.</strong> <code>pytest.ini</code> overrides <code>[tool.pytest.ini_options]</code> without warning (the <code>unit</code> marker exists only in the ignored one). Keep one.</li>
+    <li><strong>Lint stack.</strong> Replace black, isort, flake8 and pylint with Ruff (format and lint) in pre-commit and CI. Extend <code>check_logging_style.py</code>: there are 131 f-string log calls and 84 stdlib <code>extra={}</code> calls beside structlog key/value calls.</li>
+    <li><strong>Swallowed errors.</strong> 37 <code>except Exception</code> handlers just <code>return 0/None</code>, <code>pass</code> or <code>continue</code> (mostly <code>selenium_utils</code>, <code>driver.py</code>, <code>base_storage.py</code>). AGENTS.md forbids this. Add Ruff <code>BLE001</code>/<code>S110</code> and allow-list the deliberate ones.</li>
+    <li><strong>Tracked generated file.</strong> <code>preprocessed_configs/config.xml</code> is generated by ClickHouse ("Do not edit it"). Untrack it and add it to <code>.gitignore</code>.</li>
+    <li><strong>Coverage scope.</strong> <code>--cov=src</code> leaves out <code>scripts/</code>, where much of the logic lives. Candidate 3 fixes this structurally. After that, add <code>fail_under</code>.</li>
+    <li><strong>Compatibility adapters.</strong> About 20 deprecated scripts and 20 CLI aliases have no removal date. State one in ADR 0024 (for example "removed in 3.0") so the count shrinks.</li>
+  </ul>
+</section>
+
+<section class="top" id="top-recommendation">
+  <h2>Next: 2. One Signal Catalog module</h2>
+  <p>Candidate 1 is done, which removes the only active correctness problem this review found. Candidate 2 has the best leverage per line, since every new signal goes through the catalog, and it has a smaller correctness gap of its own: the quality gate silently skips malformed catalogs. It is in-process work, so the new interface is testable from the first commit.</p>
+  <p>Then <strong>3 + 4 + 6 together</strong>, because thin entry points, the stage plan and the run scope share one interface (<code>RunScope</code> → <code>main(argv)</code>).</p>
+</section>
+
+<p class="closing">Which of these would you like to explore?</p>
+</main>
+</body>
+</html>

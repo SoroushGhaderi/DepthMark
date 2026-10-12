@@ -10,7 +10,7 @@ class ShotEvent(BaseModel):
     model_config = ConfigDict(extra='ignore', validate_assignment=True, populate_by_name=True)
 
     match_id: int = Field(..., description="Unique match identifier")
-    id: Optional[int] = Field(
+    shot_id: Optional[int] = Field(
         None, description="Unique identifier for the shot event"
     )
     event_type: Optional[str] = Field(None, description="Type of event ('Shot')")
@@ -25,10 +25,8 @@ class ShotEvent(BaseModel):
     )
     x: Optional[float] = Field(None, description="X-coordinate of the shot origin")
     y: Optional[float] = Field(None, description="Y-coordinate of the shot origin")
-    min: Optional[int] = Field(
-        None, description="Match minute when the shot occurred", alias="minute"
-    )
-    min_added: Optional[int] = Field(None, description="Stoppage time minute", alias="m_added")
+    minute: Optional[int] = Field(None, description="Match minute when the shot occurred")
+    minute_added: Optional[int] = Field(None, description="Stoppage time minute")
     is_blocked: Optional[bool] = Field(
         None, description="True if the shot was blocked"
     )

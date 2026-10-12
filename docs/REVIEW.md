@@ -38,6 +38,7 @@ clean, and a few query-cost and retention decisions.
 | Scheduler profile never ran a scheduler | 2026-10-02 | ADR 0027: external scheduler under `flock -n` |
 | Wheel omitted most runtime packages | 2026-10-02 | Package discovery plus a test; editable checkout install is the supported mode |
 | No one-command server setup | 2026-10-10 | ADR 0030: `scripts/bootstrap.sh` |
+| Bronze loads reported success after swallowed insert, read, and processor errors; values were clipped or defaulted to fit | 2026-08-24, 2026-10-11 | ADR 0031: DDL-driven Bronze Admission before any insert; every failure stops the date |
 | Pipeline continued after upstream failures | 2026-06 readiness review | Downstream stages gated in daily, monthly, and full-history modes |
 | Bronze truncate had no dry-run | 2026-06 readiness review | `--truncate --dry-run` implemented |
 | Pytest collection broken from repo root | 2026-06 readiness review | Fixed; root `pytest -q` collects and passes |
@@ -101,8 +102,6 @@ clean, and a few query-cost and retention decisions.
   considered in the 2026-08-11 review and deferred (high migration cost).
 - Gold signal catalogs generating DDL identity checks was proposed and not
   scheduled.
-- FotMob Bronze admission fail-closed behavior (zero-row tables treated as
-  success) was raised on 2026-08-24; it was not re-verified here.
 
 ## Verified strengths
 

@@ -1,0 +1,297 @@
+{
+  "data": {
+    "general": {
+      "matchId": 4800001,
+      "matchRound": "12",
+      "teamColors": {
+        "darkMode": {"home": "#111111", "away": "#222222"},
+        "lightMode": {"home": "#333333", "away": "#444444"}
+      },
+      "leagueId": 47,
+      "leagueName": "Test League",
+      "leagueRoundName": "Round 12",
+      "parentLeagueId": 47,
+      "countryCode": "TST",
+      "parentLeagueName": "Test League",
+      "parentLeagueSeason": "2025/2026",
+      "parentLeagueTournamentId": 47,
+      "homeTeam": {"name": "Alpha FC", "id": 9001},
+      "awayTeam": {"name": "Beta United", "id": 9002},
+      "coverageLevel": "full",
+      "matchTimeUTC": "Mon, Dec 8, 2025, 15:00 UTC",
+      "matchTimeUTCDate": "2025-12-08T15:00:00.000Z",
+      "started": true,
+      "finished": true
+    },
+    "header": {
+      "status": {
+        "utcTime": "2025-12-08T15:00:00.000Z",
+        "scoreStr": "2 - 1",
+        "started": true,
+        "finished": true,
+        "cancelled": false,
+        "halfs": {
+          "firstHalfStarted": "08.12.2025 15:00:00",
+          "firstHalfEnded": "08.12.2025 15:47:00",
+          "secondHalfStarted": "08.12.2025 16:02:00",
+          "secondHalfEnded": "08.12.2025 16:50:00",
+          "gameEnded": "08.12.2025 16:50:00"
+        }
+      },
+      "events": {
+        "homeTeamGoals": {
+          "Test Striker": [
+            {
+              "eventId": 70001,
+              "time": 12,
+              "overloadTime": null,
+              "homeScore": 1,
+              "awayScore": 0,
+              "isHome": true,
+              "ownGoal": false,
+              "player": {"id": 50001, "name": "Test Striker"},
+              "assistPlayerId": 50002,
+              "assistInput": "Test Winger",
+              "shotmapEvent": {
+                "id": 80001,
+                "x": 95.5,
+                "y": 30.2,
+                "min": 12,
+                "expectedGoals": 0.42,
+                "expectedGoalsOnTarget": 0.61,
+                "shotType": "RightFoot",
+                "situation": "RegularPlay",
+                "period": "FirstHalf",
+                "isFromInsideBox": true
+              }
+            },
+            {
+              "eventId": 70002,
+              "time": 78,
+              "homeScore": 2,
+              "awayScore": 1,
+              "isHome": true,
+              "player": {"id": 50001, "name": "Test Striker"},
+              "shotmapEvent": {}
+            }
+          ]
+        },
+        "awayTeamGoals": {
+          "Test Forward": [
+            {
+              "eventId": 70003,
+              "time": 55,
+              "homeScore": 1,
+              "awayScore": 1,
+              "isHome": false,
+              "player": {"id": 60001, "name": "Test Forward"},
+              "shotmapEvent": {}
+            }
+          ]
+        },
+        "awayTeamRedCards": {
+          "Test Defender": [
+            {
+              "eventId": 70010,
+              "time": 88,
+              "homeScore": 2,
+              "awayScore": 1,
+              "isHome": false,
+              "player": {"id": 60002, "name": "Test Defender"}
+            }
+          ]
+        }
+      }
+    },
+    "content": {
+      "matchFacts": {
+        "events": {
+          "events": [
+            {"type": "Goal", "eventId": 70001, "time": 12},
+            {
+              "type": "Card",
+              "eventId": 70020,
+              "time": 30,
+              "overloadTime": null,
+              "card": "Yellow",
+              "isHome": true,
+              "homeScore": 1,
+              "awayScore": 0,
+              "player": {"id": 50003, "name": "Test Midfielder", "profileUrl": "/players/50003"},
+              "cardDescription": {"defaultText": "Foul"}
+            },
+            {
+              "type": "Card",
+              "eventId": null,
+              "time": 88,
+              "card": "Red",
+              "isHome": false,
+              "homeScore": 2,
+              "awayScore": 1,
+              "player": {"id": 60002, "name": "Test Defender"}
+            },
+            {"type": "Substitution", "time": 70, "swap": [{"id": 50010}, {"id": 50001}]}
+          ]
+        },
+        "infoBox": {
+          "Stadium": {
+            "name": "Test Arena",
+            "city": "Testville",
+            "country": "Testland",
+            "lat": 51.5,
+            "long": -0.1,
+            "capacity": 40000,
+            "surface": "grass"
+          },
+          "Attendance": 35000,
+          "Referee": {"text": "Test Referee", "country": "Testland"},
+          "Match Date": {"utcTime": "2025-12-08T15:00:00.000Z", "isDateCorrect": true},
+          "Tournament": {"id": 47, "leagueName": "Test League", "round": "12", "parentLeagueId": 47}
+        },
+        "momentum": {
+          "main": {
+            "data": [
+              {"minute": 1, "value": 20},
+              {"minute": 1.5, "value": -15},
+              {"minute": 2, "value": 0}
+            ]
+          }
+        },
+        "teamForm": [
+          [
+            {
+              "result": 1,
+              "resultString": "W",
+              "score": "2 - 0",
+              "date": {"utcTime": "2025-12-01T15:00:00.000Z"},
+              "lkToMatch": "/matches/alpha-vs-gamma/abc#4799001",
+              "home": {"id": "9001", "name": "Alpha FC", "isOurTeam": true},
+              "away": {"id": "9003", "name": "Gamma City"},
+              "tooltipText": {"homeScore": "2", "awayScore": "0"}
+            }
+          ],
+          [
+            {
+              "result": -1,
+              "resultString": "L",
+              "score": "0 - 1",
+              "date": {"utcTime": "2025-12-01T17:00:00.000Z"},
+              "lkToMatch": "/matches/beta-vs-delta/def#4799002",
+              "home": {"id": "9002", "name": "Beta United", "isOurTeam": true},
+              "away": {"id": "9004", "name": "Delta Town"},
+              "tooltipText": {"homeScore": "0", "awayScore": "1"}
+            }
+          ]
+        ]
+      },
+      "stats": {
+        "Periods": {
+          "All": {
+            "teamColors": {"lightMode": {"home": "#333333", "away": "#444444"}},
+            "stats": [
+              {
+                "stats": [
+                  {"key": "BallPossesion", "stats": [55, 45]},
+                  {"key": "expected_goals", "stats": ["1.42", "0.88"]},
+                  {"key": "accurate_passes", "stats": ["412 (86%)", "301 (79%)"]},
+                  {"key": "fouls", "stats": [11, 14]}
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "playerStats": {
+        "50001": {
+          "id": 50001,
+          "name": "Test Striker",
+          "teamId": 9001,
+          "teamName": "Alpha FC",
+          "isGoalkeeper": false,
+          "funFacts": [{"fallback": "Scored twice"}],
+          "stats": [
+            {
+              "stats": {
+                "FotMob rating": {"key": "rating_title", "stat": {"value": 8.4}},
+                "Minutes played": {"key": "minutes_played", "stat": {"value": 90}},
+                "Goals": {"key": "goals", "stat": {"value": 2}},
+                "Accurate passes": {"key": "accurate_passes", "stat": {"value": 20, "total": 25}}
+              }
+            }
+          ]
+        },
+        "60001": {
+          "id": 60001,
+          "name": "Test Forward",
+          "teamId": 9002,
+          "stats": []
+        }
+      },
+      "shotmap": {
+        "shots": [
+          {
+            "id": 80001,
+            "eventType": "Goal",
+            "teamId": 9001,
+            "playerId": 50001,
+            "playerName": "Test Striker",
+            "x": 95.5,
+            "y": 30.2,
+            "min": 12,
+            "isBlocked": false,
+            "isOnTarget": true,
+            "expectedGoals": 0.42,
+            "shotType": "RightFoot",
+            "situation": "RegularPlay",
+            "period": "FirstHalf",
+            "isOwnGoal": false,
+            "onGoalShot": {"x": 1.2, "y": 0.3, "zoomRatio": 1.0},
+            "isFromInsideBox": true
+          },
+          {
+            "id": 80002,
+            "eventType": "Miss",
+            "teamId": 9002,
+            "playerId": 60001,
+            "min": 40,
+            "minAdded": 2,
+            "expectedGoals": 0.05
+          }
+        ]
+      },
+      "lineup": {
+        "homeTeam": {
+          "starters": [
+            {
+              "id": 50001,
+              "name": "Test Striker",
+              "shirtNumber": "9",
+              "positionId": 115,
+              "usualPlayingPositionId": 3,
+              "isCaptain": true,
+              "horizontalLayout": {"x": 0.8, "y": 0.5, "height": 0.1, "width": 0.2},
+              "performance": {
+                "rating": 8.4,
+                "substitutionEvents": [{"time": 70, "type": "subOut", "reason": "Tactical"}]
+              }
+            }
+          ],
+          "subs": [
+            {
+              "id": 50010,
+              "name": "Test Substitute",
+              "shirtNumber": "18",
+              "performance": {"substitutionEvents": [{"time": 70, "type": "subIn"}]}
+            }
+          ],
+          "coach": {"id": 30001, "name": "Test Coach", "primaryTeamId": 9001}
+        },
+        "awayTeam": {
+          "starters": [{"id": 60001, "name": "Test Forward", "shirtNumber": "10"}],
+          "subs": [],
+          "coach": {"id": null, "name": "Unknown Coach", "countryCode": "TST"}
+        }
+      }
+    }
+  }
+}
