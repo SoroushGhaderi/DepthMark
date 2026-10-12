@@ -32,6 +32,7 @@ CANONICAL_COMMANDS: Dict[str, CommandSpec] = {
     "report-scraping": CommandSpec("report_scraping.py"),
     "scrape-fotmob": CommandSpec("bronze/scrape_fotmob.py"),
     "load-fotmob-bronze": CommandSpec("bronze/load_fotmob_bronze.py"),
+    "remove-fotmob-bronze": CommandSpec("bronze/remove_fotmob_bronze.py"),
     "load-fotmob-silver": CommandSpec("silver/load_fotmob_silver.py"),
     "load-fotmob-gold": CommandSpec("gold/load_fotmob_gold.py"),
     "run-fotmob-pipeline": CommandSpec("orchestration/run_fotmob_pipeline.py"),

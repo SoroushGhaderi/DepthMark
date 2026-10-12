@@ -60,6 +60,8 @@ trade-off.
 | `0028-record-scoped-publication-status.md`                          | Scoped Silver/Gold batches record committing/published/failed per partition; readers consume only published partitions. | Gold loads, the activation builder, and strict quality checks fail closed on unpublished partitions; external readers apply the same query. |
 | `0029-split-clickhouse-identities-and-isolate-staging.md`           | Staging lives in `warehouse_stage`; the application user has no DDL or truncate rights on warehouse tables; a maintenance user runs setup, full-history swaps, and maintenance. | Setup re-provisions the application user each run; full-history loads and maintenance commands need maintenance credentials. |
 | `0030-automate-server-bootstrap.md`                                 | `scripts/bootstrap.sh` initializes or upgrades a server with generated secrets, setup, MongoDB, and the schedule; the tracked Compose stack is the deployment. | New setup steps belong in the bootstrap; real `.env` values are never replaced; scheduled jobs own their dates and locks. |
+| `0031-fail-closed-fotmob-bronze-admission.md`                      | FotMob Bronze rows are admitted against their setup DDL before any insert; lossless conversions only. Date-Level Failures fail their date and the run continues; Run-Level Failures stop the run. | A source change that no longer fits the DDL fails the affected dates until the processor, model, or DDL changes. |
+| `0032-scoped-fotmob-bronze-removal-replace-and-rebuild.md`          | Bronze commands are scoped by Source Date; `remove-fotmob-bronze` deletes a scope (full history truncates), `--replace` admits before removing, `--full-history --rebuild` stages and swaps; one non-blocking Bronze write lock. | `--truncate` with a narrower scope is rejected; removal by Source Date needs the date's retained source files. |
 
 
 ## Queue
@@ -106,6 +108,8 @@ here only after pressure-testing against the code:
 | 9       | Prioritize Oddspedia links against DepthMark Silver | Accepted in `0022-prioritize-oddspedia-links-against-depthmark-silver.md` |
 | 10      | Source-qualified operational script names | Accepted in `0024-source-qualified-operational-script-names.md`; compatibility adapters retained |
 | 11      | Unified scraping status and reports | Accepted in `0025-unify-scraping-status-and-reports.md`; one read-only command covers both sources |
+| 18      | Bronze removal, replace, and rebuild | Accepted in `0032-scoped-fotmob-bronze-removal-replace-and-rebuild.md`; also amended ADR 0031 with Date-Level and Run-Level Failures |
+| 17      | Fail-closed FotMob Bronze admission | Accepted in `0031-fail-closed-fotmob-bronze-admission.md`; replaces swallowed insert errors and silent type coercion |
 | 16      | Automated server bootstrap | Accepted in `0030-automate-server-bootstrap.md`; supersedes ADR 0005's local-only Compose stance and refines ADR 0027 scheduling |
 | 15      | ClickHouse identity and role split | Accepted in `0029-split-clickhouse-identities-and-isolate-staging.md`; verified against ClickHouse 24.10 |
 | 14      | Scoped publication status | Accepted in `0028-record-scoped-publication-status.md`; Gold, activations, and strict quality checks fail closed on unpublished partitions |

@@ -100,20 +100,45 @@ def test_loader_parsers_require_explicit_scope():
 
 
 def test_bronze_loader_parser_accepts_dry_run():
-    args = bronze_loader.parse_args(["--date", "20251208", "--truncate", "--dry-run"])
+    args = bronze_loader.parse_args(["--date", "20251208", "--replace", "--dry-run"])
     assert args.date == "20251208"
-    assert args.truncate is True
+    assert args.replace is True
     assert args.dry_run is True
 
 
-def test_bronze_service_dry_run_does_not_truncate_or_load(monkeypatch):
+@pytest.mark.parametrize(
+    "argv, message",
+    [
+        (["--date", "20251208", "--truncate"], "no longer accepted"),
+        (["--month", "202512", "--truncate"], "no longer accepted"),
+        (["--date", "20251208", "--rebuild"], "requires --full-history"),
+        (["--full-history", "--replace"], "Use --rebuild"),
+        (["--date", "20251208", "--replace", "--rebuild"], "requires --full-history"),
+    ],
+)
+def test_bronze_loader_rejects_unsafe_scope_combinations(argv, message):
+    with pytest.raises(SystemExit) as exit_info:
+        bronze_loader.validate_arguments(bronze_loader.parse_args(argv))
+    assert message in str(exit_info.value)
+
+
+def test_deprecated_full_history_truncate_runs_a_rebuild(capsys):
+    args = bronze_loader.parse_args(["--full-history", "--truncate"])
+
+    bronze_loader.validate_arguments(args)
+
+    assert args.rebuild is True
+    assert bronze_loader._write_mode(args) == "rebuild"
+    assert "deprecated" in capsys.readouterr().err
+
+
+def test_bronze_service_dry_run_does_not_load(monkeypatch):
     service = BronzeService(client=None)
     calls = []
 
-    monkeypatch.setattr(service, "truncate_tables", lambda: calls.append("truncate"))
-    monkeypatch.setattr(service, "load_date", lambda date: calls.append(("load", date)))
+    monkeypatch.setattr(service, "load_dates", lambda *args, **kwargs: calls.append("load"))
 
-    result = service.run(dates=["20251208"], truncate=True, dry_run=True)
+    result = service.run(dates=["20251208"], dry_run=True, mode="replace")
 
     assert result.exit_code == 0
     assert result.dates_processed == 1
@@ -136,7 +161,7 @@ def test_bronze_loader_dry_run_skips_clickhouse_and_telegram(monkeypatch):
     monkeypatch.setattr(bronze_loader, "TelegramClient", lambda: RecordingTelegramClient())
     monkeypatch.setattr(bronze_loader, "setup_logging", lambda *args, **kwargs: RecordingLogger())
 
-    exit_code = bronze_loader.main(["--date", "20251208", "--truncate", "--dry-run"])
+    exit_code = bronze_loader.main(["--date", "20251208", "--replace", "--dry-run"])
 
     assert exit_code == 0
     assert connected == []

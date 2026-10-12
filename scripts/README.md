@@ -249,7 +249,9 @@ compatibility aliases.
 - `scripts/bronze/sync_s3.py upload --date 20251208 --dry-run`
 - `scripts/bronze/sync_s3.py download --date 20251208 --dry-run`
 - `scripts/bronze/load_fotmob_bronze.py --date 20251208 --dry-run`
-- `scripts/bronze/load_fotmob_bronze.py --date 20251208 --truncate --dry-run`
+- `scripts/bronze/load_fotmob_bronze.py --date 20251208 --replace --dry-run`
+- `scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run`
+- `scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run`
 - `scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run`
 - `scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run`
 - `scripts/gold/load_fotmob_gold.py --date 20251208 --part signals --dry-run`

@@ -1,6 +1,13 @@
-"""Match data processor: converts raw API data to structured format."""
+"""Match data processor: converts raw FotMob payloads into Bronze table rows.
+
+``process_match`` returns rows keyed by Bronze table name, with keys equal to the
+table's DDL column names. A payload section that is absent yields no rows; a row
+the source models reject is returned as a :class:`RowRejection`; and an error
+while reading a section raises :class:`BronzeProcessingError`.
+"""
 import hashlib
 import re
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -12,7 +19,6 @@ from ...models import (
     FlatPlayerStats,
     GeneralMatchStats,
     GoalEventHeader,
-    GoalEventMatchFacts,
     LineupPlayer,
     MatchTimeline,
     MatchVenue,
@@ -21,7 +27,6 @@ from ...models import (
     RedCardEvent,
     ShotEvent,
     SubstitutePlayer,
-    SubstitutionEvent,
     TeamCoach,
     TeamFormMatch,
 )
@@ -91,6 +96,11 @@ PERIOD_STAT_KEY_MAPPING: Dict[str, Tuple[str, str]] = {
     "red_cards": ("red_cards_home", "red_cards_away"),
 }
 
+# FotMob reports possession as a whole percentage but occasionally with one decimal
+# (66.7 / 33.3). Bronze, Silver, and Gold store it as Int32, so the processor rounds
+# half to even, which keeps a home/away pair summing to 100 (50.5 / 49.5 -> 50 / 50).
+ROUNDED_POSSESSION_FIELDS = ("ball_possession_home", "ball_possession_away")
+
 # Fields that contain ratio values (e.g., "5/10") instead of numeric values
 RATIO_STAT_FIELDS = frozenset(
     {
@@ -103,6 +113,68 @@ RATIO_STAT_FIELDS = frozenset(
         "dribbles_succeeded",
     }
 )
+
+
+BRONZE_TABLES: Tuple[str, ...] = (
+    "match_reference",
+    "general",
+    "timeline",
+    "venue",
+    "player",
+    "shotmap",
+    "goal",
+    "cards",
+    "red_card",
+    "period",
+    "momentum",
+    "starters",
+    "substitutes",
+    "coaches",
+    "team_form",
+)
+
+
+class BronzeProcessingError(RuntimeError):
+    """Raised when a payload section cannot be read, as opposed to being absent."""
+
+
+@dataclass(frozen=True)
+class RowRejection:
+    """One source row the processor's models rejected, with the reason."""
+
+    table: str
+    match_id: Any
+    reason: str
+
+    def describe(self) -> str:
+        return f"{self.table} match_id={self.match_id!r}: {self.reason}"
+
+
+@dataclass
+class ProcessedMatch:
+    """Bronze rows for one match, keyed by table, plus rows the models rejected."""
+
+    match_id: Any
+    rows: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    rejected_rows: List[RowRejection] = field(default_factory=list)
+    validation_summary: Optional[Dict[str, Any]] = None
+
+
+def _section_failed(section: str, error: Exception) -> BronzeProcessingError:
+    return BronzeProcessingError(f"{section} section failed: {type(error).__name__}: {error}")
+
+
+def _validation_reason(error: PydanticValidationError) -> str:
+    """Summarize a model validation error as ``field: message (input)`` items."""
+    parts = []
+    for detail in error.errors():
+        location = ".".join(str(part) for part in detail.get("loc", ()))
+        parts.append(f"{location}: {detail.get('msg')} (input {detail.get('input')!r})")
+    return "; ".join(parts)
+
+
+def _lineup_table(player_model: Any) -> str:
+    return "starters" if player_model is LineupPlayer else "substitutes"
 
 
 class FotMobBronzeMatchProcessor(ProcessorProtocol):
@@ -129,6 +201,88 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
         self.validator = validator or FotMobValidator()
         self.extractor = extractor or SafeFieldExtractor()
         self._processed_match_count = 0
+
+    def _reject(
+        self,
+        rejections: Optional[List[RowRejection]],
+        table: str,
+        match_id: Any,
+        error: PydanticValidationError,
+    ) -> None:
+        """Record a row the source models rejected; log it when nobody collects rejections."""
+        rejection = RowRejection(table=table, match_id=match_id, reason=_validation_reason(error))
+        if rejections is None:
+            self.logger.warning(
+                "Rejected FotMob source row",
+                table_name=table,
+                match_id=match_id,
+                reason=rejection.reason,
+            )
+            return
+        rejections.append(rejection)
+
+    def _distinct_event_row(
+        self,
+        rows_by_event_id: Dict[int, Dict[str, Any]],
+        row: Dict[str, Any],
+        table_name: str,
+        match_id: Any,
+    ) -> Dict[str, Any]:
+        """Give a different event that repeats an earlier event's id its own deterministic id.
+
+        FotMob sometimes reuses an ``eventId`` for two events, and two events without
+        an id can derive the same synthetic id. Bronze identity is ``(match_id,
+        event_id)``, so ClickHouse would keep only one of them. An exact repeat keeps
+        its id and collapses during admission.
+        """
+        event_id = row["event_id"]
+        earlier = rows_by_event_id.get(event_id)
+        if earlier is None or earlier == row:
+            rows_by_event_id.setdefault(event_id, row)
+            return row
+        occurrence = 1
+        while True:
+            seed = f"{table_name}|{match_id}|{event_id}|occurrence:{occurrence}"
+            digest_value = int(hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16], 16)
+            candidate = (digest_value % self._INT64_MAX) + 1
+            distinct_row = {**row, "event_id": candidate}
+            existing = rows_by_event_id.get(candidate)
+            if existing == distinct_row:
+                return distinct_row
+            if existing is None:
+                break
+            occurrence += 1
+        rows_by_event_id[candidate] = distinct_row
+        self.logger.info(
+            "Assigned a distinct id to an event that repeats another event's id",
+            table_name=table_name,
+            match_id=match_id,
+            repeated_id=event_id,
+            resolved_id=candidate,
+            occurrence=occurrence,
+        )
+        return distinct_row
+
+    @staticmethod
+    def _first_lineup_entry_per_player(
+        players: List[Dict[str, Any]], table_name: str, match_id: Any, log: Any
+    ) -> List[Dict[str, Any]]:
+        """Keep the first lineup entry for each player; the source occasionally repeats one."""
+        kept: List[Dict[str, Any]] = []
+        seen: set = set()
+        for player in players:
+            if player["player_id"] in seen:
+                continue
+            seen.add(player["player_id"])
+            kept.append(player)
+        if len(kept) != len(players):
+            log.info(
+                "Ignored repeated lineup entries; kept the first per player",
+                table_name=table_name,
+                match_id=match_id,
+                ignored_rows=len(players) - len(kept),
+            )
+        return kept
 
     @staticmethod
     def _split_full_score(full_score: Optional[str]) -> Tuple[Optional[int], Optional[int]]:
@@ -287,20 +441,26 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
 
     def process_all(
         self, raw_response: Dict[str, Any], validate_before_processing: bool = True
-    ) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
-        """
-        Process all match data with validation and optional response saving.
+    ) -> Tuple[Dict[str, pd.DataFrame], Optional[Dict[str, Any]]]:
+        """Return one DataFrame per Bronze table that has rows, plus the validation summary.
 
-        Args:
-            raw_response: Raw API response
-            validate_before_processing: If True, validate response before processing
-
-        Returns:
-            Tuple of (processed_dataframes, validation_summary)
+        Kept for scrape-time data-quality checks; Bronze loading uses ``process_match``.
         """
-        match_id = self.extractor.safe_get_nested(
-            raw_response, "general", "matchId", default="unknown"
-        )
+        processed = self.process_match(raw_response, validate_before_processing)
+        dataframes = {table: pd.DataFrame(rows) for table, rows in processed.rows.items() if rows}
+        return dataframes, processed.validation_summary
+
+    def process_match(
+        self, raw_response: Dict[str, Any], validate_before_processing: bool = True
+    ) -> ProcessedMatch:
+        """Process one FotMob match payload into Bronze rows keyed by table.
+
+        Raises :class:`BronzeProcessingError` when the payload has no
+        ``general.matchId`` or when a section cannot be read.
+        """
+        match_id = self.extractor.safe_get_nested(raw_response, "general", "matchId")
+        if match_id is None:
+            raise BronzeProcessingError("payload has no general.matchId")
 
         # Validate response
         validation_summary = None
@@ -318,25 +478,37 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             else:
                 self.logger.debug(f"[OK] Validation passed for match {match_id}")
 
-        # Process data
         self.logger.debug("Processing match payload", match_id=match_id)
-        general_stats = self.process_general_stats(raw_response)
-        processed_data = {
-            "match_reference": self.process_match_reference(general_stats),
-            "general": general_stats,
-            "timeline": self.process_match_timeline(raw_response),
-            "goal": self.process_goal_events_from_header(raw_response),
-            "red_card": self.process_red_card_events(raw_response),
-            "cards_only": self.process_match_facts_events(raw_response),
-            "venue": self.process_infobox_data(raw_response),
-            "team_form": self.process_team_form_data(raw_response),
-            "momentum": self.process_momentum_data(raw_response),
-            "period": self.process_period_stats(raw_response),
-            "player": self.process_flat_player_stats(raw_response),
-            "shotmap": self.process_shotmap_data(raw_response),
-            "lineup_data": self.process_lineup_data(raw_response),
-        }
-        dataframes = self._convert_to_dataframes(processed_data)
+        rejections: List[RowRejection] = []
+        try:
+            general_stats = self.process_general_stats(raw_response, rejections)
+            lineup = self.process_lineup_data(raw_response, rejections)
+            single_rows = {
+                "match_reference": self.process_match_reference(general_stats),
+                "general": general_stats,
+                "timeline": self.process_match_timeline(raw_response, rejections),
+                "venue": self.process_infobox_data(raw_response, rejections),
+            }
+            rows: Dict[str, List[Dict[str, Any]]] = {
+                table: [row] if row else [] for table, row in single_rows.items()
+            }
+            rows.update(
+                {
+                    "goal": self.process_goal_events_from_header(raw_response, rejections),
+                    "red_card": self.process_red_card_events(raw_response, rejections),
+                    "cards": self.process_card_events(raw_response, rejections),
+                    "team_form": self.process_team_form_data(raw_response, rejections),
+                    "momentum": self.process_momentum_data(raw_response, rejections),
+                    "period": self.process_period_stats(raw_response, rejections),
+                    "player": self.process_flat_player_stats(raw_response, rejections),
+                    "shotmap": self.process_shotmap_data(raw_response, rejections),
+                    "starters": lineup["starters"],
+                    "substitutes": lineup["substitutes"],
+                    "coaches": lineup["coaches"],
+                }
+            )
+        except BronzeProcessingError as error:
+            raise BronzeProcessingError(f"FotMob match {match_id}: {error}") from error
         self._processed_match_count += 1
         if self._processed_match_count % 100 == 0:
             self.logger.info(
@@ -347,21 +519,30 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
         else:
             self.logger.debug("Completed processing match", match_id=match_id)
 
-        return dataframes, validation_summary
+        return ProcessedMatch(
+            match_id=match_id,
+            rows=rows,
+            rejected_rows=rejections,
+            validation_summary=validation_summary,
+        )
 
     @staticmethod
     def _extract_match_date(
         match_time_utc_date: Optional[str],
         match_time_utc: Optional[str],
-    ) -> str:
-        """Resolve a stable YYYY-MM-DD match date for the bronze match reference."""
+    ) -> Optional[str]:
+        """Resolve the YYYY-MM-DD match date for the bronze match reference.
+
+        Returns ``None`` when the payload carries no date, which Bronze admission
+        rejects instead of storing a placeholder date.
+        """
         for raw_value in (match_time_utc_date, match_time_utc):
             if not raw_value:
                 continue
             date_match = re.match(r"^\s*(\d{4}-\d{2}-\d{2})", str(raw_value))
             if date_match:
                 return date_match.group(1)
-        return "1970-01-01"
+        return None
 
     def process_match_reference(
         self, general_stats: Optional[Dict[str, Any]]
@@ -406,36 +587,9 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
         )
         return match_reference
 
-    def _convert_to_dataframes(self, processed_data: Dict[str, Any]) -> Dict[str, pd.DataFrame]:
-        """Convert processed data to DataFrames."""
-        dataframes = {}
-        for key, value in processed_data.items():
-            if isinstance(value, list):
-                if value:
-                    dataframes[key] = pd.DataFrame(value)
-                else:
-                    dataframes[key] = pd.DataFrame()
-            elif isinstance(value, dict):
-                if key == "cards_only":
-                    for event_type, events in value.items():
-                        if events and event_type not in ["goals", "substitutions"]:
-                            dataframes[event_type] = pd.DataFrame(events)
-                elif key == "lineup_data":
-                    for lineup_type, lineup_items in value.items():
-                        if lineup_items:
-                            if isinstance(lineup_items, list):
-                                dataframes[lineup_type] = pd.DataFrame(lineup_items)
-                            else:
-                                dataframes[lineup_type] = pd.DataFrame([lineup_items])
-                        else:
-                            dataframes[lineup_type] = pd.DataFrame()
-                else:
-                    dataframes[key] = pd.DataFrame([value])
-            elif value is not None:
-                dataframes[key] = pd.DataFrame([value])
-        return dataframes
-
-    def process_match_timeline(self, response_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def process_match_timeline(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> Optional[Dict[str, Any]]:
         """Process match timeline data with safe field extraction."""
         try:
             self.logger.debug("Processing timeline data")
@@ -481,13 +635,14 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             validated_timeline = MatchTimeline(**timeline_dict)
             return validated_timeline.model_dump()
         except PydanticValidationError as e:
-            self.logger.error(f"Validation failed for timeline: {e}")
-            self.logger.debug(f"Timeline data: {timeline_dict}")
+            self._reject(rejections, "timeline", timeline_dict.get("match_id"), e)
         except Exception as e:
-            self.logger.exception(f"Error processing timeline: {e}")
+            raise _section_failed("timeline", e) from e
         return None
 
-    def process_general_stats(self, response_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def process_general_stats(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> Optional[Dict[str, Any]]:
         """Process general match statistics."""
         try:
             self.logger.debug("Processing general stats")
@@ -556,13 +711,13 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             validated_stats = GeneralMatchStats(**processed_data)
             return validated_stats.model_dump()
         except PydanticValidationError as e:
-            self.logger.error(f"Validation failed for general stats: {e}")
+            self._reject(rejections, "general", processed_data.get("match_id"), e)
         except Exception as e:
-            self.logger.exception(f"Error processing general stats: {e}")
+            raise _section_failed("general", e) from e
         return None
 
     def process_goal_events_from_header(
-        self, response_data: Dict[str, Any]
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
     ) -> List[Dict[str, Any]]:
         """Process goal events from header section."""
         all_goal_dicts = []
@@ -576,6 +731,7 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             events = header.get("events", {})
             if not isinstance(events, dict):
                 return all_goal_dicts
+            goal_rows_by_event_id: Dict[int, Dict[str, Any]] = {}
             goal_data_sources = [
                 (events.get("homeTeamGoals", {}), "Home"),
                 (events.get("awayTeamGoals", {}), "Away"),
@@ -664,17 +820,15 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                         }
                         try:
                             validated_event = GoalEventHeader(**flat_goal_data)
-                            goal_dict = validated_event.model_dump()
+                            goal_dict = self._distinct_event_row(
+                                goal_rows_by_event_id,
+                                validated_event.model_dump(),
+                                "goal",
+                                match_id,
+                            )
                             all_goal_dicts.append(goal_dict)
                         except PydanticValidationError as e:
-                            self.logger.warning(
-                                f"Validation error for goal event (match {match_id}, event_id {scorer_stat.get('eventId')}): {e}"
-                            )
-                            self.logger.debug(f"Goal data that failed validation: {flat_goal_data}")
-                        except Exception as e:
-                            self.logger.error(
-                                f"Unexpected error processing goal event: {e}", exc_info=True
-                            )
+                            self._reject(rejections, "goal", match_id, e)
             if len(all_goal_dicts) > 0:
                 self.logger.debug(
                     f"Processed {len(all_goal_dicts)} goal events for match {match_id}"
@@ -682,10 +836,12 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             else:
                 self.logger.debug(f"No goal events found for match {match_id}")
         except Exception as e:
-            self.logger.exception(f"Error processing goal events for match {match_id}: {e}")
+            raise _section_failed("goal", e) from e
         return all_goal_dicts
 
-    def process_red_card_events(self, response_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def process_red_card_events(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> List[Dict[str, Any]]:
         """Process red card events."""
         all_red_cards = []
         try:
@@ -695,6 +851,7 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             match_id = response_data.get("general", {}).get("matchId")
             if not isinstance(events, dict) or not match_id:
                 return all_red_cards
+            red_card_rows_by_event_id: Dict[int, Dict[str, Any]] = {}
             team_red_cards_sources = [
                 (events.get("homeTeamRedCards", {}), "Home"),
                 (events.get("awayTeamRedCards", {}), "Away"),
@@ -736,25 +893,35 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                         }
                         try:
                             validated_event = RedCardEvent(**flat_data)
-                            all_red_cards.append(validated_event.model_dump())
+                            all_red_cards.append(
+                                self._distinct_event_row(
+                                    red_card_rows_by_event_id,
+                                    validated_event.model_dump(),
+                                    "red_card",
+                                    match_id,
+                                )
+                            )
                         except PydanticValidationError as e:
-                            self.logger.error(f"Validation error for red card: {e}")
-                        except Exception as e:
-                            self.logger.exception(f"Error processing red cards: {e}")
+                            self._reject(rejections, "red_card", match_id, e)
         except Exception as e:
-            self.logger.exception(f"Error processing red card events: {e}")
+            raise _section_failed("red_card", e) from e
         return all_red_cards
 
-    def process_match_facts_events(
-        self, response_data: Dict[str, Any]
-    ) -> Dict[str, List[Dict[str, Any]]]:
-        """Process match facts events."""
-        results = {"goals": [], "cards": [], "substitutions": [], "added_time": [], "half_time": []}
+    def process_card_events(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> List[Dict[str, Any]]:
+        """Process card events from the match facts timeline into ``bronze.cards`` rows.
+
+        Goals and substitutions in the same timeline are not Bronze tables: goals come
+        from the header (``process_goal_events_from_header``) and substitutions from
+        the lineup.
+        """
+        cards: List[Dict[str, Any]] = []
         try:
-            self.logger.debug("Processing match facts events")
+            self.logger.debug("Processing card events")
             match_id = response_data.get("general", {}).get("matchId")
             if not match_id:
-                return results
+                return cards
             events_list = (
                 response_data.get("content", {})
                 .get("matchFacts", {})
@@ -762,123 +929,63 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                 .get("events", [])
             )
             if not isinstance(events_list, list):
-                return results
+                return cards
+            card_rows_by_event_id: Dict[int, Dict[str, Any]] = {}
             for event in events_list:
-                if not isinstance(event, dict):
+                if not isinstance(event, dict) or event.get("type") != "Card":
                     continue
-                event_type = event.get("type")
-                # Only cards are materialized from match facts into bronze tables.
-                if event_type in ("Goal", "Substitution"):
-                    continue
-                if event_type == "Goal":
-                    shotmap_event = event.get("shotmapEvent", {}) or {}
-                    event_id = self._resolve_positive_event_id(
-                        raw_event_id=event.get("eventId"),
-                        synthetic_seed=(
-                            f"match_facts_goal|{match_id}|{event.get('time')}|{event.get('overloadTime')}|"
-                            f"{event.get('homeScore')}|{event.get('awayScore')}|{event.get('isHome')}|"
-                            f"{event.get('player', {}).get('id')}|{event.get('assistPlayerId')}"
-                        ),
-                        table_name="match_facts_goal",
-                        match_id=match_id,
-                        event_time=event.get("time"),
-                        player_id=event.get("player", {}).get("id"),
+                card_description = event.get("cardDescription")
+                if isinstance(card_description, dict):
+                    description_text = (
+                        card_description.get("defaultText")
+                        or card_description.get("localizedKey")
+                        or None
                     )
-                    goal_data = {
-                        "match_id": match_id,
-                        "event_id": event_id,
-                        "time": event.get("time"),
-                        "added_time": event.get("overloadTime"),
-                        "player_id": event.get("player", {}).get("id"),
-                        "player_name": event.get("player", {}).get("name"),
-                        "player_profile_url": event.get("player", {}).get("profileUrl"),
-                        "team": "Home" if event.get("isHome") else "Away",
-                        "score": f"{event.get('homeScore')}-{event.get('awayScore')}",
-                        "new_score": event.get("newScore", []),
-                        "shot_type": shotmap_event.get("shotType"),
-                        "xg": shotmap_event.get("expectedGoals"),
-                        "xg_ot": shotmap_event.get("expectedGoalsOnTarget"),
-                        "situation": shotmap_event.get("situation"),
-                        "assist_player": event.get("assistInput"),
-                        "assist_id": event.get("assistPlayerId"),
-                        "shot_x": shotmap_event.get("x"),
-                        "shot_y": shotmap_event.get("y"),
-                    }
-                    try:
-                        validated = GoalEventMatchFacts(**goal_data)
-                        results["goals"].append(validated.model_dump())
-                    except PydanticValidationError as e:
-                        self.logger.error(f"Validation error for goal: {e}")
-                elif event_type == "Card":
-                    card_description = event.get("cardDescription")
-                    if isinstance(card_description, dict):
-                        description_text = (
-                            card_description.get("defaultText")
-                            or card_description.get("localizedKey")
-                            or None
-                        )
-                    else:
-                        description_text = (
-                            card_description if isinstance(card_description, str) else None
-                        )
-                    event_id = self._resolve_positive_event_id(
-                        raw_event_id=event.get("eventId"),
-                        synthetic_seed=(
-                            f"match_facts_card|{match_id}|{event.get('time')}|{event.get('overloadTime')}|"
-                            f"{event.get('homeScore')}|{event.get('awayScore')}|{event.get('isHome')}|"
-                            f"{event.get('player', {}).get('id')}|{event.get('card')}"
-                        ),
-                        table_name="cards",
-                        match_id=match_id,
-                        event_time=event.get("time"),
-                        player_id=event.get("player", {}).get("id"),
+                else:
+                    description_text = (
+                        card_description if isinstance(card_description, str) else None
                     )
-                    card_data = {
-                        "match_id": match_id,
-                        "event_id": event_id,
-                        "time": event.get("time"),
-                        "added_time": event.get("overloadTime"),
-                        "player_id": event.get("player", {}).get("id"),
-                        "player_name": event.get("player", {}).get("name"),
-                        "player_profile_url": event.get("player", {}).get("profileUrl"),
-                        "team": "Home" if event.get("isHome") else "Away",
-                        "card_type": event.get("card"),
-                        "description": description_text,
-                        "score": f"{event.get('homeScore')}-{event.get('awayScore')}",
-                    }
-                    try:
-                        validated = CardEventMatchFacts(**card_data)
-                        results["cards"].append(validated.model_dump())
-                    except PydanticValidationError as e:
-                        self.logger.error(f"Validation error for card: {e}")
-                elif event_type == "Substitution":
-                    swap = event.get("swap", [{}, {}])
-                    player_in = swap[0] if len(swap) > 0 else {}
-                    player_out = swap[1] if len(swap) > 1 else {}
-                    sub_data = {
-                        "match_id": match_id,
-                        "time": event.get("time"),
-                        "added_time": event.get("overloadTime"),
-                        "team": "Home" if event.get("isHome") else "Away",
-                        "player_in_id": player_in.get("id"),
-                        "player_in_name": player_in.get("name"),
-                        "player_in_profile_url": player_in.get("profileUrl"),
-                        "player_out_id": player_out.get("id"),
-                        "player_out_name": player_out.get("name"),
-                        "player_out_profile_url": player_out.get("profileUrl"),
-                        "injured": event.get("injuredPlayerOut", False),
-                        "score": f"{event.get('homeScore')}-{event.get('awayScore')}",
-                    }
-                    try:
-                        validated = SubstitutionEvent(**sub_data)
-                        results["substitutions"].append(validated.model_dump())
-                    except PydanticValidationError as e:
-                        self.logger.error(f"Validation error for substitution: {e}")
+                event_id = self._resolve_positive_event_id(
+                    raw_event_id=event.get("eventId"),
+                    synthetic_seed=(
+                        f"match_facts_card|{match_id}|{event.get('time')}|{event.get('overloadTime')}|"
+                        f"{event.get('homeScore')}|{event.get('awayScore')}|{event.get('isHome')}|"
+                        f"{event.get('player', {}).get('id')}|{event.get('card')}"
+                    ),
+                    table_name="cards",
+                    match_id=match_id,
+                    event_time=event.get("time"),
+                    player_id=event.get("player", {}).get("id"),
+                )
+                card_data = {
+                    "match_id": match_id,
+                    "event_id": event_id,
+                    "event_time": event.get("time"),
+                    "added_time": event.get("overloadTime"),
+                    "player_id": event.get("player", {}).get("id"),
+                    "player_name": event.get("player", {}).get("name"),
+                    "player_profile_url": event.get("player", {}).get("profileUrl"),
+                    "team": "Home" if event.get("isHome") else "Away",
+                    "card_type": event.get("card"),
+                    "description": description_text,
+                    "score_at_event": f"{event.get('homeScore')}-{event.get('awayScore')}",
+                }
+                try:
+                    validated = CardEventMatchFacts(**card_data)
+                    cards.append(
+                        self._distinct_event_row(
+                            card_rows_by_event_id, validated.model_dump(), "cards", match_id
+                        )
+                    )
+                except PydanticValidationError as e:
+                    self._reject(rejections, "cards", match_id, e)
         except Exception as e:
-            self.logger.exception(f"Error processing match facts events: {e}")
-        return results
+            raise _section_failed("cards", e) from e
+        return cards
 
-    def process_momentum_data(self, response_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def process_momentum_data(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> List[Dict[str, Any]]:
         """Process momentum data."""
         processed_points = []
         try:
@@ -913,10 +1020,26 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     validated_data = MomentumDataPoint(**processed_data)
                     processed_points.append(validated_data.model_dump())
                 except PydanticValidationError as e:
-                    self.logger.error(f"Validation error for momentum point: {e}")
+                    self._reject(rejections, "momentum", match_id, e)
         except Exception as e:
-            self.logger.exception(f"Error processing momentum data: {e}")
+            raise _section_failed("momentum", e) from e
         return processed_points
+
+    def _round_possession(self, flat_data: Dict[str, Any], match_id: Any) -> None:
+        """Round fractional possession half to even (see ``ROUNDED_POSSESSION_FIELDS``)."""
+        rounded = {}
+        for field_name in ROUNDED_POSSESSION_FIELDS:
+            value = flat_data.get(field_name)
+            if isinstance(value, float) and not value.is_integer():
+                flat_data[field_name] = round(value)
+                rounded[field_name] = value
+        if rounded:
+            self.logger.info(
+                "Rounded fractional ball possession",
+                match_id=match_id,
+                period=flat_data.get("period"),
+                source_values=rounded,
+            )
 
     def _parse_stat_values(self, key: str, values_raw: List[Any]) -> List[Any]:
         """Parse stat values, handling ratio fields and type conversion.
@@ -951,7 +1074,9 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                 values.append(None if v_raw is None else str(v_raw))
         return values
 
-    def process_period_stats(self, response_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def process_period_stats(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> List[Dict[str, Any]]:
         """Process period statistics."""
         results = []
         try:
@@ -1013,17 +1138,20 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                 for source_field, alias_field in alias_pairs:
                     if alias_field not in flat_data and source_field in flat_data:
                         flat_data[alias_field] = flat_data.get(source_field)
+                self._round_possession(flat_data, match_id)
                 try:
                     validated = PeriodStats(**flat_data)
                     # Avoid emitting deprecated/unused optional fields as null columns.
                     results.append(validated.model_dump(exclude_none=True))
                 except PydanticValidationError as e:
-                    self.logger.error(f"Validation error for period stats: {e}")
+                    self._reject(rejections, "period", match_id, e)
         except Exception as e:
-            self.logger.exception(f"Error processing period stats: {e}")
+            raise _section_failed("period", e) from e
         return results
 
-    def process_flat_player_stats(self, response_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def process_flat_player_stats(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> List[Dict[str, Any]]:
         """Process player statistics."""
         all_player_stats = []
         try:
@@ -1222,18 +1350,9 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                         player_dict["player_name"] = player_dict.pop("name")
                     all_player_stats.append(player_dict)
                 except PydanticValidationError as e:
-                    match_id = flat_data.get("match_id", "unknown")
-                    player_id = flat_data.get("id", "unknown")
-                    self.logger.warning(
-                        f"Validation error for player {player_id} match {match_id}: {e}"
-                    )
-                    self.logger.debug(f"Player data that failed validation: {flat_data}")
-                except Exception as e:
-                    self.logger.error(
-                        f"Unexpected error processing player stats: {e}", exc_info=True
-                    )
+                    self._reject(rejections, "player", match_id, e)
         except Exception as e:
-            self.logger.exception(f"Error processing player stats: {e}")
+            raise _section_failed("player", e) from e
         if len(all_player_stats) > 0:
             match_id = response_data.get("general", {}).get("matchId", "unknown")
             self.logger.debug(
@@ -1244,7 +1363,9 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             self.logger.debug(f"No player stats found for match {match_id}")
         return all_player_stats
 
-    def process_shotmap_data(self, response_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def process_shotmap_data(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> List[Dict[str, Any]]:
         """Process shotmap data."""
         processed_shots = []
         try:
@@ -1263,19 +1384,19 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     on_goal_shot = {}
                 processed_shot = {
                     "match_id": match_id,
-                    "id": shot_raw.get("id"),
+                    "shot_id": shot_raw.get("id"),
                     "event_type": shot_raw.get("eventType"),
                     "team_id": shot_raw.get("teamId"),
                     "player_id": shot_raw.get("playerId"),
                     "player_name": shot_raw.get("playerName"),
                     "x": shot_raw.get("x"),
                     "y": shot_raw.get("y"),
-                    "min": (
+                    "minute": (
                         shot_raw.get("min")
                         if shot_raw.get("min") is not None
                         else shot_raw.get("minute")
                     ),
-                    "min_added": (
+                    "minute_added": (
                         shot_raw.get("minAdded")
                         if shot_raw.get("minAdded") is not None
                         else shot_raw.get("mAdded")
@@ -1308,21 +1429,18 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     shot_dict = validated_shot.model_dump()
                     processed_shots.append(shot_dict)
                 except PydanticValidationError as e:
-                    self.logger.warning(
-                        f"Validation error for shot event (match {match_id}, shot id {shot_raw.get('id')}): {e}"
-                    )
-                    self.logger.debug(f"Shot data that failed validation: {processed_shot}")
-                except Exception as e:
-                    self.logger.error(f"Unexpected error processing shot event: {e}", exc_info=True)
+                    self._reject(rejections, "shotmap", match_id, e)
         except Exception as e:
-            self.logger.exception(f"Error processing shotmap for match {match_id}: {e}")
+            raise _section_failed("shotmap", e) from e
         if len(processed_shots) > 0:
             self.logger.debug(f"Processed {len(processed_shots)} shots for match {match_id}")
         else:
             self.logger.debug(f"No shots found for match {match_id}")
         return processed_shots
 
-    def process_lineup_data(self, response_data: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:
+    def process_lineup_data(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Process lineup data (starters, subs, coaches).
         IMPROVED: Combines home/away to single dataframes with team_side field
@@ -1346,6 +1464,7 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     match_id,
                     team_side="home",
                     used_ids=used_lineup_player_ids,
+                    rejections=rejections,
                 )
                 home_substitutes = self._process_lineup_players(
                     home_team_raw.get("subs", []),
@@ -1353,12 +1472,15 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     match_id,
                     team_side="home",
                     used_ids=used_lineup_player_ids,
+                    rejections=rejections,
                 )
                 lineup_output["starters"].extend(home_starters)
                 lineup_output["substitutes"].extend(home_substitutes)
                 home_coach_raw = home_team_raw.get("coach", {})
                 if isinstance(home_coach_raw, dict) and home_coach_raw:
-                    home_coach = self._process_coach(home_coach_raw, match_id, team_side="home")
+                    home_coach = self._process_coach(
+                        home_coach_raw, match_id, team_side="home", rejections=rejections
+                    )
                     if home_coach:
                         lineup_output["coaches"].append(home_coach)
             away_team_raw = lineup_raw.get("awayTeam", {})
@@ -1369,6 +1491,7 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     match_id,
                     team_side="away",
                     used_ids=used_lineup_player_ids,
+                    rejections=rejections,
                 )
                 away_substitutes = self._process_lineup_players(
                     away_team_raw.get("subs", []),
@@ -1376,16 +1499,23 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                     match_id,
                     team_side="away",
                     used_ids=used_lineup_player_ids,
+                    rejections=rejections,
                 )
                 lineup_output["starters"].extend(away_starters)
                 lineup_output["substitutes"].extend(away_substitutes)
                 away_coach_raw = away_team_raw.get("coach", {})
                 if isinstance(away_coach_raw, dict) and away_coach_raw:
-                    away_coach = self._process_coach(away_coach_raw, match_id, team_side="away")
+                    away_coach = self._process_coach(
+                        away_coach_raw, match_id, team_side="away", rejections=rejections
+                    )
                     if away_coach:
                         lineup_output["coaches"].append(away_coach)
         except Exception as e:
-            self.logger.exception(f"Error processing lineup: {e}")
+            raise _section_failed("lineup", e) from e
+        for table_name in ("starters", "substitutes"):
+            lineup_output[table_name] = self._first_lineup_entry_per_player(
+                lineup_output[table_name], table_name, match_id, self.logger
+            )
         return lineup_output
 
     def _process_lineup_players(
@@ -1395,6 +1525,7 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
         match_id: int,
         team_side: str = "home",
         used_ids: Optional[set] = None,
+        rejections: Optional[List[RowRejection]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Helper to process lineup players.
@@ -1491,11 +1622,15 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                 validated_player = player_model(**player_data)
                 processed_players.append(validated_player.model_dump())
             except PydanticValidationError as e:
-                self.logger.error(f"Validation error for player {player_raw.get('id')}: {e}")
+                self._reject(rejections, _lineup_table(player_model), match_id, e)
         return processed_players
 
     def _process_coach(
-        self, coach_raw: Dict[str, Any], match_id: int, team_side: str = "home"
+        self,
+        coach_raw: Dict[str, Any],
+        match_id: int,
+        team_side: str = "home",
+        rejections: Optional[List[RowRejection]] = None,
     ) -> Dict[str, Any]:
         """
         Helper to process coach data.
@@ -1530,7 +1665,7 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             coach_data = {
                 "match_id": match_id,
                 "team_side": team_side,
-                "id": resolved_coach_id,
+                "coach_id": resolved_coach_id,
                 "age": coach_raw.get("age"),
                 "name": coach_raw.get("name"),
                 "first_name": coach_raw.get("firstName"),
@@ -1544,13 +1679,12 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             validated_coach = TeamCoach(**coach_data)
             return validated_coach.model_dump()
         except PydanticValidationError as e:
-            self.logger.error(f"Validation error for coach {coach_raw.get('id')}: {e}")
-            return {}
-        except Exception as e:
-            self.logger.error(f"Error processing coach: {e}")
+            self._reject(rejections, "coaches", match_id, e)
             return {}
 
-    def process_infobox_data(self, response_data: Dict[str, Any]) -> Dict[str, Any]:
+    def process_infobox_data(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> Dict[str, Any]:
         """
         Process venue, stadium, attendance, and match information from InfoBox.
         Extracts:
@@ -1615,13 +1749,14 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
             validated_venue = MatchVenue(**venue_data)
             return validated_venue.model_dump()
         except PydanticValidationError as e:
-            self.logger.error(f"Validation error for venue data: {e}")
+            self._reject(rejections, "venue", match_id, e)
             return {}
         except Exception as e:
-            self.logger.exception(f"Error processing venue data: {e}")
-            return {}
+            raise _section_failed("venue", e) from e
 
-    def process_team_form_data(self, response_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def process_team_form_data(
+        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Process team form data to flattened structure with team_side field.
         Returns list of TeamFormMatch objects (one per past match for each team).
@@ -1720,9 +1855,9 @@ class FotMobBronzeMatchProcessor(ProcessorProtocol):
                         validated_form = TeamFormMatch(**form_match_data)
                         processed_form.append(validated_form.model_dump())
                     except PydanticValidationError as e:
-                        self.logger.error(f"Validation error for team form match: {e}")
+                        self._reject(rejections, "team_form", match_id, e)
         except Exception as e:
-            self.logger.exception(f"Error processing team form data: {e}")
+            raise _section_failed("team_form", e) from e
         return processed_form
 
 

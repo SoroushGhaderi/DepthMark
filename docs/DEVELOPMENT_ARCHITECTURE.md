@@ -127,7 +127,8 @@ ClickHouse access uses two identities (ADR 0029). The application user
 creates, optimizes, and drops tables only in the `warehouse_stage` staging
 database. The maintenance user (`CLICKHOUSE_MAINTENANCE_USER`) runs setup, which
 also provisions the application user, plus full-history loads, Table
-Recreation, optimization, drop scripts, and Bronze `--truncate`. See
+Recreation, optimization, drop scripts, the Bronze `--rebuild`, and
+full-history Bronze removal. See
 `docs/data-flow/infrastructure.md` for the identity table.
 
 ## Canonical Command Surface
@@ -225,7 +226,9 @@ python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
 python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
 python3 scripts/bronze/load_fotmob_bronze.py --date 20251208
 python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --truncate --dry-run
+python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --replace --dry-run
+python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run
+python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run
 python3 scripts/bronze/load_fotmob_bronze.py --single-date 20251208
 python3 scripts/bronze/load_fotmob_bronze.py --full-history
 python3 scripts/bronze/drop_clickhouse.py --dry-run
@@ -694,8 +697,13 @@ one activation row.
 
 ## Operational Guarantees
 
-1. Bronze loading includes DLQ fallback via `src/fotmob/bronze/dead_letter.py` for failed
-   inserts and replay context.
+1. FotMob Bronze loading is fail-closed (ADR 0031): every value is admitted
+   against its table's setup DDL before any insert. A Date-Level Failure
+   (unreadable payload, processor error, rejected value) fails its date and the
+   run continues; a Run-Level Failure (drifted table, failed insert, held write
+   lock) stops the run. Either exits non-zero. Failed inserts keep their rows
+   in `data/dlq/` for diagnosis. `--replace` and `--rebuild` never empty Bronze
+   before the replacement is ready (ADR 0032).
 2. Layer contracts are enforced at runtime by the Bronze, Silver, and Gold
    contract assertions.
 3. Silver and Gold loaders support `--dry-run` planning mode.

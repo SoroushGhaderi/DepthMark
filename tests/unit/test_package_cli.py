@@ -11,6 +11,7 @@ EXPECTED_CANONICAL_COMMANDS = {
     "report-scraping": "report_scraping.py",
     "scrape-fotmob": "bronze/scrape_fotmob.py",
     "load-fotmob-bronze": "bronze/load_fotmob_bronze.py",
+    "remove-fotmob-bronze": "bronze/remove_fotmob_bronze.py",
     "load-fotmob-silver": "silver/load_fotmob_silver.py",
     "load-fotmob-gold": "gold/load_fotmob_gold.py",
     "run-fotmob-pipeline": "orchestration/run_fotmob_pipeline.py",

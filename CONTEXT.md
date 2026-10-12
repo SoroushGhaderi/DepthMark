@@ -119,6 +119,39 @@ identity from `signal_instance_id`.
 
 Related terms: Logical Duplicate Identity, Physical Row Version.
 
+### Bronze Admission
+
+The fail-closed step that turns processed FotMob rows into the exact shape of
+their Bronze table, driven by the table's setup DDL under `clickhouse/bronze/`
+(`src/fotmob/bronze/admission.py`). Every table of a date is admitted before
+anything is inserted. A value is converted only when the conversion is
+lossless; anything else, including an undeclared key, an out-of-range integer,
+or a `NULL` in a non-`Nullable` column, fails the date with the table, column,
+rule, and `match_id` examples. Exact duplicate rows collapse; rows that share a
+Row Identity but differ fail.
+
+Avoid saying: schema fixing, type repair, clipping, default filling.
+Related terms: Row Identity, Schema Drift, Bronze Layer, Date-Level Failure.
+
+### Date-Level Failure
+
+A Bronze load failure confined to one date's source: an unreadable payload, a
+processor error, or a value that fails Bronze Admission. The date is recorded as
+failed and nothing is inserted for it; the run continues with the remaining dates
+and exits non-zero with every failed date and its cause.
+
+Avoid saying: skipped date, partial success.
+Related terms: Run-Level Failure, Bronze Admission.
+
+### Run-Level Failure
+
+A Bronze load failure that would affect every remaining date: a missing or
+drifted table, a failed truncate, a lost connection, or a failed insert. The run
+stops immediately and exits non-zero.
+
+Avoid saying: fatal error, crash.
+Related terms: Date-Level Failure, Schema Drift.
+
 ### Schema Drift
 
 A difference between an existing warehouse table and its setup DDL in column
@@ -138,7 +171,29 @@ way to apply schema drift. Table recreation never repopulates rows; the operator
 reloads the affected scope through the normal layer loader afterward.
 
 Avoid saying: table rebuild, schema reset, schema migration.
-Related terms: Schema Drift, Gold Activation Rebuild.
+Related terms: Schema Drift, Bronze Rebuild, Gold Activation Rebuild.
+
+### Bronze Rebuild
+
+Truncate-and-reload of all FotMob Bronze history without the empty window
+(`load-fotmob-bronze --full-history --rebuild`): every Source Date loads into
+copies of the warehouse tables in the Staging Database, which are swapped in
+only if every date loaded. On any failure Bronze is left unchanged. It replaces
+data, never table definitions.
+
+Avoid saying: table recreation.
+Related terms: Table Recreation, Bronze Removal, Source Date, Staging Database.
+
+### Bronze Removal
+
+Deleting the matches of a Source Date scope from every FotMob Bronze table
+(`remove-fotmob-bronze`); full history truncates the tables. Removal touches
+only Bronze and reports the Match Dates whose Silver and Gold scopes are now
+stale. `load-fotmob-bronze --replace` removes and reloads each Source Date only
+after its rows pass Bronze Admission.
+
+Avoid saying: cascade delete, purge.
+Related terms: Bronze Rebuild, Source Date, Match Date.
 
 ### Scope Publication
 
@@ -208,6 +263,28 @@ behavior.
 
 Avoid saying: current scrape, live scrape.
 Related terms: Live Scrape.
+
+### Source Date
+
+The calendar date of the Historical Bronze folder a FotMob match payload is
+stored under, `data/fotmob/historical/matches/YYYYMM/YYYYMMDD/`, taken from the
+folder name. It is the scope of every FotMob Bronze command (load, removal,
+rebuild). Bronze tables do not store it: a Source Date's matches are the
+`general.matchId` values of the payloads stored under its folder. It is never
+read from the payload's own dates, and it can differ from the Match Date at day
+boundaries.
+
+Avoid saying: scrape date, load date, match date.
+Related terms: Match Date, Historical Scrape, Warehouse Execution Scope.
+
+### Match Date
+
+The UTC calendar date of a match's kickoff, read from the payload into
+`bronze.match_reference.match_date`. Silver and Gold scopes (Warehouse Execution
+Scope) use the Match Date; Bronze commands use the Source Date.
+
+Avoid saying: source date, fixture day.
+Related terms: Source Date, Warehouse Execution Scope.
 
 ### Live Scrape
 
