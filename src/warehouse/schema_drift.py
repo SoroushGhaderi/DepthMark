@@ -217,6 +217,27 @@ def parse_create_table(statement: str, source_file: Path) -> Optional[ExpectedTa
     )
 
 
+def column_default_expression(table: ExpectedTable, column: str) -> Optional[str]:
+    """Return the normalized default expression a column declares, if any."""
+    header = CREATE_TABLE_HEADER_PATTERN.match(table.create_statement)
+    if header is None:
+        return None
+    open_index = header.end() - 1
+    close_index = _matching_paren_index(table.create_statement, open_index)
+    for element in _split_top_level(table.create_statement[open_index + 1 : close_index]):
+        name_and_rest = element.split(None, 1)
+        if len(name_and_rest) != 2 or name_and_rest[0].strip('`"') != column:
+            continue
+        column_type = _first_top_level_token(name_and_rest[1])
+        modifiers = name_and_rest[1][len(column_type) :].strip()
+        kind, _, expression = modifiers.partition(" ")
+        if kind.upper() not in COLUMN_DEFAULT_KINDS:
+            return None
+        expression = re.split(r"\s+(?:CODEC|COMMENT|TTL)\b", expression, maxsplit=1)[0]
+        return normalize_sql_fragment(expression)
+    return None
+
+
 def setup_statements(sql_file: Path) -> list[str]:
     """Return the executable statements in one setup SQL file."""
     return split_sql_statements(sql_file.read_text(encoding="utf-8"))

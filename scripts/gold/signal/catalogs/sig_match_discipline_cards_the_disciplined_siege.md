@@ -1,7 +1,7 @@
 ---
 signal_id: sig_match_discipline_cards_the_disciplined_siege
 status: active
-entity: team
+entity: match
 family: discipline
 subfamily: cards
 grain: match_team
@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_the_disciplined_siege
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_the_disciplined_siege.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_discipline_cards_the_disciplined_siege
 

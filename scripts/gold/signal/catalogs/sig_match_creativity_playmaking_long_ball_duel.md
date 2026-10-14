@@ -1,7 +1,7 @@
 ---
 signal_id: sig_match_creativity_playmaking_long_ball_duel
 status: active
-entity: team
+entity: match
 family: creativity
 subfamily: playmaking
 grain: match_team
@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_creativity_playmaking_long_ball_duel
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_long_ball_duel.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_creativity_playmaking_long_ball_duel
 

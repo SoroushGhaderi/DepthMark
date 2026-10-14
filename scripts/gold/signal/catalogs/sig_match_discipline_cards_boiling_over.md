@@ -1,7 +1,7 @@
 ---
 signal_id: sig_match_discipline_cards_boiling_over
 status: active
-entity: team
+entity: match
 family: discipline
 subfamily: cards
 grain: match_team
@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_discipline_cards_boiling_over
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_boiling_over.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_discipline_cards_boiling_over
 

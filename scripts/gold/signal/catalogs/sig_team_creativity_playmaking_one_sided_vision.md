@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_one_sided_vision
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_one_sided_vision.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_creativity_playmaking_one_sided_vision
 
