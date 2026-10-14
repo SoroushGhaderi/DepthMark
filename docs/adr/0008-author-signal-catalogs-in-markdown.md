@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted
+Accepted. Amended by
+[ADR 0033](0033-single-validated-signal-catalog.md), which moves catalogs to
+`catalogs/signals/`, defines `entity` and `status`, removes
+`asset_paths.runner`, and makes one validated module the only catalog reader.
 
 ## Context
 

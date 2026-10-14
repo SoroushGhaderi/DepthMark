@@ -117,7 +117,14 @@ and Silver identities come from layer contracts, scenario identities from DDL
 sorting keys, signal identities from catalog `row_identity`, and activation
 identity from `signal_instance_id`.
 
-Related terms: Logical Duplicate Identity, Physical Row Version.
+A signal's Row Identity is one chain: the catalog `row_identity`, the DDL
+`signal_instance_id` default hash (`row_identity` in catalog order, with
+`match_id` prepended when absent), and the Signal Activation ID must all use the same columns in
+the same order. The DDL `ORDER BY` is a physical sort key, not the Row Identity;
+it only has to end with `signal_instance_id`.
+
+Related terms: Logical Duplicate Identity, Physical Row Version, Signal
+Activation ID.
 
 ### Bronze Admission
 
@@ -375,14 +382,50 @@ Related terms: Signal Catalog, Signal Activation ID.
 
 A markdown-authored description of one Gold signal, including frontmatter
 metadata and human-readable explanation. The catalog frontmatter is the
-canonical source for signal metadata that is synchronized into MongoDB.
+canonical source for signal metadata that is synchronized into MongoDB. Every
+consumer reads catalogs through one validated loader, and one invalid catalog
+fails every consumer rather than dropping that signal.
 
-Related terms: Signal Activation, Signal Catalog Sync.
+Related terms: Signal Activation, Signal Catalog Sync, Signal Entity, Signal
+Status, Signal Grain.
+
+### Signal Entity
+
+The subject scope of a signal: `match`, `team`, or `player`. It is the second
+segment of `signal_id` (`sig_<entity>_<family>_<subfamily>_<name>`), and catalog
+frontmatter `entity` must equal it. The row grain is a separate property held in
+`grain`; a match signal emitted once per side has entity `match` and grain
+`match_team`.
+
+Avoid saying: entity as row grain, team entity for a match signal.
+Related terms: Signal Catalog, Signal Grain.
+
+### Signal Grain
+
+The row grain of a signal output table, held in catalog `grain`: `match_team`
+for match and team signals (one row per triggered side) and `match_player` for
+player signals (one row per triggered player).
+
+Related terms: Signal Entity, Row Identity.
+
+### Signal Status
+
+The lifecycle state in catalog frontmatter `status`: `active` or `deprecated`.
+An active signal runs in Gold, appears in Signal Activations, and syncs to
+MongoDB. A deprecated signal does not run in Gold and is excluded from Signal
+Activations, but still syncs to MongoDB with its status and keeps its table and
+identity checks. Deprecation applies to scopes rebuilt after the change; older
+scopes keep their activations until a full-history activation rebuild.
+
+Avoid saying: inactive, experimental, disabled signal.
+Related terms: Signal Catalog, Gold Activation Rebuild.
 
 ### Signal Catalog Sync
 
-The process that reads markdown signal catalogs and writes derivative documents
-to the MongoDB `signals` collection for serving and querying.
+The process that makes the MongoDB `signals` collection an exact mirror of the
+validated signal catalogs: it replaces changed documents, leaves unchanged ones
+untouched, and deletes documents whose signal no longer has a catalog.
+Deprecated signals remain in the mirror.
 
 Avoid saying: Mongo catalog authoring.
 Related terms: Signal Catalog.
