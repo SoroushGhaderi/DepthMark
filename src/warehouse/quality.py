@@ -7,8 +7,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
 
-import yaml
-
+from src.fotmob.gold.signal_catalog import (
+    SIGNAL_CATALOG_RELATIVE_DIR,
+    SIGNAL_TABLE_DATABASE,
+    SignalCatalog,
+    load_signal_catalog,
+)
 from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.contracts import BRONZE_REQUIRED_KEYS, SILVER_TABLE_KEYS
@@ -223,32 +227,18 @@ def load_scenario_identity_contracts(ddl_path: Path) -> Dict[str, TableIdentity]
     return contracts
 
 
-def load_signal_identity_contracts(catalog_dir: Path) -> Dict[str, TableIdentity]:
-    """Read Gold signal row identities from catalog frontmatter."""
-    contracts: Dict[str, TableIdentity] = {}
-    for path in sorted(catalog_dir.glob("*.md")):
-        text = path.read_text(encoding="utf-8")
-        if not text.startswith("---\n"):
-            continue
-        try:
-            frontmatter = text.split("---", 2)[1]
-            metadata = yaml.safe_load(frontmatter) or {}
-        except (ValueError, yaml.YAMLError):
-            continue
-        table_name = (metadata.get("asset_paths") or {}).get("table")
-        row_identity = metadata.get("row_identity")
-        if not isinstance(table_name, str) or "." not in table_name:
-            continue
-        database, table = table_name.split(".", 1)
-        columns = tuple(row_identity) if isinstance(row_identity, list) else ()
-        contracts[table_name] = TableIdentity(
-            database=database,
-            table=table,
-            columns=columns,
+def signal_identity_contracts(catalog: SignalCatalog) -> Dict[str, TableIdentity]:
+    """Return each catalogued signal table's row identity, deprecated signals included."""
+    return {
+        definition.table: TableIdentity(
+            database=SIGNAL_TABLE_DATABASE,
+            table=definition.signal_id,
+            columns=definition.row_identity,
             scope_column="match_date",
-            source=f"{path.name} row_identity",
+            source=f"{definition.source_path.name} row_identity",
         )
-    return contracts
+        for definition in catalog
+    }
 
 
 def build_identity_contracts(project_root: Path) -> Dict[str, TableIdentity]:
@@ -259,7 +249,10 @@ def build_identity_contracts(project_root: Path) -> Dict[str, TableIdentity]:
             project_root / "clickhouse/gold/ddl/01_create_scenario_tables.sql"
         )
     )
-    contracts.update(load_signal_identity_contracts(project_root / "scripts/gold/signal/catalogs"))
+    catalog = load_signal_catalog(
+        project_root / SIGNAL_CATALOG_RELATIVE_DIR, project_root=project_root
+    )
+    contracts.update(signal_identity_contracts(catalog))
     return contracts
 
 

@@ -2,9 +2,8 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
-import yaml
-
 from scripts.quality.check_data_quality import strict_exit_code
+from src.fotmob.gold.signal_catalog import load_signal_catalog
 from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
@@ -316,14 +315,13 @@ def test_signal_dml_insert_columns_match_ddl_and_catalog_identity():
 
         assert insert_columns == ddl_columns, signal_id
 
-    for path in sorted((project_root / "scripts/gold/signal/catalogs").glob("sig_*.md")):
-        text = path.read_text(encoding="utf-8")
-        frontmatter = yaml.safe_load(text.split("---", 2)[1])
-        sql_path = project_root / frontmatter["asset_paths"]["sql"]
-        signal_id, insert_columns = _signal_insert_columns(sql_path.read_text(encoding="utf-8"))
+    for definition in load_signal_catalog():
+        signal_id, insert_columns = _signal_insert_columns(
+            definition.sql_path.read_text(encoding="utf-8")
+        )
 
-        assert signal_id == frontmatter["signal_id"]
-        assert set(frontmatter["row_identity"]).issubset(set(insert_columns))
+        assert signal_id == definition.signal_id
+        assert set(definition.row_identity).issubset(set(insert_columns))
 
 
 def test_bronze_date_duplicate_query_scopes_through_match_reference():
@@ -338,3 +336,35 @@ def test_bronze_date_duplicate_query_scopes_through_match_reference():
     assert "r.identity_row_count - f.identity_row_count" in queries.physical_count_sql
     assert "match_id IN (SELECT match_id FROM bronze.match_reference" in queries.logical_count_sql
     assert "toDate(match_date) = toDate('2026-01-02')" in queries.logical_count_sql
+
+
+def test_invalid_signal_catalog_fails_quality_check_before_connecting(monkeypatch):
+    from scripts.quality import check_data_quality
+    from src.fotmob.gold.signal_catalog import CatalogViolation, SignalCatalogError
+
+    def invalid_catalog(_project_root):
+        raise SignalCatalogError([CatalogViolation("catalogs/sig_x.md", "broken")])
+
+    def unexpected_client(**_kwargs):
+        raise AssertionError("quality check must not connect with an invalid catalog")
+
+    monkeypatch.setattr(check_data_quality, "build_identity_contracts", invalid_catalog)
+    monkeypatch.setattr(check_data_quality, "ClickHouseClient", unexpected_client)
+
+    assert check_data_quality.main(["--full-history"]) == 1
+
+
+def test_signal_identity_contracts_keep_deprecated_signals():
+    from dataclasses import replace
+
+    from src.fotmob.gold.signal_catalog import SignalCatalog
+    from src.warehouse.quality import signal_identity_contracts
+
+    catalog = load_signal_catalog()
+    deprecated = replace(catalog.definitions[0], status="deprecated")
+    contracts = signal_identity_contracts(
+        SignalCatalog(definitions=(deprecated,), catalog_dir=catalog.catalog_dir)
+    )
+
+    assert contracts[deprecated.table].columns == deprecated.row_identity
+    assert contracts[deprecated.table].source == f"{deprecated.signal_id}.md row_identity"
