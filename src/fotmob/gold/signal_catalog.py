@@ -46,7 +46,8 @@ from src.warehouse.schema_drift import (
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SIGNAL_CATALOG_DIR = PROJECT_ROOT / "scripts" / "gold" / "signal" / "catalogs"
+SIGNAL_CATALOG_RELATIVE_DIR = Path("scripts") / "gold" / "signal" / "catalogs"
+SIGNAL_CATALOG_DIR = PROJECT_ROOT / SIGNAL_CATALOG_RELATIVE_DIR
 SIGNAL_DDL_RELATIVE_DIR = Path("clickhouse") / "gold" / "ddl" / "signals"
 SIGNAL_DML_RELATIVE_DIR = Path("clickhouse") / "gold" / "dml" / "signals"
 SIGNAL_TABLE_DATABASE = "gold_signals"
