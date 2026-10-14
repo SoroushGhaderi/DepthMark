@@ -28,6 +28,7 @@ logger = get_logger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS_DIR = PROJECT_ROOT / "scripts" / "gold"
+SIGNAL_ACTIVATION_SCRIPT = SCRIPTS_DIR / "build_fotmob_signal_activations.py"
 
 
 @dataclass
@@ -194,10 +195,7 @@ class GoldService:
         dry_run: bool = False,
     ) -> int:
         """Run signal activation scripts. Returns exit code."""
-        activation_dir = SCRIPTS_DIR / "activations"
-        activation_scripts = [
-            activation_dir / "build_signal_activations.py",
-        ]
+        activation_scripts = [SIGNAL_ACTIVATION_SCRIPT]
 
         for script_path in activation_scripts:
             if not script_path.exists():
