@@ -1,7 +1,7 @@
 ---
 signal_id: sig_match_goalkeeping_defense_goalless_siege_match
 status: active
-entity: team
+entity: match
 family: goalkeeping
 subfamily: defense
 grain: match_team
@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_match_goalkeeping_defense_goalless_siege_match
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_goalless_siege_match.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_match_goalkeeping_defense_goalless_siege_match
 

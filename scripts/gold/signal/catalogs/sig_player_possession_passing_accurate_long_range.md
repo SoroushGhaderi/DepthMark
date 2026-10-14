@@ -14,7 +14,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_possession_passing_accurate_long_range
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_accurate_long_range.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_possession_passing_accurate_long_range
 

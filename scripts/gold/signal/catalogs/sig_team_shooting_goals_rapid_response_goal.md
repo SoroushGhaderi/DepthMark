@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_rapid_response_goal
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_rapid_response_goal.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_shooting_goals_rapid_response_goal
 

@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_creativity_playmaking_total_fluidity
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_total_fluidity.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_creativity_playmaking_total_fluidity
 

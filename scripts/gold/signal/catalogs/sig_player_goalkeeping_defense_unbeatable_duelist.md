@@ -14,7 +14,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_unbeatable_duelist.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_goalkeeping_defense_unbeatable_duelist
 

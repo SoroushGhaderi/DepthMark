@@ -14,7 +14,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_player_shooting_goals_late_winner_clutch
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_late_winner_clutch.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_player_shooting_goals_late_winner_clutch
 

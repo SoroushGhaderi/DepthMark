@@ -13,7 +13,6 @@ row_identity:
 asset_paths:
   table: gold_signals.sig_team_shooting_goals_shot_accuracy_collapse
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shot_accuracy_collapse.sql
-  runner: scripts/gold/run_gold_sql_jobs.py
 ---
 # sig_team_shooting_goals_shot_accuracy_collapse
 
