@@ -3,9 +3,9 @@
 The original monolithic contract has been split into two purpose-specific contracts:
 
 1. Core creative contract (Codex High):
-   - `scripts/gold/signal/contracts/SIGNAL_CORE_CONTRACT.md`
+   - `catalogs/signals/contracts/SIGNAL_CORE_CONTRACT.md`
 2. Routine implementation contract (Codex Low):
-   - `scripts/gold/signal/contracts/SIGNAL_EXECUTION_CONTRACT.md`
+   - `catalogs/signals/contracts/SIGNAL_EXECUTION_CONTRACT.md`
 
 ## Normative Language
 

@@ -88,8 +88,8 @@ for the documentation map.
 | Script inventory | [`scripts/README.md`](scripts/README.md) |
 
 Subsystem contracts live next to the code they govern, such as
-`scripts/gold/scenario/SCENARIOS_CONTRACT.md` and
-`scripts/gold/signal/contracts/`.
+`catalogs/scenarios/SCENARIOS_CONTRACT.md` and
+`catalogs/signals/contracts/`.
 
 ## Project Layout
 

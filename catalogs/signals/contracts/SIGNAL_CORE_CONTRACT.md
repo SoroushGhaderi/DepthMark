@@ -15,8 +15,8 @@ This document is intended for deep tactical/analytical reasoning work where desi
 This contract applies to:
 
 - `clickhouse/gold/dml/signals/*/sig_*.sql`
-- `scripts/gold/signal/catalogs/sig_*.md`
-- `scripts/gold/signal/catalogs/README.md`
+- `catalogs/signals/sig_*.md`
+- `catalogs/signals/README.md`
 
 ## Core Principles
 
@@ -40,7 +40,7 @@ When proposing a new signal, similarity against existing active signals MUST be 
 When signal inventory is large, similarity checks MUST follow this workflow to avoid loading unnecessary context:
 
 1. Stage 1 (index-only scan):
-   - Read only `scripts/gold/signal/catalogs/README.md` table rows.
+   - Read only `catalogs/signals/README.md` table rows.
    - Filter to `status=active` plus exact `entity`, `family`, and `subfamily` match.
 2. Stage 2 (narrow candidate set):
    - Keep at most 8 candidates.
@@ -147,7 +147,7 @@ When generating analyst-facing exploratory SQL:
 
 ## Catalog Contract
 
-File: `scripts/gold/signal/catalogs/sig_<name>.md`
+File: `catalogs/signals/sig_<name>.md`
 
 Each catalog MUST include:
 

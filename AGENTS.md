@@ -44,7 +44,7 @@ canonical FotMob fixture reference used by the cross-source resolution edge.
 - `docs/data-flow/infrastructure.md`: Docker setup, quick start, and environment configuration.
 - `docs/SCRIPTS_CONTRACT.md`: authoritative rules for scripts, script-oriented helpers, and application services behind script entry points.
 - `scripts/README.md`: script layout and command surface.
-- `clickhouse/gold/dml/signals/README.md` and `scripts/gold/signal/catalogs/README.md`: signal SQL/catalog guidance.
+- `clickhouse/gold/dml/signals/README.md` and `catalogs/signals/README.md`: signal SQL/catalog guidance.
 
 If these files conflict with code, resolve the mismatch intentionally and mention it in the change summary.
 
@@ -156,7 +156,7 @@ For files under `scripts/`, script-oriented helpers under `src/`, and source or 
 - New or changed scenario work should update SQL, runner code, DDL/contracts, and the relevant catalog docs.
 - Scenario SQL targets `gold_scenarios.scenario_*`; do not add legacy
   `gold.scenario_*` targets.
-- Signal metadata source of truth is markdown frontmatter under `scripts/gold/signal/catalogs/*.md`.
+- Signal metadata source of truth is markdown frontmatter under `catalogs/signals/*.md`.
 - Required signal frontmatter keys include `signal_id`, `status`, `entity`, `family`, `subfamily`, `grain`, `row_identity`, and `asset_paths`.
 
 ## Testing And Verification

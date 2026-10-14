@@ -4,7 +4,7 @@ Signals are tactical/statistical triggers with focused single-condition logic.
 
 - `clickhouse/gold/dml/signals/{match,team,player}/sig_*.sql`: signal SQL definitions executed through
   `scripts/gold/run_gold_sql_jobs.py`
-- `scripts/gold/signal/catalogs/sig_*.md`: markdown catalogs with frontmatter
+- `catalogs/signals/sig_*.md`: markdown catalogs with frontmatter
   metadata and output schema documentation
 
 Signal SQL jobs populate `gold_signals.sig_*` tables. Active catalogs sync to
