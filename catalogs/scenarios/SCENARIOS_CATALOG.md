@@ -26,12 +26,12 @@ Identifies finished matches decided by a dominant 3+ goal margin, capturing fixt
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_demolition.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_demolition`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_demolition
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_demolition
 ```
 
 ---
@@ -51,12 +51,12 @@ Finds wins built on elite defensive suppression, where the winning side concedes
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_defensive_shutdown_win.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_defensive_shutdown_win`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_defensive_shutdown_win
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_defensive_shutdown_win
 ```
 
 ---
@@ -76,12 +76,12 @@ Captures wins where the victor generated little attacking volume and still took 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_underdog_heist.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_underdog_heist`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_underdog_heist
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_underdog_heist
 ```
 
 ---
@@ -101,12 +101,12 @@ Identifies winning teams whose victories were powered by set-piece execution —
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_dead_ball_dominance.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_dead_ball_dominance`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_dead_ball_dominance
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_dead_ball_dominance
 ```
 
 ---
@@ -126,12 +126,12 @@ Finds wins achieved with very low possession share — capturing results where a
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_low_block_heist.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_low_block_heist`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_low_block_heist
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_low_block_heist
 ```
 
 ---
@@ -151,12 +151,12 @@ Highlights matches with minimal chance creation from both sides — contests def
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_tactical_stalemate.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_tactical_stalemate`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_tactical_stalemate
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_tactical_stalemate
 ```
 
 ---
@@ -176,12 +176,12 @@ Identifies full comebacks where the eventual match winner was actively losing at
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_great_escape.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_great_escape`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_great_escape
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_great_escape
 ```
 
 ---
@@ -201,12 +201,12 @@ Finds individual carrying performances where a single player delivered extreme d
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_one_man_army.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_one_man_army`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_one_man_army
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_one_man_army
 ```
 
 ---
@@ -226,12 +226,12 @@ Detects wins decided by a late goal that fundamentally altered the match state �
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_last_gasp.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_last_gasp`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_last_gasp
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_last_gasp
 ```
 
 ---
@@ -251,12 +251,12 @@ Surfaces goalkeepers who produced major shot-stopping value in finished matches 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_shot_stopper.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_shot_stopper`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_shot_stopper
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_shot_stopper
 ```
 
 ---
@@ -280,12 +280,12 @@ Flags finished matches with extreme physical or disciplinary intensity — conte
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_war_zone.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_war_zone`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_war_zone
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_war_zone
 ```
 
 ---
@@ -307,12 +307,12 @@ Finds elite finishing spikes where a player scored multiple goals from minimal s
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_clinical_finisher.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_clinical_finisher`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_clinical_finisher
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_clinical_finisher
 ```
 
 ---
@@ -332,12 +332,12 @@ Tracks penalty-heavy matches with multiple high-variance pressure moments — co
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_russian_roulette.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_russian_roulette`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_russian_roulette
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_russian_roulette
 ```
 
 ---
@@ -357,12 +357,12 @@ Identifies winning teams who paired a very low shot volume with an exceptionally
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_efficiency_machine.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_efficiency_machine`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_efficiency_machine
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_efficiency_machine
 ```
 
 ---
@@ -382,12 +382,12 @@ Highlights goalkeepers who repeatedly denied high-quality on-target chances with
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_big_chance_killer.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_big_chance_killer`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_big_chance_killer
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_big_chance_killer
 ```
 
 ---
@@ -407,12 +407,12 @@ Finds teams that avoided defeat despite receiving a red card during the match �
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_ten_men_stand.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_ten_men_stand`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_ten_men_stand
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_ten_men_stand
 ```
 
 ---
@@ -434,12 +434,12 @@ Identifies outfield players who combined safe ball circulation with meaningful f
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_progressive_powerhouse.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_progressive_powerhouse`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_progressive_powerhouse
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_progressive_powerhouse
 ```
 
 ---
@@ -459,12 +459,12 @@ Finds matches where one side dominated control metrics — possession and passin
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_sterile_control.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_sterile_control`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_sterile_control
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_sterile_control
 ```
 
 ---
@@ -486,12 +486,12 @@ Captures dominant individual defensive displays characterised by elite aerial do
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_defensive_masterclass.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_defensive_masterclass`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_defensive_masterclass
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_defensive_masterclass
 ```
 
 ---
@@ -511,12 +511,12 @@ Identifies tempo controllers who combined elite touch volume with passing precis
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_metronome.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_metronome`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_metronome
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_metronome
 ```
 
 ---
@@ -540,12 +540,12 @@ Finds non-goalkeeper, non-center-back outfield players sustaining elite two-way 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_high_intensity_engine.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_high_intensity_engine`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_high_intensity_engine
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_high_intensity_engine
 ```
 
 ---
@@ -567,12 +567,12 @@ Surfaces balanced outfield performances where a single player contributed meanin
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_box_to_box_general.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_box_to_box_general`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_box_to_box_general
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_box_to_box_general
 ```
 
 ---
@@ -592,12 +592,12 @@ Finds away wins defined by territorial and chance-quality superiority — captur
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_away_day_masterclass.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_away_day_masterclass`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_away_day_masterclass
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_away_day_masterclass
 ```
 
 ---
@@ -617,12 +617,12 @@ Identifies elite individual creators who combined high chance-creation volume wi
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_key_pass_king.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_key_pass_king`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_key_pass_king
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_key_pass_king
 ```
 
 ---
@@ -642,12 +642,12 @@ Finds substitutes who made immediate direct attacking impact after coming off th
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_wildcard.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_wildcard`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_wildcard
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_wildcard
 ```
 
 ---
@@ -667,12 +667,12 @@ Highlights captains on winning teams who delivered above-average individual impa
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_lead_by_example.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_lead_by_example`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_lead_by_example
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_lead_by_example
 ```
 
 ---
@@ -694,12 +694,12 @@ Finds high-impact young starters who delivered outright attacking contributions 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_young_gun.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_young_gun`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_young_gun
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_young_gun
 ```
 
 ---
@@ -719,12 +719,12 @@ Detects teams that were trailing at half-time but recovered to avoid defeat — 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_second_half_warriors.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_second_half_warriors`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_second_half_warriors
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_second_half_warriors
 ```
 
 ---
@@ -744,12 +744,12 @@ Find elite passing-control performances delivered under adverse possession conte
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_against_the_grain.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_against_the_grain`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_against_the_grain
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_against_the_grain
 ```
 
 ---
@@ -769,12 +769,12 @@ Flags matches with heavy combined foul counts but unusually light disciplinary p
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_unpunished_aggression.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_unpunished_aggression`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_unpunished_aggression
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_unpunished_aggression
 ```
 
 ---
@@ -794,12 +794,12 @@ Finds wins built on elite team-level ball-winning intensity — matches where th
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_pressing_masterclass.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_pressing_masterclass`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_pressing_masterclass
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_pressing_masterclass
 ```
 
 ---
@@ -819,12 +819,12 @@ Identifies primary goalkeepers who have delivered match-defining performances ch
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_elite_shot_stopper.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_elite_shot_stopper`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_elite_shot_stopper
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_elite_shot_stopper
 ```
 
 ---
@@ -844,12 +844,12 @@ Find matches where one side lays siege with elite shot and xG volume, but still 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_hollow_dominance.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_hollow_dominance`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_hollow_dominance
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_hollow_dominance
 ```
 
 ---
@@ -867,12 +867,12 @@ Find outfield isolation specialists who combine high dribble volume, efficient t
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_touchline_terror.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_touchline_terror`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_touchline_terror
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_touchline_terror
 ```
 
 ---
@@ -890,12 +890,12 @@ Find deep distributors who repeatedly break lines through accurate long progress
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_line_breaker.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_line_breaker`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_line_breaker
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_line_breaker
 ```
 
 ---
@@ -915,12 +915,12 @@ Find end-to-end shootouts where both teams produce elite attacking volume, then 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_basketball_match.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_basketball_match`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_basketball_match
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_basketball_match
 ```
 
 ---
@@ -938,12 +938,12 @@ Find attackers who repeatedly draw fouls while actively carrying the ball or rec
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_lightning_rod.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_lightning_rod`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_lightning_rod
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_lightning_rod
 ```
 
 ---
@@ -963,12 +963,12 @@ Find outfield defenders who protect their box under heavy shot pressure, combini
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_human_shield.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_human_shield`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_human_shield
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_human_shield
 ```
 
 ---
@@ -988,12 +988,12 @@ Find late substitutes who deliver direct scoreline impact on very low touch volu
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_golden_touch.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_golden_touch`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_golden_touch
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_golden_touch
 ```
 
 ---
@@ -1013,12 +1013,12 @@ Find high-intensity disruptors who blend defensive action volume, tactical aggre
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_chaos_engine.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_chaos_engine`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_chaos_engine
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_chaos_engine
 ```
 
 ---
@@ -1036,12 +1036,12 @@ Find late-match collapses driven by goal surges, shot escalation, and aggressive
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_tired_legs.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_tired_legs`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_tired_legs
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_tired_legs
 ```
 
 ---
@@ -1061,12 +1061,12 @@ Find high-volume shooters who absorb a very large share of their team's attempts
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_black_hole.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_black_hole`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_black_hole
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_black_hole
 ```
 
 ---
@@ -1086,12 +1086,12 @@ Find teams whose defensive line repeatedly catches opponents offside while still
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_high_line_trap.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_high_line_trap`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_high_line_trap
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_high_line_trap
 ```
 
 ---
@@ -1111,12 +1111,12 @@ Find starting attackers with very low overall involvement but extreme penalty-bo
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_ghost_poacher.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_ghost_poacher`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_ghost_poacher
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_ghost_poacher
 ```
 
 ---
@@ -1136,12 +1136,12 @@ Find low-possession teams that leaned heavily on direct long-ball progression, s
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_route_one_masterclass.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_route_one_masterclass`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_route_one_masterclass
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_route_one_masterclass
 ```
 
 ---
@@ -1161,12 +1161,12 @@ Find matches where one side imposed extreme territorial control and almost compl
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_total_suffocation.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_total_suffocation`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_total_suffocation
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_total_suffocation
 ```
 
 ---
@@ -1186,12 +1186,12 @@ Find matches where one side weaponized possession to keep the opponent out of da
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_territorial_suffocation.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_territorial_suffocation`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_territorial_suffocation
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_territorial_suffocation
 ```
 
 ---
@@ -1211,12 +1211,12 @@ Find deep-lying distribution hubs who combine elite passing volume and accuracy 
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_clinical_pivot.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_clinical_pivot`
 
 ### 🚀 Execution
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_clinical_pivot
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_clinical_pivot
 ```
 
 ---
@@ -1239,11 +1239,11 @@ python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id s
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/{team,player}/scenario_<name>.sql`
-- **Runner:** `scripts/gold/run_gold_sql_jobs.py`
+- **Runner:** `scripts/gold/run_fotmob_gold_jobs.py`
 - **Target Table:** `gold_scenarios.scenario_<name>`
 
 ### 🚀 Execution
 \`\`\`bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind scenario --id scenario_<name>
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario --id scenario_<name>
 \`\`\`
 ```

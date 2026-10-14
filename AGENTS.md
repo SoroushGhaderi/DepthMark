@@ -44,7 +44,8 @@ canonical FotMob fixture reference used by the cross-source resolution edge.
 - `docs/data-flow/infrastructure.md`: Docker setup, quick start, and environment configuration.
 - `docs/SCRIPTS_CONTRACT.md`: authoritative rules for scripts, script-oriented helpers, and application services behind script entry points.
 - `scripts/README.md`: script layout and command surface.
-- `clickhouse/gold/dml/signals/README.md` and `catalogs/signals/README.md`: signal SQL/catalog guidance.
+- `catalogs/signals/contracts/README.md`: signal authoring guide and catalog, SQL, and table contracts.
+- `catalogs/signals/README.md` and `clickhouse/gold/dml/signals/README.md`: signal catalog index and SQL layout.
 
 If these files conflict with code, resolve the mismatch intentionally and mention it in the change summary.
 
@@ -69,6 +70,8 @@ python scripts/orchestration/run_scheduled_job.py fotmob-daily --dry-run
 python scripts/orchestration/setup_fotmob_warehouse.py
 python scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python scripts/mongodb/init_indexes.py
+python scripts/quality/check_signal_catalogs.py
+python scripts/quality/check_signal_catalogs.py --write-index
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/bronze/scrape_fotmob.py 20251208
 python scripts/report_scraping.py --date 20251208
@@ -157,7 +160,13 @@ For files under `scripts/`, script-oriented helpers under `src/`, and source or 
 - Scenario SQL targets `gold_scenarios.scenario_*`; do not add legacy
   `gold.scenario_*` targets.
 - Signal metadata source of truth is markdown frontmatter under `catalogs/signals/*.md`.
-- Required signal frontmatter keys include `signal_id`, `status`, `entity`, `family`, `subfamily`, `grain`, `row_identity`, and `asset_paths`.
+  Read it only through `load_signal_catalog()` in `src/fotmob/gold/signal_catalog.py`
+  (ADR 0033); never parse catalog frontmatter elsewhere.
+- Signal frontmatter holds exactly `signal_id`, `status`, `entity`, `family`,
+  `subfamily`, `grain`, `headline`, `trigger`, `row_identity`, and `asset_paths`
+  (`table`, `sql`). `entity` equals the id segment; `status` is `active` or
+  `deprecated`. Rules: `catalogs/signals/contracts/CATALOG.md`.
+- After any catalog change, run `python scripts/quality/check_signal_catalogs.py --write-index`.
 
 ## Testing And Verification
 
@@ -166,6 +175,7 @@ Use the narrowest verification that proves the change.
 ```bash
 pytest
 python scripts/quality/check_logging_style.py
+python scripts/quality/check_signal_catalogs.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
 python scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
 python scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run

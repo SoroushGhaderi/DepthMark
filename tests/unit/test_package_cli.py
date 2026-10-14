@@ -16,6 +16,7 @@ EXPECTED_CANONICAL_COMMANDS = {
     "load-fotmob-gold": "gold/load_fotmob_gold.py",
     "run-fotmob-gold-jobs": "gold/run_fotmob_gold_jobs.py",
     "build-fotmob-signal-activations": "gold/build_fotmob_signal_activations.py",
+    "check-signal-catalogs": "quality/check_signal_catalogs.py",
     "run-fotmob-pipeline": "orchestration/run_fotmob_pipeline.py",
     "setup-fotmob-warehouse": "orchestration/setup_fotmob_warehouse.py",
     "discover-oddspedia-events": "oddspedia/discover_oddspedia_events.py",

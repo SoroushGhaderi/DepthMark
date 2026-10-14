@@ -113,7 +113,9 @@ python3 scripts/quality/check_logging_style.py
 
 ## MongoDB Sync
 
-After Gold activation rebuild, sync signal catalogs to MongoDB:
+After Gold activation rebuild, mirror the signal catalogs into MongoDB. The
+sync validates the whole catalog first and writes nothing if any catalog is
+invalid; `--dry-run` reports inserts, updates, and deletes:
 
 ```bash
 python3 scripts/mongodb/init_indexes.py
@@ -203,8 +205,8 @@ python3 scripts/health_check.py --json
 | Scraping fails (API) | Re-run `scrape_fotmob.py` for affected dates |
 | Bronze load fails | Re-run `load_fotmob_bronze.py --date <date>` or `--single-date <date>` |
 | Silver SQL fails | Fix SQL, re-run `silver/load_fotmob_silver.py --date <YYYYMMDD>` for the same scope |
-| Gold SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind signal --id <id>` |
-| Activation fails | Re-run `build_signal_activations.py --date <YYYYMMDD>` with the same scope |
+| Gold SQL fails | Re-run `run_fotmob_gold_jobs.py --date <YYYYMMDD> --kind signal --id <id>` |
+| Activation fails | Re-run `build_fotmob_signal_activations.py --date <YYYYMMDD>` with the same scope |
 | Signal failures skipped activations | Fix signals, rerun `load_fotmob_gold.py --date <YYYYMMDD> --part signals` |
 | Commit fails after some tables changed | Re-run the identical scope; replacement converges safely |
-| MongoDB sync fails | Re-run `sync_signal_catalogs.py` |
+| MongoDB sync fails | Fix any catalog violation (`check_signal_catalogs.py`), then re-run `sync_signal_catalogs.py` |

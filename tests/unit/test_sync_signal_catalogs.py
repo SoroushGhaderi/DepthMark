@@ -151,3 +151,18 @@ def test_invalid_catalog_syncs_nothing(monkeypatch) -> None:
     monkeypatch.setattr(sync, "setup_logging", lambda **_kwargs: None)
 
     assert sync.main(["--dry-run"]) == 1
+
+
+def test_every_document_matches_the_published_signals_schema(documents) -> None:
+    import json
+    from pathlib import Path
+
+    jsonschema = pytest.importorskip("jsonschema")
+    schema = json.loads(Path("schemas/mongodb/signals.schema.json").read_text(encoding="utf-8"))
+    validator = jsonschema.Draft202012Validator(schema)
+    timestamp = CREATED_AT.isoformat()
+
+    for document in documents:
+        stored = {**document, "created_at": timestamp, "updated_at": timestamp}
+        errors = [error.message for error in validator.iter_errors(stored)]
+        assert errors == [], document["signal_id"]

@@ -209,7 +209,7 @@ code {
 
 <header>
   <h1>DepthMark: architecture review</h1>
-  <p class="meta">2026-10-11 · branch <code>fix/non-destructive-warehouse-setup</code> · ~37k lines Python, 690 SQL files, 344 signal catalogs, 31 ADRs · updated after candidate 1 was implemented</p>
+  <p class="meta">2026-10-11 · branch <code>fix/non-destructive-warehouse-setup</code> · ~37k lines Python, 690 SQL files, 344 signal catalogs, 31 ADRs · updated after candidates 1 and 2 were implemented</p>
   <p class="small">This review adds to <a href="REVIEW.md"><code>docs/REVIEW.md</code></a> and does not repeat it. Items already listed there (no CI, floating dependencies, lint baseline, <code>SELECT *</code>, TTL) are mentioned only where a candidate below fixes them as a side effect.</p>
   <div class="legend">
     <span><span class="legend-box"></span> module</span>
@@ -219,7 +219,7 @@ code {
   </div>
   <ul class="toc">
     <li><a href="#c1">1 Bronze admission ✓</a></li>
-    <li><a href="#c2">2 Signal catalog</a></li>
+    <li><a href="#c2">2 Signal catalog ✓</a></li>
     <li><a href="#c3">3 Thin entry points</a></li>
     <li><a href="#c4">4 Pipeline plan</a></li>
     <li><a href="#c5">5 Warehouse session</a></li>
@@ -304,10 +304,10 @@ code {
 <article class="card" id="c2">
   <div class="card-head">
     <h2>2. One Signal Catalog module</h2>
-    <span class="badge b-strong">Strong</span>
+    <span class="badge b-done">Done · ADR 0033</span>
     <span class="badge b-cat">In-process</span>
   </div>
-  <p class="files"><code>scripts/gold/activations/build_signal_activations.py:135-230</code>, <code>scripts/mongodb/sync_signal_catalogs.py:54-200</code>, <code>src/warehouse/quality.py:229</code>, <code>src/fotmob/gold/dml_runner.py:132</code></p>
+  <p class="files">New <code>src/fotmob/gold/signal_catalog.py</code> and <code>scripts/quality/check_signal_catalogs.py</code>; rewired <code>src/fotmob/gold/dml_runner.py</code>, <code>src/warehouse/quality.py</code>, <code>scripts/mongodb/sync_signal_catalogs.py</code>; renamed <code>scripts/gold/build_fotmob_signal_activations.py</code> and <code>scripts/gold/run_fotmob_gold_jobs.py</code> (old paths are adapters); catalogs moved to <code>catalogs/signals/</code></p>
   <div class="compare">
     <div class="panel">
       <p class="label">Before: three parsers, three failure policies</p>
@@ -329,20 +329,20 @@ code {
     <div class="panel">
       <p class="label">After</p>
       <div class="deep">
-        <div class="sig">load_signal_catalog(dir) → tuple[SignalDefinition]</div>
-        <div class="chips"><span class="chip">frontmatter parse</span><span class="chip">required keys</span><span class="chip">id ↔ entity/family</span><span class="chip">asset path checks</span><span class="chip">status filter</span><span class="chip">row_identity ↔ DDL ORDER BY</span></div>
+        <div class="sig">load_signal_catalog(dir) → SignalCatalog | SignalCatalogError</div>
+        <div class="chips"><span class="chip">exact frontmatter keys</span><span class="chip">entity/family/subfamily = id segments</span><span class="chip">status active | deprecated</span><span class="chip">asset paths exist</span><span class="chip">every DML and DDL table catalogued</span><span class="chip">identity chain ↔ DDL hash</span><span class="chip">all violations in one error</span></div>
       </div>
-      <div class="consumers"><span class="node">activations</span><span class="node">Mongo sync</span><span class="node">quality gate</span><span class="node">Gold job list</span></div>
+      <div class="consumers"><span class="node">Gold job list</span><span class="node">activations</span><span class="node">quality gate</span><span class="node">Mongo mirror</span><span class="node">check command</span></div>
     </div>
   </div>
-  <p><strong>Problem:</strong> three modules parse the same frontmatter in different ways. The quality gate skips malformed files without logging (<code>except: continue</code>), so a broken catalog quietly removes its signal from the duplicate-identity check. All 93 <code>sig_match_*</code> catalogs declare <code>entity: team</code>, and the activation builder logs a warning for each one on every run. The Gold runner finds SQL by glob, so <code>status</code> has no effect on what runs.</p>
-  <p><strong>Solution:</strong> add one module that returns validated, immutable <code>SignalDefinition</code> records and is the only reader of catalogs. Every consumer and the Gold job list are built from it.</p>
+  <p><strong>Problem (was):</strong> three modules parsed the same frontmatter differently. The quality gate skipped malformed catalogs with <code>continue</code>, removing them from duplicate checks. The 93 <code>sig_match_*</code> catalogs said <code>entity: team</code>, so ClickHouse activations recorded <code>match</code> while MongoDB recorded <code>team</code>. The Gold runner found SQL by glob, so <code>status</code> decided nothing, and every MongoDB document embedded the generic runner's source.</p>
+  <p><strong>What changed:</strong> one module is the only catalog reader, and one invalid catalog fails every consumer before it writes. <code>entity</code> is the subject scope and equals the id segment; <code>status</code> is <code>active</code> or <code>deprecated</code> and now decides what runs. <code>asset_paths.runner</code> is gone. The MongoDB sync mirrors the catalog: it replaces changed documents whole, skips unchanged ones by content hash, and prunes orphans behind a mass-deletion guard. The index table is generated by <code>check_signal_catalogs.py --write-index</code>. Catalogs and contracts moved out of <code>scripts/</code>, and the contracts were rewritten by artifact, with each rule naming the check that enforces it.</p>
   <ul class="small">
-    <li><strong>Leverage:</strong> each new signal is validated once, the same way everywhere.</li>
-    <li><strong>Tests:</strong> one contract test over the real catalog directory checks catalog ↔ SQL ↔ DDL identity. This is the "catalogs generate DDL identity checks" idea REVIEW.md left unscheduled.</li>
-    <li><strong>Decision needed:</strong> is <code>entity</code> the signal scope (<code>match</code>) or the row grain (<code>team</code>)? <code>grain: match_team</code> already holds the grain, so <code>entity</code> should probably match the id.</li>
+    <li><strong>Correction to this review:</strong> the proposed <code>row_identity ↔ DDL ORDER BY</code> check would have failed 132 signals without a defect, because <code>ORDER BY</code> is a sort key. The enforced contract is the identity chain: <code>row_identity</code> columns exist, the DDL <code>signal_instance_id</code> default hashes them in catalog order, and <code>ORDER BY</code> ends with <code>signal_instance_id</code>. All 344 signals satisfy it.</li>
+    <li><strong>Verified:</strong> generated activation SQL is byte-identical for all 344 signals; Gold job lists are unchanged for every documented selector; every MongoDB document validates against <code>schemas/mongodb/signals.schema.json</code>.</li>
+    <li><strong>Tests:</strong> 59 new tests (465 in total) across the loader, the check command, job selection, the activation builder, the quality gate, and the sync.</li>
+    <li><strong>Follow-up:</strong> all 344 signal DML files still insert into the legacy <code>gold.sig_*</code> name, which the runner rewrites; migrate them to <code>gold_signals.*</code>.</li>
   </ul>
-  <div class="callout note">ADR 0008 (catalogs in markdown) still holds. This only centralizes how they are read. Consider also moving <code>scripts/gold/signal/catalogs/</code> out of <code>scripts/</code>: catalogs are content, not scripts.</div>
 </article>
 
 <!-- 3 -->
@@ -585,9 +585,8 @@ code {
 </section>
 
 <section class="top" id="top-recommendation">
-  <h2>Next: 2. One Signal Catalog module</h2>
-  <p>Candidate 1 is done, which removes the only active correctness problem this review found. Candidate 2 has the best leverage per line, since every new signal goes through the catalog, and it has a smaller correctness gap of its own: the quality gate silently skips malformed catalogs. It is in-process work, so the new interface is testable from the first commit.</p>
-  <p>Then <strong>3 + 4 + 6 together</strong>, because thin entry points, the stage plan and the run scope share one interface (<code>RunScope</code> → <code>main(argv)</code>).</p>
+  <h2>Next: 3 + 4 + 6 together</h2>
+  <p>Candidates 1 and 2 are done, which removes the correctness gaps this review found. Thin entry points, the stage plan, and the run scope share one interface (<code>RunScope</code> → <code>main(argv)</code>), so they are best done as one change. Candidate 2 already moved the activation builder and the Gold runner to canonical names, which leaves fewer deprecated files holding real code.</p>
 </section>
 
 <p class="closing">Which of these would you like to explore?</p>
