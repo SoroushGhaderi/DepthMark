@@ -17,6 +17,7 @@ from src.fotmob.gold.dml_runner import (
     build_scoped_gold_job,
     discover_gold_sql_jobs,
 )
+from src.fotmob.gold.signal_catalog import SignalCatalog, SignalCatalogError, load_signal_catalog
 from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.integrations.clickhouse.sql import execute_sql_script
@@ -89,19 +90,6 @@ class GoldService:
         for sql_file in sql_files:
             execute_sql_script(self.client, sql_file, layer_name="gold")
 
-    def discover_signal_jobs(
-        self,
-        entity: Optional[str] = None,
-        family: Optional[str] = None,
-    ) -> list[GoldSqlJob]:
-        """Discover signal SQL jobs, optionally filtered by entity or family."""
-        return discover_gold_sql_jobs(
-            "signal",
-            entity=entity,
-            family=family,
-            target_db=gold_signals_db(),
-        )
-
     def run_sql_jobs(
         self,
         job_name: str,
@@ -151,9 +139,11 @@ class GoldService:
         part: str,
         scope: WarehouseExecutionScope,
         dry_run: bool = False,
+        signal_catalog: Optional[SignalCatalog] = None,
     ) -> tuple[int, int, int, int]:
         """Stage and commit scenario and signal jobs selected by part and scope.
 
+        Signal jobs are the active signals of ``signal_catalog``, loaded when not given.
         Returns (scenario_ok, scenario_fail, signal_ok, signal_fail).
         """
         scenario_jobs = (
@@ -162,7 +152,9 @@ class GoldService:
             else []
         )
         signal_jobs = (
-            discover_gold_sql_jobs("signal", target_db=gold_signals_db())
+            discover_gold_sql_jobs(
+                "signal", target_db=gold_signals_db(), signal_catalog=signal_catalog
+            )
             if part in ("all", "signals")
             else []
         )
@@ -270,6 +262,20 @@ class GoldService:
         """
         result = GoldRunResult(exit_code=0)
 
+        signal_catalog: Optional[SignalCatalog] = None
+        if part in ("all", "signals"):
+            try:
+                signal_catalog = load_signal_catalog()
+            except SignalCatalogError as error:
+                for violation in error.violations:
+                    logger.error("Signal catalog violation: %s", violation.describe())
+                logger.error(
+                    "Gold load blocked: signal catalog is invalid (%s violation(s))",
+                    len(error.violations),
+                )
+                result.exit_code = 1
+                return result
+
         if not dry_run:
             try:
                 assert_upstream_published(self.client, silver_publication(), consumer="Gold load")
@@ -294,7 +300,9 @@ class GoldService:
             result.scenario_failed_count,
             result.signal_success_count,
             result.signal_failed_count,
-        ) = self.run_selected_jobs(part=part, scope=scope, dry_run=dry_run)
+        ) = self.run_selected_jobs(
+            part=part, scope=scope, dry_run=dry_run, signal_catalog=signal_catalog
+        )
 
         if part in ("all", "signals") and result.signal_failed_count == 0:
             result.signal_activation_exit_code = self.run_signal_activation_builders(

@@ -78,7 +78,7 @@ def main(argv=None) -> int:
         failed_count = result.scenario_failed_count + result.signal_failed_count
         if result.signal_activation_exit_code != 0:
             failed_count += 1
-        if failed_count > 0:
+        if result.exit_code != 0 or failed_count > 0:
             return 1
         logger.info("Gold dry-run completed successfully")
         return 0

@@ -38,13 +38,13 @@ Flags players repeatedly bypassed in one-on-one actions (`dribbled past >= 5`) t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_dribbled_past_heavy.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_dribbled_past_heavy
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_dribbled_past_heavy
 ```
 
 ## Output Schema
