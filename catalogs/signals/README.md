@@ -1,33 +1,30 @@
 # Gold Signal Catalogs
 
-Each active Gold signal has a catalog file in this directory. The index is structured from per-signal metadata so engineers and analysts can quickly scan signal ownership, grain, and status.
+Each FotMob Gold signal has one catalog here, `<signal_id>.md`. Its YAML
+frontmatter is the source of truth for the signal's metadata (ADR 0008), and
+every consumer reads it through `load_signal_catalog()` in
+`src/fotmob/gold/signal_catalog.py` (ADR 0033): Gold job selection, the
+activation builder, the strict quality gate, and the MongoDB sync.
 
-## Metadata Contract
+- Frontmatter schema and body sections: [`contracts/CATALOG.md`](contracts/CATALOG.md)
+- Adding, changing, deprecating, or deleting a signal: [`contracts/AUTHORING.md`](contracts/AUTHORING.md)
+- All signal contracts: [`contracts/README.md`](contracts/README.md)
 
-Catalogs use a YAML frontmatter block that is parsed by `scripts/mongodb/sync_signal_catalogs.py`.
-The sync script currently requires these top-level fields:
+Validate every catalog without any service:
 
-- `signal_id`
-- `status`
-- `entity`
-- `family`
-- `subfamily`
-- `grain`
-- `row_identity`
-- `asset_paths`
+```bash
+python3 scripts/quality/check_signal_catalogs.py
+```
 
-Common optional fields include `headline` and `trigger`.
-Asset paths are explicit in each catalog:
+## Index
 
-- Target table: `gold_signals.{signal_id}`
-- SQL path: `clickhouse/gold/dml/signals/{entity}/{signal_id}.sql`
-- Runner path: `scripts/gold/run_gold_sql_jobs.py`
+The table below is generated from the catalogs and lists every signal,
+deprecated ones included. Do not edit it by hand; regenerate it after any
+catalog change:
 
-The MongoDB sync embeds the referenced SQL and shared generic runner file
-contents under `assets.sql.content` and `assets.runner.content`, along with each
-asset path, SHA-256 hash, and byte count.
-
-Keep this index aligned with active catalog files when adding, renaming, or deleting a signal.
+```bash
+python3 scripts/quality/check_signal_catalogs.py --write-index
+```
 
 <!-- signal-index:start -->
 | Signal ID | Entity | Family | Subfamily | Grain | Status | Catalog |

@@ -184,6 +184,30 @@ stability rules in DepthMark. The canonical command list lives in
    or other state mutation. It reports context, output scope, selected tables,
    exclusions, and planned operations.
 
+### FotMob Gold SQL Jobs And Signal Catalogs
+
+1. `scripts/gold/run_fotmob_gold_jobs.py` is the only selected-job runner for
+   Gold scenario and signal SQL (ADR 0001, ADR 0009, ADR 0033). It loads SQL
+   from `.sql` files, builds a `ScopedSqlJob` per selected job, stages every job
+   through `ScopedReplacementBatch` before committing any, and exits non-zero on
+   failure. Python may render validated SQL placeholders but must not inline
+   business or reference queries.
+2. One signal runs with `--id <signal_id>`; batches use `--kind`, or the
+   separate `--entity` or `--family` (`family` or `family_subfamily`)
+   selectors. Selecting a deprecated or uncatalogued signal exits `2`.
+3. `scripts/gold/load_fotmob_gold.py` is the bulk orchestrator. It runs the
+   selected scenario and signal jobs in id order, then
+   `scripts/gold/build_fotmob_signal_activations.py` with the same scope, then
+   `assert_gold_layer_contracts`. It never runs DDL; setup is separate
+   (ADR 0026). It supports a `--dry-run` plan.
+4. Signal catalog frontmatter is read only through `load_signal_catalog()` in
+   `src/fotmob/gold/signal_catalog.py`. Every consumer (the runner, the bulk
+   loader, the activation builder, `check_data_quality.py`, and
+   `sync_signal_catalogs.py`) loads the catalog before it writes anything and
+   exits `1` without writing when it reports any violation. Do not parse catalog
+   frontmatter anywhere else.
+5. New work must not add per-signal or per-scenario Python runner files.
+
 ### Oddspedia Source Pipeline
 
 1. Oddspedia event intake is independent of the FotMob orchestration command.
@@ -233,6 +257,10 @@ stability rules in DepthMark. The canonical command list lives in
 5. `scripts/quality/check_bronze_to_silver_reconciliation.py` remains a
    backward-compatible alias with its existing `--checks`, `--sample-limit`,
    and `--strict` arguments.
+6. `scripts/quality/check_signal_catalogs.py` validates the signal catalog
+   against its SQL and DDL without ClickHouse, MongoDB, or `.env`. It exits `1`
+   on any violation or a stale index; `--write-index` regenerates the index
+   table instead of failing on it and writes nothing else.
 
 ## Data Safety
 
