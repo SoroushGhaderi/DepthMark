@@ -6,7 +6,7 @@ The source of truth is markdown frontmatter in Git.
 ## Overview
 
 ```text
-scripts/gold/signal/catalogs/*.md   (source of truth)
+catalogs/signals/*.md   (source of truth)
   → sync_signal_catalogs.py
   → MongoDB signals collection       (serving copy)
 ```
@@ -23,7 +23,7 @@ scripts/gold/signal/catalogs/*.md   (source of truth)
 
 ## Signal Catalog Format
 
-Each signal has a markdown file in `scripts/gold/signal/catalogs/sig_<name>.md`:
+Each signal has a markdown file in `catalogs/signals/sig_<name>.md`:
 
 ```markdown
 ---
@@ -87,7 +87,7 @@ python3 scripts/mongodb/sync_signal_catalogs.py             # execute
 ```
 
 Sync process:
-1. Discovers all `scripts/gold/signal/catalogs/*.md` files.
+1. Discovers all `catalogs/signals/*.md` files.
 2. Parses YAML frontmatter and markdown body.
 3. Validates required frontmatter keys.
 4. Validates `asset_paths.table` uses `gold_signals.<signal_id>` namespace.

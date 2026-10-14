@@ -55,8 +55,8 @@ Gold setup DDL lives under `clickhouse/gold/ddl/`; transforms live under
 - `dml/signals/{match,team,player}/sig_*.sql`
 - `dml/activations/signal_activation_final_insert.sql`
 
-Signal metadata is authored in `scripts/gold/signal/catalogs/*.md`. Scenario
-narrative docs live in `scripts/gold/scenario/SCENARIOS_CATALOG.md`.
+Signal metadata is authored in `catalogs/signals/*.md`. Scenario
+narrative docs live in `catalogs/scenarios/SCENARIOS_CATALOG.md`.
 
 ### Oddspedia Gold
 

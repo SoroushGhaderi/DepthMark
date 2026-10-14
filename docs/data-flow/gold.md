@@ -41,8 +41,8 @@ Each signal consists of 4 artifacts:
 | --- | --- | --- |
 | SQL | `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql` | Transformation logic |
 | Table DDL | `clickhouse/gold/ddl/signals/{match,team,player}/` | Output table schema |
-| Catalog | `scripts/gold/signal/catalogs/sig_<name>.md` | Metadata + documentation |
-| Index | `scripts/gold/signal/catalogs/README.md` | Signal inventory |
+| Catalog | `catalogs/signals/sig_<name>.md` | Metadata + documentation |
+| Index | `catalogs/signals/README.md` | Signal inventory |
 
 ### Signal Taxonomy
 
@@ -70,7 +70,7 @@ Scenarios are narrative-driven analysis outputs:
 - 23 team/match-grain scenarios in `clickhouse/gold/dml/scenarios/team/`
 - 25 player-grain scenarios in `clickhouse/gold/dml/scenarios/player/`
 
-Catalog: `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+Catalog: `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 ## Data Flow
 
@@ -142,7 +142,7 @@ only the requested output scope:
 
 Per-row enrichment in the stage pass:
 
-1. Scans active signal catalogs in `scripts/gold/signal/catalogs/`.
+1. Scans active signal catalogs in `catalogs/signals/`.
 2. Reads each catalog's `row_identity` fields.
 3. For each signal output row in `gold_signals.sig_*`:
    - Computes `signal_instance_id = SHA256("v1|signal_id|<identity values>")`

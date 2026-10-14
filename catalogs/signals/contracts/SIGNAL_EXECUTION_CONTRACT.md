@@ -46,8 +46,8 @@ Each signal MUST ship as one 4-part package:
 
 1. SQL transform: `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql`
 2. Target table: `gold_signals.sig_<name>`
-3. Catalog: `scripts/gold/signal/catalogs/sig_<name>.md`
-4. Catalog index entry in `scripts/gold/signal/catalogs/README.md`
+3. Catalog: `catalogs/signals/sig_<name>.md`
+4. Catalog index entry in `catalogs/signals/README.md`
 
 No package is complete unless all 4 parts are present and consistent.
 
@@ -117,8 +117,8 @@ If the commit cannot be created (for example permissions, conflicts, or policy c
 
 - [ ] `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql` present and correct
 - [ ] `clickhouse/gold/ddl/signals/{match,team,player}/create_table_{entity}_{family}_{subfamily}.sql` set updated with new table DDL
-- [ ] `scripts/gold/signal/catalogs/sig_<name>.md` present and accurate
-- [ ] `scripts/gold/signal/catalogs/README.md` updated with new catalog entry
+- [ ] `catalogs/signals/sig_<name>.md` present and accurate
+- [ ] `catalogs/signals/README.md` updated with new catalog entry
 - [ ] Validation gate passed (`--part signals` dry-run and full run)
 
 ### Commit Message Templates
@@ -131,7 +131,7 @@ feat(signal): add sig_<name>
 - SQL: clickhouse/gold/dml/signals/<entity>/sig_<name>.sql
 - Table: gold_signals.sig_<name>
 - Runner: scripts/gold/run_gold_sql_jobs.py
-- Catalog: scripts/gold/signal/catalogs/sig_<name>.md
+- Catalog: catalogs/signals/sig_<name>.md
 ```
 
 **Update to existing signal:**

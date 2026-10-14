@@ -509,7 +509,7 @@ Current Gold inventory:
 - 48 scenario SQL transforms in `clickhouse/gold/dml/scenarios/{team,player}/`
   (23 team/match-grain, 25 player-grain)
 - 344 signal SQL transforms in `clickhouse/gold/dml/signals/{match,team,player}/`
-- 344 signal catalog markdown files in `scripts/gold/signal/catalogs/`
+- 344 signal catalog markdown files in `catalogs/signals/`
 - 1 shared activation serving table in `gold.signal_activations`
 
 Gold SQL jobs are executed through the generic runner in
@@ -600,7 +600,7 @@ Construct `scope` with `WarehouseExecutionScope.for_date("20251208")`,
 ## MongoDB Content Catalog
 
 Signal metadata is authored in markdown frontmatter under
-`scripts/gold/signal/catalogs/*.md`. These markdown catalogs are the source of
+`catalogs/signals/*.md`. These markdown catalogs are the source of
 truth for signal metadata; MongoDB is a synchronized serving/query copy. The sync
 script stores:
 
@@ -740,9 +740,9 @@ one activation row.
    Gold signal table DDL files use
    `create_table_{entity}_{family}_{subfamily}.sql`.
 5. New or changed scenario work must update SQL, Gold scenario DDL, and
-   `scripts/gold/scenario/SCENARIOS_CATALOG.md` when relevant.
+   `catalogs/scenarios/SCENARIOS_CATALOG.md` when relevant.
 6. New or changed signal work must update SQL, signal DDL, catalog
-   markdown, and `scripts/gold/signal/catalogs/README.md` when relevant.
+   markdown, and `catalogs/signals/README.md` when relevant.
 
 ## Incident Handling
 
@@ -759,8 +759,8 @@ one activation row.
 2. Keep project-wide references, runbooks, and operational guidance in `docs/`.
 3. Keep script layout and inventory in `scripts/README.md`.
 4. Keep subsystem contracts next to the code they govern, such as
-   `scripts/gold/scenario/SCENARIOS_CONTRACT.md` and
-   `scripts/gold/signal/contracts/`.
+   `catalogs/scenarios/SCENARIOS_CONTRACT.md` and
+   `catalogs/signals/contracts/`.
 5. Keep the source of truth for data flow and system diagrams in
    `docs/data-flow/warehouse-pipeline-reference.html`. It owns the central
    concept definitions and links detailed layer documentation, runbooks,

@@ -331,13 +331,13 @@ reported as non-failing operational diagnostics.
 ## Scenario Scripts
 
 Scenario SQL jobs are executed by `scripts/gold/run_gold_sql_jobs.py`.
-Do not add handwritten `scripts/gold/scenario/scenario_*.py` runner files.
-Scenario standards are defined in `scripts/gold/scenario/SCENARIOS_CONTRACT.md`.
+Do not add handwritten `catalogs/scenarios/scenario_*.py` runner files.
+Scenario standards are defined in `catalogs/scenarios/SCENARIOS_CONTRACT.md`.
 
 Current inventory: 48 matching SQL transforms.
 
 - SQL files: `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
-- Catalog: `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+- Catalog: `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 ## Signal Scripts
 
@@ -359,14 +359,14 @@ is rerun with the same scope. The activation ID key uses each signal catalog
 Current inventory: 344 matching SQL transforms and 344 matching markdown catalogs.
 
 - SQL files: `clickhouse/gold/dml/signals/*/sig_*.sql`
-- Contracts: `scripts/gold/signal/contracts/`
+- Contracts: `catalogs/signals/contracts/`
 
 ## Signal Catalogs
 
-Per-signal docs live in `scripts/gold/signal/catalogs/` and include tactical logic plus output schema tables:
+Per-signal docs live in `catalogs/signals/` and include tactical logic plus output schema tables:
 
-- `scripts/gold/signal/catalogs/README.md`
-- `scripts/gold/signal/catalogs/sig_*.md`
+- `catalogs/signals/README.md`
+- `catalogs/signals/sig_*.md`
 
 Before deep review of many full catalogs, use a token-efficient manual flow:
 

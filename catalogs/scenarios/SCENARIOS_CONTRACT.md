@@ -10,7 +10,7 @@ This contract applies to:
 - `scripts/gold/run_gold_sql_jobs.py`
 - `src/fotmob/gold/dml_runner.py`
 - `scripts/gold/load_fotmob_gold.py`
-- `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+- `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 ## Scenario Unit Contract
 
@@ -21,7 +21,7 @@ Each scenario is a 3-part unit:
 2. Target table  
    `gold_scenarios.scenario_<name>`
 3. Catalog entry in  
-   `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+   `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 All three parts are required for a production-ready scenario.
 
@@ -93,7 +93,7 @@ Minimum operational checks:
 
 1. Any new scenario must update:
    - `clickhouse/gold/ddl/01_create_scenario_tables.sql` (or active DDL file set)
-   - `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+   - `catalogs/scenarios/SCENARIOS_CATALOG.md`
 2. Renaming/deleting a scenario requires coordinated changes to:
    - SQL file
    - target table DDL

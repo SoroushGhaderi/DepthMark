@@ -95,6 +95,7 @@ services:
       - ./src:/app/src
       - ./credentials.json:/app/credentials.json:ro
       - ./clickhouse:/app/clickhouse:ro
+      - ./catalogs:/app/catalogs:ro
     environment:
       PYTHONUNBUFFERED: "1"
       PYTHONPATH: /app
