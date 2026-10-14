@@ -48,13 +48,13 @@ on the ball (`touches > 50`), and avoids possession losses via a conservative tu
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_pressure_absorber.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_pressure_absorber`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_pressure_absorber
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_pressure_absorber
 ```
 
 ## Output Schema

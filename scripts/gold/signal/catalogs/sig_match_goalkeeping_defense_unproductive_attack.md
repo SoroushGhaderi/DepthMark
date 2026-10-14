@@ -37,13 +37,13 @@ Detect defensive wins where one side absorbs very high shot volume, blocks an ex
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_unproductive_attack.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_unproductive_attack`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_unproductive_attack
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_unproductive_attack
 ```
 
 ## Output Schema

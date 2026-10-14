@@ -35,13 +35,13 @@ Flags players who miss at least three big chances in one finished match, surfaci
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_big_chance_bottler.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_shooting_goals_big_chance_bottler`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_big_chance_bottler
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_big_chance_bottler
 ```
 
 ## Output Schema

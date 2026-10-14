@@ -41,13 +41,13 @@ Detect player-level playmaking performances where a single player records an ass
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_assist_brace.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_creativity_playmaking_assist_brace`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_assist_brace
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_assist_brace
 ```
 
 ## Output Schema

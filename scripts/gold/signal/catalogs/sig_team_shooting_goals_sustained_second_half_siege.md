@@ -46,13 +46,13 @@ Detect team matches where post-halftime pressure escalates into extreme second-h
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_sustained_second_half_siege.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_shooting_goals_sustained_second_half_siege`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_sustained_second_half_siege
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_sustained_second_half_siege
 ```
 
 ## Output Schema

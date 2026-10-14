@@ -34,13 +34,13 @@ Triggers when a center back records at least 80 accurate passes, highlighting de
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_deep_playmaker.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_deep_playmaker`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_deep_playmaker
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_deep_playmaker
 ```
 
 ## Output Schema

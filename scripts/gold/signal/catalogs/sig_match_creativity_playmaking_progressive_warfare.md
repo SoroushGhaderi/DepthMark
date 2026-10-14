@@ -43,13 +43,13 @@ proxy metrics when explicit progressive-pass counts are not available in current
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_progressive_warfare.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_creativity_playmaking_progressive_warfare`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_progressive_warfare
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_progressive_warfare
 ```
 
 ## Output Schema

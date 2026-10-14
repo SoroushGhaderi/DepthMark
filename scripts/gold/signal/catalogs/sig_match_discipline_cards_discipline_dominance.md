@@ -34,13 +34,13 @@ Flags match-team rows where the winning side also leads the physical battle (fou
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_discipline_dominance.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_discipline_cards_discipline_dominance`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_discipline_dominance
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_discipline_dominance
 ```
 
 ## Output Schema

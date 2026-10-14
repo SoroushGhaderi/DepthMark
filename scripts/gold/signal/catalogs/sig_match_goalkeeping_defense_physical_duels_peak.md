@@ -35,13 +35,13 @@ Detects finished matches where total physical duel volume is extreme and emits b
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_physical_duels_peak.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_physical_duels_peak`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_physical_duels_peak
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_physical_duels_peak
 ```
 
 ## Output Schema

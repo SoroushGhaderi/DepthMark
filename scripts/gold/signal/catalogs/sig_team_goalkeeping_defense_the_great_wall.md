@@ -37,13 +37,13 @@ Detect matches where a team blocks at least half of opposition shot attempts, th
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_the_great_wall.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_the_great_wall`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_the_great_wall
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_the_great_wall
 ```
 
 ## Output Schema

@@ -30,13 +30,13 @@ Flags matches where one team completes more than three times as many passes as t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_one_sided_passing.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_possession_passing_one_sided_passing`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_one_sided_passing
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_one_sided_passing
 ```
 
 ## Output Schema

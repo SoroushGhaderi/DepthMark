@@ -29,13 +29,13 @@ Triggers when a team records elite full-match pass accuracy above `92%`, flaggin
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_accurate_unit.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_possession_passing_accurate_unit`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_accurate_unit
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_accurate_unit
 ```
 
 ## Output Schema

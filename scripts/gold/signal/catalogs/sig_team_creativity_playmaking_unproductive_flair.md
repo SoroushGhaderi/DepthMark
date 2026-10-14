@@ -47,13 +47,13 @@ completes at least 25 successful dribbles while finishing with zero goals.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unproductive_flair.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_unproductive_flair`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_unproductive_flair
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_unproductive_flair
 ```
 
 ## Output Schema

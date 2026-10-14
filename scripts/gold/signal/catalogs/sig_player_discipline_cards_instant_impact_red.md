@@ -34,13 +34,13 @@ Flags substitute players dismissed within 10 minutes of entering, surfacing imme
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_instant_impact_red.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_discipline_cards_instant_impact_red`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_instant_impact_red
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_instant_impact_red
 ```
 
 ## Output Schema

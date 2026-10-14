@@ -35,13 +35,13 @@ Detect finished matches where whistle-driven fragmentation is extreme, using a j
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_interruption_heavy.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_interruption_heavy`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_interruption_heavy
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_interruption_heavy
 ```
 
 ## Output Schema

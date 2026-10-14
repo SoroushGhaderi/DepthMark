@@ -37,13 +37,13 @@ Flags low-possession wins built on extreme clearance volume, surfacing compact, 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_parking_the_bus.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_parking_the_bus`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_parking_the_bus
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_parking_the_bus
 ```
 
 ## Output Schema

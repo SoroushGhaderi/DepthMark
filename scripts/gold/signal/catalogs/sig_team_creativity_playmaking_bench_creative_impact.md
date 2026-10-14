@@ -34,13 +34,13 @@ Detect team matches where substitute players jointly deliver meaningful creative
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_bench_creative_impact.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_bench_creative_impact`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_bench_creative_impact
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_bench_creative_impact
 ```
 
 ## Output Schema

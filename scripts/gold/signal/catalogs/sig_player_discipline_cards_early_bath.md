@@ -33,13 +33,13 @@ Triggers when a player is sent off in the opening 20 minutes, flagging severe ea
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_early_bath.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_discipline_cards_early_bath`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_early_bath
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_early_bath
 ```
 
 ## Output Schema

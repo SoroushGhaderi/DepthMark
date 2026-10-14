@@ -32,13 +32,13 @@ Detect matches where at least three different substitutes score non-own goals, t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_substituted_scoring_fest.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_shooting_goals_substituted_scoring_fest`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_substituted_scoring_fest
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_substituted_scoring_fest
 ```
 
 ## Output Schema

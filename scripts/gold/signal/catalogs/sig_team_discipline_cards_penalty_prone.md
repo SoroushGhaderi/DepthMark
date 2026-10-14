@@ -31,13 +31,13 @@ Flags team-match performances where a team concedes at least two penalties, surf
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_penalty_prone.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_discipline_cards_penalty_prone`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_penalty_prone
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_penalty_prone
 ```
 
 ## Output Schema

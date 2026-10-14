@@ -40,13 +40,13 @@ tackles won, interceptions, clearances, and shot blocks.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_defensive_workrate_monster.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_defensive_workrate_monster`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_defensive_workrate_monster
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_defensive_workrate_monster
 ```
 
 ## Output Schema

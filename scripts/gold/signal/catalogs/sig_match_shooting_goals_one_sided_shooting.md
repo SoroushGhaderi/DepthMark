@@ -33,13 +33,13 @@ Detect finished matches where one side owns every on-target attempt (`> 0` vs `0
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_one_sided_shooting.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_shooting_goals_one_sided_shooting`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_one_sided_shooting
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_one_sided_shooting
 ```
 
 ## Output Schema

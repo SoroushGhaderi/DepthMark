@@ -29,13 +29,13 @@ Triggers when a team's second-half pass volume is at least 30% lower than its fi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_passing_fatigue_index.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_possession_passing_passing_fatigue_index`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_passing_fatigue_index
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_passing_fatigue_index
 ```
 
 ## Output Schema

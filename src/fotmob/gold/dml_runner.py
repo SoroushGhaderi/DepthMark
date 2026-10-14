@@ -1,4 +1,9 @@
-"""Discover and execute Gold scenario and signal DML SQL in ClickHouse."""
+"""Discover and execute Gold scenario and signal DML SQL in ClickHouse.
+
+Scenario jobs are discovered from their SQL files. Signal jobs come from the
+validated signal catalog (ADR 0033): only active signals run, and selecting a
+deprecated or uncatalogued signal is an error.
+"""
 
 import os
 import re
@@ -7,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Optional
 
+from src.fotmob.gold.signal_catalog import SignalCatalog, SignalDefinition, load_signal_catalog
 from src.warehouse.publication import gold_outputs_publication
 from src.warehouse.scoped_replace import (
     ScopedReplacementBatch,
@@ -23,8 +29,8 @@ SignalEntity = Literal["match", "player", "team"]
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 GOLD_SQL_DIR = PROJECT_ROOT / "clickhouse" / "gold"
 GOLD_DML_DIR = GOLD_SQL_DIR / "dml"
+SCENARIO_DML_DIR = GOLD_DML_DIR / "scenarios"
 JOB_ID_RE = re.compile(r"^(scenario|sig|signal)_[a-z0-9_]+$")
-SIGNAL_ENTITIES: tuple[SignalEntity, ...] = ("match", "player", "team")
 SIGNAL_FAMILY_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
 
 
@@ -62,26 +68,6 @@ def validate_job_id(kind: GoldJobKind, job_id: str) -> str:
     return job_id
 
 
-def signal_entity_from_job_id(job_id: str) -> Optional[SignalEntity]:
-    """Infer signal entity subdirectory from a signal job id."""
-    if job_id.startswith("sig_match_"):
-        return "match"
-    if job_id.startswith("sig_player_"):
-        return "player"
-    if job_id.startswith("sig_team_"):
-        return "team"
-    return None
-
-
-def _dml_search_dir(kind: GoldJobKind, entity: Optional[SignalEntity] = None) -> Path:
-    """Return the DML directory root for scenario or signal SQL discovery."""
-    if kind == "scenario":
-        return GOLD_DML_DIR / "scenarios"
-    if entity:
-        return GOLD_DML_DIR / "signals" / entity
-    return GOLD_DML_DIR / "signals"
-
-
 def validate_signal_family(family: str) -> str:
     """Validate a signal family filter."""
     if not SIGNAL_FAMILY_RE.match(family):
@@ -92,41 +78,59 @@ def validate_signal_family(family: str) -> str:
     return family
 
 
-def resolve_gold_sql_job(
-    kind: GoldJobKind,
-    job_id: str,
-    *,
-    target_db: Optional[str] = None,
-) -> GoldSqlJob:
-    """Resolve a Gold SQL job id to SQL path and target table metadata."""
-    job_id = validate_job_id(kind, job_id)
-    entity = signal_entity_from_job_id(job_id) if kind == "signal" else None
-    search_dirs = (
-        [_dml_search_dir(kind, entity)]
-        if entity
-        else [_dml_search_dir(kind)]
-        if kind == "scenario"
-        else [_dml_search_dir(kind, signal_entity) for signal_entity in SIGNAL_ENTITIES]
-    )
-    sql_file = next(
-        (
-            path
-            for search_dir in search_dirs
-            for path in search_dir.rglob(f"{job_id}.sql")
-            if path.is_file()
-        ),
-        _dml_search_dir(kind, entity) / f"{job_id}.sql",
-    )
-    resolved_target_db = (
-        target_db or os.getenv("CLICKHOUSE_GOLD_TARGET_DB") or default_target_db(kind)
-    )
+def _resolved_target_db(kind: GoldJobKind, target_db: Optional[str]) -> str:
+    return target_db or os.getenv("CLICKHOUSE_GOLD_TARGET_DB") or default_target_db(kind)
+
+
+def _signal_job(definition: SignalDefinition, target_db: Optional[str]) -> GoldSqlJob:
+    resolved_target_db = _resolved_target_db("signal", target_db)
     return GoldSqlJob(
-        kind=kind,
+        kind="signal",
+        job_id=definition.signal_id,
+        sql_file=definition.sql_path,
+        target_db=resolved_target_db,
+        target_table=f"{resolved_target_db}.{definition.signal_id}",
+    )
+
+
+def _scenario_job(job_id: str, target_db: Optional[str]) -> GoldSqlJob:
+    sql_file = next(
+        (path for path in SCENARIO_DML_DIR.rglob(f"{job_id}.sql") if path.is_file()),
+        SCENARIO_DML_DIR / f"{job_id}.sql",
+    )
+    resolved_target_db = _resolved_target_db("scenario", target_db)
+    return GoldSqlJob(
+        kind="scenario",
         job_id=job_id,
         sql_file=sql_file,
         target_db=resolved_target_db,
         target_table=f"{resolved_target_db}.{job_id}",
     )
+
+
+def resolve_gold_sql_job(
+    kind: GoldJobKind,
+    job_id: str,
+    *,
+    target_db: Optional[str] = None,
+    signal_catalog: Optional[SignalCatalog] = None,
+) -> GoldSqlJob:
+    """Resolve a Gold SQL job id to SQL path and target table metadata.
+
+    A signal must have an active catalog; the catalog is loaded when not given.
+    """
+    job_id = validate_job_id(kind, job_id)
+    if kind == "scenario":
+        return _scenario_job(job_id, target_db)
+
+    catalog = signal_catalog or load_signal_catalog()
+    try:
+        definition = catalog.get(job_id)
+    except KeyError as error:
+        raise ValueError(f"Signal {job_id} has no catalog") from error
+    if not definition.is_active:
+        raise ValueError(f"Signal {job_id} is {definition.status} and does not run in Gold")
+    return _signal_job(definition, target_db)
 
 
 def discover_gold_sql_jobs(
@@ -135,8 +139,13 @@ def discover_gold_sql_jobs(
     entity: Optional[SignalEntity] = None,
     family: Optional[str] = None,
     target_db: Optional[str] = None,
+    signal_catalog: Optional[SignalCatalog] = None,
 ) -> list[GoldSqlJob]:
-    """Discover all executable Gold SQL jobs for a kind."""
+    """Discover all executable Gold SQL jobs for a kind, ordered by job id.
+
+    Signal jobs are the active catalog signals, optionally filtered by entity or by
+    family (``family`` or ``family_subfamily``); the catalog is loaded when not given.
+    """
     if kind != "signal" and (entity or family):
         raise ValueError("Entity and family filters are only supported for signal SQL jobs")
     if family is not None:
@@ -145,27 +154,20 @@ def discover_gold_sql_jobs(
         raise ValueError("Use --entity or --family as separate signal selectors, not both")
 
     if kind == "scenario":
-        pattern = "scenario_*.sql"
-        search_dirs = [_dml_search_dir(kind)]
-    elif entity:
-        pattern = f"sig_{entity}_*.sql"
-        search_dirs = [_dml_search_dir(kind, entity)]
-    elif family:
-        pattern = f"sig_*_{family}_*.sql"
-        search_dirs = [_dml_search_dir(kind)]
-    else:
-        pattern = "sig_*.sql"
-        search_dirs = [_dml_search_dir(kind, signal_entity) for signal_entity in SIGNAL_ENTITIES]
-
-    jobs: list[GoldSqlJob] = []
-    seen_job_ids: set[str] = set()
-    for search_dir in search_dirs:
-        for path in sorted(search_dir.rglob(pattern)):
+        jobs: list[GoldSqlJob] = []
+        seen_job_ids: set[str] = set()
+        for path in sorted(SCENARIO_DML_DIR.rglob("scenario_*.sql")):
             if not path.is_file() or path.stem in seen_job_ids:
                 continue
             seen_job_ids.add(path.stem)
-            jobs.append(resolve_gold_sql_job(kind, path.stem, target_db=target_db))
-    return jobs
+            jobs.append(_scenario_job(path.stem, target_db))
+        return jobs
+
+    catalog = signal_catalog or load_signal_catalog()
+    return [
+        _signal_job(definition, target_db)
+        for definition in catalog.select(entity=entity, family=family)
+    ]
 
 
 def build_scoped_gold_job(job: GoldSqlJob) -> ScopedSqlJob:

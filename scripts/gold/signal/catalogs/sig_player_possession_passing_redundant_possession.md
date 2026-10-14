@@ -36,13 +36,13 @@ Triggers when a player has high passing volume but no final-third progression, i
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_redundant_possession.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_redundant_possession`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_redundant_possession
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_redundant_possession
 ```
 
 ## Output Schema

@@ -30,13 +30,13 @@ Flags team-match performances with multiple dismissals (two or more red cards), 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_discipline_meltdown.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_discipline_cards_discipline_meltdown`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_discipline_meltdown
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_discipline_meltdown
 ```
 
 ## Output Schema

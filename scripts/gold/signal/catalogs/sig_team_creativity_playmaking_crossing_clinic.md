@@ -35,13 +35,13 @@ Detect team-level crossing clinics where a side records at least 10 successful c
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_crossing_clinic.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_creativity_playmaking_crossing_clinic`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_crossing_clinic
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_crossing_clinic
 ```
 
 ## Output Schema

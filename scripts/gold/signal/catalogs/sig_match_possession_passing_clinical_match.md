@@ -29,13 +29,13 @@ Flags extreme finishing matches where total scoring is high despite low underlyi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_clinical_match.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_possession_passing_clinical_match`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_possession_passing_clinical_match
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_possession_passing_clinical_match
 ```
 
 ## Output Schema

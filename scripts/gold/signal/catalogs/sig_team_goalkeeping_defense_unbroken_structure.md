@@ -47,13 +47,13 @@ scoreline context.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_unbroken_structure.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_goalkeeping_defense_unbroken_structure`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_unbroken_structure
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_unbroken_structure
 ```
 
 ## Output Schema

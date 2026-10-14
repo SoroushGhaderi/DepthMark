@@ -29,13 +29,13 @@ Triggers when the losing side attempts an extreme long-ball volume (`>60`), indi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_long_ball_desperation.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_team_possession_passing_long_ball_desperation`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_long_ball_desperation
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_long_ball_desperation
 ```
 
 ## Output Schema

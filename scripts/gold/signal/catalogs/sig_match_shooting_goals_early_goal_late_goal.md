@@ -33,13 +33,13 @@ Flag finished matches that feature both an opening-phase breakthrough and an end
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_early_goal_late_goal.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_shooting_goals_early_goal_late_goal`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_early_goal_late_goal
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_early_goal_late_goal
 ```
 
 ## Output Schema

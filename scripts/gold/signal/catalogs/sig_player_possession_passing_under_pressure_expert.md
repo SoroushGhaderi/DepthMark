@@ -37,13 +37,13 @@ Flags players who keep elite pass accuracy under sustained opponent pressure, is
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_under_pressure_expert.sql`
-- Runner: `scripts/gold/run_gold_sql_jobs.py`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_under_pressure_expert`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_under_pressure_expert
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_under_pressure_expert
 ```
 
 ## Output Schema
