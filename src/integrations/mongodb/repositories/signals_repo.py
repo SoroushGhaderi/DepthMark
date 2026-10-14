@@ -1,7 +1,7 @@
 """Signals repository for DepthMark content catalog."""
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from pymongo.collection import Collection
 from pymongo.database import Database
@@ -14,21 +14,34 @@ def _now_utc() -> datetime:
 
 
 class SignalsRepository:
-    """CRUD-like operations for signal documents."""
+    """Mirror-style operations for signal documents synced from catalogs."""
 
     def __init__(self, database: Database):
         self.collection: Collection = database[SIGNALS_COLLECTION]
 
-    def upsert_signal(self, signal_id: str, payload: Dict[str, Any]) -> None:
-        update_doc = {
-            "$set": {
-                **payload,
-                "signal_id": signal_id,
-                "updated_at": _now_utc(),
-            },
-            "$setOnInsert": {"created_at": _now_utc()},
+    def list_signal_states(self) -> Dict[str, Dict[str, Any]]:
+        """Return each stored signal's ``content_sha256`` and ``created_at`` by id."""
+        projection = {"_id": 0, "signal_id": 1, "content_sha256": 1, "created_at": 1}
+        return {
+            document["signal_id"]: document
+            for document in self.collection.find({}, projection)
+            if "signal_id" in document
         }
-        self.collection.update_one({"signal_id": signal_id}, update_doc, upsert=True)
+
+    def replace_signal(
+        self, document: Dict[str, Any], *, created_at: Optional[datetime] = None
+    ) -> None:
+        """Replace one signal document whole, keeping its original ``created_at``."""
+        now = _now_utc()
+        replacement = {**document, "created_at": created_at or now, "updated_at": now}
+        self.collection.replace_one({"signal_id": document["signal_id"]}, replacement, upsert=True)
+
+    def delete_signals(self, signal_ids: Iterable[str]) -> int:
+        """Delete the documents of signals that no longer have a catalog."""
+        signal_ids = list(signal_ids)
+        if not signal_ids:
+            return 0
+        return self.collection.delete_many({"signal_id": {"$in": signal_ids}}).deleted_count
 
     def get_signal(self, signal_id: str) -> Optional[Dict[str, Any]]:
         return self.collection.find_one({"signal_id": signal_id}, {"_id": 0})
@@ -39,4 +52,3 @@ class SignalsRepository:
             query["status"] = status
         cursor = self.collection.find(query, {"_id": 0}).sort("updated_at", -1).limit(limit)
         return list(cursor)
-
