@@ -3,6 +3,7 @@
 import argparse
 import sys
 import time
+from contextlib import ExitStack
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
@@ -10,7 +11,7 @@ sys.path.insert(0, str(project_root))
 
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import maintenance_client
+from src.warehouse.identities import Identity, warehouse_session
 
 logger = get_logger()
 
@@ -47,17 +48,12 @@ def main(argv=None) -> int:
     args = parse_args(argv)
     database = args.database
 
-    try:
-        client = maintenance_client()
-    except RuntimeError as identity_error:
-        logger.error(str(identity_error))
-        return 1
-
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        return 1
-
-    try:
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(Identity.MAINTENANCE))
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
         find_start = time.perf_counter()
         tables = _find_tables(client, database)
         find_elapsed_seconds = time.perf_counter() - find_start
@@ -103,8 +99,6 @@ def main(argv=None) -> int:
         else:
             logger.info("All bronze tables dropped successfully")
         return 0
-    finally:
-        client.disconnect()
 
 
 if __name__ == "__main__":

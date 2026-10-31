@@ -32,14 +32,13 @@ Usage:
 
 import argparse
 import logging
-import os
 import sys
+from contextlib import ExitStack
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from config.settings import get_settings
 from src.common.dates import extract_year_month
 from src.common.logging import get_logger, setup_logging
 from src.fotmob.bronze import BronzeRunResult, BronzeService
@@ -51,6 +50,7 @@ from src.fotmob.bronze.source_dates import (
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.integrations.telegram import ErrorAlertData, TelegramClient
 from src.warehouse.contracts import LayerContractError
+from src.warehouse.identities import Identity, WarehouseConnectionError, warehouse_session
 
 logger = get_logger(__name__)
 
@@ -110,26 +110,22 @@ Examples:
     parser.add_argument(
         "--host",
         type=str,
-        default=os.getenv("CLICKHOUSE_HOST", "localhost"),
-        help="ClickHouse host",
+        help="ClickHouse host (default: CLICKHOUSE_HOST from settings)",
     )
     parser.add_argument(
         "--port",
         type=int,
-        default=int(os.getenv("CLICKHOUSE_PORT", "8123")),
-        help="ClickHouse HTTP port",
+        help="ClickHouse HTTP port (default: CLICKHOUSE_PORT from settings)",
     )
     parser.add_argument(
         "--username",
         type=str,
-        default=os.getenv("CLICKHOUSE_USER", "fotmob_user"),
-        help="ClickHouse username",
+        help="ClickHouse username (default: CLICKHOUSE_USER from settings)",
     )
     parser.add_argument(
         "--password",
         type=str,
-        default=os.getenv("CLICKHOUSE_PASSWORD", "fotmob_pass"),
-        help="ClickHouse password",
+        help="ClickHouse password (default: CLICKHOUSE_PASSWORD from settings)",
     )
 
     parser.add_argument(
@@ -310,28 +306,22 @@ def main(argv: list[str] | None = None) -> int:
             logger.info("Bronze dry-run completed successfully")
         return result.exit_code
 
-    username, password = args.username, args.password
-    if args.rebuild:
-        # Swapping whole tables is reserved for the maintenance identity (ADR 0029).
-        settings = get_settings()
-        if not settings.clickhouse_maintenance_user:
-            logger.error(
-                "--rebuild needs the ClickHouse maintenance identity; set "
-                "CLICKHOUSE_MAINTENANCE_USER and CLICKHOUSE_MAINTENANCE_PASSWORD"
+    # Swapping whole tables is reserved for the maintenance identity (ADR 0029).
+    identity = Identity.MAINTENANCE if args.rebuild else Identity.APPLICATION
+    stack = ExitStack()
+    try:
+        client = stack.enter_context(
+            warehouse_session(
+                identity,
+                "bronze",
+                host=args.host,
+                port=args.port,
+                username=args.username,
+                password=args.password,
             )
-            return 1
-        username = settings.clickhouse_maintenance_user
-        password = settings.clickhouse_maintenance_password
-    client = ClickHouseClient(
-        host=args.host,
-        port=args.port,
-        username=username,
-        password=password,
-        database="bronze",
-    )
-
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
+        )
+    except WarehouseConnectionError as error:
+        logger.error(str(error))
         telegram_client = TelegramClient()
         telegram_client.render_and_send(
             "error_alert.html.j2",
@@ -347,6 +337,9 @@ def main(argv: list[str] | None = None) -> int:
                 },
             ),
         )
+        return 1
+    except RuntimeError as error:
+        logger.error(str(error))
         return 1
 
     result = BronzeRunResult(exit_code=1)
@@ -370,7 +363,7 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("Bronze layer contract assertion failed", error=str(exc))
         return 1
     finally:
-        client.disconnect()
+        stack.close()
         telegram_client = TelegramClient()
         date_range = f"{dates[0]}–{dates[-1]}" if len(dates) > 1 else (dates[0] if dates else "N/A")
         telegram_client.render_and_send(

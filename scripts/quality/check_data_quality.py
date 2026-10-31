@@ -3,6 +3,7 @@
 import argparse
 import sys
 from collections.abc import Sequence
+from contextlib import ExitStack
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
@@ -11,10 +12,9 @@ for candidate in (str(project_root), str(scripts_dir)):
     if candidate not in sys.path:
         sys.path.insert(0, candidate)
 
-from config.settings import get_settings
 from src.common.logging import get_logger
 from src.fotmob.gold.signal_catalog import SignalCatalogError
-from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import WarehouseConnectionError, warehouse_session
 from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
@@ -177,47 +177,40 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
 
-    settings = get_settings()
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        return 1
-    try:
-        logger.info(
-            "Running unified warehouse data quality",
-            scope=scope.label,
-            layers=layers,
-            reconciliation_checks=checks,
-            strict=args.strict,
-        )
-        summary = DataQualityService(client, project_root, identities=identities).run(
-            scope=scope,
-            layers=layers,
-            reconciliation_checks=checks,
-            sample_limit=args.sample_limit,
-        )
-        _log_summary(summary, scope)
-        exit_code = strict_exit_code(summary, args.strict)
-        logger.info(
-            "Unified warehouse data quality completed",
-            logical_duplicate_failures=summary.duplicate_failure_count,
-            reconciliation_failures=summary.reconciliation_failure_count,
-            unpublished_partitions=len(summary.unpublished_partitions),
-            unvalidated_tables=len(summary.skipped_tables),
-            exit_code=exit_code,
-        )
-        return exit_code
-    except Exception as error:
-        logger.exception("Unified warehouse data quality failed", error=str(error))
-        return 1
-    finally:
-        client.disconnect()
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session())
+        except WarehouseConnectionError as error:
+            logger.error(str(error))
+            return 1
+        try:
+            logger.info(
+                "Running unified warehouse data quality",
+                scope=scope.label,
+                layers=layers,
+                reconciliation_checks=checks,
+                strict=args.strict,
+            )
+            summary = DataQualityService(client, project_root, identities=identities).run(
+                scope=scope,
+                layers=layers,
+                reconciliation_checks=checks,
+                sample_limit=args.sample_limit,
+            )
+            _log_summary(summary, scope)
+            exit_code = strict_exit_code(summary, args.strict)
+            logger.info(
+                "Unified warehouse data quality completed",
+                logical_duplicate_failures=summary.duplicate_failure_count,
+                reconciliation_failures=summary.reconciliation_failure_count,
+                unpublished_partitions=len(summary.unpublished_partitions),
+                unvalidated_tables=len(summary.skipped_tables),
+                exit_code=exit_code,
+            )
+            return exit_code
+        except Exception as error:
+            logger.exception("Unified warehouse data quality failed", error=str(error))
+            return 1
 
 
 if __name__ == "__main__":

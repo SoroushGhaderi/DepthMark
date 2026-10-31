@@ -9,11 +9,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from config.settings import get_settings
 from src.common.dates import resolve_date_scope
-from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.bronze import OddspediaBronzeLoader
 from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
+from src.warehouse.identities import WarehouseConnectionError, warehouse_session
 
 
 def _dates(args):
@@ -57,24 +56,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         for date_id in dates:
             loader.load_date(date_id, dry_run=True)
         return 0
-    settings = get_settings()
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
-    if not client.connect():
-        return 1
     try:
-        loader = OddspediaBronzeLoader(client=client)
-        for date_id in dates:
-            with oddspedia_date_lock(date_id, operation="load_bronze"):
-                loader.load_date(date_id)
-        return 0
-    finally:
-        client.disconnect()
+        with warehouse_session() as client:
+            loader = OddspediaBronzeLoader(client=client)
+            for date_id in dates:
+                with oddspedia_date_lock(date_id, operation="load_bronze"):
+                    loader.load_date(date_id)
+    except WarehouseConnectionError as error:
+        print(error, file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

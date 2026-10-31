@@ -149,15 +149,15 @@ def test_bronze_loader_dry_run_skips_clickhouse_and_telegram(monkeypatch):
     connected = []
     notifications = []
 
-    class BlockingClickHouseClient:
-        def __init__(self, *args, **kwargs):
-            connected.append(("init", args, kwargs))
+    def blocking_session(*args, **kwargs):
+        connected.append(("session", args, kwargs))
+        raise AssertionError("dry-run must not open a warehouse session")
 
     class RecordingTelegramClient:
         def render_and_send(self, *args, **kwargs):
             notifications.append((args, kwargs))
 
-    monkeypatch.setattr(bronze_loader, "ClickHouseClient", BlockingClickHouseClient)
+    monkeypatch.setattr(bronze_loader, "warehouse_session", blocking_session)
     monkeypatch.setattr(bronze_loader, "TelegramClient", lambda: RecordingTelegramClient())
     monkeypatch.setattr(bronze_loader, "setup_logging", lambda *args, **kwargs: RecordingLogger())
 

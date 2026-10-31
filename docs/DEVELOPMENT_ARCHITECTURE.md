@@ -131,6 +131,14 @@ Recreation, optimization, drop scripts, the Bronze `--rebuild`, and
 full-history Bronze removal. See
 `docs/data-flow/infrastructure.md` for the identity table.
 
+Code opens a warehouse connection only through
+`src.warehouse.identities.warehouse_session(identity_or_scope, database)`. It
+picks the identity (a full-history scope selects maintenance), raises
+`WarehouseConnectionError` instead of returning an unconnected client, and
+always disconnects. Setup, which tries several hosts, is the one caller of the
+lower-level `warehouse_client()`. The `src/operations/health.py` probe stays
+below this seam because `ClickHouseClient.health_check()` delegates to it.
+
 ## Canonical Command Surface
 
 Use these paths for documentation, automation, and daily operations. When using

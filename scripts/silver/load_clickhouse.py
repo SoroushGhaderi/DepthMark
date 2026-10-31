@@ -3,6 +3,7 @@
 import argparse
 import sys
 import time
+from contextlib import ExitStack
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
@@ -16,7 +17,7 @@ from src.common.logging import get_logger, setup_logging
 from src.fotmob.silver import SilverRunResult, SilverService
 from src.integrations.telegram import LayerAlertData, TelegramClient
 from src.warehouse.contracts import LayerContractError
-from src.warehouse.identities import client_for_scope
+from src.warehouse.identities import WarehouseConnectionError, warehouse_session
 from src.warehouse.scope import (
     add_warehouse_scope_arguments,
     execution_scope_from_args,
@@ -64,69 +65,68 @@ def main(argv=None) -> int:
             logger.info("Silver dry-run completed successfully")
         return result.exit_code
 
-    try:
-        client = client_for_scope(scope)
-    except RuntimeError as identity_error:
-        logger.error(str(identity_error))
-        return 1
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        telegram_client = TelegramClient()
-        telegram_client.render_and_send(
-            "layer_alert.html.j2",
-            LayerAlertData(
-                layer="silver",
-                success=False,
-                scope="runtime",
-                duration_seconds=time.perf_counter() - stage_start,
-                details={
-                    "Jobs planned": "0",
-                    "Jobs completed": "0",
-                    "Contract checks": "not run",
-                },
-            ),
-        )
-        return 1
-
-    exit_code = 0
-    result = SilverRunResult(exit_code=1)
-    try:
-        service = SilverService(client=client)
-        result = service.run(scope=scope, dry_run=False)
-        exit_code = result.exit_code
-        return exit_code
-    except LayerContractError as contract_error:
-        logger.error("Silver layer contract assertion failed", error=str(contract_error))
-        exit_code = 1
-        return exit_code
-    finally:
-        client.disconnect()
-        completion_rate = (
-            (result.completed_jobs / result.total_jobs * 100) if result.total_jobs > 0 else 0
-        )
-        telegram_client = TelegramClient()
-        telegram_client.render_and_send(
-            "layer_alert.html.j2",
-            LayerAlertData(
-                layer="silver",
-                success=exit_code == 0,
-                scope=scope.label,
-                duration_seconds=time.perf_counter() - stage_start,
-                details={
-                    "Jobs planned": str(result.total_jobs),
-                    "Jobs completed": str(result.completed_jobs),
-                    "Contract checks": "passed"
-                    if result.contracts_checked
-                    else "failed or skipped",
-                },
-                insights={
-                    "Completion rate": f"{completion_rate:.1f}%",
-                    "Quality signal": "contracts passed"
-                    if result.contracts_checked
-                    else "contract check failed",
-                },
-            ),
-        )
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(scope))
+        except WarehouseConnectionError as error:
+            logger.error(str(error))
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="silver",
+                    success=False,
+                    scope="runtime",
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "Jobs planned": "0",
+                        "Jobs completed": "0",
+                        "Contract checks": "not run",
+                    },
+                ),
+            )
+            return 1
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        exit_code = 0
+        result = SilverRunResult(exit_code=1)
+        try:
+            service = SilverService(client=client)
+            result = service.run(scope=scope, dry_run=False)
+            exit_code = result.exit_code
+            return exit_code
+        except LayerContractError as contract_error:
+            logger.error("Silver layer contract assertion failed", error=str(contract_error))
+            exit_code = 1
+            return exit_code
+        finally:
+            completion_rate = (
+                (result.completed_jobs / result.total_jobs * 100) if result.total_jobs > 0 else 0
+            )
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="silver",
+                    success=exit_code == 0,
+                    scope=scope.label,
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "Jobs planned": str(result.total_jobs),
+                        "Jobs completed": str(result.completed_jobs),
+                        "Contract checks": "passed"
+                        if result.contracts_checked
+                        else "failed or skipped",
+                    },
+                    insights={
+                        "Completion rate": f"{completion_rate:.1f}%",
+                        "Quality signal": "contracts passed"
+                        if result.contracts_checked
+                        else "contract check failed",
+                    },
+                ),
+            )
 
 
 if __name__ == "__main__":

@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -27,7 +28,7 @@ from clickhouse_setup_common import LAYER_ORDER, get_layer_sql_files, resolve_cl
 
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import maintenance_client
+from src.warehouse.identities import Identity, warehouse_session
 from src.warehouse.schema_drift import (
     ExpectedTable,
     find_schema_drift,
@@ -182,67 +183,62 @@ def run(argv: Sequence[str] | None = None, client: Any | None = None) -> int:
         logger.error(str(error))
         return 2
 
-    owns_client = client is None
-    if client is None:
+    with ExitStack() as stack:
+        if client is None:
+            try:
+                client = stack.enter_context(warehouse_session(Identity.MAINTENANCE))
+            except RuntimeError as error:
+                logger.error(str(error))
+                return 1
         try:
-            client = maintenance_client()
-        except RuntimeError as identity_error:
-            logger.error(str(identity_error))
-            return 1
-        if not client.connect():
-            logger.error("Failed to connect to ClickHouse")
-            return 1
+            if args.drifted:
+                drifts = find_schema_drift(client, [target.expected for target in targets])
+                if drifts:
+                    logger.info("Schema drift detected\n" + format_drift_report(drifts))
+                drifted_names = {drift.expected.qualified_name for drift in drifts}
+                targets = [target for target in targets if target.qualified_name in drifted_names]
+                if not targets:
+                    logger.info("No schema drift found; nothing to recreate")
+                    return 0
 
-    try:
-        if args.drifted:
-            drifts = find_schema_drift(client, [target.expected for target in targets])
-            if drifts:
-                logger.info("Schema drift detected\n" + format_drift_report(drifts))
-            drifted_names = {drift.expected.qualified_name for drift in drifts}
-            targets = [target for target in targets if target.qualified_name in drifted_names]
-            if not targets:
-                logger.info("No schema drift found; nothing to recreate")
-                return 0
-
-        row_counts = live_row_counts(client, targets)
-        logger.info(
-            "Planning Table Recreation",
-            dry_run=not args.execute,
-            selected_tables=len(targets),
-            rows_to_drop=sum(row_counts.get(target.qualified_name, 0) for target in targets),
-        )
-        for target in targets:
-            exists = target.qualified_name in row_counts
-            if not args.execute:
-                logger.info(
-                    "Dry-run Table Recreation",
-                    table=target.qualified_name,
-                    exists=exists,
-                    rows=row_counts.get(target.qualified_name, 0),
-                    source_file=target.expected.source_file.name,
-                )
-                continue
+            row_counts = live_row_counts(client, targets)
             logger.info(
-                "Recreating table",
-                table=target.qualified_name,
-                rows_dropped=row_counts.get(target.qualified_name, 0),
+                "Planning Table Recreation",
+                dry_run=not args.execute,
+                selected_tables=len(targets),
+                rows_to_drop=sum(row_counts.get(target.qualified_name, 0) for target in targets),
             )
-            client.execute(drop_statement(target))
-            client.execute(target.expected.create_statement)
+            for target in targets:
+                exists = target.qualified_name in row_counts
+                if not args.execute:
+                    logger.info(
+                        "Dry-run Table Recreation",
+                        table=target.qualified_name,
+                        exists=exists,
+                        rows=row_counts.get(target.qualified_name, 0),
+                        source_file=target.expected.source_file.name,
+                    )
+                    continue
+                logger.info(
+                    "Recreating table",
+                    table=target.qualified_name,
+                    rows_dropped=row_counts.get(target.qualified_name, 0),
+                )
+                client.execute(drop_statement(target))
+                client.execute(target.expected.create_statement)
 
-        if args.execute:
-            for hint in sorted({target.reload_hint for target in targets}):
-                logger.info("Recreated tables are empty; reload the affected scope", command=hint)
-        return 0
-    except ValueError as error:
-        logger.error(str(error))
-        return 2
-    except Exception as error:
-        logger.exception("Table Recreation failed", error=str(error))
-        return 1
-    finally:
-        if owns_client:
-            client.disconnect()
+            if args.execute:
+                for hint in sorted({target.reload_hint for target in targets}):
+                    logger.info(
+                        "Recreated tables are empty; reload the affected scope", command=hint
+                    )
+            return 0
+        except ValueError as error:
+            logger.error(str(error))
+            return 2
+        except Exception as error:
+            logger.exception("Table Recreation failed", error=str(error))
+            return 1
 
 
 def main() -> int:

@@ -15,7 +15,7 @@ sys.path.insert(0, str(project_root))
 from config.settings import get_settings
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import provision_application_user
+from src.warehouse.identities import Identity, provision_application_user, warehouse_client
 from src.warehouse.schema_drift import (
     assert_setup_sql_is_non_destructive,
     find_schema_drift,
@@ -146,13 +146,7 @@ def connect_clickhouse() -> ClickHouseClient:
             settings.clickhouse_port,
             username,
         )
-        client = ClickHouseClient(
-            host=candidate_host,
-            port=settings.clickhouse_port,
-            username=username,
-            password=password,
-            database="default",
-        )
+        client = warehouse_client(Identity.MAINTENANCE, host=candidate_host)
         if client.connect():
             if not create_user_if_not_exists(client, app_username, app_password):
                 client.disconnect()

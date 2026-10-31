@@ -6,9 +6,13 @@ from scripts import clickhouse_setup_common
 from src.warehouse import identities
 from src.warehouse.identities import (
     WAREHOUSE_DATABASES,
+    Identity,
+    WarehouseConnectionError,
     application_grant_statements,
-    client_for_scope,
+    identity_for_scope,
     provision_application_user,
+    warehouse_client,
+    warehouse_session,
 )
 from src.warehouse.scope import WarehouseExecutionScope
 from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
@@ -76,11 +80,29 @@ def test_provisioning_rejects_unsafe_user_names():
         provision_application_user(_RecordingClient(), "app; DROP", "secret")
 
 
-def test_full_history_loads_use_the_maintenance_identity(monkeypatch):
+def test_full_history_loads_use_the_maintenance_identity():
+    assert identity_for_scope(WarehouseExecutionScope.full_history()) is Identity.MAINTENANCE
+    assert identity_for_scope(WarehouseExecutionScope.for_month("202512")) is Identity.APPLICATION
+
+
+def test_client_credentials_follow_the_identity(monkeypatch):
     monkeypatch.setattr(identities, "get_settings", lambda: _settings())
 
-    assert client_for_scope(WarehouseExecutionScope.full_history()).username == "depthmark_admin"
-    assert client_for_scope(WarehouseExecutionScope.for_month("202512")).username == "depthmark_app"
+    assert warehouse_client(Identity.MAINTENANCE).username == "depthmark_admin"
+    assert warehouse_client(Identity.APPLICATION).username == "depthmark_app"
+
+
+def test_flags_override_only_the_application_identity(monkeypatch):
+    monkeypatch.setattr(identities, "get_settings", lambda: _settings())
+
+    application = warehouse_client(
+        Identity.APPLICATION, host="db", port=9000, username="cli_user", password="cli_pass"
+    )
+    maintenance = warehouse_client(Identity.MAINTENANCE, host="db", username="cli_user")
+
+    assert (application.host, application.port, application.username) == ("db", 9000, "cli_user")
+    assert application.password == "cli_pass"
+    assert (maintenance.host, maintenance.username) == ("db", "depthmark_admin")
 
 
 def test_maintenance_identity_must_be_configured(monkeypatch):
@@ -89,7 +111,54 @@ def test_maintenance_identity_must_be_configured(monkeypatch):
     )
 
     with pytest.raises(RuntimeError, match="CLICKHOUSE_MAINTENANCE_USER"):
-        client_for_scope(WarehouseExecutionScope.full_history())
+        warehouse_client(Identity.MAINTENANCE)
+
+
+class _SessionClient:
+    def __init__(self, connects: bool, **kwargs):
+        self.connects = connects
+        self.closed = False
+        self.host = kwargs["host"]
+        self.port = kwargs["port"]
+        self.username = kwargs["username"]
+
+    def connect(self):
+        return self.connects
+
+    def disconnect(self):
+        self.closed = True
+
+
+def _session_clients(monkeypatch, connects: bool) -> list[_SessionClient]:
+    clients: list[_SessionClient] = []
+
+    def factory(**kwargs):
+        client = _SessionClient(connects, **kwargs)
+        clients.append(client)
+        return client
+
+    monkeypatch.setattr(identities, "get_settings", lambda: _settings())
+    monkeypatch.setattr(identities, "ClickHouseClient", factory)
+    return clients
+
+
+def test_session_picks_the_scope_identity_and_always_disconnects(monkeypatch):
+    clients = _session_clients(monkeypatch, connects=True)
+
+    with pytest.raises(ValueError, match="boom"):
+        with warehouse_session(WarehouseExecutionScope.full_history()) as client:
+            assert client.username == "depthmark_admin"
+            raise ValueError("boom")
+
+    assert clients[0].closed
+
+
+def test_session_raises_instead_of_yielding_an_unconnected_client(monkeypatch):
+    _session_clients(monkeypatch, connects=False)
+
+    with pytest.raises(WarehouseConnectionError, match="application identity"):
+        with warehouse_session():
+            pytest.fail("an unconnected session must not be entered")
 
 
 def test_scoped_batches_stage_only_in_the_staging_database():

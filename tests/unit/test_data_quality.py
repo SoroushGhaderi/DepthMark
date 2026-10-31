@@ -344,11 +344,11 @@ def test_invalid_signal_catalog_fails_quality_check_before_connecting(monkeypatc
     def invalid_catalog(_project_root):
         raise SignalCatalogError([CatalogViolation("catalogs/sig_x.md", "broken")])
 
-    def unexpected_client(**_kwargs):
+    def unexpected_session(*_args, **_kwargs):
         raise AssertionError("quality check must not connect with an invalid catalog")
 
     monkeypatch.setattr(check_data_quality, "build_identity_contracts", invalid_catalog)
-    monkeypatch.setattr(check_data_quality, "ClickHouseClient", unexpected_client)
+    monkeypatch.setattr(check_data_quality, "warehouse_session", unexpected_session)
 
     assert check_data_quality.main(["--full-history"]) == 1
 

@@ -6,6 +6,7 @@ Signal jobs come from the validated signal catalog: only active signals run.
 import argparse
 import sys
 import time
+from contextlib import ExitStack
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
@@ -22,7 +23,7 @@ from src.fotmob.gold.dml_runner import (
 )
 from src.fotmob.gold.signal_catalog import SignalCatalogError, load_signal_catalog
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import client_for_scope
+from src.warehouse.identities import warehouse_session
 from src.warehouse.publication import gold_outputs_publication
 from src.warehouse.scope import (
     add_warehouse_scope_arguments,
@@ -186,21 +187,14 @@ def main(argv: list[str] | None = None) -> int:
         _, failed_count = _run_jobs(None, jobs, scope=scope, dry_run=True)
         return 0 if failed_count == 0 else 1
 
-    try:
-        client = client_for_scope(scope)
-    except RuntimeError as identity_error:
-        logger.error(str(identity_error))
-        return 1
-
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        return 1
-
-    try:
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(scope))
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
         _, failed_count = _run_jobs(client, jobs, scope=scope, dry_run=False)
         return 0 if failed_count == 0 else 1
-    finally:
-        client.disconnect()
 
 
 if __name__ == "__main__":

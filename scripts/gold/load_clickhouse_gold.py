@@ -3,6 +3,7 @@
 import argparse
 import sys
 import time
+from contextlib import ExitStack
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
@@ -17,7 +18,7 @@ from src.fotmob.gold import GoldRunResult, GoldService
 from src.integrations.telegram import LayerAlertData, TelegramClient
 from src.warehouse.contracts import LayerContractError
 from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
-from src.warehouse.identities import client_for_scope
+from src.warehouse.identities import WarehouseConnectionError, warehouse_session
 from src.warehouse.scope import (
     add_warehouse_scope_arguments,
     execution_scope_from_args,
@@ -82,83 +83,81 @@ def main(argv=None) -> int:
         logger.info("Gold dry-run completed successfully")
         return 0
 
-    try:
-        client = client_for_scope(scope)
-    except RuntimeError as identity_error:
-        logger.error(str(identity_error))
-        return 1
-
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        telegram_client = TelegramClient()
-        telegram_client.render_and_send(
-            "layer_alert.html.j2",
-            LayerAlertData(
-                layer="gold",
-                success=False,
-                scope="runtime",
-                duration_seconds=time.perf_counter() - stage_start,
-                details={
-                    "SQL files executed": "0",
-                    "Scenarios succeeded": "0",
-                    "Signals succeeded": "0",
-                    "Contract checks": "not run",
-                },
-            ),
-        )
-        return 1
-
-    exit_code = 0
-    result = GoldRunResult(exit_code=1)
-    try:
-        service = GoldService(client=client, metadata_db=metadata_db)
-        result = service.run(scope=scope, part=args.part, dry_run=False)
-        exit_code = result.exit_code
-        return exit_code
-    except LayerContractError as contract_error:
-        logger.error("Gold layer contract assertion failed", error=str(contract_error))
-        exit_code = 1
-        return exit_code
-    finally:
-        client.disconnect()
-        total_jobs = (
-            result.scenario_success_count
-            + result.scenario_failed_count
-            + result.signal_success_count
-            + result.signal_failed_count
-        )
-        scenario_success_rate = (
-            ((result.scenario_success_count + result.signal_success_count) / total_jobs * 100)
-            if total_jobs > 0
-            else 0
-        )
-        telegram_client = TelegramClient()
-        telegram_client.render_and_send(
-            "layer_alert.html.j2",
-            LayerAlertData(
-                layer="gold",
-                success=exit_code == 0,
-                scope=scope.label,
-                duration_seconds=time.perf_counter() - stage_start,
-                details={
-                    "SQL files executed": str(result.sql_file_count),
-                    "Scenarios succeeded": str(result.scenario_success_count),
-                    "Scenario failures": str(result.scenario_failed_count),
-                    "Signals succeeded": str(result.signal_success_count),
-                    "Signal failures": str(result.signal_failed_count),
-                    "Activation exit code": str(result.signal_activation_exit_code),
-                    "Contract checks": "passed"
-                    if result.contracts_checked
-                    else "failed or skipped",
-                },
-                insights={
-                    "Success rate": f"{scenario_success_rate:.1f}%",
-                    "Quality signal": "gold contracts passed"
-                    if result.contracts_checked
-                    else "contract check failed",
-                },
-            ),
-        )
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(scope))
+        except WarehouseConnectionError as error:
+            logger.error(str(error))
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="gold",
+                    success=False,
+                    scope="runtime",
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "SQL files executed": "0",
+                        "Scenarios succeeded": "0",
+                        "Signals succeeded": "0",
+                        "Contract checks": "not run",
+                    },
+                ),
+            )
+            return 1
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        exit_code = 0
+        result = GoldRunResult(exit_code=1)
+        try:
+            service = GoldService(client=client, metadata_db=metadata_db)
+            result = service.run(scope=scope, part=args.part, dry_run=False)
+            exit_code = result.exit_code
+            return exit_code
+        except LayerContractError as contract_error:
+            logger.error("Gold layer contract assertion failed", error=str(contract_error))
+            exit_code = 1
+            return exit_code
+        finally:
+            total_jobs = (
+                result.scenario_success_count
+                + result.scenario_failed_count
+                + result.signal_success_count
+                + result.signal_failed_count
+            )
+            scenario_success_rate = (
+                ((result.scenario_success_count + result.signal_success_count) / total_jobs * 100)
+                if total_jobs > 0
+                else 0
+            )
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="gold",
+                    success=exit_code == 0,
+                    scope=scope.label,
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "SQL files executed": str(result.sql_file_count),
+                        "Scenarios succeeded": str(result.scenario_success_count),
+                        "Scenario failures": str(result.scenario_failed_count),
+                        "Signals succeeded": str(result.signal_success_count),
+                        "Signal failures": str(result.signal_failed_count),
+                        "Activation exit code": str(result.signal_activation_exit_code),
+                        "Contract checks": "passed"
+                        if result.contracts_checked
+                        else "failed or skipped",
+                    },
+                    insights={
+                        "Success rate": f"{scenario_success_rate:.1f}%",
+                        "Quality signal": "gold contracts passed"
+                        if result.contracts_checked
+                        else "contract check failed",
+                    },
+                ),
+            )
 
 
 if __name__ == "__main__":

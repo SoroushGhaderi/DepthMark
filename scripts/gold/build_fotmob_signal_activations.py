@@ -3,6 +3,7 @@
 import argparse
 import re
 import sys
+from contextlib import ExitStack
 from pathlib import Path
 
 project_root = Path(__file__).resolve().parents[2]
@@ -21,7 +22,7 @@ from src.fotmob.gold.signal_catalog import (
 )
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.databases import STAGING_DATABASE, gold_db, gold_signals_db
-from src.warehouse.identities import client_for_scope
+from src.warehouse.identities import warehouse_session
 from src.warehouse.publication import (
     assert_upstream_published,
     gold_activations_publication,
@@ -417,39 +418,33 @@ def main(argv: list[str] | None = None) -> int:
         logger.warning("No active signal catalogs found", catalog_dir=str(catalog.catalog_dir))
         return 0
 
-    try:
-        client = client_for_scope(scope)
-    except RuntimeError as identity_error:
-        logger.error(str(identity_error))
-        return 1
-
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        return 1
-
-    try:
-        processed, skipped = build_signal_activations(
-            client=client,
-            source_database=args.source_db,
-            target_database=args.target_db,
-            definitions=definitions,
-            scope=scope,
-            dry_run=args.dry_run,
-        )
-        logger.info(
-            "Signal activation build completed",
-            source_db=args.source_db,
-            target_db=args.target_db,
-            processed=processed,
-            skipped=skipped,
-            dry_run=args.dry_run,
-        )
-        return 0
-    except Exception as exc:
-        logger.exception("Signal activation build failed", error=str(exc))
-        return 1
-    finally:
-        client.disconnect()
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(scope))
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        try:
+            processed, skipped = build_signal_activations(
+                client=client,
+                source_database=args.source_db,
+                target_database=args.target_db,
+                definitions=definitions,
+                scope=scope,
+                dry_run=args.dry_run,
+            )
+            logger.info(
+                "Signal activation build completed",
+                source_db=args.source_db,
+                target_db=args.target_db,
+                processed=processed,
+                skipped=skipped,
+                dry_run=args.dry_run,
+            )
+            return 0
+        except Exception as exc:
+            logger.exception("Signal activation build failed", error=str(exc))
+            return 1
 
 
 if __name__ == "__main__":

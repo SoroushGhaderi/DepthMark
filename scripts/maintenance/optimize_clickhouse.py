@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from contextlib import ExitStack
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,7 +15,7 @@ if str(project_root) not in sys.path:
 
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import maintenance_client
+from src.warehouse.identities import Identity, warehouse_session
 
 logger = get_logger(__name__)
 
@@ -125,48 +126,43 @@ def run(argv: Sequence[str] | None = None) -> int:
         logger.error(str(error))
         return 2
 
-    try:
-        client = maintenance_client()
-    except RuntimeError as identity_error:
-        logger.error(str(identity_error))
-        return 1
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        return 1
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(Identity.MAINTENANCE))
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        try:
+            targets = discover_targets(client, databases, args.table)
+            if not targets:
+                logger.warning(
+                    "No ClickHouse tables selected for optimization",
+                    layer=args.layer,
+                    database=args.database,
+                    table=args.table,
+                )
+                return 0
 
-    try:
-        targets = discover_targets(client, databases, args.table)
-        if not targets:
-            logger.warning(
-                "No ClickHouse tables selected for optimization",
-                layer=args.layer,
-                database=args.database,
-                table=args.table,
+            logger.info(
+                "Planning ClickHouse optimization",
+                dry_run=not args.execute,
+                selected_tables=len(targets),
+                databases=list(databases),
             )
+            for target in targets:
+                statement = optimize_statement(target)
+                if args.execute:
+                    logger.info("Executing ClickHouse optimization", table=target.qualified_name)
+                    client.execute(statement)
+                else:
+                    logger.info("Dry-run ClickHouse optimization", statement=statement)
             return 0
-
-        logger.info(
-            "Planning ClickHouse optimization",
-            dry_run=not args.execute,
-            selected_tables=len(targets),
-            databases=list(databases),
-        )
-        for target in targets:
-            statement = optimize_statement(target)
-            if args.execute:
-                logger.info("Executing ClickHouse optimization", table=target.qualified_name)
-                client.execute(statement)
-            else:
-                logger.info("Dry-run ClickHouse optimization", statement=statement)
-        return 0
-    except ValueError as error:
-        logger.error(str(error))
-        return 2
-    except Exception as error:
-        logger.exception("ClickHouse optimization failed", error=str(error))
-        return 1
-    finally:
-        client.disconnect()
+        except ValueError as error:
+            logger.error(str(error))
+            return 2
+        except Exception as error:
+            logger.exception("ClickHouse optimization failed", error=str(error))
+            return 1
 
 
 def main() -> int:

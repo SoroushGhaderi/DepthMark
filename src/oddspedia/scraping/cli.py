@@ -22,9 +22,9 @@ import sys
 import tempfile
 import threading
 import time
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from contextlib import nullcontext
+from contextlib import contextmanager, nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -34,9 +34,7 @@ from selenium.common.exceptions import (
     WebDriverException,
 )
 
-from config.settings import get_settings as get_depthmark_settings
 from src.common.dates import resolve_date_scope
-from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.scraping.audit import (
     audit_date,
     audit_match_json,
@@ -99,6 +97,7 @@ from src.oddspedia.scraping.utils import (
     save_json,
 )
 from src.oddspedia.silver.match_resolution import OddspediaMatchResolver
+from src.warehouse.identities import warehouse_session
 
 configure_logging()
 logger = get_logger("oddspedia")
@@ -659,19 +658,11 @@ def phase1_collect(
     return matches
 
 
-def _create_priority_service() -> tuple[ClickHouseClient, LinkPriorityService]:
+@contextmanager
+def _priority_service() -> Iterator[LinkPriorityService]:
     """Connect a source-workflow service to the canonical Silver reference."""
-    settings = get_depthmark_settings()
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
-    if not client.connect():
-        raise RuntimeError("Unable to connect to ClickHouse for link prioritization")
-    return client, LinkPriorityService(client, _priority_resolver())
+    with warehouse_session() as client:
+        yield LinkPriorityService(client, _priority_resolver())
 
 
 def _priority_resolver() -> OddspediaMatchResolver:
@@ -706,11 +697,8 @@ def prioritize_date(
     if links and not listing_matches_target_date(links, date_str):
         raise ValueError(f"Source links do not target {date_str}: {links_file}")
 
-    client, service = _create_priority_service()
-    try:
+    with _priority_service() as service:
         artifact = service.prioritize(date_str, links, sport=sport)
-    finally:
-        client.disconnect()
 
     artifact_path = get_prioritized_match_links_file(date_str, sport=sport)
     if not dry_run:

@@ -37,7 +37,7 @@ from src.fotmob.bronze.source_dates import (  # noqa: E402
     add_source_date_arguments,
     source_dates_from_args,
 )
-from src.warehouse.identities import application_client, maintenance_client  # noqa: E402
+from src.warehouse.identities import Identity, WarehouseConnectionError, warehouse_session  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -83,24 +83,18 @@ def main(argv: list[str] | None = None) -> int:
     logger = setup_logging(name="bronze_removal", log_dir="logs", log_level="INFO")
 
     # Truncation is reserved for the maintenance identity (ADR 0029).
+    identity = (
+        Identity.MAINTENANCE if args.full_history and not args.dry_run else Identity.APPLICATION
+    )
+    historical_root = get_fotmob_historical_path(FotMobConfig().storage.bronze_path)
     try:
-        if args.full_history and not args.dry_run:
-            client = maintenance_client("default")
-        else:
-            client = application_client("default")
-    except RuntimeError as error:
-        logger.error("Cannot choose a ClickHouse identity", error=str(error))
+        with warehouse_session(identity) as client:
+            result = BronzeRemovalService(client, historical_root).run(
+                dates=dates, full_history=args.full_history, dry_run=args.dry_run
+            )
+    except WarehouseConnectionError as error:
+        logger.error(str(error))
         return 1
-    if not client.connect():
-        logger.error("Failed to connect to ClickHouse")
-        return 1
-    try:
-        historical_root = get_fotmob_historical_path(FotMobConfig().storage.bronze_path)
-        result = BronzeRemovalService(client, historical_root).run(
-            dates=dates, full_history=args.full_history, dry_run=args.dry_run
-        )
-    finally:
-        client.disconnect()
     report(result)
     return result.exit_code
 

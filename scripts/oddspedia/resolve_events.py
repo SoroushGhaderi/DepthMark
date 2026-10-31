@@ -3,7 +3,7 @@
 import argparse
 import sys
 from collections.abc import Sequence
-from contextlib import nullcontext
+from contextlib import ExitStack, nullcontext
 from datetime import datetime
 from pathlib import Path
 
@@ -11,11 +11,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from config.settings import get_settings
 from src.common.dates import resolve_date_scope
-from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
 from src.oddspedia.silver import OddspediaMatchResolver, OddspediaResolutionService
+from src.warehouse.identities import WarehouseConnectionError, warehouse_session
 
 
 def _dates(args):
@@ -76,22 +75,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         dates = _dates(args)
     except ValueError as exc:
         parser.error(str(exc))
-    settings = get_settings()
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
-    if not client.connect():
-        return 1
     resolver = OddspediaMatchResolver(
         PROJECT_ROOT / "config" / "oddspedia_match_resolution" / "scoring_policy.yaml",
         PROJECT_ROOT / "config" / "oddspedia_match_resolution" / "team_aliases.yaml",
     )
-    service = OddspediaResolutionService(client, resolver)
-    try:
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session())
+        except WarehouseConnectionError as error:
+            print(error, file=sys.stderr)
+            return 1
+        service = OddspediaResolutionService(client, resolver)
         for date_id in dates:
             lock = (
                 nullcontext() if args.dry_run else oddspedia_date_lock(date_id, operation="resolve")
@@ -106,9 +100,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             for result in results:
                 summary[result.resolution_status] = summary.get(result.resolution_status, 0) + 1
             print(f"{date_id} {summary}")
-        return 0
-    finally:
-        client.disconnect()
+    return 0
 
 
 if __name__ == "__main__":

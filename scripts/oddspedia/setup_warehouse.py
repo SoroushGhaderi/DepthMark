@@ -3,6 +3,7 @@
 import argparse
 import sys
 from collections.abc import Sequence
+from contextlib import ExitStack
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -12,7 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from config.settings import get_settings
 from src.common.logging import get_logger
 from src.integrations.clickhouse.sql import split_sql_statements
-from src.warehouse.identities import maintenance_client, provision_application_user
+from src.warehouse.identities import Identity, provision_application_user, warehouse_session
 from src.warehouse.schema_drift import (
     assert_setup_sql_is_non_destructive,
     find_schema_drift,
@@ -41,14 +42,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         for path in sql_paths:
             print(path.relative_to(PROJECT_ROOT))
         return 0
-    try:
-        client = maintenance_client()
-    except RuntimeError as identity_error:
-        logger.error(str(identity_error))
-        return 1
-    if not client.connect():
-        return 1
-    try:
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(Identity.MAINTENANCE))
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
         drifts = find_schema_drift(client, parse_expected_tables(sql_paths))
         if drifts:
             logger.error(
@@ -68,8 +67,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 1
         provision_application_user(client, settings.clickhouse_user, settings.clickhouse_password)
         return 0
-    finally:
-        client.disconnect()
 
 
 if __name__ == "__main__":
