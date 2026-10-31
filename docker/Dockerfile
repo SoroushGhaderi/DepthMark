@@ -97,7 +97,6 @@ COPY --chown=appuser:appuser src/ ./src/
 COPY --chown=appuser:appuser scripts/ ./scripts/
 COPY --chown=appuser:appuser config/ ./config/
 COPY --chown=appuser:appuser catalogs/ ./catalogs/
-COPY --chown=appuser:appuser pytest.ini ./
 
 # Copy entrypoint script (as root, then fix permissions)
 COPY docker/docker-entrypoint.sh /usr/local/bin/

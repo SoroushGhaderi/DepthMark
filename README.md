@@ -95,15 +95,27 @@ Subsystem contracts live next to the code they govern, such as
 
 ```text
 DepthMark/
+  catalogs/               signal and scenario catalogs (markdown frontmatter + contracts)
   clickhouse/             ClickHouse DDL/DML by layer (gold uses ddl/ + dml/)
-  config/                 Python configuration modules
-  data/fotmob/            FotMob Historical and Live raw Bronze aspects
-  data/oddspedia/         Oddspedia Historical and Live source artifacts
+  config/                 Python configuration modules and match-resolution policy YAML
+  data/fotmob/            FotMob Historical and Live raw Bronze aspects (local only)
+  data/oddspedia/         Oddspedia Historical and Live source artifacts (local only)
   docker/                 Dockerfile, entrypoint; root docker-compose.yml is the main stack
   docs/                   project-wide architecture and contracts
+  notebooks/              exploratory Bronze data analysis
+  schemas/                versioned JSON Schemas for MongoDB and Oddspedia contracts
   scripts/                operational entry points
   src/                    source domains plus warehouse, integrations, common, and operations modules
+  tests/                  unit tests and deterministic fixtures
+  config.yaml             application settings for FotMob, Oddspedia, logging, and alerts
+  pyproject.toml          package metadata, dependencies, and pytest/Black/isort/mypy config
+  requirements.txt        dependency install list used by the Docker image
+  .env.example            environment template; scripts/bootstrap.sh generates .env from it
+  credentials.json.example  shape of the local, git-ignored credentials.json cookie file
 ```
+
+`data/`, `logs/`, `.env`, `credentials.json`, and test output (`.coverage`,
+`coverage.xml`, `htmlcov/`) are local-only and ignored by git.
 
 FotMob remains the canonical fixture-reference source for cross-source match
 resolution. Oddspedia remains the canonical source for its event and odds

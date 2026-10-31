@@ -494,7 +494,7 @@ class PlaywrightFetcher:
         return None
 
     def _get_stored_credentials_cookies(self) -> Dict[str, str]:
-        """Read cookies from fotmob_credentials.py (hot-reloaded on every call)."""
+        """Read cookies from credentials.json (hot-reloaded on every call)."""
         cookies = self._read_credentials_file_cookies()
         return cookies if cookies else {}
 
