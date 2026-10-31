@@ -18,11 +18,14 @@ except ImportError:
     FileLock = None
     Timeout = None
 
-from src.core.constants import HealthThresholds
 from src.fotmob.bronze.base_storage import BaseBronzeStorage
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
+
+# Free disk space thresholds for the Bronze health check.
+DISK_CRITICAL_GB = 1.0
+DISK_WARNING_GB = 5.0
 
 
 class FotMobBronzeStorage(BaseBronzeStorage):
@@ -93,9 +96,9 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
             disk_status = (
                 "OK"
-                if free_gb >= HealthThresholds.DISK_WARNING_GB
+                if free_gb >= DISK_WARNING_GB
                 else "WARNING"
-                if free_gb >= HealthThresholds.DISK_CRITICAL_GB
+                if free_gb >= DISK_CRITICAL_GB
                 else "ERROR"
             )
             checks.append(
@@ -111,15 +114,15 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                 }
             )
 
-            if free_gb < HealthThresholds.DISK_CRITICAL_GB:
+            if free_gb < DISK_CRITICAL_GB:
                 issues.append(
-                    f"Critical: Less than {HealthThresholds.DISK_CRITICAL_GB} GB "
+                    f"Critical: Less than {DISK_CRITICAL_GB} GB "
                     f"free disk space ({free_gb:.1f} GB)"
                 )
-            elif free_gb < HealthThresholds.DISK_WARNING_GB:
+            elif free_gb < DISK_WARNING_GB:
                 warnings.append(
                     f"Low disk space: {free_gb:.1f} GB free "
-                    f"(recommend {HealthThresholds.DISK_WARNING_GB}+ GB)"
+                    f"(recommend {DISK_WARNING_GB}+ GB)"
                 )
         except Exception as e:
             checks.append(

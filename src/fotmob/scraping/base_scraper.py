@@ -4,14 +4,13 @@ from typing import Any, Dict, Optional
 
 from config import FotMobConfig
 
-from src.core import ScraperProtocol
 from src.common.logging import get_logger
 from .playwright_fetcher import PlaywrightFetcher
 
 logger = get_logger(__name__)
 
 
-class BaseScraper(ScraperProtocol):
+class BaseScraper:
     """
     Base class for FotMob API scrapers.
 

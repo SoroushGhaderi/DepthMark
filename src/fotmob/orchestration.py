@@ -16,8 +16,6 @@ import requests
 
 from config import FotMobConfig
 
-from src.core import OrchestratorError, OrchestratorProtocol
-from src.core.constants import Defaults
 from src.fotmob.bronze.match_processor import FotMobBronzeMatchProcessor
 from src.fotmob.bronze.paths import get_fotmob_historical_path
 from src.fotmob.bronze.storage import FotMobBronzeStorage
@@ -30,8 +28,19 @@ from src.common.validation import DataQualityChecker
 
 logger = get_logger(__name__)
 
+# Attempts to fetch a date's match list before the date fails.
+MAX_FETCH_RETRIES = 5
 
-class FotMobOrchestrator(OrchestratorProtocol):
+
+class OrchestratorError(RuntimeError):
+    """Raised when a FotMob scrape step fails and the run must stop."""
+
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
+        super().__init__(message)
+        self.details = details or {}
+
+
+class FotMobOrchestrator:
     """
     Orchestrate the entire scraping and processing pipeline.
 
@@ -324,7 +333,7 @@ class FotMobOrchestrator(OrchestratorProtocol):
 
         self.logger.info("Fetching daily listing from API", extra={"date": date_str})
 
-        max_retries = Defaults.MAX_FETCH_RETRIES
+        max_retries = MAX_FETCH_RETRIES
 
         for attempt in range(max_retries):
             try:

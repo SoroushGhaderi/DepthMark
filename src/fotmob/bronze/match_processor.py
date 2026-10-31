@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 from pydantic import ValidationError as PydanticValidationError
 
-from ...core import ProcessorProtocol
 from ...models import (
     CardEventMatchFacts,
     FlatPlayerStats,
@@ -177,7 +176,7 @@ def _lineup_table(player_model: Any) -> str:
     return "starters" if player_model is LineupPlayer else "substitutes"
 
 
-class FotMobBronzeMatchProcessor(ProcessorProtocol):
+class FotMobBronzeMatchProcessor:
     """Process raw FotMob bronze data into structured bronze tables."""
 
     _INT64_MIN = -(2**63)

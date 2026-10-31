@@ -27,11 +27,14 @@ except ImportError:
     FileLock = None
     Timeout = None
 
-from ...core import StorageError, StorageProtocol
 from src.common.logging import get_logger
 
 
-class BaseBronzeStorage(StorageProtocol, ABC):
+class StorageError(RuntimeError):
+    """Raised when a Bronze storage directory cannot be created."""
+
+
+class BaseBronzeStorage(ABC):
     """Base class for Bronze layer storage.
 
     Bronze layer contains unprocessed, raw data exactly as received from the API.
@@ -82,7 +85,6 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             raise StorageError(
                 f"Cannot create directory '{self.base_dir}': A file with that name already exists. "
                 f"Please remove or rename the file at {self.base_dir.absolute()}",
-                details={"path": str(self.base_dir.absolute())},
             )
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
@@ -92,7 +94,6 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             raise StorageError(
                 f"Cannot create directory '{self.matches_dir}': A file with that name already exists. "
                 f"Please remove or rename the file at {self.matches_dir.absolute()}",
-                details={"path": str(self.matches_dir.absolute())},
             )
         self.matches_dir.mkdir(parents=True, exist_ok=True)
 
@@ -102,7 +103,6 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             raise StorageError(
                 f"Cannot create directory '{self.daily_listings_dir}': A file with that name already exists. "
                 f"Please remove or rename the file at {self.daily_listings_dir.absolute()}",
-                details={"path": str(self.daily_listings_dir.absolute())},
             )
         self.daily_listings_dir.mkdir(parents=True, exist_ok=True)
 

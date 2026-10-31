@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.core import OrchestratorError
+from src.fotmob.orchestration import OrchestratorError
 from src.fotmob.orchestration import FotMobOrchestrator
 
 

@@ -537,7 +537,6 @@ src/
   integrations/           external-system adapters
   common/                 dependency-light shared helpers
   operations/             health and other operational workflows
-  core/                   stable application interfaces and exceptions
   models/                 football data models
 scripts/                  operational CLI entry points
 ```
