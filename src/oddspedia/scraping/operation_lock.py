@@ -11,7 +11,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from src.common.dates import normalize_compact_date
-from src.oddspedia.scraping.config import DATA_DIR, normalize_sport
+from src.oddspedia.scraping.config import normalize_sport
+from src.oddspedia.scraping.paths import data_dir
 
 
 class OddspediaRunLockedError(RuntimeError):
@@ -32,7 +33,7 @@ def oddspedia_date_lock(
     sport_id = normalize_sport(sport)
     if not operation or not operation.replace("-", "_").isidentifier():
         raise ValueError(f"invalid Oddspedia lock operation: {operation!r}")
-    root = Path(lock_root) if lock_root is not None else Path(DATA_DIR) / "locks"
+    root = Path(lock_root) if lock_root is not None else Path(data_dir()) / "locks"
     root.mkdir(parents=True, exist_ok=True)
     lock_path = root / f"{sport_id}_{date_id}.lock"
     lock_file = lock_path.open("a+", encoding="utf-8")

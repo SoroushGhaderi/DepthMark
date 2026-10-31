@@ -45,16 +45,8 @@ from src.oddspedia.scraping.audit import (
 )
 from src.oddspedia.scraping.config import (
     FOOTBALL_ODDS_MAX_ATTEMPTS,
-    WORKER_MAX_DELAY,
-    WORKER_MIN_DELAY,
-    get_discovery_snapshot_file,
-    get_match_file,
-    get_match_links_file,
-    get_matches_dir,
-    get_prioritized_match_links_file,
-    get_run_logs_dir,
+    get_settings,
     get_sport_listing_url,
-    get_storage_aspect,
     normalize_sport,
 )
 from src.oddspedia.scraping.driver import DriverManager
@@ -84,6 +76,15 @@ from src.oddspedia.scraping.match_scraper import (
 )
 from src.oddspedia.scraping.metrics import get_metrics, reset_metrics
 from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
+from src.oddspedia.scraping.paths import (
+    get_discovery_snapshot_file,
+    get_match_file,
+    get_match_links_file,
+    get_matches_dir,
+    get_prioritized_match_links_file,
+    get_run_logs_dir,
+    get_storage_aspect,
+)
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.scraping.storage import (
     compress_date_files,
@@ -1512,7 +1513,9 @@ def _phase2_scrape_concurrent(
                             circuit_breaker.record_failure()
 
                 if j < len(batch) - 1 and last_error is None:
-                    delay = random.uniform(WORKER_MIN_DELAY, WORKER_MAX_DELAY)
+                    delay = random.uniform(
+                        get_settings().worker_min_delay, get_settings().worker_max_delay
+                    )
                     logger.debug("worker_delay", worker=worker_id, delay_s=round(delay, 1))
                     time.sleep(delay)
         finally:

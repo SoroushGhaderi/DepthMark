@@ -1,10 +1,18 @@
-import os
-from datetime import date, datetime
-from pathlib import Path
+"""Oddspedia scraper configuration, read from DepthMark settings when used.
+
+Nothing here is frozen at import: every value comes from
+``Settings.oddspedia`` at call time, so tests and overrides only need to change
+settings (``reset_settings()`` after changing the environment).
+"""
 
 from config.settings import OddspediaSettings
 from config.settings import get_settings as get_depthmark_settings
-from src.common.dates import normalize_compact_date
+
+# Odds can be absent while the page is still loading. Keep this policy
+# separate from the broader page/error retry budget so an empty odds result is
+# only accepted after three football extraction attempts.
+FOOTBALL_ODDS_MAX_ATTEMPTS = 3
+DEFAULT_SPORT = "football"
 
 
 def get_settings() -> OddspediaSettings:
@@ -12,40 +20,9 @@ def get_settings() -> OddspediaSettings:
     return get_depthmark_settings().oddspedia
 
 
-settings = get_settings()
-
-_PROJECT_ROOT = Path(__file__).resolve().parents[3]
-# Oddspedia is an isolated source domain. Historical and Live aspects mirror
-# FotMob's source-local storage convention without sharing implementation.
-_configured_data_dir = Path(settings.data_dir)
-# Accept the former aspect-specific setting as a root override so deployments
-# do not accidentally create ``historical/historical`` on upgrade.
-if _configured_data_dir.name == "historical":
-    _configured_data_dir = _configured_data_dir.parent
-DATA_DIR = str(
-    _configured_data_dir
-    if _configured_data_dir.is_absolute()
-    else _PROJECT_ROOT / _configured_data_dir
-)
-HISTORICAL_DIR = os.path.join(DATA_DIR, "historical")
-LIVE_DIR = os.path.join(DATA_DIR, "live")
-LOGS_DIR = str(_PROJECT_ROOT / "logs" / "oddspedia")
-
-BASE_URL = settings.base_url
-FOOTBALL_ODDS_URL = f"{BASE_URL}/football"
-# Odds can be absent while the page is still loading. Keep this policy
-# separate from the broader page/error retry budget so an empty odds result is
-# only accepted after three football extraction attempts.
-FOOTBALL_ODDS_MAX_ATTEMPTS = 3
-DEFAULT_SPORT = "football"
-SCRAPER_ENV = settings.scraper_env
-MIN_DELAY = settings.min_delay
-MAX_DELAY = settings.max_delay
-PAGE_LOAD_TIMEOUT = settings.page_load_timeout
-CLOUDFLARE_WAIT = settings.cloudflare_wait
-SCROLL_PAUSE = settings.scroll_pause
-WORKER_MIN_DELAY = settings.worker_min_delay
-WORKER_MAX_DELAY = settings.worker_max_delay
+def base_url() -> str:
+    """Return the configured Oddspedia site root, e.g. ``https://oddspedia.com``."""
+    return get_settings().base_url
 
 
 def normalize_sport(sport=None):
@@ -59,95 +36,4 @@ def normalize_sport(sport=None):
 def get_sport_listing_url(sport=None):
     """Return the Oddspedia football listing URL."""
     normalize_sport(sport)
-    return FOOTBALL_ODDS_URL
-
-
-def get_storage_aspect(date_str: str, current_date: date | None = None) -> str:
-    """Return the Historical or Live aspect for one collection date.
-
-    Completed dates are immutable Historical artifacts. The machine-local
-    current date is a refreshable Live snapshot; future dates are rejected.
-    """
-    target_date = datetime.strptime(normalize_compact_date(date_str), "%Y%m%d").date()
-    today = current_date or date.today()
-    if target_date > today:
-        raise ValueError(f"future dates cannot be collected: {date_str}")
-    return "live" if target_date == today else "historical"
-
-
-def get_date_dir(date_str=None, sport=None):
-    """Return the root directory for a date's storage aspect."""
-    normalize_sport(sport)
-    date_id = normalize_compact_date(date_str or date.today().strftime("%Y%m%d"))
-    return LIVE_DIR if get_storage_aspect(date_id) == "live" else HISTORICAL_DIR
-
-
-def _get_artifact_date_dir(artifact: str, date_str: str, sport=None) -> str:
-    """Return a canonical ``{aspect}/{artifact}/{YYYYMM}/{YYYYMMDD}`` directory."""
-    normalize_sport(sport)
-    date_id = normalize_compact_date(date_str)
-    return os.path.join(get_date_dir(date_id, sport=sport), artifact, date_id[:6], date_id)
-
-
-def get_match_links_file(date_str=None, sport=None):
-    """Return the match-links JSON path for a given date.
-    e.g. data/oddspedia/historical/daily_listings/202602/20260227/match_links.json
-    """
-    date_id = normalize_compact_date(date_str or date.today().strftime("%Y%m%d"))
-    return os.path.join(
-        _get_artifact_date_dir("daily_listings", date_id, sport), "match_links.json"
-    )
-
-
-def get_discovery_snapshot_file(date_str, sport=None):
-    """Return the diagnostic snapshot path for an unaccepted discovery."""
-    normalize_sport(sport)
-    date_id = normalize_compact_date(date_str)
-    return os.path.join(
-        _get_artifact_date_dir("daily_listings", date_id, sport), "discovery_partial.json"
-    )
-
-
-def get_manifest_file(date_str, sport=None):
-    """Return the scrape manifest JSON path for a given date."""
-    normalize_sport(sport)
-    date_id = normalize_compact_date(date_str)
-    return os.path.join(_get_artifact_date_dir("manifests", date_id, sport), "manifest.json")
-
-
-def get_prioritized_match_links_file(date_str, sport=None):
-    """Return the historical DepthMark-derived priority artifact for one date.
-
-    Unlike source listings, priority is meaningful only after a completed
-    historical DepthMark reference window. It therefore always belongs below
-    the Historical Oddspedia root, including when the source listing was first
-    discovered as a Live snapshot.
-    """
-    normalize_sport(sport)
-    date_id = normalize_compact_date(date_str)
-    return os.path.join(
-        HISTORICAL_DIR,
-        "link_priorities",
-        date_id[:6],
-        date_id,
-        "prioritized_match_links.json",
-    )
-
-
-def get_matches_dir(date_str=None, sport=None):
-    """Return the per-match JSON directory for a given date.
-    e.g. data/oddspedia/historical/matches/202602/20260227/
-    """
-    date_id = normalize_compact_date(date_str or date.today().strftime("%Y%m%d"))
-    return _get_artifact_date_dir("matches", date_id, sport)
-
-
-def get_match_file(date_str: str, match_id: str, sport=None) -> str:
-    """Return the canonical raw match-payload filename for one fixture."""
-    return os.path.join(get_matches_dir(date_str, sport=sport), f"{match_id}.json")
-
-
-def get_run_logs_dir(date_str, sport=None):
-    """Return the directory containing event logs for one scrape date."""
-    date_id = normalize_compact_date(date_str)
-    return os.path.join(LOGS_DIR, normalize_sport(sport), date_id[:6], date_id)
+    return f"{base_url()}/football"

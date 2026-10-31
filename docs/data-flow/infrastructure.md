@@ -319,10 +319,13 @@ Unified pydantic-settings based configuration — single source of truth for all
 - `clickhouse_host`, `clickhouse_port`, `clickhouse_user`, `clickhouse_password`
 - `clickhouse_db_fotmob`, `clickhouse_db_gold`, `clickhouse_db_gold_scenarios`, `clickhouse_db_gold_signals`
 - `telegram_bot_token`, `telegram_chat_id`, `telegram_enabled`
-- standalone Bronze S3 sync reads `S3_ENDPOINT`, `S3_ACCESS_KEY`,
-  `S3_SECRET_KEY`, optional `S3_BUCKET`, and optional `S3_REGION` directly from
-  the environment
-- `environment`, `log_level`, `log_dir`, `data_dir`
+- `s3_endpoint`, `s3_access_key`, `s3_secret_key`, optional `s3_bucket` and
+  `s3_region` (standalone Bronze S3 sync)
+- `mongodb_host`, `mongodb_port`, `mongodb_user`, `mongodb_password`,
+  `mongodb_database`, `mongodb_auth_source`, optional `mongodb_uri`
+- `clickhouse_gold_target_db` (optional Gold output redirect)
+- `environment`, `deployment_environment` (first of `DEPTHMARK_ENV`,
+  `ENVIRONMENT`, `SCRAPER_ENV`), `log_level`, `log_dir`, `data_dir`
 
 **FotMob scraping settings** (from `config.yaml` with env-var overrides):
 - `fotmob.api.base_url`, `fotmob.api.user_agents`, `fotmob.api.x_mas_token`
@@ -331,9 +334,16 @@ Unified pydantic-settings based configuration — single source of truth for all
 - `fotmob.storage.bronze_path`, `fotmob.storage.enabled`
 - `fotmob.retry.*`, `fotmob.logging.*`, `fotmob.data_quality.*`, `fotmob.proxy.*`
 
-Env vars override YAML values: `FOTMOB_X_MAS_TOKEN`, `FOTMOB_MAX_WORKERS`, etc.
-
-`FotMobConfig` is a backward-compatible adapter that delegates to `Settings.fotmob`.
+`config/settings.py` is the only reader of configuration. Precedence, highest
+first: process environment, the documented flat names in
+`NESTED_ENV_ALIASES` (`FOTMOB_X_MAS_TOKEN`, `FOTMOB_MAX_WORKERS`,
+`FOTMOB_TIMEZONE`, `ODDSPEDIA_MIN_DELAY`, `ODDSPEDIA_CHROME_BIN`/`CHROME_BIN`,
+...), `.env` in the checkout and its parent (the checkout wins), the `fotmob` and
+`oddspedia` sections of `config.yaml`, then defaults. Any nested field can also
+be set with `__`, for example `FOTMOB__REQUEST__TIMEOUT=45`. pydantic validates
+every value, so a malformed number or boolean fails at startup instead of being
+silently coerced. FotMob code receives the `Settings.fotmob` model directly;
+the `FotMobConfig` adapter and the legacy `config/base.py` dataclasses are gone.
 
 ## Health Checks
 

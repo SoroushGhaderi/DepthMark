@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 
 from selenium.common.exceptions import WebDriverException
 
-from src.oddspedia.scraping.config import BASE_URL, get_sport_listing_url, normalize_sport
+from src.oddspedia.scraping.config import base_url, get_sport_listing_url, normalize_sport
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
 from src.oddspedia.scraping.utils import pin_oddspedia_event_url, safe_get
@@ -1019,7 +1019,7 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
             "date": m.get("md", ""),
             "status": _listing_status_token(m),
             "url": path,
-            "full_url": BASE_URL + path,
+            "full_url": base_url() + path,
         }
 
     # --- Enrich URLs from rendered DOM <a href> links ---
@@ -1084,7 +1084,7 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
             if matched_slug is not None:
                 m["matchKey"] = matched_slug
                 m["url"] = matched_path
-                m["full_url"] = BASE_URL + matched_path
+                m["full_url"] = base_url() + matched_path
                 if not m.get("status"):
                     m["status"] = slug_to_status.get(matched_slug, "") or path_to_status.get(
                         matched_path, ""
@@ -1609,7 +1609,7 @@ def _build_urls(matches, sport="football"):
         match_id = str(m.get("matchId") or m.get("id") or "")
         if m.get("url") and m.get("full_url"):
             if not m["full_url"].startswith("http"):
-                m["full_url"] = BASE_URL + m["full_url"]
+                m["full_url"] = base_url() + m["full_url"]
             if sport == "football":
                 m["url"] = pin_oddspedia_event_url(m["url"], match_id)
                 m["full_url"] = pin_oddspedia_event_url(m["full_url"], match_id)
@@ -1624,7 +1624,7 @@ def _build_urls(matches, sport="football"):
             m["full_url"] = ""
             continue
         m["url"] = path
-        m["full_url"] = BASE_URL + path
+        m["full_url"] = base_url() + path
         if sport == "football":
             m["url"] = pin_oddspedia_event_url(m["url"], match_id)
             m["full_url"] = pin_oddspedia_event_url(m["full_url"], match_id)
@@ -1678,8 +1678,8 @@ def _merge_league_names(matches, league_matches, overwrite=False, sport="footbal
             by_id[match_id] = context
         if path:
             by_path[path] = context
-            if path.startswith(BASE_URL):
-                by_path[path[len(BASE_URL) :]] = context
+            if path.startswith(base_url()):
+                by_path[path[len(base_url()) :]] = context
         if slug:
             by_slug[slug] = context
         identity = event_identity(info)
@@ -1729,7 +1729,7 @@ def _merge_league_names(matches, league_matches, overwrite=False, sport="footbal
             source_path = parsed.path or source_url
             if source_path.startswith(f"/{sport}/") or source_path.startswith(f"/a/{sport}/"):
                 match["url"] = source_path
-                match["full_url"] = BASE_URL + source_path
+                match["full_url"] = base_url() + source_path
                 match["matchKey"] = source_path.rstrip("/").rsplit("/", 1)[-1]
     if identity_matches:
         logger.info("league_names_merged_by_event_identity", count=identity_matches)

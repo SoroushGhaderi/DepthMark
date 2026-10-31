@@ -29,7 +29,7 @@ from datetime import date as calendar_date
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from config import FotMobConfig
+from config.settings import FotMobSettings, get_settings
 from src.common.logging import get_logger, setup_logging
 from src.common.run_scope import RunScope, ScopeError
 from src.fotmob.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
@@ -334,9 +334,10 @@ def create_date_info(
 # ============================================================================
 
 
-def create_config(args: argparse.Namespace) -> FotMobConfig:
+def create_config(args: argparse.Namespace) -> FotMobSettings:
     """Create FotMob configuration from arguments."""
-    config = FotMobConfig()
+    # A private copy: scrape-specific overrides must not leak into cached settings.
+    config = get_settings().fotmob.model_copy(deep=True)
 
     if args.debug:
         config.logging.level = "DEBUG"
@@ -472,8 +473,8 @@ def run_scraping(args: argparse.Namespace) -> int:
     # Setup logging
     logger = setup_logging(
         name="bronze_processing",
-        log_dir=config.log_dir,
-        log_level=config.log_level,
+        log_dir=config.logging.dir,
+        log_level=config.logging.level,
     )
 
     # Print header

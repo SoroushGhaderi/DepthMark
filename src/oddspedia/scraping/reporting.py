@@ -13,16 +13,16 @@ from typing import Any
 from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
 from src.oddspedia.scraping.audit import DateAudit, audit_date
-from src.oddspedia.scraping.config import (
+from src.oddspedia.scraping.config import normalize_sport
+from src.oddspedia.scraping.link_prioritization import PRIORITY_TIERS, source_inventory_checksum
+from src.oddspedia.scraping.manifest import ScrapeManifest
+from src.oddspedia.scraping.paths import (
     get_manifest_file,
     get_match_links_file,
     get_prioritized_match_links_file,
     get_run_logs_dir,
     get_storage_aspect,
-    normalize_sport,
 )
-from src.oddspedia.scraping.link_prioritization import PRIORITY_TIERS, source_inventory_checksum
-from src.oddspedia.scraping.manifest import ScrapeManifest
 from src.oddspedia.scraping.storage import iter_match_payloads
 
 logger = get_logger(__name__)

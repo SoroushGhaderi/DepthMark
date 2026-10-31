@@ -1,12 +1,9 @@
 """Shared helpers for ClickHouse layer setup scripts."""
 
-import os
 import re
 import time
 from collections.abc import Callable, Iterable
 from pathlib import Path
-
-from dotenv import dotenv_values
 
 from config.settings import get_settings
 from src.common.logging import get_logger
@@ -43,33 +40,14 @@ INSECURE_CLICKHOUSE_PASSWORDS = {
 }
 
 
-def load_local_env_files() -> None:
-    """Load .env via pydantic-settings (centralised env loading)."""
-    get_settings()
-
-
-load_local_env_files()
-
-
 def is_local_development_environment() -> bool:
-    """Return whether local-only development credentials are allowed."""
-    environment_names = ("DEPTHMARK_ENV", "ENVIRONMENT", "SCRAPER_ENV")
-    for name in environment_names:
-        environment = os.getenv(name)
-        if environment:
-            return environment.strip().lower() in LOCAL_ENVIRONMENT_VALUES
+    """Return whether local-only development credentials are allowed.
 
-    # pydantic-settings reads .env files without exporting their values into
-    # os.environ. Read only the environment selector here so a production
-    # value in either supported .env location cannot be mistaken for the
-    # Settings model's development default.
-    for env_path in (project_root / ".env", project_root.parent / ".env"):
-        values = dotenv_values(env_path)
-        for name in environment_names:
-            environment = values.get(name)
-            if environment:
-                return str(environment).strip().lower() in LOCAL_ENVIRONMENT_VALUES
-    return False
+    Reads DEPTHMARK_ENV, ENVIRONMENT, or SCRAPER_ENV (first set wins) from the
+    process environment or either .env file; an unset selector is not local.
+    """
+    environment = get_settings().deployment_environment
+    return bool(environment) and environment.strip().lower() in LOCAL_ENVIRONMENT_VALUES
 
 
 def validate_clickhouse_credentials(

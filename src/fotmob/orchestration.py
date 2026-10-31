@@ -14,7 +14,7 @@ from typing import Any
 
 import requests
 
-from config import FotMobConfig
+from config.settings import FotMobSettings, get_settings
 from src.common.logging import get_logger
 from src.common.metrics import ScraperMetrics
 from src.common.validation import DataQualityChecker
@@ -50,7 +50,7 @@ class FotMobOrchestrator:
 
     def __init__(
         self,
-        config: FotMobConfig | None = None,
+        config: FotMobSettings | None = None,
         bronze_only: bool = True,
         bronze_path: str | Path | None = None,
     ):
@@ -62,7 +62,7 @@ class FotMobOrchestrator:
             bronze_only: If True, only scrape to Bronze layer (no processing).
                         Default is True. Processing to ClickHouse is done separately.
         """
-        self.config = config or FotMobConfig()
+        self.config = config or get_settings().fotmob
         self.logger = logger
         self.bronze_only = bronze_only
         self.telegram_client = TelegramClient()
@@ -203,7 +203,7 @@ class FotMobOrchestrator:
             else:
                 match_ids_to_scrape = [str(m) for m in match_ids]
 
-            if self.config.enable_parallel and len(match_ids_to_scrape) > 1:
+            if self.config.scraping.enable_parallel and len(match_ids_to_scrape) > 1:
                 self._scrape_matches_parallel(
                     match_ids_to_scrape, metrics, date_str, scraped_match_ids
                 )
@@ -492,7 +492,7 @@ class FotMobOrchestrator:
             "Scraping matches in parallel",
             date=date_str,
             match_count=len(match_ids),
-            max_workers=self.config.max_workers,
+            max_workers=self.config.scraping.max_workers,
         )
 
         match_ids_to_scrape = [m for m in match_ids if m not in scraped_match_ids]
@@ -524,7 +524,7 @@ class FotMobOrchestrator:
             return self._process_match_with_scraper(scraper, match_id, date_str)
 
         try:
-            with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
+            with ThreadPoolExecutor(max_workers=self.config.scraping.max_workers) as executor:
                 future_to_match = {}
                 for match_id in match_ids_to_scrape:
                     future = executor.submit(_worker, match_id)
@@ -631,7 +631,7 @@ class FotMobOrchestrator:
 
             # Run data quality checks if enabled
             quality_issues = None
-            if self.processor and self.config.enable_data_quality_checks:
+            if self.processor and self.config.data_quality.enabled:
                 try:
                     dataframes, _ = self.processor.process_all(raw_data)
                     validation_results = DataQualityChecker.validate_all_dataframes(dataframes)
@@ -642,7 +642,7 @@ class FotMobOrchestrator:
                         for issue in result.get("issues", [])
                     ]
 
-                    if quality_issues and self.config.fail_on_quality_issues:
+                    if quality_issues and self.config.data_quality.fail_on_issues:
                         return (
                             False,
                             f"Data quality issues: {quality_issues}",

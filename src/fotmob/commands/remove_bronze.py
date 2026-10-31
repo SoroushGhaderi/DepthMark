@@ -23,7 +23,7 @@ To reload a scope instead of only clearing it, use
 
 import argparse
 
-from config import FotMobConfig
+from config.settings import get_settings
 from src.common.logging import get_logger, setup_logging
 from src.common.run_scope import RunScope, add_scope_arguments
 from src.fotmob.bronze.paths import get_fotmob_historical_path
@@ -77,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     identity = (
         Identity.MAINTENANCE if args.full_history and not args.dry_run else Identity.APPLICATION
     )
-    historical_root = get_fotmob_historical_path(FotMobConfig().storage.bronze_path)
+    historical_root = get_fotmob_historical_path(get_settings().fotmob.storage.bronze_path)
     try:
         with warehouse_session(identity) as client:
             result = BronzeRemovalService(client, historical_root).run(

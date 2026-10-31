@@ -26,7 +26,7 @@ from uuid import uuid4
 
 import pandas as pd
 
-from config import FotMobConfig
+from config.settings import get_settings
 from src.common.logging import get_logger
 from src.fotmob.bronze.admission import (
     BRONZE_DATABASE,
@@ -351,7 +351,9 @@ class BronzeService:
     @property
     def historical_root(self) -> Path:
         if self._historical_root is None:
-            self._historical_root = get_fotmob_historical_path(FotMobConfig().storage.bronze_path)
+            self._historical_root = get_fotmob_historical_path(
+                get_settings().fotmob.storage.bronze_path
+            )
         return self._historical_root
 
     @property

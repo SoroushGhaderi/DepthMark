@@ -11,7 +11,7 @@ from src.fotmob.orchestration import FotMobOrchestrator, OrchestratorError
 def build_orchestrator(compression_status: str = "success") -> FotMobOrchestrator:
     """Build an orchestrator with all network and filesystem boundaries mocked."""
     orchestrator = FotMobOrchestrator.__new__(FotMobOrchestrator)
-    orchestrator.config = SimpleNamespace(enable_parallel=False)
+    orchestrator.config = SimpleNamespace(scraping=SimpleNamespace(enable_parallel=False))
     orchestrator.logger = MagicMock()
     orchestrator.bronze_only = True
     orchestrator.telegram_client = MagicMock()

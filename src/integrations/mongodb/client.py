@@ -1,12 +1,12 @@
 """MongoDB client helpers for DepthMark content catalog."""
 
-import os
 from dataclasses import dataclass
 from urllib.parse import quote_plus
 
 from pymongo import MongoClient
 from pymongo.database import Database
 
+from config.settings import get_settings
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
@@ -44,16 +44,17 @@ class MongoConnectionConfig:
     uri: str | None
 
     @classmethod
-    def from_env(cls) -> "MongoConnectionConfig":
-        """Build configuration from environment variables."""
+    def from_settings(cls) -> "MongoConnectionConfig":
+        """Build configuration from the MONGODB_* settings."""
+        settings = get_settings()
         return cls(
-            host=os.getenv("MONGODB_HOST", "localhost"),
-            port=int(os.getenv("MONGODB_PORT", "27017")),
-            username=os.getenv("MONGODB_USER"),
-            password=os.getenv("MONGODB_PASSWORD"),
-            database=os.getenv("MONGODB_DATABASE", "orbit_content"),
-            auth_source=os.getenv("MONGODB_AUTH_SOURCE", "admin"),
-            uri=os.getenv("MONGODB_URI"),
+            host=settings.mongodb_host,
+            port=settings.mongodb_port,
+            username=settings.mongodb_user,
+            password=settings.mongodb_password,
+            database=settings.mongodb_database,
+            auth_source=settings.mongodb_auth_source,
+            uri=settings.mongodb_uri,
         )
 
     def resolved_uri(self) -> str:
@@ -74,7 +75,7 @@ class MongoDBClient:
     """Thin wrapper around pymongo.MongoClient used by DepthMark."""
 
     def __init__(self, config: MongoConnectionConfig | None = None):
-        self.config = config or MongoConnectionConfig.from_env()
+        self.config = config or MongoConnectionConfig.from_settings()
         self._client: MongoClient | None = None
 
     def connect(self) -> bool:

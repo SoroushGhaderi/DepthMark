@@ -19,11 +19,8 @@ from pathlib import Path
 
 from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
-from src.oddspedia.scraping.config import (
-    get_match_file,
-    get_matches_dir,
-    normalize_sport,
-)
+from src.oddspedia.scraping.config import normalize_sport
+from src.oddspedia.scraping.paths import get_match_file, get_matches_dir
 
 logger = get_logger(__name__)
 

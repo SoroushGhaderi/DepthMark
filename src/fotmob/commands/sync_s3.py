@@ -9,14 +9,10 @@ Examples:
 """
 
 import argparse
-import os
 from urllib.parse import urlparse, urlunparse
 
-from dotenv import load_dotenv
-
-from config import FotMobConfig
+from config.settings import get_settings
 from src.common.logging import configure_logging, get_logger
-from src.common.paths import PROJECT_ROOT
 from src.common.run_scope import RunScope, ScopeError
 from src.fotmob.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
 from src.fotmob.bronze.paths import get_fotmob_historical_path
@@ -88,19 +84,14 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
-def load_environment() -> None:
-    """Load project and parent environment files without overriding process values."""
-    load_dotenv(PROJECT_ROOT / ".env", override=False)
-    load_dotenv(PROJECT_ROOT.parent / ".env", override=False)
-
-
 def create_s3_client() -> S3Client:
     """Build a strict S3 client from environment configuration."""
-    endpoint = os.getenv("S3_ENDPOINT", "").strip()
-    access_key = os.getenv("S3_ACCESS_KEY", "").strip()
-    secret_key = os.getenv("S3_SECRET_KEY", "").strip()
-    region = os.getenv("S3_REGION", DEFAULT_S3_REGION).strip() or DEFAULT_S3_REGION
-    bucket_name = os.getenv("S3_BUCKET", "").strip() or _bucket_from_endpoint(endpoint)
+    settings = get_settings()
+    endpoint = (settings.s3_endpoint or "").strip()
+    access_key = (settings.s3_access_key or "").strip()
+    secret_key = (settings.s3_secret_key or "").strip()
+    region = (settings.s3_region or "").strip() or DEFAULT_S3_REGION
+    bucket_name = (settings.s3_bucket or "").strip() or _bucket_from_endpoint(endpoint)
 
     missing = [
         name
@@ -165,9 +156,8 @@ def resolve_dates(args: argparse.Namespace, service: BronzeS3Service) -> list[st
 
 def run(args: argparse.Namespace) -> int:
     """Run independent syncs and return a process exit code."""
-    load_environment()
     client = create_s3_client()
-    bronze_path = get_fotmob_historical_path(FotMobConfig().storage.bronze_path)
+    bronze_path = get_fotmob_historical_path(get_settings().fotmob.storage.bronze_path)
     service = BronzeS3Service(bronze_path=bronze_path, s3_client=client)
     dates = resolve_dates(args, service)
     if not dates:

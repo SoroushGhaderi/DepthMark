@@ -5,13 +5,13 @@ validated signal catalog (ADR 0033): only active signals run, and selecting a
 deprecated or uncatalogued signal is an error.
 """
 
-import os
 import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from config.settings import get_settings
 from src.fotmob.gold.signal_catalog import (
     SIGNAL_TABLE_DATABASE,
     SignalCatalog,
@@ -86,7 +86,7 @@ def validate_signal_family(family: str) -> str:
 
 
 def _resolved_target_db(kind: GoldJobKind, target_db: str | None) -> str:
-    return target_db or os.getenv("CLICKHOUSE_GOLD_TARGET_DB") or default_target_db(kind)
+    return target_db or get_settings().clickhouse_gold_target_db or default_target_db(kind)
 
 
 def _signal_job(definition: SignalDefinition, target_db: str | None) -> GoldSqlJob:

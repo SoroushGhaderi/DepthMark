@@ -17,9 +17,9 @@ from selenium.common.exceptions import StaleElementReferenceException, WebDriver
 from selenium.webdriver.common.by import By
 
 from src.oddspedia.scraping.config import (
-    BASE_URL,
     FOOTBALL_ODDS_MAX_ATTEMPTS,
-    SCROLL_PAUSE,
+    base_url,
+    get_settings,
     normalize_sport,
 )
 from src.oddspedia.scraping.logging import get_logger
@@ -78,8 +78,10 @@ _ODDS_NOT_YET_AVAILABLE_MESSAGE = "odds are not yet available from bookies"
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
-def _scroll_page(driver, pause=SCROLL_PAUSE, max_scrolls=10):
+def _scroll_page(driver, pause=None, max_scrolls=10):
     """Scroll incrementally to trigger lazy-loaded content."""
+    if pause is None:
+        pause = get_settings().scroll_pause
     last_h = driver.execute_script("return document.body.scrollHeight")
     for _ in range(max_scrolls):
         driver.execute_script("window.scrollBy(0, 600);")
@@ -208,7 +210,7 @@ def _archived_match_url(url, match_info, sport="football"):
         return None
 
     match_url_id = match_id_match.group(1)
-    return f"{BASE_URL}/a/{sport}/{away_slug}-{home_slug}-{match_url_id}"
+    return f"{base_url()}/a/{sport}/{away_slug}-{home_slug}-{match_url_id}"
 
 
 def _listing_shell_is_current(driver, sport="football"):
@@ -2977,7 +2979,7 @@ def scrape_match(
         return _build_result_from_listing(match_info, sport=sport)
 
     if not url.startswith("http"):
-        url = BASE_URL + url
+        url = base_url() + url
     if sport == "football":
         # Older discovery artifacts contain only the reusable matchup slug.
         # Pin it at navigation time so they remain safe without migration.

@@ -14,10 +14,10 @@ from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.scraping.audit import audit_match_payload
-from src.oddspedia.scraping.config import get_match_links_file
 from src.oddspedia.scraping.link_prioritization import source_inventory_checksum
 from src.oddspedia.scraping.manifest import ManifestCorruptError, load_manifest
 from src.oddspedia.scraping.match_collector import listing_matches_target_date
+from src.oddspedia.scraping.paths import get_match_links_file
 from src.oddspedia.scraping.storage import StoredMatchPayload, iter_match_payloads
 from src.warehouse.databases import STAGING_DATABASE
 

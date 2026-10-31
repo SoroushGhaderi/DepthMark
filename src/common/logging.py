@@ -24,8 +24,9 @@ def _normalize_log_level(log_level: str) -> int:
 
 def _is_production_environment() -> bool:
     """Return True when runtime environment should default to JSON logs."""
-    env = os.getenv("SCRAPER_ENV") or os.getenv("ENVIRONMENT") or "development"
-    return env.lower() == "production"
+    from config.settings import get_settings
+
+    return (get_settings().deployment_environment or "").strip().lower() == "production"
 
 
 def _merge_extra_fields(

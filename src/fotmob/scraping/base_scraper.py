@@ -2,7 +2,7 @@ import random
 import time
 from typing import Any
 
-from config import FotMobConfig
+from config.settings import FotMobSettings
 from src.common.logging import get_logger
 
 from .playwright_fetcher import PlaywrightFetcher
@@ -19,7 +19,7 @@ class BaseScraper:
     a valid, URL-specific x-mas token to every outgoing request automatically.
     """
 
-    def __init__(self, config: FotMobConfig):
+    def __init__(self, config: FotMobSettings):
         self.config = config
         self.logger = logger
         self._fetcher = PlaywrightFetcher(config)

@@ -6,17 +6,14 @@ import unicodedata
 from dataclasses import dataclass, field
 from typing import Any
 
-from src.oddspedia.scraping.config import (
-    get_match_file,
-    get_match_links_file,
-    normalize_sport,
-)
+from src.oddspedia.scraping.config import normalize_sport
 from src.oddspedia.scraping.manifest import (
     ScrapeManifest,
     create_manifest,
     load_manifest,
     save_manifest,
 )
+from src.oddspedia.scraping.paths import get_match_file, get_match_links_file
 from src.oddspedia.scraping.storage import iter_match_payloads
 
 MIN_USEFUL_FILE_BYTES = 750

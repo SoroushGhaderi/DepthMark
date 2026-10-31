@@ -2,11 +2,11 @@
 
 import argparse
 import json
-import os
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from config.settings import get_settings
 from src.common.logging import get_logger, setup_logging
 from src.common.paths import PROJECT_ROOT
 from src.operations.health import health_check
@@ -34,25 +34,25 @@ Examples:
         "--clickhouse-host",
         type=str,
         default=None,
-        help="ClickHouse host (default: CLICKHOUSE_HOST env var or 'localhost')",
+        help="ClickHouse host (default: CLICKHOUSE_HOST setting)",
     )
     parser.add_argument(
         "--clickhouse-port",
         type=int,
-        default=8123,
-        help="ClickHouse HTTP port (default: 8123)",
+        default=None,
+        help="ClickHouse HTTP port (default: CLICKHOUSE_PORT setting)",
     )
     parser.add_argument(
         "--clickhouse-username",
         type=str,
-        default="default",
-        help="ClickHouse username (default: CLICKHOUSE_USER env var or 'default')",
+        default=None,
+        help="ClickHouse username (default: CLICKHOUSE_USER setting)",
     )
     parser.add_argument(
         "--clickhouse-password",
         type=str,
-        default="",
-        help="ClickHouse password (default: CLICKHOUSE_PASSWORD env var or empty)",
+        default=None,
+        help="ClickHouse password (default: CLICKHOUSE_PASSWORD setting)",
     )
     parser.add_argument(
         "--clickhouse-database",
@@ -153,12 +153,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         log_level="DEBUG" if args.verbose else "INFO",
     )
 
-    clickhouse_host = args.clickhouse_host or os.getenv("CLICKHOUSE_HOST")
-    if clickhouse_host == "localhost":
-        clickhouse_host = os.getenv("CLICKHOUSE_HOST", "clickhouse")
-
-    clickhouse_username = os.getenv("CLICKHOUSE_USER", args.clickhouse_username)
-    clickhouse_password = os.getenv("CLICKHOUSE_PASSWORD", args.clickhouse_password)
+    # Flags win; anything not given comes from the CLICKHOUSE_* settings.
+    settings = get_settings()
+    clickhouse_host = args.clickhouse_host or settings.clickhouse_host
+    clickhouse_port = args.clickhouse_port or settings.clickhouse_port
+    clickhouse_username = args.clickhouse_username or settings.clickhouse_user
+    clickhouse_password = (
+        settings.clickhouse_password
+        if args.clickhouse_password is None
+        else args.clickhouse_password
+    )
 
     storage_paths = list(args.storage or ["data"])
     fotmob_bronze_path = Path("data/fotmob")
@@ -170,7 +174,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     results = health_check(
         clickhouse_host=None if args.no_clickhouse else clickhouse_host,
-        clickhouse_port=args.clickhouse_port,
+        clickhouse_port=clickhouse_port,
         clickhouse_username=clickhouse_username,
         clickhouse_password=clickhouse_password,
         clickhouse_database=args.clickhouse_database,

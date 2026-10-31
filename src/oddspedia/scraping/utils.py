@@ -9,7 +9,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
-from src.oddspedia.scraping.config import MAX_DELAY, MIN_DELAY
+from src.oddspedia.scraping.config import get_settings
 from src.oddspedia.scraping.driver import wait_for_cloudflare
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
@@ -50,9 +50,13 @@ def pin_oddspedia_event_url(url: str, event_id: object) -> str:
     return urlunparse(parsed._replace(query=urlencode(query)))
 
 
-def random_delay(min_s=MIN_DELAY, max_s=MAX_DELAY):
-    """Sleep for a random duration to mimic human behaviour."""
-    delay = random.uniform(min_s, max_s)
+def random_delay(min_s=None, max_s=None):
+    """Sleep for a random duration to mimic human behaviour (settings bounds by default)."""
+    settings = get_settings()
+    delay = random.uniform(
+        settings.min_delay if min_s is None else min_s,
+        settings.max_delay if max_s is None else max_s,
+    )
     logger.debug("sleeping", delay_s=round(delay, 1))
     time.sleep(delay)
 

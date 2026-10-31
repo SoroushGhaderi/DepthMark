@@ -331,7 +331,7 @@ def _normalize_id_list(value) -> list[str]:
 
 def get_manifest_path(date_str: str, sport: str = "football") -> str:
     """Return the path to the manifest file for a given date."""
-    from src.oddspedia.scraping.config import get_manifest_file
+    from src.oddspedia.scraping.paths import get_manifest_file
 
     return get_manifest_file(date_str, sport=sport)
 

@@ -6,7 +6,7 @@ from typing import Any
 import structlog
 from structlog.stdlib import LoggerFactory
 
-from src.oddspedia.scraping.config import SCRAPER_ENV
+from src.oddspedia.scraping.config import get_settings
 
 
 def configure_logging(json_logs: bool = False, log_file: str | None = None) -> None:
@@ -31,7 +31,7 @@ def configure_logging(json_logs: bool = False, log_file: str | None = None) -> N
         structlog.processors.format_exc_info,
     ]
 
-    if json_logs or SCRAPER_ENV == "production":
+    if json_logs or get_settings().scraper_env == "production":
         processors.append(structlog.processors.JSONRenderer())
     else:
         processors.append(structlog.dev.ConsoleRenderer())

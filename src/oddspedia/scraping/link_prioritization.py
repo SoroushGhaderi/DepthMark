@@ -13,10 +13,7 @@ from typing import Any
 
 from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
-from src.oddspedia.scraping.config import (
-    get_match_links_file,
-    get_prioritized_match_links_file,
-)
+from src.oddspedia.scraping.paths import get_match_links_file, get_prioritized_match_links_file
 from src.oddspedia.silver.match_resolution import (
     FotMobMatch,
     FotMobReferenceWindowVerifier,

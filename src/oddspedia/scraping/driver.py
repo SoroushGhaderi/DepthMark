@@ -13,7 +13,7 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options as SeleniumChromeOptions
 
-from src.oddspedia.scraping.config import CLOUDFLARE_WAIT, PAGE_LOAD_TIMEOUT
+from src.oddspedia.scraping.config import get_settings
 from src.oddspedia.scraping.logging import get_logger
 
 logger = get_logger(__name__)
@@ -66,10 +66,9 @@ _BLOCKED_RESOURCE_URLS = (
 
 def _configured_chrome_binary() -> str | None:
     """Return an explicitly configured or discoverable Chrome executable."""
-    for variable in ("ODDSPEDIA_CHROME_BIN", "CHROME_BIN"):
-        configured = os.getenv(variable)
-        if configured:
-            return configured
+    configured = get_settings().chrome_binary
+    if configured:
+        return configured
 
     candidates = []
     if platform.system() == "Darwin":
@@ -171,7 +170,7 @@ def get_driver(headless=False, load_resources=False, user_data_dir=None):
 
     chrome_ver = detect_chrome_version(chrome_binary)
     logger.info("creating_chrome_driver", version_main=chrome_ver)
-    driver_path = os.getenv("ODDSPEDIA_CHROMEDRIVER_PATH") or os.getenv("CHROMEDRIVER_PATH")
+    driver_path = get_settings().chromedriver_path
     if not driver_path and chrome_ver:
         try:
             driver_path = _cached_chromedriver_path(chrome_ver)
@@ -195,7 +194,7 @@ def get_driver(headless=False, load_resources=False, user_data_dir=None):
             driver_path=driver_path,
         )
 
-    driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
+    driver.set_page_load_timeout(get_settings().page_load_timeout)
     # Optional element searches use bounded explicit polling at their call
     # sites. A global implicit wait would silently add the same delay to every
     # absent-element lookup.
@@ -438,8 +437,10 @@ def _chrome_for_testing_platform() -> str:
     raise RuntimeError(f"Unsupported Chrome for Testing platform: {system} {machine}")
 
 
-def wait_for_cloudflare(driver, timeout=CLOUDFLARE_WAIT):
+def wait_for_cloudflare(driver, timeout=None):
     """Block until the Cloudflare 'Just a moment...' challenge resolves."""
+    if timeout is None:
+        timeout = get_settings().cloudflare_wait
     logger.info("cloudflare_wait_start", timeout_s=timeout)
     deadline = time.time() + timeout
 
