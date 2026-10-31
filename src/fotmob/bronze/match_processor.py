@@ -468,14 +468,13 @@ class FotMobBronzeMatchProcessor:
 
             if not validation_summary["is_valid"]:
                 self.logger.warning(
-                    f"Validation failed for match {match_id} with "
-                    f"{validation_summary['error_count']} errors. Processing anyway..."
+                    "Validation failed for match %s with %s errors. Processing anyway...", match_id, validation_summary['error_count']
                 )
                 # Log errors
                 for error in validation_summary["errors"]:
-                    self.logger.error(f"  - {error}")
+                    self.logger.error("  - %s", error)
             else:
-                self.logger.debug(f"[OK] Validation passed for match {match_id}")
+                self.logger.debug("[OK] Validation passed for match %s", match_id)
 
         self.logger.debug("Processing match payload", match_id=match_id)
         rejections: List[RowRejection] = []
@@ -830,10 +829,10 @@ class FotMobBronzeMatchProcessor:
                             self._reject(rejections, "goal", match_id, e)
             if len(all_goal_dicts) > 0:
                 self.logger.debug(
-                    f"Processed {len(all_goal_dicts)} goal events for match {match_id}"
+                    "Processed %s goal events for match %s", len(all_goal_dicts), match_id
                 )
             else:
-                self.logger.debug(f"No goal events found for match {match_id}")
+                self.logger.debug("No goal events found for match %s", match_id)
         except Exception as e:
             raise _section_failed("goal", e) from e
         return all_goal_dicts
@@ -1355,11 +1354,11 @@ class FotMobBronzeMatchProcessor:
         if len(all_player_stats) > 0:
             match_id = response_data.get("general", {}).get("matchId", "unknown")
             self.logger.debug(
-                f"Processed {len(all_player_stats)} player stats for match {match_id}"
+                "Processed %s player stats for match %s", len(all_player_stats), match_id
             )
         else:
             match_id = response_data.get("general", {}).get("matchId", "unknown")
-            self.logger.debug(f"No player stats found for match {match_id}")
+            self.logger.debug("No player stats found for match %s", match_id)
         return all_player_stats
 
     def process_shotmap_data(
@@ -1432,9 +1431,9 @@ class FotMobBronzeMatchProcessor:
         except Exception as e:
             raise _section_failed("shotmap", e) from e
         if len(processed_shots) > 0:
-            self.logger.debug(f"Processed {len(processed_shots)} shots for match {match_id}")
+            self.logger.debug("Processed %s shots for match %s", len(processed_shots), match_id)
         else:
-            self.logger.debug(f"No shots found for match {match_id}")
+            self.logger.debug("No shots found for match %s", match_id)
         return processed_shots
 
     def process_lineup_data(

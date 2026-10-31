@@ -189,7 +189,7 @@ class PlaywrightFetcher:
             "x-mas": xmas,
         }
 
-        self.logger.debug(f"GET {url_path}")
+        self.logger.debug("GET %s", url_path)
 
         try:
             from curl_cffi import requests as curl_requests
@@ -212,13 +212,13 @@ class PlaywrightFetcher:
                 if fallback_json is not None:
                     return fallback_json
 
-            self.logger.error(f"Request failed {resp.status_code}: {url_path} — {resp.text[:200]}")
+            self.logger.error("Request failed %s: %s — %s", resp.status_code, url_path, resp.text[:200])
             return None
         except ImportError:
             self.logger.error("curl_cffi is not installed. Fix: pip install curl_cffi")
             return None
         except Exception as exc:
-            self.logger.error(f"Request error for {url_path}: {exc}")
+            self.logger.error("Request error for %s: %s", url_path, exc)
             return None
 
     def _fetch_json_via_playwright(
@@ -231,7 +231,7 @@ class PlaywrightFetcher:
         try:
             from playwright.sync_api import sync_playwright
         except Exception as exc:
-            self.logger.warning(f"Playwright fallback unavailable: {exc}")
+            self.logger.warning("Playwright fallback unavailable: %s", exc)
             return None
 
         try:
@@ -263,13 +263,13 @@ class PlaywrightFetcher:
                         return resp.json()
 
                     self.logger.error(
-                        f"Playwright fallback failed {resp.status}: {full_url} — {resp.text()[:200]}"
+                        "Playwright fallback failed %s: %s — %s", resp.status, full_url, resp.text()[:200]
                     )
                     return None
                 finally:
                     browser.close()
         except Exception as exc:
-            self.logger.warning(f"Playwright fallback request error: {exc}")
+            self.logger.warning("Playwright fallback request error: %s", exc)
             return None
 
     def close(self):
@@ -308,15 +308,15 @@ class PlaywrightFetcher:
             self._foo_hash = params["foo"]
             self._h_lyrics = params["h"]
             self._signing_params_ts = time.time()
-            self.logger.info(f"x-mas signing params refreshed (foo={self._foo_hash[:12]}…)")
+            self.logger.info("x-mas signing params refreshed (foo=%s…)", self._foo_hash[:12])
         except Exception as exc:
             if self._foo_hash:
                 self.logger.warning(
-                    f"Could not refresh signing params ({exc}); using cached values"
+                    "Could not refresh signing params (%s); using cached values", exc
                 )
             else:
                 self.logger.warning(
-                    f"Could not extract signing params ({exc}); using built-in fallback"
+                    "Could not extract signing params (%s); using built-in fallback", exc
                 )
                 self._foo_hash = _FALLBACK_FOO_HASH
                 self._h_lyrics = _FALLBACK_H_LYRICS
@@ -415,12 +415,11 @@ class PlaywrightFetcher:
         # Inject the best turnstile_verified
         if tv_chrome_valid:
             base["turnstile_verified"] = tv_chrome
-            self.logger.info(f"Using {source} cookies with valid Chrome Turnstile")
+            self.logger.info("Using %s cookies with valid Chrome Turnstile", source)
         elif tv_stored_valid:
             base["turnstile_verified"] = tv_stored
             self.logger.info(
-                f"Using {source} cookies + stored Turnstile "
-                f"(Chrome Turnstile {'expired' if tv_chrome else 'absent'})"
+                "Using %s cookies + stored Turnstile (Chrome Turnstile %s)", source, 'expired' if tv_chrome else 'absent'
             )
         else:
             # Keep the newest available token (even stale) as a best-effort fallback.
@@ -485,12 +484,11 @@ class PlaywrightFetcher:
 
             if cookies:
                 self.logger.debug(
-                    f"browser-cookie3: {len(cookies)} fotmob cookie(s) from Chrome "
-                    f"(turnstile_verified={'yes' if 'turnstile_verified' in cookies else 'no'})"
+                    "browser-cookie3: %s fotmob cookie(s) from Chrome (turnstile_verified=%s)", len(cookies), 'yes' if 'turnstile_verified' in cookies else 'no'
                 )
                 return cookies
         except Exception as exc:
-            self.logger.debug(f"browser-cookie3 unavailable: {exc}")
+            self.logger.debug("browser-cookie3 unavailable: %s", exc)
         return None
 
     def _get_stored_credentials_cookies(self) -> Dict[str, str]:
@@ -503,19 +501,18 @@ class PlaywrightFetcher:
         try:
             creds_path = Path(__file__).parent.parent.parent.parent / "credentials.json"
             if not creds_path.exists():
-                self.logger.warning(f"credentials.json not found at {creds_path}")
+                self.logger.warning("credentials.json not found at %s", creds_path)
                 return None
 
             with open(creds_path, "r") as f:
                 data = json.load(f)
                 cookies = data.get("cookies", {})
                 self.logger.debug(
-                    f"credentials.json (live): {len(cookies)} cookie(s) "
-                    f"(turnstile_verified={'yes' if 'turnstile_verified' in cookies else 'no'})"
+                    "credentials.json (live): %s cookie(s) (turnstile_verified=%s)", len(cookies), 'yes' if 'turnstile_verified' in cookies else 'no'
                 )
                 return cookies
         except Exception as exc:
-            self.logger.debug(f"Could not reload credentials.json: {exc}")
+            self.logger.debug("Could not reload credentials.json: %s", exc)
         return None
 
     # ------------------------------------------------------------------

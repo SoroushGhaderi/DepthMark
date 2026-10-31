@@ -212,7 +212,7 @@ def get_dates_to_process(
         dates = discover_historical_dates(root)
         log.info(
             "Full-history Bronze loading mode",
-            extra={"historical_root": str(root), "total_dates": len(dates)},
+            historical_root=str(root), total_dates=len(dates),
         )
         return dates
     if args.month:
@@ -235,12 +235,7 @@ def get_dates_to_process(
         month_name = month_names[int(month) - 1]
         log.info(
             "Monthly loading mode",
-            extra={
-                "month": args.month,
-                "month_name": month_name,
-                "year": int(year),
-                "total_dates": len(dates),
-            },
+            month=args.month, month_name=month_name, year=int(year), total_dates=len(dates),
         )
         return dates
     elif args.start_date:
@@ -255,7 +250,7 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
     from src.fotmob.bronze.loader import FOTMOB_TABLES
 
     log.info("=" * 80)
-    log.info("Database statistics", extra={"database": "BRONZE"})
+    log.info("Database statistics", database="BRONZE")
     log.info("=" * 80)
 
     for physical_table in FOTMOB_TABLES:
@@ -263,21 +258,12 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
         if "error" not in stats:
             log.info(
                 "Table statistics",
-                extra={
-                    "database": "bronze",
-                    "table_name": physical_table,
-                    "row_count": stats.get("row_count", 0),
-                    "size": stats.get("size", "0 B"),
-                },
+                database="bronze", table_name=physical_table, row_count=stats.get("row_count", 0), size=stats.get("size", "0 B"),
             )
         else:
             log.warning(
                 "Failed to read table statistics",
-                extra={
-                    "database": "bronze",
-                    "table_name": physical_table,
-                    "error": stats.get("error", "Unknown error"),
-                },
+                database="bronze", table_name=physical_table, error=stats.get("error", "Unknown error"),
             )
 
 

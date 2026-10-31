@@ -194,11 +194,11 @@ class ClickHouseClient:
             )
 
             self.client.query("SELECT 1")
-            self.logger.info(f"Connected to ClickHouse: {self.host}:{self.port}/{self.database}")
+            self.logger.info("Connected to ClickHouse: %s:%s/%s", self.host, self.port, self.database)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to connect to ClickHouse: {e}")
+            self.logger.error("Failed to connect to ClickHouse: %s", e)
             return False
 
     def disconnect(self):
@@ -281,7 +281,7 @@ class ClickHouseClient:
         db = self._validate_identifier(db, "database")
 
         if df.empty:
-            self.logger.warning(f"DataFrame is empty, skipping insert to {table}")
+            self.logger.warning("DataFrame is empty, skipping insert to %s", table)
             return 0
 
         try:
@@ -289,11 +289,11 @@ class ClickHouseClient:
 
             self.client.insert_df(full_table, df)
             rows_inserted = len(df)
-            self.logger.info(f"Inserted {rows_inserted} rows to {full_table}")
+            self.logger.info("Inserted %s rows to %s", rows_inserted, full_table)
             return rows_inserted
 
         except Exception as e:
-            self.logger.error(f"Failed to insert to {table}: {e}")
+            self.logger.error("Failed to insert to %s: %s", table, e)
             raise
 
     def get_table_stats(self, table: str, database: Optional[str] = None) -> Dict[str, Any]:
@@ -337,7 +337,7 @@ class ClickHouseClient:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get stats for {table}: {e}")
+            self.logger.error("Failed to get stats for %s: %s", table, e)
             return {"table": full_table, "error": str(e)}
 
     def truncate_table(self, table: str, database: Optional[str] = None):
@@ -361,9 +361,9 @@ class ClickHouseClient:
 
         try:
             self.execute(f"TRUNCATE TABLE {full_table}")
-            self.logger.info(f"Truncated table {full_table}")
+            self.logger.info("Truncated table %s", full_table)
         except Exception as e:
-            self.logger.error(f"Failed to truncate {table}: {e}")
+            self.logger.error("Failed to truncate %s: %s", table, e)
             raise
 
     def __enter__(self):

@@ -42,7 +42,7 @@ def check_disk_space(path: str = ".", threshold_gb: float = 1.0) -> Dict[str, An
             "message": f"Free space: {free_gb:.2f} GB ({free_gb*1024:.0f} MB)",
         }
     except Exception as e:
-        logger.error(f"Failed to check disk space for {path}: {e}")
+        logger.error("Failed to check disk space for %s: %s", path, e)
         return {
             "status": "error",
             "path": str(path),
@@ -94,7 +94,7 @@ def check_storage_access(storage_path: str) -> Dict[str, Any]:
             "message": message,
         }
     except Exception as e:
-        logger.error(f"Failed to check storage access for {storage_path}: {e}")
+        logger.error("Failed to check storage access for %s: %s", storage_path, e)
         return {
             "status": "error",
             "path": str(storage_path),
@@ -197,7 +197,7 @@ def check_clickhouse_connection(
             "message": "clickhouse_connect package is not installed",
         }
     except Exception as e:
-        logger.error(f"Failed to check ClickHouse connection: {e}")
+        logger.error("Failed to check ClickHouse connection: %s", e)
         return {
             "status": "error",
             "host": host,
@@ -240,7 +240,7 @@ def health_check(
         "components": {},
     }
     if clickhouse_host:
-        logger.info(f"Checking ClickHouse connection: {clickhouse_host}:{clickhouse_port}")
+        logger.info("Checking ClickHouse connection: %s:%s", clickhouse_host, clickhouse_port)
         clickhouse_result = check_clickhouse_connection(
             host=clickhouse_host,
             port=clickhouse_port,
@@ -256,10 +256,10 @@ def health_check(
         }
     storage_results = {}
     for storage_path in storage_paths:
-        logger.info(f"Checking storage access: {storage_path}")
+        logger.info("Checking storage access: %s", storage_path)
         storage_results[storage_path] = check_storage_access(storage_path)
     results["components"]["storage"] = storage_results
-    logger.info(f"Checking disk space: {disk_path}")
+    logger.info("Checking disk space: %s", disk_path)
     disk_result = check_disk_space(disk_path, threshold_gb=disk_threshold_gb)
     results["components"]["disk_space"] = disk_result
     statuses = []

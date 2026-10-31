@@ -62,7 +62,7 @@ def report(result: BronzeRemovalResult) -> None:
     """Log the outcome in one place for operators and automation."""
     verb = "Would remove" if result.dry_run else "Removed"
     logger.info(
-        f"{verb} FotMob Bronze rows",
+        "%s FotMob Bronze rows", verb,
         scope="full history" if result.full_history else ",".join(result.dates_removed),
         rows=result.removed_rows,
         total_rows=sum(result.removed_rows.values()),

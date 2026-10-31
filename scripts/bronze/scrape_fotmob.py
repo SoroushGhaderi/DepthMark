@@ -429,7 +429,7 @@ def process_single_date(
     Returns:
         Metrics object if successful, None if failed
     """
-    logger.info(f"[{idx}/{total}] Processing date: {date_str}")
+    logger.info("[%s/%s] Processing date: %s", idx, total, date_str)
     logger.info("[%s/%s] Scraping %s...", idx, total, date_str)
 
     try:
@@ -441,7 +441,7 @@ def process_single_date(
         )
         return metrics
     except Exception as e:
-        logger.error(f"Failed to process date {date_str}: {e}")
+        logger.error("Failed to process date %s: %s", date_str, e)
         logger.error("Date processing error: %s", e)
         _send_failure_alert(date_str, e)
         return None
@@ -538,9 +538,9 @@ def run_scraping(args: argparse.Namespace) -> int:
             # Check and refresh turnstile if needed (every 30 minutes)
             was_refreshed, turnstile_status = refresh_if_needed(max_age_seconds=1800)
             if was_refreshed:
-                logger.info(f"Turnstile refreshed: {turnstile_status}")
+                logger.info("Turnstile refreshed: %s", turnstile_status)
             else:
-                logger.info(f"Turnstile status: {turnstile_status}")
+                logger.info("Turnstile status: %s", turnstile_status)
         else:
             stats.record_failure()
 

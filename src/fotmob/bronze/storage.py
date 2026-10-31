@@ -67,7 +67,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
             base_dir: One explicit Bronze aspect directory
         """
         super().__init__(base_dir)
-        logger.info(f"Bronze storage initialized: {base_dir}")
+        logger.info("Bronze storage initialized: %s", base_dir)
 
     def health_check(self) -> Dict[str, Any]:
         """Perform pre-flight health checks before operations.
@@ -254,7 +254,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
         try:
             date_str_normalized = self._normalize_date(date_str)
         except ValueError:
-            self.logger.warning(f"Invalid date format: {date_str}")
+            self.logger.warning("Invalid date format: %s", date_str)
             return False
 
         listing_file = self._date_partition_dir(
@@ -262,7 +262,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
         ) / "matches.json"
 
         if not listing_file.exists():
-            self.logger.debug(f"Daily listing file not found: {listing_file}")
+            self.logger.debug("Daily listing file not found: %s", listing_file)
             return False
 
         lock_file = listing_file.parent / ".matches.json.lock"
@@ -334,7 +334,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                             }
                         )
                 except Exception as e:
-                    self.logger.warning(f"Could not update storage statistics: {e}")
+                    self.logger.warning("Could not update storage statistics: %s", e)
 
                 # Atomic write
                 temp_file = listing_file.parent / ".matches.json.tmp"
@@ -349,11 +349,11 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                     listing_file.unlink()
                 temp_file.rename(listing_file)
 
-                self.logger.debug(f"Updated daily listing: match {match_id} marked as scraped")
+                self.logger.debug("Updated daily listing: match %s marked as scraped", match_id)
                 return True
 
             except Exception as e:
-                self.logger.error(f"Error updating daily listing for match {match_id}: {e}")
+                self.logger.error("Error updating daily listing for match %s: %s", match_id, e)
 
                 temp_file = listing_file.parent / ".matches.json.tmp"
                 if temp_file.exists():
@@ -373,7 +373,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
         try:
             date_str_normalized = self._normalize_date(date_str)
         except ValueError:
-            self.logger.warning(f"Invalid date format: {date_str}")
+            self.logger.warning("Invalid date format: %s", date_str)
             return False
 
         listing_file = self._date_partition_dir(
@@ -381,7 +381,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
         ) / "matches.json"
 
         if not listing_file.exists():
-            self.logger.debug(f"Daily listing file not found: {listing_file}")
+            self.logger.debug("Daily listing file not found: %s", listing_file)
             return False
 
         lock_file = listing_file.parent / ".matches.json.lock"
@@ -438,7 +438,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                             }
                         )
                 except Exception as e:
-                    self.logger.warning(f"Could not update storage statistics: {e}")
+                    self.logger.warning("Could not update storage statistics: %s", e)
 
                 temp_file = listing_file.parent / ".matches.json.tmp"
                 with open(temp_file, "w", encoding="utf-8") as f:
@@ -453,13 +453,13 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
                 self.logger.info(
                     "Marked match as FotMob-unavailable in daily listing",
-                    extra={"date": date_str_normalized, "match_id": match_id},
+                    date=date_str_normalized, match_id=match_id,
                 )
                 return True
 
             except Exception as e:
                 self.logger.error(
-                    f"Error marking match {match_id} as unavailable in daily listing: {e}"
+                    "Error marking match %s as unavailable in daily listing: %s", match_id, e
                 )
 
                 temp_file = listing_file.parent / ".matches.json.tmp"

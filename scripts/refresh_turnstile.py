@@ -107,7 +107,7 @@ def update_credentials_json(tv: str) -> bool:
     """Update `credentials.json` atomically with a fresh turnstile token."""
     path = ROOT / "credentials.json"
     if not path.exists():
-        logger.error(f"credentials.json not found: {path}")
+        logger.error("credentials.json not found: %s", path)
         return False
 
     try:
@@ -126,7 +126,7 @@ def update_credentials_json(tv: str) -> bool:
         logger.info("Updated credentials.json with new turnstile token")
         return True
     except Exception as e:
-        logger.error(f"Error updating credentials.json: {e}")
+        logger.error("Error updating credentials.json: %s", e)
         return False
 
 
@@ -193,8 +193,8 @@ def main():
         sys.exit(1)
 
     status = check_age(tv)
-    logger.info(f"Found turnstile: {tv[:60]}...")
-    logger.info(f"Status: {status}")
+    logger.info("Found turnstile: %s...", tv[:60])
+    logger.info("Status: %s", status)
 
     if status.startswith("expired"):
         logger.warning(

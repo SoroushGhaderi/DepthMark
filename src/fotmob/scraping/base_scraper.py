@@ -30,7 +30,7 @@ class BaseScraper:
             self.config.request.delay_min,
             self.config.request.delay_max,
         )
-        self.logger.debug(f"Waiting {delay:.2f}s before next request")
+        self.logger.debug("Waiting %.2fs before next request", delay)
         time.sleep(delay)
 
     def make_request(
@@ -40,12 +40,12 @@ class BaseScraper:
     ) -> Optional[Dict[str, Any]]:
         """Make a browser-based GET request with automatic x-mas token injection."""
         self._delay_request()
-        self.logger.debug(f"Browser request → {url}")
+        self.logger.debug("Browser request → %s", url)
 
         result = self._fetcher.fetch_json(url, params)
 
         if result is None:
-            self.logger.error(f"Request failed: {url}")
+            self.logger.error("Request failed: %s", url)
 
         return result
 

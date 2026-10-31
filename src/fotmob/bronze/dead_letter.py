@@ -63,12 +63,11 @@ class DeadLetterQueue:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
             self.logger.warning(
-                f"Sent failed record to DLQ: {dlq_file.name} "
-                f"(table: {table}, rows: {record['row_count']})"
+                "Sent failed record to DLQ: %s (table: %s, rows: %s)", dlq_file.name, table, record['row_count']
             )
             return dlq_file
         except Exception as e:
-            self.logger.error(f"Failed to write to DLQ file {dlq_file}: {e}")
+            self.logger.error("Failed to write to DLQ file %s: %s", dlq_file, e)
             raise
 
     def _serialize_data(self, data: Any) -> Any:
@@ -186,7 +185,7 @@ class DeadLetterQueue:
                         if line.strip():
                             records.append(json.loads(line))
             except Exception as e:
-                self.logger.error(f"Error reading DLQ file {dlq_file}: {e}")
+                self.logger.error("Error reading DLQ file %s: %s", dlq_file, e)
 
         return records
 
@@ -229,7 +228,7 @@ class DeadLetterQueue:
                     stats["by_date"][file_date]["files"] += 1
                     stats["by_date"][file_date]["records"] += record_count
             except Exception as e:
-                self.logger.warning(f"Error processing DLQ file {dlq_file}: {e}")
+                self.logger.warning("Error processing DLQ file %s: %s", dlq_file, e)
 
         stats["total_size_mb"] = stats["total_size_bytes"] / (1024 * 1024)
         return stats

@@ -106,7 +106,7 @@ class BaseBronzeStorage(ABC):
             )
         self.daily_listings_dir.mkdir(parents=True, exist_ok=True)
 
-        self.logger.debug(f"Bronze storage initialized at {base_dir}")
+        self.logger.debug("Bronze storage initialized at %s", base_dir)
 
     def _normalize_date(self, date_str: str) -> str:
         """Normalize date string to YYYYMMDD format.
@@ -144,7 +144,7 @@ class BaseBronzeStorage(ABC):
         try:
             return self._normalize_date(date_str)
         except ValueError:
-            self.logger.warning(f"Invalid date format: {date_str}, using as-is")
+            self.logger.warning("Invalid date format: %s, using as-is", date_str)
             return date_str
 
     def save_raw_match_data(
@@ -199,7 +199,7 @@ class BaseBronzeStorage(ABC):
                 file_size_kb = os.path.getsize(file_path) / 1024
 
                 self.logger.debug(
-                    f"Saved raw data for match {match_id} to {file_path} ({file_size_kb:.2f} KB)"
+                    "Saved raw data for match %s to %s (%.2f KB)", match_id, file_path, file_size_kb
                 )
                 return file_path
 
@@ -212,7 +212,7 @@ class BaseBronzeStorage(ABC):
                 raise write_error
 
         except Exception as e:
-            self.logger.error(f"Error saving raw data for match {match_id}: {e}", exc_info=True)
+            self.logger.error("Error saving raw data for match %s: %s", match_id, e, exc_info=True)
             raise
 
     def save_matches_batch(
@@ -274,18 +274,17 @@ class BaseBronzeStorage(ABC):
 
             if failed_matches:
                 self.logger.warning(
-                    f"Batch save completed: {len(saved_paths)}/{len(matches)} succeeded, "
-                    f"{len(failed_matches)} failed: {failed_matches}"
+                    "Batch save completed: %s/%s succeeded, %s failed: %s", len(saved_paths), len(matches), len(failed_matches), failed_matches
                 )
             else:
                 self.logger.info(
-                    f"Batch save completed: {len(saved_paths)} matches saved to {date_dir}"
+                    "Batch save completed: %s matches saved to %s", len(saved_paths), date_dir
                 )
 
             return saved_paths
 
         except Exception as e:
-            self.logger.error(f"Error in batch save: {e}", exc_info=True)
+            self.logger.error("Error in batch save: %s", e, exc_info=True)
             raise
 
     def _save_matches_batch_internal(
@@ -325,10 +324,10 @@ class BaseBronzeStorage(ABC):
                 file_size_kb = os.path.getsize(file_path) / 1024
 
                 saved_paths.append(file_path)
-                self.logger.debug(f"Saved match {match_id} ({file_size_kb:.2f} KB)")
+                self.logger.debug("Saved match %s (%.2f KB)", match_id, file_size_kb)
 
             except Exception as e:
-                self.logger.error(f"Error saving match {match_id} in batch: {e}")
+                self.logger.error("Error saving match %s in batch: %s", match_id, e)
                 failed_matches.append(match_id)
 
                 temp_path = date_dir / f".match_{match_id}.json.tmp"
@@ -377,7 +376,7 @@ class BaseBronzeStorage(ABC):
                             except KeyError:
                                 pass
                     except Exception as e:
-                        self.logger.error(f"Error reading archive {archive_path}: {e}")
+                        self.logger.error("Error reading archive %s: %s", archive_path, e)
 
                 # Try gzip file
                 file_path_gz = date_dir / f"match_{match_id}.json.gz"
@@ -393,7 +392,7 @@ class BaseBronzeStorage(ABC):
                         data = json.load(f)
                     return data.get("data", data)
 
-                self.logger.warning(f"Raw data not found for match {match_id} on {date_str}")
+                self.logger.warning("Raw data not found for match %s on %s", match_id, date_str)
                 return None
             else:
                 # Search all date directories
@@ -434,11 +433,11 @@ class BaseBronzeStorage(ABC):
                         data = json.load(f)
                     return data.get("data", data)
 
-                self.logger.warning(f"Raw data not found for match {match_id}")
+                self.logger.warning("Raw data not found for match %s", match_id)
                 return None
 
         except Exception as e:
-            self.logger.error(f"Error loading raw data for match {match_id}: {e}")
+            self.logger.error("Error loading raw data for match %s: %s", match_id, e)
             return None
 
     def match_exists(self, match_id: str, date_str: Optional[str] = None) -> bool:
@@ -569,8 +568,7 @@ class BaseBronzeStorage(ABC):
                 json.dump(listing_data, f, indent=2, ensure_ascii=False)
             temp_file.replace(listing_file)
             self.logger.info(
-                f"Saved daily listing for {date_str_normalized}: {len(match_ids)} matches, "
-                f"{storage_stats['files_stored']} files stored ({storage_stats['total_size_mb']:.2f} MB)"
+                "Saved daily listing for %s: %s matches, %s files stored (%.2f MB)", date_str_normalized, len(match_ids), storage_stats['files_stored'], storage_stats['total_size_mb']
             )
             return listing_file
         except Exception:
@@ -647,7 +645,7 @@ class BaseBronzeStorage(ABC):
                                 stats["files_in_archive"] += 1
                                 stats["total_size_bytes"] += member.size
             except Exception as e:
-                self.logger.warning(f"Error reading archive {archive_path}: {e}")
+                self.logger.warning("Error reading archive %s: %s", archive_path, e)
 
         # Check individual files
         for match_id in match_ids:
@@ -709,7 +707,7 @@ class BaseBronzeStorage(ABC):
         try:
             date_str_normalized = self._normalize_date(date_str)
         except ValueError:
-            self.logger.warning(f"Invalid date format: {date_str}")
+            self.logger.warning("Invalid date format: %s", date_str)
             return None
 
         listing_file = self._date_partition_dir(
@@ -723,7 +721,7 @@ class BaseBronzeStorage(ABC):
             with open(listing_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading daily listing for {date_str_normalized}: {e}")
+            self.logger.error("Error loading daily listing for %s: %s", date_str_normalized, e)
             return None
 
     def get_match_ids_for_date(self, date_str: str) -> List[Union[int, str]]:
@@ -801,7 +799,7 @@ class BaseBronzeStorage(ABC):
         if not force and archive_path.exists():
             archive_size_mb = archive_path.stat().st_size / (1024 * 1024)
             self.logger.debug(
-                f"Archive exists for {date_str_normalized} ({archive_size_mb:.2f} MB), skipping"
+                "Archive exists for %s (%.2f MB), skipping", date_str_normalized, archive_size_mb
             )
             return {
                 "compressed": 0,
@@ -814,7 +812,7 @@ class BaseBronzeStorage(ABC):
             }
 
         if not date_dir.exists():
-            self.logger.debug(f"Date directory not found: {date_dir}")
+            self.logger.debug("Date directory not found: %s", date_dir)
             return {
                 "compressed": 0,
                 "size_before_mb": 0,
@@ -828,7 +826,7 @@ class BaseBronzeStorage(ABC):
 
         all_files = json_files + existing_gz_files
         if not all_files:
-            self.logger.debug(f"No files to compress for {date_str_normalized}")
+            self.logger.debug("No files to compress for %s", date_str_normalized)
             return {
                 "compressed": 0,
                 "size_before_mb": 0,
@@ -844,7 +842,7 @@ class BaseBronzeStorage(ABC):
 
             # Step 1: Compress JSON files to gzip (byte-copy method - faster)
             if json_files:
-                self.logger.debug(f"Compressing {len(json_files)} JSON files to gzip")
+                self.logger.debug("Compressing %s JSON files to gzip", len(json_files))
                 for json_file in json_files:
                     gz_file = json_file.with_suffix(".json.gz")
                     with open(json_file, "rb") as f_in, gzip.open(
@@ -855,10 +853,10 @@ class BaseBronzeStorage(ABC):
                     gz_files.append(gz_file)
                     json_file.unlink()
             else:
-                self.logger.debug(f"Using {len(existing_gz_files)} existing gzip files")
+                self.logger.debug("Using %s existing gzip files", len(existing_gz_files))
 
             # Step 2: Create tar archive
-            self.logger.debug(f"Creating tar archive with {len(gz_files)} files")
+            self.logger.debug("Creating tar archive with %s files", len(gz_files))
 
             with tarfile.open(archive_path, "w") as tar:
                 for gz_file in gz_files:
@@ -883,17 +881,17 @@ class BaseBronzeStorage(ABC):
                             error_msg.append(f"Unexpected files in tar: {extra}")
                         raise ValueError(f"Tar archive incomplete: {'; '.join(error_msg)}")
 
-                    self.logger.debug(f"Archive verified: {len(tar_members)} files intact")
+                    self.logger.debug("Archive verified: %s files intact", len(tar_members))
 
             except Exception as verify_error:
-                self.logger.error(f"Archive verification failed: {verify_error}")
+                self.logger.error("Archive verification failed: %s", verify_error)
                 if archive_path.exists():
                     archive_path.unlink()
                 self.logger.info("Deleted corrupt archive, kept original files")
                 raise Exception(f"Tar archive verification failed: {verify_error}")
 
             # Step 3: Delete gzip files
-            self.logger.debug(f"Cleaning up {len(gz_files)} temporary gzip files")
+            self.logger.debug("Cleaning up %s temporary gzip files", len(gz_files))
             deleted_count = 0
             for gz_file in gz_files:
                 if gz_file.exists():
@@ -901,7 +899,7 @@ class BaseBronzeStorage(ABC):
                         gz_file.unlink()
                         deleted_count += 1
                     except Exception as e:
-                        self.logger.warning(f"Could not delete {gz_file.name}: {e}")
+                        self.logger.warning("Could not delete %s: %s", gz_file.name, e)
 
             size_before_mb = total_before / (1024 * 1024)
             size_after_mb = total_after / (1024 * 1024)
@@ -909,9 +907,7 @@ class BaseBronzeStorage(ABC):
             saved_pct = ((total_before - total_after) / max(total_before, 1)) * 100
 
             self.logger.info(
-                f"Compressed {date_str_normalized}: {len(gz_files)} files, "
-                f"{size_before_mb:.2f} MB -> {size_after_mb:.2f} MB "
-                f"(saved {saved_pct:.0f}%)"
+                "Compressed %s: %s files, %.2f MB -> %.2f MB (saved %.0f%%)", date_str_normalized, len(gz_files), size_before_mb, size_after_mb, saved_pct
             )
 
             return {
@@ -925,7 +921,7 @@ class BaseBronzeStorage(ABC):
             }
 
         except Exception as e:
-            self.logger.error(f"Error during compression for {date_str_normalized}: {e}")
+            self.logger.error("Error during compression for %s: %s", date_str_normalized, e)
             # Cleanup on error
             if archive_path.exists():
                 archive_path.unlink()

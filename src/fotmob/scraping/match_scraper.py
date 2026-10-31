@@ -21,7 +21,7 @@ class MatchScraper(BaseScraper):
         Returns:
             Match data as dictionary, or None if failed
         """
-        self.logger.info(f"Fetching match details for ID: {match_id}")
+        self.logger.info("Fetching match details for ID: %s", match_id)
 
         url = f"{self.config.api.base_url}/matchDetails"
         params = {"matchId": match_id}
@@ -30,14 +30,14 @@ class MatchScraper(BaseScraper):
 
         if not response_data:
             self.logger.error(
-                f"Failed to fetch match details for ID: {match_id}"
+                "Failed to fetch match details for ID: %s", match_id
             )
             return None
 
         if is_fotmob_data_not_found_response(response_data):
             self.logger.warning(
                 "FotMob listed match but returned no detail data",
-                extra={"match_id": match_id},
+                match_id=match_id,
             )
             raise FotMobMatchDataNotFoundError(match_id)
 
@@ -45,7 +45,7 @@ class MatchScraper(BaseScraper):
             return None
 
         self.logger.info(
-            f"Successfully fetched match details for ID: {match_id}"
+            "Successfully fetched match details for ID: %s", match_id
         )
         return response_data
 
@@ -64,14 +64,14 @@ class MatchScraper(BaseScraper):
         """
         if "general" not in response_data:
             self.logger.error(
-                f"Missing 'general' section for match {match_id}"
+                "Missing 'general' section for match %s", match_id
             )
             return False
 
         general = response_data.get("general", {})
         if not isinstance(general, dict):
             self.logger.error(
-                f"Invalid 'general' section for match {match_id}"
+                "Invalid 'general' section for match %s", match_id
             )
             return False
 
@@ -80,13 +80,11 @@ class MatchScraper(BaseScraper):
             try:
                 if str(returned_match_id) != str(match_id):
                     self.logger.warning(
-                        f"Match ID mismatch: requested {match_id}, "
-                        f"got {returned_match_id}"
+                        "Match ID mismatch: requested %s, got %s", match_id, returned_match_id
                     )
             except (ValueError, TypeError):
                 self.logger.warning(
-                    f"Invalid match ID format: requested {match_id}, "
-                    f"got {returned_match_id}"
+                    "Invalid match ID format: requested %s, got %s", match_id, returned_match_id
                 )
 
         return True

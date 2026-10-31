@@ -212,24 +212,24 @@ class FotMobValidator:
         context = f"match {match_id}" if match_id else "response"
         
         if is_valid:
-            self.logger.debug(f"[OK] Validation passed for {context}")
+            self.logger.debug("[OK] Validation passed for %s", context)
             if warnings:
                 self.logger.warning(
-                    f"Validation warnings for {context} ({len(warnings)}):"
+                    "Validation warnings for %s (%s):", context, len(warnings)
                 )
                 for warning in warnings:
-                    self.logger.warning(f"  - {warning}")
+                    self.logger.warning("  - %s", warning)
         else:
             self.logger.error(
-                f"[ERROR] Validation failed for {context} with {len(errors)} errors:"
+                "[ERROR] Validation failed for %s with %s errors:", context, len(errors)
             )
             for error in errors:
-                self.logger.error(f"  - {error}")
+                self.logger.error("  - %s", error)
             
             if warnings:
-                self.logger.warning(f"Additional warnings ({len(warnings)}):")
+                self.logger.warning("Additional warnings (%s):", len(warnings))
                 for warning in warnings:
-                    self.logger.warning(f"  - {warning}")
+                    self.logger.warning("  - %s", warning)
         
         return is_valid
     
@@ -334,11 +334,11 @@ class ResponseSaver:
             with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(output_data, f, indent=2, ensure_ascii=False)
             
-            self.logger.debug(f"Saved validated response for match {match_id} to {output_file}")
+            self.logger.debug("Saved validated response for match %s to %s", match_id, output_file)
             return output_file
             
         except Exception as e:
-            self.logger.error(f"Failed to save response for match {match_id}: {e}")
+            self.logger.error("Failed to save response for match %s: %s", match_id, e)
             raise
     
     def save_invalid_response(
@@ -382,13 +382,13 @@ class ResponseSaver:
                 json.dump(output_data, f, indent=2, ensure_ascii=False)
             
             self.logger.warning(
-                f"Saved INVALID response for match {match_id} to {output_file}"
+                "Saved INVALID response for match %s to %s", match_id, output_file
             )
             return output_file
             
         except Exception as e:
             self.logger.error(
-                f"Failed to save invalid response for match {match_id}: {e}"
+                "Failed to save invalid response for match %s: %s", match_id, e
             )
             raise
 

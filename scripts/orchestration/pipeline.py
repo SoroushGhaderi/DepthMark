@@ -408,15 +408,14 @@ def _handle_step_result(
 ) -> None:
     """Handle step result logging and alerting."""
     if result.success:
-        logger.info(f"\n[SUCCESS] {result.name} completed in " f"{result.elapsed_time:.1f}s")
+        logger.info("\n[SUCCESS] %s completed in %.1fs", result.name, result.elapsed_time)
         return
     if continue_on_error:
         logger.warning(
-            f"\n[WARNING] {result.name} failed (exit code: "
-            f"{result.exit_code}) but continuing..."
+            "\n[WARNING] %s failed (exit code: %s) but continuing...", result.name, result.exit_code
         )
     else:
-        logger.error(f"\n[ERROR] {result.name} failed (exit code: " f"{result.exit_code})")
+        logger.error("\n[ERROR] %s failed (exit code: %s)", result.name, result.exit_code)
     _send_step_failure_alert(result)
 
 
@@ -569,18 +568,17 @@ def log_pipeline_header(
     logger.info("\n" + "=" * 80)
     logger.info("UNIFIED PIPELINE ORCHESTRATOR")
     logger.info("=" * 80)
-    logger.info(f"Mode:             {date_info.display_text}")
-    logger.info(f"Total dates:      {len(date_info.dates)}")
-    logger.info(f"Skip FotMob:      {config.skip_fotmob}")
-    logger.info(f"Skip Bronze:      {config.skip_bronze}")
+    logger.info("Mode:             %s", date_info.display_text)
+    logger.info("Total dates:      %s", len(date_info.dates))
+    logger.info("Skip FotMob:      %s", config.skip_fotmob)
+    logger.info("Skip Bronze:      %s", config.skip_bronze)
     logger.info(
-        f"Skip ClickHouse:  "
-        f"{config.skip_clickhouse or config.bronze_only or config.silver_only or config.gold_only}"
+        "Skip ClickHouse:  %s", config.skip_clickhouse or config.bronze_only or config.silver_only or config.gold_only
     )
-    logger.info(f"Skip Silver:      {config.skip_silver or config.bronze_only or config.gold_only}")
-    logger.info(f"Skip Gold:        {config.skip_gold or config.bronze_only or config.silver_only}")
-    logger.info(f"Force mode:       {config.force}")
-    logger.info(f"Log file:         {log_file}")
+    logger.info("Skip Silver:      %s", config.skip_silver or config.bronze_only or config.gold_only)
+    logger.info("Skip Gold:        %s", config.skip_gold or config.bronze_only or config.silver_only)
+    logger.info("Force mode:       %s", config.force)
+    logger.info("Log file:         %s", log_file)
     logger.info("=" * 80)
 
 
@@ -617,9 +615,9 @@ def process_clickhouse_loading_monthly(
     logger: logging.Logger,
 ) -> Optional[StepResult]:
     """Process ClickHouse loading for monthly mode."""
-    logger.info(f"\n\n{'#' * 80}")
+    logger.info("\n\n%s", '#' * 80)
     logger.info("# Loading to ClickHouse (Monthly Mode)")
-    logger.info(f"{'#' * 80}\n")
+    logger.info("%s\n", '#' * 80)
     if not config.skip_fotmob:
         result = run_clickhouse_load_month("fotmob", month_str, config)
         results.add_result("fotmob_clickhouse", result)
@@ -753,19 +751,19 @@ def log_pipeline_summary(
     logger.info("\n\n" + "=" * 80)
     logger.info("PIPELINE SUMMARY")
     logger.info("=" * 80)
-    logger.info(f"Total time: {format_elapsed_time(elapsed_time)}")
-    logger.info(f"Dates processed: {total_dates}")
-    logger.info(f"Log file: {log_file}")
+    logger.info("Total time: %s", format_elapsed_time(elapsed_time))
+    logger.info("Dates processed: %s", total_dates)
+    logger.info("Log file: %s", log_file)
     logger.info("\nResults by step:")
     summary = results.get_summary()
     for step_name, stats in summary.items():
         display_name = RESULT_CATEGORIES.get(step_name, step_name.replace("_", " ").title())
-        logger.info(f"\n  {display_name}:")
-        logger.info(f"    Successful: {stats['successful']}/{stats['total']}")
-        logger.info(f"    Failed: {stats['failed']}")
-        logger.info(f"    Total time: {stats['total_time']:.1f}s")
+        logger.info("\n  %s:", display_name)
+        logger.info("    Successful: %s/%s", stats['successful'], stats['total'])
+        logger.info("    Failed: %s", stats['failed'])
+        logger.info("    Total time: %.1fs", stats['total_time'])
         if stats["failed"] > 0:
-            logger.info(f"    Failed dates: {stats['failed_dates']}")
+            logger.info("    Failed dates: %s", stats['failed_dates'])
     logger.info("\n" + "=" * 80)
 
 
@@ -788,9 +786,9 @@ def run_pipeline(args: argparse.Namespace) -> int:
         logger.info("Scraping is intentionally excluded from full-history pipeline mode")
         process_full_history(config, results)
     for idx, date_str in enumerate(date_info.dates, 1):
-        logger.info(f"\n\n{'#' * 80}")
-        logger.info(f"# Processing date {idx}/{len(date_info.dates)}: {date_str}")
-        logger.info(f"{'#' * 80}\n")
+        logger.info("\n\n%s", '#' * 80)
+        logger.info("# Processing date %s/%s: %s", idx, len(date_info.dates), date_str)
+        logger.info("%s\n", '#' * 80)
         bronze_result: Optional[StepResult] = None
         if not config.silver_only and not config.gold_only:
             bronze_result = process_bronze_scraping(date_str, config, results)
@@ -902,7 +900,7 @@ def cli_main() -> int:
         return 130
     except (RuntimeError, OSError, ValueError) as e:
         logger = get_logger("pipeline")
-        logger.error(f"\nFatal error: {e}", exc_info=True)
+        logger.error("\nFatal error: %s", e, exc_info=True)
         return 1
 
 
