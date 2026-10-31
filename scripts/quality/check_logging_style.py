@@ -18,7 +18,7 @@ import ast
 import re
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[2]
 CHECK_DIRS = [ROOT / "src", ROOT / "scripts", ROOT / "config"]
 EXCLUDE_PATH_PARTS = {"metrics_alerts.py", "alerting.py"}
 

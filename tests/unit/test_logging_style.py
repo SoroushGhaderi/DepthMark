@@ -31,3 +31,12 @@ def test_non_logger_calls_are_ignored() -> None:
     source = 'parser.error(f"bad value {value}")\nprint(f"{value}")\n'
 
     assert structured_call_violations(PATH, source) == []
+
+
+def test_checker_scans_the_repository_sources() -> None:
+    from scripts.quality.check_logging_style import ROOT, iter_python_files
+
+    files = iter_python_files()
+
+    assert ROOT / "src" / "cli.py" in files
+    assert ROOT / "scripts" / "quality" / "check_logging_style.py" in files
