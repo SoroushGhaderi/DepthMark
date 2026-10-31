@@ -76,8 +76,8 @@ Repository = "https://github.com/SoroushGhaderi/DepthMark"
 Issues = "https://github.com/SoroushGhaderi/DepthMark/issues"
 
 [tool.setuptools.packages.find]
-# DepthMark runs from a source checkout (`pip install -e .`): the CLI dispatches to
-# scripts by path and reads clickhouse/ SQL and config files from the checkout.
+# DepthMark runs from a source checkout (`uv sync` or `pip install -e .`): commands
+# read clickhouse/ SQL, catalogs and config files from the checkout.
 include = ["src*", "scripts*", "config*"]
 namespaces = true
 
@@ -114,7 +114,7 @@ python_functions = ["test_*"]
 addopts = [
     "-v",
     "--strict-markers",
-    "--cov=src",
+    "--cov",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-report=xml",
@@ -126,7 +126,8 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src"]
+# Command logic lives in src/ (scripts/ are shims), so this counts every command.
+source = ["src", "config"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -135,6 +136,8 @@ omit = [
 ]
 
 [tool.coverage.report]
+# Measured 65% on 2026-10-31; raise the floor as coverage grows, never lower it.
+fail_under = 64
 exclude_lines = [
     "pragma: no cover",
     "def __repr__",
