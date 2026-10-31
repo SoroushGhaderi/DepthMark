@@ -5,12 +5,16 @@ Rules:
 1. No emoji in runtime logger messages.
 2. Status-like logger messages should use bracket tags such as:
    [OK], [WARN], [ERROR], [INFO], [DEBUG], [NEXT], [STATS], [CANCELLED].
+3. Logger messages are constant strings: values go in %-style arguments or
+   structlog key/value fields, never in f-strings.
+4. No stdlib ``extra={...}`` dicts; pass structlog key/value fields instead.
 
 Telegram/email formatting modules are excluded.
 """
 
 from __future__ import annotations
 
+import ast
 import re
 from pathlib import Path
 
@@ -24,6 +28,7 @@ LOGGER_CALL_RE = re.compile(
 )
 EMOJI_RE = re.compile(r"[✅❌⚠️📊💡✓✗⚡🏠ℹ️🚨⏭️⏱️🗄️☁️]")
 STATUS_WORD_RE = re.compile(r"\b(OK|WARN|WARNING|ERROR|INFO|DEBUG|SUCCESS|FAILED|NEXT|STATS)\b")
+LOG_METHODS = {"debug", "info", "warning", "warn", "error", "critical", "exception"}
 
 
 def should_exclude(path: Path) -> bool:
@@ -39,6 +44,26 @@ def iter_python_files() -> list[Path]:
     return files
 
 
+def is_logger_call(node: ast.AST) -> bool:
+    """Return True for ``<something log-like>.<level>(...)`` calls."""
+    if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+        return False
+    return node.func.attr in LOG_METHODS and "log" in ast.unparse(node.func.value).lower()
+
+
+def structured_call_violations(path: Path, content: str) -> list[str]:
+    """Return f-string message and stdlib ``extra=`` violations in ``content``."""
+    violations: list[str] = []
+    for node in ast.walk(ast.parse(content, filename=str(path))):
+        if not is_logger_call(node):
+            continue
+        if node.args and isinstance(node.args[0], ast.JoinedStr):
+            violations.append(f"{path}:{node.lineno}: f-string logger message")
+        if any(keyword.arg == "extra" for keyword in node.keywords):
+            violations.append(f"{path}:{node.lineno}: extra={{...}} instead of key/value fields")
+    return violations
+
+
 def main() -> int:
     violations: list[str] = []
 
@@ -47,6 +72,7 @@ def main() -> int:
             continue
 
         content = path.read_text(encoding="utf-8")
+        violations.extend(structured_call_violations(path, content))
         for match in LOGGER_CALL_RE.finditer(content):
             msg = match.group(1)
             if EMOJI_RE.search(msg):

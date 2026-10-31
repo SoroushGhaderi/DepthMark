@@ -54,10 +54,14 @@ To run commands outside Docker, install DepthMark in editable mode from the
 repository root. This also provides the `depthmark` command:
 
 ```bash
-python3 -m pip install -r requirements.txt
-python3 -m pip install -e .
+uv sync --extra dev          # creates .venv from uv.lock, installs DepthMark editable
+source .venv/bin/activate
+pre-commit install
 depthmark --help
 ```
+
+Without uv, `python3 -m pip install -r requirements.txt` followed by
+`python3 -m pip install -e ".[dev]"` installs the same runtime versions.
 
 DepthMark runs from a source checkout: the `depthmark` command dispatches to
 scripts by path and reads `clickhouse/` SQL and configuration files from the

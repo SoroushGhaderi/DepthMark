@@ -272,10 +272,11 @@ stability rules in DepthMark. The canonical command list lives in
 
 ## Formatting and Quality Gates
 
-1. Formatting baseline: `black`.
-2. Import sorting baseline: `isort`.
-3. Hygiene baseline: `pyflakes` clean.
-4. Avoid wide mechanical rewrites unless requested.
+1. Formatting and import sorting: `ruff format` and `ruff check` (configured in
+   `pyproject.toml`), enforced by pre-commit and CI.
+2. Logging style: `scripts/quality/check_logging_style.py` passes.
+3. Avoid wide mechanical rewrites unless requested; list any that land in
+   `.git-blame-ignore-revs`.
 
 ## Update Policy
 

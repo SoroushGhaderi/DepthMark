@@ -6,11 +6,6 @@ import unittest
 from datetime import date
 from unittest.mock import patch
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
-
 from src.oddspedia.scraping.config import (
     BASE_URL,
     get_manifest_file,
@@ -30,6 +25,8 @@ from src.oddspedia.scraping.utils import (
     load_json,
     save_json,
 )
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 class SportConfigTests(unittest.TestCase):

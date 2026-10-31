@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.6"
+          python-version: "3.11"
+
+      - name: Install locked dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Lock file matches pyproject.toml
+        run: uv lock --check
+
+      - name: requirements.txt matches uv.lock
+        run: |
+          uv export --frozen --no-dev --no-emit-project --format requirements-txt --hashes -o requirements.txt --quiet
+          git diff --exit-code requirements.txt
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Logging style
+        run: uv run python scripts/quality/check_logging_style.py
+
+      - name: Signal catalogs
+        run: uv run python scripts/quality/check_signal_catalogs.py
+
+      - name: Tests
+        run: uv run pytest

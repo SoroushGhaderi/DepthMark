@@ -1,13 +1,6 @@
-import os
-import sys
 import unittest
 from datetime import date
 from unittest.mock import patch
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
 
 from src.oddspedia.scraping.match_collector import (
     _navigate_to_date,

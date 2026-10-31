@@ -1,13 +1,7 @@
 import json
 import os
-import sys
 import unittest
 from unittest.mock import patch
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
 
 from src.oddspedia.scraping.match_collector import (
     _JS_SPORT_STATE,
@@ -22,6 +16,8 @@ from src.oddspedia.scraping.match_collector import (
     _merge_league_names,
     collect_match_links,
 )
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 class _FakeDriver:

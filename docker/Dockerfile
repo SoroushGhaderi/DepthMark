@@ -19,10 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy and install Python dependencies
+# Install the locked runtime dependencies. requirements.txt is exported from
+# uv.lock with hashes, so the image builds the same set every time.
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --require-hashes -r requirements.txt
 
 # ============================================
 # Final stage
