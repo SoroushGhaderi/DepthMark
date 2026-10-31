@@ -60,51 +60,6 @@ def month_date_ids(month: str, through_date: date | None = None) -> list[str]:
     return [f"{year:04d}{month_number:02d}{day:02d}" for day in range(1, last_day + 1)]
 
 
-def resolve_date_scope(
-    date_value: str | None = None,
-    month: str | None = None,
-    current_date: date | None = None,
-    start_date: str | None = None,
-    end_date: str | None = None,
-    default_to_today: bool = True,
-) -> list[str]:
-    """Resolve one date, month, or inclusive range without admitting future dates.
-
-    A current-month selector stops at ``current_date``. This keeps collection,
-    reporting, and downstream date scopes consistent while allowing historical
-    months to retain their complete calendar-day behavior.
-    """
-    selectors = sum(bool(value) for value in (date_value, month, start_date))
-    if selectors > 1:
-        raise ValueError("choose only one of --date, --month, or --start-date")
-    if start_date and not end_date:
-        raise ValueError("--end-date is required with --start-date")
-    if end_date and not start_date:
-        raise ValueError("--end-date can only be used with --start-date")
-
-    today = current_date or date.today()
-    if date_value:
-        date_id = normalize_compact_date(date_value)
-        if datetime.strptime(date_id, DATE_FORMAT_COMPACT).date() > today:
-            raise ValueError(f"future dates cannot be selected: {date_id}")
-        return [date_id]
-    if start_date:
-        dates = inclusive_date_ids(start_date, end_date or "")
-        if datetime.strptime(dates[-1], DATE_FORMAT_COMPACT).date() > today:
-            raise ValueError(f"future dates cannot be selected: {dates[-1]}")
-        return dates
-    if month:
-        month_id = normalize_compact_month(month)
-        selected_month = datetime.strptime(month_id, DATE_FORMAT_MONTH).date()
-        first_day = selected_month.replace(day=1)
-        if first_day > today:
-            raise ValueError(f"future months cannot be selected: {month_id}")
-        return month_date_ids(month_id, through_date=today)
-    if default_to_today:
-        return [today.strftime(DATE_FORMAT_COMPACT)]
-    raise ValueError("one of --date, --month, or --start-date is required")
-
-
 def format_date_compact_to_display(date_str: str) -> str:
     """
     Convert date from YYYYMMDD format to YYYY-MM-DD format.

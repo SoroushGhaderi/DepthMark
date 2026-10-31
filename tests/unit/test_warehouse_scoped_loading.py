@@ -171,7 +171,7 @@ def test_bronze_loader_dry_run_skips_clickhouse_and_telegram(monkeypatch):
 def test_pipeline_accepts_named_date_scope():
     parser = pipeline.create_argument_parser()
     args = parser.parse_args(["--date", "20251208"])
-    pipeline._validate_single_date_argument(parser, args)
+    pipeline._validate_scope_arguments(parser, args)
     assert args.date == "20251208"
 
 
@@ -313,7 +313,7 @@ def test_pipeline_skips_downstream_daily_stages_after_bronze_failure(monkeypatch
     )
 
     args = pipeline.create_argument_parser().parse_args(["20251208"])
-    pipeline._validate_single_date_argument(pipeline.create_argument_parser(), args)
+    pipeline._validate_scope_arguments(pipeline.create_argument_parser(), args)
 
     assert pipeline.run_pipeline(args) == 1
     assert calls == [("scrape_fotmob.py", ["20251208"])]
@@ -336,7 +336,7 @@ def test_pipeline_skips_gold_after_daily_silver_failure(monkeypatch, tmp_path):
     )
 
     args = pipeline.create_argument_parser().parse_args(["20251208"])
-    pipeline._validate_single_date_argument(pipeline.create_argument_parser(), args)
+    pipeline._validate_scope_arguments(pipeline.create_argument_parser(), args)
 
     assert pipeline.run_pipeline(args) == 1
     assert calls == [

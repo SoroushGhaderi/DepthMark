@@ -10,10 +10,11 @@ from typing import Any
 
 import pandas as pd
 
+from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.oddspedia.scraping.audit import audit_match_payload
-from src.oddspedia.scraping.config import get_match_links_file, normalize_date
+from src.oddspedia.scraping.config import get_match_links_file
 from src.oddspedia.scraping.link_prioritization import source_inventory_checksum
 from src.oddspedia.scraping.manifest import ManifestCorruptError, load_manifest
 from src.oddspedia.scraping.match_collector import listing_matches_target_date
@@ -67,7 +68,7 @@ class OddspediaBronzeLoader:
         self.database = database
 
     def load_date(self, date_str: str, dry_run: bool = False) -> OddspediaBronzeLoadResult:
-        date_id = normalize_date(date_str)
+        date_id = normalize_compact_date(date_str)
         result = OddspediaBronzeLoadResult(date=date_id, dry_run=dry_run)
         event_records, stored_payloads = self._validated_artifacts(date_id)
         event_rows = self._event_rows(date_id, records=event_records)
@@ -304,7 +305,7 @@ class OddspediaBronzeLoader:
             raise OddspediaBronzeAdmissionError(
                 f"Oddspedia discovery manifest is missing for {date_id}"
             )
-        if normalize_date(manifest.date) != date_id:
+        if normalize_compact_date(manifest.date) != date_id:
             raise OddspediaBronzeAdmissionError(
                 f"Oddspedia discovery manifest date does not match {date_id}"
             )

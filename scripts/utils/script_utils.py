@@ -5,7 +5,6 @@ This module centralizes common operations used across scraping scripts.
 
 import logging
 import sys
-from calendar import monthrange
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -18,13 +17,14 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from selenium.common.exceptions import WebDriverException
 
+from src.common.dates import (
+    DATE_FORMAT_COMPACT,
+    inclusive_date_ids,
+    month_date_ids,
+)
 from src.common.logging import get_logger
 
-DATE_FORMAT_COMPACT = "%Y%m%d"
-DATE_FORMAT_MONTH = "%Y%m"
-DATE_FORMAT_DISPLAY = "%Y-%m-%d"
 MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-VALID_YEAR_RANGE = (2000, 2100)
 
 
 @dataclass
@@ -100,97 +100,6 @@ def add_project_to_path() -> None:
         sys.path.insert(0, project_root_str)
 
 
-def validate_date_format(date_str: str, format_type: str = "YYYYMMDD") -> tuple[bool, str | None]:
-    """
-    Validate date string format.
-    Args:
-        date_str: Date string to validate
-        format_type: Expected format ("YYYYMMDD" or "YYYYMM")
-    Returns:
-        Tuple of (is_valid, error_message)
-    """
-    if format_type == "YYYYMMDD":
-        return _validate_full_date(date_str)
-    elif format_type == "YYYYMM":
-        return _validate_month_date(date_str)
-    return False, f"Unknown format type: {format_type}"
-
-
-def _validate_full_date(date_str: str) -> tuple[bool, str | None]:
-    """Validate a full date string (YYYYMMDD format)."""
-    if len(date_str) != 8 or not date_str.isdigit():
-        return False, f"Invalid date format: {date_str}. Expected YYYYMMDD (e.g., 20251113)"
-    try:
-        year = int(date_str[:4])
-        month = int(date_str[4:6])
-        day = int(date_str[6:8])
-        if not (1 <= month <= 12):
-            return False, f"Invalid month: {month}. Must be between 01 and 12"
-        if not (1 <= day <= 31):
-            return False, f"Invalid day: {day}. Must be between 01 and 31"
-        if not (VALID_YEAR_RANGE[0] <= year <= VALID_YEAR_RANGE[1]):
-            return (
-                False,
-                f"Invalid year: {year}. Must be between {VALID_YEAR_RANGE[0]} and {VALID_YEAR_RANGE[1]}",
-            )
-        datetime(year, month, day)
-        return True, None
-    except ValueError as e:
-        return False, f"Invalid date: {date_str}. {str(e)}"
-
-
-def _validate_month_date(date_str: str) -> tuple[bool, str | None]:
-    """Validate a month string (YYYYMM format)."""
-    if len(date_str) != 6 or not date_str.isdigit():
-        return False, f"Invalid month format: {date_str}. Expected YYYYMM (e.g., 202511)"
-    try:
-        year = int(date_str[:4])
-        month = int(date_str[4:6])
-        if not (1 <= month <= 12):
-            return False, f"Invalid month: {month}. Must be between 01 and 12"
-        if not (VALID_YEAR_RANGE[0] <= year <= VALID_YEAR_RANGE[1]):
-            return (
-                False,
-                f"Invalid year: {year}. Must be between {VALID_YEAR_RANGE[0]} and {VALID_YEAR_RANGE[1]}",
-            )
-        return True, None
-    except ValueError as e:
-        return False, f"Invalid month: {date_str}. {str(e)}"
-
-
-def generate_date_range(start_date: str, end_date: str) -> list[str]:
-    """
-    Generate list of dates between start and end (inclusive).
-    Args:
-        start_date: Start date in YYYYMMDD format
-        end_date: End date in YYYYMMDD format
-    Returns:
-        List of date strings in YYYYMMDD format
-    """
-    start = datetime.strptime(start_date, DATE_FORMAT_COMPACT)
-    end = datetime.strptime(end_date, DATE_FORMAT_COMPACT)
-    dates = []
-    current = start
-    while current <= end:
-        dates.append(current.strftime(DATE_FORMAT_COMPACT))
-        current += timedelta(days=1)
-    return dates
-
-
-def generate_month_dates(month_str: str) -> list[str]:
-    """
-    Generate all dates in a month.
-    Args:
-        month_str: Month in YYYYMM format
-    Returns:
-        List of date strings in YYYYMMDD format
-    """
-    year = int(month_str[:4])
-    month = int(month_str[4:6])
-    _, last_day = monthrange(year, month)
-    return [f"{year}{month:02d}{day:02d}" for day in range(1, last_day + 1)]
-
-
 def extract_year_month(month_str: str) -> tuple[str, str]:
     """
     Extract year and month from YYYYMM format.
@@ -234,7 +143,7 @@ def create_date_range_info(
         DateRangeInfo with dates list and display information
     """
     if month:
-        dates = generate_month_dates(month)
+        dates = month_date_ids(month)
         display_name = get_month_display_name(month)
         return DateRangeInfo(
             dates=dates,
@@ -246,7 +155,7 @@ def create_date_range_info(
         if num_days:
             end = datetime.strptime(start_date, DATE_FORMAT_COMPACT) + timedelta(days=num_days - 1)
             end_date = end.strftime(DATE_FORMAT_COMPACT)
-        dates = generate_date_range(start_date, end_date)
+        dates = inclusive_date_ids(start_date, end_date)
         return DateRangeInfo(
             dates=dates,
             display_text=f"Range: {start_date} to {end_date}",

@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 
+from src.common.run_scope import RunScope, add_scope_arguments
+
 ScopeKind = Literal["date", "month", "full-history"]
 
 
@@ -28,6 +30,17 @@ class WarehouseExecutionScope:
     @classmethod
     def full_history(cls) -> "WarehouseExecutionScope":
         return cls(kind="full-history")
+
+    @classmethod
+    def from_run_scope(cls, scope: RunScope) -> "WarehouseExecutionScope":
+        """Warehouse loads replace whole partitions, so ranges are not a warehouse scope."""
+        if scope.kind == "date":
+            return cls.for_date(scope.start)
+        if scope.kind == "month":
+            return cls.for_month(scope.start)
+        if scope.kind == "full-history":
+            return cls.full_history()
+        raise ValueError("Warehouse loads take --date, --month, or --full-history, not a range")
 
     @property
     def label(self) -> str:
@@ -70,35 +83,25 @@ def _validate_compact_date(value: str, date_format: str, display_format: str) ->
         raise ValueError(f"Invalid scope value '{value}'; expected {display_format}")
 
 
+WAREHOUSE_SCOPE_KINDS = frozenset({"date", "month", "full-history"})
+
+
 def add_warehouse_scope_arguments(
     parser: argparse.ArgumentParser,
     *,
     include_single_date: bool = True,
 ) -> None:
     """Add required, mutually exclusive warehouse scope selectors."""
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--date", help="Process one match date (YYYYMMDD)")
-    if include_single_date:
-        group.add_argument(
-            "--single-date",
-            help="Backward-compatible alias for --date (YYYYMMDD)",
-        )
-    group.add_argument("--month", help="Process one calendar month (YYYYMM)")
-    group.add_argument(
-        "--full-history",
-        action="store_true",
-        help="Explicitly process all available history",
+    add_scope_arguments(
+        parser,
+        allow=WAREHOUSE_SCOPE_KINDS,
+        single_date_alias=include_single_date,
+        noun="match date",
     )
 
 
 def execution_scope_from_args(args: argparse.Namespace) -> WarehouseExecutionScope:
-    """Build and validate a scope from parsed CLI arguments."""
-    date_value = getattr(args, "date", None) or getattr(args, "single_date", None)
-    if date_value:
-        return WarehouseExecutionScope.for_date(date_value)
-    month_value = getattr(args, "month", None)
-    if month_value:
-        return WarehouseExecutionScope.for_month(month_value)
-    if getattr(args, "full_history", False):
-        return WarehouseExecutionScope.full_history()
-    raise ValueError("One of --date, --month, or --full-history is required")
+    """Build and validate a warehouse scope from parsed CLI arguments."""
+    return WarehouseExecutionScope.from_run_scope(
+        RunScope.from_args(args, allow=WAREHOUSE_SCOPE_KINDS)
+    )

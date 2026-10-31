@@ -109,8 +109,8 @@ def test_stale_scopes_rerun_single_dates_or_whole_months():
     [
         ([], "one of the arguments"),
         (["--date", "2025-12-08"], "expected YYYYMMDD"),
-        (["--start-date", "20251208"], "requires --end-date"),
-        (["--start-date", "20251208", "--end-date", "20251201"], "must not be before"),
+        (["--start-date", "20251208"], "--end-date is required"),
+        (["--start-date", "20251208", "--end-date", "20251201"], "cannot be before"),
         (["--date", "20251208", "--month", "202512"], "not allowed with"),
     ],
 )

@@ -21,8 +21,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config import FotMobConfig
-from scripts.utils import generate_date_range, generate_month_dates, validate_date_format
 from src.common.logging import configure_logging, get_logger
+from src.common.run_scope import RunScope, ScopeError
 from src.fotmob.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
 from src.fotmob.bronze.paths import get_fotmob_historical_path
 from src.integrations.s3 import S3Client, S3ConfigurationError
@@ -83,29 +83,14 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     parser = create_argument_parser()
     args = parser.parse_args(argv)
 
-    if args.start_date and not args.end_date:
-        parser.error("--end-date is required with --start-date")
-    if args.end_date and not args.start_date:
-        parser.error("--end-date can only be used with --start-date")
-
-    if args.date:
-        _validate_date(parser, args.date)
-    if args.month:
-        is_valid, error = validate_date_format(args.month, "YYYYMM")
-        if not is_valid:
-            parser.error(error)
-    if args.start_date:
-        _validate_date(parser, args.start_date)
-        _validate_date(parser, args.end_date)
-        if args.end_date < args.start_date:
-            parser.error("--end-date cannot be before --start-date")
+    try:
+        # No selector means every stored date, discovered locally or remotely.
+        args.scope = RunScope.from_args(
+            args, allow={"date", "range", "month"}, default=RunScope.full_history()
+        )
+    except ScopeError as error:
+        parser.error(str(error))
     return args
-
-
-def _validate_date(parser: argparse.ArgumentParser, date_str: str) -> None:
-    is_valid, error = validate_date_format(date_str, "YYYYMMDD")
-    if not is_valid:
-        parser.error(error)
 
 
 def load_environment() -> None:
@@ -176,12 +161,8 @@ def _service_endpoint(endpoint: str, bucket_name: str) -> str:
 
 def resolve_dates(args: argparse.Namespace, service: BronzeS3Service) -> list[str]:
     """Resolve the explicit CLI scope into sorted date strings."""
-    if args.date:
-        return [args.date]
-    if args.month:
-        return generate_month_dates(args.month)
-    if args.start_date:
-        return generate_date_range(args.start_date, args.end_date)
+    if args.scope.kind != "full-history":
+        return args.scope.dates()
     if args.action == "upload":
         return service.list_local_dates()
     return service.list_remote_dates()

@@ -34,7 +34,8 @@ from selenium.common.exceptions import (
     WebDriverException,
 )
 
-from src.common.dates import resolve_date_scope
+from src.common.dates import normalize_compact_date
+from src.common.run_scope import resolve_date_scope
 from src.oddspedia.scraping.audit import (
     audit_date,
     audit_match_json,
@@ -54,7 +55,6 @@ from src.oddspedia.scraping.config import (
     get_run_logs_dir,
     get_sport_listing_url,
     get_storage_aspect,
-    normalize_date,
     normalize_sport,
 )
 from src.oddspedia.scraping.driver import DriverManager
@@ -521,7 +521,7 @@ def _existing_inventory_matches_target(links_file, date_str, sport: str = "footb
         discovery = manifest.discovery if manifest else {}
         return (
             manifest is not None
-            and normalize_date(manifest.date) == normalize_date(date_str)
+            and normalize_compact_date(manifest.date) == normalize_compact_date(date_str)
             and discovery.get("status") == "no_events"
             and bool(discovery.get("empty_confirmed"))
             and int(discovery.get("match_count", -1)) == 0

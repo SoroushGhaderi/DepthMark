@@ -11,11 +11,11 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
 from src.oddspedia.scraping.config import (
     get_match_links_file,
     get_prioritized_match_links_file,
-    normalize_date,
 )
 from src.oddspedia.silver.match_resolution import (
     FotMobMatch,
@@ -73,7 +73,7 @@ def priority_artifact_is_current(
     matcher_rule_version: str | None = None,
 ) -> bool:
     """Return whether an artifact still describes the current source inventory."""
-    matches_source = artifact.payload.get("prioritized_date") == normalize_date(
+    matches_source = artifact.payload.get("prioritized_date") == normalize_compact_date(
         date_str
     ) and artifact.source_checksum == source_inventory_checksum(links)
     matches_matcher = (
@@ -123,7 +123,7 @@ class LinkPriorityService:
         self, date_str: str, links: Sequence[dict[str, Any]], sport: str = "football"
     ) -> PriorityArtifact:
         """Produce a complete decision ledger for one accepted source inventory."""
-        date_id = normalize_date(date_str)
+        date_id = normalize_compact_date(date_str)
         discovery_date = datetime.strptime(date_id, "%Y%m%d").date()
         reference_dates = self.resolver.candidate_dates(discovery_date)
         reference_verification = FotMobReferenceWindowVerifier(self.client).require_complete(
@@ -235,7 +235,7 @@ def save_priority_artifact(
         json.dumps(artifact.payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     temporary_path.replace(path)
-    logger.info("link_priorities_saved", path=str(path), date=normalize_date(date_str))
+    logger.info("link_priorities_saved", path=str(path), date=normalize_compact_date(date_str))
     return str(path)
 
 

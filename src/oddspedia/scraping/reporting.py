@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
 from src.oddspedia.scraping.audit import DateAudit, audit_date
 from src.oddspedia.scraping.config import (
@@ -18,7 +19,6 @@ from src.oddspedia.scraping.config import (
     get_prioritized_match_links_file,
     get_run_logs_dir,
     get_storage_aspect,
-    normalize_date,
     normalize_sport,
 )
 from src.oddspedia.scraping.link_prioritization import PRIORITY_TIERS, source_inventory_checksum
@@ -34,7 +34,7 @@ _PRIORITY_RANK = {tier: rank for rank, tier in enumerate(PRIORITY_TIERS)}
 
 def build_run_report(date_str: str, sport: str = "football") -> dict[str, Any]:
     """Build a JSON-serializable report without acquiring locks or writing state."""
-    date_id = normalize_date(date_str)
+    date_id = normalize_compact_date(date_str)
     sport_id = normalize_sport(sport)
     links_path = Path(get_match_links_file(date_id, sport=sport_id))
     source_links = _load_links(links_path)

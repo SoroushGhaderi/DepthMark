@@ -43,12 +43,12 @@ from utils import (
     create_date_range_info,
     print_header,
     print_separator,
-    validate_date_format,
 )
 
 from config import FotMobConfig
 from scripts.refresh_turnstile import refresh_if_needed
 from src.common.logging import get_logger, setup_logging
+from src.common.run_scope import RunScope, ScopeError
 from src.fotmob.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
 from src.fotmob.orchestration import FotMobOrchestrator
 from src.integrations.telegram import (
@@ -237,9 +237,10 @@ def _validate_month_argument(
     if not args.month:
         return
 
-    is_valid, error_msg = validate_date_format(args.month, "YYYYMM")
-    if not is_valid:
-        parser.error(error_msg)
+    try:
+        RunScope.for_month(args.month)
+    except ScopeError as error:
+        parser.error(str(error))
 
     if args.end_date or args.days:
         parser.error("Cannot use --end_date or --days with --month option")
@@ -259,19 +260,13 @@ def _validate_start_date_argument(
     if not args.start_date:
         return
 
-    is_valid, error_msg = validate_date_format(args.start_date, "YYYYMMDD")
-    if not is_valid:
-        parser.error(error_msg)
-
-    if args.end_date:
-        is_valid, error_msg = validate_date_format(args.end_date, "YYYYMMDD")
-        if not is_valid:
-            parser.error(error_msg)
-
-        if args.end_date < args.start_date:
-            parser.error(
-                f"End date ({args.end_date}) cannot be before start date ({args.start_date})"
-            )
+    try:
+        if args.end_date:
+            RunScope.for_range(args.start_date, args.end_date)
+        else:
+            RunScope.for_date(args.start_date)
+    except ScopeError as error:
+        parser.error(str(error))
 
     if args.days and args.days < 1:
         parser.error(f"Number of days must be at least 1 (got: {args.days})")

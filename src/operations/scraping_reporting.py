@@ -7,7 +7,7 @@ from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, date, datetime
 from typing import Any
 
-from src.common.dates import resolve_date_scope
+from src.common.run_scope import resolve_date_scope
 from src.fotmob.scraping.reporting import build_run_report as build_fotmob_report
 from src.oddspedia.scraping.reporting import build_run_report as build_oddspedia_report
 

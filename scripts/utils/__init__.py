@@ -3,12 +3,10 @@
 Provides shared utilities for scraping scripts to reduce code duplication.
 """
 
+from src.common.dates import DATE_FORMAT_COMPACT, DATE_FORMAT_DISPLAY, DATE_FORMAT_MONTH
+
 from .script_utils import (
-    DATE_FORMAT_COMPACT,
-    DATE_FORMAT_DISPLAY,
-    DATE_FORMAT_MONTH,
     MONTH_NAMES,
-    VALID_YEAR_RANGE,
     DateRangeInfo,
     ImplicitWaitContext,
     PerformanceTimer,
@@ -21,14 +19,11 @@ from .script_utils import (
     extract_year_month,
     format_elapsed_time,
     format_stats_summary,
-    generate_date_range,
-    generate_month_dates,
     get_month_display_name,
     get_project_root,
     log_header,
     print_header,
     print_separator,
-    validate_date_format,
 )
 
 __all__ = [
@@ -36,7 +31,6 @@ __all__ = [
     "DATE_FORMAT_MONTH",
     "DATE_FORMAT_DISPLAY",
     "MONTH_NAMES",
-    "VALID_YEAR_RANGE",
     "StepResult",
     "PipelineStats",
     "DateRangeInfo",
@@ -44,9 +38,6 @@ __all__ = [
     "PipelineMode",
     "get_project_root",
     "add_project_to_path",
-    "validate_date_format",
-    "generate_date_range",
-    "generate_month_dates",
     "extract_year_month",
     "get_month_display_name",
     "create_date_range_info",

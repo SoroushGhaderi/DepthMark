@@ -17,11 +17,11 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
+from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
 from src.oddspedia.scraping.config import (
     get_match_file,
     get_matches_dir,
-    normalize_date,
     normalize_sport,
 )
 
@@ -33,7 +33,7 @@ def _storage_date(date_str: str) -> str:
     value = str(date_str).strip()
     if len(value) == 10 and value[4] == "-" and value[7] == "-":
         value = value.replace("-", "")
-    return normalize_date(value)
+    return normalize_compact_date(value)
 
 
 @dataclass(frozen=True)

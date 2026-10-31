@@ -39,13 +39,11 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from src.common.dates import extract_year_month
 from src.common.logging import get_logger, setup_logging
+from src.common.run_scope import RunScope, ScopeError, add_scope_arguments
 from src.fotmob.bronze import BronzeRunResult, BronzeService
 from src.fotmob.bronze.source_dates import (
     discover_historical_dates,
-    generate_date_range,
-    generate_month_dates,
 )
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.integrations.telegram import ErrorAlertData, TelegramClient
@@ -89,23 +87,8 @@ Examples:
         """,
     )
 
-    date_group = parser.add_mutually_exclusive_group()
-    date_group.add_argument("--date", type=str, help="Date to load (YYYYMMDD format)")
-    date_group.add_argument(
-        "--single-date",
-        type=str,
-        help="Load a single date (YYYYMMDD format). Equivalent to --date.",
-    )
-    date_group.add_argument(
-        "--start-date", type=str, help="Start date for range loading (YYYYMMDD format)"
-    )
-    date_group.add_argument("--month", type=str, help="Load entire month (YYYYMM format)")
-    date_group.add_argument(
-        "--full-history",
-        action="store_true",
-        help="Load every available date from data/fotmob/historical (Live is excluded)",
-    )
-    parser.add_argument("--end-date", type=str, help="End date for range loading (YYYYMMDD format)")
+    # Optional because --stats needs no scope; validate_arguments requires one otherwise.
+    add_scope_arguments(parser, required=False, single_date_alias=True, noun="Source Date")
 
     parser.add_argument(
         "--host",
@@ -162,16 +145,11 @@ Examples:
 
 def validate_arguments(args: argparse.Namespace) -> None:
     """Validate parsed arguments."""
-    if args.month:
-        if len(args.month) != 6 or not args.month.isdigit():
-            raise SystemExit(f"Invalid month format: {args.month}. Use YYYYMM")
-
-        month = int(args.month[4:6])
-        if not (1 <= month <= 12):
-            raise SystemExit(f"Invalid month: {month}")
-
-        if args.end_date:
-            raise SystemExit("Cannot use --end-date with --month option")
+    if not args.stats:
+        try:
+            RunScope.from_args(args)
+        except ScopeError as error:
+            raise SystemExit(str(error)) from error
     if args.truncate:
         if not args.full_history:
             raise SystemExit(
@@ -197,12 +175,9 @@ def get_dates_to_process(
     log: logging.Logger,
     historical_root: Path | None = None,
 ) -> list[str]:
-    """Get list of dates to process from arguments."""
-    if args.single_date:
-        if args.date:
-            raise SystemExit("Use either --date or --single-date, not both")
-        args.date = args.single_date
-    if args.full_history:
+    """Return the Source Dates selected by the arguments (full history is discovered)."""
+    scope = RunScope.from_args(args)
+    if scope.kind == "full-history":
         root = historical_root or (project_root / "data" / "fotmob" / "historical")
         dates = discover_historical_dates(root)
         log.info(
@@ -211,37 +186,9 @@ def get_dates_to_process(
             total_dates=len(dates),
         )
         return dates
-    if args.month:
-        dates = generate_month_dates(args.month)
-        year, month = extract_year_month(args.month)
-        month_names = [
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-            "Oct",
-            "Nov",
-            "Dec",
-        ]
-        month_name = month_names[int(month) - 1]
-        log.info(
-            "Monthly loading mode",
-            month=args.month,
-            month_name=month_name,
-            year=int(year),
-            total_dates=len(dates),
-        )
-        return dates
-    elif args.start_date:
-        return generate_date_range(args.start_date, args.end_date)
-    elif args.date:
-        return [args.date]
-    return []
+    dates = scope.dates()
+    log.info("Bronze loading scope", scope=scope.label, total_dates=len(dates))
+    return dates
 
 
 def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:

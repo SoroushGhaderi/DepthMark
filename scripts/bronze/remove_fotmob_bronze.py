@@ -31,12 +31,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from config import FotMobConfig  # noqa: E402
 from src.common.logging import get_logger, setup_logging  # noqa: E402
+from src.common.run_scope import RunScope, add_scope_arguments  # noqa: E402
 from src.fotmob.bronze.paths import get_fotmob_historical_path  # noqa: E402
 from src.fotmob.bronze.removal import BronzeRemovalResult, BronzeRemovalService  # noqa: E402
-from src.fotmob.bronze.source_dates import (  # noqa: E402
-    add_source_date_arguments,
-    source_dates_from_args,
-)
 from src.warehouse.identities import Identity, WarehouseConnectionError, warehouse_session  # noqa: E402
 
 logger = get_logger(__name__)
@@ -48,7 +45,7 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__.split("Usage:", 1)[1],
     )
-    add_source_date_arguments(parser)
+    add_scope_arguments(parser, noun="Source Date")
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -75,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        dates = source_dates_from_args(args)
+        dates = RunScope.from_args(args).dates()
     except ValueError as error:
         parser.error(str(error))
 

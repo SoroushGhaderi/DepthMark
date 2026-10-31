@@ -4,6 +4,7 @@ from pathlib import Path
 
 from config.settings import OddspediaSettings
 from config.settings import get_settings as get_depthmark_settings
+from src.common.dates import normalize_compact_date
 
 
 def get_settings() -> OddspediaSettings:
@@ -61,31 +62,13 @@ def get_sport_listing_url(sport=None):
     return FOOTBALL_ODDS_URL
 
 
-def normalize_date(date_str: str) -> str:
-    """Return a date identifier in the canonical YYYYMMDD format."""
-    value = str(date_str).strip()
-    if len(value) == 8 and value.isdigit():
-        datetime.strptime(value, "%Y%m%d")
-        return value
-    raise ValueError(f"date must use YYYYMMDD format: {date_str}")
-
-
-def normalize_month(month_str: str) -> str:
-    """Return a month identifier in the canonical YYYYMM format."""
-    value = str(month_str).strip()
-    if len(value) == 6 and value.isdigit():
-        datetime.strptime(value, "%Y%m")
-        return value
-    raise ValueError(f"month must use YYYYMM format: {month_str}")
-
-
 def get_storage_aspect(date_str: str, current_date: date | None = None) -> str:
     """Return the Historical or Live aspect for one collection date.
 
     Completed dates are immutable Historical artifacts. The machine-local
     current date is a refreshable Live snapshot; future dates are rejected.
     """
-    target_date = datetime.strptime(normalize_date(date_str), "%Y%m%d").date()
+    target_date = datetime.strptime(normalize_compact_date(date_str), "%Y%m%d").date()
     today = current_date or date.today()
     if target_date > today:
         raise ValueError(f"future dates cannot be collected: {date_str}")
@@ -95,14 +78,14 @@ def get_storage_aspect(date_str: str, current_date: date | None = None) -> str:
 def get_date_dir(date_str=None, sport=None):
     """Return the root directory for a date's storage aspect."""
     normalize_sport(sport)
-    date_id = normalize_date(date_str or date.today().strftime("%Y%m%d"))
+    date_id = normalize_compact_date(date_str or date.today().strftime("%Y%m%d"))
     return LIVE_DIR if get_storage_aspect(date_id) == "live" else HISTORICAL_DIR
 
 
 def _get_artifact_date_dir(artifact: str, date_str: str, sport=None) -> str:
     """Return a canonical ``{aspect}/{artifact}/{YYYYMM}/{YYYYMMDD}`` directory."""
     normalize_sport(sport)
-    date_id = normalize_date(date_str)
+    date_id = normalize_compact_date(date_str)
     return os.path.join(get_date_dir(date_id, sport=sport), artifact, date_id[:6], date_id)
 
 
@@ -110,7 +93,7 @@ def get_match_links_file(date_str=None, sport=None):
     """Return the match-links JSON path for a given date.
     e.g. data/oddspedia/historical/daily_listings/202602/20260227/match_links.json
     """
-    date_id = normalize_date(date_str or date.today().strftime("%Y%m%d"))
+    date_id = normalize_compact_date(date_str or date.today().strftime("%Y%m%d"))
     return os.path.join(
         _get_artifact_date_dir("daily_listings", date_id, sport), "match_links.json"
     )
@@ -119,7 +102,7 @@ def get_match_links_file(date_str=None, sport=None):
 def get_discovery_snapshot_file(date_str, sport=None):
     """Return the diagnostic snapshot path for an unaccepted discovery."""
     normalize_sport(sport)
-    date_id = normalize_date(date_str)
+    date_id = normalize_compact_date(date_str)
     return os.path.join(
         _get_artifact_date_dir("daily_listings", date_id, sport), "discovery_partial.json"
     )
@@ -128,7 +111,7 @@ def get_discovery_snapshot_file(date_str, sport=None):
 def get_manifest_file(date_str, sport=None):
     """Return the scrape manifest JSON path for a given date."""
     normalize_sport(sport)
-    date_id = normalize_date(date_str)
+    date_id = normalize_compact_date(date_str)
     return os.path.join(_get_artifact_date_dir("manifests", date_id, sport), "manifest.json")
 
 
@@ -141,7 +124,7 @@ def get_prioritized_match_links_file(date_str, sport=None):
     discovered as a Live snapshot.
     """
     normalize_sport(sport)
-    date_id = normalize_date(date_str)
+    date_id = normalize_compact_date(date_str)
     return os.path.join(
         HISTORICAL_DIR,
         "link_priorities",
@@ -155,7 +138,7 @@ def get_matches_dir(date_str=None, sport=None):
     """Return the per-match JSON directory for a given date.
     e.g. data/oddspedia/historical/matches/202602/20260227/
     """
-    date_id = normalize_date(date_str or date.today().strftime("%Y%m%d"))
+    date_id = normalize_compact_date(date_str or date.today().strftime("%Y%m%d"))
     return _get_artifact_date_dir("matches", date_id, sport)
 
 
@@ -166,5 +149,5 @@ def get_match_file(date_str: str, match_id: str, sport=None) -> str:
 
 def get_run_logs_dir(date_str, sport=None):
     """Return the directory containing event logs for one scrape date."""
-    date_id = normalize_date(date_str)
+    date_id = normalize_compact_date(date_str)
     return os.path.join(LOGS_DIR, normalize_sport(sport), date_id[:6], date_id)

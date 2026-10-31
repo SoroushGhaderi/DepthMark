@@ -10,7 +10,8 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-from src.oddspedia.scraping.config import DATA_DIR, normalize_date, normalize_sport
+from src.common.dates import normalize_compact_date
+from src.oddspedia.scraping.config import DATA_DIR, normalize_sport
 
 
 class OddspediaRunLockedError(RuntimeError):
@@ -27,7 +28,7 @@ def oddspedia_date_lock(
     lock_root: Path | None = None,
 ) -> Iterator[Path]:
     """Hold an exclusive process lock for one sport/date until the context exits."""
-    date_id = normalize_date(date_str)
+    date_id = normalize_compact_date(date_str)
     sport_id = normalize_sport(sport)
     if not operation or not operation.replace("-", "_").isidentifier():
         raise ValueError(f"invalid Oddspedia lock operation: {operation!r}")

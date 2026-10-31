@@ -37,11 +37,11 @@ from utils.script_utils import (
     create_date_range_info,
     format_elapsed_time,
     get_project_root,
-    validate_date_format,
 )
 
 add_project_to_path()
 from src.common.logging import get_logger, setup_logging
+from src.common.run_scope import RunScope, ScopeError
 from src.integrations.telegram import ErrorAlertData, TelegramClient
 
 RESULT_CATEGORIES = {
@@ -250,9 +250,7 @@ def parse_arguments() -> argparse.Namespace:
     """Parse and validate command-line arguments."""
     parser = create_argument_parser()
     args = parser.parse_args()
-    _validate_month_argument(parser, args)
-    _validate_date_range_arguments(parser, args)
-    _validate_single_date_argument(parser, args)
+    _validate_scope_arguments(parser, args)
     _validate_pipeline_flags(parser, args)
     return args
 
@@ -266,49 +264,17 @@ def _validate_pipeline_flags(parser: argparse.ArgumentParser, args: argparse.Nam
         parser.error("--full-history cannot use --bronze-only because scraping is excluded")
 
 
-def _validate_month_argument(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
-    """Validate month argument if provided."""
-    if not args.month:
-        return
-    is_valid, error_msg = validate_date_format(args.month, "YYYYMM")
-    if not is_valid:
-        parser.error(error_msg)
-    if args.end_date:
-        parser.error("Cannot use --end-date with --month option")
-
-
-def _validate_date_range_arguments(
-    parser: argparse.ArgumentParser, args: argparse.Namespace
-) -> None:
-    """Validate date range arguments."""
-    if not args.start_date:
-        return
-    if not args.end_date:
-        parser.error("--end-date is required when using --start-date")
-    is_valid, error_msg = validate_date_format(args.start_date, "YYYYMMDD")
-    if not is_valid:
-        parser.error(error_msg)
-    is_valid, error_msg = validate_date_format(args.end_date, "YYYYMMDD")
-    if not is_valid:
-        parser.error(error_msg)
-    if args.end_date < args.start_date:
-        parser.error(f"End date ({args.end_date}) cannot be before start date ({args.start_date})")
-
-
-def _validate_single_date_argument(
-    parser: argparse.ArgumentParser, args: argparse.Namespace
-) -> None:
-    """Validate single date argument."""
+def _validate_scope_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
+    """Fold named date aliases into ``args.date`` and validate the run scope."""
     named_date = args.single_date or args.named_date
     if named_date:
         if args.date:
             parser.error("Use either the positional date or a named date selector, not both")
         args.date = named_date
-    if not args.date:
-        return
-    is_valid, error_msg = validate_date_format(args.date, "YYYYMMDD")
-    if not is_valid:
-        parser.error(error_msg)
+    try:
+        RunScope.from_args(args)
+    except ScopeError as error:
+        parser.error(str(error))
 
 
 def create_pipeline_config(args: argparse.Namespace) -> PipelineConfig:

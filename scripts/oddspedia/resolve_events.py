@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.common.dates import resolve_date_scope
+from src.common.run_scope import resolve_date_scope
 from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
 from src.oddspedia.silver import OddspediaMatchResolver, OddspediaResolutionService
 from src.warehouse.identities import WarehouseConnectionError, warehouse_session

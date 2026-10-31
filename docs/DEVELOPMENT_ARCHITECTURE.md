@@ -557,6 +557,13 @@ discovery/execution, client setup, contract checks, validation, alerts, and
 deterministic summaries. They must not become a home for Silver or Gold
 analytical logic, which remains in ClickHouse SQL.
 
+Every command parses its `--date`, `--start-date`/`--end-date`, `--month`, and
+`--full-history` selectors with `src.common.run_scope.RunScope` (declaring the
+kinds it accepts with `allow=`) and expands them with `RunScope.dates()`, so
+validation messages, reversed ranges, and the current month stopping at today
+behave the same in every CLI. `WarehouseExecutionScope.from_run_scope()` turns a
+date, month, or full-history `RunScope` into a warehouse partition scope.
+
 Scoped derived loads share this function flow:
 
 1. CLI parsers call `execution_scope_from_args()` to create a required
