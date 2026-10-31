@@ -1,10 +1,10 @@
 import random
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 from config import FotMobConfig
-
 from src.common.logging import get_logger
+
 from .playwright_fetcher import PlaywrightFetcher
 
 logger = get_logger(__name__)
@@ -36,8 +36,8 @@ class BaseScraper:
     def make_request(
         self,
         url: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """Make a browser-based GET request with automatic x-mas token injection."""
         self._delay_request()
         self.logger.debug("Browser request → %s", url)

@@ -9,7 +9,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from scripts.oddspedia.load_bronze import main
 
-
 if __name__ == "__main__":
     print(
         "Warning: scripts/oddspedia/load_clickhouse.py is deprecated; use "

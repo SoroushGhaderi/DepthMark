@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import re
 from collections import Counter
-from datetime import datetime, timezone
+from collections.abc import Iterable, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
+from typing import Any
 
 from src.common.logging import get_logger
 from src.oddspedia.scraping.audit import DateAudit, audit_date
@@ -31,7 +32,7 @@ _ANSI_ESCAPE_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 _PRIORITY_RANK = {tier: rank for rank, tier in enumerate(PRIORITY_TIERS)}
 
 
-def build_run_report(date_str: str, sport: str = "football") -> Dict[str, Any]:
+def build_run_report(date_str: str, sport: str = "football") -> dict[str, Any]:
     """Build a JSON-serializable report without acquiring locks or writing state."""
     date_id = normalize_date(date_str)
     sport_id = normalize_sport(sport)
@@ -70,7 +71,7 @@ def build_run_report(date_str: str, sport: str = "football") -> Dict[str, Any]:
     }
     report = {
         "schema_version": "v1",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "source": "oddspedia",
         "date": date_id,
         "sport": sport_id,
@@ -95,7 +96,7 @@ def build_run_report(date_str: str, sport: str = "football") -> Dict[str, Any]:
     return report
 
 
-def _load_links(path: Path) -> List[Dict[str, Any]]:
+def _load_links(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     payload = _load_json(path)
@@ -104,7 +105,7 @@ def _load_links(path: Path) -> List[Dict[str, Any]]:
     return [item for item in payload if isinstance(item, dict)]
 
 
-def _load_optional_json(path: Path) -> Optional[Dict[str, Any]]:
+def _load_optional_json(path: Path) -> dict[str, Any] | None:
     if not path.exists():
         return None
     payload = _load_json(path)
@@ -118,7 +119,7 @@ def _load_json(path: Path) -> Any:
         return json.load(source)
 
 
-def _load_manifest_quiet(path: Path) -> Optional[ScrapeManifest]:
+def _load_manifest_quiet(path: Path) -> ScrapeManifest | None:
     """Load the manifest without emitting the status logger's console event."""
     if not path.exists():
         return None
@@ -129,8 +130,8 @@ def _load_manifest_quiet(path: Path) -> Optional[ScrapeManifest]:
 
 
 def _inventory_summary(
-    links: Sequence[Dict[str, Any]], path: Path, manifest: Optional[ScrapeManifest]
-) -> Dict[str, Any]:
+    links: Sequence[dict[str, Any]], path: Path, manifest: ScrapeManifest | None
+) -> dict[str, Any]:
     ids = [str(link.get("id")) for link in links if link.get("id") is not None]
     discovery = (manifest.discovery if manifest else {}) or {}
     return {
@@ -149,12 +150,12 @@ def _inventory_summary(
 
 
 def _priority_summary(
-    payload: Optional[Dict[str, Any]],
-    source_links: Sequence[Dict[str, Any]],
+    payload: dict[str, Any] | None,
+    source_links: Sequence[dict[str, Any]],
     date_id: str,
-    manifest: Optional[ScrapeManifest],
+    manifest: ScrapeManifest | None,
     path: Path,
-) -> Tuple[Dict[str, Any], Set[str]]:
+) -> tuple[dict[str, Any], set[str]]:
     if payload is None:
         return (
             {
@@ -221,7 +222,7 @@ def _priority_summary(
     )
 
 
-def _scrape_summary(manifest: Optional[ScrapeManifest], selected_ids: Set[str]) -> Dict[str, Any]:
+def _scrape_summary(manifest: ScrapeManifest | None, selected_ids: set[str]) -> dict[str, Any]:
     if manifest is None:
         return {
             "manifest_present": False,
@@ -278,7 +279,7 @@ def _scrape_summary(manifest: Optional[ScrapeManifest], selected_ids: Set[str]) 
     }
 
 
-def _metrics_summary(metrics: Dict[str, Any]) -> Dict[str, Any]:
+def _metrics_summary(metrics: dict[str, Any]) -> dict[str, Any]:
     keys = (
         "run",
         "match_detail_extraction",
@@ -293,7 +294,7 @@ def _metrics_summary(metrics: Dict[str, Any]) -> Dict[str, Any]:
     return {key: metrics.get(key) for key in keys if key in metrics}
 
 
-def _audit_summary(audit: DateAudit, selected_ids: Set[str]) -> Dict[str, Any]:
+def _audit_summary(audit: DateAudit, selected_ids: set[str]) -> dict[str, Any]:
     observation_counts = Counter(
         observation for item in audit.coverage_observations for observation in item.observations
     )
@@ -331,7 +332,7 @@ def _audit_summary(audit: DateAudit, selected_ids: Set[str]) -> Dict[str, Any]:
     }
 
 
-def _payload_summary(payloads: Iterable[Any]) -> Dict[str, Any]:
+def _payload_summary(payloads: Iterable[Any]) -> dict[str, Any]:
     payload_list = list(payloads)
     odds_unavailable_ids = sorted(
         str(payload.match_id) for payload in payload_list if payload.payload.get("odds_unavailable")
@@ -364,7 +365,7 @@ def _payload_summary(payloads: Iterable[Any]) -> Dict[str, Any]:
     }
 
 
-def _log_summary(date_id: str, sport: str, manifest: Optional[ScrapeManifest]) -> Dict[str, Any]:
+def _log_summary(date_id: str, sport: str, manifest: ScrapeManifest | None) -> dict[str, Any]:
     logs_dir = Path(get_run_logs_dir(date_id, sport=sport))
     paths = sorted(logs_dir.glob("*.log")) if logs_dir.exists() else []
     summaries = [_summarize_log(path) for path in paths]
@@ -382,7 +383,7 @@ def _log_summary(date_id: str, sport: str, manifest: Optional[ScrapeManifest]) -
     }
 
 
-def _summarize_log(path: Path) -> Dict[str, Any]:
+def _summarize_log(path: Path) -> dict[str, Any]:
     content = _ANSI_ESCAPE_RE.sub("", path.read_text(encoding="utf-8", errors="replace"))
     has_scraper_start = "scraper_start" in content
     has_scrape_complete = "scrape_json_complete" in content
@@ -409,7 +410,7 @@ def _summarize_log(path: Path) -> Dict[str, Any]:
     }
 
 
-def _warehouse_summary(scrape: Dict[str, Any], audit: Dict[str, Any]) -> Dict[str, Any]:
+def _warehouse_summary(scrape: dict[str, Any], audit: dict[str, Any]) -> dict[str, Any]:
     ready = bool(
         scrape.get("full_date_scope_complete")
         and audit.get("problem_count") == 0
@@ -429,7 +430,7 @@ def _warehouse_summary(scrape: Dict[str, Any], audit: Dict[str, Any]) -> Dict[st
     return {"bronze_admission_ready": ready, "reason": reason}
 
 
-def _overall_status(scrape: Dict[str, Any], audit: Dict[str, Any], priority: Dict[str, Any]) -> str:
+def _overall_status(scrape: dict[str, Any], audit: dict[str, Any], priority: dict[str, Any]) -> str:
     if not scrape.get("manifest_present"):
         return "not_started"
     if (
@@ -451,7 +452,7 @@ def _overall_status(scrape: Dict[str, Any], audit: Dict[str, Any], priority: Dic
     return "attention_required"
 
 
-def _findings(report: Dict[str, Any]) -> List[str]:
+def _findings(report: dict[str, Any]) -> list[str]:
     inventory = report["inventory"]
     priority = report["priority"]
     scrape = report["scrape"]
@@ -513,14 +514,14 @@ def _findings(report: Dict[str, Any]) -> List[str]:
     return findings
 
 
-def _next_steps(report: Dict[str, Any]) -> List[str]:
+def _next_steps(report: dict[str, Any]) -> list[str]:
     """Return actionable commands without changing report state."""
     date_id = report["date"]
     inventory = report["inventory"]
     priority = report["priority"]
     scrape = report["scrape"]
     warehouse = report["warehouse"]
-    steps: List[str] = []
+    steps: list[str] = []
     if not scrape["manifest_present"] and not inventory["total"]:
         steps.append(f"python3 scripts/oddspedia/discover_oddspedia_events.py --date {date_id}")
     elif inventory["total"] and not priority["artifact_present"]:
@@ -536,9 +537,8 @@ def _next_steps(report: Dict[str, Any]) -> List[str]:
     if warehouse["bronze_admission_ready"]:
         steps.extend(
             [
-                "python3 scripts/oddspedia/load_oddspedia_bronze.py " f"--date {date_id} --dry-run",
-                "python3 scripts/oddspedia/resolve_oddspedia_events.py "
-                f"--date {date_id} --dry-run",
+                f"python3 scripts/oddspedia/load_oddspedia_bronze.py --date {date_id} --dry-run",
+                f"python3 scripts/oddspedia/resolve_oddspedia_events.py --date {date_id} --dry-run",
             ]
         )
     elif scrape.get("selected_scope_complete") and not scrape.get("full_date_scope_complete"):

@@ -29,10 +29,11 @@ from __future__ import annotations
 
 import math
 import re
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any
 
 import pandas as pd
 
@@ -63,8 +64,8 @@ class BronzeAdmissionError(RuntimeError):
         self,
         message: str,
         *,
-        table: Optional[str] = None,
-        violations: Sequence["AdmissionViolation"] = (),
+        table: str | None = None,
+        violations: Sequence[AdmissionViolation] = (),
     ) -> None:
         details = "".join(f"\n  - {violation.describe()}" for violation in violations)
         super().__init__(f"{message}{details}")
@@ -84,7 +85,7 @@ class AdmissionViolation:
     column: str
     rule: str
     count: int
-    examples: Tuple[str, ...]
+    examples: tuple[str, ...]
 
     def describe(self) -> str:
         examples = "; ".join(self.examples)
@@ -97,7 +98,7 @@ class BronzeColumnSpec:
 
     name: str
     clickhouse_type: str
-    default_kind: Optional[str] = None
+    default_kind: str | None = None
 
     @property
     def nullable(self) -> bool:
@@ -133,8 +134,8 @@ class BronzeTableSpec:
     """One Bronze table: its DDL columns and its declared row identity."""
 
     table: str
-    columns: Tuple[BronzeColumnSpec, ...]
-    row_identity: Tuple[str, ...]
+    columns: tuple[BronzeColumnSpec, ...]
+    row_identity: tuple[str, ...]
     source_file: Path
     expected: ExpectedTable = field(repr=False, compare=False)
 
@@ -143,7 +144,7 @@ class BronzeTableSpec:
         return f"{BRONZE_DATABASE}.{self.table}"
 
     @property
-    def column_names(self) -> Tuple[str, ...]:
+    def column_names(self) -> tuple[str, ...]:
         return tuple(column.name for column in self.columns)
 
     def column(self, name: str) -> BronzeColumnSpec:
@@ -153,7 +154,7 @@ class BronzeTableSpec:
         raise KeyError(f"{self.qualified_name} has no column {name}")
 
 
-def load_bronze_table_specs(ddl_dir: Path = BRONZE_DDL_DIR) -> Dict[str, BronzeTableSpec]:
+def load_bronze_table_specs(ddl_dir: Path = BRONZE_DDL_DIR) -> dict[str, BronzeTableSpec]:
     """Parse Bronze setup DDL into table specs and check each declared row identity.
 
     Raises :class:`BronzeSchemaError` when a table in ``BRONZE_REQUIRED_KEYS`` has no
@@ -164,8 +165,8 @@ def load_bronze_table_specs(ddl_dir: Path = BRONZE_DDL_DIR) -> Dict[str, BronzeT
         for table in parse_expected_tables(sorted(ddl_dir.glob("*.sql")))
         if table.database == BRONZE_DATABASE
     }
-    specs: Dict[str, BronzeTableSpec] = {}
-    problems: List[str] = []
+    specs: dict[str, BronzeTableSpec] = {}
+    problems: list[str] = []
     for table_name, row_identity in BRONZE_REQUIRED_KEYS.items():
         expected = expected_tables.get(table_name)
         if expected is None:
@@ -199,7 +200,7 @@ def load_bronze_table_specs(ddl_dir: Path = BRONZE_DDL_DIR) -> Dict[str, BronzeT
 
 
 def assert_live_bronze_tables_match(
-    client: Any, specs: Mapping[str, BronzeTableSpec], tables: Optional[Iterable[str]] = None
+    client: Any, specs: Mapping[str, BronzeTableSpec], tables: Iterable[str] | None = None
 ) -> None:
     """Fail closed unless every selected Bronze table exists and matches its setup DDL.
 
@@ -231,8 +232,8 @@ class _ViolationCollector:
 
     def __init__(self, table: str) -> None:
         self.table = table
-        self._counts: Dict[Tuple[str, str], int] = {}
-        self._examples: Dict[Tuple[str, str], List[str]] = {}
+        self._counts: dict[tuple[str, str], int] = {}
+        self._examples: dict[tuple[str, str], list[str]] = {}
 
     def add(self, column: str, rule: str, row: Mapping[str, Any], value: Any) -> None:
         key = (column, rule)
@@ -247,7 +248,7 @@ class _ViolationCollector:
         self._examples.setdefault(key, []).extend(examples[:MAX_EXAMPLES_PER_VIOLATION])
 
     @property
-    def violations(self) -> List[AdmissionViolation]:
+    def violations(self) -> list[AdmissionViolation]:
         return [
             AdmissionViolation(
                 table=self.table,
@@ -335,7 +336,7 @@ def _string_converter(value: Any) -> str:
     raise _Reject("not_text")
 
 
-def _string_array_converter(value: Any) -> List[str]:
+def _string_array_converter(value: Any) -> list[str]:
     if not isinstance(value, (list, tuple)):
         raise _Reject("not_a_list")
     items = []
@@ -427,8 +428,8 @@ def admit_rows(spec: BronzeTableSpec, rows: Sequence[Mapping[str, Any]]) -> Admi
         return AdmittedTable(table=spec.table, frame=pd.DataFrame(), source_rows=0)
     collector = _ViolationCollector(spec.table)
     declared = set(spec.column_names)
-    unknown: Dict[str, int] = {}
-    unknown_examples: Dict[str, List[str]] = {}
+    unknown: dict[str, int] = {}
+    unknown_examples: dict[str, list[str]] = {}
     for row in rows:
         for key in row:
             if key not in declared:
@@ -440,7 +441,7 @@ def admit_rows(spec: BronzeTableSpec, rows: Sequence[Mapping[str, Any]]) -> Admi
         collector.add_count(key, "not_declared_in_ddl", count, unknown_examples[key])
 
     present = {key for row in rows for key in row}
-    data: Dict[str, pd.Series] = {}
+    data: dict[str, pd.Series] = {}
     for column in spec.columns:
         if column.is_computed:
             if column.name in present:
@@ -452,7 +453,7 @@ def admit_rows(spec: BronzeTableSpec, rows: Sequence[Mapping[str, Any]]) -> Admi
             collector.add_count(column.name, "required_column_absent", len(rows), [])
             continue
         convert = _converter_for(column)
-        values: List[Any] = []
+        values: list[Any] = []
         for row in rows:
             value = row.get(column.name)
             if _is_null(value):
@@ -499,7 +500,7 @@ def _check_row_identity(
     rows: Sequence[Mapping[str, Any]],
     data: Mapping[str, pd.Series],
     collector: _ViolationCollector,
-) -> List[int]:
+) -> list[int]:
     """Check identity values and return the row positions to keep.
 
     Identity columns must be positive where numeric. A row repeating an earlier
@@ -516,9 +517,9 @@ def _check_row_identity(
                 collector.add(key, "non_positive_identity", row, value)
 
     columns = list(data.values())
-    first_index: Dict[Tuple[Any, ...], int] = {}
-    keep: List[int] = []
-    conflicts: List[str] = []
+    first_index: dict[tuple[Any, ...], int] = {}
+    keep: list[int] = []
+    conflicts: list[str] = []
     conflict_count = 0
     for index, identity in enumerate(zip(*(data[key] for key in spec.row_identity))):
         earlier = first_index.get(identity)

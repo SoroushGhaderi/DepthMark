@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 from structlog.stdlib import LoggerFactory
@@ -9,7 +9,7 @@ from structlog.stdlib import LoggerFactory
 from src.oddspedia.scraping.config import SCRAPER_ENV
 
 
-def configure_logging(json_logs: bool = False, log_file: Optional[str] = None) -> None:
+def configure_logging(json_logs: bool = False, log_file: str | None = None) -> None:
     """Configure terminal logging and, optionally, persist the same events."""
     handlers = [logging.StreamHandler(sys.stdout)]
     if log_file:
@@ -45,7 +45,7 @@ def configure_logging(json_logs: bool = False, log_file: Optional[str] = None) -
     )
 
 
-def get_logger(name: Optional[str] = None, **initial_context: Any) -> structlog.BoundLogger:
+def get_logger(name: str | None = None, **initial_context: Any) -> structlog.BoundLogger:
     """Get a structlog logger with optional initial context."""
     log = structlog.get_logger(name)
     if initial_context:

@@ -1,7 +1,6 @@
 import os
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 from config.settings import OddspediaSettings
 from config.settings import get_settings as get_depthmark_settings
@@ -80,7 +79,7 @@ def normalize_month(month_str: str) -> str:
     raise ValueError(f"month must use YYYYMM format: {month_str}")
 
 
-def get_storage_aspect(date_str: str, current_date: Optional[date] = None) -> str:
+def get_storage_aspect(date_str: str, current_date: date | None = None) -> str:
     """Return the Historical or Live aspect for one collection date.
 
     Completed dates are immutable Historical artifacts. The machine-local

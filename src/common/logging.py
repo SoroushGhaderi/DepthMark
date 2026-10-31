@@ -7,11 +7,10 @@ import sys
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import structlog
 from structlog.stdlib import LoggerFactory
-
 
 _STRUCTLOG_CONFIGURED = False
 _DEFAULT_LOGGER_NAME = "depthmark"
@@ -47,7 +46,7 @@ def _merge_extra_fields(
 
 
 def configure_logging(
-    json_logs: Optional[bool] = None,
+    json_logs: bool | None = None,
     log_level: str = "INFO",
     force: bool = False,
     suppress_noisy_warnings: bool = True,
@@ -121,7 +120,7 @@ def _should_use_colors() -> bool:
     return sys.stdout.isatty()
 
 
-def _resolve_date_suffix(date_suffix: Optional[str] = None) -> str:
+def _resolve_date_suffix(date_suffix: str | None = None) -> str:
     """Resolve date suffix used in log file names."""
     if date_suffix:
         return date_suffix
@@ -138,7 +137,7 @@ class _AnsiStrippingFormatter(logging.Formatter):
 
 def initialize_logging(
     log_level: str = "INFO",
-    json_output: Optional[bool] = None,
+    json_output: bool | None = None,
     force: bool = False,
 ) -> logging.Logger:
     """Backward-compatible initializer that delegates to ``configure_logging``."""
@@ -150,8 +149,8 @@ def setup_logging(
     name: str = _DEFAULT_LOGGER_NAME,
     log_dir: str = "logs",
     log_level: str = "INFO",
-    log_format: Optional[str] = None,
-    date_suffix: Optional[str] = None,
+    log_format: str | None = None,
+    date_suffix: str | None = None,
 ) -> structlog.BoundLogger:
     """
     Configure a named logger and optional file output.
@@ -187,7 +186,7 @@ def setup_logging(
     return bound_logger
 
 
-def get_logger(name: Optional[str] = None, **initial_context: Any) -> structlog.BoundLogger:
+def get_logger(name: str | None = None, **initial_context: Any) -> structlog.BoundLogger:
     """Get a structlog logger with optional initial context."""
     if not _STRUCTLOG_CONFIGURED:
         configure_logging()
@@ -201,7 +200,7 @@ def setup_json_logging(
     name: str = _DEFAULT_LOGGER_NAME,
     log_dir: str = "logs",
     log_level: str = "INFO",
-    date_suffix: Optional[str] = None,
+    date_suffix: str | None = None,
 ) -> structlog.BoundLogger:
     """Compatibility wrapper: force JSON renderer regardless of environment."""
     initialize_logging(log_level=log_level, json_output=True)

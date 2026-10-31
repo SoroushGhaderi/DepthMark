@@ -5,13 +5,17 @@ table's DDL column names. A payload section that is absent yields no rows; a row
 the source models reject is returned as a :class:`RowRejection`; and an error
 while reading a section raises :class:`BronzeProcessingError`.
 """
+
 import hashlib
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 from pydantic import ValidationError as PydanticValidationError
+
+from src.common.logging import get_logger
+from src.fotmob.validation import FotMobValidator, SafeFieldExtractor
 
 from ...models import (
     CardEventMatchFacts,
@@ -29,14 +33,12 @@ from ...models import (
     TeamCoach,
     TeamFormMatch,
 )
-from src.fotmob.validation import FotMobValidator, SafeFieldExtractor
-from src.common.logging import get_logger
 
 logger = get_logger(__name__)
 
 
 # Period statistics key mapping: API key -> (home_field, away_field)
-PERIOD_STAT_KEY_MAPPING: Dict[str, Tuple[str, str]] = {
+PERIOD_STAT_KEY_MAPPING: dict[str, tuple[str, str]] = {
     "BallPossesion": ("ball_possession_home", "ball_possession_away"),
     "expected_goals": ("expected_goals_home", "expected_goals_away"),
     "total_shots": ("total_shots_home", "total_shots_away"),
@@ -114,7 +116,7 @@ RATIO_STAT_FIELDS = frozenset(
 )
 
 
-BRONZE_TABLES: Tuple[str, ...] = (
+BRONZE_TABLES: tuple[str, ...] = (
     "match_reference",
     "general",
     "timeline",
@@ -154,9 +156,9 @@ class ProcessedMatch:
     """Bronze rows for one match, keyed by table, plus rows the models rejected."""
 
     match_id: Any
-    rows: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
-    rejected_rows: List[RowRejection] = field(default_factory=list)
-    validation_summary: Optional[Dict[str, Any]] = None
+    rows: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    rejected_rows: list[RowRejection] = field(default_factory=list)
+    validation_summary: dict[str, Any] | None = None
 
 
 def _section_failed(section: str, error: Exception) -> BronzeProcessingError:
@@ -184,8 +186,8 @@ class FotMobBronzeMatchProcessor:
 
     def __init__(
         self,
-        validator: Optional[FotMobValidator] = None,
-        extractor: Optional[SafeFieldExtractor] = None,
+        validator: FotMobValidator | None = None,
+        extractor: SafeFieldExtractor | None = None,
     ):
         """
         Initialize the match processor with dependency injection.
@@ -203,7 +205,7 @@ class FotMobBronzeMatchProcessor:
 
     def _reject(
         self,
-        rejections: Optional[List[RowRejection]],
+        rejections: list[RowRejection] | None,
         table: str,
         match_id: Any,
         error: PydanticValidationError,
@@ -222,11 +224,11 @@ class FotMobBronzeMatchProcessor:
 
     def _distinct_event_row(
         self,
-        rows_by_event_id: Dict[int, Dict[str, Any]],
-        row: Dict[str, Any],
+        rows_by_event_id: dict[int, dict[str, Any]],
+        row: dict[str, Any],
         table_name: str,
         match_id: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Give a different event that repeats an earlier event's id its own deterministic id.
 
         FotMob sometimes reuses an ``eventId`` for two events, and two events without
@@ -264,10 +266,10 @@ class FotMobBronzeMatchProcessor:
 
     @staticmethod
     def _first_lineup_entry_per_player(
-        players: List[Dict[str, Any]], table_name: str, match_id: Any, log: Any
-    ) -> List[Dict[str, Any]]:
+        players: list[dict[str, Any]], table_name: str, match_id: Any, log: Any
+    ) -> list[dict[str, Any]]:
         """Keep the first lineup entry for each player; the source occasionally repeats one."""
-        kept: List[Dict[str, Any]] = []
+        kept: list[dict[str, Any]] = []
         seen: set = set()
         for player in players:
             if player["player_id"] in seen:
@@ -284,7 +286,7 @@ class FotMobBronzeMatchProcessor:
         return kept
 
     @staticmethod
-    def _split_full_score(full_score: Optional[str]) -> Tuple[Optional[int], Optional[int]]:
+    def _split_full_score(full_score: str | None) -> tuple[int | None, int | None]:
         """Parse score strings like '2-1' or '2 - 1' into home/away integer scores."""
         if not full_score:
             return None, None
@@ -296,7 +298,7 @@ class FotMobBronzeMatchProcessor:
         return int(match.group(1)), int(match.group(2))
 
     @staticmethod
-    def _extract_year_from_datetime(value: Optional[str]) -> Optional[str]:
+    def _extract_year_from_datetime(value: str | None) -> str | None:
         """Extract YYYY from ISO-like datetime strings."""
         if not value:
             return None
@@ -307,9 +309,9 @@ class FotMobBronzeMatchProcessor:
         self,
         match_id: int,
         team_side: str,
-        player_raw: Dict[str, Any],
+        player_raw: dict[str, Any],
         used_ids: set,
-    ) -> Tuple[int, str]:
+    ) -> tuple[int, str]:
         """Generate deterministic synthetic Int64 id from stable player attributes."""
         base_key = (
             f"match:{int(match_id)}|"
@@ -334,7 +336,7 @@ class FotMobBronzeMatchProcessor:
             salt += 1
 
     @staticmethod
-    def _resolve_numeric_id(raw_id: Any) -> Optional[int]:
+    def _resolve_numeric_id(raw_id: Any) -> int | None:
         """Resolve integer ids from mixed raw values."""
         if isinstance(raw_id, int):
             return raw_id
@@ -342,7 +344,7 @@ class FotMobBronzeMatchProcessor:
             return int(raw_id)
         return None
 
-    def _collect_used_lineup_player_ids(self, lineup_raw: Dict[str, Any]) -> set:
+    def _collect_used_lineup_player_ids(self, lineup_raw: dict[str, Any]) -> set:
         """Collect all valid positive lineup ids across home/away starters+subs."""
         used_ids = set()
         for team_key in ("homeTeam", "awayTeam"):
@@ -389,7 +391,7 @@ class FotMobBronzeMatchProcessor:
         table_name: str,
         match_id: Any,
         id_field: str = "event_id",
-        fallback_source_field: Optional[str] = None,
+        fallback_source_field: str | None = None,
         fallback_source_value: Any = None,
         event_time: Any = None,
         player_id: Any = None,
@@ -439,8 +441,8 @@ class FotMobBronzeMatchProcessor:
         return 1_500_000_000 + (digest_value % 647_483_647)
 
     def process_all(
-        self, raw_response: Dict[str, Any], validate_before_processing: bool = True
-    ) -> Tuple[Dict[str, pd.DataFrame], Optional[Dict[str, Any]]]:
+        self, raw_response: dict[str, Any], validate_before_processing: bool = True
+    ) -> tuple[dict[str, pd.DataFrame], dict[str, Any] | None]:
         """Return one DataFrame per Bronze table that has rows, plus the validation summary.
 
         Kept for scrape-time data-quality checks; Bronze loading uses ``process_match``.
@@ -450,7 +452,7 @@ class FotMobBronzeMatchProcessor:
         return dataframes, processed.validation_summary
 
     def process_match(
-        self, raw_response: Dict[str, Any], validate_before_processing: bool = True
+        self, raw_response: dict[str, Any], validate_before_processing: bool = True
     ) -> ProcessedMatch:
         """Process one FotMob match payload into Bronze rows keyed by table.
 
@@ -468,7 +470,9 @@ class FotMobBronzeMatchProcessor:
 
             if not validation_summary["is_valid"]:
                 self.logger.warning(
-                    "Validation failed for match %s with %s errors. Processing anyway...", match_id, validation_summary['error_count']
+                    "Validation failed for match %s with %s errors. Processing anyway...",
+                    match_id,
+                    validation_summary["error_count"],
                 )
                 # Log errors
                 for error in validation_summary["errors"]:
@@ -477,7 +481,7 @@ class FotMobBronzeMatchProcessor:
                 self.logger.debug("[OK] Validation passed for match %s", match_id)
 
         self.logger.debug("Processing match payload", match_id=match_id)
-        rejections: List[RowRejection] = []
+        rejections: list[RowRejection] = []
         try:
             general_stats = self.process_general_stats(raw_response, rejections)
             lineup = self.process_lineup_data(raw_response, rejections)
@@ -487,7 +491,7 @@ class FotMobBronzeMatchProcessor:
                 "timeline": self.process_match_timeline(raw_response, rejections),
                 "venue": self.process_infobox_data(raw_response, rejections),
             }
-            rows: Dict[str, List[Dict[str, Any]]] = {
+            rows: dict[str, list[dict[str, Any]]] = {
                 table: [row] if row else [] for table, row in single_rows.items()
             }
             rows.update(
@@ -526,9 +530,9 @@ class FotMobBronzeMatchProcessor:
 
     @staticmethod
     def _extract_match_date(
-        match_time_utc_date: Optional[str],
-        match_time_utc: Optional[str],
-    ) -> Optional[str]:
+        match_time_utc_date: str | None,
+        match_time_utc: str | None,
+    ) -> str | None:
         """Resolve the YYYY-MM-DD match date for the bronze match reference.
 
         Returns ``None`` when the payload carries no date, which Bronze admission
@@ -543,8 +547,8 @@ class FotMobBronzeMatchProcessor:
         return None
 
     def process_match_reference(
-        self, general_stats: Optional[Dict[str, Any]]
-    ) -> Optional[Dict[str, Any]]:
+        self, general_stats: dict[str, Any] | None
+    ) -> dict[str, Any] | None:
         """Process the compact match reference row for bronze filters."""
         if not general_stats:
             return None
@@ -575,9 +579,7 @@ class FotMobBronzeMatchProcessor:
             "away_score",
         }
         match_reference = {
-            key: value
-            for key, value in general_stats.items()
-            if key in match_reference_fields
+            key: value for key, value in general_stats.items() if key in match_reference_fields
         }
         match_reference["match_date"] = self._extract_match_date(
             general_stats.get("match_time_utc_date"),
@@ -586,8 +588,8 @@ class FotMobBronzeMatchProcessor:
         return match_reference
 
     def process_match_timeline(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> dict[str, Any] | None:
         """Process match timeline data with safe field extraction."""
         try:
             self.logger.debug("Processing timeline data")
@@ -639,8 +641,8 @@ class FotMobBronzeMatchProcessor:
         return None
 
     def process_general_stats(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> dict[str, Any] | None:
         """Process general match statistics."""
         try:
             self.logger.debug("Processing general stats")
@@ -715,8 +717,8 @@ class FotMobBronzeMatchProcessor:
         return None
 
     def process_goal_events_from_header(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """Process goal events from header section."""
         all_goal_dicts = []
         try:
@@ -729,7 +731,7 @@ class FotMobBronzeMatchProcessor:
             events = header.get("events", {})
             if not isinstance(events, dict):
                 return all_goal_dicts
-            goal_rows_by_event_id: Dict[int, Dict[str, Any]] = {}
+            goal_rows_by_event_id: dict[int, dict[str, Any]] = {}
             goal_data_sources = [
                 (events.get("homeTeamGoals", {}), "Home"),
                 (events.get("awayTeamGoals", {}), "Away"),
@@ -838,8 +840,8 @@ class FotMobBronzeMatchProcessor:
         return all_goal_dicts
 
     def process_red_card_events(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """Process red card events."""
         all_red_cards = []
         try:
@@ -849,7 +851,7 @@ class FotMobBronzeMatchProcessor:
             match_id = response_data.get("general", {}).get("matchId")
             if not isinstance(events, dict) or not match_id:
                 return all_red_cards
-            red_card_rows_by_event_id: Dict[int, Dict[str, Any]] = {}
+            red_card_rows_by_event_id: dict[int, dict[str, Any]] = {}
             team_red_cards_sources = [
                 (events.get("homeTeamRedCards", {}), "Home"),
                 (events.get("awayTeamRedCards", {}), "Away"),
@@ -906,15 +908,15 @@ class FotMobBronzeMatchProcessor:
         return all_red_cards
 
     def process_card_events(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """Process card events from the match facts timeline into ``bronze.cards`` rows.
 
         Goals and substitutions in the same timeline are not Bronze tables: goals come
         from the header (``process_goal_events_from_header``) and substitutions from
         the lineup.
         """
-        cards: List[Dict[str, Any]] = []
+        cards: list[dict[str, Any]] = []
         try:
             self.logger.debug("Processing card events")
             match_id = response_data.get("general", {}).get("matchId")
@@ -928,7 +930,7 @@ class FotMobBronzeMatchProcessor:
             )
             if not isinstance(events_list, list):
                 return cards
-            card_rows_by_event_id: Dict[int, Dict[str, Any]] = {}
+            card_rows_by_event_id: dict[int, dict[str, Any]] = {}
             for event in events_list:
                 if not isinstance(event, dict) or event.get("type") != "Card":
                     continue
@@ -982,8 +984,8 @@ class FotMobBronzeMatchProcessor:
         return cards
 
     def process_momentum_data(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """Process momentum data."""
         processed_points = []
         try:
@@ -1023,7 +1025,7 @@ class FotMobBronzeMatchProcessor:
             raise _section_failed("momentum", e) from e
         return processed_points
 
-    def _round_possession(self, flat_data: Dict[str, Any], match_id: Any) -> None:
+    def _round_possession(self, flat_data: dict[str, Any], match_id: Any) -> None:
         """Round fractional possession half to even (see ``ROUNDED_POSSESSION_FIELDS``)."""
         rounded = {}
         for field_name in ROUNDED_POSSESSION_FIELDS:
@@ -1039,7 +1041,7 @@ class FotMobBronzeMatchProcessor:
                 source_values=rounded,
             )
 
-    def _parse_stat_values(self, key: str, values_raw: List[Any]) -> List[Any]:
+    def _parse_stat_values(self, key: str, values_raw: list[Any]) -> list[Any]:
         """Parse stat values, handling ratio fields and type conversion.
 
         Args:
@@ -1073,8 +1075,8 @@ class FotMobBronzeMatchProcessor:
         return values
 
     def process_period_stats(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """Process period statistics."""
         results = []
         try:
@@ -1148,8 +1150,8 @@ class FotMobBronzeMatchProcessor:
         return results
 
     def process_flat_player_stats(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """Process player statistics."""
         all_player_stats = []
         try:
@@ -1362,8 +1364,8 @@ class FotMobBronzeMatchProcessor:
         return all_player_stats
 
     def process_shotmap_data(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """Process shotmap data."""
         processed_shots = []
         try:
@@ -1437,8 +1439,8 @@ class FotMobBronzeMatchProcessor:
         return processed_shots
 
     def process_lineup_data(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> Dict[str, List[Dict[str, Any]]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> dict[str, list[dict[str, Any]]]:
         """
         Process lineup data (starters, subs, coaches).
         IMPROVED: Combines home/away to single dataframes with team_side field
@@ -1518,13 +1520,13 @@ class FotMobBronzeMatchProcessor:
 
     def _process_lineup_players(
         self,
-        players_raw: List[Dict[str, Any]],
+        players_raw: list[dict[str, Any]],
         player_model,
         match_id: int,
         team_side: str = "home",
-        used_ids: Optional[set] = None,
-        rejections: Optional[List[RowRejection]] = None,
-    ) -> List[Dict[str, Any]]:
+        used_ids: set | None = None,
+        rejections: list[RowRejection] | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Helper to process lineup players.
         Args:
@@ -1625,11 +1627,11 @@ class FotMobBronzeMatchProcessor:
 
     def _process_coach(
         self,
-        coach_raw: Dict[str, Any],
+        coach_raw: dict[str, Any],
         match_id: int,
         team_side: str = "home",
-        rejections: Optional[List[RowRejection]] = None,
-    ) -> Dict[str, Any]:
+        rejections: list[RowRejection] | None = None,
+    ) -> dict[str, Any]:
         """
         Helper to process coach data.
         Args:
@@ -1681,8 +1683,8 @@ class FotMobBronzeMatchProcessor:
             return {}
 
     def process_infobox_data(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> Dict[str, Any]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> dict[str, Any]:
         """
         Process venue, stadium, attendance, and match information from InfoBox.
         Extracts:
@@ -1753,8 +1755,8 @@ class FotMobBronzeMatchProcessor:
             raise _section_failed("venue", e) from e
 
     def process_team_form_data(
-        self, response_data: Dict[str, Any], rejections: Optional[List[RowRejection]] = None
-    ) -> List[Dict[str, Any]]:
+        self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
+    ) -> list[dict[str, Any]]:
         """
         Process team form data to flattened structure with team_side field.
         Returns list of TeamFormMatch objects (one per past match for each team).

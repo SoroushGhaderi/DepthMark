@@ -2,6 +2,7 @@
 
 This module centralizes common operations used across scraping scripts.
 """
+
 import logging
 import sys
 from calendar import monthrange
@@ -9,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -32,8 +33,8 @@ class StepResult:
     success: bool
     exit_code: int
     elapsed_time: float
-    date_str: Optional[str] = None
-    error_message: Optional[str] = None
+    date_str: str | None = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -52,7 +53,7 @@ class PipelineStats:
 class DateRangeInfo:
     """Information about a date range for display and logging."""
 
-    dates: List[str]
+    dates: list[str]
     display_text: str
     mode_text: str
     log_suffix: str
@@ -72,7 +73,7 @@ class PipelineMode(Enum):
     MONTHLY = "monthly"
 
 
-_PROJECT_ROOT: Optional[Path] = None
+_PROJECT_ROOT: Path | None = None
 logger = get_logger(__name__)
 
 
@@ -97,9 +98,7 @@ def add_project_to_path() -> None:
         sys.path.insert(0, project_root_str)
 
 
-def validate_date_format(
-    date_str: str, format_type: str = "YYYYMMDD"
-) -> Tuple[bool, Optional[str]]:
+def validate_date_format(date_str: str, format_type: str = "YYYYMMDD") -> tuple[bool, str | None]:
     """
     Validate date string format.
     Args:
@@ -115,7 +114,7 @@ def validate_date_format(
     return False, f"Unknown format type: {format_type}"
 
 
-def _validate_full_date(date_str: str) -> Tuple[bool, Optional[str]]:
+def _validate_full_date(date_str: str) -> tuple[bool, str | None]:
     """Validate a full date string (YYYYMMDD format)."""
     if len(date_str) != 8 or not date_str.isdigit():
         return False, f"Invalid date format: {date_str}. Expected YYYYMMDD (e.g., 20251113)"
@@ -138,7 +137,7 @@ def _validate_full_date(date_str: str) -> Tuple[bool, Optional[str]]:
         return False, f"Invalid date: {date_str}. {str(e)}"
 
 
-def _validate_month_date(date_str: str) -> Tuple[bool, Optional[str]]:
+def _validate_month_date(date_str: str) -> tuple[bool, str | None]:
     """Validate a month string (YYYYMM format)."""
     if len(date_str) != 6 or not date_str.isdigit():
         return False, f"Invalid month format: {date_str}. Expected YYYYMM (e.g., 202511)"
@@ -157,7 +156,7 @@ def _validate_month_date(date_str: str) -> Tuple[bool, Optional[str]]:
         return False, f"Invalid month: {date_str}. {str(e)}"
 
 
-def generate_date_range(start_date: str, end_date: str) -> List[str]:
+def generate_date_range(start_date: str, end_date: str) -> list[str]:
     """
     Generate list of dates between start and end (inclusive).
     Args:
@@ -176,7 +175,7 @@ def generate_date_range(start_date: str, end_date: str) -> List[str]:
     return dates
 
 
-def generate_month_dates(month_str: str) -> List[str]:
+def generate_month_dates(month_str: str) -> list[str]:
     """
     Generate all dates in a month.
     Args:
@@ -190,7 +189,7 @@ def generate_month_dates(month_str: str) -> List[str]:
     return [f"{year}{month:02d}{day:02d}" for day in range(1, last_day + 1)]
 
 
-def extract_year_month(month_str: str) -> Tuple[str, str]:
+def extract_year_month(month_str: str) -> tuple[str, str]:
     """
     Extract year and month from YYYYMM format.
     Args:
@@ -215,11 +214,11 @@ def get_month_display_name(month_str: str) -> str:
 
 
 def create_date_range_info(
-    date: Optional[str] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-    month: Optional[str] = None,
-    num_days: Optional[int] = None,
+    date: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+    month: str | None = None,
+    num_days: int | None = None,
 ) -> DateRangeInfo:
     """
     Create DateRangeInfo from various date arguments.
@@ -307,7 +306,7 @@ class PerformanceTimer:
         timer.log_elapsed()
     """
 
-    def __init__(self, operation_name: str, logger: Optional[logging.Logger] = None):
+    def __init__(self, operation_name: str, logger: logging.Logger | None = None):
         """
         Initialize timer.
         Args:
@@ -356,7 +355,7 @@ def format_elapsed_time(seconds: float) -> str:
     """
     if seconds < 60:
         return f"{seconds:.1f}s"
-        return f"{seconds:.1f}s ({seconds/60:.1f} minutes)"
+        return f"{seconds:.1f}s ({seconds / 60:.1f} minutes)"
 
 
 def print_header(title: str, char: str = "=", width: int = 80) -> None:
@@ -378,7 +377,7 @@ def log_header(logger: logging.Logger, title: str, char: str = "=", width: int =
     logger.info(char * width)
 
 
-def format_stats_summary(stats: Dict[str, Any], indent: int = 2) -> str:
+def format_stats_summary(stats: dict[str, Any], indent: int = 2) -> str:
     """
     Format statistics dictionary as a summary string.
     Args:

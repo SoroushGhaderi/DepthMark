@@ -40,11 +40,15 @@ class SafeGetTests(unittest.TestCase):
             driver_obj.title = "Oddspedia Football"
             return True
 
-        with patch("src.oddspedia.scraping.utils.wait_for_cloudflare", side_effect=wait_for_cloudflare):
+        with patch(
+            "src.oddspedia.scraping.utils.wait_for_cloudflare", side_effect=wait_for_cloudflare
+        ):
             result = safe_get(driver, "https://oddspedia.com/football", retries=2)
 
         self.assertTrue(result)
-        self.assertEqual(driver.get_calls, ["https://oddspedia.com/football", "https://oddspedia.com/football"])
+        self.assertEqual(
+            driver.get_calls, ["https://oddspedia.com/football", "https://oddspedia.com/football"]
+        )
         self.assertEqual(driver.reconnect_calls, 1)
 
     @patch("src.oddspedia.scraping.utils.random_delay")

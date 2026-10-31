@@ -22,11 +22,10 @@ Usage:
 import os
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from pydantic import BaseModel, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 # ---------------------------------------------------------------------------
 # Environment enum
@@ -54,7 +53,7 @@ class FotMobApiSettings(BaseModel):
     user_agent: str = ""
     x_mas_token: str = ""
     cookies: str = ""
-    user_agents: List[str] = []
+    user_agents: list[str] = []
 
 
 class FotMobRequestSettings(BaseModel):
@@ -72,7 +71,7 @@ class FotMobScrapingSettings(BaseModel):
     enable_parallel: bool = True
     metrics_update_interval: int = 20
     filter_by_status: bool = True
-    allowed_match_statuses: Tuple[str, ...] = (
+    allowed_match_statuses: tuple[str, ...] = (
         "Finished",
         "FullTime",
         "FT",
@@ -100,7 +99,7 @@ class FotMobRetrySettings(BaseModel):
     max_wait: float = 10.0
     exponential_base: float = 2.0
     backoff_factor: float = 2.0
-    status_codes: Tuple[int, ...] = (429, 500, 502, 503, 504)
+    status_codes: tuple[int, ...] = (429, 500, 502, 503, 504)
 
 
 class FotMobLoggingSettings(BaseModel):
@@ -184,7 +183,7 @@ class OddspediaSettings(BaseModel):
 # Env-var → FotMob nested-field mapping
 # ---------------------------------------------------------------------------
 
-_FOTMOB_ENV_MAP: Dict[str, Tuple[str, str]] = {
+_FOTMOB_ENV_MAP: dict[str, tuple[str, str]] = {
     # env var name → (nested_path, key)
     "FOTMOB_X_MAS_TOKEN": ("api", "x_mas_token"),
     "FOTMOB_COOKIES": ("api", "cookies"),
@@ -212,7 +211,7 @@ _FOTMOB_ENV_MAP: Dict[str, Tuple[str, str]] = {
     "FOTMOB_PROXY_HTTPS": ("proxy", "https"),
 }
 
-_ODDSPEDIA_ENV_MAP: Dict[str, str] = {
+_ODDSPEDIA_ENV_MAP: dict[str, str] = {
     "ODDSPEDIA_BASE_URL": "base_url",
     "ODDSPEDIA_SCRAPER_ENV": "scraper_env",
     "ODDSPEDIA_MIN_DELAY": "min_delay",
@@ -277,7 +276,7 @@ def _coerce_value(key: str, raw: str) -> Any:
     return raw
 
 
-def _load_yaml_fotmob() -> Dict[str, Any]:
+def _load_yaml_fotmob() -> dict[str, Any]:
     """Load the ``fotmob`` section from config.yaml, if it exists."""
     try:
         import yaml
@@ -290,13 +289,13 @@ def _load_yaml_fotmob() -> Dict[str, Any]:
     if not Path(config_path).exists():
         return {}
 
-    with open(config_path, "r") as fh:
+    with open(config_path) as fh:
         data = yaml.safe_load(fh) or {}
 
     return data.get("fotmob", {})
 
 
-def _load_yaml_oddspedia() -> Dict[str, Any]:
+def _load_yaml_oddspedia() -> dict[str, Any]:
     """Load the ``oddspedia`` section from config.yaml, if it exists."""
     try:
         import yaml
@@ -308,15 +307,15 @@ def _load_yaml_oddspedia() -> Dict[str, Any]:
         config_path = Path(__file__).parent.parent / "config.yaml"
     if not Path(config_path).exists():
         return {}
-    with open(config_path, "r") as fh:
+    with open(config_path) as fh:
         data = yaml.safe_load(fh) or {}
     return data.get("oddspedia", {})
 
 
-def _build_fotmob_overrides() -> Dict[str, Any]:
+def _build_fotmob_overrides() -> dict[str, Any]:
     """Build a nested dict from FOTMOB_* env vars (env vars win over YAML)."""
     yaml_data = _load_yaml_fotmob()
-    overrides: Dict[str, Any] = {}
+    overrides: dict[str, Any] = {}
 
     for env_name, (section, key) in _FOTMOB_ENV_MAP.items():
         raw = os.getenv(env_name)
@@ -324,7 +323,7 @@ def _build_fotmob_overrides() -> Dict[str, Any]:
             overrides.setdefault(section, {})[key] = _coerce_value(key, raw)
 
     # Merge: YAML provides defaults, env-var overrides win
-    merged: Dict[str, Any] = {}
+    merged: dict[str, Any] = {}
     for section_name in (
         "api",
         "request",
@@ -343,7 +342,7 @@ def _build_fotmob_overrides() -> Dict[str, Any]:
     return merged
 
 
-def _build_oddspedia_overrides() -> Dict[str, Any]:
+def _build_oddspedia_overrides() -> dict[str, Any]:
     """Merge Oddspedia YAML defaults with explicit environment overrides."""
     values = dict(_load_yaml_oddspedia())
     for env_name, key in _ODDSPEDIA_ENV_MAP.items():
@@ -387,7 +386,7 @@ class Settings(BaseSettings):
     clickhouse_password: str = ""
     # Maintenance identity (ADR 0029): setup, full-history swaps, and maintenance
     # commands. The application identity above has no DDL rights on warehouse tables.
-    clickhouse_maintenance_user: Optional[str] = None
+    clickhouse_maintenance_user: str | None = None
     clickhouse_maintenance_password: str = ""
     clickhouse_database: str = "default"
     clickhouse_db_fotmob: str = "fotmob"
@@ -401,8 +400,8 @@ class Settings(BaseSettings):
 
     # Telegram
     telegram_enabled: bool = True
-    telegram_bot_token: Optional[str] = None
-    telegram_chat_id: Optional[str] = None
+    telegram_bot_token: str | None = None
+    telegram_chat_id: str | None = None
 
     # YAML config path
     config_file_path: str = "config.yaml"
@@ -410,13 +409,13 @@ class Settings(BaseSettings):
     # FotMob browser/proxy (kept for backward compat with .env)
     fotmob_browser_enabled: bool = False
     fotmob_proxy_enabled: bool = False
-    fotmob_proxy_http: Optional[str] = None
-    fotmob_proxy_https: Optional[str] = None
+    fotmob_proxy_http: str | None = None
+    fotmob_proxy_https: str | None = None
 
     # S3
-    s3_endpoint: Optional[str] = None
-    s3_access_key: Optional[str] = None
-    s3_secret_key: Optional[str] = None
+    s3_endpoint: str | None = None
+    s3_access_key: str | None = None
+    s3_secret_key: str | None = None
 
     # FotMob scraping configuration (nested)
     fotmob: FotMobSettings = FotMobSettings()
@@ -424,7 +423,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="before")
     @classmethod
-    def _load_fotmob_from_yaml(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    def _load_fotmob_from_yaml(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Merge YAML-based FotMob config with env-var overrides."""
         fotmob_overrides = _build_fotmob_overrides()
         existing_fotmob = values.get("fotmob")
@@ -492,7 +491,7 @@ class Settings(BaseSettings):
 # Lazy singleton
 # ---------------------------------------------------------------------------
 
-_settings: Optional[Settings] = None
+_settings: Settings | None = None
 
 
 def get_settings() -> Settings:

@@ -5,10 +5,11 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any
 
 from src.common.logging import get_logger
 from src.oddspedia.scraping.config import (
@@ -17,8 +18,8 @@ from src.oddspedia.scraping.config import (
     normalize_date,
 )
 from src.oddspedia.silver.match_resolution import (
-    FotMobReferenceWindowVerifier,
     FotMobMatch,
+    FotMobReferenceWindowVerifier,
     OddspediaEvent,
     OddspediaMatchResolver,
     ResolutionResult,
@@ -35,10 +36,10 @@ _TIER_RANK = {tier: rank for rank, tier in enumerate(PRIORITY_TIERS)}
 class PriorityArtifact:
     """One deterministic, date-scoped links-layer priority decision."""
 
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
     @property
-    def links(self) -> List[Dict[str, Any]]:
+    def links(self) -> list[dict[str, Any]]:
         return list(self.payload.get("links") or [])
 
     @property
@@ -47,13 +48,13 @@ class PriorityArtifact:
         return str(source_inventory.get("sha256") or "")
 
 
-def source_inventory_checksum(links: Sequence[Dict[str, Any]]) -> str:
+def source_inventory_checksum(links: Sequence[dict[str, Any]]) -> str:
     """Hash the exact accepted source inventory without mutating its records."""
     encoded = json.dumps(list(links), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
-def load_priority_artifact(date_str: str, sport: str = "football") -> Optional[PriorityArtifact]:
+def load_priority_artifact(date_str: str, sport: str = "football") -> PriorityArtifact | None:
     """Load a date priority artifact when it exists and has the expected shape."""
     path = Path(get_prioritized_match_links_file(date_str, sport=sport))
     if not path.exists():
@@ -68,8 +69,8 @@ def load_priority_artifact(date_str: str, sport: str = "football") -> Optional[P
 def priority_artifact_is_current(
     artifact: PriorityArtifact,
     date_str: str,
-    links: Sequence[Dict[str, Any]],
-    matcher_rule_version: Optional[str] = None,
+    links: Sequence[dict[str, Any]],
+    matcher_rule_version: str | None = None,
 ) -> bool:
     """Return whether an artifact still describes the current source inventory."""
     matches_source = artifact.payload.get("prioritized_date") == normalize_date(
@@ -89,8 +90,8 @@ def priority_artifact_is_current(
 def select_links_for_priority(
     artifact: PriorityArtifact,
     priority: str,
-    source_links: Sequence[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
+    source_links: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
     """Rehydrate priority-selected links from the immutable source inventory."""
     if priority not in _TIER_RANK:
         raise ValueError(f"Unknown priority tier: {priority}")
@@ -119,7 +120,7 @@ class LinkPriorityService:
         self.resolver = resolver
 
     def prioritize(
-        self, date_str: str, links: Sequence[Dict[str, Any]], sport: str = "football"
+        self, date_str: str, links: Sequence[dict[str, Any]], sport: str = "football"
     ) -> PriorityArtifact:
         """Produce a complete decision ledger for one accepted source inventory."""
         date_id = normalize_date(date_str)
@@ -155,7 +156,7 @@ class LinkPriorityService:
                 "verification": reference_verification.as_dict(),
             },
             "matcher": {"rule_version": self.resolver.rule_version},
-            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "generated_at": datetime.now(UTC).isoformat(),
             "links": records,
         }
         logger.info(
@@ -192,7 +193,7 @@ class LinkPriorityService:
         )
         return PriorityArtifact(payload=payload)
 
-    def _load_fotmob_matches(self, reference_dates: Iterable[date]) -> List[FotMobMatch]:
+    def _load_fotmob_matches(self, reference_dates: Iterable[date]) -> list[FotMobMatch]:
         dates = tuple(reference_dates)
         if len(dates) != 3:
             raise ValueError("Link priority requires exactly a three-day reference window")
@@ -240,7 +241,7 @@ def save_priority_artifact(
 
 def priority_run_summary(
     artifact: PriorityArtifact, artifact_path: str, selected_priority: str = "lower"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Return the manifest-sized audit summary for a priority decision."""
     resolutions = [record.get("resolution") or {} for record in artifact.links]
     statuses = Counter(resolution.get("status") or "unknown" for resolution in resolutions)
@@ -261,11 +262,11 @@ def priority_run_summary(
         "match_confidence_counts": dict(confidences),
         "team_match_rule_counts": _team_match_rule_counts(resolutions),
         "no_candidate_count": no_candidate_count,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(UTC).isoformat(),
     }
 
 
-def _event_from_link(source_link: Dict[str, Any], discovery_date: date) -> OddspediaEvent:
+def _event_from_link(source_link: dict[str, Any], discovery_date: date) -> OddspediaEvent:
     return OddspediaEvent(
         oddspedia_match_id=str(source_link.get("id") or ""),
         discovery_date=discovery_date,
@@ -276,7 +277,7 @@ def _event_from_link(source_link: Dict[str, Any], discovery_date: date) -> Oddsp
     )
 
 
-def _resolution_payload(result: ResolutionResult) -> Dict[str, Any]:
+def _resolution_payload(result: ResolutionResult) -> dict[str, Any]:
     priority = _priority_for(result)
     return {
         "status": result.resolution_status,
@@ -293,10 +294,10 @@ def _resolution_payload(result: ResolutionResult) -> Dict[str, Any]:
 
 
 def _provider_pair_payload(
-    source_link: Dict[str, Any],
+    source_link: dict[str, Any],
     result: ResolutionResult,
-    matches_by_id: Dict[int, FotMobMatch],
-) -> Dict[str, Optional[Dict[str, Any]]]:
+    matches_by_id: dict[int, FotMobMatch],
+) -> dict[str, dict[str, Any] | None]:
     """Return provider rows with an identical field contract for direct comparison."""
     match = matches_by_id.get(result.fotmob_match_id) if result.fotmob_match_id else None
     return {
@@ -305,7 +306,7 @@ def _provider_pair_payload(
     }
 
 
-def _oddspedia_provider_row(source_link: Dict[str, Any]) -> Dict[str, Any]:
+def _oddspedia_provider_row(source_link: dict[str, Any]) -> dict[str, Any]:
     scheduled_at = source_link.get("date")
     return {
         "id": str(source_link.get("id") or ""),
@@ -318,7 +319,7 @@ def _oddspedia_provider_row(source_link: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def _fotmob_provider_row(match: FotMobMatch) -> Dict[str, Any]:
+def _fotmob_provider_row(match: FotMobMatch) -> dict[str, Any]:
     return {
         "id": str(match.match_id),
         "home_team": match.home_team_name,
@@ -330,7 +331,7 @@ def _fotmob_provider_row(match: FotMobMatch) -> Dict[str, Any]:
     }
 
 
-def _priority_for(result: ResolutionResult) -> Optional[str]:
+def _priority_for(result: ResolutionResult) -> str | None:
     if result.resolution_status == "matched" and result.coverage_category in _TIER_RANK:
         return result.coverage_category
     if result.resolution_status == "unmatched":
@@ -338,7 +339,7 @@ def _priority_for(result: ResolutionResult) -> Optional[str]:
     return None
 
 
-def _team_match_rule_counts(resolutions: Iterable[Dict[str, Any]]) -> Dict[str, int]:
+def _team_match_rule_counts(resolutions: Iterable[dict[str, Any]]) -> dict[str, int]:
     """Count home/away comparison methods used by confirmed approximate matches."""
     rules = Counter()
     for resolution in resolutions:
@@ -361,6 +362,6 @@ def _selected_record_count(artifact: PriorityArtifact, priority: str) -> int:
     )
 
 
-def _artifact_checksum(payload: Dict[str, Any]) -> str:
+def _artifact_checksum(payload: dict[str, Any]) -> str:
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()

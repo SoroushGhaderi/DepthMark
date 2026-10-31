@@ -2,9 +2,9 @@
 
 import argparse
 import sys
+from collections.abc import Sequence
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -27,7 +27,7 @@ def _dates(args):
     )
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Resolve one Oddspedia date or month against the FotMob Silver window."""
     parser = argparse.ArgumentParser(
         description="Resolve Oddspedia events to FotMob Silver matches"

@@ -7,15 +7,13 @@ import argparse
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.warehouse.publication import gold_outputs_publication
-from src.warehouse.scoped_replace import ScopedReplacementBatch
+from src.common.logging import get_logger, setup_logging
 from src.fotmob.gold.dml_runner import (
     GoldJobKind,
     build_scoped_gold_job,
@@ -23,18 +21,19 @@ from src.fotmob.gold.dml_runner import (
     resolve_gold_sql_job,
 )
 from src.fotmob.gold.signal_catalog import SignalCatalogError, load_signal_catalog
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import client_for_scope
+from src.warehouse.publication import gold_outputs_publication
 from src.warehouse.scope import (
     add_warehouse_scope_arguments,
     execution_scope_from_args,
 )
-from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import client_for_scope
-from src.common.logging import get_logger, setup_logging
+from src.warehouse.scoped_replace import ScopedReplacementBatch
 
 logger = get_logger(__name__)
 
 
-def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse CLI arguments."""
     parser = argparse.ArgumentParser(description="Run selected Gold SQL jobs in ClickHouse")
     add_warehouse_scope_arguments(parser)
@@ -112,7 +111,7 @@ def _selected_jobs(args: argparse.Namespace):
 
 
 def _run_jobs(
-    client: Optional[ClickHouseClient],
+    client: ClickHouseClient | None,
     jobs,
     *,
     scope,
@@ -152,7 +151,7 @@ def _run_jobs(
     return success_count, failed_count
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """Run selected Gold SQL jobs."""
     global logger
     args = parse_args(argv)

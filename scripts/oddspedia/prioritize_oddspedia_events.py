@@ -9,6 +9,5 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.oddspedia.scraping.entrypoints import run_event_command
 
-
 if __name__ == "__main__":
     run_event_command("prioritize")

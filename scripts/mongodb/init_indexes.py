@@ -8,8 +8,8 @@ project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.integrations.mongodb import ensure_content_catalog_indexes, get_mongodb_client
 from src.common.logging import get_logger, setup_logging
+from src.integrations.mongodb import ensure_content_catalog_indexes, get_mongodb_client
 
 logger = get_logger(__name__)
 
@@ -48,7 +48,9 @@ def main() -> int:
     try:
         database = mongo_client.get_database()
         created = ensure_content_catalog_indexes(database)
-        logger.info("MongoDB indexes ensured", database=database.name, collections=list(created.keys()))
+        logger.info(
+            "MongoDB indexes ensured", database=database.name, collections=list(created.keys())
+        )
         for collection_name, index_names in created.items():
             logger.info(
                 "Collection indexes",

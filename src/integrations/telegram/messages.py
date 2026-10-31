@@ -5,7 +5,7 @@ it to ``TelegramClient.render_and_send()``.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -53,9 +53,9 @@ class LayerAlertData:
     success: bool
     scope: str
     duration_seconds: float = 0.0
-    details: Dict[str, Any] = field(default_factory=dict)
-    insights: Dict[str, Any] = field(default_factory=dict)
-    entity_coverage: List[Dict[str, Any]] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+    insights: dict[str, Any] = field(default_factory=dict)
+    entity_coverage: list[dict[str, Any]] = field(default_factory=list)
     missing_count: int = 0
     avg_coverage: float = 0.0
     min_coverage: float = 0.0
@@ -69,7 +69,7 @@ class PipelineSummaryData:
     date: str
     success: bool
     total_duration_seconds: float = 0.0
-    steps: List[Dict[str, Any]] = field(default_factory=list)
+    steps: list[dict[str, Any]] = field(default_factory=list)
     dates_processed: int = 0
     dates_total: int = 0
     silent: bool = False
@@ -83,6 +83,6 @@ class ErrorAlertData:
     title: str
     message: str
     timestamp: str = ""
-    context: Dict[str, Any] = field(default_factory=dict)
+    context: dict[str, Any] = field(default_factory=dict)
     action_hint: str = ""
     silent: bool = False

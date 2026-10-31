@@ -2,7 +2,6 @@
 
 import os
 from dataclasses import dataclass
-from typing import Optional
 from urllib.parse import quote_plus
 
 from pymongo import MongoClient
@@ -16,8 +15,8 @@ logger = get_logger(__name__)
 def build_mongodb_uri(
     host: str,
     port: int,
-    username: Optional[str],
-    password: Optional[str],
+    username: str | None,
+    password: str | None,
     database: str,
     auth_source: str = "admin",
 ) -> str:
@@ -38,11 +37,11 @@ class MongoConnectionConfig:
 
     host: str
     port: int
-    username: Optional[str]
-    password: Optional[str]
+    username: str | None
+    password: str | None
     database: str
     auth_source: str
-    uri: Optional[str]
+    uri: str | None
 
     @classmethod
     def from_env(cls) -> "MongoConnectionConfig":
@@ -74,9 +73,9 @@ class MongoConnectionConfig:
 class MongoDBClient:
     """Thin wrapper around pymongo.MongoClient used by DepthMark."""
 
-    def __init__(self, config: Optional[MongoConnectionConfig] = None):
+    def __init__(self, config: MongoConnectionConfig | None = None):
         self.config = config or MongoConnectionConfig.from_env()
-        self._client: Optional[MongoClient] = None
+        self._client: MongoClient | None = None
 
     def connect(self) -> bool:
         """Connect and ping MongoDB server."""

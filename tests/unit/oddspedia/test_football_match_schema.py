@@ -26,8 +26,8 @@ from src.oddspedia.scraping.match_scraper import (
     _football_missing_market_names,
     _football_odds_coverage_error,
     _football_odds_not_yet_available,
-    _is_football_market_selector_text,
     _football_selector_rendered,
+    _is_football_market_selector_text,
     _merge_odds_markets,
     _normalize_football_odds,
     _parse_football_score_payload,
@@ -142,22 +142,27 @@ class FootballMatchSchemaTests(unittest.TestCase):
             {"market": "Asian Handicap", "lines": [{"label": "-0.5"}]},
             {"market": "Both Teams to Score", "lines": [{"label": "Main Line"}]},
         ]
-        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
-            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
-            return_value=metadata,
-        ), patch("src.oddspedia.scraping.match_scraper._scroll_page"), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._football_market_inventory",
-            return_value={"total_markets": 6, "market_names": []},
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
-            return_value=False,
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_football_odds",
-            return_value=truncated_odds,
+        with (
+            patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True),
+            patch(
+                "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+                return_value=metadata,
+            ),
+            patch("src.oddspedia.scraping.match_scraper._scroll_page"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_cards"),
+            patch(
+                "src.oddspedia.scraping.match_scraper._football_market_inventory",
+                return_value={"total_markets": 6, "market_names": []},
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
+                return_value=False,
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_football_odds",
+                return_value=truncated_odds,
+            ),
         ):
             with self.assertRaises(FootballOddsCoverageError):
                 scrape_match(
@@ -199,25 +204,30 @@ class FootballMatchSchemaTests(unittest.TestCase):
             )
         ]
         inventory_names = [*partial_odds, {"market": "Corners Odd or Even"}]
-        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
-            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
-            return_value=metadata,
-        ), patch("src.oddspedia.scraping.match_scraper._scroll_page"), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._football_market_inventory",
-            return_value={
-                "total_markets": 7,
-                "market_names": [market["market"] for market in inventory_names],
-            },
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
-            return_value=False,
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_football_odds",
-            return_value=(partial_odds, ["Corners Odd or Even"]),
+        with (
+            patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True),
+            patch(
+                "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+                return_value=metadata,
+            ),
+            patch("src.oddspedia.scraping.match_scraper._scroll_page"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_cards"),
+            patch(
+                "src.oddspedia.scraping.match_scraper._football_market_inventory",
+                return_value={
+                    "total_markets": 7,
+                    "market_names": [market["market"] for market in inventory_names],
+                },
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
+                return_value=False,
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_football_odds",
+                return_value=(partial_odds, ["Corners Odd or Even"]),
+            ),
         ):
             with self.assertRaises(FootballOddsCoverageError) as context:
                 scrape_match(
@@ -256,25 +266,31 @@ class FootballMatchSchemaTests(unittest.TestCase):
             "status": "scheduled",
             "full_url": "https://oddspedia.com/football/home-away-empty-odds",
         }
-        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
-            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
-            return_value=metadata,
-        ), patch("src.oddspedia.scraping.match_scraper._scroll_page"), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_list"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._football_market_inventory",
-            return_value={"total_markets": 6, "market_names": []},
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
-            return_value=False,
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_football_odds",
-            return_value=[],
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_overall_stats",
-            return_value={"tabs": []},
+        with (
+            patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True),
+            patch(
+                "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+                return_value=metadata,
+            ),
+            patch("src.oddspedia.scraping.match_scraper._scroll_page"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_cards"),
+            patch(
+                "src.oddspedia.scraping.match_scraper._football_market_inventory",
+                return_value={"total_markets": 6, "market_names": []},
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._football_odds_not_yet_available",
+                return_value=False,
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_football_odds",
+                return_value=[],
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_overall_stats",
+                return_value={"tabs": []},
+            ),
         ):
             with self.assertRaises(FootballOddsRetryableError):
                 scrape_match(
@@ -414,27 +430,29 @@ class FootballMatchSchemaTests(unittest.TestCase):
             driver_obj.title = "Algeciras vs CD Teruel Live Score"
             return True
 
-        with patch(
-            "src.oddspedia.scraping.match_scraper.safe_get", side_effect=fake_safe_get
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
-            return_value={
-                "event_id": "9955415",
-                "home": "Algeciras",
-                "away": "CD Teruel",
-                "date": "2026-07-01",
-                "status": "finished",
-                "home_score": 1,
-                "away_score": 0,
-            },
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._scroll_page"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]
-        ), patch(
-            "src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-08-03T00:00:00Z"
+        with (
+            patch("src.oddspedia.scraping.match_scraper.safe_get", side_effect=fake_safe_get),
+            patch(
+                "src.oddspedia.scraping.match_scraper._wait_for_event_metadata",
+                return_value={
+                    "event_id": "9955415",
+                    "home": "Algeciras",
+                    "away": "CD Teruel",
+                    "date": "2026-07-01",
+                    "status": "finished",
+                    "home_score": 1,
+                    "away_score": 0,
+                },
+            ),
+            patch("src.oddspedia.scraping.match_scraper._scroll_page"),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_overall_stats",
+                return_value={"tabs": []},
+            ),
+            patch("src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]),
+            patch(
+                "src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-08-03T00:00:00Z"
+            ),
         ):
             result = scrape_match(
                 driver,
@@ -502,7 +520,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
                         "status": "2HALF",
                         "matchKey": "celta-de-vigo-olympique-lyon-1178135",
                         "full_url": (
-                            "https://oddspedia.com/football/" "celta-de-vigo-olympique-lyon-1178135"
+                            "https://oddspedia.com/football/celta-de-vigo-olympique-lyon-1178135"
                         ),
                     },
                     sport="football",
@@ -534,12 +552,16 @@ class FootballMatchSchemaTests(unittest.TestCase):
                 "lines": [{"type": "main", "label": "Main Line", "home": 2.1, "away": 3.2}],
             }
         ]
-        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
-            "src.oddspedia.scraping.match_scraper._extract_football_odds",
-            side_effect=AssertionError("mismatched pages must not reach odds extraction"),
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_overall_stats",
-            side_effect=AssertionError("mismatched pages must not reach stats extraction"),
+        with (
+            patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_football_odds",
+                side_effect=AssertionError("mismatched pages must not reach odds extraction"),
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_overall_stats",
+                side_effect=AssertionError("mismatched pages must not reach stats extraction"),
+            ),
         ):
             with self.assertRaises(MatchIdentityMismatchError):
                 scrape_match(
@@ -663,18 +685,20 @@ class FootballMatchSchemaTests(unittest.TestCase):
                     result.update(home_score="", away_score="", winner="")
                 return result
 
-        with patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True), patch(
-            "src.oddspedia.scraping.match_scraper._scroll_page"
-        ), patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"), patch(
-            "src.oddspedia.scraping.match_scraper._expand_football_market_cards"
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._extract_overall_stats", return_value={"tabs": []}
-        ), patch(
-            "src.oddspedia.scraping.match_scraper._football_score_from_dom", return_value=None
-        ), patch(
-            "src.oddspedia.scraping.match_scraper.time.sleep"
+        with (
+            patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True),
+            patch("src.oddspedia.scraping.match_scraper._scroll_page"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_list"),
+            patch("src.oddspedia.scraping.match_scraper._expand_football_market_cards"),
+            patch("src.oddspedia.scraping.match_scraper._extract_football_odds", return_value=[]),
+            patch(
+                "src.oddspedia.scraping.match_scraper._extract_overall_stats",
+                return_value={"tabs": []},
+            ),
+            patch(
+                "src.oddspedia.scraping.match_scraper._football_score_from_dom", return_value=None
+            ),
+            patch("src.oddspedia.scraping.match_scraper.time.sleep"),
         ):
             with self.assertRaises(FootballScoreUnavailableError):
                 scrape_match(

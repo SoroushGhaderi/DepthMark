@@ -9,7 +9,6 @@ failing on it. Needs no ClickHouse, MongoDB, or ``.env``.
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
@@ -27,7 +26,7 @@ from src.fotmob.gold.signal_catalog import (
 logger = get_logger(__name__)
 
 
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Validate signal catalogs and check or regenerate their index."
     )
@@ -45,7 +44,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     try:
         catalog = load_signal_catalog(args.catalog_dir)

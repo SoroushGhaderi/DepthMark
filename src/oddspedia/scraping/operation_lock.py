@@ -5,10 +5,10 @@ import json
 import os
 import socket
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator, Optional
 
 from src.oddspedia.scraping.config import DATA_DIR, normalize_date, normalize_sport
 
@@ -24,7 +24,7 @@ def oddspedia_date_lock(
     sport: str = "football",
     operation: str,
     timeout_seconds: float = 0,
-    lock_root: Optional[Path] = None,
+    lock_root: Path | None = None,
 ) -> Iterator[Path]:
     """Hold an exclusive process lock for one sport/date until the context exits."""
     date_id = normalize_date(date_str)
@@ -56,7 +56,7 @@ def oddspedia_date_lock(
             "operation": operation,
             "pid": os.getpid(),
             "host": socket.gethostname(),
-            "started_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
         }
         lock_file.seek(0)
         lock_file.truncate()

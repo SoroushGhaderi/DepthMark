@@ -3,15 +3,14 @@
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
-from src.warehouse.publication import silver_publication
-from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
-from src.warehouse.scope import WarehouseExecutionScope
+from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.integrations.clickhouse.sql import split_sql_statements
 from src.warehouse.contracts import assert_silver_layer_contracts
-from src.common.logging import get_logger
+from src.warehouse.publication import silver_publication
+from src.warehouse.scope import WarehouseExecutionScope
+from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
 
 logger = get_logger(__name__)
 
@@ -39,8 +38,8 @@ class SilverService:
 
     def __init__(
         self,
-        client: Optional[ClickHouseClient] = None,
-        silver_root: Optional[Path] = None,
+        client: ClickHouseClient | None = None,
+        silver_root: Path | None = None,
     ):
         self.client = client
         self.silver_root = silver_root or (PROJECT_ROOT / "clickhouse" / "silver")

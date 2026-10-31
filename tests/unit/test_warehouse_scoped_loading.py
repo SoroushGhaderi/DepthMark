@@ -10,15 +10,15 @@ from scripts.gold import load_clickhouse_gold as gold_loader
 from scripts.orchestration import pipeline
 from scripts.silver import load_clickhouse as silver_loader
 from src.fotmob.bronze import BronzeService
-from src.warehouse.scoped_replace import (
-    ScopedReplacementBatch,
-    ScopedSqlJob,
-    replace_insert_target,
-)
 from src.warehouse.scope import (
     WarehouseExecutionScope,
     add_warehouse_scope_arguments,
     execution_scope_from_args,
+)
+from src.warehouse.scoped_replace import (
+    ScopedReplacementBatch,
+    ScopedSqlJob,
+    replace_insert_target,
 )
 
 

@@ -8,10 +8,10 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import maintenance_client
-from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
 from src.common.logging import get_logger
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.warehouse.identities import maintenance_client
 
 logger = get_logger()
 
@@ -46,15 +46,13 @@ def _find_tables(client: ClickHouseClient, database: str, part: str) -> list[str
         return []
 
     prefix_filter = " OR ".join(f"startsWith(name, '{prefix}')" for prefix in prefixes)
-    query = """
+    query = f"""
         SELECT name
         FROM system.tables
         WHERE database = %(database)s
           AND ({prefix_filter})
         ORDER BY name
-    """.format(
-        prefix_filter=prefix_filter
-    )
+    """
     result = client.execute(query, {"database": database})
     return [row[0] for row in result.result_rows]
 

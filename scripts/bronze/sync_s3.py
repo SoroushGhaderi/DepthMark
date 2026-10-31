@@ -12,7 +12,6 @@ import argparse
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
 from urllib.parse import urlparse, urlunparse
 
 from dotenv import load_dotenv
@@ -79,7 +78,7 @@ def _add_common_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def parse_arguments(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse and validate CLI arguments."""
     parser = create_argument_parser()
     args = parser.parse_args(argv)
@@ -175,7 +174,7 @@ def _service_endpoint(endpoint: str, bucket_name: str) -> str:
     return urlunparse(parsed._replace(netloc=service_host))
 
 
-def resolve_dates(args: argparse.Namespace, service: BronzeS3Service) -> List[str]:
+def resolve_dates(args: argparse.Namespace, service: BronzeS3Service) -> list[str]:
     """Resolve the explicit CLI scope into sorted date strings."""
     if args.date:
         return [args.date]
@@ -199,7 +198,7 @@ def run(args: argparse.Namespace) -> int:
         logger.error("No dates found for requested scope", action=args.action)
         return 1
 
-    results: List[BronzeS3SyncResult] = []
+    results: list[BronzeS3SyncResult] = []
     failures = 0
     for date_str in dates:
         try:
@@ -245,7 +244,7 @@ def run(args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """CLI entry point."""
     configure_logging()
     try:

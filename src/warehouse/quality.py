@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Any
 
 from src.fotmob.gold.signal_catalog import (
     SIGNAL_CATALOG_RELATIVE_DIR,
@@ -13,7 +14,6 @@ from src.fotmob.gold.signal_catalog import (
     SignalCatalog,
     load_signal_catalog,
 )
-from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.contracts import BRONZE_REQUIRED_KEYS, SILVER_TABLE_KEYS
 from src.warehouse.publication import (
@@ -23,6 +23,7 @@ from src.warehouse.publication import (
     UnpublishedPartition,
     find_unpublished_partitions,
 )
+from src.warehouse.scope import WarehouseExecutionScope
 
 WAREHOUSE_DATABASES = ("bronze", "silver", "gold_scenarios", "gold_signals", "gold")
 _SAFE_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
@@ -41,9 +42,9 @@ class TableIdentity:
 
     database: str
     table: str
-    columns: Tuple[str, ...]
-    scope_column: Optional[str] = None
-    scope_expression: Optional[str] = None
+    columns: tuple[str, ...]
+    scope_column: str | None = None
+    scope_expression: str | None = None
     source: str = "layer contract"
 
     @property
@@ -56,13 +57,13 @@ class DuplicateResult:
     """Logical duplicate result plus physical ReplacingMergeTree version diagnostics."""
 
     table: str
-    identity_columns: Tuple[str, ...]
+    identity_columns: tuple[str, ...]
     duplicate_identities: int
     duplicate_rows: int
-    samples: Tuple[Tuple[Any, ...], ...] = ()
+    samples: tuple[tuple[Any, ...], ...] = ()
     physical_duplicate_identities: int = 0
     physical_extra_versions: int = 0
-    physical_samples: Tuple[Tuple[Any, ...], ...] = ()
+    physical_samples: tuple[tuple[Any, ...], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -92,8 +93,8 @@ class ReconciliationResult:
     silver_count: int
     missing_from_silver: int
     unexpected_in_silver: int
-    missing_samples: Tuple[Tuple[Any, ...], ...] = ()
-    unexpected_samples: Tuple[Tuple[Any, ...], ...] = ()
+    missing_samples: tuple[tuple[Any, ...], ...] = ()
+    unexpected_samples: tuple[tuple[Any, ...], ...] = ()
 
     @property
     def failed(self) -> bool:
@@ -104,10 +105,10 @@ class ReconciliationResult:
 class DataQualitySummary:
     """Structured result of a complete quality run."""
 
-    duplicate_results: List[DuplicateResult] = field(default_factory=list)
-    skipped_tables: List[SkippedTable] = field(default_factory=list)
-    reconciliation_results: List[ReconciliationResult] = field(default_factory=list)
-    unpublished_partitions: List[UnpublishedPartition] = field(default_factory=list)
+    duplicate_results: list[DuplicateResult] = field(default_factory=list)
+    skipped_tables: list[SkippedTable] = field(default_factory=list)
+    reconciliation_results: list[ReconciliationResult] = field(default_factory=list)
+    unpublished_partitions: list[UnpublishedPartition] = field(default_factory=list)
 
     @property
     def duplicate_failure_count(self) -> int:
@@ -131,12 +132,12 @@ class ReconciliationDefinition:
     """Identity datasets compared between Bronze and Silver."""
 
     name: str
-    keys: Tuple[str, ...]
+    keys: tuple[str, ...]
     bronze_sql: str
     silver_table: str
 
 
-def _rows(result: Any) -> List[List[Any]]:
+def _rows(result: Any) -> list[list[Any]]:
     if hasattr(result, "result_rows"):
         return list(result.result_rows or [])
     if isinstance(result, list):
@@ -175,8 +176,8 @@ def _bronze_scope_expression() -> str:
     return "match_id IN (SELECT match_id FROM bronze.match_reference WHERE {predicate})"
 
 
-def _base_identity_contracts() -> Dict[str, TableIdentity]:
-    contracts: Dict[str, TableIdentity] = {}
+def _base_identity_contracts() -> dict[str, TableIdentity]:
+    contracts: dict[str, TableIdentity] = {}
     for table, keys in BRONZE_REQUIRED_KEYS.items():
         scope_column = "match_date" if table == "match_reference" else None
         scope_expression = None if table == "match_reference" else "match_id"
@@ -206,10 +207,10 @@ def _base_identity_contracts() -> Dict[str, TableIdentity]:
     return contracts
 
 
-def load_scenario_identity_contracts(ddl_path: Path) -> Dict[str, TableIdentity]:
+def load_scenario_identity_contracts(ddl_path: Path) -> dict[str, TableIdentity]:
     """Read scenario row identities from their declared ClickHouse ORDER BY keys."""
     sql = ddl_path.read_text(encoding="utf-8")
-    contracts: Dict[str, TableIdentity] = {}
+    contracts: dict[str, TableIdentity] = {}
     for table, order_expression in _SCENARIO_TABLE.findall(sql):
         identifiers = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", order_expression)
         columns = tuple(
@@ -227,7 +228,7 @@ def load_scenario_identity_contracts(ddl_path: Path) -> Dict[str, TableIdentity]
     return contracts
 
 
-def signal_identity_contracts(catalog: SignalCatalog) -> Dict[str, TableIdentity]:
+def signal_identity_contracts(catalog: SignalCatalog) -> dict[str, TableIdentity]:
     """Return each catalogued signal table's row identity, deprecated signals included."""
     return {
         definition.table: TableIdentity(
@@ -241,7 +242,7 @@ def signal_identity_contracts(catalog: SignalCatalog) -> Dict[str, TableIdentity
     }
 
 
-def build_identity_contracts(project_root: Path) -> Dict[str, TableIdentity]:
+def build_identity_contracts(project_root: Path) -> dict[str, TableIdentity]:
     """Build the repository-backed identity registry used by quality checks."""
     contracts = _base_identity_contracts()
     contracts.update(
@@ -320,7 +321,7 @@ def build_duplicate_queries(
     )
 
 
-def _reconciliation_definitions() -> Dict[str, ReconciliationDefinition]:
+def _reconciliation_definitions() -> dict[str, ReconciliationDefinition]:
     direct = {
         "match": ("bronze.general", ("match_id",), "silver.match", ""),
         "period": ("bronze.period", ("match_id", "period"), "silver.period_stat", ""),
@@ -334,7 +335,7 @@ def _reconciliation_definitions() -> Dict[str, ReconciliationDefinition]:
         "shot": ("bronze.shotmap", ("match_id", "shot_id"), "silver.shot", ""),
         "card": ("bronze.cards", ("match_id", "event_id"), "silver.card", ""),
     }
-    definitions: Dict[str, ReconciliationDefinition] = {}
+    definitions: dict[str, ReconciliationDefinition] = {}
     for name, (bronze_table, keys, silver_table, eligibility) in direct.items():
         where = f" WHERE {eligibility}" if eligibility else ""
         definitions[name] = ReconciliationDefinition(
@@ -370,7 +371,7 @@ WHERE match_id > 0 AND coach_id > 0 AND length(trim(BOTH ' ' FROM team_side)) > 
     return definitions
 
 
-def reconciliation_check_names() -> List[str]:
+def reconciliation_check_names() -> list[str]:
     return list(_reconciliation_definitions())
 
 
@@ -407,12 +408,10 @@ def build_reconciliation_queries(
     join_keys = ", ".join(definition.keys)
     first_key = definition.keys[0]
     missing = (
-        f"FROM {b_set} AS b LEFT JOIN {s_set} AS s USING ({join_keys})\n"
-        f"WHERE s.{first_key} IS NULL"
+        f"FROM {b_set} AS b LEFT JOIN {s_set} AS s USING ({join_keys})\nWHERE s.{first_key} IS NULL"
     )
     unexpected = (
-        f"FROM {s_set} AS s LEFT JOIN {b_set} AS b USING ({join_keys})\n"
-        f"WHERE b.{first_key} IS NULL"
+        f"FROM {s_set} AS s LEFT JOIN {b_set} AS b USING ({join_keys})\nWHERE b.{first_key} IS NULL"
     )
     name = definition.name
     return {
@@ -440,14 +439,14 @@ class DataQualityService:
         self,
         client: ClickHouseClient,
         project_root: Path,
-        identities: Optional[Mapping[str, TableIdentity]] = None,
+        identities: Mapping[str, TableIdentity] | None = None,
     ) -> None:
         self.client = client
         self.identities = dict(
             build_identity_contracts(project_root) if identities is None else identities
         )
 
-    def _warehouse_metadata(self) -> Tuple[List[str], Dict[str, Set[str]]]:
+    def _warehouse_metadata(self) -> tuple[list[str], dict[str, set[str]]]:
         databases = ", ".join(f"'{database}'" for database in WAREHOUSE_DATABASES)
         table_rows = _rows(
             self.client.execute(
@@ -464,7 +463,7 @@ class DataQualityService:
             )
         )
         tables = [f"{row[0]}.{row[1]}" for row in table_rows]
-        columns: Dict[str, Set[str]] = {}
+        columns: dict[str, set[str]] = {}
         for database, table, column in column_rows:
             columns.setdefault(f"{database}.{table}", set()).add(str(column))
         return tables, columns
@@ -474,9 +473,9 @@ class DataQualityService:
         scope: WarehouseExecutionScope,
         layers: Sequence[str],
         sample_limit: int,
-    ) -> Tuple[List[DuplicateResult], List[SkippedTable]]:
-        results: List[DuplicateResult] = []
-        skipped: List[SkippedTable] = []
+    ) -> tuple[list[DuplicateResult], list[SkippedTable]]:
+        results: list[DuplicateResult] = []
+        skipped: list[SkippedTable] = []
         tables, columns_by_table = self._warehouse_metadata()
         selected_databases = {
             database
@@ -547,9 +546,9 @@ class DataQualityService:
         scope: WarehouseExecutionScope,
         checks: Iterable[str],
         sample_limit: int,
-    ) -> List[ReconciliationResult]:
+    ) -> list[ReconciliationResult]:
         definitions = _reconciliation_definitions()
-        results: List[ReconciliationResult] = []
+        results: list[ReconciliationResult] = []
         for name in checks:
             definition = definitions[name]
             queries = build_reconciliation_queries(definition, scope, sample_limit)
@@ -557,8 +556,8 @@ class DataQualityService:
             silver_count = _scalar(self.client, queries["silver_count"])
             missing_count = _scalar(self.client, queries["missing_count"])
             unexpected_count = _scalar(self.client, queries["unexpected_count"])
-            missing_samples: Tuple[Tuple[Any, ...], ...] = ()
-            unexpected_samples: Tuple[Tuple[Any, ...], ...] = ()
+            missing_samples: tuple[tuple[Any, ...], ...] = ()
+            unexpected_samples: tuple[tuple[Any, ...], ...] = ()
             if missing_count:
                 missing_samples = tuple(
                     tuple(row)
@@ -607,10 +606,10 @@ class DataQualityService:
         self,
         scope: WarehouseExecutionScope,
         layers: Sequence[str],
-        skipped_tables: List[SkippedTable],
-    ) -> List[UnpublishedPartition]:
+        skipped_tables: list[SkippedTable],
+    ) -> list[UnpublishedPartition]:
         """Return unpublished Silver/Gold partitions that overlap the selected scope."""
-        unpublished: List[UnpublishedPartition] = []
+        unpublished: list[UnpublishedPartition] = []
         for layer in layers:
             table = PUBLICATION_TABLES.get(layer)
             if table is None:

@@ -1,14 +1,15 @@
 """Health check utilities for ClickHouse, storage access, and disk space."""
+
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from src.common.logging import get_logger
 from src.integrations.telegram import ErrorAlertData, TelegramClient
 
 
-def check_disk_space(path: str = ".", threshold_gb: float = 1.0) -> Dict[str, Any]:
+def check_disk_space(path: str = ".", threshold_gb: float = 1.0) -> dict[str, Any]:
     """
     Check available disk space for a given path.
     Args:
@@ -39,7 +40,7 @@ def check_disk_space(path: str = ".", threshold_gb: float = 1.0) -> Dict[str, An
             "free_gb": round(free_gb, 2),
             "used_percent": round(used_percent, 2),
             "threshold_gb": threshold_gb,
-            "message": f"Free space: {free_gb:.2f} GB ({free_gb*1024:.0f} MB)",
+            "message": f"Free space: {free_gb:.2f} GB ({free_gb * 1024:.0f} MB)",
         }
     except Exception as e:
         logger.error("Failed to check disk space for %s: %s", path, e)
@@ -51,7 +52,7 @@ def check_disk_space(path: str = ".", threshold_gb: float = 1.0) -> Dict[str, An
         }
 
 
-def check_storage_access(storage_path: str) -> Dict[str, Any]:
+def check_storage_access(storage_path: str) -> dict[str, Any]:
     """
     Check if storage directory is accessible and writable.
     Args:
@@ -110,7 +111,7 @@ def check_clickhouse_connection(
     password: str = "",
     database: str = "default",
     timeout: float = 5.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Check ClickHouse connection health.
     Args:
@@ -132,7 +133,7 @@ def check_clickhouse_connection(
         try:
             sock = socket.create_connection((host, port), timeout=timeout)
             sock.close()
-        except (socket.timeout, socket.error, OSError) as e:
+        except (TimeoutError, OSError) as e:
             return {
                 "status": "error",
                 "host": host,
@@ -208,15 +209,15 @@ def check_clickhouse_connection(
 
 
 def health_check(
-    clickhouse_host: Optional[str] = None,
+    clickhouse_host: str | None = None,
     clickhouse_port: int = 8123,
     clickhouse_username: str = "default",
     clickhouse_password: str = "",
     clickhouse_database: str = "default",
-    storage_paths: Optional[list[str]] = None,
+    storage_paths: list[str] | None = None,
     disk_path: str = ".",
     disk_threshold_gb: float = 1.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Perform comprehensive health check of all system components.
     Args:
@@ -310,7 +311,11 @@ def health_check(
                         level="CRITICAL" if status in ("error", "critical") else "WARNING",
                         title=f"Health Check Failed: {component_name}:{path}",
                         message=f"Health check failed for {component_name}:{path}: {message}",
-                        context={"component": f"{component_name}:{path}", "status": status, **path_result},
+                        context={
+                            "component": f"{component_name}:{path}",
+                            "status": status,
+                            **path_result,
+                        },
                     ),
                 )
     return results

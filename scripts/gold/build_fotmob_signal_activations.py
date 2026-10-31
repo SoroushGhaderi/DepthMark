@@ -4,27 +4,12 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import Optional
 
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.warehouse.publication import (
-    assert_upstream_published,
-    gold_activations_publication,
-    gold_outputs_publication,
-)
-from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
-from src.warehouse.scope import (
-    WarehouseExecutionScope,
-    add_warehouse_scope_arguments,
-    execution_scope_from_args,
-)
-from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import client_for_scope
-from src.warehouse.databases import STAGING_DATABASE, gold_db, gold_signals_db
 from src.common.logging import get_logger, setup_logging
 from src.fotmob.gold.signal_catalog import (
     SIGNAL_CATALOG_DIR,
@@ -34,6 +19,20 @@ from src.fotmob.gold.signal_catalog import (
     load_signal_catalog,
     signal_instance_id_expression,
 )
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.databases import STAGING_DATABASE, gold_db, gold_signals_db
+from src.warehouse.identities import client_for_scope
+from src.warehouse.publication import (
+    assert_upstream_published,
+    gold_activations_publication,
+    gold_outputs_publication,
+)
+from src.warehouse.scope import (
+    WarehouseExecutionScope,
+    add_warehouse_scope_arguments,
+    execution_scope_from_args,
+)
+from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
 
 logger = get_logger(__name__)
 
@@ -51,7 +50,7 @@ def load_environment() -> None:
     get_settings()
 
 
-def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build enriched signal activation rows into gold.signal_activations."
     )
@@ -271,12 +270,12 @@ def _activation_insert_sql(
         {match_reference_alias}.match_started AS match_started,
         {match_reference_alias}.match_finished AS match_finished,
         {match_reference_alias}.full_score AS full_score,
-        toNullable(toInt32({optional_col('home_team_id', 'Nullable(Int32)')})) AS home_team_id,
-        toNullable(toString({optional_col('home_team_name', 'Nullable(String)')})) AS home_team_name,
-        toNullable(toInt32({optional_col('away_team_id', 'Nullable(Int32)')})) AS away_team_id,
-        toNullable(toString({optional_col('away_team_name', 'Nullable(String)')})) AS away_team_name,
-        toNullable(toInt32({optional_col('home_score', 'Nullable(Int32)')})) AS home_score,
-        toNullable(toInt32({optional_col('away_score', 'Nullable(Int32)')})) AS away_score,
+        toNullable(toInt32({optional_col("home_team_id", "Nullable(Int32)")})) AS home_team_id,
+        toNullable(toString({optional_col("home_team_name", "Nullable(String)")})) AS home_team_name,
+        toNullable(toInt32({optional_col("away_team_id", "Nullable(Int32)")})) AS away_team_id,
+        toNullable(toString({optional_col("away_team_name", "Nullable(String)")})) AS away_team_name,
+        toNullable(toInt32({optional_col("home_score", "Nullable(Int32)")})) AS home_score,
+        toNullable(toInt32({optional_col("away_score", "Nullable(Int32)")})) AS away_score,
         {venue_alias}.stadium_name AS stadium_name,
         {venue_alias}.stadium_city AS stadium_city,
         {venue_alias}.stadium_country AS stadium_country,
@@ -287,13 +286,13 @@ def _activation_insert_sql(
         {venue_alias}.attendance AS attendance,
         {venue_alias}.referee_name AS referee_name,
         {venue_alias}.referee_country AS referee_country,
-        toNullable(toString({optional_col('triggered_side', 'Nullable(String)')})) AS triggered_side,
-        toNullable(toInt32({optional_col('triggered_team_id', 'Nullable(Int32)')})) AS triggered_team_id,
-        toNullable(toString({optional_col('triggered_team_name', 'Nullable(String)')})) AS triggered_team_name,
-        toNullable(toInt32({optional_col('triggered_player_id', 'Nullable(Int32)')})) AS triggered_player_id,
-        toNullable(toString({optional_col('triggered_player_name', 'Nullable(String)')})) AS triggered_player_name,
-        toNullable(toInt32({optional_col('opponent_team_id', 'Nullable(Int32)')})) AS opponent_team_id,
-        toNullable(toString({optional_col('opponent_team_name', 'Nullable(String)')})) AS opponent_team_name,
+        toNullable(toString({optional_col("triggered_side", "Nullable(String)")})) AS triggered_side,
+        toNullable(toInt32({optional_col("triggered_team_id", "Nullable(Int32)")})) AS triggered_team_id,
+        toNullable(toString({optional_col("triggered_team_name", "Nullable(String)")})) AS triggered_team_name,
+        toNullable(toInt32({optional_col("triggered_player_id", "Nullable(Int32)")})) AS triggered_player_id,
+        toNullable(toString({optional_col("triggered_player_name", "Nullable(String)")})) AS triggered_player_name,
+        toNullable(toInt32({optional_col("opponent_team_id", "Nullable(Int32)")})) AS opponent_team_id,
+        toNullable(toString({optional_col("opponent_team_name", "Nullable(String)")})) AS opponent_team_name,
         '{definition.signal_id}' AS source_table,
         {_source_row_json_expr(available_columns, source_alias)} AS source_row_json,
         {_sql_array_literal(sorted(available_columns))} AS source_row_columns,
@@ -389,7 +388,7 @@ def build_signal_activations(
     return processed, skipped
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     global logger
     load_environment()
     args = parse_args(argv)

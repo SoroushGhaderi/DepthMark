@@ -5,7 +5,6 @@ around implicit waits and element lookups.
 """
 
 from contextlib import contextmanager
-from typing import List, Optional
 
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -50,8 +49,8 @@ def temporary_wait(driver: WebDriver, seconds: float):
 
 
 def find_with_fallbacks(
-    driver: WebDriver, selectors: List[tuple], timeout: float = 2.0, must_be_visible: bool = True
-) -> Optional[WebElement]:
+    driver: WebDriver, selectors: list[tuple], timeout: float = 2.0, must_be_visible: bool = True
+) -> WebElement | None:
     """Try multiple selectors in order, returning first match.
 
     Args:
@@ -91,8 +90,8 @@ def find_with_fallbacks(
 
 
 def find_all_with_fallbacks(
-    driver: WebDriver, selectors: List[tuple], timeout: float = 2.0, must_be_visible: bool = True
-) -> List[WebElement]:
+    driver: WebDriver, selectors: list[tuple], timeout: float = 2.0, must_be_visible: bool = True
+) -> list[WebElement]:
     """Try multiple selectors in order, returning all matches from first successful selector.
 
     Similar to find_with_fallbacks but returns all matching elements.
@@ -133,8 +132,8 @@ def quick_check(driver: WebDriver, by: str, selector: str) -> bool:
 
 
 def wait_for_any(
-    driver: WebDriver, selectors: List[tuple], timeout: float = 10.0
-) -> Optional[WebElement]:
+    driver: WebDriver, selectors: list[tuple], timeout: float = 10.0
+) -> WebElement | None:
     """Wait for any of the given selectors to appear.
 
     More efficient than multiple separate waits.
@@ -182,7 +181,7 @@ class ElementCache:
         self.driver = driver
         self._cache = {}
 
-    def get(self, by: str, selector: str) -> Optional[WebElement]:
+    def get(self, by: str, selector: str) -> WebElement | None:
         """Get element, using cache if available and not stale."""
         cache_key = (by, selector)
 

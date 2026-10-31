@@ -1,12 +1,12 @@
 """Stable adapters for the phase-specific Oddspedia script entry points."""
 
 import sys
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from src.oddspedia.scraping.cli import main
 
 
-def run_event_command(command: str, argv: Optional[Sequence[str]] = None) -> None:
+def run_event_command(command: str, argv: Sequence[str] | None = None) -> None:
     """Run one Oddspedia event-intake command through the shared CLI.
 
     Args:

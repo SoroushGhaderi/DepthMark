@@ -5,7 +5,6 @@ import io
 import json
 import tarfile
 from pathlib import Path
-from typing import Dict, List
 
 import pytest
 
@@ -17,14 +16,14 @@ class FakeS3Client:
 
     def __init__(self) -> None:
         self.bucket_name = "scout-sport"
-        self.objects: Dict[str, bytes] = {}
-        self.metadata: Dict[str, Dict] = {}
-        self.upload_calls: List[str] = []
+        self.objects: dict[str, bytes] = {}
+        self.metadata: dict[str, dict] = {}
+        self.upload_calls: list[str] = []
 
     def object_exists(self, key: str) -> bool:
         return key in self.objects
 
-    def object_metadata(self, key: str) -> Dict:
+    def object_metadata(self, key: str) -> dict:
         return self.metadata.get(key, {"Metadata": {}})
 
     def upload_file(self, local_path: Path, key: str, sha256: str) -> None:
@@ -36,7 +35,7 @@ class FakeS3Client:
     def download_file(self, key: str, local_path: Path) -> None:
         local_path.write_bytes(self.objects[key])
 
-    def list_keys(self, prefix: str) -> List[str]:
+    def list_keys(self, prefix: str) -> list[str]:
         return sorted(key for key in self.objects if key.startswith(prefix))
 
 
@@ -57,7 +56,7 @@ def create_complete_date(bronze_path: Path, date_str: str = "20251208") -> None:
     )
 
 
-def archive_bytes(entries: Dict[str, bytes]) -> bytes:
+def archive_bytes(entries: dict[str, bytes]) -> bytes:
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode="w:gz") as archive:
         for name, payload in entries.items():

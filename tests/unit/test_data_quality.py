@@ -15,7 +15,6 @@ from src.warehouse.quality import (
 )
 from src.warehouse.scope import WarehouseExecutionScope
 
-
 DEFAULT_SIGNAL_COLUMNS = {"signal_instance_id", "inserted_at"}
 
 

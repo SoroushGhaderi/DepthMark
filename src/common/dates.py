@@ -3,9 +3,9 @@ Date utility functions and constants for consistent date handling.
 
 Replaces magic numbers and hardcoded string slicing with proper constants and functions.
 """
+
 from calendar import monthrange
 from datetime import date, datetime, timedelta
-from typing import List, Optional
 
 DATE_FORMAT_COMPACT = "%Y%m%d"
 DATE_FORMAT_DISPLAY = "%Y-%m-%d"
@@ -36,7 +36,7 @@ def normalize_compact_month(value: str) -> str:
     return month_id
 
 
-def inclusive_date_ids(start_date: str, end_date: str) -> List[str]:
+def inclusive_date_ids(start_date: str, end_date: str) -> list[str]:
     """Return an ordered, inclusive range of compact date identifiers."""
     start = datetime.strptime(normalize_compact_date(start_date), DATE_FORMAT_COMPACT).date()
     end = datetime.strptime(normalize_compact_date(end_date), DATE_FORMAT_COMPACT).date()
@@ -50,7 +50,7 @@ def inclusive_date_ids(start_date: str, end_date: str) -> List[str]:
     return result
 
 
-def month_date_ids(month: str, through_date: Optional[date] = None) -> List[str]:
+def month_date_ids(month: str, through_date: date | None = None) -> list[str]:
     """Return the dates in a month, optionally clipped through one date."""
     month_id = normalize_compact_month(month)
     year, month_number = int(month_id[:4]), int(month_id[4:])
@@ -61,13 +61,13 @@ def month_date_ids(month: str, through_date: Optional[date] = None) -> List[str]
 
 
 def resolve_date_scope(
-    date_value: Optional[str] = None,
-    month: Optional[str] = None,
-    current_date: Optional[date] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
+    date_value: str | None = None,
+    month: str | None = None,
+    current_date: date | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     default_to_today: bool = True,
-) -> List[str]:
+) -> list[str]:
     """Resolve one date, month, or inclusive range without admitting future dates.
 
     A current-month selector stops at ``current_date``. This keeps collection,

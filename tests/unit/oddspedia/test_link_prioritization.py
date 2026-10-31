@@ -11,9 +11,10 @@ from src.oddspedia.scraping.link_prioritization import (
     save_priority_artifact,
     select_links_for_priority,
 )
-from src.oddspedia.silver.match_resolution import OddspediaMatchResolver
-from src.oddspedia.silver.match_resolution import ReferenceWindowNotReadyError
-
+from src.oddspedia.silver.match_resolution import (
+    OddspediaMatchResolver,
+    ReferenceWindowNotReadyError,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -220,9 +221,7 @@ def test_priority_rejects_an_operator_assertion_when_silver_is_not_reconciled(
                     ]
                 )
             if "oddspedia_reference_window:silver" in query:
-                return _QueryResult(
-                    [(1, date(2026, 2, 28)), (2, date(2026, 3, 1))]
-                )
+                return _QueryResult([(1, date(2026, 2, 28)), (2, date(2026, 3, 1))])
             raise AssertionError("candidate rows must not load before readiness succeeds")
 
     with pytest.raises(ReferenceWindowNotReadyError, match="2026-03-02"):

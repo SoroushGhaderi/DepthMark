@@ -2,14 +2,14 @@
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from clickhouse_setup_common import LAYER_ORDER, run_clickhouse_layers
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Create each FotMob warehouse layer in dependency order."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.parse_args(argv)

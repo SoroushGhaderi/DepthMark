@@ -13,8 +13,9 @@ Full-history batches record partition ``0``, meaning every partition.
 from __future__ import annotations
 
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Optional, Sequence
+from typing import Any
 
 from src.warehouse.scope import WarehouseExecutionScope
 
@@ -65,7 +66,7 @@ class PublicationLog:
         status: str,
         tables: Sequence[str],
         committed_tables: Sequence[str] = (),
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         """Append one status row for the batch and the scope's partition."""
         client.execute(
@@ -106,7 +107,7 @@ class UnpublishedPartition:
 
 
 def find_unpublished_partitions(
-    client: Any, table: str, batch: Optional[str] = None
+    client: Any, table: str, batch: str | None = None
 ) -> list[UnpublishedPartition]:
     """Return partitions whose latest batch status is not ``published``.
 

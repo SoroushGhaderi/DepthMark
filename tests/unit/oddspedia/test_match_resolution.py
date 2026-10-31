@@ -5,12 +5,11 @@ import pytest
 
 from src.oddspedia.silver.match_resolution import (
     FotMobMatch,
-    OddspediaEvent,
     OddspediaBronzeNotPublishedError,
+    OddspediaEvent,
     OddspediaMatchResolver,
     OddspediaResolutionService,
 )
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 

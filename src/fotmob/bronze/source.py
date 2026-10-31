@@ -10,8 +10,9 @@ import gzip
 import io
 import json
 import tarfile
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Dict, Iterator, Tuple
+from typing import Any
 
 from src.fotmob.bronze.errors import BronzeSourceError, BronzeSourceMissingError
 
@@ -21,7 +22,7 @@ def get_matches_dir(historical_root: Path, date_str: str) -> Path:
     return historical_root / "matches" / date_str[:6] / date_str
 
 
-def iter_match_payloads(matches_dir: Path, date_str: str) -> Iterator[Tuple[str, Dict[str, Any]]]:
+def iter_match_payloads(matches_dir: Path, date_str: str) -> Iterator[tuple[str, dict[str, Any]]]:
     """Yield ``(source, payload)`` for every stored match of a Source Date.
 
     The date archive ``<date>_matches.tar`` is authoritative when it exists;
@@ -42,14 +43,14 @@ def iter_match_payloads(matches_dir: Path, date_str: str) -> Iterator[Tuple[str,
                 with gzip.open(file_path, "rt", encoding="utf-8") as handle:
                     file_data = json.load(handle)
             else:
-                with open(file_path, "r", encoding="utf-8") as handle:
+                with open(file_path, encoding="utf-8") as handle:
                     file_data = json.load(handle)
         except (OSError, EOFError, UnicodeDecodeError, json.JSONDecodeError) as error:
             raise BronzeSourceError(f"Cannot read FotMob payload {file_path}: {error}") from error
         yield str(file_path), _payload_from_file(file_data, str(file_path))
 
 
-def _iter_archive_payloads(archive_path: Path) -> Iterator[Tuple[str, Dict[str, Any]]]:
+def _iter_archive_payloads(archive_path: Path) -> Iterator[tuple[str, dict[str, Any]]]:
     try:
         with tarfile.open(archive_path, "r") as archive:
             for member in archive.getmembers():
@@ -71,7 +72,7 @@ def _iter_archive_payloads(archive_path: Path) -> Iterator[Tuple[str, Dict[str, 
         raise BronzeSourceError(f"Cannot read FotMob archive {archive_path}: {error}") from error
 
 
-def _payload_from_file(file_data: Any, source: str) -> Dict[str, Any]:
+def _payload_from_file(file_data: Any, source: str) -> dict[str, Any]:
     """Unwrap the stored ``{"data": payload}`` envelope used by Bronze storage."""
     payload = file_data.get("data", file_data) if isinstance(file_data, dict) else None
     if not isinstance(payload, dict):
@@ -79,7 +80,7 @@ def _payload_from_file(file_data: Any, source: str) -> Dict[str, Any]:
     return payload
 
 
-def source_date_match_ids(historical_root: Path, date_str: str) -> Tuple[int, ...]:
+def source_date_match_ids(historical_root: Path, date_str: str) -> tuple[int, ...]:
     """Return the match ids stored under a Source Date, from each payload's ``general.matchId``.
 
     Raises :class:`BronzeSourceMissingError` when the date has no stored payloads,

@@ -6,7 +6,6 @@ import subprocess
 import time
 import urllib.request
 import zipfile
-from typing import Optional
 from urllib.error import HTTPError, URLError
 
 import undetected_chromedriver as uc
@@ -65,7 +64,7 @@ _BLOCKED_RESOURCE_URLS = (
 )
 
 
-def _configured_chrome_binary() -> Optional[str]:
+def _configured_chrome_binary() -> str | None:
     """Return an explicitly configured or discoverable Chrome executable."""
     for variable in ("ODDSPEDIA_CHROME_BIN", "CHROME_BIN"):
         configured = os.getenv(variable)
@@ -91,7 +90,7 @@ def _configured_chrome_binary() -> Optional[str]:
     return next((path for path in candidates if path and os.path.isfile(path)), None)
 
 
-def detect_chrome_version(chrome_binary: Optional[str] = None) -> Optional[int]:
+def detect_chrome_version(chrome_binary: str | None = None) -> int | None:
     """Return the major Chrome version (e.g. 148) or None if detection fails."""
     chrome_binary = chrome_binary or _configured_chrome_binary()
     if chrome_binary:
@@ -214,10 +213,10 @@ def get_driver(headless=False, load_resources=False, user_data_dir=None):
 
 def _fallback_driver(
     headless: bool,
-    user_data_dir: Optional[str],
-    chrome_ver: Optional[int],
-    chrome_binary: Optional[str] = None,
-    driver_path: Optional[str] = None,
+    user_data_dir: str | None,
+    chrome_ver: int | None,
+    chrome_binary: str | None = None,
+    driver_path: str | None = None,
 ):
     """Create a driver after undetected_chromedriver's own download is blocked."""
     if driver_path:
@@ -268,8 +267,8 @@ def _fallback_driver(
 def _apply_common_chrome_options(
     options,
     headless: bool,
-    user_data_dir: Optional[str],
-    chrome_binary: Optional[str] = None,
+    user_data_dir: str | None,
+    chrome_binary: str | None = None,
 ) -> None:
     options.page_load_strategy = "eager"
     if chrome_binary:
@@ -358,7 +357,7 @@ def _ensure_chrome_for_testing_driver(version_main: int) -> str:
     return driver_path
 
 
-def _cached_chromedriver_path(version_main: int) -> Optional[str]:
+def _cached_chromedriver_path(version_main: int) -> str | None:
     """Return the existing per-version fallback without making a request."""
     path = os.path.join(
         os.path.expanduser("~"),
@@ -464,7 +463,7 @@ class DriverManager:
         self,
         headless: bool = False,
         load_resources: bool = False,
-        user_data_dir: Optional[str] = None,
+        user_data_dir: str | None = None,
     ):
         self._headless = headless
         self._load_resources = load_resources

@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -155,7 +155,7 @@ def test_floats_accept_numeric_text_and_treat_nan_as_null():
 
 def test_strings_accept_text_temporal_values_and_integers_only():
     spec = _spec(("match_id", "Int32"), ("label", "Nullable(String)"))
-    kicked_off = datetime(2021, 1, 10, 15, tzinfo=timezone.utc)
+    kicked_off = datetime(2021, 1, 10, 15, tzinfo=UTC)
 
     frame = admit_rows(
         spec,

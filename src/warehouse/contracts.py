@@ -1,7 +1,7 @@
 """Lightweight data contracts and quality assertions for medallion layers."""
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
@@ -13,7 +13,7 @@ class LayerContractError(RuntimeError):
     """Raised when a layer contract assertion fails."""
 
 
-BRONZE_REQUIRED_KEYS: Dict[str, List[str]] = {
+BRONZE_REQUIRED_KEYS: dict[str, list[str]] = {
     "match_reference": ["match_id"],
     "general": ["match_id"],
     "timeline": ["match_id"],
@@ -31,7 +31,7 @@ BRONZE_REQUIRED_KEYS: Dict[str, List[str]] = {
     "team_form": ["match_id", "team_id", "form_position"],
 }
 
-SILVER_TABLE_KEYS: Dict[str, List[str]] = {
+SILVER_TABLE_KEYS: dict[str, list[str]] = {
     "match": ["match_id"],
     "period_stat": ["match_id", "period"],
     "player_match_stat": ["match_id", "player_id"],
@@ -83,12 +83,12 @@ def _table_exists(client: ClickHouseClient, database: str, table: str) -> bool:
     """Return True when table exists."""
     db = _safe_identifier(database)
     tbl = _safe_identifier(table)
-    query = "SELECT count() FROM system.tables " f"WHERE database = '{db}' AND name = '{tbl}'"
+    query = f"SELECT count() FROM system.tables WHERE database = '{db}' AND name = '{tbl}'"
     return _query_scalar(client, query) > 0
 
 
 def count_invalid_key_rows(
-    client: ClickHouseClient, database: str, table: str, keys: List[str]
+    client: ClickHouseClient, database: str, table: str, keys: list[str]
 ) -> int:
     """Count rows whose identity keys are null, or non-positive where numeric."""
     db = _safe_identifier(database)
@@ -104,8 +104,8 @@ def count_invalid_key_rows(
 
 def assert_bronze_layer_contracts(
     client: ClickHouseClient,
-    inserted_rows_by_table: Dict[str, int],
-    baseline_invalid_rows_by_table: Optional[Dict[str, int]] = None,
+    inserted_rows_by_table: dict[str, int],
+    baseline_invalid_rows_by_table: dict[str, int] | None = None,
     database: str = "bronze",
     log=logger,
 ) -> None:
@@ -140,12 +140,12 @@ def assert_bronze_layer_contracts(
 
 def get_bronze_invalid_key_rows(
     client: ClickHouseClient,
-    table_names: List[str],
+    table_names: list[str],
     database: str = "bronze",
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Return current invalid key row counts for bronze tables."""
     db = _safe_identifier(database)
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
 
     for table_name in table_names:
         table = _safe_identifier(table_name)
@@ -206,7 +206,7 @@ def _list_gold_analytics_tables(
     client: ClickHouseClient,
     database: str,
     table_prefix: str,
-) -> List[str]:
+) -> list[str]:
     """Return gold analytics tables in one namespace matching a table prefix."""
     db = _safe_identifier(database)
     prefix = table_prefix.replace("'", "")
@@ -238,9 +238,7 @@ def _assert_gold_analytics_tables(
         table_prefix=table_prefix,
     )
     if not analytics_tables:
-        raise LayerContractError(
-            f"Gold contract failed: no {table_prefix}* tables found in {db}"
-        )
+        raise LayerContractError(f"Gold contract failed: no {table_prefix}* tables found in {db}")
 
     for table_name in analytics_tables:
         table = _safe_identifier(table_name)
@@ -260,7 +258,7 @@ def _assert_gold_analytics_tables(
         if "home_score" in columns and "away_score" in columns:
             negative_scores = _query_scalar(
                 client,
-                f"SELECT count() FROM {db}.{table} " "WHERE (home_score < 0) OR (away_score < 0)",
+                f"SELECT count() FROM {db}.{table} WHERE (home_score < 0) OR (away_score < 0)",
             )
             if negative_scores > 0:
                 log.warning(
@@ -270,11 +268,11 @@ def _assert_gold_analytics_tables(
                 )
 
 
-def _list_table_columns(client: ClickHouseClient, database: str, table: str) -> List[str]:
+def _list_table_columns(client: ClickHouseClient, database: str, table: str) -> list[str]:
     """Return table column names from system.columns."""
     db = _safe_identifier(database)
     tbl = _safe_identifier(table)
-    query = "SELECT name FROM system.columns " f"WHERE database = '{db}' AND table = '{tbl}'"
+    query = f"SELECT name FROM system.columns WHERE database = '{db}' AND table = '{tbl}'"
     result = client.execute(query, log_query=False)
     if hasattr(result, "result_rows") and result.result_rows:
         return [str(row[0]) for row in result.result_rows if row]
@@ -369,8 +367,7 @@ def assert_gold_activation_contracts(
     missing_columns = sorted(required_columns - columns)
     if missing_columns:
         raise LayerContractError(
-            f"Gold activation contract failed for {db}.{table}: "
-            f"missing columns {missing_columns}"
+            f"Gold activation contract failed for {db}.{table}: missing columns {missing_columns}"
         )
 
     invalid_rows = _query_scalar(

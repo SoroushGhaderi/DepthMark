@@ -2,17 +2,17 @@
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.common.logging import get_logger
 from config.settings import get_settings
-from src.warehouse.identities import maintenance_client, provision_application_user
+from src.common.logging import get_logger
 from src.integrations.clickhouse.sql import split_sql_statements
+from src.warehouse.identities import maintenance_client, provision_application_user
 from src.warehouse.schema_drift import (
     assert_setup_sql_is_non_destructive,
     find_schema_drift,
@@ -23,7 +23,7 @@ from src.warehouse.schema_drift import (
 logger = get_logger(__name__)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Create missing Oddspedia warehouse tables or print the planned SQL files."""
     parser = argparse.ArgumentParser(description="Create Oddspedia warehouse tables")
     parser.add_argument("--dry-run", action="store_true", help="Print planned SQL files only")

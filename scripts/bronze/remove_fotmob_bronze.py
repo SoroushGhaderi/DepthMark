@@ -24,7 +24,6 @@ To reload a scope instead of only clearing it, use
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -62,7 +61,8 @@ def report(result: BronzeRemovalResult) -> None:
     """Log the outcome in one place for operators and automation."""
     verb = "Would remove" if result.dry_run else "Removed"
     logger.info(
-        "%s FotMob Bronze rows", verb,
+        "%s FotMob Bronze rows",
+        verb,
         scope="full history" if result.full_history else ",".join(result.dates_removed),
         rows=result.removed_rows,
         total_rows=sum(result.removed_rows.values()),
@@ -71,7 +71,7 @@ def report(result: BronzeRemovalResult) -> None:
         logger.info("Follow-up command", command=command)
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     try:

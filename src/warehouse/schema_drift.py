@@ -9,9 +9,10 @@ applying that change is an explicit Table Recreation (see ADR 0026).
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable, Optional, Sequence
+from typing import Any
 
 from src.integrations.clickhouse.sql import split_sql_statements
 
@@ -67,7 +68,7 @@ def _split_top_level(text: str, separator: str = ",") -> list[str]:
     """Split text on a separator that is outside parentheses and quotes."""
     parts: list[str] = []
     depth = 0
-    quote: Optional[str] = None
+    quote: str | None = None
     current: list[str] = []
     for char in text:
         if quote:
@@ -95,7 +96,7 @@ def _split_top_level(text: str, separator: str = ",") -> list[str]:
 def _matching_paren_index(text: str, open_index: int) -> int:
     """Return the index of the parenthesis closing the one at ``open_index``."""
     depth = 0
-    quote: Optional[str] = None
+    quote: str | None = None
     for index in range(open_index, len(text)):
         char = text[index]
         if quote:
@@ -116,7 +117,7 @@ def _matching_paren_index(text: str, open_index: int) -> int:
 def normalize_sql_fragment(fragment: str) -> str:
     """Normalize a type or expression for comparison: drop whitespace outside quotes."""
     normalized: list[str] = []
-    quote: Optional[str] = None
+    quote: str | None = None
     for char in fragment.strip():
         if quote:
             normalized.append(char)
@@ -134,7 +135,7 @@ def normalize_sql_fragment(fragment: str) -> str:
 def _first_top_level_token(text: str) -> str:
     """Return text up to the first whitespace outside parentheses and quotes."""
     depth = 0
-    quote: Optional[str] = None
+    quote: str | None = None
     for index, char in enumerate(text):
         if quote:
             if char == quote:
@@ -150,7 +151,7 @@ def _first_top_level_token(text: str) -> str:
     return text
 
 
-def _parse_column(element: str) -> Optional[tuple[str, str]]:
+def _parse_column(element: str) -> tuple[str, str] | None:
     """Parse ``name Type [modifiers]`` into a normalized (name, type) pair."""
     name_and_rest = element.split(None, 1)
     if name_and_rest[0].upper() in NON_COLUMN_ELEMENT_KEYWORDS:
@@ -161,7 +162,7 @@ def _parse_column(element: str) -> Optional[tuple[str, str]]:
     return name, normalize_sql_fragment(_first_top_level_token(name_and_rest[1]))
 
 
-def _column_default_kind(element: str) -> Optional[str]:
+def _column_default_kind(element: str) -> str | None:
     """Return the default kind a column definition declares after its type, if any."""
     name_and_rest = element.split(None, 1)
     if len(name_and_rest) != 2:
@@ -189,7 +190,7 @@ def parse_sorting_key(text: str) -> tuple[str, ...]:
     return tuple(normalize_sql_fragment(part) for part in _split_top_level(expression))
 
 
-def parse_create_table(statement: str, source_file: Path) -> Optional[ExpectedTable]:
+def parse_create_table(statement: str, source_file: Path) -> ExpectedTable | None:
     """Parse a schema-qualified ``CREATE TABLE IF NOT EXISTS`` statement."""
     header = CREATE_TABLE_HEADER_PATTERN.match(statement)
     if header is None:
@@ -217,7 +218,7 @@ def parse_create_table(statement: str, source_file: Path) -> Optional[ExpectedTa
     )
 
 
-def column_default_expression(table: ExpectedTable, column: str) -> Optional[str]:
+def column_default_expression(table: ExpectedTable, column: str) -> str | None:
     """Return the normalized default expression a column declares, if any."""
     header = CREATE_TABLE_HEADER_PATTERN.match(table.create_statement)
     if header is None:

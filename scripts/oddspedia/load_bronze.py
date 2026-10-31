@@ -2,8 +2,8 @@
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -26,7 +26,7 @@ def _dates(args):
     )
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Load one Oddspedia date or month into Bronze."""
     parser = argparse.ArgumentParser(description="Load Oddspedia Historical artifacts into Bronze")
     scope = parser.add_mutually_exclusive_group(required=True)

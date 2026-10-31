@@ -9,7 +9,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from scripts.oddspedia.resolve_events import main
 
-
 if __name__ == "__main__":
     print(
         "Warning: scripts/oddspedia/resolve_matches.py is deprecated; use "

@@ -23,10 +23,10 @@ import argparse
 import fcntl
 import subprocess
 import sys
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Callable, Optional, Sequence
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
@@ -55,7 +55,7 @@ def _local_yesterday() -> date:
 
 def _utc_two_days_ago() -> date:
     # Oddspedia uses UTC date boundaries and needs FotMob Silver for the following day.
-    return datetime.now(timezone.utc).date() - timedelta(days=2)
+    return datetime.now(UTC).date() - timedelta(days=2)
 
 
 JOBS = {
@@ -72,7 +72,7 @@ JOBS = {
 }
 
 
-def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run one recurring DepthMark job")
     parser.add_argument("job", choices=sorted(JOBS), help="Scheduled job to run")
     parser.add_argument(
@@ -90,7 +90,7 @@ def build_command(job_name: str) -> list[str]:
     return [sys.executable, str(PROJECT_ROOT / job.script), *job.arguments(day)]
 
 
-def run(argv: Optional[Sequence[str]] = None) -> int:
+def run(argv: Sequence[str] | None = None) -> int:
     args = parse_args(argv)
     command = build_command(args.job)
     if args.dry_run:

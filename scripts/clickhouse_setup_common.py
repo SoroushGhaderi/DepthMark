@@ -4,8 +4,8 @@ import os
 import re
 import sys
 import time
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Callable, Iterable, Optional
 
 from dotenv import dotenv_values
 
@@ -193,7 +193,7 @@ def resolve_clickhouse_root() -> Path:
     return root
 
 
-def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None) -> list[Path]:
+def get_layer_sql_files(layer_name: str, clickhouse_root: Path | None = None) -> list[Path]:
     """Return ordered schema SQL files for a specific medallion layer."""
     if layer_name not in LAYER_ORDER:
         raise ValueError(f"Unknown layer '{layer_name}'")
@@ -263,9 +263,7 @@ def _is_excluded_from_layer_setup(sql_file: Path) -> bool:
     return any(part in normalized_name for part in SETUP_EXCLUDED_SQL_NAME_PARTS)
 
 
-def execute_sql_file(
-    client: ClickHouseClient, sql_file: Path, database: Optional[str] = None
-) -> bool:
+def execute_sql_file(client: ClickHouseClient, sql_file: Path, database: str | None = None) -> bool:
     """Execute an SQL file statement by statement."""
     try:
         sql_content = sql_file.read_text(encoding="utf-8")
@@ -387,8 +385,8 @@ def _execute_layer_sql_files(
 
 def run_clickhouse_layer_setup(
     layer_name: str,
-    client: Optional[ClickHouseClient] = None,
-    sql_file_filter: Optional[Callable[[Path], bool]] = None,
+    client: ClickHouseClient | None = None,
+    sql_file_filter: Callable[[Path], bool] | None = None,
 ) -> int:
     """Create the missing tables of one ClickHouse medallion layer."""
     owns_client = client is None

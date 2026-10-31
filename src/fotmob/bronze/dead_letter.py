@@ -8,7 +8,7 @@ import json
 import math
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.common.logging import get_logger
 
@@ -30,7 +30,7 @@ class DeadLetterQueue:
         self.logger = logger
 
     def send_to_dlq(
-        self, table: str, data: Any, error: str, context: Optional[Dict[str, Any]] = None
+        self, table: str, data: Any, error: str, context: dict[str, Any] | None = None
     ) -> Path:
         """
         Send failed record to DLQ.
@@ -63,7 +63,10 @@ class DeadLetterQueue:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
             self.logger.warning(
-                "Sent failed record to DLQ: %s (table: %s, rows: %s)", dlq_file.name, table, record['row_count']
+                "Sent failed record to DLQ: %s (table: %s, rows: %s)",
+                dlq_file.name,
+                table,
+                record["row_count"],
             )
             return dlq_file
         except Exception as e:
@@ -155,8 +158,8 @@ class DeadLetterQueue:
         return 1
 
     def get_dlq_records(
-        self, table: Optional[str] = None, date: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, table: str | None = None, date: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Read records from DLQ files.
 
@@ -180,7 +183,7 @@ class DeadLetterQueue:
 
         for dlq_file in self.dlq_path.glob(pattern):
             try:
-                with open(dlq_file, "r", encoding="utf-8") as f:
+                with open(dlq_file, encoding="utf-8") as f:
                     for line in f:
                         if line.strip():
                             records.append(json.loads(line))
@@ -189,7 +192,7 @@ class DeadLetterQueue:
 
         return records
 
-    def get_dlq_stats(self) -> Dict[str, Any]:
+    def get_dlq_stats(self) -> dict[str, Any]:
         """
         Get statistics about DLQ.
 
@@ -235,5 +238,5 @@ class DeadLetterQueue:
 
     def _count_records(self, dlq_file: Path) -> int:
         """Count non-empty JSONL records in a DLQ file."""
-        with open(dlq_file, "r", encoding="utf-8") as handle:
+        with open(dlq_file, encoding="utf-8") as handle:
             return sum(1 for line in handle if line.strip())

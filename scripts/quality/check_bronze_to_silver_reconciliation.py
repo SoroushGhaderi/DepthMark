@@ -3,7 +3,6 @@
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 project_root = Path(__file__).resolve().parents[2]
 scripts_dir = Path(__file__).resolve().parents[1]
@@ -15,11 +14,10 @@ from scripts.quality.check_data_quality import main as unified_main
 from src.warehouse.quality import reconciliation_check_names
 
 
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Compatibility alias: check Bronze and Silver duplicates and reconcile "
-            "Bronze to Silver"
+            "Compatibility alias: check Bronze and Silver duplicates and reconcile Bronze to Silver"
         )
     )
     scope = parser.add_mutually_exclusive_group()
@@ -39,9 +37,9 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    scope_args: List[str] = []
+    scope_args: list[str] = []
     if args.date:
         scope_args = ["--date", args.date]
     elif args.month:

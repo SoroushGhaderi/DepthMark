@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timezone
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+from collections.abc import Callable, Iterable, Sequence
+from datetime import UTC, date, datetime
+from typing import Any
 
 from src.common.dates import resolve_date_scope
 from src.fotmob.scraping.reporting import build_run_report as build_fotmob_report
@@ -22,12 +23,12 @@ _MARKDOWN_RE = re.compile(r"[*_`]+")
 
 
 def resolve_report_dates(
-    date_value: Optional[str] = None,
-    month: Optional[str] = None,
-    current_date: Optional[date] = None,
-    start_date: Optional[str] = None,
-    end_date: Optional[str] = None,
-) -> List[str]:
+    date_value: str | None = None,
+    month: str | None = None,
+    current_date: date | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> list[str]:
     """Resolve a date, month, or inclusive range for read-only reporting."""
     return resolve_date_scope(
         date_value=date_value,
@@ -38,7 +39,7 @@ def resolve_report_dates(
     )
 
 
-def build_scraping_report(source: str, dates: Sequence[str]) -> Dict[str, Any]:
+def build_scraping_report(source: str, dates: Sequence[str]) -> dict[str, Any]:
     """Build one report bundle through explicit source-owned adapters."""
     source_id = str(source).strip().lower()
     if source_id not in {"all", *SOURCE_ORDER}:
@@ -47,12 +48,12 @@ def build_scraping_report(source: str, dates: Sequence[str]) -> Dict[str, Any]:
         raise ValueError("at least one report date is required")
 
     selected_sources = SOURCE_ORDER if source_id == "all" else (source_id,)
-    adapters: Dict[str, Callable[[str], Dict[str, Any]]] = {
+    adapters: dict[str, Callable[[str], dict[str, Any]]] = {
         "fotmob": build_fotmob_report,
         "oddspedia": build_oddspedia_report,
     }
     normalized_dates = [_parse_date(date_id).strftime("%Y%m%d") for date_id in dates]
-    reports: List[Dict[str, Any]] = []
+    reports: list[dict[str, Any]] = []
     for normalized_date in normalized_dates:
         for selected_source in selected_sources:
             try:
@@ -62,7 +63,7 @@ def build_scraping_report(source: str, dates: Sequence[str]) -> Dict[str, Any]:
 
     return {
         "schema_version": "v1",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "scope": {
             "source": source_id,
             "sources": list(selected_sources),
@@ -74,7 +75,7 @@ def build_scraping_report(source: str, dates: Sequence[str]) -> Dict[str, Any]:
     }
 
 
-def render_summary(bundle: Dict[str, Any]) -> str:
+def render_summary(bundle: dict[str, Any]) -> str:
     """Render a compact terminal report for operators."""
     reports = bundle.get("reports") or []
     rows = [_summary_row(report) for report in reports]
@@ -112,7 +113,7 @@ def render_summary(bundle: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def render_markdown(bundle: Dict[str, Any]) -> str:
+def render_markdown(bundle: dict[str, Any]) -> str:
     """Render a portable cross-source operational report in Markdown."""
     reports = bundle.get("reports") or []
     totals = bundle.get("totals") or {}
@@ -189,12 +190,12 @@ def render_markdown(bundle: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def needs_attention(bundle: Dict[str, Any]) -> bool:
+def needs_attention(bundle: dict[str, Any]) -> bool:
     """Return whether an automation policy should fail for this bundle."""
     return bundle.get("overall_status") not in {"complete", "live_complete"}
 
 
-def _summary_row(report: Dict[str, Any]) -> tuple:
+def _summary_row(report: dict[str, Any]) -> tuple:
     summary = report.get("summary") or {}
     return (
         SOURCE_LABELS.get(report.get("source"), str(report.get("source", "unknown"))),
@@ -208,7 +209,7 @@ def _summary_row(report: Dict[str, Any]) -> tuple:
     )
 
 
-def _append_source_details(lines: List[str], report: Dict[str, Any]) -> None:
+def _append_source_details(lines: list[str], report: dict[str, Any]) -> None:
     label = SOURCE_LABELS.get(report.get("source"), str(report.get("source", "unknown")))
     lines.extend([f"### {label} — {report.get('date')}", ""])
     if report.get("overall_status") == "error":
@@ -270,7 +271,7 @@ def _append_source_details(lines: List[str], report: Dict[str, Any]) -> None:
     lines.append("")
 
 
-def _totals(reports: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+def _totals(reports: Sequence[dict[str, Any]]) -> dict[str, Any]:
     summaries = [report.get("summary") or {} for report in reports]
     return {
         "sources": len({report.get("source") for report in reports}),
@@ -290,7 +291,7 @@ def _totals(reports: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
-def _bundle_status(reports: Sequence[Dict[str, Any]]) -> str:
+def _bundle_status(reports: Sequence[dict[str, Any]]) -> str:
     statuses = {str(report.get("overall_status", "error")) for report in reports}
     if "error" in statuses:
         return "error"
@@ -301,7 +302,7 @@ def _bundle_status(reports: Sequence[Dict[str, Any]]) -> str:
     return "complete"
 
 
-def _error_report(source: str, date_id: str, exc: Exception) -> Dict[str, Any]:
+def _error_report(source: str, date_id: str, exc: Exception) -> dict[str, Any]:
     return {
         "schema_version": "v1",
         "source": source,
@@ -326,8 +327,8 @@ def _error_report(source: str, date_id: str, exc: Exception) -> Dict[str, Any]:
     }
 
 
-def _unique_next_steps(reports: Sequence[Dict[str, Any]]) -> List[str]:
-    steps: List[str] = []
+def _unique_next_steps(reports: Sequence[dict[str, Any]]) -> list[str]:
+    steps: list[str] = []
     for report in reports:
         for step in report.get("next_steps") or []:
             if step not in steps:

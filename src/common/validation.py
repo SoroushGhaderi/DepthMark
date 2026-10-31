@@ -1,5 +1,6 @@
 """Data quality validation utilities."""
-from typing import Any, Dict
+
+from typing import Any
 
 import pandas as pd
 
@@ -8,7 +9,7 @@ class DataQualityChecker:
     """Validate scraped data quality."""
 
     @staticmethod
-    def check_general_stats(df: pd.DataFrame) -> Dict[str, Any]:
+    def check_general_stats(df: pd.DataFrame) -> dict[str, Any]:
         """
         Validate general stats dataframe.
         Args:
@@ -45,7 +46,7 @@ class DataQualityChecker:
         }
 
     @staticmethod
-    def check_player_stats(df: pd.DataFrame) -> Dict[str, Any]:
+    def check_player_stats(df: pd.DataFrame) -> dict[str, Any]:
         """
         Validate player stats.
         Args:
@@ -88,7 +89,7 @@ class DataQualityChecker:
         return {"passed": len(issues) == 0, "issues": issues, "row_count": len(df)}
 
     @staticmethod
-    def check_goal_events(df: pd.DataFrame) -> Dict[str, Any]:
+    def check_goal_events(df: pd.DataFrame) -> dict[str, Any]:
         """
         Validate goal events.
         Args:
@@ -117,7 +118,7 @@ class DataQualityChecker:
         return {"passed": len(issues) == 0, "issues": issues, "row_count": len(df)}
 
     @staticmethod
-    def check_shot_events(df: pd.DataFrame) -> Dict[str, Any]:
+    def check_shot_events(df: pd.DataFrame) -> dict[str, Any]:
         """
         Validate shot events.
         Args:
@@ -144,7 +145,7 @@ class DataQualityChecker:
         return {"passed": len(issues) == 0, "issues": issues, "row_count": len(df)}
 
     @staticmethod
-    def validate_all_dataframes(dataframes: Dict[str, pd.DataFrame]) -> Dict[str, Dict[str, Any]]:
+    def validate_all_dataframes(dataframes: dict[str, pd.DataFrame]) -> dict[str, dict[str, Any]]:
         """
         Validate all dataframes in the collection.
         Args:
@@ -172,7 +173,7 @@ class DataQualityChecker:
         return results
 
     @staticmethod
-    def _basic_check(df: pd.DataFrame) -> Dict[str, Any]:
+    def _basic_check(df: pd.DataFrame) -> dict[str, Any]:
         """Basic validation for any dataframe."""
         issues = []
         if df.empty:

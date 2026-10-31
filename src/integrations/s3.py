@@ -1,7 +1,7 @@
 """Low-level S3 client used by the standalone Bronze sync workflow."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.common.logging import get_logger
 
@@ -22,7 +22,7 @@ class S3Client:
         secret_key: str,
         bucket_name: str,
         region: str,
-        client: Optional[Any] = None,
+        client: Any | None = None,
     ) -> None:
         self.bucket_name = bucket_name
         if client is not None:
@@ -56,7 +56,7 @@ class S3Client:
                 return False
             raise
 
-    def object_metadata(self, key: str) -> Dict[str, Any]:
+    def object_metadata(self, key: str) -> dict[str, Any]:
         """Return object headers and user metadata."""
         return self._client.head_object(Bucket=self.bucket_name, Key=key)
 
@@ -76,13 +76,13 @@ class S3Client:
         """Download one object to a local path."""
         self._client.download_file(self.bucket_name, key, str(local_path))
 
-    def list_keys(self, prefix: str) -> List[str]:
+    def list_keys(self, prefix: str) -> list[str]:
         """List all keys below a prefix, following pagination tokens."""
-        keys: List[str] = []
-        continuation_token: Optional[str] = None
+        keys: list[str] = []
+        continuation_token: str | None = None
 
         while True:
-            request: Dict[str, Any] = {"Bucket": self.bucket_name, "Prefix": prefix}
+            request: dict[str, Any] = {"Bucket": self.bucket_name, "Prefix": prefix}
             if continuation_token:
                 request["ContinuationToken"] = continuation_token
             try:

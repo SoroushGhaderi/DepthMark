@@ -20,7 +20,6 @@ Sensitive data (tokens) should be in .env file::
 
 import json
 import random
-from typing import Dict, List, Optional
 
 from .settings import (
     FotMobApiSettings,
@@ -47,7 +46,7 @@ class FotMobConfig:
     to work so that existing scraper code does not need to change.
     """
 
-    def __init__(self, settings: Optional[Settings] = None) -> None:
+    def __init__(self, settings: Settings | None = None) -> None:
         self._settings = settings or get_settings()
         self._fotmob: FotMobSettings = self._settings.fotmob
 
@@ -108,7 +107,7 @@ class FotMobConfig:
         return self.api.x_mas_token
 
     @property
-    def user_agents(self) -> List[str]:
+    def user_agents(self) -> list[str]:
         return self.api.user_agents
 
     @property
@@ -205,7 +204,7 @@ class FotMobConfig:
     # Convenience helpers
     # ------------------------------------------------------------------
 
-    def get_headers(self, referer: str = "https://www.fotmob.com/") -> Dict[str, str]:
+    def get_headers(self, referer: str = "https://www.fotmob.com/") -> dict[str, str]:
         """Get HTTP headers for API requests with random User-Agent."""
         user_agent = (
             random.choice(self.api.user_agents) if self.api.user_agents else self.api.user_agent
@@ -241,7 +240,7 @@ class FotMobConfig:
         """Create storage/log directories (delegates to Settings)."""
         self._settings.ensure_directories()
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         """Serialise configuration to a plain dict."""
         result = self._settings.to_dict()
         result["fotmob"] = {
@@ -257,14 +256,12 @@ class FotMobConfig:
         }
         return result
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validate configuration values."""
-        errors: List[str] = []
+        errors: list[str] = []
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if self.logging.level not in valid_levels:
-            errors.append(
-                f"Invalid log level: {self.logging.level}. Must be one of {valid_levels}"
-            )
+            errors.append(f"Invalid log level: {self.logging.level}. Must be one of {valid_levels}")
         if not self.storage.bronze_path:
             errors.append("bronze_path cannot be empty")
         return errors

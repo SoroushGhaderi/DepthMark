@@ -8,7 +8,7 @@ import tarfile
 from collections import Counter
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 from config.settings import get_settings
 
@@ -18,9 +18,9 @@ _MATCH_FILE_RE = re.compile(r"(?:^|/)match_(\d+)\.json(?:\.gz)?$")
 
 def build_run_report(
     date_str: str,
-    bronze_root: Optional[Path] = None,
-    current_date: Optional[date] = None,
-) -> Dict[str, Any]:
+    bronze_root: Path | None = None,
+    current_date: date | None = None,
+) -> dict[str, Any]:
     """Reconcile one FotMob listing with its stored payloads without writing state."""
     date_id = _normalize_date(date_str)
     today = current_date or date.today()
@@ -89,7 +89,7 @@ def build_run_report(
     completed = len(completed_ids)
     progress_pct = _percentage(completed, discovered, empty_is_complete=True)
 
-    findings: List[str] = []
+    findings: list[str] = []
     listed_date = str(listing.get("date") or "")
     declared_total = listing.get("total_matches")
     if listed_date and listed_date != date_id:
@@ -140,7 +140,7 @@ def build_run_report(
     else:
         overall_status = "complete"
 
-    next_steps: List[str] = []
+    next_steps: list[str] = []
     if missing_ids or has_contract_issue:
         next_steps.append(f"python3 scripts/bronze/scrape_fotmob.py {date_id}")
     if bronze_ready:
@@ -182,12 +182,12 @@ def build_run_report(
     }
 
 
-def _resolve_bronze_root(bronze_root: Optional[Path]) -> Path:
+def _resolve_bronze_root(bronze_root: Path | None) -> Path:
     configured = Path(bronze_root or get_settings().fotmob.storage.bronze_path)
     return configured if configured.is_absolute() else PROJECT_ROOT / configured
 
 
-def _load_listing(path: Path) -> Dict[str, Any]:
+def _load_listing(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as source:
         payload = json.load(source)
     if not isinstance(payload, dict):
@@ -196,11 +196,11 @@ def _load_listing(path: Path) -> Dict[str, Any]:
 
 
 def _storage_summary(
-    matches_dir: Path, expected_ids: Set[str], unavailable_ids: Set[str]
-) -> Dict[str, Any]:
-    individual_ids: Set[str] = set()
-    archived_ids: Set[str] = set()
-    read_errors: List[str] = []
+    matches_dir: Path, expected_ids: set[str], unavailable_ids: set[str]
+) -> dict[str, Any]:
+    individual_ids: set[str] = set()
+    archived_ids: set[str] = set()
+    read_errors: list[str] = []
     physical_size_bytes = 0
 
     if matches_dir.is_dir():
@@ -246,7 +246,7 @@ def _storage_summary(
     }
 
 
-def _match_id_from_name(name: str) -> Optional[str]:
+def _match_id_from_name(name: str) -> str | None:
     match = _MATCH_FILE_RE.search(name)
     return match.group(1) if match else None
 
@@ -276,7 +276,7 @@ def _summary(
     artifact_files: int = 0,
     storage_size_mb: float = 0.0,
     bronze_admission_ready: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "discovered": discovered,
         "completed": completed,

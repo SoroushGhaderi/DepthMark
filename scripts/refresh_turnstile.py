@@ -7,11 +7,11 @@ Run this whenever the scraper reports TURNSTILE_REQUIRED:
 Requirements: Chrome must be open and you must have visited fotmob.com recently.
 The scraper hot-reloads credentials.json on every request — no restart needed.
 """
+
 import json
 import sys
 import time
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 ROOT = Path(__file__).parent.parent
 if str(ROOT) not in sys.path:
@@ -28,7 +28,7 @@ def get_chrome_turnstile() -> str:
     try:
         import browser_cookie3
 
-        candidates: List[str] = []
+        candidates: list[str] = []
         for domain in ("www.fotmob.com", ".fotmob.com", "fotmob.com"):
             cj = browser_cookie3.chrome(domain_name=domain)
             for cookie in cj:
@@ -54,7 +54,7 @@ def get_chrome_turnstile() -> str:
     return ""
 
 
-def get_turnstile_age_seconds(turnstile_value: str) -> Optional[int]:
+def get_turnstile_age_seconds(turnstile_value: str) -> int | None:
     """Get age of turnstile token in seconds. Returns None if format is invalid."""
     parts = turnstile_value.split(".")
     if len(parts) == 3:
@@ -67,7 +67,7 @@ def get_turnstile_age_seconds(turnstile_value: str) -> Optional[int]:
     return None
 
 
-def get_turnstile_age_info(turnstile_value: str) -> Tuple[Optional[int], str]:
+def get_turnstile_age_info(turnstile_value: str) -> tuple[int | None, str]:
     """Get turnstile age in seconds and human-readable status.
 
     Returns:
@@ -99,7 +99,7 @@ def check_age(tv: str) -> str:
 
 def _load_credentials_json(path: Path) -> dict:
     """Load credentials.json from disk."""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -130,7 +130,7 @@ def update_credentials_json(tv: str) -> bool:
         return False
 
 
-def refresh_if_needed(max_age_seconds: int = 1800) -> Tuple[bool, Optional[str]]:
+def refresh_if_needed(max_age_seconds: int = 1800) -> tuple[bool, str | None]:
     """Check turnstile age and refresh if needed.
 
     Args:

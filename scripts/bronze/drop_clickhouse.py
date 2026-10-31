@@ -8,9 +8,9 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
+from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.identities import maintenance_client
-from src.common.logging import get_logger
 
 logger = get_logger()
 

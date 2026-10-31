@@ -10,7 +10,6 @@ references them, but new code should use the pydantic models in
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
 
 
 @dataclass
@@ -32,10 +31,7 @@ class LoggingConfig:
     """Legacy logging config (use ``FotMobLoggingSettings`` instead)."""
 
     level: str = "INFO"
-    format: str = (
-        "%(asctime)s - %(name)s - %(levelname)s - "
-        "%(funcName)s:%(lineno)d - %(message)s"
-    )
+    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
     file: str = "logs/scraper.log"
     max_bytes: int = 10485760
     backup_count: int = 5
@@ -64,9 +60,7 @@ class RetryConfig:
     max_wait: float = 10.0
     exponential_base: float = 2.0
     backoff_factor: float = 2.0
-    status_codes: tuple = field(
-        default_factory=lambda: (429, 500, 502, 503, 504)
-    )
+    status_codes: tuple = field(default_factory=lambda: (429, 500, 502, 503, 504))
 
 
 __all__ = [

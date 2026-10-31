@@ -45,9 +45,12 @@ def test_compress_date_uses_fotmob_archive_shape(tmp_path):
     _write_payload(date_dir, "101")
     _write_payload(date_dir, "102")
 
-    with patch("src.oddspedia.scraping.storage.get_matches_dir", return_value=str(date_dir)), patch(
-        "src.oddspedia.scraping.storage.get_match_file",
-        side_effect=lambda date, match_id, sport="football": str(date_dir / f"{match_id}.json"),
+    with (
+        patch("src.oddspedia.scraping.storage.get_matches_dir", return_value=str(date_dir)),
+        patch(
+            "src.oddspedia.scraping.storage.get_match_file",
+            side_effect=lambda date, match_id, sport="football": str(date_dir / f"{match_id}.json"),
+        ),
     ):
         result = compress_date_files("20260701")
         archive_path = date_dir / "20260701_matches.tar"
@@ -74,9 +77,12 @@ def test_compress_date_merges_new_payloads_into_existing_archive(tmp_path):
     date_dir.mkdir(parents=True)
     _write_payload(date_dir, "101")
 
-    with patch("src.oddspedia.scraping.storage.get_matches_dir", return_value=str(date_dir)), patch(
-        "src.oddspedia.scraping.storage.get_match_file",
-        side_effect=lambda date, match_id, sport="football": str(date_dir / f"{match_id}.json"),
+    with (
+        patch("src.oddspedia.scraping.storage.get_matches_dir", return_value=str(date_dir)),
+        patch(
+            "src.oddspedia.scraping.storage.get_match_file",
+            side_effect=lambda date, match_id, sport="football": str(date_dir / f"{match_id}.json"),
+        ),
     ):
         assert compress_date_files("20260701")["status"] == "success"
         _write_payload(date_dir, "102")
@@ -94,10 +100,13 @@ def test_completed_historical_scrape_triggers_compression():
     manifest = ScrapeManifest(date="20260701", sport="football", total=1)
     manifest.mark_done("101")
 
-    with patch("src.oddspedia.scraping.cli.get_storage_aspect", return_value="historical"), patch(
-        "src.oddspedia.scraping.cli.compress_date_files",
-        return_value={"status": "success", "compressed": 1, "archive_file": "archive.tar"},
-    ) as compress:
+    with (
+        patch("src.oddspedia.scraping.cli.get_storage_aspect", return_value="historical"),
+        patch(
+            "src.oddspedia.scraping.cli.compress_date_files",
+            return_value={"status": "success", "compressed": 1, "archive_file": "archive.tar"},
+        ) as compress,
+    ):
         _compress_completed_date(manifest, "20260701")
 
     compress.assert_called_once_with("20260701", sport="football")

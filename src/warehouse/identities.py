@@ -10,7 +10,8 @@ Recreation, optimization, truncation, and drop scripts.
 from __future__ import annotations
 
 import re
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient

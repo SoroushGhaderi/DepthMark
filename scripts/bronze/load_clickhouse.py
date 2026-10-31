@@ -35,28 +35,27 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 project_root = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(project_root))
 
-from src.fotmob.bronze import BronzeRunResult, BronzeService
-from src.integrations.telegram import ErrorAlertData, TelegramClient
 from config.settings import get_settings
-from src.integrations.clickhouse.client import ClickHouseClient
 from src.common.dates import extract_year_month
+from src.common.logging import get_logger, setup_logging
+from src.fotmob.bronze import BronzeRunResult, BronzeService
 from src.fotmob.bronze.source_dates import (
     discover_historical_dates,
     generate_date_range,
     generate_month_dates,
 )
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.integrations.telegram import ErrorAlertData, TelegramClient
 from src.warehouse.contracts import LayerContractError
-from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
 
-def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(
         description="Load data from bronze layer JSON files into ClickHouse",
@@ -200,8 +199,8 @@ def validate_arguments(args: argparse.Namespace) -> None:
 def get_dates_to_process(
     args: argparse.Namespace,
     log: logging.Logger,
-    historical_root: Optional[Path] = None,
-) -> List[str]:
+    historical_root: Path | None = None,
+) -> list[str]:
     """Get list of dates to process from arguments."""
     if args.single_date:
         if args.date:
@@ -212,7 +211,8 @@ def get_dates_to_process(
         dates = discover_historical_dates(root)
         log.info(
             "Full-history Bronze loading mode",
-            historical_root=str(root), total_dates=len(dates),
+            historical_root=str(root),
+            total_dates=len(dates),
         )
         return dates
     if args.month:
@@ -235,7 +235,10 @@ def get_dates_to_process(
         month_name = month_names[int(month) - 1]
         log.info(
             "Monthly loading mode",
-            month=args.month, month_name=month_name, year=int(year), total_dates=len(dates),
+            month=args.month,
+            month_name=month_name,
+            year=int(year),
+            total_dates=len(dates),
         )
         return dates
     elif args.start_date:
@@ -258,12 +261,17 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
         if "error" not in stats:
             log.info(
                 "Table statistics",
-                database="bronze", table_name=physical_table, row_count=stats.get("row_count", 0), size=stats.get("size", "0 B"),
+                database="bronze",
+                table_name=physical_table,
+                row_count=stats.get("row_count", 0),
+                size=stats.get("size", "0 B"),
             )
         else:
             log.warning(
                 "Failed to read table statistics",
-                database="bronze", table_name=physical_table, error=stats.get("error", "Unknown error"),
+                database="bronze",
+                table_name=physical_table,
+                error=stats.get("error", "Unknown error"),
             )
 
 
@@ -273,7 +281,7 @@ def _write_mode(args: argparse.Namespace) -> str:
     return "replace" if args.replace else "append"
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
     global logger
     args = parse_args(argv)
@@ -342,7 +350,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
 
     result = BronzeRunResult(exit_code=1)
-    dates: List[str] = []
+    dates: list[str] = []
     try:
         if args.stats:
             show_statistics(client, logger)

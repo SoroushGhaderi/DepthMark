@@ -16,7 +16,7 @@ import tarfile
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     from filelock import FileLock, Timeout
@@ -148,7 +148,7 @@ class BaseBronzeStorage(ABC):
             return date_str
 
     def save_raw_match_data(
-        self, match_id: str, raw_data: Dict[str, Any], date_str: Optional[str] = None
+        self, match_id: str, raw_data: dict[str, Any], date_str: str | None = None
     ) -> Path:
         """Save raw API response to Bronze layer.
 
@@ -188,7 +188,7 @@ class BaseBronzeStorage(ABC):
                     json.dump(data_with_metadata, f, indent=2, ensure_ascii=False)
 
                 # Verify the file is valid JSON
-                with open(temp_path, "r", encoding="utf-8") as f:
+                with open(temp_path, encoding="utf-8") as f:
                     json.load(f)
 
                 # Atomic rename
@@ -215,9 +215,7 @@ class BaseBronzeStorage(ABC):
             self.logger.error("Error saving raw data for match %s: %s", match_id, e, exc_info=True)
             raise
 
-    def save_matches_batch(
-        self, matches: List[tuple], date_str: Optional[str] = None
-    ) -> List[Path]:
+    def save_matches_batch(self, matches: list[tuple], date_str: str | None = None) -> list[Path]:
         """Save multiple matches in a single batch operation.
 
         More efficient than individual saves when processing many matches
@@ -274,7 +272,11 @@ class BaseBronzeStorage(ABC):
 
             if failed_matches:
                 self.logger.warning(
-                    "Batch save completed: %s/%s succeeded, %s failed: %s", len(saved_paths), len(matches), len(failed_matches), failed_matches
+                    "Batch save completed: %s/%s succeeded, %s failed: %s",
+                    len(saved_paths),
+                    len(matches),
+                    len(failed_matches),
+                    failed_matches,
                 )
             else:
                 self.logger.info(
@@ -288,7 +290,7 @@ class BaseBronzeStorage(ABC):
             raise
 
     def _save_matches_batch_internal(
-        self, matches: List[tuple], date_dir: Path, date_str_normalized: str, scraped_at: str
+        self, matches: list[tuple], date_dir: Path, date_str_normalized: str, scraped_at: str
     ) -> tuple:
         """Internal method to save matches without lock management.
 
@@ -314,7 +316,7 @@ class BaseBronzeStorage(ABC):
                     json.dump(data_with_metadata, f, indent=2, ensure_ascii=False)
 
                 # Verify
-                with open(temp_path, "r", encoding="utf-8") as f:
+                with open(temp_path, encoding="utf-8") as f:
                     json.load(f)
 
                 if file_path.exists():
@@ -340,8 +342,8 @@ class BaseBronzeStorage(ABC):
         return saved_paths, failed_matches
 
     def load_raw_match_data(
-        self, match_id: str, date_str: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, match_id: str, date_str: str | None = None
+    ) -> dict[str, Any] | None:
         """Load raw API response from Bronze layer.
 
         Supports: tar archive, individual .json.gz, and .json files.
@@ -388,7 +390,7 @@ class BaseBronzeStorage(ABC):
                 # Try plain JSON
                 file_path = date_dir / f"match_{match_id}.json"
                 if file_path.exists():
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         data = json.load(f)
                     return data.get("data", data)
 
@@ -429,7 +431,7 @@ class BaseBronzeStorage(ABC):
                         data = json.load(f)
                     return data.get("data", data)
                 elif matches:
-                    with open(matches[0], "r", encoding="utf-8") as f:
+                    with open(matches[0], encoding="utf-8") as f:
                         data = json.load(f)
                     return data.get("data", data)
 
@@ -440,7 +442,7 @@ class BaseBronzeStorage(ABC):
             self.logger.error("Error loading raw data for match %s: %s", match_id, e)
             return None
 
-    def match_exists(self, match_id: str, date_str: Optional[str] = None) -> bool:
+    def match_exists(self, match_id: str, date_str: str | None = None) -> bool:
         """Check if raw data exists for a match.
 
         Checks archive, .json.gz, and .json files.
@@ -521,7 +523,7 @@ class BaseBronzeStorage(ABC):
             match_id, date_str
         )
 
-    def save_daily_listing(self, date_str: str, match_ids: List) -> Path:
+    def save_daily_listing(self, date_str: str, match_ids: list) -> Path:
         """Save daily listing of match IDs for a date with comprehensive metadata.
 
         Used to track games and prevent duplicate API requests.
@@ -568,7 +570,11 @@ class BaseBronzeStorage(ABC):
                 json.dump(listing_data, f, indent=2, ensure_ascii=False)
             temp_file.replace(listing_file)
             self.logger.info(
-                "Saved daily listing for %s: %s matches, %s files stored (%.2f MB)", date_str_normalized, len(match_ids), storage_stats['files_stored'], storage_stats['total_size_mb']
+                "Saved daily listing for %s: %s matches, %s files stored (%.2f MB)",
+                date_str_normalized,
+                len(match_ids),
+                storage_stats["files_stored"],
+                storage_stats["total_size_mb"],
             )
             return listing_file
         except Exception:
@@ -579,10 +585,10 @@ class BaseBronzeStorage(ABC):
     def _get_storage_stats(
         self,
         date_str: str,
-        match_ids: List,
+        match_ids: list,
         matches_date_dir: Path,
-        unavailable_match_ids: Optional[List] = None,
-    ) -> Dict[str, Any]:
+        unavailable_match_ids: list | None = None,
+    ) -> dict[str, Any]:
         """Gather comprehensive storage statistics for a date.
 
         Args:
@@ -695,7 +701,7 @@ class BaseBronzeStorage(ABC):
 
         return stats
 
-    def load_daily_listing(self, date_str: str) -> Optional[Dict[str, Any]]:
+    def load_daily_listing(self, date_str: str) -> dict[str, Any] | None:
         """Load daily listing of match IDs for a date.
 
         Args:
@@ -710,21 +716,21 @@ class BaseBronzeStorage(ABC):
             self.logger.warning("Invalid date format: %s", date_str)
             return None
 
-        listing_file = self._date_partition_dir(
-            self.daily_listings_dir, date_str_normalized
-        ) / "matches.json"
+        listing_file = (
+            self._date_partition_dir(self.daily_listings_dir, date_str_normalized) / "matches.json"
+        )
 
         if not listing_file.exists():
             return None
 
         try:
-            with open(listing_file, "r", encoding="utf-8") as f:
+            with open(listing_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             self.logger.error("Error loading daily listing for %s: %s", date_str_normalized, e)
             return None
 
-    def get_match_ids_for_date(self, date_str: str) -> List[Union[int, str]]:
+    def get_match_ids_for_date(self, date_str: str) -> list[int | str]:
         """Get list of match IDs for a date from daily listing.
 
         Args:
@@ -738,7 +744,7 @@ class BaseBronzeStorage(ABC):
             return listing.get("match_ids", [])
         return []
 
-    def get_completion_percentage(self, date_str: str) -> Optional[float]:
+    def get_completion_percentage(self, date_str: str) -> float | None:
         """Get completion percentage for a date from daily listing.
 
         Args:
@@ -767,12 +773,12 @@ class BaseBronzeStorage(ABC):
         except ValueError:
             return False
 
-        listing_file = self._date_partition_dir(
-            self.daily_listings_dir, date_str_normalized
-        ) / "matches.json"
+        listing_file = (
+            self._date_partition_dir(self.daily_listings_dir, date_str_normalized) / "matches.json"
+        )
         return listing_file.exists()
 
-    def compress_date_files(self, date_str: str, force: bool = False) -> Dict[str, Any]:
+    def compress_date_files(self, date_str: str, force: bool = False) -> dict[str, Any]:
         """Compress all JSON files for a specific date.
 
         Step 1: Compress each .json to .json.gz (GZIP compression)
@@ -845,9 +851,10 @@ class BaseBronzeStorage(ABC):
                 self.logger.debug("Compressing %s JSON files to gzip", len(json_files))
                 for json_file in json_files:
                     gz_file = json_file.with_suffix(".json.gz")
-                    with open(json_file, "rb") as f_in, gzip.open(
-                        gz_file, "wb", compresslevel=6
-                    ) as f_out:
+                    with (
+                        open(json_file, "rb") as f_in,
+                        gzip.open(gz_file, "wb", compresslevel=6) as f_out,
+                    ):
                         shutil.copyfileobj(f_in, f_out)
 
                     gz_files.append(gz_file)
@@ -907,7 +914,12 @@ class BaseBronzeStorage(ABC):
             saved_pct = ((total_before - total_after) / max(total_before, 1)) * 100
 
             self.logger.info(
-                "Compressed %s: %s files, %.2f MB -> %.2f MB (saved %.0f%%)", date_str_normalized, len(gz_files), size_before_mb, size_after_mb, saved_pct
+                "Compressed %s: %s files, %.2f MB -> %.2f MB (saved %.0f%%)",
+                date_str_normalized,
+                len(gz_files),
+                size_before_mb,
+                size_after_mb,
+                saved_pct,
             )
 
             return {

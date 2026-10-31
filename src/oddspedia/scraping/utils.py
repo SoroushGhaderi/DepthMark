@@ -3,7 +3,7 @@ import os
 import random
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
@@ -277,13 +277,13 @@ def save_json(data, path, artifact_type=None):
 
 def load_json(path):
     """Read and return JSON from *path*."""
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 
 def now_iso():
     """Return current UTC time as ISO-8601 string."""
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def get_performance_logs(driver):

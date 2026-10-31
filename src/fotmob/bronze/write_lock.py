@@ -11,10 +11,10 @@ import fcntl
 import json
 import os
 import socket
+from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Iterator, Optional
 
 DEFAULT_LOCK_PATH = Path(__file__).resolve().parents[3] / "data" / "locks" / "fotmob_bronze.lock"
 
@@ -24,7 +24,7 @@ class BronzeWriteLockedError(RuntimeError):
 
 
 @contextmanager
-def fotmob_bronze_write_lock(operation: str, lock_path: Optional[Path] = None) -> Iterator[Path]:
+def fotmob_bronze_write_lock(operation: str, lock_path: Path | None = None) -> Iterator[Path]:
     """Hold the FotMob Bronze write lock until the context exits, or fail at once."""
     path = Path(lock_path) if lock_path is not None else DEFAULT_LOCK_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -46,7 +46,7 @@ def fotmob_bronze_write_lock(operation: str, lock_path: Optional[Path] = None) -
                 "operation": operation,
                 "pid": os.getpid(),
                 "host": socket.gethostname(),
-                "started_at": datetime.now(timezone.utc).isoformat(),
+                "started_at": datetime.now(UTC).isoformat(),
             },
             lock_file,
             sort_keys=True,

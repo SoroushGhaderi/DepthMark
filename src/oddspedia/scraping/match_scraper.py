@@ -2866,7 +2866,7 @@ def _extract_point_by_point(driver):
         if not set_data:
             continue
 
-        key = f"{set_data.get('set','')}|{set_data.get('set_score','')}"
+        key = f"{set_data.get('set', '')}|{set_data.get('set_score', '')}"
         if key in seen:
             continue
         seen.add(key)

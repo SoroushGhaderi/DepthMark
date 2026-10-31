@@ -5,13 +5,13 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.operations.health import health_check
 from src.common.logging import get_logger, setup_logging
+from src.operations.health import health_check
 
 logger = get_logger(__name__)
 
@@ -84,7 +84,7 @@ Examples:
     return parser.parse_args()
 
 
-def _log_component(component_name: str, component_result: Dict[str, Any]) -> None:
+def _log_component(component_name: str, component_result: dict[str, Any]) -> None:
     """Log one health-check component."""
     logger.info("%s", component_name.upper().replace("_", " "))
     logger.info("%s", "-" * 80)
@@ -122,7 +122,7 @@ def _log_component(component_name: str, component_result: Dict[str, Any]) -> Non
             logger.info("  %s", path_result["message"])
 
 
-def print_health_results(results: Dict[str, Any], json_output: bool = False) -> int:
+def print_health_results(results: dict[str, Any], json_output: bool = False) -> int:
     """Log health check results and return a process exit code."""
     if json_output:
         logger.info("%s", json.dumps(results, indent=2))

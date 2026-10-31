@@ -17,6 +17,9 @@ Or use the single source of truth directly::
     settings = get_settings()
 """
 
+# Legacy aliases — still importable for any code that references them
+from .base import LoggingConfig, MetricsConfig, RetryConfig, StorageConfig
+from .fotmob import FotMobConfig
 from .settings import (
     Environment,
     FotMobApiSettings,
@@ -33,10 +36,6 @@ from .settings import (
     get_settings,
     reset_settings,
 )
-from .fotmob import FotMobConfig
-
-# Legacy aliases — still importable for any code that references them
-from .base import LoggingConfig, MetricsConfig, RetryConfig, StorageConfig
 
 __all__ = [
     # Unified settings

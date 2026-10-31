@@ -31,10 +31,11 @@ from __future__ import annotations
 
 import copy
 import re
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence, Set, Tuple
+from typing import Any
 
 import yaml
 
@@ -57,12 +58,12 @@ INDEX_FILE_NAME = "README.md"
 INDEX_START_MARKER = "<!-- signal-index:start -->"
 INDEX_END_MARKER = "<!-- signal-index:end -->"
 
-SIGNAL_ENTITIES: Tuple[str, ...] = ("match", "team", "player")
-SIGNAL_STATUSES: Tuple[str, ...] = ("active", "deprecated")
+SIGNAL_ENTITIES: tuple[str, ...] = ("match", "team", "player")
+SIGNAL_STATUSES: tuple[str, ...] = ("active", "deprecated")
 GRAIN_BY_ENTITY: Mapping[str, str] = MappingProxyType(
     {"match": "match_team", "team": "match_team", "player": "match_player"}
 )
-FRONTMATTER_KEYS: Tuple[str, ...] = (
+FRONTMATTER_KEYS: tuple[str, ...] = (
     "signal_id",
     "status",
     "entity",
@@ -74,7 +75,7 @@ FRONTMATTER_KEYS: Tuple[str, ...] = (
     "row_identity",
     "asset_paths",
 )
-ASSET_PATH_KEYS: Tuple[str, ...] = ("table", "sql")
+ASSET_PATH_KEYS: tuple[str, ...] = ("table", "sql")
 
 _FRONTMATTER_START = "---\n"
 _FRONTMATTER_END = "\n---\n"
@@ -120,7 +121,7 @@ class SignalDefinition:
     grain: str
     headline: str
     trigger: str
-    row_identity: Tuple[str, ...]
+    row_identity: tuple[str, ...]
     table: str
     sql_path: Path
     source_path: Path
@@ -136,17 +137,17 @@ class SignalDefinition:
         return "sig"
 
     @property
-    def tags(self) -> Tuple[str, str]:
+    def tags(self) -> tuple[str, str]:
         return (self.family, self.subfamily)
 
     @property
-    def identity_fields(self) -> Tuple[str, ...]:
+    def identity_fields(self) -> tuple[str, ...]:
         """Columns hashed into ``signal_instance_id``: ``row_identity`` led by ``match_id``."""
         if "match_id" in self.row_identity:
             return self.row_identity
         return ("match_id", *self.row_identity)
 
-    def frontmatter_dict(self) -> Dict[str, Any]:
+    def frontmatter_dict(self) -> dict[str, Any]:
         """Return a mutable deep copy of the authored frontmatter."""
         return copy.deepcopy(dict(self.frontmatter))
 
@@ -159,7 +160,7 @@ class SignalDefinition:
 class SignalCatalog:
     """Every validated signal definition, ordered by ``signal_id``."""
 
-    definitions: Tuple[SignalDefinition, ...]
+    definitions: tuple[SignalDefinition, ...]
     catalog_dir: Path
 
     def __iter__(self) -> Iterator[SignalDefinition]:
@@ -168,7 +169,7 @@ class SignalCatalog:
     def __len__(self) -> int:
         return len(self.definitions)
 
-    def active(self) -> Tuple[SignalDefinition, ...]:
+    def active(self) -> tuple[SignalDefinition, ...]:
         return tuple(definition for definition in self.definitions if definition.is_active)
 
     def get(self, signal_id: str) -> SignalDefinition:
@@ -181,10 +182,10 @@ class SignalCatalog:
     def select(
         self,
         *,
-        entity: Optional[str] = None,
-        family: Optional[str] = None,
+        entity: str | None = None,
+        family: str | None = None,
         include_deprecated: bool = False,
-    ) -> Tuple[SignalDefinition, ...]:
+    ) -> tuple[SignalDefinition, ...]:
         """Return definitions matching the selectors; active only unless asked."""
         return tuple(
             definition
@@ -211,7 +212,7 @@ def signal_instance_id_expression(definition: SignalDefinition, table_alias: str
     return f"lower(hex(SHA256(concat({hashed}))))"
 
 
-def split_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
+def split_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     """Split catalog markdown into its frontmatter mapping and body text."""
     if not content.startswith(_FRONTMATTER_START):
         raise ValueError("missing YAML frontmatter start '---'")
@@ -228,7 +229,7 @@ def split_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
     return frontmatter, body.strip()
 
 
-def catalog_files(catalog_dir: Path) -> List[Path]:
+def catalog_files(catalog_dir: Path) -> list[Path]:
     """Return the catalog markdown files in a directory, excluding its index."""
     return sorted(
         path for path in catalog_dir.glob("*.md") if path.name.lower() != INDEX_FILE_NAME.lower()
@@ -241,7 +242,7 @@ def load_signal_catalog(
     project_root: Path = PROJECT_ROOT,
 ) -> SignalCatalog:
     """Read and validate every signal catalog, or raise naming every violation."""
-    violations: List[CatalogViolation] = []
+    violations: list[CatalogViolation] = []
     catalog_dir = catalog_dir.resolve()
     project_root = project_root.resolve()
     if not catalog_dir.is_dir():
@@ -252,7 +253,7 @@ def load_signal_catalog(
     files = catalog_files(catalog_dir)
     if not files:
         violations.append(CatalogViolation(_display(catalog_dir, project_root), "no catalogs"))
-    definitions: List[SignalDefinition] = []
+    definitions: list[SignalDefinition] = []
     for path in files:
         definition = _read_definition(path, project_root, violations)
         if definition is not None:
@@ -278,10 +279,10 @@ def _display(path: Path, project_root: Path) -> str:
 
 
 def _read_definition(
-    path: Path, project_root: Path, violations: List[CatalogViolation]
-) -> Optional[SignalDefinition]:
+    path: Path, project_root: Path, violations: list[CatalogViolation]
+) -> SignalDefinition | None:
     source = _display(path, project_root)
-    file_violations: List[CatalogViolation] = []
+    file_violations: list[CatalogViolation] = []
 
     def violate(rule: str) -> None:
         file_violations.append(CatalogViolation(source, rule))
@@ -299,7 +300,7 @@ def _read_definition(
     if unknown:
         violate(f"undeclared frontmatter keys {unknown}")
 
-    text_values: Dict[str, str] = {}
+    text_values: dict[str, str] = {}
     for key in FRONTMATTER_KEYS:
         if key in ("row_identity", "asset_paths") or key not in frontmatter:
             continue
@@ -350,7 +351,7 @@ def _read_definition(
             violate(f"row_identity repeats columns {duplicates}")
 
     asset_paths = frontmatter.get("asset_paths")
-    sql_path: Optional[Path] = None
+    sql_path: Path | None = None
     if "asset_paths" in frontmatter and not isinstance(asset_paths, dict):
         violate("asset_paths must be a mapping")
     elif isinstance(asset_paths, dict):
@@ -396,9 +397,9 @@ def _read_definition(
 
 
 def _check_dml_coverage(
-    catalogued_ids: Set[str],
+    catalogued_ids: set[str],
     project_root: Path,
-    violations: List[CatalogViolation],
+    violations: list[CatalogViolation],
 ) -> None:
     for sql_file in sorted((project_root / SIGNAL_DML_RELATIVE_DIR).rglob("sig_*.sql")):
         if sql_file.stem not in catalogued_ids:
@@ -409,12 +410,12 @@ def _check_dml_coverage(
 
 def _check_ddl_identity(
     definitions: Sequence[SignalDefinition],
-    catalogued_ids: Set[str],
+    catalogued_ids: set[str],
     project_root: Path,
-    violations: List[CatalogViolation],
+    violations: list[CatalogViolation],
 ) -> None:
     ddl_files = sorted((project_root / SIGNAL_DDL_RELATIVE_DIR).rglob("*.sql"))
-    tables: Dict[str, ExpectedTable] = {
+    tables: dict[str, ExpectedTable] = {
         table.qualified_name: table
         for table in parse_expected_tables(ddl_files)
         if table.database == SIGNAL_TABLE_DATABASE

@@ -24,11 +24,11 @@ Usage:
 import argparse
 import sys
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date as calendar_date
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Sequence
 
 # Ensure local project imports resolve before importing project modules.
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -38,8 +38,18 @@ for _path in (str(SCRIPT_DIR), str(SCRIPTS_ROOT), str(PROJECT_ROOT)):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
+from utils import (
+    DateRangeInfo,
+    create_date_range_info,
+    print_header,
+    print_separator,
+    validate_date_format,
+)
+
 from config import FotMobConfig
 from scripts.refresh_turnstile import refresh_if_needed
+from src.common.logging import get_logger, setup_logging
+from src.fotmob.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
 from src.fotmob.orchestration import FotMobOrchestrator
 from src.integrations.telegram import (
     DailyReportData,
@@ -47,15 +57,6 @@ from src.integrations.telegram import (
     LayerAlertData,
     MonthlyReportData,
     TelegramClient,
-)
-from src.fotmob.bronze.paths import get_fotmob_historical_path, get_fotmob_live_path
-from src.common.logging import get_logger, setup_logging
-from utils import (
-    DateRangeInfo,
-    create_date_range_info,
-    print_header,
-    print_separator,
-    validate_date_format,
 )
 
 logger = get_logger(__name__)
@@ -209,8 +210,8 @@ def _add_option_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def parse_arguments(
-    argv: Optional[Sequence[str]] = None,
-    current_date: Optional[calendar_date] = None,
+    argv: Sequence[str] | None = None,
+    current_date: calendar_date | None = None,
 ) -> argparse.Namespace:
     """Parse and validate command-line arguments."""
     parser = create_argument_parser()
@@ -305,7 +306,7 @@ def _validate_historical_scope(
 
 def create_date_info(
     args: argparse.Namespace,
-    current_date: Optional[calendar_date] = None,
+    current_date: calendar_date | None = None,
 ) -> DateRangeInfo:
     """Create DateRangeInfo from parsed arguments."""
     today = current_date or calendar_date.today()
@@ -404,8 +405,7 @@ def print_next_steps(stats: ScrapingStats) -> None:
     if stats.total_successful > 0:
         logger.info("Next steps:")
         logger.info(
-            "  Load to ClickHouse:  "
-            "python3 scripts/bronze/load_fotmob_bronze.py --date <date>"
+            "  Load to ClickHouse:  python3 scripts/bronze/load_fotmob_bronze.py --date <date>"
         )
         logger.info("  Review raw artifacts under data/fotmob/historical/")
 
@@ -422,7 +422,7 @@ def process_single_date(
     logger,
     idx: int,
     total: int,
-) -> Optional[object]:
+) -> object | None:
     """
     Process a single date.
 

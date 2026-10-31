@@ -7,7 +7,7 @@ the base bronze storage with FotMob-specific functionality like health checks.
 import contextlib
 import json
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 try:
     from filelock import FileLock, Timeout
@@ -18,8 +18,8 @@ except ImportError:
     FileLock = None
     Timeout = None
 
-from src.fotmob.bronze.base_storage import BaseBronzeStorage
 from src.common.logging import get_logger
+from src.fotmob.bronze.base_storage import BaseBronzeStorage
 
 logger = get_logger(__name__)
 
@@ -69,7 +69,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
         super().__init__(base_dir)
         logger.info("Bronze storage initialized: %s", base_dir)
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Perform pre-flight health checks before operations.
 
         Checks:
@@ -116,13 +116,11 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
             if free_gb < DISK_CRITICAL_GB:
                 issues.append(
-                    f"Critical: Less than {DISK_CRITICAL_GB} GB "
-                    f"free disk space ({free_gb:.1f} GB)"
+                    f"Critical: Less than {DISK_CRITICAL_GB} GB free disk space ({free_gb:.1f} GB)"
                 )
             elif free_gb < DISK_WARNING_GB:
                 warnings.append(
-                    f"Low disk space: {free_gb:.1f} GB free "
-                    f"(recommend {DISK_WARNING_GB}+ GB)"
+                    f"Low disk space: {free_gb:.1f} GB free (recommend {DISK_WARNING_GB}+ GB)"
                 )
         except Exception as e:
             checks.append(
@@ -257,9 +255,9 @@ class FotMobBronzeStorage(BaseBronzeStorage):
             self.logger.warning("Invalid date format: %s", date_str)
             return False
 
-        listing_file = self._date_partition_dir(
-            self.daily_listings_dir, date_str_normalized
-        ) / "matches.json"
+        listing_file = (
+            self._date_partition_dir(self.daily_listings_dir, date_str_normalized) / "matches.json"
+        )
 
         if not listing_file.exists():
             self.logger.debug("Daily listing file not found: %s", listing_file)
@@ -274,7 +272,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
         with lock:
             try:
-                with open(listing_file, "r", encoding="utf-8") as f:
+                with open(listing_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 match_id_int = int(match_id)
@@ -342,7 +340,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                     json.dump(data, f, indent=2, ensure_ascii=False)
 
                 # Verify
-                with open(temp_file, "r", encoding="utf-8") as f:
+                with open(temp_file, encoding="utf-8") as f:
                     json.load(f)
 
                 if listing_file.exists():
@@ -376,9 +374,9 @@ class FotMobBronzeStorage(BaseBronzeStorage):
             self.logger.warning("Invalid date format: %s", date_str)
             return False
 
-        listing_file = self._date_partition_dir(
-            self.daily_listings_dir, date_str_normalized
-        ) / "matches.json"
+        listing_file = (
+            self._date_partition_dir(self.daily_listings_dir, date_str_normalized) / "matches.json"
+        )
 
         if not listing_file.exists():
             self.logger.debug("Daily listing file not found: %s", listing_file)
@@ -393,7 +391,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
         with lock:
             try:
-                with open(listing_file, "r", encoding="utf-8") as f:
+                with open(listing_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 match_id_int = int(match_id)
@@ -444,7 +442,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                 with open(temp_file, "w", encoding="utf-8") as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
 
-                with open(temp_file, "r", encoding="utf-8") as f:
+                with open(temp_file, encoding="utf-8") as f:
                     json.load(f)
 
                 if listing_file.exists():
@@ -453,7 +451,8 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
                 self.logger.info(
                     "Marked match as FotMob-unavailable in daily listing",
-                    date=date_str_normalized, match_id=match_id,
+                    date=date_str_normalized,
+                    match_id=match_id,
                 )
                 return True
 

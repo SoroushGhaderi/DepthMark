@@ -6,9 +6,9 @@ scopes are now stale, with the commands that rebuild them, instead of cascading.
 """
 
 from collections import defaultdict
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Sequence
 
 from src.common.logging import get_logger
 from src.fotmob.bronze.admission import (
@@ -41,7 +41,7 @@ def _scalar(result) -> int:
 
 def count_match_rows(
     client, match_ids: Sequence[int], tables: Sequence[str] = BRONZE_TABLES
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Return the stored rows per Bronze table that belong to the given matches."""
     if not match_ids:
         return {table: 0 for table in tables}
@@ -59,7 +59,7 @@ def count_match_rows(
 
 def delete_match_rows(
     client, match_ids: Sequence[int], tables: Sequence[str] = BRONZE_TABLES
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Delete the given matches from every Bronze table and return the rows removed.
 
     Each delete waits for its mutation (``mutations_sync = 2``), so rows inserted
@@ -76,7 +76,7 @@ def delete_match_rows(
     return counts
 
 
-def match_dates_for(client, match_ids: Sequence[int]) -> List[str]:
+def match_dates_for(client, match_ids: Sequence[int]) -> list[str]:
     """Return the ISO Match Dates Bronze holds for the given matches."""
     if not match_ids:
         return []
@@ -88,7 +88,7 @@ def match_dates_for(client, match_ids: Sequence[int]) -> List[str]:
     return [str(row[0]) for row in result.result_rows]
 
 
-def count_all_rows(client, tables: Sequence[str] = BRONZE_TABLES) -> Dict[str, int]:
+def count_all_rows(client, tables: Sequence[str] = BRONZE_TABLES) -> dict[str, int]:
     """Return the stored rows per Bronze table."""
     return {
         table: _scalar(
@@ -98,13 +98,13 @@ def count_all_rows(client, tables: Sequence[str] = BRONZE_TABLES) -> Dict[str, i
     }
 
 
-def stale_scope_commands(match_dates: Iterable[str]) -> List[str]:
+def stale_scope_commands(match_dates: Iterable[str]) -> list[str]:
     """Return the Silver then Gold commands that rebuild the scopes of these Match Dates.
 
     A month with one stale date reruns that date; a month with several reruns the
     month, which replaces the same partitions in one pass.
     """
-    by_month: Dict[str, List[str]] = defaultdict(list)
+    by_month: dict[str, list[str]] = defaultdict(list)
     for iso_date in sorted(set(match_dates)):
         compact = iso_date.replace("-", "")
         by_month[compact[:6]].append(compact)
@@ -124,12 +124,12 @@ class BronzeRemovalResult:
     dry_run: bool = False
     full_history: bool = False
     exit_code: int = 0
-    dates_removed: List[str] = field(default_factory=list)
-    removed_rows: Dict[str, int] = field(default_factory=dict)
-    stale_match_dates: List[str] = field(default_factory=list)
-    follow_up_commands: List[str] = field(default_factory=list)
-    failed_dates: Dict[str, str] = field(default_factory=dict)
-    run_error: Optional[str] = None
+    dates_removed: list[str] = field(default_factory=list)
+    removed_rows: dict[str, int] = field(default_factory=dict)
+    stale_match_dates: list[str] = field(default_factory=list)
+    follow_up_commands: list[str] = field(default_factory=list)
+    failed_dates: dict[str, str] = field(default_factory=dict)
+    run_error: str | None = None
 
     def finish(self) -> "BronzeRemovalResult":
         self.stale_match_dates = sorted(set(self.stale_match_dates))
@@ -152,8 +152,8 @@ class BronzeRemovalService:
         self,
         client,
         historical_root: Path,
-        specs: Optional[Mapping[str, BronzeTableSpec]] = None,
-        lock_path: Optional[Path] = None,
+        specs: Mapping[str, BronzeTableSpec] | None = None,
+        lock_path: Path | None = None,
     ):
         self.client = client
         self.historical_root = historical_root
@@ -169,7 +169,7 @@ class BronzeRemovalService:
     def run(
         self,
         *,
-        dates: Optional[List[str]] = None,
+        dates: list[str] | None = None,
         full_history: bool = False,
         dry_run: bool = False,
     ) -> BronzeRemovalResult:
@@ -192,7 +192,7 @@ class BronzeRemovalService:
             result.run_error = f"{type(error).__name__}: {error}"
         return self._report(result.finish())
 
-    def _remove(self, result: BronzeRemovalResult, dates: List[str], full_history: bool) -> None:
+    def _remove(self, result: BronzeRemovalResult, dates: list[str], full_history: bool) -> None:
         assert_live_bronze_tables_match(self.client, self.specs)
         if full_history:
             result.removed_rows = count_all_rows(self.client)

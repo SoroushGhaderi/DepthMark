@@ -2,9 +2,7 @@ from src.oddspedia.scraping.utils import pin_oddspedia_event_url
 
 
 def test_pin_oddspedia_event_url_adds_event_selector_to_matchup_url():
-    expected = (
-        "https://oddspedia.com/football/" "deportes-recoleta-union-san-felipe-133331?m=9876168"
-    )
+    expected = "https://oddspedia.com/football/deportes-recoleta-union-san-felipe-133331?m=9876168"
 
     assert (
         pin_oddspedia_event_url(

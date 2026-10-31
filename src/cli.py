@@ -11,7 +11,6 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
@@ -23,11 +22,11 @@ class CommandSpec:
     """One package command and its script target."""
 
     script: str
-    replacement: Optional[str] = None
-    arguments: Tuple[str, ...] = ()
+    replacement: str | None = None
+    arguments: tuple[str, ...] = ()
 
 
-CANONICAL_COMMANDS: Dict[str, CommandSpec] = {
+CANONICAL_COMMANDS: dict[str, CommandSpec] = {
     "health-check": CommandSpec("health_check.py"),
     "report-scraping": CommandSpec("report_scraping.py"),
     "scrape-fotmob": CommandSpec("bronze/scrape_fotmob.py"),
@@ -68,7 +67,7 @@ def _oddspedia_report_alias(output_format: str) -> CommandSpec:
     )
 
 
-COMPATIBILITY_COMMANDS: Dict[str, CommandSpec] = {
+COMPATIBILITY_COMMANDS: dict[str, CommandSpec] = {
     "scrape": _alias("scrape-fotmob"),
     "load": _alias("load-fotmob-bronze"),
     "pipeline": _alias("run-fotmob-pipeline"),
@@ -98,10 +97,10 @@ COMPATIBILITY_COMMANDS: Dict[str, CommandSpec] = {
     ),
 }
 
-COMMANDS: Dict[str, CommandSpec] = {**CANONICAL_COMMANDS, **COMPATIBILITY_COMMANDS}
+COMMANDS: dict[str, CommandSpec] = {**CANONICAL_COMMANDS, **COMPATIBILITY_COMMANDS}
 
 # Kept as a compatibility view for callers that imported the old registry.
-SCRIPT_MAP: Dict[str, str] = {command: spec.script for command, spec in COMMANDS.items()}
+SCRIPT_MAP: dict[str, str] = {command: spec.script for command, spec in COMMANDS.items()}
 
 
 def _run_script(script_name: str, script_args: list[str]) -> int:
@@ -157,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
             else command.replacement
         )
         print(
-            f"Warning: 'depthmark {parsed.command}' is deprecated; " f"use {replacement} instead.",
+            f"Warning: 'depthmark {parsed.command}' is deprecated; use {replacement} instead.",
             file=sys.stderr,
         )
 

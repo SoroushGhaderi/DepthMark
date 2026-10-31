@@ -19,8 +19,8 @@ import os
 import sys
 import threading
 import time
+from collections.abc import Sequence
 from contextlib import nullcontext
-from typing import Optional, Sequence, Tuple
 
 # Make the src/ package discoverable when running main.py directly.
 _src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
@@ -30,7 +30,7 @@ import random
 import shutil
 import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from selenium.common.exceptions import (
@@ -658,7 +658,7 @@ def phase1_collect(
     return matches
 
 
-def _create_priority_service() -> Tuple[ClickHouseClient, LinkPriorityService]:
+def _create_priority_service() -> tuple[ClickHouseClient, LinkPriorityService]:
     """Connect a source-workflow service to the canonical Silver reference."""
     settings = get_depthmark_settings()
     client = ClickHouseClient(
@@ -1632,9 +1632,9 @@ def _warn_deprecated_options(argv: Sequence[str]) -> None:
 
 
 def main(
-    argv: Optional[Sequence[str]] = None,
+    argv: Sequence[str] | None = None,
     default_sport: str = "football",
-    fixed_command: Optional[str] = None,
+    fixed_command: str | None = None,
 ) -> None:
     """Run the shared pipeline.
 
@@ -1844,7 +1844,7 @@ def main(
     # Persist every terminal event alongside the data being scraped. A month
     # run receives its own directory because its events span multiple dates.
     log_date = dates[0]
-    run_started_at = datetime.now(timezone.utc)
+    run_started_at = datetime.now(UTC)
     run_id = run_started_at.strftime("%Y%m%dT%H%M%S")
     run_dir = get_run_logs_dir(log_date, sport=sport)
     log_path = None if args.dry_run else os.path.join(run_dir, f"run_{run_id}.log")

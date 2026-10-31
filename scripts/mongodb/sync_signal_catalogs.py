@@ -12,9 +12,10 @@ import argparse
 import hashlib
 import json
 import sys
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any
 
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
@@ -39,12 +40,12 @@ MAX_PRUNE_FRACTION = 0.10
 class SignalSyncPlan:
     """Which signal documents a sync inserts, updates, leaves, and deletes."""
 
-    inserts: List[str] = field(default_factory=list)
-    updates: List[str] = field(default_factory=list)
-    unchanged: List[str] = field(default_factory=list)
-    deletes: List[str] = field(default_factory=list)
+    inserts: list[str] = field(default_factory=list)
+    updates: list[str] = field(default_factory=list)
+    unchanged: list[str] = field(default_factory=list)
+    deletes: list[str] = field(default_factory=list)
 
-    def prune_refusal(self, stored_count: int, allow_mass_prune: bool) -> Optional[str]:
+    def prune_refusal(self, stored_count: int, allow_mass_prune: bool) -> str | None:
         """Return why pruning is refused, or ``None`` when it may proceed."""
         if not self.deletes or allow_mass_prune:
             return None
@@ -63,7 +64,7 @@ def load_environment() -> None:
     get_settings()
 
 
-def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Mirror validated signal catalogs into the MongoDB signals collection."
     )
@@ -99,7 +100,7 @@ def relative_project_path(file_path: Path) -> str:
     return file_path.resolve().relative_to(project_root).as_posix()
 
 
-def _text_asset(file_path: Path) -> Dict[str, Any]:
+def _text_asset(file_path: Path) -> dict[str, Any]:
     content = file_path.read_text(encoding="utf-8")
     content_bytes = content.encode("utf-8")
     return {
@@ -116,10 +117,10 @@ def content_sha256(document: Mapping[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def build_signal_document(definition: SignalDefinition) -> Dict[str, Any]:
+def build_signal_document(definition: SignalDefinition) -> dict[str, Any]:
     """Build the MongoDB document for one validated signal."""
     frontmatter = definition.frontmatter_dict()
-    document: Dict[str, Any] = {
+    document: dict[str, Any] = {
         "signal_id": definition.signal_id,
         "status": definition.status,
         "entity": definition.entity,
@@ -215,7 +216,7 @@ def sync_signals(
     return 0
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     load_environment()
     args = parse_args(argv)
     setup_logging(

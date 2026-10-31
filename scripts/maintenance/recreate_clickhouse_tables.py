@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Any
 
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
@@ -23,6 +24,7 @@ if str(scripts_root) not in sys.path:
     sys.path.insert(0, str(scripts_root))
 
 from clickhouse_setup_common import LAYER_ORDER, get_layer_sql_files, resolve_clickhouse_root
+
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.identities import maintenance_client
@@ -69,7 +71,7 @@ class RecreationTarget:
         return RELOAD_HINTS[self.layer]
 
 
-def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse operator Table Recreation arguments."""
     parser = argparse.ArgumentParser(
         description=(
@@ -117,8 +119,8 @@ def setup_inventory(clickhouse_root: Path) -> list[RecreationTarget]:
 def select_targets(
     inventory: Sequence[RecreationTarget],
     layer: str,
-    database: Optional[str],
-    table: Optional[str],
+    database: str | None,
+    table: str | None,
 ) -> list[RecreationTarget]:
     """Filter the setup inventory by layer, database, and table selectors."""
     selected = [
@@ -149,8 +151,7 @@ def live_row_counts(client: Any, targets: Sequence[RecreationTarget]) -> dict[st
             raise ValueError(f"Unsafe database: {database}")
     database_list = ", ".join(f"'{database}'" for database in databases)
     rows = client.execute(
-        "SELECT database, name, total_rows FROM system.tables "
-        f"WHERE database IN ({database_list})",
+        f"SELECT database, name, total_rows FROM system.tables WHERE database IN ({database_list})",
         log_query=False,
     ).result_rows
     return {f"{database}.{name}": int(total_rows or 0) for database, name, total_rows in rows}
@@ -164,7 +165,7 @@ def drop_statement(target: RecreationTarget) -> str:
     return f"DROP TABLE IF EXISTS {target.qualified_name}"
 
 
-def run(argv: Optional[Sequence[str]] = None, client: Optional[Any] = None) -> int:
+def run(argv: Sequence[str] | None = None, client: Any | None = None) -> int:
     """Plan or execute an explicit Table Recreation."""
     args = parse_args(argv)
     if requires_explicit_scope(args):

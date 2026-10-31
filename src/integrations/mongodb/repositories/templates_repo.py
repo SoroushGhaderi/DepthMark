@@ -1,7 +1,7 @@
 """Channel template repository for DepthMark content catalog."""
 
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from pymongo.collection import Collection
 from pymongo.database import Database
@@ -10,7 +10,7 @@ from ..collections import CHANNEL_TEMPLATES_COLLECTION
 
 
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc).replace(microsecond=0)
+    return datetime.now(UTC).replace(microsecond=0)
 
 
 class TemplatesRepository:
@@ -19,7 +19,7 @@ class TemplatesRepository:
     def __init__(self, database: Database):
         self.collection: Collection = database[CHANNEL_TEMPLATES_COLLECTION]
 
-    def upsert_template(self, template_id: str, payload: Dict[str, Any]) -> None:
+    def upsert_template(self, template_id: str, payload: dict[str, Any]) -> None:
         update_doc = {
             "$set": {
                 **payload,
@@ -30,17 +30,17 @@ class TemplatesRepository:
         }
         self.collection.update_one({"template_id": template_id}, update_doc, upsert=True)
 
-    def get_template(self, template_id: str) -> Optional[Dict[str, Any]]:
+    def get_template(self, template_id: str) -> dict[str, Any] | None:
         return self.collection.find_one({"template_id": template_id}, {"_id": 0})
 
     def list_templates(
         self,
-        channel: Optional[str] = None,
-        content_type: Optional[str] = None,
-        status: Optional[str] = None,
+        channel: str | None = None,
+        content_type: str | None = None,
+        status: str | None = None,
         limit: int = 200,
-    ) -> List[Dict[str, Any]]:
-        query: Dict[str, Any] = {}
+    ) -> list[dict[str, Any]]:
+        query: dict[str, Any] = {}
         if channel:
             query["channel"] = channel
         if content_type:
@@ -49,4 +49,3 @@ class TemplatesRepository:
             query["status"] = status
         cursor = self.collection.find(query, {"_id": 0}).sort("updated_at", -1).limit(limit)
         return list(cursor)
-

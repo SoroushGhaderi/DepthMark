@@ -4,17 +4,17 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Sequence
 
 project_root = Path(__file__).resolve().parents[2]
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.identities import maintenance_client
-from src.common.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -37,7 +37,7 @@ class OptimizeTarget:
         return f"{self.database}.{self.table}"
 
 
-def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse operator maintenance arguments."""
     parser = argparse.ArgumentParser(
         description=(
@@ -74,7 +74,7 @@ def _validate_identifier(value: str, label: str) -> str:
     return value
 
 
-def selected_databases(layer: str, database: Optional[str]) -> tuple[str, ...]:
+def selected_databases(layer: str, database: str | None) -> tuple[str, ...]:
     """Resolve the ClickHouse databases selected by CLI filters."""
     if database:
         _validate_identifier(database, "database")
@@ -89,7 +89,7 @@ def selected_databases(layer: str, database: Optional[str]) -> tuple[str, ...]:
 def discover_targets(
     client: ClickHouseClient,
     databases: Sequence[str],
-    table: Optional[str],
+    table: str | None,
 ) -> list[OptimizeTarget]:
     """Discover selected ClickHouse tables from system metadata."""
     if table:
@@ -113,7 +113,7 @@ def optimize_statement(target: OptimizeTarget) -> str:
     return f"OPTIMIZE TABLE {target.qualified_name} FINAL DEDUPLICATE"
 
 
-def run(argv: Optional[Sequence[str]] = None) -> int:
+def run(argv: Sequence[str] | None = None) -> int:
     """Plan or execute explicit ClickHouse optimization."""
     args = parse_args(argv)
     if args.execute and args.layer == "all" and not args.database:

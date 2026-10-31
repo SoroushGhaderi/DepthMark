@@ -1,10 +1,8 @@
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from datetime import UTC, datetime
 
 from src.oddspedia.scraping.logging import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -14,7 +12,7 @@ class Metrics:
     """Thread-safe metrics collector for a scraping run."""
 
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
-    _context: Dict[str, object] = field(default_factory=dict, repr=False)
+    _context: dict[str, object] = field(default_factory=dict, repr=False)
 
     phase_1_total: int = 0
     phase_1_success: int = 0
@@ -26,14 +24,14 @@ class Metrics:
     phase_2_skipped: int = 0
     phase_2_failed: int = 0
 
-    page_load_time_ms: List[int] = field(default_factory=list)
+    page_load_time_ms: list[int] = field(default_factory=list)
 
     cloudflare_challenges: int = 0
     cloudflare_timeouts: int = 0
 
-    scrape_errors: Dict[str, int] = field(default_factory=dict)
+    scrape_errors: dict[str, int] = field(default_factory=dict)
 
-    odds_markets_by_type: Dict[str, int] = field(default_factory=dict)
+    odds_markets_by_type: dict[str, int] = field(default_factory=dict)
     odds_extraction_success: int = 0
     odds_extraction_failed: int = 0
     live_odds_extraction_success: int = 0
@@ -43,10 +41,10 @@ class Metrics:
 
     circuit_breaker_paused: int = 0
     circuit_breaker_aborted: bool = False
-    link_prioritization: Optional[Dict] = None
+    link_prioritization: dict | None = None
 
-    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    end_time: Optional[datetime] = None
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    end_time: datetime | None = None
 
     def _increment(self, counter_name: str, value: int = 1) -> None:
         with self._lock:
@@ -59,7 +57,7 @@ class Metrics:
             d[key] = d.get(key, 0) + value
 
     def phase1_start(self) -> None:
-        self.start_time = datetime.now(timezone.utc)
+        self.start_time = datetime.now(UTC)
 
     def phase1_complete(self, total: int, success: int, duration_seconds: int) -> None:
         self.phase_1_total = total
@@ -140,19 +138,19 @@ class Metrics:
         with self._lock:
             self.circuit_breaker_aborted = True
 
-    def record_link_prioritization(self, summary: Dict) -> None:
+    def record_link_prioritization(self, summary: dict) -> None:
         """Attach the date-scoped priority decision to this run's summary."""
         with self._lock:
             self.link_prioritization = dict(summary)
 
     def finish(self) -> None:
-        self.end_time = datetime.now(timezone.utc)
+        self.end_time = datetime.now(UTC)
 
     @property
     def total_duration_seconds(self) -> int:
         if self.end_time:
             return int((self.end_time - self.start_time).total_seconds())
-        return int((datetime.now(timezone.utc) - self.start_time).total_seconds())
+        return int((datetime.now(UTC) - self.start_time).total_seconds())
 
     @property
     def avg_page_load_ms(self) -> float:
@@ -193,7 +191,7 @@ class Metrics:
         terminal = self.phase_2_success + self.phase_2_skipped
         return round((terminal / self.phase_2_total) * 100, 2)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             "run": {
                 "start": self.start_time.isoformat(),
@@ -239,7 +237,7 @@ class Metrics:
             "link_prioritization": self.link_prioritization,
         }
 
-    def manifest_snapshot(self) -> Dict:
+    def manifest_snapshot(self) -> dict:
         """Return the latest run summary for embedding in a scrape manifest."""
         with self._lock:
             context = dict(self._context)
@@ -252,7 +250,7 @@ class Metrics:
         )
 
 
-_global_metrics: Optional[Metrics] = None
+_global_metrics: Metrics | None = None
 
 
 def get_metrics() -> Metrics:

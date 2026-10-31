@@ -4,7 +4,6 @@ import argparse
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 project_root = Path(__file__).resolve().parents[2]
 scripts_dir = Path(__file__).resolve().parents[1]
@@ -13,21 +12,21 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import get_settings
+from src.common.logging import get_logger, setup_logging
 from src.fotmob.gold import GoldRunResult, GoldService
 from src.integrations.telegram import LayerAlertData, TelegramClient
+from src.warehouse.contracts import LayerContractError
+from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.warehouse.identities import client_for_scope
 from src.warehouse.scope import (
     add_warehouse_scope_arguments,
     execution_scope_from_args,
 )
-from src.warehouse.identities import client_for_scope
-from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
-from src.warehouse.contracts import LayerContractError
-from src.common.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
 
 
-def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Process FotMob Gold through two-phase staged replacement. "

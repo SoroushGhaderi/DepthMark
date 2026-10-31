@@ -1,7 +1,7 @@
 """Durable terminal outcomes for one Sport-Date Scrape."""
 
 import threading
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 from src.oddspedia.scraping.manifest import ScrapeManifest, update_manifest
 from src.oddspedia.scraping.metrics import Metrics
@@ -62,7 +62,7 @@ class TerminalOutcomeCheckpoint:
         self,
         match_id: str,
         outcome: str,
-        reason: Optional[str] = None,
+        reason: str | None = None,
         **details,
     ) -> ScrapeManifest:
         def apply(manifest: ScrapeManifest) -> None:
@@ -76,6 +76,7 @@ class TerminalOutcomeCheckpoint:
                 raise ValueError(f"Unsupported terminal outcome: {outcome}")
 
         with self._lock:
+
             def apply_and_sync(manifest: ScrapeManifest) -> None:
                 apply(manifest)
                 done_count, skipped_count, failed_count = self._terminal_counts(manifest)

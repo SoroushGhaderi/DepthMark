@@ -24,7 +24,7 @@ import hashlib
 import json
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 from urllib.parse import urlencode
 
 from src.common.logging import get_logger
@@ -147,8 +147,8 @@ class PlaywrightFetcher:
         self.config = config
         self.logger = logger
 
-        self._foo_hash: Optional[str] = None
-        self._h_lyrics: Optional[str] = None
+        self._foo_hash: str | None = None
+        self._h_lyrics: str | None = None
         self._signing_params_ts: float = 0.0
 
     # ------------------------------------------------------------------
@@ -162,8 +162,8 @@ class PlaywrightFetcher:
     def fetch_json(
         self,
         url: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """Make an authenticated GET request and return the parsed JSON body."""
         self._ensure_signing_params()
 
@@ -212,7 +212,9 @@ class PlaywrightFetcher:
                 if fallback_json is not None:
                     return fallback_json
 
-            self.logger.error("Request failed %s: %s — %s", resp.status_code, url_path, resp.text[:200])
+            self.logger.error(
+                "Request failed %s: %s — %s", resp.status_code, url_path, resp.text[:200]
+            )
             return None
         except ImportError:
             self.logger.error("curl_cffi is not installed. Fix: pip install curl_cffi")
@@ -224,9 +226,9 @@ class PlaywrightFetcher:
     def _fetch_json_via_playwright(
         self,
         full_url: str,
-        headers: Dict[str, str],
-        cookies: Dict[str, str],
-    ) -> Optional[Dict[str, Any]]:
+        headers: dict[str, str],
+        cookies: dict[str, str],
+    ) -> dict[str, Any] | None:
         """Fallback fetch through Playwright's request context for hard 502 cases."""
         try:
             from playwright.sync_api import sync_playwright
@@ -263,7 +265,10 @@ class PlaywrightFetcher:
                         return resp.json()
 
                     self.logger.error(
-                        "Playwright fallback failed %s: %s — %s", resp.status, full_url, resp.text()[:200]
+                        "Playwright fallback failed %s: %s — %s",
+                        resp.status,
+                        full_url,
+                        resp.text()[:200],
                     )
                     return None
                 finally:
@@ -321,7 +326,7 @@ class PlaywrightFetcher:
                 self._foo_hash = _FALLBACK_FOO_HASH
                 self._h_lyrics = _FALLBACK_H_LYRICS
 
-    def _extract_signing_params_via_playwright(self) -> Dict[str, str]:
+    def _extract_signing_params_via_playwright(self) -> dict[str, str]:
         """Load fotmob.com briefly with Playwright to extract the signing params."""
         try:
             from playwright.sync_api import sync_playwright
@@ -377,7 +382,7 @@ class PlaywrightFetcher:
     # Cookie management
     # ------------------------------------------------------------------
 
-    def _get_cookies(self) -> Dict[str, str]:
+    def _get_cookies(self) -> dict[str, str]:
         """
         Return a cookie dict for fotmob.com requests.
 
@@ -419,7 +424,9 @@ class PlaywrightFetcher:
         elif tv_stored_valid:
             base["turnstile_verified"] = tv_stored
             self.logger.info(
-                "Using %s cookies + stored Turnstile (Chrome Turnstile %s)", source, 'expired' if tv_chrome else 'absent'
+                "Using %s cookies + stored Turnstile (Chrome Turnstile %s)",
+                source,
+                "expired" if tv_chrome else "absent",
             )
         else:
             # Keep the newest available token (even stale) as a best-effort fallback.
@@ -454,7 +461,7 @@ class PlaywrightFetcher:
         # Unknown format — accept it optimistically
         return True
 
-    def _try_read_chrome_cookies(self) -> Optional[Dict[str, str]]:
+    def _try_read_chrome_cookies(self) -> dict[str, str] | None:
         """Try to read fotmob.com cookies from the local Chrome profile.
 
         Tries both '.fotmob.com' (subdomain-wildcard cookies) and 'fotmob.com'
@@ -464,7 +471,7 @@ class PlaywrightFetcher:
         try:
             import browser_cookie3
 
-            cookies: Dict[str, str] = {}
+            cookies: dict[str, str] = {}
             turnstile_candidates = []
             for domain in (".fotmob.com", "fotmob.com", "www.fotmob.com"):
                 try:
@@ -484,19 +491,21 @@ class PlaywrightFetcher:
 
             if cookies:
                 self.logger.debug(
-                    "browser-cookie3: %s fotmob cookie(s) from Chrome (turnstile_verified=%s)", len(cookies), 'yes' if 'turnstile_verified' in cookies else 'no'
+                    "browser-cookie3: %s fotmob cookie(s) from Chrome (turnstile_verified=%s)",
+                    len(cookies),
+                    "yes" if "turnstile_verified" in cookies else "no",
                 )
                 return cookies
         except Exception as exc:
             self.logger.debug("browser-cookie3 unavailable: %s", exc)
         return None
 
-    def _get_stored_credentials_cookies(self) -> Dict[str, str]:
+    def _get_stored_credentials_cookies(self) -> dict[str, str]:
         """Read cookies from credentials.json (hot-reloaded on every call)."""
         cookies = self._read_credentials_file_cookies()
         return cookies if cookies else {}
 
-    def _read_credentials_file_cookies(self) -> Optional[Dict[str, str]]:
+    def _read_credentials_file_cookies(self) -> dict[str, str] | None:
         """Directly read credentials.json from disk (bypasses startup cache)."""
         try:
             creds_path = Path(__file__).parent.parent.parent.parent / "credentials.json"
@@ -504,11 +513,13 @@ class PlaywrightFetcher:
                 self.logger.warning("credentials.json not found at %s", creds_path)
                 return None
 
-            with open(creds_path, "r") as f:
+            with open(creds_path) as f:
                 data = json.load(f)
                 cookies = data.get("cookies", {})
                 self.logger.debug(
-                    "credentials.json (live): %s cookie(s) (turnstile_verified=%s)", len(cookies), 'yes' if 'turnstile_verified' in cookies else 'no'
+                    "credentials.json (live): %s cookie(s) (turnstile_verified=%s)",
+                    len(cookies),
+                    "yes" if "turnstile_verified" in cookies else "no",
                 )
                 return cookies
         except Exception as exc:

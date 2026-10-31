@@ -1,7 +1,7 @@
 """Scraper for fetching daily match listings."""
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from .base_scraper import BaseScraper
 
@@ -9,7 +9,7 @@ from .base_scraper import BaseScraper
 class DailyScraper(BaseScraper):
     """Scraper for fetching all matches for a given date."""
 
-    def fetch_matches_for_date(self, date_str: str) -> List[int]:
+    def fetch_matches_for_date(self, date_str: str) -> list[int]:
         """
         Fetch all match IDs for a specific date.
 
@@ -36,7 +36,7 @@ class DailyScraper(BaseScraper):
 
         return match_ids
 
-    def _extract_match_ids(self, response_data: Dict[str, Any]) -> List[int]:
+    def _extract_match_ids(self, response_data: dict[str, Any]) -> list[int]:
         """
         Extract all match IDs from the API response.
 
@@ -87,14 +87,16 @@ class DailyScraper(BaseScraper):
                     else:
                         filtered_count += 1
                         self.logger.debug(
-                            "Filtered out match %s with status: %s", match['id'], status_short
+                            "Filtered out match %s with status: %s", match["id"], status_short
                         )
                 else:
                     match_ids.append(match["id"])
 
         if self.config.scraping.filter_by_status:
             self.logger.info(
-                "Status filter: %s matches included, %s matches filtered out", len(match_ids), filtered_count
+                "Status filter: %s matches included, %s matches filtered out",
+                len(match_ids),
+                filtered_count,
             )
         self.logger.debug("Status breakdown: %s", status_counts)
 

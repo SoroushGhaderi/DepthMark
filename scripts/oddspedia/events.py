@@ -12,7 +12,6 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.oddspedia.scraping.cli import main
 
-
 if __name__ == "__main__":
     print(
         "Warning: scripts/oddspedia/events.py is deprecated; use the source-qualified "

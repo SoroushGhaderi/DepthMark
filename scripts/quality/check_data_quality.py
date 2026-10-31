@@ -2,8 +2,8 @@
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import List, Optional, Sequence
 
 project_root = Path(__file__).resolve().parents[2]
 scripts_dir = Path(__file__).resolve().parents[1]
@@ -12,7 +12,9 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import get_settings
+from src.common.logging import get_logger
 from src.fotmob.gold.signal_catalog import SignalCatalogError
+from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
@@ -20,14 +22,12 @@ from src.warehouse.quality import (
     reconciliation_check_names,
 )
 from src.warehouse.scope import WarehouseExecutionScope
-from src.integrations.clickhouse.client import ClickHouseClient
-from src.common.logging import get_logger
 
 logger = get_logger(__name__)
 LAYERS = ("bronze", "silver", "gold")
 
 
-def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Check duplicate row identities across Bronze, Silver, and Gold, and reconcile "
@@ -75,7 +75,7 @@ def _scope_from_args(args: argparse.Namespace) -> WarehouseExecutionScope:
     return WarehouseExecutionScope.full_history()
 
 
-def _resolve_csv(raw_value: str, available: Sequence[str], label: str) -> List[str]:
+def _resolve_csv(raw_value: str, available: Sequence[str], label: str) -> list[str]:
     normalized = raw_value.strip().lower()
     if normalized == "all":
         return list(available)
@@ -149,7 +149,7 @@ def strict_exit_code(summary: DataQualitySummary, strict: bool) -> int:
     return 1 if strict and summary.has_failures else 0
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.sample_limit <= 0:
         logger.error("sample-limit must be a positive integer", sample_limit=args.sample_limit)

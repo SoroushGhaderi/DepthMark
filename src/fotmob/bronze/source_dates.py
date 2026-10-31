@@ -9,12 +9,11 @@ import argparse
 from calendar import monthrange
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import List
 
 from src.common.dates import DATE_FORMAT_COMPACT
 
 
-def generate_date_range(start_date: str, end_date: str) -> List[str]:
+def generate_date_range(start_date: str, end_date: str) -> list[str]:
     """Return every YYYYMMDD date from ``start_date`` to ``end_date`` inclusive."""
     start = datetime.strptime(start_date, DATE_FORMAT_COMPACT)
     end = datetime.strptime(end_date, DATE_FORMAT_COMPACT)
@@ -26,7 +25,7 @@ def generate_date_range(start_date: str, end_date: str) -> List[str]:
     return dates
 
 
-def generate_month_dates(month_str: str) -> List[str]:
+def generate_month_dates(month_str: str) -> list[str]:
     """Return every YYYYMMDD date of a YYYYMM month."""
     year = int(month_str[:4])
     month = int(month_str[4:6])
@@ -34,7 +33,7 @@ def generate_month_dates(month_str: str) -> List[str]:
     return [f"{year}{month:02d}{day:02d}" for day in range(1, last_day + 1)]
 
 
-def discover_historical_dates(historical_root: Path) -> List[str]:
+def discover_historical_dates(historical_root: Path) -> list[str]:
     """Return valid completed Source Dates available in Historical storage."""
     discovered: set = set()
     for parent_name in ("matches", "daily_listings"):
@@ -63,7 +62,7 @@ def add_source_date_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--end-date", help="Last Source Date of a range (YYYYMMDD)")
 
 
-def source_dates_from_args(args: argparse.Namespace) -> List[str]:
+def source_dates_from_args(args: argparse.Namespace) -> list[str]:
     """Expand date, range, or month selectors; full history returns no explicit dates."""
     for value, display in ((args.date, "YYYYMMDD"), (args.start_date, "YYYYMMDD")):
         if value is not None:

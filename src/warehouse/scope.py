@@ -3,7 +3,7 @@
 import argparse
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 ScopeKind = Literal["date", "month", "full-history"]
 
@@ -13,7 +13,7 @@ class WarehouseExecutionScope:
     """An explicit output scope for a warehouse load."""
 
     kind: ScopeKind
-    value: Optional[str] = None
+    value: str | None = None
 
     @classmethod
     def for_date(cls, value: str) -> "WarehouseExecutionScope":
@@ -34,7 +34,7 @@ class WarehouseExecutionScope:
         return self.value or "full-history"
 
     @property
-    def partition_id(self) -> Optional[int]:
+    def partition_id(self) -> int | None:
         if self.kind == "date":
             return int(self.value[:6])
         if self.kind == "month":
@@ -42,7 +42,7 @@ class WarehouseExecutionScope:
         return None
 
     @property
-    def iso_date(self) -> Optional[str]:
+    def iso_date(self) -> str | None:
         if self.kind != "date":
             return None
         return datetime.strptime(self.value, "%Y%m%d").date().isoformat()
