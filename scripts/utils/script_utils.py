@@ -16,6 +16,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from selenium.common.exceptions import WebDriverException
+
 from src.common.logging import get_logger
 
 DATE_FORMAT_COMPACT = "%Y%m%d"
@@ -261,7 +263,7 @@ def create_date_range_info(
 
 class ImplicitWaitContext:
     """
-    Context manager for temporaril in y changing Selenium implicit wait.
+    Context manager for temporarily changing Selenium implicit wait.
     More efficient than manually saving/restoring wait times.
     Usage:
         with ImplicitWaitContext(driver, 0):
@@ -285,16 +287,16 @@ class ImplicitWaitContext:
         """Enter context: save current wait and set new wait."""
         try:
             self.driver.implicitly_wait(self.new_wait)
-        except Exception:
-            pass
+        except WebDriverException:
+            logger.debug("Could not set implicit wait", exc_info=True)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Exit context: restore original wait."""
         try:
             self.driver.implicitly_wait(self.original_wait)
-        except Exception:
-            pass
+        except WebDriverException:
+            logger.debug("Could not restore implicit wait", exc_info=True)
         return False
 
 

@@ -18,6 +18,8 @@ except ImportError:
     FileLock = None
     Timeout = None
 
+import requests
+
 from src.common.logging import get_logger
 from src.fotmob.bronze.base_storage import BaseBronzeStorage
 
@@ -122,7 +124,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                 warnings.append(
                     f"Low disk space: {free_gb:.1f} GB free (recommend {DISK_WARNING_GB}+ GB)"
                 )
-        except Exception as e:
+        except OSError as e:
             checks.append(
                 {"check": "Disk Space", "status": "ERROR", "message": f"Failed to check: {e}"}
             )
@@ -141,7 +143,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                     "message": "Can write to bronze directory",
                 }
             )
-        except Exception as e:
+        except OSError as e:
             checks.append(
                 {
                     "check": "Write Permissions",
@@ -176,14 +178,12 @@ class FotMobBronzeStorage(BaseBronzeStorage):
 
         # Check network connectivity
         try:
-            import requests
-
             requests.get("https://www.fotmob.com", timeout=5)
 
             checks.append(
                 {"check": "Network Connectivity", "status": "OK", "message": "Can reach FotMob.com"}
             )
-        except Exception as e:
+        except requests.RequestException as e:
             checks.append(
                 {
                     "check": "Network Connectivity",
@@ -332,7 +332,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                             }
                         )
                 except Exception as e:
-                    self.logger.warning("Could not update storage statistics: %s", e)
+                    self.logger.warning("Could not update storage statistics: %s", e, exc_info=True)
 
                 # Atomic write
                 temp_file = listing_file.parent / ".matches.json.tmp"
@@ -351,14 +351,12 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                 return True
 
             except Exception as e:
-                self.logger.error("Error updating daily listing for match %s: %s", match_id, e)
+                self.logger.exception("Error updating daily listing for match %s: %s", match_id, e)
 
                 temp_file = listing_file.parent / ".matches.json.tmp"
                 if temp_file.exists():
-                    try:
+                    with contextlib.suppress(OSError):
                         temp_file.unlink()
-                    except Exception:
-                        pass
                 return False
 
     def mark_match_as_unavailable(self, match_id: str, date_str: str) -> bool:
@@ -436,7 +434,7 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                             }
                         )
                 except Exception as e:
-                    self.logger.warning("Could not update storage statistics: %s", e)
+                    self.logger.warning("Could not update storage statistics: %s", e, exc_info=True)
 
                 temp_file = listing_file.parent / ".matches.json.tmp"
                 with open(temp_file, "w", encoding="utf-8") as f:
@@ -457,16 +455,14 @@ class FotMobBronzeStorage(BaseBronzeStorage):
                 return True
 
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "Error marking match %s as unavailable in daily listing: %s", match_id, e
                 )
 
                 temp_file = listing_file.parent / ".matches.json.tmp"
                 if temp_file.exists():
-                    try:
+                    with contextlib.suppress(OSError):
                         temp_file.unlink()
-                    except Exception:
-                        pass
                 return False
 
 

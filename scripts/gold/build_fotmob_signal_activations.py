@@ -446,7 +446,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     except Exception as exc:
-        logger.error("Signal activation build failed", error=str(exc))
+        logger.exception("Signal activation build failed", error=str(exc))
         return 1
     finally:
         client.disconnect()

@@ -375,7 +375,7 @@ class BronzeService:
                 else:
                     for date_str in dates:
                         self._write_one_date(date_str, result, replace=mode == "replace")
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - logged by _record_run_failure; exits non-zero
             self._record_run_failure(result, error)
         return self._report(result.finish())
 

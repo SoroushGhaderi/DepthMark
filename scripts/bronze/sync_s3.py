@@ -222,7 +222,7 @@ def run(args: argparse.Namespace) -> int:
             )
         except Exception as exc:
             failures += 1
-            logger.error(
+            logger.exception(
                 "Bronze S3 sync date failed",
                 action=args.action,
                 date=date_str,

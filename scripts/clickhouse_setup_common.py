@@ -175,7 +175,7 @@ def create_user_if_not_exists(client: ClickHouseClient, username: str, password:
         provision_application_user(client, username, password)
         return True
     except Exception as exc:
-        logger.error("Failed to provision user '%s': %s", username, exc)
+        logger.exception("Failed to provision user '%s': %s", username, exc)
         return False
 
 
@@ -309,7 +309,7 @@ def execute_sql_file(client: ClickHouseClient, sql_file: Path, database: str | N
                 if "already exists" in str(exc).lower():
                     executed_count += 1
                 else:
-                    logger.error("Failed while executing %s: %s", sql_file.name, exc)
+                    logger.exception("Failed while executing %s: %s", sql_file.name, exc)
                     logger.error("Statement: %s", statement)
                     return False
             elapsed_seconds = time.perf_counter() - statement_start

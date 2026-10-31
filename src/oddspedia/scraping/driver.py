@@ -105,13 +105,13 @@ def detect_chrome_version(chrome_binary: str | None = None) -> int | None:
             parts = result.stdout.strip().split()
             if parts:
                 return int(parts[-1].split(".")[0])
-        except Exception:
+        except (OSError, subprocess.SubprocessError, ValueError):
             pass
 
     try:
         with open(_CHROME_PLIST, "rb") as f:
             info = plistlib.load(f)
-    except Exception:
+    except (OSError, plistlib.InvalidFileException, ValueError):
         pass
     else:
         version = info.get("KSVersion") or info.get("CFBundleShortVersionString", "")
@@ -128,7 +128,7 @@ def detect_chrome_version(chrome_binary: str | None = None) -> int | None:
         parts = result.stdout.strip().split()
         if parts:
             return int(parts[-1].split(".")[0])
-    except Exception:
+    except (OSError, subprocess.SubprocessError, ValueError):
         pass
     logger.warning("chrome_version_detection_failed")
     return None
@@ -255,7 +255,10 @@ def _fallback_driver(
                 )
         except Exception as exc:
             logger.warning(
-                "chromedriver_cft_fallback_failed", error=str(exc), fallback="selenium_manager"
+                "chromedriver_cft_fallback_failed",
+                error=str(exc),
+                fallback="selenium_manager",
+                exc_info=True,
             )
 
     options = SeleniumChromeOptions()
@@ -382,14 +385,16 @@ def _prepare_chromedriver_binary(driver_path: str) -> None:
         subprocess.run(
             ["xattr", "-dr", "com.apple.quarantine", driver_path], check=False, timeout=10
         )
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         pass
     try:
         subprocess.run(
             ["codesign", "--force", "--deep", "--sign", "-", driver_path], check=False, timeout=20
         )
     except Exception as exc:
-        logger.warning("chromedriver_codesign_failed", path=driver_path, error=str(exc))
+        logger.warning(
+            "chromedriver_codesign_failed", path=driver_path, error=str(exc), exc_info=True
+        )
 
 
 def _latest_driver_download(version_main: int, platform_name: str) -> tuple[str, str]:
@@ -477,7 +482,7 @@ class DriverManager:
         try:
             _ = self._driver.current_url
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - any failure means the browser session is gone
             return False
 
     def reconnect(self) -> None:
@@ -488,8 +493,8 @@ class DriverManager:
         )
         try:
             self._driver.quit()
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001 - best-effort shutdown of a session being replaced
+            logger.debug("driver_quit_failed", exc_info=True)
         time.sleep(_RECONNECT_DELAY)
         self._driver = get_driver(
             self._headless,
@@ -502,6 +507,6 @@ class DriverManager:
         if self._driver is not None:
             try:
                 self._driver.quit()
-            except Exception:
-                pass
+            except Exception:  # noqa: BLE001 - best-effort shutdown at close
+                logger.debug("driver_quit_failed", exc_info=True)
             self._driver = None

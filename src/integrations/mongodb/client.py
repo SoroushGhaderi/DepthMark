@@ -96,7 +96,7 @@ class MongoDBClient:
             )
             return True
         except Exception as exc:
-            logger.error("MongoDB connection failed", error=str(exc))
+            logger.exception("MongoDB connection failed", error=str(exc))
             self._client = None
             return False
 

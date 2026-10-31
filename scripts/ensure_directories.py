@@ -72,7 +72,7 @@ def main() -> int:
         ensure_directories()
         return 0
     except Exception as e:
-        logger.error("Error creating directories: %s", e)
+        logger.exception("Error creating directories: %s", e)
         return 1
 
 

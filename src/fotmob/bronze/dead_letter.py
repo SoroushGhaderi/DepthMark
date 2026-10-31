@@ -127,7 +127,8 @@ class DeadLetterQueue:
         try:
             if pd.isna(value):
                 return None
-        except Exception:
+        except (TypeError, ValueError):
+            # pd.isna is ambiguous for array-likes; keep the value as is.
             pass
         return value
 
@@ -188,7 +189,7 @@ class DeadLetterQueue:
                         if line.strip():
                             records.append(json.loads(line))
             except Exception as e:
-                self.logger.error("Error reading DLQ file %s: %s", dlq_file, e)
+                self.logger.exception("Error reading DLQ file %s: %s", dlq_file, e)
 
         return records
 
@@ -231,7 +232,7 @@ class DeadLetterQueue:
                     stats["by_date"][file_date]["files"] += 1
                     stats["by_date"][file_date]["records"] += record_count
             except Exception as e:
-                self.logger.warning("Error processing DLQ file %s: %s", dlq_file, e)
+                self.logger.warning("Error processing DLQ file %s: %s", dlq_file, e, exc_info=True)
 
         stats["total_size_mb"] = stats["total_size_bytes"] / (1024 * 1024)
         return stats

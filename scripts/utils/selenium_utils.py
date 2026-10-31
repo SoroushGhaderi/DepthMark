@@ -6,7 +6,7 @@ around implicit waits and element lookups.
 
 from contextlib import contextmanager
 
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import WebDriverWait
@@ -84,7 +84,7 @@ def find_with_fallbacks(
                             return visible[0]
                     else:
                         return elements[0]
-            except Exception:
+            except WebDriverException:
                 continue
     return None
 
@@ -107,7 +107,7 @@ def find_all_with_fallbacks(
                             return visible
                     else:
                         return elements
-            except Exception:
+            except WebDriverException:
                 continue
     return []
 
@@ -127,7 +127,7 @@ def quick_check(driver: WebDriver, by: str, selector: str) -> bool:
         try:
             elements = driver.find_elements(by, selector)
             return len(elements) > 0
-        except Exception:
+        except WebDriverException:
             return False
 
 
@@ -154,7 +154,7 @@ def wait_for_any(
                     elements = driver.find_elements(by, selector)
                     if elements:
                         return elements[0]
-                except Exception:
+                except WebDriverException:
                     continue
             return False
 
@@ -190,7 +190,7 @@ class ElementCache:
             try:
                 element.is_enabled()
                 return element
-            except Exception:
+            except WebDriverException:
                 del self._cache[cache_key]
 
         try:
@@ -199,7 +199,7 @@ class ElementCache:
                 element = elements[0]
                 self._cache[cache_key] = element
                 return element
-        except Exception:
+        except WebDriverException:
             pass
 
         return None

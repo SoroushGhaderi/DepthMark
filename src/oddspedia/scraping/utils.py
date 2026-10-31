@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import random
@@ -109,13 +110,14 @@ def safe_get(driver, url, retries=3):
                     "driver_session_lost",
                     error=type(session_err).__name__,
                     error_detail=str(session_err),
+                    exc_info=True,
                 )
                 if hasattr(driver, "reconnect"):
                     try:
                         driver.reconnect()
                         logger.info("driver_reconnected", url=url)
                     except Exception as reconnect_err:
-                        logger.error("reconnect_failed", error=str(reconnect_err))
+                        logger.exception("reconnect_failed", error=str(reconnect_err))
                         return False
                 else:
                     logger.error("reconnect_not_supported")
@@ -152,6 +154,7 @@ def safe_get(driver, url, retries=3):
                                     url=url,
                                     attempt=attempt,
                                     error=str(reconnect_err),
+                                    exc_info=True,
                                 )
                         if attempt < retries:
                             random_delay(2, 5)
@@ -180,12 +183,13 @@ def safe_get(driver, url, retries=3):
                                     url=url,
                                     attempt=attempt,
                                     error=str(reconnect_err),
+                                    exc_info=True,
                                 )
                         random_delay(2, 5)
                         continue
                     return False
             except Exception as check_err:
-                logger.warning("page_check_failed", error=str(check_err))
+                logger.warning("page_check_failed", error=str(check_err), exc_info=True)
 
         except TimeoutException:
             logger.warning("request_timeout", url=url, attempt=attempt)
@@ -196,7 +200,7 @@ def safe_get(driver, url, retries=3):
             if attempt < retries:
                 random_delay(2, 5)
         except Exception as exc:
-            logger.warning("request_error", url=url, attempt=attempt, error=str(exc))
+            logger.warning("request_error", url=url, attempt=attempt, error=str(exc), exc_info=True)
             if attempt < retries:
                 random_delay(2, 5)
 
@@ -267,10 +271,8 @@ def save_json(data, path, artifact_type=None):
             os.fsync(fd)
         os.replace(tmp_path, path)
     except Exception:
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except Exception:
-            pass
         raise
     logger.info("json_saved", path=path)
 
@@ -304,5 +306,5 @@ def extract_network_response_body(driver, request_id):
         resp = driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
         body = resp.get("body", "")
         return json.loads(body)
-    except Exception:
+    except (WebDriverException, ValueError):
         return None

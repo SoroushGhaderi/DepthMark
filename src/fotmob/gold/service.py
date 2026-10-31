@@ -116,7 +116,7 @@ class GoldService:
                 publication=gold_outputs_publication(),
             ).run(scoped_jobs)
         except Exception as error:
-            logger.error("Gold %s scoped batch failed: %s", job_name, error)
+            logger.exception("Gold %s scoped batch failed: %s", job_name, error)
             failed_jobs = [job.job_id for job in jobs]
 
         failed_count = len(failed_jobs)
@@ -176,7 +176,7 @@ class GoldService:
                 publication=gold_outputs_publication(),
             ).run(scoped_jobs)
         except Exception as error:
-            logger.error("Gold scoped staging or commit failed: %s", error)
+            logger.exception("Gold scoped staging or commit failed: %s", error)
             return 0, len(scenario_jobs), 0, len(signal_jobs)
         return len(scenario_jobs), 0, len(signal_jobs), 0
 

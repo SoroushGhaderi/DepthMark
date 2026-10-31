@@ -83,6 +83,7 @@ class FotMobOrchestrator:
             self.logger.debug(
                 "Could not enforce sequential FotMob scraping",
                 error=str(e),
+                exc_info=True,
             )
 
         storage_path = bronze_path or get_fotmob_historical_path(self.config.storage.bronze_path)
@@ -366,6 +367,7 @@ class FotMobOrchestrator:
                         "Could not save daily listing",
                         date=date_str,
                         error=str(e),
+                        exc_info=True,
                     )
 
                 self.logger.info(
@@ -572,7 +574,9 @@ class FotMobOrchestrator:
                 try:
                     scraper.close()
                 except Exception as e:
-                    self.logger.debug("Failed to close worker scraper session", error=str(e))
+                    self.logger.debug(
+                        "Failed to close worker scraper session", error=str(e), exc_info=True
+                    )
 
     def _fetch_and_save_match(
         self,
@@ -619,6 +623,7 @@ class FotMobOrchestrator:
                     date=date_str,
                     match_id=match_id,
                     error=str(e),
+                    exc_info=True,
                 )
 
             if self.bronze_only:
@@ -650,6 +655,7 @@ class FotMobOrchestrator:
                         date=date_str,
                         match_id=match_id,
                         error=str(e),
+                        exc_info=True,
                     )
 
             return True, None, quality_issues, False
@@ -663,6 +669,7 @@ class FotMobOrchestrator:
                     date=date_str,
                     match_id=match_id,
                     error=str(e),
+                    exc_info=True,
                 )
             return True, None, None, True
 

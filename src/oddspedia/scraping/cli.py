@@ -16,20 +16,15 @@ Alternatively (after ``pip install -e .``):
 
 import argparse
 import os
+import random
+import shutil
 import sys
+import tempfile
 import threading
 import time
 from collections.abc import Sequence
-from contextlib import nullcontext
-
-# Make the src/ package discoverable when running main.py directly.
-_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
-if _src not in sys.path:
-    sys.path.insert(0, _src)
-import random
-import shutil
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import nullcontext
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -502,7 +497,9 @@ def _needs_discovery_retry(date_str, sport: str) -> bool:
             or discovery.get("inventory_checksum") != source_inventory_checksum(links)
         )
     except Exception as exc:
-        logger.warning("discovery_inventory_validation_failed", date=date_str, error=str(exc))
+        logger.warning(
+            "discovery_inventory_validation_failed", date=date_str, error=str(exc), exc_info=True
+        )
         return True
 
 
@@ -532,7 +529,9 @@ def _existing_inventory_matches_target(links_file, date_str, sport: str = "footb
             and discovery.get("inventory_checksum") == source_inventory_checksum([])
         )
     except Exception as exc:
-        logger.warning("existing_inventory_unreadable", links_file=links_file, error=str(exc))
+        logger.warning(
+            "existing_inventory_unreadable", links_file=links_file, error=str(exc), exc_info=True
+        )
         return False
 
 
@@ -552,7 +551,9 @@ def _discovery_is_accepted(date_str: str, sport: str = "football") -> bool:
             and discovery.get("inventory_checksum") == source_inventory_checksum(links)
         )
     except Exception as exc:
-        logger.warning("accepted_discovery_validation_failed", date=date_str, error=str(exc))
+        logger.warning(
+            "accepted_discovery_validation_failed", date=date_str, error=str(exc), exc_info=True
+        )
         return False
 
 
@@ -1105,7 +1106,7 @@ def _phase2_scrape_sequential(
                 progress_reporter.record("skipped", match_id)
                 last_error = None
                 break
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - retried; the final error is recorded
                 last_error = e
                 if isinstance(e, FootballOddsRetryableError):
                     empty_odds_attempts += 1
@@ -1139,7 +1140,9 @@ def _phase2_scrape_sequential(
                             driver.reconnect()
                             _warmup_cloudflare(driver, sport=sport)
                         except Exception as reconnect_error:
-                            logger.warning("driver_reconnect_failed", error=str(reconnect_error))
+                            logger.warning(
+                                "driver_reconnect_failed", error=str(reconnect_error), exc_info=True
+                            )
                     time.sleep(delay + jitter)
                 else:
                     logger.error(
@@ -1322,7 +1325,7 @@ def _phase2_scrape_concurrent(
             )
             worker_drivers.append(driver)
         except Exception as e:
-            logger.error("worker_driver_init_failed", worker=w, error=str(e))
+            logger.exception("worker_driver_init_failed", worker=w, error=str(e))
             worker_drivers.append(None)
 
     success_count = 0
@@ -1378,12 +1381,14 @@ def _phase2_scrape_concurrent(
             try:
                 _warmup_cloudflare(driver, sport=sport)
             except Exception as e:
-                logger.warning("worker_warmup_failed", worker=worker_id, error=str(e))
+                logger.warning(
+                    "worker_warmup_failed", worker=worker_id, error=str(e), exc_info=True
+                )
                 if hasattr(driver, "reconnect"):
                     try:
                         driver.reconnect()
-                    except Exception:
-                        pass
+                    except Exception:  # noqa: BLE001 - the next match retries with a fresh driver
+                        logger.warning("driver_reconnect_failed", exc_info=True)
             for j, match_info in enumerate(batch):
                 match_id = _match_id(match_info)
                 out_path = get_match_file(date_str, match_id, sport=sport)
@@ -1460,7 +1465,7 @@ def _phase2_scrape_concurrent(
                         last_error = None
                         circuit_breaker.record_success()
                         break
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001 - retried; the final error is recorded
                         last_error = e
                         if isinstance(e, FootballOddsRetryableError):
                             empty_odds_attempts += 1
@@ -1502,6 +1507,7 @@ def _phase2_scrape_concurrent(
                                         "driver_reconnect_failed",
                                         worker=worker_id,
                                         error=str(reconnect_error),
+                                        exc_info=True,
                                     )
                             time.sleep(delay + jitter)
                         else:
@@ -1545,7 +1551,7 @@ def _phase2_scrape_concurrent(
                 failed_count += _fail_unresolved_batch(batch, "worker_incomplete_batch")
                 logger.info("worker_finished", worker=wid, count=len(results))
             except Exception as e:
-                logger.error("worker_crashed", worker=wid, error=str(e))
+                logger.exception("worker_crashed", worker=wid, error=str(e))
                 failed_count += _fail_unresolved_batch(batch, "worker_crashed")
 
     update_manifest(date_str, lambda m: m.clear_in_progress(), sport=sport)
@@ -1576,10 +1582,7 @@ def _phase2_scrape_concurrent(
 
     # Clean up temp Chrome profile directories
     for d in worker_dirs:
-        try:
-            shutil.rmtree(d, ignore_errors=True)
-        except Exception:
-            pass
+        shutil.rmtree(d, ignore_errors=True)
 
     return manifest
 

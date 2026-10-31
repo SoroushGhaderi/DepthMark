@@ -216,7 +216,7 @@ def _listing_shell_is_current(driver, sport="football"):
     try:
         title = driver.title or ""
         current_path = urlparse(driver.current_url or "").path.rstrip("/")
-    except Exception:
+    except WebDriverException:
         return False
     return _is_listing_page_title(title) or current_path == f"/{sport}"
 
@@ -3012,7 +3012,7 @@ def scrape_match(
                 continue
             try:
                 page_title = driver.title or ""
-            except Exception:
+            except WebDriverException:
                 page_title = ""
             if _is_detail_url(candidate_url) and _is_listing_page_title(page_title):
                 raise MatchPageNotRenderedError(

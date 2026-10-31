@@ -200,7 +200,7 @@ class ClickHouseClient:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to connect to ClickHouse: %s", e)
+            self.logger.exception("Failed to connect to ClickHouse: %s", e)
             return False
 
     def disconnect(self):
@@ -337,7 +337,7 @@ class ClickHouseClient:
             }
 
         except Exception as e:
-            self.logger.error("Failed to get stats for %s: %s", table, e)
+            self.logger.exception("Failed to get stats for %s: %s", table, e)
             return {"table": full_table, "error": str(e)}
 
     def truncate_table(self, table: str, database: str | None = None):

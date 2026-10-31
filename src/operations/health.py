@@ -43,7 +43,7 @@ def check_disk_space(path: str = ".", threshold_gb: float = 1.0) -> dict[str, An
             "message": f"Free space: {free_gb:.2f} GB ({free_gb * 1024:.0f} MB)",
         }
     except Exception as e:
-        logger.error("Failed to check disk space for %s: %s", path, e)
+        logger.exception("Failed to check disk space for %s: %s", path, e)
         return {
             "status": "error",
             "path": str(path),
@@ -72,7 +72,7 @@ def check_storage_access(storage_path: str) -> dict[str, Any]:
                 test_file.touch()
                 test_file.unlink()
                 writable = True
-            except Exception:
+            except OSError:
                 writable = False
         if not exists:
             status = "error"
@@ -95,7 +95,7 @@ def check_storage_access(storage_path: str) -> dict[str, Any]:
             "message": message,
         }
     except Exception as e:
-        logger.error("Failed to check storage access for %s: %s", storage_path, e)
+        logger.exception("Failed to check storage access for %s: %s", storage_path, e)
         return {
             "status": "error",
             "path": str(storage_path),
@@ -178,7 +178,7 @@ def check_clickhouse_connection(
                     "query_successful": False,
                     "message": "ClickHouse connection successful but query failed",
                 }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - any failure is reported as an unhealthy check
             return {
                 "status": "error",
                 "host": host,
@@ -198,7 +198,7 @@ def check_clickhouse_connection(
             "message": "clickhouse_connect package is not installed",
         }
     except Exception as e:
-        logger.error("Failed to check ClickHouse connection: %s", e)
+        logger.exception("Failed to check ClickHouse connection: %s", e)
         return {
             "status": "error",
             "host": host,

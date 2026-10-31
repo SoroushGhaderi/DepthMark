@@ -50,7 +50,7 @@ def get_chrome_turnstile() -> str:
 
         return max(candidates, key=_token_created_at)
     except Exception as exc:
-        logger.debug("Could not read Chrome cookies: %s", exc)
+        logger.debug("Could not read Chrome cookies: %s", exc, exc_info=True)
     return ""
 
 
@@ -126,7 +126,7 @@ def update_credentials_json(tv: str) -> bool:
         logger.info("Updated credentials.json with new turnstile token")
         return True
     except Exception as e:
-        logger.error("Error updating credentials.json: %s", e)
+        logger.exception("Error updating credentials.json: %s", e)
         return False
 
 
@@ -175,7 +175,8 @@ def refresh_if_needed(max_age_seconds: int = 1800) -> tuple[bool, str | None]:
         return False, f"Token valid (age={age_seconds}s<{max_age_seconds}s), {status}"
 
     except Exception as e:
-        return False, f"Error: {str(e)}"
+        logger.warning("Turnstile check failed", exc_info=True)
+        return False, f"Error: {e}"
 
 
 def main():

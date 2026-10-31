@@ -7,6 +7,7 @@ This base class provides common functionality for all scraper-specific
 bronze storage implementations.
 """
 
+import contextlib
 import gzip
 import io
 import json
@@ -28,6 +29,9 @@ except ImportError:
     Timeout = None
 
 from src.common.logging import get_logger
+
+# Errors raised by a corrupt or truncated tar/gzip/JSON archive member.
+ARCHIVE_READ_ERRORS = (OSError, EOFError, tarfile.TarError, ValueError)
 
 
 class StorageError(RuntimeError):
@@ -205,10 +209,8 @@ class BaseBronzeStorage(ABC):
 
             except Exception as write_error:
                 if temp_path.exists():
-                    try:
+                    with contextlib.suppress(OSError):
                         temp_path.unlink()
-                    except Exception:
-                        pass
                 raise write_error
 
         except Exception as e:
@@ -258,10 +260,8 @@ class BaseBronzeStorage(ABC):
                     raise
                 finally:
                     if lock_path.exists():
-                        try:
+                        with contextlib.suppress(OSError):
                             lock_path.unlink()
-                        except Exception:
-                            pass
             else:
                 self.logger.warning(
                     "File locking not available - batch save may not be thread-safe"
@@ -329,15 +329,13 @@ class BaseBronzeStorage(ABC):
                 self.logger.debug("Saved match %s (%.2f KB)", match_id, file_size_kb)
 
             except Exception as e:
-                self.logger.error("Error saving match %s in batch: %s", match_id, e)
+                self.logger.exception("Error saving match %s in batch: %s", match_id, e)
                 failed_matches.append(match_id)
 
                 temp_path = date_dir / f".match_{match_id}.json.tmp"
                 if temp_path.exists():
-                    try:
+                    with contextlib.suppress(OSError):
                         temp_path.unlink()
-                    except Exception:
-                        pass
 
         return saved_paths, failed_matches
 
@@ -378,7 +376,7 @@ class BaseBronzeStorage(ABC):
                             except KeyError:
                                 pass
                     except Exception as e:
-                        self.logger.error("Error reading archive %s: %s", archive_path, e)
+                        self.logger.exception("Error reading archive %s: %s", archive_path, e)
 
                 # Try gzip file
                 file_path_gz = date_dir / f"match_{match_id}.json.gz"
@@ -419,7 +417,8 @@ class BaseBronzeStorage(ABC):
                                         return data.get("data", data)
                                 except KeyError:
                                     continue
-                        except Exception:
+                        except ARCHIVE_READ_ERRORS as error:
+                            self.logger.warning("Unreadable archive %s: %s", archive_path, error)
                             continue
 
                 # Try gzip files
@@ -439,7 +438,7 @@ class BaseBronzeStorage(ABC):
                 return None
 
         except Exception as e:
-            self.logger.error("Error loading raw data for match %s: %s", match_id, e)
+            self.logger.exception("Error loading raw data for match %s: %s", match_id, e)
             return None
 
     def match_exists(self, match_id: str, date_str: str | None = None) -> bool:
@@ -469,8 +468,8 @@ class BaseBronzeStorage(ABC):
                             return True
                         except KeyError:
                             pass
-                except Exception:
-                    pass
+                except ARCHIVE_READ_ERRORS as error:
+                    self.logger.warning("Unreadable archive %s: %s", archive_path, error)
 
             # Check individual files
             file_path = date_dir / f"match_{match_id}.json"
@@ -498,7 +497,8 @@ class BaseBronzeStorage(ABC):
                                 return True
                             except KeyError:
                                 continue
-                    except Exception:
+                    except ARCHIVE_READ_ERRORS as error:
+                        self.logger.warning("Unreadable archive %s: %s", archive_path, error)
                         continue
 
         return False
@@ -651,7 +651,7 @@ class BaseBronzeStorage(ABC):
                                 stats["files_in_archive"] += 1
                                 stats["total_size_bytes"] += member.size
             except Exception as e:
-                self.logger.warning("Error reading archive %s: %s", archive_path, e)
+                self.logger.warning("Error reading archive %s: %s", archive_path, e, exc_info=True)
 
         # Check individual files
         for match_id in match_ids:
@@ -727,7 +727,7 @@ class BaseBronzeStorage(ABC):
             with open(listing_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            self.logger.error("Error loading daily listing for %s: %s", date_str_normalized, e)
+            self.logger.exception("Error loading daily listing for %s: %s", date_str_normalized, e)
             return None
 
     def get_match_ids_for_date(self, date_str: str) -> list[int | str]:
@@ -891,7 +891,7 @@ class BaseBronzeStorage(ABC):
                     self.logger.debug("Archive verified: %s files intact", len(tar_members))
 
             except Exception as verify_error:
-                self.logger.error("Archive verification failed: %s", verify_error)
+                self.logger.exception("Archive verification failed: %s", verify_error)
                 if archive_path.exists():
                     archive_path.unlink()
                 self.logger.info("Deleted corrupt archive, kept original files")
@@ -906,7 +906,9 @@ class BaseBronzeStorage(ABC):
                         gz_file.unlink()
                         deleted_count += 1
                     except Exception as e:
-                        self.logger.warning("Could not delete %s: %s", gz_file.name, e)
+                        self.logger.warning(
+                            "Could not delete %s: %s", gz_file.name, e, exc_info=True
+                        )
 
             size_before_mb = total_before / (1024 * 1024)
             size_after_mb = total_after / (1024 * 1024)
@@ -933,7 +935,7 @@ class BaseBronzeStorage(ABC):
             }
 
         except Exception as e:
-            self.logger.error("Error during compression for %s: %s", date_str_normalized, e)
+            self.logger.exception("Error during compression for %s: %s", date_str_normalized, e)
             # Cleanup on error
             if archive_path.exists():
                 archive_path.unlink()

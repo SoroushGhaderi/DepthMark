@@ -137,7 +137,7 @@ class SilverService:
         try:
             batch.run(load_jobs)
         except Exception as error:
-            logger.error("Silver scoped load failed: %s", error)
+            logger.exception("Silver scoped load failed: %s", error)
             return 1, total_jobs, 0
         logger.info(
             "Silver scoped load completed | scope=%s jobs=%s duration_seconds=%.2f",

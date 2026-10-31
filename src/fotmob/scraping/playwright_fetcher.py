@@ -220,7 +220,7 @@ class PlaywrightFetcher:
             self.logger.error("curl_cffi is not installed. Fix: pip install curl_cffi")
             return None
         except Exception as exc:
-            self.logger.error("Request error for %s: %s", url_path, exc)
+            self.logger.exception("Request error for %s: %s", url_path, exc)
             return None
 
     def _fetch_json_via_playwright(
@@ -233,7 +233,7 @@ class PlaywrightFetcher:
         try:
             from playwright.sync_api import sync_playwright
         except Exception as exc:
-            self.logger.warning("Playwright fallback unavailable: %s", exc)
+            self.logger.warning("Playwright fallback unavailable: %s", exc, exc_info=True)
             return None
 
         try:
@@ -274,7 +274,7 @@ class PlaywrightFetcher:
                 finally:
                     browser.close()
         except Exception as exc:
-            self.logger.warning("Playwright fallback request error: %s", exc)
+            self.logger.warning("Playwright fallback request error: %s", exc, exc_info=True)
             return None
 
     def close(self):
@@ -317,11 +317,13 @@ class PlaywrightFetcher:
         except Exception as exc:
             if self._foo_hash:
                 self.logger.warning(
-                    "Could not refresh signing params (%s); using cached values", exc
+                    "Could not refresh signing params (%s); using cached values", exc, exc_info=True
                 )
             else:
                 self.logger.warning(
-                    "Could not extract signing params (%s); using built-in fallback", exc
+                    "Could not extract signing params (%s); using built-in fallback",
+                    exc,
+                    exc_info=True,
                 )
                 self._foo_hash = _FALLBACK_FOO_HASH
                 self._h_lyrics = _FALLBACK_H_LYRICS
@@ -480,8 +482,8 @@ class PlaywrightFetcher:
                         cookies[cookie.name] = cookie.value
                         if cookie.name == "turnstile_verified" and cookie.value:
                             turnstile_candidates.append(cookie.value)
-                except Exception:
-                    pass
+                except Exception:  # noqa: BLE001 - browser_cookie3 raises many types per browser
+                    self.logger.debug("No readable Chrome cookies for %s", domain, exc_info=True)
 
             if turnstile_candidates:
                 cookies["turnstile_verified"] = max(
@@ -497,7 +499,7 @@ class PlaywrightFetcher:
                 )
                 return cookies
         except Exception as exc:
-            self.logger.debug("browser-cookie3 unavailable: %s", exc)
+            self.logger.debug("browser-cookie3 unavailable: %s", exc, exc_info=True)
         return None
 
     def _get_stored_credentials_cookies(self) -> dict[str, str]:
@@ -523,7 +525,7 @@ class PlaywrightFetcher:
                 )
                 return cookies
         except Exception as exc:
-            self.logger.debug("Could not reload credentials.json: %s", exc)
+            self.logger.debug("Could not reload credentials.json: %s", exc, exc_info=True)
         return None
 
     # ------------------------------------------------------------------

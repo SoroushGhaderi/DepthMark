@@ -264,7 +264,7 @@ def compress_date_files(date_str: str, force: bool = False, sport: str = "footba
             "status": "success",
         }
     except Exception as exc:
-        logger.error("oddspedia_date_compression_failed", date=date_id, error=str(exc))
+        logger.exception("oddspedia_date_compression_failed", date=date_id, error=str(exc))
         return {
             "compressed": 0,
             "size_before_mb": 0,

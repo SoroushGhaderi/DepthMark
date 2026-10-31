@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import tempfile
@@ -385,10 +386,8 @@ def save_manifest(manifest: ScrapeManifest) -> None:
             os.fsync(fd)
         os.replace(tmp_path, path)
     except Exception:
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except Exception:
-            pass
         raise
     logger.debug("manifest_saved", path=path, completed_progress=manifest.completed_progress)
 

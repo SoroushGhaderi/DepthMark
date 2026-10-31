@@ -132,7 +132,7 @@ class ScopedReplacementBatch:
             try:
                 self._record_publication(FAILED, target_tables, committed, error=str(error))
             except Exception as status_error:
-                self.log.error(
+                self.log.exception(
                     "Scoped publication failure status could not be recorded",
                     scope=self.scope.label,
                     error=str(status_error),

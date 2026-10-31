@@ -137,7 +137,7 @@ def _run_jobs(
         success_count = total_jobs
         failed_count = 0
     except Exception as error:
-        logger.error("Gold scoped SQL batch failed: %s", error)
+        logger.exception("Gold scoped SQL batch failed: %s", error)
         success_count = 0
         failed_count = total_jobs
     logger.info(

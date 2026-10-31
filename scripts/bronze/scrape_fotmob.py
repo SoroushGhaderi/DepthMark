@@ -441,7 +441,7 @@ def process_single_date(
         )
         return metrics
     except Exception as e:
-        logger.error("Failed to process date %s: %s", date_str, e)
+        logger.exception("Failed to process date %s: %s", date_str, e)
         logger.error("Date processing error: %s", e)
         _send_failure_alert(date_str, e)
         return None
@@ -619,5 +619,5 @@ if __name__ == "__main__":
         logger.warning("Scraping interrupted by user. Exiting...")
         sys.exit(130)
     except Exception as e:
-        logger.error("Fatal error: %s", e)
+        logger.exception("Fatal error: %s", e)
         sys.exit(1)
