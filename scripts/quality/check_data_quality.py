@@ -12,9 +12,11 @@ for candidate in (str(project_root), str(scripts_dir)):
         sys.path.insert(0, candidate)
 
 from config.settings import get_settings
+from src.fotmob.gold.signal_catalog import SignalCatalogError
 from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
+    build_identity_contracts,
     reconciliation_check_names,
 )
 from src.warehouse.scope import WarehouseExecutionScope
@@ -164,6 +166,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         logger.error(str(error))
         return 2
 
+    try:
+        identities = build_identity_contracts(project_root)
+    except SignalCatalogError as error:
+        for violation in error.violations:
+            logger.error("Signal catalog violation", violation=violation.describe())
+        logger.error(
+            "Signal catalog is invalid; quality checks not run",
+            violations=len(error.violations),
+        )
+        return 1
+
     settings = get_settings()
     client = ClickHouseClient(
         host=settings.clickhouse_host,
@@ -183,7 +196,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             reconciliation_checks=checks,
             strict=args.strict,
         )
-        summary = DataQualityService(client, project_root).run(
+        summary = DataQualityService(client, project_root, identities=identities).run(
             scope=scope,
             layers=layers,
             reconciliation_checks=checks,

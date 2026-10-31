@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Orbit Signal",
+  "description": "A signals document mirrored from a validated signal catalog by scripts/mongodb/sync_signal_catalogs.py (ADR 0033).",
   "type": "object",
   "required": [
     "signal_id",
@@ -9,57 +10,102 @@
     "family",
     "subfamily",
     "grain",
+    "headline",
+    "trigger",
     "row_identity",
     "asset_paths",
+    "assets",
     "frontmatter",
     "source_path",
     "markdown_body",
+    "content_sha256",
     "created_at",
     "updated_at"
   ],
   "properties": {
     "signal_id": {
       "type": "string",
-      "minLength": 3
+      "pattern": "^sig_(match|team|player)_[a-z0-9]+_[a-z0-9]+_[a-z0-9]+(_[a-z0-9]+)*$"
     },
     "status": {
       "type": "string",
-      "enum": ["active", "draft", "deprecated"]
+      "enum": ["active", "deprecated"]
     },
     "entity": {
-      "type": "string"
+      "type": "string",
+      "enum": ["match", "team", "player"]
     },
     "family": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "subfamily": {
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "grain": {
-      "type": "string"
+      "type": "string",
+      "enum": ["match_team", "match_player"]
     },
     "headline": {
-      "type": ["string", "null"]
+      "type": "string",
+      "minLength": 1
     },
     "trigger": {
-      "type": ["string", "null"]
-    },
-    "tags": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "default": []
+      "type": "string",
+      "minLength": 1
     },
     "row_identity": {
       "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "type": "string"
       }
     },
     "asset_paths": {
       "type": "object",
-      "additionalProperties": true
+      "required": ["table", "sql"],
+      "properties": {
+        "table": {
+          "type": "string"
+        },
+        "sql": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "assets": {
+      "type": "object",
+      "required": ["table", "sql"],
+      "properties": {
+        "table": {
+          "type": "string"
+        },
+        "sql": {
+          "type": "object",
+          "required": ["path", "content", "sha256", "byte_count"],
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "content": {
+              "type": "string"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "byte_count": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     },
     "frontmatter": {
       "type": "object",
@@ -72,6 +118,10 @@
     "markdown_body": {
       "type": "string"
     },
+    "content_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
     "created_at": {
       "type": "string",
       "format": "date-time"
@@ -81,5 +131,5 @@
       "format": "date-time"
     }
   },
-  "additionalProperties": true
+  "additionalProperties": false
 }

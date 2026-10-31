@@ -62,5 +62,5 @@ Source-specific flows:
 Keep active subsystem contracts next to the code they govern. Current examples:
 
 - `scripts/README.md`
-- `scripts/gold/scenario/SCENARIOS_CONTRACT.md`
-- `scripts/gold/signal/contracts/`
+- `catalogs/scenarios/SCENARIOS_CONTRACT.md`
+- `catalogs/signals/contracts/`

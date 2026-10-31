@@ -1,0 +1,116 @@
+---
+signal_id: sig_match_goalkeeping_defense_save_to_goal_ratio
+status: active
+entity: match
+family: goalkeeping
+subfamily: defense
+grain: match_team
+headline: "Save To Goal Ratio"
+trigger: "Combined keeper saves are at least 10x total match goals scored (minimum 1 goal in match)."
+row_identity:
+  - match_id
+  - triggered_side
+asset_paths:
+  table: gold_signals.sig_match_goalkeeping_defense_save_to_goal_ratio
+  sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_save_to_goal_ratio.sql
+---
+# sig_match_goalkeeping_defense_save_to_goal_ratio
+
+## Purpose
+
+Detect finished matches where shot-stopping volume is disproportionately high relative to scoring
+output (`>= 10` saves per goal) and emit bilateral side-oriented context for defensive resistance,
+pressure absorption, and control-state interpretation.
+
+## Tactical And Statistical Logic
+
+- Trigger condition: `(keeper_saves_home + keeper_saves_away) / (home_goals + away_goals) >= 10.0`
+  with `(home_goals + away_goals) >= 1` and `period = 'All'`.
+- Match-level trigger emits two rows (`triggered_side = 'home'` and `triggered_side = 'away'`) to
+  preserve canonical `match_team` grain and side-oriented joins.
+- Trigger severity is preserved via `match_save_to_goal_ratio` and
+  `match_save_to_goal_ratio_above_threshold`.
+- Enrichment remains symmetric across sides: keeper output, shot pressure faced, defensive actions,
+  possession/control, passing quality, and scoreline context.
+- Similarity gate note:
+  - `sig_match_goalkeeping_defense_save_fest`: strongest overlap (save-volume framing), but that signal
+    uses an absolute trigger (`combined saves > 12`) while this signal is efficiency-contextualized by
+    scoring output (`saves per goal >= 10`).
+  - `sig_match_goalkeeping_defense_goalless_siege_match`: both can surface low-scoring pressure matches,
+    but this signal requires at least one goal and is anchored to save-to-goal ratio rather than a 0-0
+    high-xG paradox.
+
+## Technical Assets
+
+- SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_save_to_goal_ratio.sql`
+- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
+- Target table: `gold_signals.sig_match_goalkeeping_defense_save_to_goal_ratio`
+
+## Example Execution
+
+```bash
+python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_save_to_goal_ratio
+```
+
+## Output Schema
+
+| Column Name | Description | Reason |
+|---|---|---|
+| `match_id` | Unique match identifier | Stable deduplication key and downstream join anchor. |
+| `match_date` | Match date | Supports temporal slicing and reproducible backfills. |
+| `home_team_id` | Home team identifier | Preserves fixture context for bilateral analysis. |
+| `home_team_name` | Home team name | Human-readable fixture context. |
+| `away_team_id` | Away team identifier | Preserves fixture context for bilateral analysis. |
+| `away_team_name` | Away team name | Human-readable fixture context. |
+| `home_score` | Full-time home goals | Scoreline context for defensive workload interpretation. |
+| `away_score` | Full-time away goals | Scoreline context for defensive workload interpretation. |
+| `triggered_side` | Side orientation (`home` or `away`) | Canonical side key for `match_team` grain. |
+| `triggered_team_id` | Triggered-side team identifier | Side-level join key for features and QA. |
+| `triggered_team_name` | Triggered-side team name | Readable triggered-side context. |
+| `opponent_team_id` | Opponent team identifier | Bilateral comparison key. |
+| `opponent_team_name` | Opponent team name | Readable bilateral comparator context. |
+| `trigger_threshold_match_save_to_goal_ratio_min` | Configured minimum save-to-goal ratio (`10.0`) | Makes trigger boundary explicit for auditability. |
+| `trigger_threshold_min_match_goals_scored` | Minimum total goals required (`1`) | Prevents divide-by-zero and separates from goalless paradigms. |
+| `match_combined_keeper_saves` | Combined saves by both teams | Core trigger numerator for ratio detection. |
+| `match_total_goals_scored` | Total goals scored in the match | Core trigger denominator for ratio detection. |
+| `match_save_to_goal_ratio` | Combined saves per goal scored | Primary trigger metric for this signal family variant. |
+| `match_save_to_goal_ratio_above_threshold` | Ratio surplus above `10.0` | Trigger severity measure beyond binary activation. |
+| `match_combined_shots_on_target_faced` | Combined shots on target faced by both keepers | Denominator context for aggregate save load. |
+| `match_combined_save_rate_pct` | Combined save rate (%) | Normalized aggregate shot-stopping efficiency context. |
+| `triggered_team_keeper_saves` | Triggered-side keeper saves | Side-level shot-stopping workload and output. |
+| `opponent_keeper_saves` | Opponent keeper saves | Bilateral save-volume comparator. |
+| `keeper_saves_delta` | Triggered minus opponent saves | Net save workload differential. |
+| `triggered_team_shots_on_target_faced` | Triggered-side shots on target faced | Pressure intensity faced by the triggered side. |
+| `opponent_shots_on_target_faced` | Opponent shots on target faced | Bilateral pressure comparator. |
+| `shots_on_target_faced_delta` | Triggered minus opponent shots on target faced | Net on-target pressure differential. |
+| `triggered_team_goals_conceded` | Goals conceded by triggered side | Defensive outcome suffered by triggered side. |
+| `opponent_goals_conceded` | Goals conceded by opponent side | Bilateral defensive outcome comparator. |
+| `goals_conceded_delta` | Triggered minus opponent goals conceded | Net concession differential. |
+| `triggered_team_save_rate_pct` | Triggered-side save rate (%) | Normalized shot-stopping effectiveness for triggered side. |
+| `opponent_save_rate_pct` | Opponent save rate (%) | Bilateral save effectiveness comparator. |
+| `save_rate_delta_pct` | Triggered minus opponent save rate (percentage points) | Directional save-efficiency gap. |
+| `triggered_team_total_shots_faced` | Triggered-side total shots faced | Overall shot pressure faced beyond on-target attempts. |
+| `opponent_total_shots_faced` | Opponent total shots faced | Bilateral total-pressure comparator. |
+| `total_shots_faced_delta` | Triggered minus opponent total shots faced | Net shot-pressure differential. |
+| `triggered_team_shot_blocks` | Triggered-side shot blocks | Defensive resistance context complementing saves. |
+| `opponent_shot_blocks` | Opponent shot blocks | Bilateral block-volume comparator. |
+| `shot_blocks_delta` | Triggered minus opponent shot blocks | Net shot-blocking differential. |
+| `triggered_team_clearances` | Triggered-side clearances | Box-protection and danger-removal workload indicator. |
+| `opponent_clearances` | Opponent clearances | Bilateral clearance comparator. |
+| `clearances_delta` | Triggered minus opponent clearances | Net clearance workload differential. |
+| `triggered_team_interceptions` | Triggered-side interceptions | Defensive anticipation context behind save pressure. |
+| `opponent_interceptions` | Opponent interceptions | Bilateral interception comparator. |
+| `interceptions_delta` | Triggered minus opponent interceptions | Net interception differential. |
+| `triggered_team_possession_pct` | Triggered-side possession (%) | Control-share context around defensive pressure. |
+| `opponent_possession_pct` | Opponent possession (%) | Bilateral control-share comparator. |
+| `possession_delta_pct` | Triggered minus opponent possession (percentage points) | Net control differential. |
+| `triggered_team_pass_attempts` | Triggered-side pass attempts | Circulation workload context under match pressure. |
+| `opponent_pass_attempts` | Opponent pass attempts | Bilateral circulation-volume comparator. |
+| `pass_attempt_delta` | Triggered minus opponent pass attempts | Net circulation-load differential. |
+| `triggered_team_pass_accuracy_pct` | Triggered-side pass accuracy (%) | Technical execution context under pressure. |
+| `opponent_pass_accuracy_pct` | Opponent pass accuracy (%) | Bilateral execution comparator. |
+| `pass_accuracy_delta_pct` | Triggered minus opponent pass accuracy (percentage points) | Directional ball-security differential. |
+| `triggered_team_goals` | Goals scored by triggered side | Offensive output context to pair with defensive workload. |
+| `opponent_goals` | Goals scored by opponent | Bilateral scoreline comparator. |
+| `goal_delta` | Triggered minus opponent goals | Match result differential from triggered perspective. |
+| `triggered_team_clean_sheet_flag` | `1` when triggered side conceded zero goals, else `0` | Quick defensive outcome flag for filtering and modeling. |

@@ -29,7 +29,8 @@ Use these paths for new automation and daily runs:
 - `scripts/silver/drop_clickhouse.py`
 - `scripts/silver/setup_clickhouse.py`
 - `scripts/gold/load_fotmob_gold.py`
-- `scripts/gold/run_gold_sql_jobs.py`
+- `scripts/gold/run_fotmob_gold_jobs.py`
+- `scripts/gold/build_fotmob_signal_activations.py`
 - `scripts/gold/drop_clickhouse_scenarios.py`
 - `scripts/gold/setup_clickhouse_gold.py`
 - `scripts/orchestration/run_fotmob_pipeline.py`
@@ -74,6 +75,8 @@ path on the right.
 | `scripts/bronze/load_clickhouse.py` | `scripts/bronze/load_fotmob_bronze.py` |
 | `scripts/silver/load_clickhouse.py` | `scripts/silver/load_fotmob_silver.py` |
 | `scripts/gold/load_clickhouse_gold.py` | `scripts/gold/load_fotmob_gold.py` |
+| `scripts/gold/run_gold_sql_jobs.py` | `scripts/gold/run_fotmob_gold_jobs.py` |
+| `scripts/gold/activations/build_signal_activations.py` | `scripts/gold/build_fotmob_signal_activations.py` |
 | `scripts/orchestration/pipeline.py` | `scripts/orchestration/run_fotmob_pipeline.py` |
 | `scripts/orchestration/setup_clickhouse.py` | `scripts/orchestration/setup_fotmob_warehouse.py` |
 | `scripts/oddspedia/discover_events.py` | `scripts/oddspedia/discover_oddspedia_events.py` |
@@ -255,12 +258,12 @@ compatibility aliases.
 - `scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run`
 - `scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run`
 - `scripts/gold/load_fotmob_gold.py --date 20251208 --part signals --dry-run`
-- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --dry-run`
-- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --dry-run`
-- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run`
-- `scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player --dry-run`
-- `scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family shooting_goals --dry-run`
-- `scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run`
+- `scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --dry-run`
+- `scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --dry-run`
+- `scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run`
+- `scripts/gold/run_fotmob_gold_jobs.py --month 202512 --kind signal --entity player --dry-run`
+- `scripts/gold/run_fotmob_gold_jobs.py --full-history --kind signal --family shooting_goals --dry-run`
+- `scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run`
 
 ### Bronze S3 Sync
 
@@ -300,7 +303,7 @@ reload the affected scope with the normal layer loader afterward:
 python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute
 ```
-- `scripts/gold/activations/build_signal_activations.py`
+- `scripts/gold/build_fotmob_signal_activations.py`
 
 ## Quality Check Scripts
 
@@ -311,12 +314,17 @@ python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute
 - `scripts/quality/check_bronze_to_silver_reconciliation.py`
   — compatibility alias for Bronze/Silver duplicate checks and reconciliation.
 - `scripts/quality/check_logging_style.py`
+- `scripts/quality/check_signal_catalogs.py` — validates every signal catalog
+  against its SQL and DDL without any service, and checks the generated index;
+  `--write-index` regenerates it. Exits `1` on any violation or a stale index.
 
 ```bash
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_data_quality.py --month 202512 --layers gold --strict
 python3 scripts/quality/check_data_quality.py --full-history --strict
 python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict
+python3 scripts/quality/check_signal_catalogs.py
+python3 scripts/quality/check_signal_catalogs.py --write-index
 ```
 
 Gold duplicate checking uses scenario DDL identities, signal catalog
@@ -330,24 +338,26 @@ reported as non-failing operational diagnostics.
 
 ## Scenario Scripts
 
-Scenario SQL jobs are executed by `scripts/gold/run_gold_sql_jobs.py`.
-Do not add handwritten `scripts/gold/scenario/scenario_*.py` runner files.
-Scenario standards are defined in `scripts/gold/scenario/SCENARIOS_CONTRACT.md`.
+Scenario SQL jobs are executed by `scripts/gold/run_fotmob_gold_jobs.py`.
+Do not add handwritten per-scenario runner files.
+Scenario standards are defined in `catalogs/scenarios/SCENARIOS_CONTRACT.md`.
 
 Current inventory: 48 matching SQL transforms.
 
 - SQL files: `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
-- Catalog: `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+- Catalog: `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 ## Signal Scripts
 
-Signal SQL jobs are discovered and executed through `scripts/gold/run_gold_sql_jobs.py`
-and shared helpers in `src/fotmob/gold/dml_runner.py`. Do not add handwritten
-per-signal runner files. Use `--id` for one exact signal; use `--entity` or
-`--family` as separate signal batch selectors such as `--entity player` or
-`--family shooting_goals`.
+Signal SQL jobs are executed through `scripts/gold/run_fotmob_gold_jobs.py`
+and shared helpers in `src/fotmob/gold/dml_runner.py`. The job list is the
+active signals of the validated catalog (`load_signal_catalog()`, ADR 0033):
+deprecated signals do not run, and an invalid catalog stops the run. Do not add
+handwritten per-signal runner files. Use `--id` for one exact signal; use
+`--entity` or `--family` as separate signal batch selectors such as
+`--entity player` or `--family shooting_goals`.
 Every execution also requires `--date`, `--month`, or `--full-history`.
-After successful signal SQL execution, the loader runs `scripts/gold/activations/build_signal_activations.py`
+After successful signal SQL execution, the loader runs `scripts/gold/build_fotmob_signal_activations.py`
 to populate deterministic per-match activation IDs in `gold.signal_activations`.
 The builder stages rows in ephemeral `warehouse_stage.signal_activations_stage`, then runs
 `clickhouse/gold/dml/activations/signal_activation_final_insert.sql` into a
@@ -356,17 +366,18 @@ SQL failures skip activation replacement until signals succeed or the builder
 is rerun with the same scope. The activation ID key uses each signal catalog
 `row_identity` definition.
 
-Current inventory: 344 matching SQL transforms and 344 matching markdown catalogs.
+Current inventory: 344 matching SQL transforms and 344 matching markdown catalogs
+in `catalogs/signals/`. Authoring rules live in `catalogs/signals/contracts/`.
 
 - SQL files: `clickhouse/gold/dml/signals/*/sig_*.sql`
-- Contracts: `scripts/gold/signal/contracts/`
+- Contracts: `catalogs/signals/contracts/`
 
 ## Signal Catalogs
 
-Per-signal docs live in `scripts/gold/signal/catalogs/` and include tactical logic plus output schema tables:
+Per-signal docs live in `catalogs/signals/` and include tactical logic plus output schema tables:
 
-- `scripts/gold/signal/catalogs/README.md`
-- `scripts/gold/signal/catalogs/sig_*.md`
+- `catalogs/signals/README.md`
+- `catalogs/signals/sig_*.md`
 
 Before deep review of many full catalogs, use a token-efficient manual flow:
 

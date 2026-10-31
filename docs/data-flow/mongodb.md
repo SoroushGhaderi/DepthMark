@@ -6,7 +6,7 @@ The source of truth is markdown frontmatter in Git.
 ## Overview
 
 ```text
-scripts/gold/signal/catalogs/*.md   (source of truth)
+catalogs/signals/*.md   (source of truth)
   → sync_signal_catalogs.py
   → MongoDB signals collection       (serving copy)
 ```
@@ -23,51 +23,11 @@ scripts/gold/signal/catalogs/*.md   (source of truth)
 
 ## Signal Catalog Format
 
-Each signal has a markdown file in `scripts/gold/signal/catalogs/sig_<name>.md`:
-
-```markdown
----
-signal_id: sig_player_shooting_goals_shot_conversion_peak
-status: active
-entity: player
-family: shooting
-subfamily: goals
-grain: match_player
-row_identity:
-  - match_id
-  - triggered_player_id
-  - triggered_team_id
-asset_paths:
-  table: gold_signals.sig_player_shooting_goals_shot_conversion_peak
----
-
-# Signal Name
-
-Description of what this signal detects...
-```
-
-### Required Frontmatter Keys
-
-| Key | Type | Description |
-| --- | --- | --- |
-| `signal_id` | string | Unique signal identifier |
-| `status` | string | `active` or `inactive` |
-| `entity` | string | `match`, `player`, or `team` |
-| `family` | string | Taxonomy family |
-| `subfamily` | string | Taxonomy subfamily |
-| `grain` | string | Row grain (`match_team`, `match_player`) |
-| `row_identity` | list | Fields that identify one activation row |
-| `asset_paths` | object | Related asset locations |
-
-### `row_identity` Contract
-
-`row_identity` defines the stable identity for one activated signal row:
-
-- **Team-grain**: `match_id`, `triggered_side`
-- **Player-grain**: `match_id`, `triggered_player_id`, `triggered_team_id`
-
-These values are used to compute `signal_instance_id` in
-`gold.signal_activations`.
+Each signal has a markdown catalog at `catalogs/signals/sig_<name>.md`. The
+frontmatter schema, its rules, and the body sections are defined in
+[`catalogs/signals/contracts/CATALOG.md`](../../catalogs/signals/contracts/CATALOG.md).
+Every reader, the sync included, goes through `load_signal_catalog()` in
+`src/fotmob/gold/signal_catalog.py` (ADR 0033).
 
 ## Sync Flow
 
@@ -82,33 +42,49 @@ Creates unique and compound indexes on all collections.
 ### 2. Catalog Sync
 
 ```bash
-python3 scripts/mongodb/sync_signal_catalogs.py --dry-run  # preview
-python3 scripts/mongodb/sync_signal_catalogs.py             # execute
+python3 scripts/mongodb/sync_signal_catalogs.py --dry-run  # report the plan
+python3 scripts/mongodb/sync_signal_catalogs.py             # apply it
 ```
 
-Sync process:
-1. Discovers all `scripts/gold/signal/catalogs/*.md` files.
-2. Parses YAML frontmatter and markdown body.
-3. Validates required frontmatter keys.
-4. Validates `asset_paths.table` uses `gold_signals.<signal_id>` namespace.
-5. Reads embedded SQL and runner source files.
-6. Computes SHA-256 hashes for integrity.
-7. Upserts into MongoDB with content hashing.
+The sync makes the `signals` collection an exact mirror of the catalog:
+
+1. Loads and validates every catalog. Any violation writes nothing and exits 1.
+2. Builds one document per signal, active and deprecated, with a
+   `content_sha256` over its content.
+3. Reads the stored `signal_id`, `content_sha256`, and `created_at` values.
+4. Plans inserts (new signals), updates (changed hash), unchanged signals, and
+   deletes (stored signals that no longer have a catalog).
+5. Refuses to delete every stored document, or more than 10% of them, unless
+   `--allow-mass-prune` is passed.
+6. With `--dry-run`, logs the plan and stops. Otherwise it replaces changed
+   documents whole, keeping `created_at`, and deletes the orphans.
+   Unchanged documents are not written, so `updated_at` marks a real change.
+
+`--dry-run` connects to MongoDB to compute the plan. To validate catalogs
+without any service, run `python3 scripts/quality/check_signal_catalogs.py`.
 
 ### 3. What Gets Stored
 
-For each signal catalog:
-- Flattened metadata fields for fast querying
-- Full `frontmatter` object for full-fidelity reuse
-- Full markdown body in `markdown_body`
-- Embedded SQL in `assets.sql.content` with SHA-256 hash
-- Embedded runner source in `assets.runner.content` with SHA-256 hash
-- Relative source file path in `source_path`
+For each signal:
+
+- `signal_id`, `status`, `entity`, `family`, `subfamily`, `grain`, `headline`,
+  `trigger`, and `row_identity` for querying
+- `asset_paths` (`table`, `sql`) as authored
+- `assets.table`, and the signal SQL in `assets.sql` with its path, content,
+  SHA-256 hash, and byte count
+- the full `frontmatter` object and the markdown body in `markdown_body`
+- the project-relative catalog path in `source_path`
+- `content_sha256`, `created_at`, and `updated_at`
+
+`entity` is the signal's subject scope (`match`, `team`, or `player`) and
+`status` is `active` or `deprecated`. Documents carry no runner path or runner
+source.
 
 ## Repositories
 
 `src/integrations/mongodb/` contains repository classes:
-- `SignalsRepository` — CRUD with upsert semantics for signals
+- `SignalsRepository` — mirror operations for signals: read stored hashes,
+  replace whole documents, and delete orphans
 - `ScenariosRepository` — CRUD for scenarios
 - `TemplatesRepository` — CRUD for channel templates
 
@@ -117,6 +93,6 @@ For each signal catalog:
 | Failure | Recovery |
 | --- | ---|
 | Index creation fails | Check MongoDB connectivity, re-run |
-| Frontmatter validation fails | Fix markdown catalog, re-run |
-| Upsert fails | Check MongoDB connectivity, re-run |
-| Hash mismatch | Source file changed, re-sync |
+| Catalog violation | Fix the catalog (`check_signal_catalogs.py` lists every violation), re-run |
+| Mass prune refused | Check `--catalog-dir` and the deletion list; pass `--allow-mass-prune` only when intended |
+| Replace or delete fails | Check MongoDB connectivity, re-run; the mirror converges |

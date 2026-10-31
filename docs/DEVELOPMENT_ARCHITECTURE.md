@@ -311,14 +311,14 @@ python3 scripts/gold/load_fotmob_gold.py --month 202512 --dry-run
 python3 scripts/gold/load_fotmob_gold.py --full-history --dry-run
 python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals --dry-run
 python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
-python3 scripts/gold/activations/build_signal_activations.py --full-history
-python3 scripts/gold/activations/build_signal_activations.py --date 20251208 --dry-run
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --dry-run
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --dry-run
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
-python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player --dry-run
-python3 scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family shooting_goals --dry-run
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run
+python3 scripts/gold/build_fotmob_signal_activations.py --full-history
+python3 scripts/gold/build_fotmob_signal_activations.py --date 20251208 --dry-run
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --dry-run
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --dry-run
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
+python3 scripts/gold/run_fotmob_gold_jobs.py --month 202512 --kind signal --entity player --dry-run
+python3 scripts/gold/run_fotmob_gold_jobs.py --full-history --kind signal --family shooting_goals --dry-run
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run
 python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
 ```
 
@@ -333,6 +333,8 @@ python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_data_quality.py --month 202512 --strict
 python3 scripts/quality/check_data_quality.py --full-history --strict
 python3 scripts/quality/check_logging_style.py
+python3 scripts/quality/check_signal_catalogs.py
+python3 scripts/quality/check_signal_catalogs.py --write-index
 python3 scripts/maintenance/optimize_clickhouse.py --layer bronze
 python3 scripts/maintenance/optimize_clickhouse.py --layer bronze --table general --execute
 python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_signals
@@ -509,17 +511,21 @@ Current Gold inventory:
 - 48 scenario SQL transforms in `clickhouse/gold/dml/scenarios/{team,player}/`
   (23 team/match-grain, 25 player-grain)
 - 344 signal SQL transforms in `clickhouse/gold/dml/signals/{match,team,player}/`
-- 344 signal catalog markdown files in `scripts/gold/signal/catalogs/`
+- 344 signal catalog markdown files in `catalogs/signals/`, read only through
+  `load_signal_catalog()` in `src/fotmob/gold/signal_catalog.py` (ADR 0033)
 - 1 shared activation serving table in `gold.signal_activations`
 
 Gold SQL jobs are executed through the generic runner in
-`scripts/gold/run_gold_sql_jobs.py` and shared helpers in
+`scripts/gold/run_fotmob_gold_jobs.py` and shared helpers in
 `src/fotmob/gold/dml_runner.py`. Do not add handwritten per-signal or
 per-scenario runner files. Omit `--kind` to run all scenario and signal SQL jobs
 through the generic runner, or use `--kind scenario` / `--kind signal` to select
 one Gold output kind. Jobs can be selected exactly by `--id`; signal jobs can
-also be filtered by `--entity {match,player,team}` or by `--family`. Do not
-combine `--entity` and `--family`; treat them as separate signal batch selectors.
+also be filtered by `--entity {match,player,team}` or by `--family` (`family` or
+`family_subfamily`). Do not combine `--entity` and `--family`; treat them as
+separate signal batch selectors. Signal jobs are the active signals of the
+validated catalog: a deprecated or uncatalogued `--id` is rejected, and an
+invalid catalog stops the run.
 
 ## Python Layout
 
@@ -600,34 +606,22 @@ Construct `scope` with `WarehouseExecutionScope.for_date("20251208")`,
 ## MongoDB Content Catalog
 
 Signal metadata is authored in markdown frontmatter under
-`scripts/gold/signal/catalogs/*.md`. These markdown catalogs are the source of
-truth for signal metadata; MongoDB is a synchronized serving/query copy. The sync
-script stores:
+`catalogs/signals/*.md`. These markdown catalogs are the source of truth for
+signal metadata; MongoDB is a synchronized serving/query copy (ADR 0008).
+Every reader goes through `load_signal_catalog()` (ADR 0033); the frontmatter
+schema and its rules are defined in `catalogs/signals/contracts/CATALOG.md`.
 
-1. flattened metadata fields for fast querying;
-2. the full `frontmatter` object for full-fidelity reuse;
-3. the full markdown body in `markdown_body`;
-4. embedded SQL and runner source in `assets.sql.content` and
-   `assets.runner.content`, with SHA-256 hashes and byte counts;
-5. the relative source file path in `source_path`.
-
-Current required frontmatter keys:
-
-- `signal_id`
-- `status`
-- `entity`
-- `family`
-- `subfamily`
-- `grain`
-- `row_identity`
-- `asset_paths`
-
-Catalog `asset_paths.table` values must use the signal output namespace
-`gold_signals.<signal_id>`. Shared signal activation metadata remains under
-`gold.*`.
+`scripts/mongodb/sync_signal_catalogs.py` makes the `signals` collection an
+exact mirror of the validated catalog: an invalid catalog writes nothing,
+changed documents are replaced whole, unchanged documents are not written, and
+documents without a catalog are deleted, with a guard against mass deletion.
+Each document stores flattened metadata, the full `frontmatter`, the markdown
+body, the embedded signal SQL with its hash, the project-relative
+`source_path`, and a `content_sha256`. See `docs/data-flow/mongodb.md`.
 
 `row_identity` is the stable identity contract for one activated signal row and
-is used to build deterministic activation IDs:
+is used to build deterministic activation IDs; the full identity chain is in
+`catalogs/signals/contracts/TABLE.md`:
 
 - team-grain rows should use: `match_id`, `triggered_side`
 - player-grain rows should use: `match_id`, `triggered_player_id`, `triggered_team_id`
@@ -650,8 +644,8 @@ Creation flow:
    explicit Table Recreation of the affected `gold_signals.sig_*` tables and
    reload them; do not use `ALTER TABLE` to patch the `signal_instance_id`
    column in place.
-3. `scripts/gold/activations/build_signal_activations.py` scans active signal
-   catalogs and reads each catalog `row_identity`.
+3. `scripts/gold/build_fotmob_signal_activations.py` loads the active signals
+   through `load_signal_catalog()` and uses each signal's identity fields.
 4. The builder stages one row per signal output in ephemeral
    `warehouse_stage.signal_activations_stage` (DDL:
    `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`),
@@ -659,9 +653,10 @@ Creation flow:
    `clickhouse/gold/dml/activations/signal_activation_final_insert.sql`, and
    commits only the requested output scope.
 5. Each staged/serving row carries:
-   - `signal_instance_id = lower(hex(SHA256(concat('v1|', signal_id, '|', ...identity values))))`
+   - `signal_instance_id`, read from the signal table or computed with the same
+     expression as its DDL default (`signal_instance_id_expression()`)
    - `signal_id_version = 'v1'`
-   - parsed signal metadata from `signal_id` pattern (`signal_prefix`, `signal_entity`,
+   - signal metadata from the validated catalog (`signal_prefix`, `signal_entity`,
      `signal_family`, `signal_subfamily`, `signal_name`, `signal_tags`)
    - common fixture, league, venue, team, and player context when available
    - source signal row details in `source_row_json` and `source_row_columns`
@@ -681,7 +676,7 @@ To recreate `gold.signal_activations` empty from its DDL and repopulate it:
 ```bash
 python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold --table signal_activations
 python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold --table signal_activations --execute
-python3 scripts/gold/activations/build_signal_activations.py --full-history
+python3 scripts/gold/build_fotmob_signal_activations.py --full-history
 ```
 
 The builder requires `--date`, `--month`, or `--full-history`. Date and month
@@ -740,9 +735,11 @@ one activation row.
    Gold signal table DDL files use
    `create_table_{entity}_{family}_{subfamily}.sql`.
 5. New or changed scenario work must update SQL, Gold scenario DDL, and
-   `scripts/gold/scenario/SCENARIOS_CATALOG.md` when relevant.
-6. New or changed signal work must update SQL, signal DDL, catalog
-   markdown, and `scripts/gold/signal/catalogs/README.md` when relevant.
+   `catalogs/scenarios/SCENARIOS_CATALOG.md` when relevant.
+6. New or changed signal work must update SQL, signal DDL, and catalog
+   markdown together, then regenerate the index with
+   `scripts/quality/check_signal_catalogs.py --write-index`
+   (`catalogs/signals/contracts/AUTHORING.md`).
 
 ## Incident Handling
 
@@ -759,8 +756,8 @@ one activation row.
 2. Keep project-wide references, runbooks, and operational guidance in `docs/`.
 3. Keep script layout and inventory in `scripts/README.md`.
 4. Keep subsystem contracts next to the code they govern, such as
-   `scripts/gold/scenario/SCENARIOS_CONTRACT.md` and
-   `scripts/gold/signal/contracts/`.
+   `catalogs/scenarios/SCENARIOS_CONTRACT.md` and
+   `catalogs/signals/contracts/`.
 5. Keep the source of truth for data flow and system diagrams in
    `docs/data-flow/warehouse-pipeline-reference.html`. It owns the central
    concept definitions and links detailed layer documentation, runbooks,

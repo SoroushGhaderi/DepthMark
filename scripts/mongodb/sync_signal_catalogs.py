@@ -1,26 +1,61 @@
-"""Sync signal markdown catalogs into MongoDB signals collection."""
+"""Mirror validated signal catalogs into the MongoDB signals collection.
+
+The collection becomes an exact mirror of the catalog (ADR 0033): changed
+signals are replaced whole, unchanged signals are not written, and documents
+whose signal no longer has a catalog are deleted. An invalid catalog writes
+nothing. Deleting more than ``MAX_PRUNE_FRACTION`` of the stored documents
+requires ``--allow-mass-prune``. ``--dry-run`` reads MongoDB and reports the
+plan without writing.
+"""
 
 import argparse
 import hashlib
+import json
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Tuple
-
-import yaml
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 project_root = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(project_root))
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
-from src.warehouse.databases import gold_signals_db
 from src.common.logging import get_logger, setup_logging
+from src.fotmob.gold.signal_catalog import (
+    SIGNAL_CATALOG_DIR,
+    SignalCatalog,
+    SignalCatalogError,
+    SignalDefinition,
+    load_signal_catalog,
+)
 
 logger = get_logger(__name__)
 
-DEFAULT_CATALOG_DIR = project_root / "scripts" / "gold" / "signal" / "catalogs"
-FRONTMATTER_DELIMITER = "\n---\n"
-CONTENT_ASSET_KEYS = ("sql", "runner")
-SIGNAL_TABLE_ASSET_KEY = "table"
+MAX_PRUNE_FRACTION = 0.10
+
+
+@dataclass
+class SignalSyncPlan:
+    """Which signal documents a sync inserts, updates, leaves, and deletes."""
+
+    inserts: List[str] = field(default_factory=list)
+    updates: List[str] = field(default_factory=list)
+    unchanged: List[str] = field(default_factory=list)
+    deletes: List[str] = field(default_factory=list)
+
+    def prune_refusal(self, stored_count: int, allow_mass_prune: bool) -> Optional[str]:
+        """Return why pruning is refused, or ``None`` when it may proceed."""
+        if not self.deletes or allow_mass_prune:
+            return None
+        if len(self.deletes) == stored_count:
+            return "the sync would delete every stored signal document"
+        if len(self.deletes) > stored_count * MAX_PRUNE_FRACTION:
+            return (
+                f"the sync would delete {len(self.deletes)} of {stored_count} stored "
+                f"signal documents (more than {MAX_PRUNE_FRACTION:.0%})"
+            )
+        return None
 
 
 def load_environment() -> None:
@@ -28,241 +63,192 @@ def load_environment() -> None:
     get_settings()
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Sync signal catalogs from markdown frontmatter into MongoDB."
+        description="Mirror validated signal catalogs into the MongoDB signals collection."
     )
     parser.add_argument(
         "--catalog-dir",
         type=Path,
-        default=DEFAULT_CATALOG_DIR,
+        default=SIGNAL_CATALOG_DIR,
         help="Directory containing signal catalog markdown files.",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Parse and validate catalogs without writing to MongoDB.",
+        help="Read MongoDB and report inserts, updates, and deletes without writing.",
+    )
+    parser.add_argument(
+        "--allow-mass-prune",
+        action="store_true",
+        help=(
+            "Allow deleting more than "
+            f"{MAX_PRUNE_FRACTION:.0%} of stored signal documents in one sync."
+        ),
     )
     parser.add_argument(
         "--verbose",
         action="store_true",
         help="Enable debug logging output.",
     )
-    return parser.parse_args()
-
-
-def split_frontmatter(content: str, source_path: Path) -> Tuple[Dict[str, Any], str]:
-    """Split markdown into frontmatter dict and body text."""
-    if not content.startswith("---\n"):
-        raise ValueError(f"Missing YAML frontmatter start in {source_path}")
-
-    parts = content.split(FRONTMATTER_DELIMITER, 1)
-    if len(parts) != 2:
-        raise ValueError(f"Missing YAML frontmatter end in {source_path}")
-
-    yaml_block = parts[0][4:]  # remove leading "---\n"
-    body = parts[1].strip()
-
-    frontmatter = yaml.safe_load(yaml_block) or {}
-    if not isinstance(frontmatter, dict):
-        raise ValueError(f"Frontmatter is not an object in {source_path}")
-
-    return frontmatter, body
+    return parser.parse_args(argv)
 
 
 def relative_project_path(file_path: Path) -> str:
     """Return a project-relative path for stable Mongo documents."""
-    return str(file_path.resolve().relative_to(project_root))
+    return file_path.resolve().relative_to(project_root).as_posix()
 
 
-def resolve_project_asset(asset_path: str, source_path: Path) -> Path:
-    """Resolve a catalog asset path and keep it inside the project tree."""
-    resolved_path = (project_root / asset_path).resolve()
-    try:
-        resolved_path.relative_to(project_root)
-    except ValueError as exc:
-        raise ValueError(
-            f"Asset path '{asset_path}' escapes project root in {source_path}"
-        ) from exc
-    return resolved_path
-
-
-def read_text_asset(asset_path: str, source_path: Path) -> Dict[str, Any]:
-    """Read a project asset and return its content plus lightweight integrity metadata."""
-    resolved_path = resolve_project_asset(asset_path, source_path)
-    if not resolved_path.is_file():
-        raise ValueError(f"Asset path '{asset_path}' does not exist in {source_path}")
-
-    content = resolved_path.read_text(encoding="utf-8")
+def _text_asset(file_path: Path) -> Dict[str, Any]:
+    content = file_path.read_text(encoding="utf-8")
     content_bytes = content.encode("utf-8")
     return {
-        "path": relative_project_path(resolved_path),
+        "path": relative_project_path(file_path),
         "content": content,
         "sha256": hashlib.sha256(content_bytes).hexdigest(),
         "byte_count": len(content_bytes),
     }
 
 
-def build_asset_documents(asset_paths: Dict[str, Any], source_path: Path) -> Dict[str, Any]:
-    """Build embedded Mongo documents for signal assets referenced by frontmatter."""
-    assets: Dict[str, Any] = {}
-    for asset_key, asset_path in asset_paths.items():
-        if asset_key in CONTENT_ASSET_KEYS:
-            if not isinstance(asset_path, str) or not asset_path.strip():
-                raise ValueError(
-                    f"asset_paths.{asset_key} must be a non-empty string in {source_path}"
-                )
-            assets[asset_key] = read_text_asset(asset_path, source_path)
-        else:
-            assets[asset_key] = asset_path
-    return assets
+def content_sha256(document: Mapping[str, Any]) -> str:
+    """Hash a signal document's content, independent of key order."""
+    canonical = json.dumps(document, sort_keys=True, ensure_ascii=False, default=str)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def validate_signal_asset_paths(
-    signal_id: str, asset_paths: Dict[str, Any], source_path: Path
-) -> None:
-    """Validate signal asset path metadata before building the Mongo document."""
-    expected_table = f"{gold_signals_db()}.{signal_id}"
-    table_path = asset_paths.get(SIGNAL_TABLE_ASSET_KEY)
-    if table_path != expected_table:
-        raise ValueError(
-            f"asset_paths.table must be '{expected_table}' in {source_path}; got {table_path!r}"
-        )
-
-
-def build_signal_document(
-    frontmatter: Dict[str, Any], body: str, source_path: Path
-) -> Dict[str, Any]:
-    """Build Mongo document using frontmatter as the source of signal metadata."""
-    required = [
-        "signal_id",
-        "status",
-        "entity",
-        "family",
-        "subfamily",
-        "grain",
-        "row_identity",
-        "asset_paths",
-    ]
-    missing = [field for field in required if field not in frontmatter]
-    if missing:
-        raise ValueError(f"Missing required frontmatter fields {missing} in {source_path}")
-
-    signal_id = str(frontmatter["signal_id"])
-    expected_id = source_path.stem
-    if signal_id != expected_id:
-        raise ValueError(
-            f"signal_id '{signal_id}' does not match file name '{expected_id}' in {source_path}"
-        )
-
-    row_identity = frontmatter.get("row_identity")
-    if not isinstance(row_identity, list) or not all(isinstance(v, str) for v in row_identity):
-        raise ValueError(f"row_identity must be a list of strings in {source_path}")
-
-    asset_paths = frontmatter.get("asset_paths")
-    if not isinstance(asset_paths, dict):
-        raise ValueError(f"asset_paths must be an object in {source_path}")
-    for asset_key in CONTENT_ASSET_KEYS:
-        if asset_key not in asset_paths:
-            raise ValueError(f"asset_paths.{asset_key} is required in {source_path}")
-    if SIGNAL_TABLE_ASSET_KEY not in asset_paths:
-        raise ValueError(f"asset_paths.{SIGNAL_TABLE_ASSET_KEY} is required in {source_path}")
-    validate_signal_asset_paths(signal_id, asset_paths, source_path)
-
-    assets = build_asset_documents(asset_paths, source_path)
-
-    return {
-        "signal_id": signal_id,
-        "status": str(frontmatter["status"]),
-        "entity": str(frontmatter["entity"]),
-        "family": str(frontmatter["family"]),
-        "subfamily": str(frontmatter["subfamily"]),
-        "grain": str(frontmatter["grain"]),
-        "headline": frontmatter.get("headline"),
-        "trigger": frontmatter.get("trigger"),
-        "row_identity": row_identity,
-        "asset_paths": asset_paths,
-        "assets": assets,
+def build_signal_document(definition: SignalDefinition) -> Dict[str, Any]:
+    """Build the MongoDB document for one validated signal."""
+    frontmatter = definition.frontmatter_dict()
+    document: Dict[str, Any] = {
+        "signal_id": definition.signal_id,
+        "status": definition.status,
+        "entity": definition.entity,
+        "family": definition.family,
+        "subfamily": definition.subfamily,
+        "grain": definition.grain,
+        "headline": definition.headline,
+        "trigger": definition.trigger,
+        "row_identity": list(definition.row_identity),
+        "asset_paths": frontmatter["asset_paths"],
+        "assets": {"table": definition.table, "sql": _text_asset(definition.sql_path)},
         "frontmatter": frontmatter,
-        "source_path": relative_project_path(source_path),
-        "markdown_body": body,
+        "source_path": relative_project_path(definition.source_path),
+        "markdown_body": definition.body,
     }
+    document["content_sha256"] = content_sha256(document)
+    return document
 
 
-def iter_signal_catalogs(catalog_dir: Path):
-    """Yield signal markdown catalog files."""
-    for file_path in sorted(catalog_dir.glob("*.md")):
-        if file_path.name.lower() == "readme.md":
-            continue
-        yield file_path
+def plan_signal_sync(
+    documents: Sequence[Mapping[str, Any]],
+    stored_states: Mapping[str, Mapping[str, Any]],
+) -> SignalSyncPlan:
+    """Compare catalog documents with stored document hashes."""
+    plan = SignalSyncPlan()
+    catalog_ids = set()
+    for document in documents:
+        signal_id = document["signal_id"]
+        catalog_ids.add(signal_id)
+        stored = stored_states.get(signal_id)
+        if stored is None:
+            plan.inserts.append(signal_id)
+        elif stored.get("content_sha256") != document["content_sha256"]:
+            plan.updates.append(signal_id)
+        else:
+            plan.unchanged.append(signal_id)
+    plan.deletes.extend(sorted(set(stored_states) - catalog_ids))
+    return plan
 
 
-def sync_signals(catalog_dir: Path, dry_run: bool = False) -> Tuple[int, int]:
-    """Sync all signal catalogs to MongoDB; returns (processed, failed)."""
-    processed = 0
-    failed = 0
-
-    mongo_client = None
-    repository = None
-    if not dry_run:
-        from src.integrations.mongodb import get_mongodb_client
-        from src.integrations.mongodb.repositories import SignalsRepository
-
-        mongo_client = get_mongodb_client()
-        if not mongo_client.connect():
-            raise RuntimeError("Could not connect to MongoDB")
-        repository = SignalsRepository(mongo_client.get_database())
-
-    try:
-        for file_path in iter_signal_catalogs(catalog_dir):
-            try:
-                content = file_path.read_text(encoding="utf-8")
-                frontmatter, body = split_frontmatter(content, file_path)
-                document = build_signal_document(frontmatter, body, file_path)
-
-                if repository is not None:
-                    repository.upsert_signal(document["signal_id"], document)
-
-                processed += 1
-                logger.info(
-                    "Signal catalog synced",
-                    signal_id=document["signal_id"],
-                    source_path=document["source_path"],
-                    dry_run=dry_run,
-                )
-            except Exception as exc:
-                failed += 1
-                logger.error("Signal catalog sync failed", file=str(file_path), error=str(exc))
-    finally:
-        if mongo_client is not None:
-            mongo_client.disconnect()
-
-    return processed, failed
+def _log_plan(plan: SignalSyncPlan, dry_run: bool) -> None:
+    for action, signal_ids in (
+        ("insert", plan.inserts),
+        ("update", plan.updates),
+        ("delete", plan.deletes),
+    ):
+        for signal_id in signal_ids:
+            logger.info("Signal catalog sync action", action=action, signal_id=signal_id)
+    logger.info(
+        "Signal catalog sync plan",
+        inserts=len(plan.inserts),
+        updates=len(plan.updates),
+        unchanged=len(plan.unchanged),
+        deletes=len(plan.deletes),
+        dry_run=dry_run,
+    )
 
 
-def main() -> int:
+def sync_signals(
+    catalog: SignalCatalog,
+    repository: Any,
+    *,
+    dry_run: bool = False,
+    allow_mass_prune: bool = False,
+) -> int:
+    """Mirror the catalog into the repository; return a process exit code."""
+    documents = [build_signal_document(definition) for definition in catalog]
+    stored_states = repository.list_signal_states()
+    plan = plan_signal_sync(documents, stored_states)
+    _log_plan(plan, dry_run)
+
+    refusal = plan.prune_refusal(len(stored_states), allow_mass_prune)
+    if refusal is not None:
+        logger.error(
+            "Signal catalog sync refused; rerun with --allow-mass-prune if intended",
+            reason=refusal,
+        )
+        return 1
+    if dry_run:
+        return 0
+
+    changed = set(plan.inserts) | set(plan.updates)
+    for document in documents:
+        if document["signal_id"] in changed:
+            stored = stored_states.get(document["signal_id"]) or {}
+            repository.replace_signal(document, created_at=stored.get("created_at"))
+    deleted_count = repository.delete_signals(plan.deletes)
+    logger.info(
+        "Signal catalog sync applied",
+        written=len(changed),
+        deleted=deleted_count,
+    )
+    return 0
+
+
+def main(argv: Optional[Sequence[str]] = None) -> int:
     load_environment()
-    args = parse_args()
+    args = parse_args(argv)
     setup_logging(
         name="mongodb_sync_signal_catalogs",
         log_dir="logs",
         log_level="DEBUG" if args.verbose else "INFO",
     )
 
-    catalog_dir = args.catalog_dir.resolve()
-    if not catalog_dir.exists():
-        logger.error("Catalog directory does not exist", catalog_dir=str(catalog_dir))
-        return 2
+    try:
+        catalog = load_signal_catalog(args.catalog_dir)
+    except SignalCatalogError as error:
+        for violation in error.violations:
+            logger.error("Signal catalog violation", violation=violation.describe())
+        logger.error("Signal catalog is invalid; nothing synced", violations=len(error.violations))
+        return 1
 
-    processed, failed = sync_signals(catalog_dir, dry_run=args.dry_run)
-    logger.info(
-        "Signal catalog sync finished",
-        catalog_dir=str(catalog_dir),
-        processed=processed,
-        failed=failed,
-        dry_run=args.dry_run,
-    )
-    return 1 if failed else 0
+    from src.integrations.mongodb import get_mongodb_client
+    from src.integrations.mongodb.repositories import SignalsRepository
+
+    mongo_client = get_mongodb_client()
+    if not mongo_client.connect():
+        logger.error("Could not connect to MongoDB; nothing synced")
+        return 1
+    try:
+        repository = SignalsRepository(mongo_client.get_database())
+        return sync_signals(
+            catalog,
+            repository,
+            dry_run=args.dry_run,
+            allow_mass_prune=args.allow_mass_prune,
+        )
+    finally:
+        mongo_client.disconnect()
 
 
 if __name__ == "__main__":

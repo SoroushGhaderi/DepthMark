@@ -35,22 +35,33 @@ output may not be documented as a FotMob signal.
 
 ### Anatomy of a Signal
 
-Each signal consists of 4 artifacts:
+Each signal is three authored artifacts plus one generated index row:
 
 | Artifact | Location | Purpose |
 | --- | --- | --- |
 | SQL | `clickhouse/gold/dml/signals/<entity>/sig_<name>.sql` | Transformation logic |
 | Table DDL | `clickhouse/gold/ddl/signals/{match,team,player}/` | Output table schema |
-| Catalog | `scripts/gold/signal/catalogs/sig_<name>.md` | Metadata + documentation |
-| Index | `scripts/gold/signal/catalogs/README.md` | Signal inventory |
+| Catalog | `catalogs/signals/sig_<name>.md` | Metadata + documentation |
+| Index | `catalogs/signals/README.md` | Generated signal inventory |
+
+Every consumer reads catalogs through `load_signal_catalog()` in
+`src/fotmob/gold/signal_catalog.py` (ADR 0033). It validates every catalog
+against its SQL and DDL and raises one error listing every violation, which
+blocks Gold signal runs, the activation builder, the strict quality gate, and
+the MongoDB sync. `python3 scripts/quality/check_signal_catalogs.py` runs the
+same validation without any service.
 
 ### Signal Taxonomy
 
 Signals are organized by:
-- **Entity**: `match`, `player`, `team`
+- **Entity**: the subject scope, `match`, `player`, or `team`; it equals the
+  id's entity segment
 - **Family**: `shooting`, `creativity`, `possession`, `discipline`, `goalkeeping`
 - **Subfamily**: `goals`, `playmaking`, `passing`, `cards`, `defense`
-- **Grain**: `match_team`, `match_player`
+- **Grain**: `match_team` for match and team signals, `match_player` for player
+  signals
+- **Status**: `active` signals run; `deprecated` signals do not run in Gold and
+  leave activations, but keep their table and MongoDB document
 
 Example: `sig_player_shooting_goals_shot_conversion_peak`
 - Prefix: `sig`
@@ -61,8 +72,9 @@ Example: `sig_player_shooting_goals_shot_conversion_peak`
 
 ### Signal Contracts
 
-- `SIGNAL_CORE_CONTRACT.md` — creative logic and football semantics
-- `SIGNAL_EXECUTION_CONTRACT.md` — routine implementation rules
+[`catalogs/signals/contracts/`](../../catalogs/signals/contracts/README.md)
+holds the authoring guide and the catalog, SQL, and table contracts. Each rule
+names the check that enforces it, or is left to review.
 
 ## Scenario System
 
@@ -70,7 +82,7 @@ Scenarios are narrative-driven analysis outputs:
 - 23 team/match-grain scenarios in `clickhouse/gold/dml/scenarios/team/`
 - 25 player-grain scenarios in `clickhouse/gold/dml/scenarios/player/`
 
-Catalog: `scripts/gold/scenario/SCENARIOS_CATALOG.md`
+Catalog: `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 ## Data Flow
 
@@ -83,22 +95,27 @@ python3 scripts/gold/setup_clickhouse_gold.py --part scenarios
 python3 scripts/gold/setup_clickhouse_gold.py --part signals
 ```
 
-### 2. SQL Job Execution (`scripts/gold/run_gold_sql_jobs.py`)
+### 2. SQL Job Execution (`scripts/gold/run_fotmob_gold_jobs.py`)
 
 The generic runner discovers and executes Gold SQL jobs:
 ```bash
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --dry-run
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
-python3 scripts/gold/run_gold_sql_jobs.py --month 202512 --kind signal --entity player
-python3 scripts/gold/run_gold_sql_jobs.py --full-history --kind signal --family shooting_goals
-python3 scripts/gold/run_gold_sql_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --dry-run
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
+python3 scripts/gold/run_fotmob_gold_jobs.py --month 202512 --kind signal --entity player
+python3 scripts/gold/run_fotmob_gold_jobs.py --full-history --kind signal --family shooting_goals
+python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance
 ```
 
 Job discovery uses `GoldSqlJob` in `src/fotmob/gold/dml_runner.py`:
-- Files prefixed `sig_*.sql` → signal jobs
+- Signal jobs are the active signals of the validated catalog, ordered by id
 - Files prefixed `scenario_*.sql` → scenario jobs
-- Selection by `--id`, `--entity`, `--family`, or `--kind`
+- Selection by `--id`, `--entity`, `--family` (`family` or `family_subfamily`),
+  or `--kind`
+- Selecting a deprecated or uncatalogued signal by `--id` is an error (exit 2);
+  an invalid catalog stops the run (exit 1)
+
+The old path `scripts/gold/run_gold_sql_jobs.py` remains a compatibility adapter.
 
 ### 3. Bulk Loading (`scripts/gold/load_fotmob_gold.py`)
 
@@ -125,7 +142,7 @@ Execution order:
 5. Activation replacement runs with the same scope after every selected signal
    table commits successfully.
 
-### 4. Activation Rebuild (`scripts/gold/activations/build_signal_activations.py`)
+### 4. Activation Rebuild (`scripts/gold/build_fotmob_signal_activations.py`)
 
 Builds `gold.signal_activations` from all active signal catalogs, then replaces
 only the requested output scope:
@@ -142,11 +159,13 @@ only the requested output scope:
 
 Per-row enrichment in the stage pass:
 
-1. Scans active signal catalogs in `scripts/gold/signal/catalogs/`.
-2. Reads each catalog's `row_identity` fields.
+1. Loads the active signals through `load_signal_catalog()`; an invalid catalog
+   stops the build before it connects.
+2. Uses each signal's identity fields (`row_identity`, led by `match_id`).
 3. For each signal output row in `gold_signals.sig_*`:
-   - Computes `signal_instance_id = SHA256("v1|signal_id|<identity values>")`
-   - Parses signal metadata from the `signal_id` pattern
+   - Reads `signal_instance_id`, or computes it with the DDL's expression
+     (`signal_instance_id_expression()`) for tables that predate the column
+   - Takes entity, family, subfamily, name, and tags from the validated catalog
    - Copies common fixture/team/player context
    - Stores full source row in `source_row_json`
 
@@ -155,10 +174,10 @@ The final insert adds match-level summary fields on every activation row
 and related arrays).
 
 ```bash
-python3 scripts/gold/activations/build_signal_activations.py --date 20251208
-python3 scripts/gold/activations/build_signal_activations.py --month 202512
-python3 scripts/gold/activations/build_signal_activations.py --full-history
-python3 scripts/gold/activations/build_signal_activations.py --date 20251208 --dry-run
+python3 scripts/gold/build_fotmob_signal_activations.py --date 20251208
+python3 scripts/gold/build_fotmob_signal_activations.py --month 202512
+python3 scripts/gold/build_fotmob_signal_activations.py --full-history
+python3 scripts/gold/build_fotmob_signal_activations.py --date 20251208 --dry-run
 ```
 
 Serving-table DDL: `clickhouse/gold/ddl/create_table_signal_activations.sql`
@@ -197,14 +216,18 @@ python3 scripts/gold/drop_clickhouse_scenarios.py --part all
 - **`ReplacingMergeTree` with `FINAL`** for idempotent signal outputs.
 - **Versioned activation identity.** `signal_id_version` (`v1`) prefixes the
   activation hash (ADR 0006).
+- **One validated catalog reader.** Catalog frontmatter is read only through
+  `load_signal_catalog()`; one invalid catalog fails every consumer, and
+  `status` decides what runs (ADR 0033).
 
 ## Failure Modes
 
 | Failure | Recovery |
 | --- | ---|
-| Signal SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind signal --id <signal>` |
-| Scenario SQL fails | Re-run `run_gold_sql_jobs.py --date <YYYYMMDD> --kind scenario --id <scenario>` |
-| Activation replacement fails | Re-run `build_signal_activations.py` with the same scope |
+| Signal catalog invalid | Run `check_signal_catalogs.py`, fix every listed violation, re-run |
+| Signal SQL fails | Re-run `run_fotmob_gold_jobs.py --date <YYYYMMDD> --kind signal --id <signal>` |
+| Scenario SQL fails | Re-run `run_fotmob_gold_jobs.py --date <YYYYMMDD> --kind scenario --id <scenario>` |
+| Activation replacement fails | Re-run `build_fotmob_signal_activations.py` with the same scope |
 | Signal SQL failures block activations | Fix signals and rerun `load_fotmob_gold.py` with the same scope |
 | Staging fails | Existing targets remain unchanged; inspect retained stage tables |
 | Commit partially fails | Rerun the identical scope to converge committed and pending tables |
