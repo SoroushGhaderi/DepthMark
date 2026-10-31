@@ -11,7 +11,7 @@ from src.fotmob.orchestration import FotMobOrchestrator, OrchestratorError
 def build_orchestrator(compression_status: str = "success") -> FotMobOrchestrator:
     """Build an orchestrator with all network and filesystem boundaries mocked."""
     orchestrator = FotMobOrchestrator.__new__(FotMobOrchestrator)
-    orchestrator.config = SimpleNamespace(scraping=SimpleNamespace(enable_parallel=False))
+    orchestrator.config = SimpleNamespace(scraping=SimpleNamespace())
     orchestrator.logger = MagicMock()
     orchestrator.bronze_only = True
     orchestrator.telegram_client = MagicMock()
@@ -29,8 +29,7 @@ def build_orchestrator(compression_status: str = "success") -> FotMobOrchestrato
         "error": "disk full" if compression_status == "error" else "",
     }
     orchestrator._fetch_match_ids = MagicMock(return_value=[101])
-    orchestrator._scrape_matches_parallel = MagicMock()
-    orchestrator._scrape_matches_sequential = MagicMock()
+    orchestrator._scrape_matches = MagicMock()
     return orchestrator
 
 
@@ -51,12 +50,12 @@ def test_force_rescrape_rebuilds_archive() -> None:
         for match_id in match_ids:
             metrics.record_success(match_id)
 
-    orchestrator._scrape_matches_sequential.side_effect = record_success
+    orchestrator._scrape_matches.side_effect = record_success
 
     metrics = orchestrator.scrape_date("20251208", force_rescrape=True)
 
     assert metrics.successful_matches == 1
-    orchestrator._scrape_matches_sequential.assert_called_once()
+    orchestrator._scrape_matches.assert_called_once()
     orchestrator.bronze_storage.compress_date_files.assert_called_once_with("20251208", force=True)
 
 
@@ -76,7 +75,7 @@ def test_partial_date_is_not_compressed() -> None:
         for match_id in match_ids:
             metrics.record_failure(match_id, "request failed")
 
-    orchestrator._scrape_matches_sequential.side_effect = record_failure
+    orchestrator._scrape_matches.side_effect = record_failure
 
     orchestrator.scrape_date("20251208")
 

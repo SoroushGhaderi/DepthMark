@@ -342,10 +342,6 @@ def create_config(args: argparse.Namespace) -> FotMobSettings:
     if args.debug:
         config.logging.level = "DEBUG"
 
-    # FotMob runs single-threaded (sequential) by default
-    config.scraping.enable_parallel = False
-    config.scraping.max_workers = 1
-
     return config
 
 

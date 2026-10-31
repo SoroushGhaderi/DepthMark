@@ -308,7 +308,7 @@ _JS_EXTRACT_VUEX_FALLBACK = """
     var results = [];
     var seen = {};
     var origin = window.location.origin;
-    var sportSlug = arguments[0] || 'tennis';
+    var sportSlug = arguments[0] || 'football';
     function toSlug(name) {
         return (name || '').toLowerCase()
             .replace(/[éèêë]/g,'e').replace(/[àâä]/g,'a').replace(/[ùûü]/g,'u')
@@ -1159,7 +1159,7 @@ _JS_EXTRACT_DOM_LINKS = """
     // Live matches use /<sport>/<slug>-<id>
     // Past/archived matches use /a/<sport>/<slug>-<id>
     var links = {};
-    var sportSlug = arguments[0] || 'tennis';
+    var sportSlug = arguments[0] || 'football';
     var livePrefix = '/' + sportSlug + '/';
     var archivedPrefix = '/a/' + sportSlug + '/';
     var anchors = document.querySelectorAll(

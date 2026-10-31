@@ -6,9 +6,7 @@ PURPOSE: Orchestrate the entire scraping and processing pipeline.
          Saves to Bronze only. Use load_fotmob_bronze.py to load ClickHouse.
 """
 
-import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
@@ -66,25 +64,6 @@ class FotMobOrchestrator:
         self.logger = logger
         self.bronze_only = bronze_only
         self.telegram_client = TelegramClient()
-
-        # Safety: FotMob can rate-limit/ban aggressive clients. Force sequential scraping
-        # unless you intentionally re-enable parallelism in code.
-        try:
-            if getattr(self.config, "scraping", None) is not None:
-                if getattr(self.config.scraping, "enable_parallel", False):
-                    self.logger.warning(
-                        "FotMob parallel scraping is disabled for safety (rate-limit/ban risk). "
-                        "Forcing enable_parallel=False, max_workers=1."
-                    )
-                self.config.scraping.enable_parallel = False
-                self.config.scraping.max_workers = 1
-        except Exception as e:
-            # Never fail initialization due to config shape differences
-            self.logger.debug(
-                "Could not enforce sequential FotMob scraping",
-                error=str(e),
-                exc_info=True,
-            )
 
         storage_path = bronze_path or get_fotmob_historical_path(self.config.storage.bronze_path)
         self.bronze_storage = FotMobBronzeStorage(str(storage_path))
@@ -203,14 +182,7 @@ class FotMobOrchestrator:
             else:
                 match_ids_to_scrape = [str(m) for m in match_ids]
 
-            if self.config.scraping.enable_parallel and len(match_ids_to_scrape) > 1:
-                self._scrape_matches_parallel(
-                    match_ids_to_scrape, metrics, date_str, scraped_match_ids
-                )
-            else:
-                self._scrape_matches_sequential(
-                    match_ids_to_scrape, metrics, date_str, scraped_match_ids
-                )
+            self._scrape_matches(match_ids_to_scrape, metrics, date_str, scraped_match_ids)
 
         except Exception as e:
             self.logger.exception("Error during scraping", date=date_str, error=str(e))
@@ -407,10 +379,10 @@ class FotMobOrchestrator:
 
         return []
 
-    def _scrape_matches_sequential(
+    def _scrape_matches(
         self, match_ids: list[str], metrics: ScraperMetrics, date_str: str, scraped_match_ids: set
     ):
-        """Scrape matches sequentially."""
+        """Scrape matches one at a time; FotMob rate-limits and bans parallel clients."""
         self.logger.info(
             "Scraping matches sequentially",
             date=date_str,
@@ -483,100 +455,6 @@ class FotMobOrchestrator:
                     failed_matches=metrics.failed_matches,
                     skipped_matches=metrics.skipped_matches,
                 )
-
-    def _scrape_matches_parallel(
-        self, match_ids: list[str], metrics: ScraperMetrics, date_str: str, scraped_match_ids: set
-    ):
-        """Scrape matches in parallel using thread pool."""
-        self.logger.info(
-            "Scraping matches in parallel",
-            date=date_str,
-            match_count=len(match_ids),
-            max_workers=self.config.scraping.max_workers,
-        )
-
-        match_ids_to_scrape = [m for m in match_ids if m not in scraped_match_ids]
-        if len(match_ids_to_scrape) < len(match_ids):
-            skipped = len(match_ids) - len(match_ids_to_scrape)
-            self.logger.info(
-                "Skipping already scraped matches in session",
-                date=date_str,
-                skipped_matches=skipped,
-            )
-
-        # IMPORTANT: In parallel mode, reuse one MatchScraper (and its underlying
-        # requests.Session) per worker thread to avoid per-match connection/TLS overhead.
-        thread_local = threading.local()
-        created_scrapers: list[MatchScraper] = []
-        created_scrapers_lock = threading.Lock()
-
-        def _get_thread_scraper() -> MatchScraper:
-            scraper = getattr(thread_local, "scraper", None)
-            if scraper is None:
-                scraper = MatchScraper(self.config)
-                thread_local.scraper = scraper
-                with created_scrapers_lock:
-                    created_scrapers.append(scraper)
-            return scraper
-
-        def _worker(match_id: str) -> tuple[bool, str | None, bool]:
-            scraper = _get_thread_scraper()
-            return self._process_match_with_scraper(scraper, match_id, date_str)
-
-        try:
-            with ThreadPoolExecutor(max_workers=self.config.scraping.max_workers) as executor:
-                future_to_match = {}
-                for match_id in match_ids_to_scrape:
-                    future = executor.submit(_worker, match_id)
-                    future_to_match[future] = match_id
-
-                completed_count = 0
-
-                for future in as_completed(future_to_match):
-                    match_id = future_to_match[future]
-                    try:
-                        success, error_msg, fotmob_unavailable = future.result()
-                        self._apply_match_process_result(
-                            match_id=match_id,
-                            date_str=date_str,
-                            metrics=metrics,
-                            scraped_match_ids=scraped_match_ids,
-                            success=success,
-                            error_msg=error_msg,
-                            quality_issues=None,
-                            fotmob_unavailable=fotmob_unavailable,
-                        )
-                    except Exception as e:
-                        self.logger.exception(
-                            "Exception in parallel match processing",
-                            date=date_str,
-                            match_id=match_id,
-                            error=str(e),
-                        )
-                        metrics.record_failure(match_id, str(e), type(e).__name__)
-
-                    completed_count += 1
-                    # Log progress after EVERY match
-                    progress_pct = (completed_count / len(match_ids_to_scrape)) * 100
-                    self.logger.info(
-                        "[PROGRESS] Parallel match processing update",
-                        date=date_str,
-                        completed=completed_count,
-                        total=len(match_ids_to_scrape),
-                        progress_pct=round(progress_pct, 1),
-                        successful_matches=metrics.successful_matches,
-                        failed_matches=metrics.failed_matches,
-                        skipped_matches=metrics.skipped_matches,
-                    )
-        finally:
-            # Always close any sessions created for worker threads.
-            for scraper in created_scrapers:
-                try:
-                    scraper.close()
-                except Exception as e:
-                    self.logger.debug(
-                        "Failed to close worker scraper session", error=str(e), exc_info=True
-                    )
 
     def _fetch_and_save_match(
         self,
@@ -750,52 +628,6 @@ class FotMobOrchestrator:
             ),
         )
         return False
-
-    def _process_match_with_scraper(
-        self,
-        scraper: MatchScraper,
-        match_id: str,
-        date_str: str,
-    ) -> tuple[bool, str | None, bool]:
-        """
-        Process a single match using an existing scraper instance.
-
-        NOTE: This method intentionally does NOT create/close the scraper.
-        In parallel mode we reuse a scraper (and HTTP session) per worker thread.
-
-        Returns:
-            Tuple of (success, error_message, fotmob_unavailable)
-        """
-        success, error_msg, _, fotmob_unavailable = self._fetch_and_save_match(
-            scraper, match_id, date_str
-        )
-        return success, error_msg, fotmob_unavailable
-
-    def _process_single_match(
-        self,
-        scraper: MatchScraper,
-        match_id: str,
-        metrics: ScraperMetrics,
-        date_str: str,
-        scraped_match_ids: set,
-    ):
-        """Process a single match (for sequential execution)."""
-        self.logger.info("Processing match", date=date_str, match_id=match_id)
-
-        success, error_msg, quality_issues, fotmob_unavailable = self._fetch_and_save_match(
-            scraper, match_id, date_str
-        )
-
-        self._apply_match_process_result(
-            match_id=match_id,
-            date_str=date_str,
-            metrics=metrics,
-            scraped_match_ids=scraped_match_ids,
-            success=success,
-            error_msg=error_msg,
-            quality_issues=quality_issues,
-            fotmob_unavailable=fotmob_unavailable,
-        )
 
     def get_match_data(self, match_id: int, date_str: str) -> dict[str, Any] | None:
         """

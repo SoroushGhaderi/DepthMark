@@ -72,7 +72,7 @@ class MatchAudit:
     match_id: str
     path: str
     status: str
-    sport: str = "tennis"
+    sport: str = "football"
     reasons: list[str] = field(default_factory=list)
     observations: list[str] = field(default_factory=list)
     bytes: int = 0
@@ -87,7 +87,7 @@ class DateAudit:
     """Audit result for one scrape date."""
 
     date: str
-    sport: str = "tennis"
+    sport: str = "football"
     expected: int = 0
     existing: int = 0
     accepted_data_present: int = 0

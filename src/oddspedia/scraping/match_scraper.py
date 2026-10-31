@@ -24,6 +24,24 @@ from src.oddspedia.scraping.config import (
 )
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
+from src.oddspedia.scraping.odds_contract import (
+    FOOTBALL_DEFAULT_LINE_LABEL,
+    FootballOddsCoverageError,
+    FootballOddsRetryableError,
+    FootballOddsUnavailableError,
+    apply_football_selector_context,
+    build_odds,
+    football_filter_markets,
+    football_market_names_match,
+    football_missing_market_names,
+    football_odds_coverage_error,
+    football_selector_rendered,
+    has_football_market,
+    is_football_market_selector_text,
+    merge_odds_markets,
+    normalize_football_odds,
+    validate_european_handicap_coverage,
+)
 from src.oddspedia.scraping.utils import (
     _is_detail_url,
     _is_error_page,
@@ -37,27 +55,6 @@ logger = get_logger(__name__)
 
 OPTIONAL_CONTROL_WAIT_SECONDS = 2.0
 OPTIONAL_CONTROL_POLL_SECONDS = 0.1
-
-
-class FootballOddsCoverageError(RuntimeError):
-    """Raised when Oddspedia exposes a football market that was not saved."""
-
-    def __init__(self, message, *, missing_markets=None, partial_odds=None):
-        super().__init__(message)
-        self.missing_markets = list(
-            dict.fromkeys(
-                str(name).strip() for name in (missing_markets or []) if str(name).strip()
-            )
-        )
-        self.partial_odds = list(partial_odds or [])
-
-
-class FootballOddsRetryableError(FootballOddsCoverageError):
-    """Raised when football odds may appear on a subsequent page attempt."""
-
-
-class FootballOddsUnavailableError(RuntimeError):
-    """Raised when a valid football page publishes no betting lines."""
 
 
 class FootballScoreUnavailableError(RuntimeError):
@@ -830,7 +827,7 @@ def _expand_football_market_cards(driver, market_names=None):
         titles = [
             title
             for title in titles
-            if any(_football_market_names_match(title, target) for target in target_markets)
+            if any(football_market_names_match(title, target) for target in target_markets)
         ]
 
     unresolved = []
@@ -880,7 +877,7 @@ def _expand_football_market_cards(driver, market_names=None):
         all_titles = [
             title
             for title in all_titles
-            if any(_football_market_names_match(title, target) for target in target_markets)
+            if any(football_market_names_match(title, target) for target in target_markets)
         ]
 
     expanded_lines = sum(
@@ -1514,154 +1511,6 @@ _JS_EXTRACT_ODDS = """
     return markets;
 """
 
-# Extract match statistics.
-# Tries the Vuex store first, then falls back to DOM parsing.
-_JS_EXTRACT_STATS = """
-    // 1. Vuex store
-    try {
-        var store = document.querySelector('#__nuxt').__vue__.$store.state;
-        var modules = ['event-statistics', 'statistics', 'match-statistics'];
-        for (var i = 0; i < modules.length; i++) {
-            var mod = store[modules[i]];
-            if (!mod) continue;
-            var data = mod.statistics || mod.stats || mod.data;
-            if (data && (Array.isArray(data) ? data.length : Object.keys(data).length))
-                return {source: 'vuex', stats: data};
-        }
-    } catch(ex) {}
-
-    // 2. DOM: stat rows follow a (home_value | label | away_value) pattern
-    var rows = [];
-    var candidates = document.querySelectorAll(
-        '[class*="statistic"], [class*="stat-row"], [class*="match-stat"]'
-    );
-    for (var j = 0; j < candidates.length; j++) {
-        var ch = candidates[j].children;
-        if (ch.length >= 3) {
-            var mid = Math.floor(ch.length / 2);
-            rows.push({
-                name: ch[mid].textContent.trim(),
-                home: ch[0].textContent.trim(),
-                away: ch[ch.length - 1].textContent.trim()
-            });
-        }
-    }
-    if (rows.length) return {source: 'dom', stats: rows};
-
-    // 3. Find the statistics section by text content and parse line-by-line
-    var sections = document.querySelectorAll(
-        '[class*="section"], [class*="panel"], [class*="content"], [class*="tab"]'
-    );
-    for (var k = 0; k < sections.length; k++) {
-        var txt = sections[k].textContent;
-        if (txt.indexOf('Aces') < 0 || txt.indexOf('Double Faults') < 0) continue;
-
-        var stats = [];
-        var lines = txt.split('\\n')
-            .map(function(l) { return l.trim(); })
-            .filter(Boolean);
-        for (var l = 0; l + 2 < lines.length; l++) {
-            if (/^\\d/.test(lines[l]) && !/^\\d/.test(lines[l + 1]) && /^\\d/.test(lines[l + 2])) {
-                stats.push({name: lines[l + 1], home: lines[l], away: lines[l + 2]});
-                l += 2;
-            }
-        }
-        if (stats.length) return {source: 'text', stats: stats};
-    }
-
-    return {source: 'none', stats: []};
-"""
-
-# Extract point-by-point data for a specific tennis set dropdown index.
-_JS_EXTRACT_POINT_BY_POINT_SET_BY_INDEX = """
-    function txt(el) {
-        return el ? el.textContent.replace(/\\s+/g, ' ').trim() : '';
-    }
-
-    function extractGame(gameEl) {
-        var homeMeta = gameEl.querySelector('.highlights-tennis-set-game__meta--home');
-        var awayMeta = gameEl.querySelector('.highlights-tennis-set-game__meta--away');
-        var homeServing = !!(homeMeta && homeMeta.querySelector('img[alt*="Serving player"]'));
-        var awayServing = !!(awayMeta && awayMeta.querySelector('img[alt*="Serving player"]'));
-
-        var scoreSpans = gameEl.querySelectorAll('.highlights-tennis-set-game__score');
-        var homeScore = scoreSpans.length > 0 ? txt(scoreSpans[0]) : '';
-        var awayScore = scoreSpans.length > 1 ? txt(scoreSpans[1]) : '';
-
-        var winner = '';
-        if (scoreSpans.length > 1) {
-            if (scoreSpans[0].classList.contains('is-winner')) winner = 'home';
-            else if (scoreSpans[1].classList.contains('is-winner')) winner = 'away';
-        }
-
-        var gameLabels = [];
-        var metaLabels = gameEl.querySelectorAll('.highlights-tennis-set-game__meta .highlights-tennis-set-game__label');
-        for (var i = 0; i < metaLabels.length; i++) {
-            var ltxt = txt(metaLabels[i]);
-            if (ltxt) gameLabels.push(ltxt);
-        }
-
-        var points = [];
-        var pointLis = gameEl.querySelectorAll('.highlights-tennis-set-game__points li');
-        for (var p = 0; p < pointLis.length; p++) {
-            var li = pointLis[p];
-            var raw = txt(li);
-            var score = '';
-            var m = raw.match(/[0-9A]+:[0-9A]+/);
-            if (m) score = m[0];
-
-            var pointLabels = [];
-            var spans = li.querySelectorAll('.highlights-tennis-set-game__label');
-            for (var s = 0; s < spans.length; s++) {
-                var stxt = txt(spans[s]);
-                if (stxt) pointLabels.push(stxt);
-            }
-            points.push({
-                score: score,
-                labels: pointLabels,
-                text: raw
-            });
-        }
-
-        return {
-            server: homeServing ? 'home' : (awayServing ? 'away' : ''),
-            home_game_score: homeScore,
-            away_game_score: awayScore,
-            winner: winner,
-            labels: gameLabels,
-            points: points
-        };
-    }
-
-    var idx = arguments[0];
-    var root = document.querySelector('.highlights-tennis');
-    if (!root) return null;
-
-    var dropdowns = root.querySelectorAll('.event-timeline-dropdown');
-    if (!dropdowns || idx < 0 || idx >= dropdowns.length) return null;
-    var dropdown = dropdowns[idx];
-    if (!dropdown) return null;
-    var trigger = dropdown.querySelector('.event-timeline-dropdown__trigger');
-    if (!trigger) return null;
-
-    var content = dropdown.querySelector('.event-timeline-dropdown__content');
-    if (!content) return null;
-
-    var metaEl = trigger.querySelector('.event-timeline-dropdown__trigger__meta');
-    var titleEl = trigger.querySelector('.event-timeline-dropdown__trigger__title');
-
-    var games = [];
-    var gameNodes = content.querySelectorAll('.highlights-tennis-set-game');
-    for (var g = 0; g < gameNodes.length; g++) {
-        games.push(extractGame(gameNodes[g]));
-    }
-
-    return {
-        set: txt(metaEl),
-        set_score: txt(titleEl),
-        games: games
-    };
-"""
 
 # Extract full "Live Stats" details from the active stats module.
 _JS_EXTRACT_ACTIVE_OVERALL_STATS_TAB = """
@@ -1773,536 +1622,6 @@ _JS_EXTRACT_ACTIVE_OVERALL_STATS_TAB = """
 
 
 # ── Odds processing ───────────────────────────────────────────────────────────
-
-
-def _build_odds(raw_markets):
-    """Pass through raw markets from the JS extractor.
-
-    Each market is already structured as::
-
-        {"market": "Total Sets/Games", "lines": [
-            {"type": "main",        "label": "22.5 Games", "over": 1.89, "under": 1.82},
-            {"type": "alternative", "label": "2.5 Sets",   "over": 2.25, "under": 1.57},
-            …
-        ]}
-
-    We just drop empty markets here.
-    """
-    return [m for m in (raw_markets or []) if m.get("lines")]
-
-
-def _market_signature(market):
-    return (
-        str(market.get("market", "")).strip().lower(),
-        json.dumps(market.get("lines", []), sort_keys=True, default=str),
-    )
-
-
-def _merge_odds_markets(existing, new_markets):
-    def line_signature(line):
-        # A fallback-only schema_status must not create a second copy of an
-        # otherwise identical line once a later extraction normalizes it.
-        return json.dumps(
-            {key: value for key, value in line.items() if key != "schema_status"},
-            sort_keys=True,
-            default=str,
-        )
-
-    seen = {_market_signature(market) for market in existing}
-    by_name = {
-        str(market.get("market", "")).strip().lower(): market
-        for market in existing
-        if str(market.get("market", "")).strip()
-    }
-    for market in new_markets or []:
-        if not market.get("lines"):
-            continue
-        sig = _market_signature(market)
-        if sig in seen:
-            continue
-        market_name = str(market.get("market", "")).strip().lower()
-        current = by_name.get(market_name)
-        if current is not None:
-            line_signatures = {line_signature(line) for line in current.get("lines", [])}
-            for line in market.get("lines", []):
-                signature = line_signature(line)
-                if signature not in line_signatures:
-                    current.setdefault("lines", []).append(line)
-                    line_signatures.add(signature)
-                elif line.get("schema_status") != "unmatched":
-                    for current_line in current.get("lines", []):
-                        if line_signature(current_line) == signature:
-                            current_line.pop("schema_status", None)
-                            break
-            # A complete selector render supersedes an earlier fallback
-            # classification for the same market.
-            if market.get("schema_status") != "unmatched":
-                current.pop("schema_status", None)
-            seen.add(_market_signature(current))
-            continue
-        seen.add(sig)
-        existing.append(market)
-        if market_name:
-            by_name[market_name] = market
-    return existing
-
-
-def _has_football_market(odds, market_name):
-    target = _football_market_family(market_name)
-    return any(
-        _football_market_family(market.get("market", "")) == target
-        and _football_market_has_coverage(market)
-        for market in odds or []
-    )
-
-
-def _football_market_has_coverage(market):
-    """Return whether a saved market contains the fields needed to trust it."""
-    lines = [line for line in market.get("lines") or [] if isinstance(line, dict)]
-    if not lines:
-        return False
-    return all(str(line.get("label", "")).strip() for line in lines)
-
-
-def _validate_european_handicap_coverage(odds):
-    complete = []
-    for market in odds or []:
-        if _football_market_family(
-            market.get("market", "")
-        ) == "european handicap" and not _football_market_has_coverage(market):
-            logger.warning(
-                "european_handicap_incomplete_lines_skipped",
-                market=market.get("market", "European Handicap"),
-                lines=market.get("lines", []),
-            )
-            continue
-        complete.append(market)
-    return complete
-
-
-def _football_odds_coverage_error(odds, total_markets=None, odds_unavailable=False):
-    """Return an error when fewer odds markets were extracted than exposed."""
-    # Preserve compatibility with callers that passed the former boolean
-    # second positional argument while the denominator was not tracked yet.
-    if isinstance(total_markets, bool) and odds_unavailable is False:
-        odds_unavailable = total_markets
-        total_markets = None
-    if odds_unavailable or total_markets is None:
-        return None
-    try:
-        expected_count = int(total_markets)
-    except (TypeError, ValueError):
-        return None
-    if expected_count <= 0:
-        return None
-
-    extracted_count = len(odds or [])
-    if extracted_count >= expected_count:
-        return None
-    return (
-        "Football odds market coverage incomplete: "
-        f"extracted {extracted_count}/{expected_count} markets; retry required"
-    )
-
-
-def _football_label_key(value):
-    return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
-
-
-def _football_outcome_field(label, home, away):
-    key = _football_label_key(label)
-    home_key = _football_label_key(home)
-    away_key = _football_label_key(away)
-
-    if key in {"1", "home", "team1"}:
-        return "home"
-    if key in {"2", "away", "team2"}:
-        return "away"
-    if key and home_key and (key == home_key or key in home_key or home_key in key):
-        return "home"
-    if key and away_key and (key == away_key or key in away_key or away_key in key):
-        return "away"
-    if key in {"draw", "tie", "x"}:
-        return "draw"
-    if key in {"nogoal", "nogoals", "none", "neither", "nogol"}:
-        return "no_goal"
-    if key == "odd":
-        return "odd"
-    if key == "even":
-        return "even"
-    if key == "1x":
-        return "home_draw"
-    if key == "x2":
-        return "draw_away"
-    if key == "12":
-        return "home_away"
-    return ""
-
-
-_FOOTBALL_COMMON_LINE_FIELDS = {"type", "label"}
-_FOOTBALL_PARAMETERIZED_MARKETS = {
-    "total goals",
-    "total corners",
-    "asian handicap",
-    "asian handicap corners",
-    "european handicap",
-}
-_FOOTBALL_DEFAULT_LINE_LABEL = "Main Line"
-
-
-def _football_market_family(market_name):
-    name = re.sub(r"^\s*(?:1st|2nd)\s+half\s*-\s*", "", str(market_name or ""), flags=re.I)
-    return re.sub(r"\s+", " ", name).strip().lower()
-
-
-def _football_market_family_key(market_name):
-    """Return a stable key for equivalent source labels."""
-    family = _football_market_family(market_name)
-    return {
-        "match winner": "full time result",
-        "1x2": "full time result",
-    }.get(family, family)
-
-
-def _football_market_names_match(left, right):
-    """Return whether two Oddspedia labels describe the same market family."""
-    left_key = _football_market_family_key(left)
-    right_key = _football_market_family_key(right)
-    return bool(left and right) and left_key == right_key
-
-
-def _football_filter_markets(markets, target_markets):
-    """Keep only markets matching the requested source labels."""
-    targets = list(target_markets or [])
-    if not targets:
-        return list(markets or [])
-    return [
-        market
-        for market in markets or []
-        if any(_football_market_names_match(market.get("market"), target) for target in targets)
-    ]
-
-
-def _football_missing_market_names(market_names, odds):
-    """Return inventory labels that do not have a complete saved market."""
-    missing = []
-    for market_name in dict.fromkeys(str(name).strip() for name in (market_names or [])):
-        if not market_name:
-            continue
-        if not any(
-            _football_market_names_match(market.get("market"), market_name)
-            and _football_market_has_coverage(market)
-            for market in odds or []
-        ):
-            missing.append(market_name)
-    return missing
-
-
-def _football_market_requires_label(market_name):
-    return _football_market_family(market_name) in _FOOTBALL_PARAMETERIZED_MARKETS
-
-
-def _football_expected_shape(market_name):
-    family = _football_market_family(market_name)
-    if family in {"full time result", "match winner"}:
-        return "home_draw_away"
-    if family in {"total goals", "total corners"}:
-        return "over_under"
-    if family in {"asian handicap", "asian handicap corners"}:
-        return "home_away"
-    if family == "both teams to score":
-        return "yes_no"
-    if family == "double chance":
-        return "double_chance"
-    if family in {
-        "draw no bet",
-        "first team to score",
-        "next goal",
-        "clean sheet",
-        "to win both halves",
-        "to score in both halves",
-        "to score a penalty",
-    }:
-        return "home_away_optional_no_goal"
-    if family == "correct score":
-        return "scores"
-    if family == "european handicap":
-        return "home_draw_away"
-    if family == "half time / full time":
-        return "combinations"
-    if family == "corners odd or even":
-        return "odd_even"
-    return "generic"
-
-
-def _football_allowed_fields(shape):
-    fields = {
-        "home_draw_away": {"home", "draw", "away"},
-        "over_under": {"over", "under"},
-        "home_away": {"home", "away"},
-        "yes_no": {"yes", "no"},
-        "double_chance": {"home_draw", "draw_away", "home_away"},
-        "home_away_optional_no_goal": {"home", "away", "no_goal"},
-        "scores": {"scores"},
-        "combinations": {"combinations"},
-        "odd_even": {"odd", "even"},
-        "generic": {
-            "home",
-            "draw",
-            "away",
-            "over",
-            "under",
-            "yes",
-            "no",
-            "odd",
-            "even",
-            "home_draw",
-            "draw_away",
-            "home_away",
-            "no_goal",
-            "scores",
-            "combinations",
-            "outcomes",
-        },
-    }
-    return fields.get(shape, fields["generic"])
-
-
-def _football_line_matches_shape(line, shape):
-    if shape == "home_draw_away":
-        return all(line.get(key) is not None for key in ("home", "draw", "away"))
-    if shape == "over_under":
-        return all(line.get(key) is not None for key in ("over", "under"))
-    if shape == "home_away":
-        return all(line.get(key) is not None for key in ("home", "away"))
-    if shape == "yes_no":
-        return all(line.get(key) is not None for key in ("yes", "no"))
-    if shape == "double_chance":
-        return all(line.get(key) is not None for key in ("home_draw", "draw_away", "home_away"))
-    if shape == "home_away_optional_no_goal":
-        return all(line.get(key) is not None for key in ("home", "away"))
-    if shape == "scores":
-        return bool(line.get("scores"))
-    if shape == "combinations":
-        return bool(line.get("combinations"))
-    if shape == "odd_even":
-        return all(line.get(key) is not None for key in ("odd", "even"))
-    return any(
-        key not in _FOOTBALL_COMMON_LINE_FIELDS and line.get(key) is not None for key in line
-    )
-
-
-def _football_combo_key(label, home, away):
-    text = str(label or "").strip()
-    if not text:
-        return ""
-    canonical = re.fullmatch(r"(home|draw|away)_(home|draw|away)", text.lower())
-    if canonical:
-        return f"{canonical.group(1)}_{canonical.group(2)}"
-    # Oddspedia renders HT/FT outcomes as either team names, 1/X/2, or
-    # Home - Draw. A spaced hyphen is an outcome separator here, unlike the
-    # unspaced hyphen in scorelines (which belong to Correct Score).
-    parts = re.split(r"\s*(?:/|→|>|\s+-\s+)\s*", text)
-    if len(parts) != 2:
-        return ""
-
-    mapped = []
-    for part in parts:
-        field = _football_outcome_field(part, home, away)
-        if field == "home":
-            mapped.append("home")
-        elif field == "away":
-            mapped.append("away")
-        elif field == "draw":
-            mapped.append("draw")
-        else:
-            return ""
-    return "_".join(mapped)
-
-
-def _football_score_key(label):
-    text = str(label or "").strip()
-    return text if re.fullmatch(r"\d+\s*-\s*\d+", text) else ""
-
-
-def _football_apply_market_contract(market, home="", away=""):
-    market_name = str(market.get("market", "")).strip()
-    family = _football_market_family(market_name)
-    shape = _football_expected_shape(market_name)
-    allowed = _football_allowed_fields(shape)
-    contracted_lines = []
-
-    for line in market.get("lines") or []:
-        if not isinstance(line, dict):
-            continue
-        next_line = {key: line[key] for key in _FOOTBALL_COMMON_LINE_FIELDS if key in line}
-        next_line.setdefault("type", "main")
-        next_line["label"] = str(next_line.get("label", "")).strip()
-        if not next_line["label"] and not _football_market_requires_label(market_name):
-            next_line["label"] = _FOOTBALL_DEFAULT_LINE_LABEL
-
-        for key in allowed:
-            if key in line:
-                next_line[key] = line[key]
-
-        if shape == "scores":
-            scores = dict(next_line.get("scores") or {})
-            for label, value in (line.get("outcomes") or {}).items():
-                key = _football_score_key(label)
-                if key:
-                    scores[key] = value
-            if scores:
-                next_line["scores"] = scores
-
-        if shape == "combinations":
-            next_line.pop("combinations", None)
-            combinations = {}
-            for label, value in (line.get("combinations") or {}).items():
-                key = _football_combo_key(label, home, away)
-                if key:
-                    combinations[key] = value
-            for label, value in (line.get("outcomes") or {}).items():
-                key = _football_combo_key(label, home, away)
-                if key:
-                    combinations[key] = value
-            if combinations:
-                next_line["combinations"] = combinations
-
-        if _football_market_requires_label(market_name):
-            missing = []
-            if not str(next_line.get("label", "")).strip():
-                missing.append("label")
-            if family == "european handicap":
-                missing.extend(
-                    field for field in ("home", "draw", "away") if next_line.get(field) is None
-                )
-            if missing:
-                logger.warning(
-                    "parameterized_football_line_skipped",
-                    market=market_name,
-                    label=next_line.get("label", ""),
-                    missing=missing,
-                )
-                continue
-        if _football_line_matches_shape(next_line, shape):
-            contracted_lines.append(next_line)
-
-    next_market = dict(market)
-    next_market["market"] = market_name
-    if contracted_lines:
-        next_market.pop("schema_status", None)
-        # A Full Time Result card represents one 1X2 price. Some Oddspedia
-        # cards keep additional period panes mounted after switching tabs;
-        # those rows must never be serialized as extra full-time lines.
-        if _football_market_family(market_name) in {"full time result", "match winner"}:
-            contracted_lines = contracted_lines[:1]
-        next_market["lines"] = contracted_lines
-    else:
-        fallback_lines = []
-        for line in market.get("lines") or []:
-            if not isinstance(line, dict):
-                continue
-            fallback = {key: line[key] for key in _FOOTBALL_COMMON_LINE_FIELDS if key in line}
-            fallback.setdefault("type", "main")
-            fallback["label"] = str(fallback.get("label", "")).strip()
-            if not fallback["label"] and not _football_market_requires_label(market_name):
-                fallback["label"] = _FOOTBALL_DEFAULT_LINE_LABEL
-            for key, value in line.items():
-                if key in _FOOTBALL_COMMON_LINE_FIELDS:
-                    continue
-                if value is not None:
-                    fallback[key] = value
-            if len(fallback) > len(_FOOTBALL_COMMON_LINE_FIELDS):
-                fallback["schema_status"] = "unmatched"
-                fallback_lines.append(fallback)
-        if shape != "generic":
-            return None
-        if not fallback_lines:
-            return None
-        next_market["schema_status"] = "unmatched"
-        next_market["lines"] = fallback_lines
-    return next_market
-
-
-def _normalize_football_odds(odds, home="", away=""):
-    """Map football named-outcome markets onto stable saved line fields."""
-    normalized = []
-    for market in odds or []:
-        if not isinstance(market, dict):
-            continue
-        if re.match(r"^\s*(?:1st|2nd)\s+half\s*-", str(market.get("market", "")), flags=re.I):
-            continue
-        next_market = dict(market)
-        next_lines = []
-        for line in market.get("lines") or []:
-            if not isinstance(line, dict):
-                continue
-            next_line = dict(line)
-            outcomes = next_line.pop("outcomes", None)
-            remaining = {}
-            if isinstance(outcomes, dict):
-                shape = _football_expected_shape(market.get("market", ""))
-                for label, value in outcomes.items():
-                    field = (
-                        ""
-                        if shape in {"scores", "combinations"}
-                        else _football_outcome_field(label, home, away)
-                    )
-                    if field and field not in next_line:
-                        next_line[field] = value
-                    else:
-                        remaining[str(label)] = value
-            if remaining:
-                shape = _football_expected_shape(market.get("market", ""))
-                if shape == "scores":
-                    next_line["scores"] = remaining
-                elif shape == "combinations":
-                    next_line["combinations"] = remaining
-                else:
-                    next_line["outcomes"] = remaining
-            next_lines.append(next_line)
-        next_market["lines"] = next_lines
-        contracted = _football_apply_market_contract(next_market, home=home, away=away)
-        if contracted:
-            normalized.append(contracted)
-    # Card and fallback extraction can describe the same market. Consolidate
-    # them here so callers never persist a fallback ``unmatched`` duplicate
-    # alongside its successfully normalized equivalent.
-    return _merge_odds_markets([], normalized)
-
-
-def _apply_football_selector_context(markets, selector_text):
-    selector = (selector_text or "").strip()
-    if not selector:
-        return markets
-
-    contextual = []
-    period_selector = selector.lower() in {"1st half", "2nd half"}
-    for market in markets or []:
-        market = dict(market)
-        name = str(market.get("market", "")).strip()
-        if period_selector:
-            if name and not name.lower().startswith(selector.lower()):
-                market["market"] = f"{selector} - {name}"
-        elif (
-            len(markets) == 1
-            and selector.lower() != name.lower()
-            and _football_expected_shape(name) == "generic"
-        ):
-            market["market"] = selector
-        contextual.append(market)
-    return contextual
-
-
-_FOOTBALL_NON_MARKET_SELECTOR_PATTERN = re.compile(
-    r"(?:\bmoney\s+on\b|\bbetting\s+data\b)", flags=re.I
-)
-
-
-def _is_football_market_selector_text(value):
-    """Return whether *value* looks like a market selector rather than a stats link."""
-    text = re.sub(r"\s+", " ", str(value or "")).strip()
-    return bool(text) and not _FOOTBALL_NON_MARKET_SELECTOR_PATTERN.search(text)
 
 
 _JS_FOOTBALL_MARKET_SELECTOR_TEXTS = """
@@ -2505,25 +1824,6 @@ def _wait_for_football_market_odds(driver, previous_signature, timeout=8.0):
     return []
 
 
-def _football_selector_rendered(markets, selector_text):
-    """Whether a selector produced the market it was asked to display."""
-    selector = str(selector_text or "").strip().lower()
-    if selector in {"1st half", "2nd half"}:
-        period_markets = [
-            market
-            for market in markets or []
-            if str(market.get("market", "")).strip().lower().startswith(f"{selector} -")
-        ]
-        return bool(period_markets) and all(
-            _football_market_has_coverage(market) for market in period_markets
-        )
-    return any(
-        str(market.get("market", "")).strip().lower() == selector
-        and _football_market_has_coverage(market)
-        for market in markets or []
-    )
-
-
 def _extract_football_odds(
     driver,
     base_odds,
@@ -2543,37 +1843,37 @@ def _extract_football_odds(
     def extraction_result(markets, unresolved):
         return (markets, unresolved) if return_unresolved else markets
 
-    odds = _normalize_football_odds(base_odds or [], home=home, away=away)
+    odds = normalize_football_odds(base_odds or [], home=home, away=away)
     target_markets = list(
         dict.fromkeys(str(name).strip() for name in (target_markets or []) if str(name).strip())
     )
     if _football_odds_not_yet_available(driver):
         logger.info("football_odds_not_yet_available", markets=len(odds))
-        unresolved = _football_missing_market_names(target_markets, odds)
+        unresolved = football_missing_market_names(target_markets, odds)
         return extraction_result(odds, unresolved)
     try:
         selector_texts = driver.execute_script(_JS_FOOTBALL_MARKET_SELECTOR_TEXTS) or []
     except WebDriverException as exc:
         logger.warning("football_market_selector_count_failed", error=str(exc))
-        unresolved = _football_missing_market_names(target_markets, odds)
+        unresolved = football_missing_market_names(target_markets, odds)
         return extraction_result(odds, unresolved)
 
     selector_texts = [
         text
         for text in selector_texts
-        if _is_football_market_selector_text(text)
+        if is_football_market_selector_text(text)
         and str(text).strip().lower() not in {"1st half", "2nd half"}
     ]
     if target_markets:
         selector_texts = [
             text
             for text in selector_texts
-            if any(_football_market_names_match(text, target) for target in target_markets)
-            and not _has_football_market(odds, text)
+            if any(football_market_names_match(text, target) for target in target_markets)
+            and not has_football_market(odds, text)
         ]
     if not selector_texts:
-        odds = _validate_european_handicap_coverage(odds)
-        unresolved = _football_missing_market_names(target_markets, odds)
+        odds = validate_european_handicap_coverage(odds)
+        unresolved = football_missing_market_names(target_markets, odds)
         return extraction_result(odds, unresolved)
 
     logger.info(
@@ -2600,9 +1900,9 @@ def _extract_football_odds(
                 # already been expanded by the initial page pass, or its delayed
                 # render may have added alternatives after the first read.
                 raw = driver.execute_script(_JS_EXTRACT_ODDS) or raw
-                candidate = _apply_football_selector_context(_build_odds(raw or []), market_text)
-                candidate = _normalize_football_odds(candidate, home=home, away=away)
-                if _football_selector_rendered(candidate, market_text):
+                candidate = apply_football_selector_context(build_odds(raw or []), market_text)
+                candidate = normalize_football_odds(candidate, home=home, away=away)
+                if football_selector_rendered(candidate, market_text):
                     markets = candidate
                     break
                 logger.debug(
@@ -2615,12 +1915,12 @@ def _extract_football_odds(
             if not markets:
                 logger.warning("football_market_selector_no_lines", market=market_text)
                 unresolved_markets.append(market_text)
-            odds = _merge_odds_markets(odds, markets)
+            odds = merge_odds_markets(odds, markets)
         except WebDriverException as exc:
             logger.warning(
                 "football_market_selector_extract_failed", market=market_text, error=str(exc)
             )
-            if not _has_football_market(odds, market_text):
+            if not has_football_market(odds, market_text):
                 unresolved_markets.append(market_text)
 
     if unresolved_markets and not odds:
@@ -2633,27 +1933,13 @@ def _extract_football_odds(
             "Unresolved football odds markets: " + ", ".join(unresolved_markets)
         )
     if target_markets:
-        unresolved_markets = _football_missing_market_names(target_markets, odds)
+        unresolved_markets = football_missing_market_names(target_markets, odds)
     logger.info("football_odds_after_market_iteration", markets=len(odds))
-    odds = _validate_european_handicap_coverage(odds)
+    odds = validate_european_handicap_coverage(odds)
     return extraction_result(odds, unresolved_markets)
 
 
 # ── Score parsing ─────────────────────────────────────────────────────────────
-
-
-def _parse_set_scores(text):
-    """Extract set-by-set scores from a text string (e.g. '6-4 6-2').
-
-    Returns (set_scores, home_sets, away_sets).
-    """
-    pattern = re.findall(r"\b([0-7])-([0-7])\b", text[:500])
-    if not pattern:
-        return None, "", ""
-    set_scores = [{"home": int(a), "away": int(b)} for a, b in pattern[:5]]
-    home_sets = sum(1 for a, b in pattern if int(a) > int(b))
-    away_sets = sum(1 for a, b in pattern if int(b) > int(a))
-    return set_scores, home_sets, away_sets
 
 
 def _parse_football_score_payload(value):
@@ -2760,122 +2046,7 @@ def _football_score_from_meta(meta):
 # ── Live odds extraction ──────────────────────────────────────────────────────
 
 
-def _extract_live_odds(driver):
-    """Click the 'Live Odds' btn-group-item button and extract the odds shown.
-
-    These are in-play odds recorded at the time of scraping (different from
-    pre-match odds which are shown by default).  Returns an empty list when
-    the button is not present (finished or pre-match-only events).
-    """
-    if not _click_btn_group_item(driver, "live odds"):
-        return []
-    # Expand hidden alternative lines in the live-odds view as well
-    _expand_all_odds_lines(driver)
-    raw = driver.execute_script(_JS_EXTRACT_ODDS)
-    live = _build_odds(raw or [])
-    metrics = get_metrics()
-    if live:
-        metrics.record_odds_extraction(success=True, is_live=True)
-        for mkt in live:
-            metrics.record_odds_market(mkt.get("market", "unknown"))
-    else:
-        metrics.record_odds_extraction(success=False, is_live=True)
-    logger.info("live_odds_extracted", markets=len(live))
-    # Restore the default pre-match view so further extractions are unaffected
-    _click_btn_group_item(driver, "pre-match odds")
-    return live
-
-
 # ── Stats extraction ──────────────────────────────────────────────────────────
-
-
-def _extract_stats(driver):
-    """Click the Statistics tab (if present) and extract match stats.
-
-    Returns a list of dicts with keys ``name``, ``home``, ``away``.
-    """
-    _click_tab(driver, "statistics")
-    raw = driver.execute_script(_JS_EXTRACT_STATS) or {}
-
-    source = raw.get("source", "none")
-    data = raw.get("stats", [])
-
-    if source == "none" or not data:
-        return []
-
-    logger.info(
-        "stats_extracted", source=source, count=len(data) if isinstance(data, list) else "unknown"
-    )
-
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        return [{"name": k, "home": v, "away": ""} for k, v in data.items()]
-    return []
-
-
-def _extract_point_by_point(driver):
-    """Extract tennis point-by-point timeline by iterating set dropdowns."""
-    has_tennis_timeline = driver.execute_script(
-        """
-        return !!document.querySelector('.event-timeline .highlights-tennis');
-    """
-    )
-    if not has_tennis_timeline:
-        return []
-
-    triggers_count = (
-        driver.execute_script(
-            """
-        return document.querySelectorAll(
-            '.highlights-tennis .event-timeline-dropdown__trigger'
-        ).length;
-    """
-        )
-        or 0
-    )
-
-    sets = []
-    seen = set()
-
-    for idx in range(int(triggers_count)):
-        # Some pages use accordion behavior where clicking an already-open set
-        # collapses it. We therefore allow a second toggle attempt if no games
-        # are visible after the first click.
-        set_data = None
-        for attempt in range(2):
-            driver.execute_script(
-                """
-                var i = arguments[0];
-                var btns = document.querySelectorAll('.highlights-tennis .event-timeline-dropdown__trigger');
-                if (!btns || i >= btns.length) return false;
-                btns[i].click();
-                return true;
-            """,
-                idx,
-            )
-            time.sleep(0.25)
-
-            # Poll briefly for async dropdown content rendering.
-            for _ in range(7):
-                set_data = driver.execute_script(_JS_EXTRACT_POINT_BY_POINT_SET_BY_INDEX, idx)
-                if set_data and set_data.get("games"):
-                    break
-                time.sleep(0.2)
-            if set_data and set_data.get("games"):
-                break
-
-        if not set_data:
-            continue
-
-        key = f"{set_data.get('set', '')}|{set_data.get('set_score', '')}"
-        if key in seen:
-            continue
-        seen.add(key)
-        sets.append(set_data)
-
-    logger.info("point_by_point_extracted", sets=len(sets))
-    return sets
 
 
 def _extract_overall_stats(driver):
@@ -3099,36 +2270,18 @@ def scrape_match(
         or match_info.get("league", "")
     )
     date = meta.get("date") or match_info.get("date", "")
-    carried_odds = _normalize_football_odds(previous_odds or [], home=home, away=away)
+    carried_odds = normalize_football_odds(previous_odds or [], home=home, away=away)
     targeted_market_retry = sport == "football" and bool(carried_odds) and bool(retry_market_names)
 
-    # Tennis score fields are sport-specific. Football should rely on shared
-    # metadata/status/odds/stats rather than fake set data.
+    # Set-based score fields stay in the payload contract but are always empty:
+    # this scraper handles football only.
     home_sets = ""
     away_sets = ""
     set_scores = None
-    if sport == "tennis":
-        home_sets = meta.get("home_sets", "")
-        away_sets = meta.get("away_sets", "")
-        set_scores = meta.get("set_scores")
-
-    if sport == "tennis" and not home_sets and not away_sets:
-        header_text = (
-            driver.execute_script(
-                """
-            var h = document.querySelector(
-                '.match-header, [class*="match-header"], header, [class*="event-header"]'
-            );
-            return h ? h.textContent.trim().replace(/\\s+/g, ' ').substring(0, 500) : '';
-        """
-            )
-            or ""
-        )
-        set_scores, home_sets, away_sets = _parse_set_scores(header_text)
 
     # Fallback: try DOM-level status extraction when Vuex/post-match returns empty.
     # If the detail page still has no status, retain the listing status collected
-    # in phase 1. This keeps tennis aligned with football and lets us decide
+    # in phase 1 so we can decide
     # later which statuses should be scraped without losing the source value.
     if not meta.get("status"):
         dom_status = (
@@ -3200,10 +2353,10 @@ def scrape_match(
     # Odds. On a targeted retry, preserve the already extracted markets and
     # only use the current DOM's base read for the named missing markets.
     raw_markets = [] if odds_unavailable else driver.execute_script(_JS_EXTRACT_ODDS)
-    current_odds = _normalize_football_odds(_build_odds(raw_markets or []), home=home, away=away)
+    current_odds = normalize_football_odds(build_odds(raw_markets or []), home=home, away=away)
     if targeted_market_retry:
-        current_odds = _football_filter_markets(current_odds, retry_market_names)
-        odds = _merge_odds_markets(list(carried_odds), current_odds)
+        current_odds = football_filter_markets(current_odds, retry_market_names)
+        odds = merge_odds_markets(list(carried_odds), current_odds)
     else:
         odds = current_odds
     extraction_error = None
@@ -3250,7 +2403,7 @@ def scrape_match(
         if ho and ao:
             line = {
                 "type": "main",
-                "label": _FOOTBALL_DEFAULT_LINE_LABEL,
+                "label": FOOTBALL_DEFAULT_LINE_LABEL,
                 "home": float(ho),
                 "away": float(ao),
             }
@@ -3320,7 +2473,7 @@ def scrape_match(
                     total_markets=total_markets,
                 )
         else:
-            coverage_error = _football_odds_coverage_error(
+            coverage_error = football_odds_coverage_error(
                 odds,
                 total_markets=total_markets,
                 odds_unavailable=odds_unavailable,
@@ -3328,8 +2481,7 @@ def scrape_match(
             if coverage_error:
                 missing_market_names = list(
                     dict.fromkeys(
-                        _football_missing_market_names(market_names, odds)
-                        + list(unresolved_markets)
+                        football_missing_market_names(market_names, odds) + list(unresolved_markets)
                     )
                 )
                 logger.warning(
@@ -3372,13 +2524,11 @@ def scrape_match(
     else:
         metrics.record_odds_extraction(success=False)
 
-    # Live odds are tennis-only for this scraper. Football pages can expose
-    # in-play tabs, but we intentionally do not scrape them.
-    live_odds = _extract_live_odds(driver) if sport == "tennis" else []
-
-    # Statistics
-    stats = _extract_stats(driver) if sport == "tennis" else []
-    point_by_point = _extract_point_by_point(driver) if sport == "tennis" else []
+    # Football pages can expose in-play tabs, but live odds, set statistics and
+    # point-by-point data are not scraped; the keys stay empty for the contract.
+    live_odds = []
+    stats = []
+    point_by_point = []
     overall_stats = _extract_overall_stats(driver)
     if sport == "football":
         live_stats = []
@@ -3500,7 +2650,7 @@ def _build_result_from_listing(match_info, sport=None):
     if ho and ao:
         line = {
             "type": "main",
-            "label": _FOOTBALL_DEFAULT_LINE_LABEL,
+            "label": FOOTBALL_DEFAULT_LINE_LABEL,
             "home": float(ho),
             "away": float(ao),
         }

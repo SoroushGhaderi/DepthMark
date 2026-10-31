@@ -79,8 +79,6 @@ class FotMobRequestSettings(BaseModel):
 class FotMobScrapingSettings(BaseModel):
     """Scraping behaviour settings."""
 
-    max_workers: int = 2
-    enable_parallel: bool = True
     metrics_update_interval: int = 20
     filter_by_status: bool = True
     allowed_match_statuses: tuple[str, ...] = (
@@ -217,8 +215,6 @@ NESTED_ENV_ALIASES: dict[str, tuple[str, ...]] = {
     "FOTMOB_REQUEST_TIMEOUT": ("fotmob", "request", "timeout"),
     "FOTMOB_DELAY_MIN": ("fotmob", "request", "delay_min"),
     "FOTMOB_DELAY_MAX": ("fotmob", "request", "delay_max"),
-    "FOTMOB_MAX_WORKERS": ("fotmob", "scraping", "max_workers"),
-    "FOTMOB_ENABLE_PARALLEL": ("fotmob", "scraping", "enable_parallel"),
     "FOTMOB_ENABLE_CACHING": ("fotmob", "scraping", "enable_caching"),
     "FOTMOB_CACHE_TTL_HOURS": ("fotmob", "scraping", "cache_ttl_hours"),
     "FOTMOB_METRICS_UPDATE_INTERVAL": ("fotmob", "scraping", "metrics_update_interval"),

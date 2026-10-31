@@ -330,13 +330,14 @@ Unified pydantic-settings based configuration — single source of truth for all
 **FotMob scraping settings** (from `config.yaml` with env-var overrides):
 - `fotmob.api.base_url`, `fotmob.api.user_agents`, `fotmob.api.x_mas_token`
 - `fotmob.request.timeout`, `fotmob.request.delay_min`, `fotmob.request.delay_max`
-- `fotmob.scraping.max_workers`, `fotmob.scraping.enable_parallel`
+- `fotmob.scraping.timezone`, `fotmob.scraping.filter_by_status`,
+  `fotmob.scraping.allowed_match_statuses` (FotMob always scrapes one match at a time)
 - `fotmob.storage.bronze_path`, `fotmob.storage.enabled`
 - `fotmob.retry.*`, `fotmob.logging.*`, `fotmob.data_quality.*`, `fotmob.proxy.*`
 
 `config/settings.py` is the only reader of configuration. Precedence, highest
 first: process environment, the documented flat names in
-`NESTED_ENV_ALIASES` (`FOTMOB_X_MAS_TOKEN`, `FOTMOB_MAX_WORKERS`,
+`NESTED_ENV_ALIASES` (`FOTMOB_X_MAS_TOKEN`, `FOTMOB_REQUEST_TIMEOUT`,
 `FOTMOB_TIMEZONE`, `ODDSPEDIA_MIN_DELAY`, `ODDSPEDIA_CHROME_BIN`/`CHROME_BIN`,
 ...), `.env` in the checkout and its parent (the checkout wins), the `fotmob` and
 `oddspedia` sections of `config.yaml`, then defaults. Any nested field can also

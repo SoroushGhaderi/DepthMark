@@ -20,14 +20,14 @@ def test_documented_flat_names_set_nested_fields_with_validation(monkeypatch, tm
         monkeypatch,
         tmp_path,
         FOTMOB_REQUEST_TIMEOUT="45",
-        FOTMOB_ENABLE_PARALLEL="false",
+        FOTMOB_FILTER_BY_STATUS="false",
         FOTMOB_ALLOWED_MATCH_STATUSES="FT, AET",
         ODDSPEDIA_MIN_DELAY="1.5",
         FOTMOB_TIMEZONE="UTC",
     )
 
     assert settings.fotmob.request.timeout == 45
-    assert settings.fotmob.scraping.enable_parallel is False
+    assert settings.fotmob.scraping.filter_by_status is False
     assert settings.fotmob.scraping.allowed_match_statuses == ("FT", "AET")
     assert settings.fotmob.scraping.timezone == "UTC"
     assert settings.oddspedia.min_delay == 1.5
@@ -65,7 +65,7 @@ def test_only_scraper_sections_are_read_from_yaml(monkeypatch, tmp_path) -> None
 
 def test_malformed_values_fail_instead_of_being_coerced(monkeypatch, tmp_path) -> None:
     with pytest.raises(ValidationError):
-        _settings(monkeypatch, tmp_path, FOTMOB_ENABLE_PARALLEL="maybe")
+        _settings(monkeypatch, tmp_path, FOTMOB_FILTER_BY_STATUS="maybe")
 
 
 def test_deployment_selector_is_unset_until_configured(monkeypatch, tmp_path) -> None:

@@ -49,8 +49,6 @@ fotmob:
     delay_max: 4.0
 
   scraping:
-    max_workers: 2
-    enable_parallel: true
     enable_caching: true
     cache_ttl_hours: 24
     metrics_update_interval: 20

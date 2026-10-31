@@ -7,25 +7,27 @@ from unittest.mock import patch
 from src.oddspedia.scraping.match_scraper import (
     _JS_EXTRACT_ODDS,
     _JS_FOOTBALL_MARKET_SELECTOR_TEXTS,
-    FootballOddsCoverageError,
-    FootballOddsRetryableError,
-    FootballOddsUnavailableError,
     FootballScoreUnavailableError,
     MatchIdentityMismatchError,
-    _apply_football_selector_context,
     _archived_match_url,
     _expand_football_market_card_lines,
     _expand_football_market_cards,
     _extract_football_odds,
-    _football_missing_market_names,
-    _football_odds_coverage_error,
     _football_odds_not_yet_available,
-    _football_selector_rendered,
-    _is_football_market_selector_text,
-    _merge_odds_markets,
-    _normalize_football_odds,
     _parse_football_score_payload,
     scrape_match,
+)
+from src.oddspedia.scraping.odds_contract import (
+    FootballOddsCoverageError,
+    FootballOddsRetryableError,
+    FootballOddsUnavailableError,
+    apply_football_selector_context,
+    football_missing_market_names,
+    football_odds_coverage_error,
+    football_selector_rendered,
+    is_football_market_selector_text,
+    merge_odds_markets,
+    normalize_football_odds,
 )
 from src.oddspedia.scraping.utils import load_json, save_json
 
@@ -93,12 +95,12 @@ class FootballMatchSchemaTests(unittest.TestCase):
 
         self.assertIn(
             "4/6",
-            _football_odds_coverage_error(odds, total_markets=6),
+            football_odds_coverage_error(odds, total_markets=6),
         )
-        self.assertIsNone(_football_odds_coverage_error(odds, total_markets=4))
+        self.assertIsNone(football_odds_coverage_error(odds, total_markets=4))
         self.assertIn(
             "2/4",
-            _football_odds_coverage_error(odds[:2], total_markets=4),
+            football_odds_coverage_error(odds[:2], total_markets=4),
         )
 
     def test_missing_market_inventory_returns_only_uncovered_market_names(self):
@@ -114,7 +116,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         ]
 
         self.assertEqual(
-            _football_missing_market_names(
+            football_missing_market_names(
                 ["Full Time Result", "Both Teams to Score", "Corners Odd or Even"],
                 odds,
             ),
@@ -568,10 +570,6 @@ class FootballMatchSchemaTests(unittest.TestCase):
                 )
 
     @patch("src.oddspedia.scraping.match_scraper.now_iso", return_value="2026-07-09T12:00:00Z")
-    @patch(
-        "src.oddspedia.scraping.match_scraper._extract_live_odds",
-        side_effect=AssertionError("football must not scrape live odds"),
-    )
     @patch("src.oddspedia.scraping.match_scraper._extract_overall_stats")
     @patch("src.oddspedia.scraping.match_scraper._expand_all_odds_lines", return_value=1)
     @patch("src.oddspedia.scraping.match_scraper._scroll_page")
@@ -584,7 +582,6 @@ class FootballMatchSchemaTests(unittest.TestCase):
         _scroll_page,
         _expand,
         extract_overall_stats,
-        _extract_live_odds,
         _now_iso,
     ):
         extract_overall_stats.return_value = {
@@ -725,7 +722,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             },
         ]
 
-        normalized = _normalize_football_odds(odds, home="Canada", away="Morocco")
+        normalized = normalize_football_odds(odds, home="Canada", away="Morocco")
 
         self.assertEqual(
             normalized[0]["lines"][0],
@@ -753,7 +750,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        normalized = _normalize_football_odds(odds, home="Switzerland", away="Algeria")
+        normalized = normalize_football_odds(odds, home="Switzerland", away="Algeria")
 
         self.assertEqual(
             normalized[0]["lines"],
@@ -842,7 +839,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             ],
         }
 
-        merged = _merge_odds_markets([], [unmatched, normalized])
+        merged = merge_odds_markets([], [unmatched, normalized])
 
         self.assertEqual(len(merged), 1)
         self.assertEqual(len(merged[0]["lines"]), 1)
@@ -1110,7 +1107,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         with open(fixture_path, encoding="utf-8") as fixture_file:
             fixture = json.load(fixture_file)
 
-        normalized = _normalize_football_odds(fixture["expanded"], home="Canada", away="Morocco")
+        normalized = normalize_football_odds(fixture["expanded"], home="Canada", away="Morocco")
 
         self.assertEqual(normalized[0]["lines"], fixture["expanded"][0]["lines"])
 
@@ -1126,7 +1123,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        normalized = _normalize_football_odds(odds, home="PAEEK FC", away="Nea Salamis")
+        normalized = normalize_football_odds(odds, home="PAEEK FC", away="Nea Salamis")
 
         self.assertEqual(normalized[0]["lines"], odds[0]["lines"])
 
@@ -1181,7 +1178,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        normalized = _normalize_football_odds(odds, home="Canada", away="Morocco")
+        normalized = normalize_football_odds(odds, home="Canada", away="Morocco")
 
         self.assertEqual(normalized[0]["lines"][0]["scores"], {"1-0": 7.0, "0-0": 9.5})
         self.assertNotIn("outcomes", normalized[0]["lines"][0])
@@ -1200,7 +1197,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        normalized = _normalize_football_odds(odds, home="CA Chaco For Ever", away="Godoy Cruz")
+        normalized = normalize_football_odds(odds, home="CA Chaco For Ever", away="Godoy Cruz")
 
         self.assertEqual(
             normalized,
@@ -1233,7 +1230,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             },
         ]
 
-        normalized = _normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
+        normalized = normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
 
         self.assertEqual(len(normalized), 1)
         self.assertEqual(normalized[0]["market"], "Total Goals")
@@ -1255,7 +1252,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        normalized = _normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
+        normalized = normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
 
         self.assertEqual(normalized[0]["market"], "Half Time / Full Time")
         self.assertEqual(
@@ -1288,7 +1285,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        normalized = _normalize_football_odds(odds, home="Canada", away="Morocco")
+        normalized = normalize_football_odds(odds, home="Canada", away="Morocco")
 
         self.assertEqual(
             normalized[0]["lines"][0]["combinations"],
@@ -1306,7 +1303,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
         )
 
     def test_football_half_time_full_time_preserves_canonical_combination_keys(self):
-        normalized = _normalize_football_odds(
+        normalized = normalize_football_odds(
             [
                 {
                     "market": "Half Time / Full Time",
@@ -1345,7 +1342,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        contextual = _apply_football_selector_context(markets, "Asian Handicap")
+        contextual = apply_football_selector_context(markets, "Asian Handicap")
 
         self.assertEqual(contextual[0]["market"], "Both Teams to Score")
 
@@ -1363,8 +1360,8 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        self.assertFalse(_football_selector_rendered(stale, "Total Corners"))
-        self.assertTrue(_football_selector_rendered(rendered, "Total Corners"))
+        self.assertFalse(football_selector_rendered(stale, "Total Corners"))
+        self.assertTrue(football_selector_rendered(rendered, "Total Corners"))
 
     def test_period_selector_requires_period_context(self):
         markets = [
@@ -1374,8 +1371,8 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        self.assertTrue(_football_selector_rendered(markets, "1st Half"))
-        self.assertFalse(_football_selector_rendered(markets, "2nd Half"))
+        self.assertTrue(football_selector_rendered(markets, "1st Half"))
+        self.assertFalse(football_selector_rendered(markets, "2nd Half"))
 
     def test_football_world_cup_market_shapes_are_explicit(self):
         odds = [
@@ -1461,7 +1458,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             },
         ]
 
-        normalized = _normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
+        normalized = normalize_football_odds(odds, home="USA", away="Bosnia-Herzegovina")
         by_market = {market["market"]: market["lines"][0] for market in normalized}
 
         self.assertNotIn("1st Half - Total Goals", by_market)
@@ -1486,8 +1483,8 @@ class FootballMatchSchemaTests(unittest.TestCase):
         )
 
     def test_market_discovery_excludes_money_on_betting_data_links(self):
-        self.assertFalse(_is_football_market_selector_text("44% of Money on Draw Betting data"))
-        self.assertTrue(_is_football_market_selector_text("Draw No Bet"))
+        self.assertFalse(is_football_market_selector_text("44% of Money on Draw Betting data"))
+        self.assertTrue(is_football_market_selector_text("Draw No Bet"))
         self.assertIn(r"\bmoney\s+on\b", _JS_FOOTBALL_MARKET_SELECTOR_TEXTS)
         self.assertIn(r"\bbetting\s+data\b", _JS_FOOTBALL_MARKET_SELECTOR_TEXTS)
 
@@ -1532,7 +1529,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             },
         ]
 
-        normalized = _normalize_football_odds(odds, home="Brazil", away="Norway")
+        normalized = normalize_football_odds(odds, home="Brazil", away="Norway")
 
         self.assertEqual([market["market"] for market in normalized], ["European Handicap"])
 
@@ -1550,7 +1547,7 @@ class FootballMatchSchemaTests(unittest.TestCase):
             }
         ]
 
-        normalized = _normalize_football_odds(odds, home="Brazil", away="Norway")
+        normalized = normalize_football_odds(odds, home="Brazil", away="Norway")
 
         self.assertEqual(
             normalized[0]["lines"],

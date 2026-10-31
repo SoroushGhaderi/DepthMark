@@ -10,8 +10,10 @@ from src.oddspedia.scraping import cli as main
 from src.oddspedia.scraping.audit import DateAudit
 from src.oddspedia.scraping.manifest import ScrapeManifest
 from src.oddspedia.scraping.match_collector import DiscoveryResult
-from src.oddspedia.scraping.match_scraper import FootballOddsCoverageError
 from src.oddspedia.scraping.metrics import Metrics
+from src.oddspedia.scraping.odds_contract import (
+    FootballOddsCoverageError,
+)
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.scraping.utils import DataValidationError, save_json
 
