@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_pressure_absorber (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_pressure_absorber (
     match_id,
     match_date,
     home_team_id,

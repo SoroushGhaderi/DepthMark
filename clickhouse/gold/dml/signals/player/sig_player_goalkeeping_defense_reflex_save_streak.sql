@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_reflex_save_streak (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_reflex_save_streak (
     match_id,
     match_date,
     home_team_id,

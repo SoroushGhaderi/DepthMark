@@ -1,12 +1,5 @@
-import os
-import sys
 import unittest
 from unittest.mock import patch
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
 
 from src.oddspedia.scraping.utils import safe_get
 
@@ -40,11 +33,15 @@ class SafeGetTests(unittest.TestCase):
             driver_obj.title = "Oddspedia Football"
             return True
 
-        with patch("src.oddspedia.scraping.utils.wait_for_cloudflare", side_effect=wait_for_cloudflare):
+        with patch(
+            "src.oddspedia.scraping.utils.wait_for_cloudflare", side_effect=wait_for_cloudflare
+        ):
             result = safe_get(driver, "https://oddspedia.com/football", retries=2)
 
         self.assertTrue(result)
-        self.assertEqual(driver.get_calls, ["https://oddspedia.com/football", "https://oddspedia.com/football"])
+        self.assertEqual(
+            driver.get_calls, ["https://oddspedia.com/football", "https://oddspedia.com/football"]
+        )
         self.assertEqual(driver.reconnect_calls, 1)
 
     @patch("src.oddspedia.scraping.utils.random_delay")

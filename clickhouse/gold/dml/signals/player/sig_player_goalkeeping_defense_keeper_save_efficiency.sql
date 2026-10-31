@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_keeper_save_efficiency (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_keeper_save_efficiency (
     match_id,
     match_date,
     home_team_id,

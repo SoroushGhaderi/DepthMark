@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, Optional, Sequence
+from typing import Any
 
 import pytest
 import yaml
 
-from scripts.quality import check_signal_catalogs
+from src.fotmob.commands import check_signal_catalogs
 from src.fotmob.gold.signal_catalog import (
     INDEX_END_MARKER,
     INDEX_FILE_NAME,
@@ -28,9 +29,9 @@ TEAM_IDENTITY = ["match_id", "triggered_side"]
 PLAYER_IDENTITY = ["match_id", "triggered_player_id", "triggered_team_id"]
 
 
-def _frontmatter(signal_id: str, **overrides: Any) -> Dict[str, Any]:
+def _frontmatter(signal_id: str, **overrides: Any) -> dict[str, Any]:
     entity = signal_id.split("_")[1]
-    frontmatter: Dict[str, Any] = {
+    frontmatter: dict[str, Any] = {
         "signal_id": signal_id,
         "status": "active",
         "entity": entity,
@@ -71,10 +72,10 @@ class SignalProject:
         self,
         signal_id: str,
         *,
-        frontmatter: Optional[Dict[str, Any]] = None,
-        hashed_columns: Optional[Sequence[str]] = None,
-        order_by: Optional[str] = None,
-        ddl_columns: Optional[Sequence[str]] = None,
+        frontmatter: dict[str, Any] | None = None,
+        hashed_columns: Sequence[str] | None = None,
+        order_by: str | None = None,
+        ddl_columns: Sequence[str] | None = None,
         write_sql: bool = True,
         write_ddl: bool = True,
         write_catalog: bool = True,
@@ -105,7 +106,7 @@ class SignalProject:
                 f"ORDER BY ({order_by or 'match_id, signal_instance_id'});\n"
             )
 
-    def write_catalog(self, signal_id: str, frontmatter: Dict[str, Any], body: str = "") -> None:
+    def write_catalog(self, signal_id: str, frontmatter: dict[str, Any], body: str = "") -> None:
         text = "---\n" + yaml.safe_dump(frontmatter, sort_keys=False) + "---\n"
         (self.catalog_dir / f"{signal_id}.md").write_text(
             text + (body or f"# {signal_id}\n"), encoding="utf-8"
@@ -209,8 +210,7 @@ def test_grain_must_match_entity(project: SignalProject) -> None:
     project.write_catalog(PLAYER_SIGNAL, _frontmatter(PLAYER_SIGNAL, grain="match_team"))
 
     assert project.violations() == [
-        f"catalogs/{PLAYER_SIGNAL}.md: grain 'match_team' must be 'match_player' "
-        "for player signals"
+        f"catalogs/{PLAYER_SIGNAL}.md: grain 'match_team' must be 'match_player' for player signals"
     ]
 
 
@@ -239,6 +239,16 @@ def test_asset_paths_must_follow_convention_and_exist(tmp_path: Path) -> None:
     assert (
         f"catalogs/{PLAYER_SIGNAL}.md: asset_paths.table must be 'gold_signals.{PLAYER_SIGNAL}'"
     ) in violations
+
+
+def test_signal_sql_must_insert_into_its_catalog_table(project: SignalProject) -> None:
+    sql_path = project.root / f"clickhouse/gold/dml/signals/match/{MATCH_SIGNAL}.sql"
+    sql_path.write_text(f"INSERT INTO gold.{MATCH_SIGNAL} SELECT 1;\n")
+
+    assert project.violations() == [
+        f"catalogs/{MATCH_SIGNAL}.md: signal SQL must INSERT INTO "
+        f"gold_signals.{MATCH_SIGNAL}, not gold.{MATCH_SIGNAL}"
+    ]
 
 
 def test_signal_sql_and_ddl_without_catalog_are_violations(project: SignalProject) -> None:

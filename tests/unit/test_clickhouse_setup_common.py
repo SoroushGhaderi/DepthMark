@@ -1,7 +1,8 @@
 from pathlib import Path
 
-from scripts import clickhouse_setup_common
-from scripts.clickhouse_setup_common import get_layer_sql_files
+from config.settings import Settings
+from src.warehouse import setup as clickhouse_setup_common
+from src.warehouse.setup import get_layer_sql_files
 
 
 def test_layer_setup_excludes_optimization_sql(tmp_path: Path):
@@ -46,8 +47,10 @@ def test_clickhouse_user_grants_are_database_scoped_and_not_all(monkeypatch):
 def test_local_bootstrap_gate_reads_dotenv_and_fails_closed(monkeypatch, tmp_path):
     for name in ("DEPTHMARK_ENV", "ENVIRONMENT", "SCRAPER_ENV"):
         monkeypatch.delenv(name, raising=False)
-    monkeypatch.setattr(clickhouse_setup_common, "project_root", tmp_path)
     env_file = tmp_path / ".env"
+    monkeypatch.setattr(
+        clickhouse_setup_common, "get_settings", lambda: Settings(_env_file=env_file)
+    )
 
     env_file.write_text("DEPTHMARK_ENV=production\n", encoding="utf-8")
     assert not clickhouse_setup_common.is_local_development_environment()

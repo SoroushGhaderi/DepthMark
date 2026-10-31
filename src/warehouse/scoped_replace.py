@@ -3,12 +3,11 @@
 import re
 import uuid
 from dataclasses import dataclass
-from typing import Optional
 
+from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.databases import STAGING_DATABASE
 from src.warehouse.publication import COMMITTING, FAILED, PUBLISHED, PublicationLog
 from src.warehouse.scope import WarehouseExecutionScope
-from src.integrations.clickhouse.client import ClickHouseClient
 
 SAFE_QUALIFIED_TABLE_RE = re.compile(
     r"^(?P<database>[a-zA-Z_][a-zA-Z0-9_]*)\.(?P<table>[a-zA-Z_][a-zA-Z0-9_]*)$"
@@ -33,8 +32,8 @@ class PreparedReplacement:
     job: ScopedSqlJob
     calculation_table: str
     replacement_table: str
-    replacement_row_count: Optional[int]
-    target_partition_row_count: Optional[int] = None
+    replacement_row_count: int | None
+    target_partition_row_count: int | None = None
 
 
 def replace_insert_target(sql: str, target_table: str, stage_table: str) -> str:
@@ -56,13 +55,13 @@ class ScopedReplacementBatch:
 
     def __init__(
         self,
-        client: Optional[ClickHouseClient],
+        client: ClickHouseClient | None,
         scope: WarehouseExecutionScope,
         *,
         dry_run: bool = False,
         log,
-        run_id: Optional[str] = None,
-        publication: Optional[PublicationLog] = None,
+        run_id: str | None = None,
+        publication: PublicationLog | None = None,
     ):
         self.client = client
         self.scope = scope
@@ -133,7 +132,7 @@ class ScopedReplacementBatch:
             try:
                 self._record_publication(FAILED, target_tables, committed, error=str(error))
             except Exception as status_error:
-                self.log.error(
+                self.log.exception(
                     "Scoped publication failure status could not be recorded",
                     scope=self.scope.label,
                     error=str(status_error),
@@ -146,9 +145,9 @@ class ScopedReplacementBatch:
         self,
         status: str,
         tables: list[str],
-        committed: Optional[list[str]] = None,
+        committed: list[str] | None = None,
         *,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         if self.publication is None:
             return

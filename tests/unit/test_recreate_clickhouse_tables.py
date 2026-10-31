@@ -1,5 +1,5 @@
-from scripts.maintenance import recreate_clickhouse_tables
-from scripts.maintenance.recreate_clickhouse_tables import RELOAD_HINTS, run
+from src.warehouse.commands import recreate_tables as recreate_clickhouse_tables
+from src.warehouse.commands.recreate_tables import RELOAD_HINTS, run
 
 
 class _RecreationClient:

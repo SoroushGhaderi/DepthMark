@@ -8,7 +8,7 @@ import json
 import math
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from src.common.logging import get_logger
 
@@ -30,7 +30,7 @@ class DeadLetterQueue:
         self.logger = logger
 
     def send_to_dlq(
-        self, table: str, data: Any, error: str, context: Optional[Dict[str, Any]] = None
+        self, table: str, data: Any, error: str, context: dict[str, Any] | None = None
     ) -> Path:
         """
         Send failed record to DLQ.
@@ -63,12 +63,14 @@ class DeadLetterQueue:
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
             self.logger.warning(
-                f"Sent failed record to DLQ: {dlq_file.name} "
-                f"(table: {table}, rows: {record['row_count']})"
+                "Sent failed record to DLQ: %s (table: %s, rows: %s)",
+                dlq_file.name,
+                table,
+                record["row_count"],
             )
             return dlq_file
         except Exception as e:
-            self.logger.error(f"Failed to write to DLQ file {dlq_file}: {e}")
+            self.logger.error("Failed to write to DLQ file %s: %s", dlq_file, e)
             raise
 
     def _serialize_data(self, data: Any) -> Any:
@@ -125,7 +127,8 @@ class DeadLetterQueue:
         try:
             if pd.isna(value):
                 return None
-        except Exception:
+        except (TypeError, ValueError):
+            # pd.isna is ambiguous for array-likes; keep the value as is.
             pass
         return value
 
@@ -156,8 +159,8 @@ class DeadLetterQueue:
         return 1
 
     def get_dlq_records(
-        self, table: Optional[str] = None, date: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, table: str | None = None, date: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Read records from DLQ files.
 
@@ -181,16 +184,16 @@ class DeadLetterQueue:
 
         for dlq_file in self.dlq_path.glob(pattern):
             try:
-                with open(dlq_file, "r", encoding="utf-8") as f:
+                with open(dlq_file, encoding="utf-8") as f:
                     for line in f:
                         if line.strip():
                             records.append(json.loads(line))
             except Exception as e:
-                self.logger.error(f"Error reading DLQ file {dlq_file}: {e}")
+                self.logger.exception("Error reading DLQ file %s: %s", dlq_file, e)
 
         return records
 
-    def get_dlq_stats(self) -> Dict[str, Any]:
+    def get_dlq_stats(self) -> dict[str, Any]:
         """
         Get statistics about DLQ.
 
@@ -229,12 +232,12 @@ class DeadLetterQueue:
                     stats["by_date"][file_date]["files"] += 1
                     stats["by_date"][file_date]["records"] += record_count
             except Exception as e:
-                self.logger.warning(f"Error processing DLQ file {dlq_file}: {e}")
+                self.logger.warning("Error processing DLQ file %s: %s", dlq_file, e, exc_info=True)
 
         stats["total_size_mb"] = stats["total_size_bytes"] / (1024 * 1024)
         return stats
 
     def _count_records(self, dlq_file: Path) -> int:
         """Count non-empty JSONL records in a DLQ file."""
-        with open(dlq_file, "r", encoding="utf-8") as handle:
+        with open(dlq_file, encoding="utf-8") as handle:
             return sum(1 for line in handle if line.strip())

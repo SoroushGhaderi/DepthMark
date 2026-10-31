@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_discipline_cards_penalty_conceder (
+INSERT INTO gold_signals.sig_player_discipline_cards_penalty_conceder (
     match_id,
     match_date,
     home_team_id,

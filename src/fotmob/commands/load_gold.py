@@ -1,0 +1,159 @@
+"""Run scope-aware FotMob Gold orchestration in ClickHouse."""
+
+import argparse
+import time
+from contextlib import ExitStack
+
+from config.settings import get_settings
+from src.common.logging import get_logger, setup_logging
+from src.common.paths import PROJECT_ROOT
+from src.fotmob.gold import GoldRunResult, GoldService
+from src.integrations.telegram import LayerAlertData, TelegramClient
+from src.warehouse.contracts import LayerContractError
+from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.warehouse.identities import WarehouseConnectionError, warehouse_session
+from src.warehouse.scope import (
+    add_warehouse_scope_arguments,
+    execution_scope_from_args,
+)
+
+project_root = PROJECT_ROOT
+
+logger = get_logger(__name__)
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Process FotMob Gold through two-phase staged replacement. "
+            "Exactly one execution scope is required."
+        )
+    )
+    add_warehouse_scope_arguments(parser)
+    parser.add_argument(
+        "--part",
+        choices=("all", "signals", "scenarios"),
+        default="all",
+        help="Which job groups to run: all, signals only, or scenarios only.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview gold SQL/scenario/signal jobs without executing SQL or subprocesses",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None) -> int:
+    global logger
+    stage_start = time.perf_counter()
+    args = parse_args(argv)
+    try:
+        scope = execution_scope_from_args(args)
+    except ValueError as error:
+        logger.error("Invalid Gold execution scope: %s", error)
+        return 2
+    settings = get_settings()
+    logger = setup_logging(
+        name="clickhouse_gold_orchestrator",
+        log_dir=settings.log_dir,
+        log_level=settings.log_level,
+    )
+    scenario_db = gold_scenarios_db()
+    signal_db = gold_signals_db()
+    metadata_db = gold_db()
+
+    if args.dry_run:
+        logger.info("Running gold loader in dry-run mode (no SQL will be executed)")
+        logger.info("Gold scenario database: %s", scenario_db)
+        logger.info("Gold signal database: %s", signal_db)
+        logger.info("Gold metadata database: %s", metadata_db)
+        service = GoldService(client=None, metadata_db=metadata_db)
+        result = service.run(scope=scope, part=args.part, dry_run=True)
+        failed_count = result.scenario_failed_count + result.signal_failed_count
+        if result.signal_activation_exit_code != 0:
+            failed_count += 1
+        if result.exit_code != 0 or failed_count > 0:
+            return 1
+        logger.info("Gold dry-run completed successfully")
+        return 0
+
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(scope))
+        except WarehouseConnectionError as error:
+            logger.error(str(error))
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="gold",
+                    success=False,
+                    scope="runtime",
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "SQL files executed": "0",
+                        "Scenarios succeeded": "0",
+                        "Signals succeeded": "0",
+                        "Contract checks": "not run",
+                    },
+                ),
+            )
+            return 1
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        exit_code = 0
+        result = GoldRunResult(exit_code=1)
+        try:
+            service = GoldService(client=client, metadata_db=metadata_db)
+            result = service.run(scope=scope, part=args.part, dry_run=False)
+            exit_code = result.exit_code
+            return exit_code
+        except LayerContractError as contract_error:
+            logger.error("Gold layer contract assertion failed", error=str(contract_error))
+            exit_code = 1
+            return exit_code
+        finally:
+            total_jobs = (
+                result.scenario_success_count
+                + result.scenario_failed_count
+                + result.signal_success_count
+                + result.signal_failed_count
+            )
+            scenario_success_rate = (
+                ((result.scenario_success_count + result.signal_success_count) / total_jobs * 100)
+                if total_jobs > 0
+                else 0
+            )
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="gold",
+                    success=exit_code == 0,
+                    scope=scope.label,
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "SQL files executed": str(result.sql_file_count),
+                        "Scenarios succeeded": str(result.scenario_success_count),
+                        "Scenario failures": str(result.scenario_failed_count),
+                        "Signals succeeded": str(result.signal_success_count),
+                        "Signal failures": str(result.signal_failed_count),
+                        "Activation exit code": str(result.signal_activation_exit_code),
+                        "Contract checks": "passed"
+                        if result.contracts_checked
+                        else "failed or skipped",
+                    },
+                    insights={
+                        "Success rate": f"{scenario_success_rate:.1f}%",
+                        "Quality signal": "gold contracts passed"
+                        if result.contracts_checked
+                        else "contract check failed",
+                    },
+                ),
+            )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

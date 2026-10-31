@@ -7,6 +7,7 @@ This base class provides common functionality for all scraper-specific
 bronze storage implementations.
 """
 
+import contextlib
 import gzip
 import io
 import json
@@ -16,7 +17,7 @@ import tarfile
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
     from filelock import FileLock, Timeout
@@ -27,11 +28,17 @@ except ImportError:
     FileLock = None
     Timeout = None
 
-from ...core import StorageError, StorageProtocol
 from src.common.logging import get_logger
 
+# Errors raised by a corrupt or truncated tar/gzip/JSON archive member.
+ARCHIVE_READ_ERRORS = (OSError, EOFError, tarfile.TarError, ValueError)
 
-class BaseBronzeStorage(StorageProtocol, ABC):
+
+class StorageError(RuntimeError):
+    """Raised when a Bronze storage directory cannot be created."""
+
+
+class BaseBronzeStorage(ABC):
     """Base class for Bronze layer storage.
 
     Bronze layer contains unprocessed, raw data exactly as received from the API.
@@ -82,7 +89,6 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             raise StorageError(
                 f"Cannot create directory '{self.base_dir}': A file with that name already exists. "
                 f"Please remove or rename the file at {self.base_dir.absolute()}",
-                details={"path": str(self.base_dir.absolute())},
             )
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
@@ -92,7 +98,6 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             raise StorageError(
                 f"Cannot create directory '{self.matches_dir}': A file with that name already exists. "
                 f"Please remove or rename the file at {self.matches_dir.absolute()}",
-                details={"path": str(self.matches_dir.absolute())},
             )
         self.matches_dir.mkdir(parents=True, exist_ok=True)
 
@@ -102,11 +107,10 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             raise StorageError(
                 f"Cannot create directory '{self.daily_listings_dir}': A file with that name already exists. "
                 f"Please remove or rename the file at {self.daily_listings_dir.absolute()}",
-                details={"path": str(self.daily_listings_dir.absolute())},
             )
         self.daily_listings_dir.mkdir(parents=True, exist_ok=True)
 
-        self.logger.debug(f"Bronze storage initialized at {base_dir}")
+        self.logger.debug("Bronze storage initialized at %s", base_dir)
 
     def _normalize_date(self, date_str: str) -> str:
         """Normalize date string to YYYYMMDD format.
@@ -144,11 +148,11 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         try:
             return self._normalize_date(date_str)
         except ValueError:
-            self.logger.warning(f"Invalid date format: {date_str}, using as-is")
+            self.logger.warning("Invalid date format: %s, using as-is", date_str)
             return date_str
 
     def save_raw_match_data(
-        self, match_id: str, raw_data: Dict[str, Any], date_str: Optional[str] = None
+        self, match_id: str, raw_data: dict[str, Any], date_str: str | None = None
     ) -> Path:
         """Save raw API response to Bronze layer.
 
@@ -188,7 +192,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                     json.dump(data_with_metadata, f, indent=2, ensure_ascii=False)
 
                 # Verify the file is valid JSON
-                with open(temp_path, "r", encoding="utf-8") as f:
+                with open(temp_path, encoding="utf-8") as f:
                     json.load(f)
 
                 # Atomic rename
@@ -199,25 +203,21 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                 file_size_kb = os.path.getsize(file_path) / 1024
 
                 self.logger.debug(
-                    f"Saved raw data for match {match_id} to {file_path} ({file_size_kb:.2f} KB)"
+                    "Saved raw data for match %s to %s (%.2f KB)", match_id, file_path, file_size_kb
                 )
                 return file_path
 
             except Exception as write_error:
                 if temp_path.exists():
-                    try:
+                    with contextlib.suppress(OSError):
                         temp_path.unlink()
-                    except Exception:
-                        pass
                 raise write_error
 
         except Exception as e:
-            self.logger.error(f"Error saving raw data for match {match_id}: {e}", exc_info=True)
+            self.logger.error("Error saving raw data for match %s: %s", match_id, e, exc_info=True)
             raise
 
-    def save_matches_batch(
-        self, matches: List[tuple], date_str: Optional[str] = None
-    ) -> List[Path]:
+    def save_matches_batch(self, matches: list[tuple], date_str: str | None = None) -> list[Path]:
         """Save multiple matches in a single batch operation.
 
         More efficient than individual saves when processing many matches
@@ -260,10 +260,8 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                     raise
                 finally:
                     if lock_path.exists():
-                        try:
+                        with contextlib.suppress(OSError):
                             lock_path.unlink()
-                        except Exception:
-                            pass
             else:
                 self.logger.warning(
                     "File locking not available - batch save may not be thread-safe"
@@ -274,22 +272,25 @@ class BaseBronzeStorage(StorageProtocol, ABC):
 
             if failed_matches:
                 self.logger.warning(
-                    f"Batch save completed: {len(saved_paths)}/{len(matches)} succeeded, "
-                    f"{len(failed_matches)} failed: {failed_matches}"
+                    "Batch save completed: %s/%s succeeded, %s failed: %s",
+                    len(saved_paths),
+                    len(matches),
+                    len(failed_matches),
+                    failed_matches,
                 )
             else:
                 self.logger.info(
-                    f"Batch save completed: {len(saved_paths)} matches saved to {date_dir}"
+                    "Batch save completed: %s matches saved to %s", len(saved_paths), date_dir
                 )
 
             return saved_paths
 
         except Exception as e:
-            self.logger.error(f"Error in batch save: {e}", exc_info=True)
+            self.logger.error("Error in batch save: %s", e, exc_info=True)
             raise
 
     def _save_matches_batch_internal(
-        self, matches: List[tuple], date_dir: Path, date_str_normalized: str, scraped_at: str
+        self, matches: list[tuple], date_dir: Path, date_str_normalized: str, scraped_at: str
     ) -> tuple:
         """Internal method to save matches without lock management.
 
@@ -315,7 +316,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                     json.dump(data_with_metadata, f, indent=2, ensure_ascii=False)
 
                 # Verify
-                with open(temp_path, "r", encoding="utf-8") as f:
+                with open(temp_path, encoding="utf-8") as f:
                     json.load(f)
 
                 if file_path.exists():
@@ -325,24 +326,22 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                 file_size_kb = os.path.getsize(file_path) / 1024
 
                 saved_paths.append(file_path)
-                self.logger.debug(f"Saved match {match_id} ({file_size_kb:.2f} KB)")
+                self.logger.debug("Saved match %s (%.2f KB)", match_id, file_size_kb)
 
             except Exception as e:
-                self.logger.error(f"Error saving match {match_id} in batch: {e}")
+                self.logger.exception("Error saving match %s in batch: %s", match_id, e)
                 failed_matches.append(match_id)
 
                 temp_path = date_dir / f".match_{match_id}.json.tmp"
                 if temp_path.exists():
-                    try:
+                    with contextlib.suppress(OSError):
                         temp_path.unlink()
-                    except Exception:
-                        pass
 
         return saved_paths, failed_matches
 
     def load_raw_match_data(
-        self, match_id: str, date_str: Optional[str] = None
-    ) -> Optional[Dict[str, Any]]:
+        self, match_id: str, date_str: str | None = None
+    ) -> dict[str, Any] | None:
         """Load raw API response from Bronze layer.
 
         Supports: tar archive, individual .json.gz, and .json files.
@@ -377,7 +376,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                             except KeyError:
                                 pass
                     except Exception as e:
-                        self.logger.error(f"Error reading archive {archive_path}: {e}")
+                        self.logger.exception("Error reading archive %s: %s", archive_path, e)
 
                 # Try gzip file
                 file_path_gz = date_dir / f"match_{match_id}.json.gz"
@@ -389,11 +388,11 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                 # Try plain JSON
                 file_path = date_dir / f"match_{match_id}.json"
                 if file_path.exists():
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         data = json.load(f)
                     return data.get("data", data)
 
-                self.logger.warning(f"Raw data not found for match {match_id} on {date_str}")
+                self.logger.warning("Raw data not found for match %s on %s", match_id, date_str)
                 return None
             else:
                 # Search all date directories
@@ -418,7 +417,8 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                                         return data.get("data", data)
                                 except KeyError:
                                     continue
-                        except Exception:
+                        except ARCHIVE_READ_ERRORS as error:
+                            self.logger.warning("Unreadable archive %s: %s", archive_path, error)
                             continue
 
                 # Try gzip files
@@ -430,18 +430,18 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                         data = json.load(f)
                     return data.get("data", data)
                 elif matches:
-                    with open(matches[0], "r", encoding="utf-8") as f:
+                    with open(matches[0], encoding="utf-8") as f:
                         data = json.load(f)
                     return data.get("data", data)
 
-                self.logger.warning(f"Raw data not found for match {match_id}")
+                self.logger.warning("Raw data not found for match %s", match_id)
                 return None
 
         except Exception as e:
-            self.logger.error(f"Error loading raw data for match {match_id}: {e}")
+            self.logger.exception("Error loading raw data for match %s: %s", match_id, e)
             return None
 
-    def match_exists(self, match_id: str, date_str: Optional[str] = None) -> bool:
+    def match_exists(self, match_id: str, date_str: str | None = None) -> bool:
         """Check if raw data exists for a match.
 
         Checks archive, .json.gz, and .json files.
@@ -468,8 +468,8 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                             return True
                         except KeyError:
                             pass
-                except Exception:
-                    pass
+                except ARCHIVE_READ_ERRORS as error:
+                    self.logger.warning("Unreadable archive %s: %s", archive_path, error)
 
             # Check individual files
             file_path = date_dir / f"match_{match_id}.json"
@@ -497,7 +497,8 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                                 return True
                             except KeyError:
                                 continue
-                    except Exception:
+                    except ARCHIVE_READ_ERRORS as error:
+                        self.logger.warning("Unreadable archive %s: %s", archive_path, error)
                         continue
 
         return False
@@ -522,7 +523,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             match_id, date_str
         )
 
-    def save_daily_listing(self, date_str: str, match_ids: List) -> Path:
+    def save_daily_listing(self, date_str: str, match_ids: list) -> Path:
         """Save daily listing of match IDs for a date with comprehensive metadata.
 
         Used to track games and prevent duplicate API requests.
@@ -569,8 +570,11 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                 json.dump(listing_data, f, indent=2, ensure_ascii=False)
             temp_file.replace(listing_file)
             self.logger.info(
-                f"Saved daily listing for {date_str_normalized}: {len(match_ids)} matches, "
-                f"{storage_stats['files_stored']} files stored ({storage_stats['total_size_mb']:.2f} MB)"
+                "Saved daily listing for %s: %s matches, %s files stored (%.2f MB)",
+                date_str_normalized,
+                len(match_ids),
+                storage_stats["files_stored"],
+                storage_stats["total_size_mb"],
             )
             return listing_file
         except Exception:
@@ -581,10 +585,10 @@ class BaseBronzeStorage(StorageProtocol, ABC):
     def _get_storage_stats(
         self,
         date_str: str,
-        match_ids: List,
+        match_ids: list,
         matches_date_dir: Path,
-        unavailable_match_ids: Optional[List] = None,
-    ) -> Dict[str, Any]:
+        unavailable_match_ids: list | None = None,
+    ) -> dict[str, Any]:
         """Gather comprehensive storage statistics for a date.
 
         Args:
@@ -647,7 +651,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                                 stats["files_in_archive"] += 1
                                 stats["total_size_bytes"] += member.size
             except Exception as e:
-                self.logger.warning(f"Error reading archive {archive_path}: {e}")
+                self.logger.warning("Error reading archive %s: %s", archive_path, e, exc_info=True)
 
         # Check individual files
         for match_id in match_ids:
@@ -697,7 +701,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
 
         return stats
 
-    def load_daily_listing(self, date_str: str) -> Optional[Dict[str, Any]]:
+    def load_daily_listing(self, date_str: str) -> dict[str, Any] | None:
         """Load daily listing of match IDs for a date.
 
         Args:
@@ -709,24 +713,24 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         try:
             date_str_normalized = self._normalize_date(date_str)
         except ValueError:
-            self.logger.warning(f"Invalid date format: {date_str}")
+            self.logger.warning("Invalid date format: %s", date_str)
             return None
 
-        listing_file = self._date_partition_dir(
-            self.daily_listings_dir, date_str_normalized
-        ) / "matches.json"
+        listing_file = (
+            self._date_partition_dir(self.daily_listings_dir, date_str_normalized) / "matches.json"
+        )
 
         if not listing_file.exists():
             return None
 
         try:
-            with open(listing_file, "r", encoding="utf-8") as f:
+            with open(listing_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            self.logger.error(f"Error loading daily listing for {date_str_normalized}: {e}")
+            self.logger.exception("Error loading daily listing for %s: %s", date_str_normalized, e)
             return None
 
-    def get_match_ids_for_date(self, date_str: str) -> List[Union[int, str]]:
+    def get_match_ids_for_date(self, date_str: str) -> list[int | str]:
         """Get list of match IDs for a date from daily listing.
 
         Args:
@@ -740,7 +744,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             return listing.get("match_ids", [])
         return []
 
-    def get_completion_percentage(self, date_str: str) -> Optional[float]:
+    def get_completion_percentage(self, date_str: str) -> float | None:
         """Get completion percentage for a date from daily listing.
 
         Args:
@@ -769,12 +773,12 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         except ValueError:
             return False
 
-        listing_file = self._date_partition_dir(
-            self.daily_listings_dir, date_str_normalized
-        ) / "matches.json"
+        listing_file = (
+            self._date_partition_dir(self.daily_listings_dir, date_str_normalized) / "matches.json"
+        )
         return listing_file.exists()
 
-    def compress_date_files(self, date_str: str, force: bool = False) -> Dict[str, Any]:
+    def compress_date_files(self, date_str: str, force: bool = False) -> dict[str, Any]:
         """Compress all JSON files for a specific date.
 
         Step 1: Compress each .json to .json.gz (GZIP compression)
@@ -801,7 +805,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
         if not force and archive_path.exists():
             archive_size_mb = archive_path.stat().st_size / (1024 * 1024)
             self.logger.debug(
-                f"Archive exists for {date_str_normalized} ({archive_size_mb:.2f} MB), skipping"
+                "Archive exists for %s (%.2f MB), skipping", date_str_normalized, archive_size_mb
             )
             return {
                 "compressed": 0,
@@ -814,7 +818,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             }
 
         if not date_dir.exists():
-            self.logger.debug(f"Date directory not found: {date_dir}")
+            self.logger.debug("Date directory not found: %s", date_dir)
             return {
                 "compressed": 0,
                 "size_before_mb": 0,
@@ -828,7 +832,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
 
         all_files = json_files + existing_gz_files
         if not all_files:
-            self.logger.debug(f"No files to compress for {date_str_normalized}")
+            self.logger.debug("No files to compress for %s", date_str_normalized)
             return {
                 "compressed": 0,
                 "size_before_mb": 0,
@@ -844,21 +848,22 @@ class BaseBronzeStorage(StorageProtocol, ABC):
 
             # Step 1: Compress JSON files to gzip (byte-copy method - faster)
             if json_files:
-                self.logger.debug(f"Compressing {len(json_files)} JSON files to gzip")
+                self.logger.debug("Compressing %s JSON files to gzip", len(json_files))
                 for json_file in json_files:
                     gz_file = json_file.with_suffix(".json.gz")
-                    with open(json_file, "rb") as f_in, gzip.open(
-                        gz_file, "wb", compresslevel=6
-                    ) as f_out:
+                    with (
+                        open(json_file, "rb") as f_in,
+                        gzip.open(gz_file, "wb", compresslevel=6) as f_out,
+                    ):
                         shutil.copyfileobj(f_in, f_out)
 
                     gz_files.append(gz_file)
                     json_file.unlink()
             else:
-                self.logger.debug(f"Using {len(existing_gz_files)} existing gzip files")
+                self.logger.debug("Using %s existing gzip files", len(existing_gz_files))
 
             # Step 2: Create tar archive
-            self.logger.debug(f"Creating tar archive with {len(gz_files)} files")
+            self.logger.debug("Creating tar archive with %s files", len(gz_files))
 
             with tarfile.open(archive_path, "w") as tar:
                 for gz_file in gz_files:
@@ -883,17 +888,17 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                             error_msg.append(f"Unexpected files in tar: {extra}")
                         raise ValueError(f"Tar archive incomplete: {'; '.join(error_msg)}")
 
-                    self.logger.debug(f"Archive verified: {len(tar_members)} files intact")
+                    self.logger.debug("Archive verified: %s files intact", len(tar_members))
 
             except Exception as verify_error:
-                self.logger.error(f"Archive verification failed: {verify_error}")
+                self.logger.exception("Archive verification failed: %s", verify_error)
                 if archive_path.exists():
                     archive_path.unlink()
                 self.logger.info("Deleted corrupt archive, kept original files")
                 raise Exception(f"Tar archive verification failed: {verify_error}")
 
             # Step 3: Delete gzip files
-            self.logger.debug(f"Cleaning up {len(gz_files)} temporary gzip files")
+            self.logger.debug("Cleaning up %s temporary gzip files", len(gz_files))
             deleted_count = 0
             for gz_file in gz_files:
                 if gz_file.exists():
@@ -901,7 +906,9 @@ class BaseBronzeStorage(StorageProtocol, ABC):
                         gz_file.unlink()
                         deleted_count += 1
                     except Exception as e:
-                        self.logger.warning(f"Could not delete {gz_file.name}: {e}")
+                        self.logger.warning(
+                            "Could not delete %s: %s", gz_file.name, e, exc_info=True
+                        )
 
             size_before_mb = total_before / (1024 * 1024)
             size_after_mb = total_after / (1024 * 1024)
@@ -909,9 +916,12 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             saved_pct = ((total_before - total_after) / max(total_before, 1)) * 100
 
             self.logger.info(
-                f"Compressed {date_str_normalized}: {len(gz_files)} files, "
-                f"{size_before_mb:.2f} MB -> {size_after_mb:.2f} MB "
-                f"(saved {saved_pct:.0f}%)"
+                "Compressed %s: %s files, %.2f MB -> %.2f MB (saved %.0f%%)",
+                date_str_normalized,
+                len(gz_files),
+                size_before_mb,
+                size_after_mb,
+                saved_pct,
             )
 
             return {
@@ -925,7 +935,7 @@ class BaseBronzeStorage(StorageProtocol, ABC):
             }
 
         except Exception as e:
-            self.logger.error(f"Error during compression for {date_str_normalized}: {e}")
+            self.logger.exception("Error during compression for %s: %s", date_str_normalized, e)
             # Cleanup on error
             if archive_path.exists():
                 archive_path.unlink()

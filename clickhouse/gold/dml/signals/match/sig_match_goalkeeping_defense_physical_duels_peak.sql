@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_goalkeeping_defense_physical_duels_peak (
+INSERT INTO gold_signals.sig_match_goalkeeping_defense_physical_duels_peak (
     match_id,
     match_date,
     home_team_id,

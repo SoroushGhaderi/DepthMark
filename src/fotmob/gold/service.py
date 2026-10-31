@@ -4,26 +4,25 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
-from src.warehouse.publication import (
-    assert_upstream_published,
-    gold_outputs_publication,
-    silver_publication,
-)
-from src.warehouse.scoped_replace import ScopedReplacementBatch
+from src.common.logging import get_logger
 from src.fotmob.gold.dml_runner import (
     GoldSqlJob,
     build_scoped_gold_job,
     discover_gold_sql_jobs,
 )
 from src.fotmob.gold.signal_catalog import SignalCatalog, SignalCatalogError, load_signal_catalog
-from src.warehouse.scope import WarehouseExecutionScope
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.integrations.clickhouse.sql import execute_sql_script
-from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
 from src.warehouse.contracts import assert_gold_activation_contracts, assert_gold_layer_contracts
-from src.common.logging import get_logger
+from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.warehouse.publication import (
+    assert_upstream_published,
+    gold_outputs_publication,
+    silver_publication,
+)
+from src.warehouse.scope import WarehouseExecutionScope
+from src.warehouse.scoped_replace import ScopedReplacementBatch
 
 logger = get_logger(__name__)
 
@@ -58,8 +57,8 @@ class GoldService:
 
     def __init__(
         self,
-        client: Optional[ClickHouseClient] = None,
-        metadata_db: Optional[str] = None,
+        client: ClickHouseClient | None = None,
+        metadata_db: str | None = None,
     ):
         self.client = client
         self.metadata_db = metadata_db or gold_db()
@@ -117,7 +116,7 @@ class GoldService:
                 publication=gold_outputs_publication(),
             ).run(scoped_jobs)
         except Exception as error:
-            logger.error("Gold %s scoped batch failed: %s", job_name, error)
+            logger.exception("Gold %s scoped batch failed: %s", job_name, error)
             failed_jobs = [job.job_id for job in jobs]
 
         failed_count = len(failed_jobs)
@@ -139,7 +138,7 @@ class GoldService:
         part: str,
         scope: WarehouseExecutionScope,
         dry_run: bool = False,
-        signal_catalog: Optional[SignalCatalog] = None,
+        signal_catalog: SignalCatalog | None = None,
     ) -> tuple[int, int, int, int]:
         """Stage and commit scenario and signal jobs selected by part and scope.
 
@@ -177,7 +176,7 @@ class GoldService:
                 publication=gold_outputs_publication(),
             ).run(scoped_jobs)
         except Exception as error:
-            logger.error("Gold scoped staging or commit failed: %s", error)
+            logger.exception("Gold scoped staging or commit failed: %s", error)
             return 0, len(scenario_jobs), 0, len(signal_jobs)
         return len(scenario_jobs), 0, len(signal_jobs), 0
 
@@ -227,7 +226,7 @@ class GoldService:
 
         return 0
 
-    def assert_contracts(self, part: str = "all", database: Optional[str] = None) -> None:
+    def assert_contracts(self, part: str = "all", database: str | None = None) -> None:
         """Run Gold layer contract assertions."""
         if self.client is None:
             raise RuntimeError("ClickHouse client is required for contract checks")
@@ -262,7 +261,7 @@ class GoldService:
         """
         result = GoldRunResult(exit_code=0)
 
-        signal_catalog: Optional[SignalCatalog] = None
+        signal_catalog: SignalCatalog | None = None
         if part in ("all", "signals"):
             try:
                 signal_catalog = load_signal_catalog()

@@ -35,9 +35,7 @@ class TelegramClient:
         _settings = get_settings()
         self._bot_token = _settings.telegram_bot_token
         self._chat_id = _settings.telegram_chat_id
-        self._base_url = (
-            f"https://api.telegram.org/bot{self._bot_token}" if self._bot_token else ""
-        )
+        self._base_url = f"https://api.telegram.org/bot{self._bot_token}" if self._bot_token else ""
         self._jinja_env = self._build_jinja_env()
 
     @staticmethod
@@ -65,9 +63,7 @@ class TelegramClient:
             "disable_notification": silent,
         }
         try:
-            resp = requests.post(
-                f"{self._base_url}/sendMessage", json=payload, timeout=30
-            )
+            resp = requests.post(f"{self._base_url}/sendMessage", json=payload, timeout=30)
             resp.raise_for_status()
             logger.info("Telegram message sent successfully")
             return True

@@ -156,6 +156,19 @@ already extracted markets. If Oddspedia does not expose market names, the
 scraper falls back to the normal full retry because it cannot safely identify a
 smaller target.
 
+The code splits along the same lines. `src/oddspedia/scraping/odds_contract.py`
+holds the pure rules above (market families, outcome mapping, handicap
+coverage, merge and dedupe, coverage errors) and is tested on recorded
+fixtures without a browser. `match_scraper.py` only drives the page and hands
+raw markets to it. `cli.py` scrapes every match through one `scrape_one()` flow
+(attempts, partial-odds retry, manifest updates, circuit breaker) run by an
+executor: `--workers 1` is the sequential case on the caller's browser, and more
+workers each get their own Chrome profile and a disjoint batch. Matches a worker
+leaves without an outcome (crash, circuit-breaker abort, no driver) are
+persisted as retryable failures. The scraper is football-only: set scores,
+live odds, statistics and point-by-point fields stay empty in the payload
+contract.
+
 The Bronze loader writes:
 
 - `oddspedia_bronze.event` — discovered event metadata and raw event JSON.

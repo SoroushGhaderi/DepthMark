@@ -1,7 +1,8 @@
 """Signals repository for DepthMark content catalog."""
 
-from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional
+from collections.abc import Iterable
+from datetime import UTC, datetime
+from typing import Any
 
 from pymongo.collection import Collection
 from pymongo.database import Database
@@ -10,7 +11,7 @@ from ..collections import SIGNALS_COLLECTION
 
 
 def _now_utc() -> datetime:
-    return datetime.now(timezone.utc).replace(microsecond=0)
+    return datetime.now(UTC).replace(microsecond=0)
 
 
 class SignalsRepository:
@@ -19,7 +20,7 @@ class SignalsRepository:
     def __init__(self, database: Database):
         self.collection: Collection = database[SIGNALS_COLLECTION]
 
-    def list_signal_states(self) -> Dict[str, Dict[str, Any]]:
+    def list_signal_states(self) -> dict[str, dict[str, Any]]:
         """Return each stored signal's ``content_sha256`` and ``created_at`` by id."""
         projection = {"_id": 0, "signal_id": 1, "content_sha256": 1, "created_at": 1}
         return {
@@ -29,7 +30,7 @@ class SignalsRepository:
         }
 
     def replace_signal(
-        self, document: Dict[str, Any], *, created_at: Optional[datetime] = None
+        self, document: dict[str, Any], *, created_at: datetime | None = None
     ) -> None:
         """Replace one signal document whole, keeping its original ``created_at``."""
         now = _now_utc()
@@ -43,11 +44,11 @@ class SignalsRepository:
             return 0
         return self.collection.delete_many({"signal_id": {"$in": signal_ids}}).deleted_count
 
-    def get_signal(self, signal_id: str) -> Optional[Dict[str, Any]]:
+    def get_signal(self, signal_id: str) -> dict[str, Any] | None:
         return self.collection.find_one({"signal_id": signal_id}, {"_id": 0})
 
-    def list_signals(self, status: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
-        query: Dict[str, Any] = {}
+    def list_signals(self, status: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
+        query: dict[str, Any] = {}
         if status:
             query["status"] = status
         cursor = self.collection.find(query, {"_id": 0}).sort("updated_at", -1).limit(limit)

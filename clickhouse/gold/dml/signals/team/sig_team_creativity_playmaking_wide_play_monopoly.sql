@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_creativity_playmaking_wide_play_monopoly (
+INSERT INTO gold_signals.sig_team_creativity_playmaking_wide_play_monopoly (
     match_id,
     match_date,
     home_team_id,

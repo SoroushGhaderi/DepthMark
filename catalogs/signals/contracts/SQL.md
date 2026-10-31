@@ -22,9 +22,8 @@ defined in [`README.md`](README.md). SQL owns the analytical logic (ADR 0007).
    `test_signal_dml_insert_columns_match_ddl_and_catalog_identity`
 3. The insert column list MUST include every `row_identity` column. **[test]**
    same test.
-4. New DML SHOULD insert into `gold_signals.<signal_id>`. Existing DML inserts
-   into the legacy `gold.<signal_id>` name, which the runner rewrites to the
-   target database; migrate it when a file is touched.
+4. The DML MUST insert into `gold_signals.<signal_id>`, its catalog's
+   `asset_paths.table`. **[catalog]**
 5. DML MUST NOT contain DDL (`CREATE`, `ALTER`, `DROP`, `TRUNCATE`).
 6. Source tables MUST be schema-qualified (`silver.*`, `bronze.*`).
 7. Final rows MUST have a valid `match_id` (`NOT NULL`, `> 0`). **[runtime]**

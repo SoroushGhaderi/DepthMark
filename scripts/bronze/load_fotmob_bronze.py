@@ -1,7 +1,6 @@
-"""Canonical entry point for loading FotMob Bronze data into ClickHouse."""
+"""Load raw FotMob bronze files into ClickHouse bronze tables."""
 
-from load_clickhouse import main
-
+from src.fotmob.commands.load_bronze import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_impact_accumulator (
+INSERT INTO gold_signals.sig_player_shooting_goals_impact_accumulator (
     match_id,
     match_date,
     home_team_id,

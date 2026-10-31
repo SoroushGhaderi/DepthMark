@@ -9,7 +9,6 @@ import tempfile
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
 
 from src.common.logging import get_logger
 from src.integrations.s3 import S3Client
@@ -51,9 +50,9 @@ class BronzeS3Service:
         BronzeS3Service._validate_date(date_str)
         return f"bronze/fotmob/{date_str[:6]}/{date_str}.tar.gz"
 
-    def list_local_dates(self) -> List[str]:
+    def list_local_dates(self) -> list[str]:
         """List dates found in either canonical local Bronze directory."""
-        dates: Set[str] = set()
+        dates: set[str] = set()
         for parent_name in ("matches", "daily_listings"):
             parent = self.bronze_path / parent_name
             if not parent.exists():
@@ -65,7 +64,7 @@ class BronzeS3Service:
             )
         return sorted(dates)
 
-    def list_remote_dates(self) -> List[str]:
+    def list_remote_dates(self) -> list[str]:
         """List dates represented by compatible remote object keys."""
         dates = []
         for prefix in self._remote_object_prefixes():
@@ -166,7 +165,7 @@ class BronzeS3Service:
             sha256=checksum,
         )
 
-    def _remote_object_prefixes(self) -> Tuple[str, ...]:
+    def _remote_object_prefixes(self) -> tuple[str, ...]:
         """Return canonical and legacy archive prefixes to discover."""
         canonical_prefix = "bronze/fotmob/"
         bucket_name = getattr(self.s3_client, "bucket_name", "")
@@ -174,7 +173,7 @@ class BronzeS3Service:
             return (canonical_prefix,)
         return (canonical_prefix, f"{bucket_name}/{canonical_prefix}")
 
-    def _remote_object_keys(self, date_str: str) -> Tuple[str, ...]:
+    def _remote_object_keys(self, date_str: str) -> tuple[str, ...]:
         """Return preferred and compatibility key candidates for one archive."""
         canonical_key = self.object_key(date_str)
         bucket_name = getattr(self.s3_client, "bucket_name", "")
@@ -241,15 +240,15 @@ class BronzeS3Service:
             if listing_path.exists():
                 archive.add(listing_path, arcname=f"daily_listings/{date_str[:6]}/{date_str}")
 
-    def _local_targets(self, date_str: str) -> Tuple[Path, Path]:
+    def _local_targets(self, date_str: str) -> tuple[Path, Path]:
         return (
             self.bronze_path / "matches" / date_str[:6] / date_str,
             self.bronze_path / "daily_listings" / date_str[:6] / date_str,
         )
 
     @staticmethod
-    def _stored_match_ids(matches_path: Path) -> Set[str]:
-        stored: Set[str] = set()
+    def _stored_match_ids(matches_path: Path) -> set[str]:
+        stored: set[str] = set()
         if not matches_path.exists():
             return stored
         for path in matches_path.iterdir():
@@ -293,7 +292,7 @@ class BronzeS3Service:
             raise BronzeS3SyncError(f"invalid archive {archive_path}: {exc}") from exc
 
     @staticmethod
-    def _resolve_archive_layout(date_str: str, extract_path: Path) -> Dict[str, Path]:
+    def _resolve_archive_layout(date_str: str, extract_path: Path) -> dict[str, Path]:
         new_matches = extract_path / "matches" / date_str[:6] / date_str
         new_listing = extract_path / "daily_listings" / date_str[:6] / date_str
         if new_matches.exists() or new_listing.exists():
@@ -316,11 +315,11 @@ class BronzeS3Service:
             f"(expected matches/{date_str[:6]}/{date_str}, matches/{date_str}, or {date_str})"
         )
 
-    def _install_targets(self, date_str: str, staged_targets: Dict[str, Path], force: bool) -> None:
+    def _install_targets(self, date_str: str, staged_targets: dict[str, Path], force: bool) -> None:
         self.bronze_path.mkdir(parents=True, exist_ok=True)
         backup_root = Path(tempfile.mkdtemp(prefix="depthmark-s3-backup-", dir=self.bronze_path))
-        installed: List[Path] = []
-        backups: List[Tuple[Path, Path]] = []
+        installed: list[Path] = []
+        backups: list[tuple[Path, Path]] = []
         try:
             if force:
                 for parent_name in ("matches", "daily_listings"):

@@ -2,8 +2,8 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
-from scripts.quality.check_data_quality import strict_exit_code
 from src.fotmob.gold.signal_catalog import load_signal_catalog
+from src.warehouse.commands.check_data_quality import strict_exit_code
 from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
@@ -14,7 +14,6 @@ from src.warehouse.quality import (
     build_identity_contracts,
 )
 from src.warehouse.scope import WarehouseExecutionScope
-
 
 DEFAULT_SIGNAL_COLUMNS = {"signal_instance_id", "inserted_at"}
 
@@ -106,9 +105,9 @@ def _signal_ddl_columns(project_root: Path) -> dict[str, tuple[str, ...]]:
 
 
 def _signal_insert_columns(sql: str) -> tuple[str, tuple[str, ...]]:
-    match = re.search(r"INSERT\s+INTO\s+gold\.(sig_[a-z0-9_]+)\s*\(", sql, re.IGNORECASE)
+    match = re.search(r"INSERT\s+INTO\s+gold_signals\.(sig_[a-z0-9_]+)\s*\(", sql, re.IGNORECASE)
     if not match:
-        raise ValueError("Signal SQL must insert into gold.sig_*")
+        raise ValueError("Signal SQL must insert into gold_signals.sig_*")
     body = _parenthesized_body(sql, sql.find("(", match.end() - 1))
     columns = tuple(item.strip().strip("`") for item in _split_top_level_csv(body))
     return match.group(1), columns
@@ -339,17 +338,17 @@ def test_bronze_date_duplicate_query_scopes_through_match_reference():
 
 
 def test_invalid_signal_catalog_fails_quality_check_before_connecting(monkeypatch):
-    from scripts.quality import check_data_quality
     from src.fotmob.gold.signal_catalog import CatalogViolation, SignalCatalogError
+    from src.warehouse.commands import check_data_quality
 
     def invalid_catalog(_project_root):
         raise SignalCatalogError([CatalogViolation("catalogs/sig_x.md", "broken")])
 
-    def unexpected_client(**_kwargs):
+    def unexpected_session(*_args, **_kwargs):
         raise AssertionError("quality check must not connect with an invalid catalog")
 
     monkeypatch.setattr(check_data_quality, "build_identity_contracts", invalid_catalog)
-    monkeypatch.setattr(check_data_quality, "ClickHouseClient", unexpected_client)
+    monkeypatch.setattr(check_data_quality, "warehouse_session", unexpected_session)
 
     assert check_data_quality.main(["--full-history"]) == 1
 

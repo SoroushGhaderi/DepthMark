@@ -3,7 +3,7 @@
 import re
 import time
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 import clickhouse_connect
 
@@ -20,9 +20,9 @@ class QueryExecutionSummary:
     query_type: str
     duration_ms: float
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
-    def as_log_fields(self) -> Dict[str, Any]:
+    def as_log_fields(self) -> dict[str, Any]:
         """Return compact structured fields suitable for structured logs."""
         fields = asdict(self)
         return {key: value for key, value in fields.items() if value is not None}
@@ -128,7 +128,7 @@ class ClickHouseClient:
         self.password = password
         self.database = database
         self.logger = logger
-        self.client: Optional[clickhouse_connect.driver.Client] = None
+        self.client: clickhouse_connect.driver.Client | None = None
 
     def _validate_table_name(self, table: str) -> str:
         """Validate table name against whitelist to prevent SQL injection.
@@ -157,7 +157,7 @@ class ClickHouseClient:
     )
 
     @classmethod
-    def summarize_query(cls, query: str, max_preview_length: int = 160) -> Dict[str, Any]:
+    def summarize_query(cls, query: str, max_preview_length: int = 160) -> dict[str, Any]:
         """Build a lightweight summary for a raw SQL query string."""
         query_without_leading_comments = cls._LEADING_SQL_COMMENTS_RE.sub("", query, count=1)
         query_clean = " ".join(query_without_leading_comments.split())
@@ -194,11 +194,13 @@ class ClickHouseClient:
             )
 
             self.client.query("SELECT 1")
-            self.logger.info(f"Connected to ClickHouse: {self.host}:{self.port}/{self.database}")
+            self.logger.info(
+                "Connected to ClickHouse: %s:%s/%s", self.host, self.port, self.database
+            )
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to connect to ClickHouse: {e}")
+            self.logger.exception("Failed to connect to ClickHouse: %s", e)
             return False
 
     def disconnect(self):
@@ -210,7 +212,7 @@ class ClickHouseClient:
     def execute(
         self,
         query: str,
-        parameters: Optional[Dict[str, Any]] = None,
+        parameters: dict[str, Any] | None = None,
         *,
         log_query: bool = True,
     ) -> Any:
@@ -252,7 +254,7 @@ class ClickHouseClient:
                 )
             raise
 
-    def insert_dataframe(self, table: str, df, database: Optional[str] = None) -> int:
+    def insert_dataframe(self, table: str, df, database: str | None = None) -> int:
         """Insert pandas DataFrame to ClickHouse table with SQL injection protection.
 
         Args:
@@ -269,9 +271,7 @@ class ClickHouseClient:
         table = self._validate_table_name(table)
         return self.insert_dataframe_qualified_table(table, df, database=database)
 
-    def insert_dataframe_qualified_table(
-        self, table: str, df, database: Optional[str] = None
-    ) -> int:
+    def insert_dataframe_qualified_table(self, table: str, df, database: str | None = None) -> int:
         """Insert into a validated database/table pair, including generated stage tables."""
         if not self.client:
             raise RuntimeError("Not connected to ClickHouse. Call connect() first.")
@@ -281,7 +281,7 @@ class ClickHouseClient:
         db = self._validate_identifier(db, "database")
 
         if df.empty:
-            self.logger.warning(f"DataFrame is empty, skipping insert to {table}")
+            self.logger.warning("DataFrame is empty, skipping insert to %s", table)
             return 0
 
         try:
@@ -289,14 +289,14 @@ class ClickHouseClient:
 
             self.client.insert_df(full_table, df)
             rows_inserted = len(df)
-            self.logger.info(f"Inserted {rows_inserted} rows to {full_table}")
+            self.logger.info("Inserted %s rows to %s", rows_inserted, full_table)
             return rows_inserted
 
         except Exception as e:
-            self.logger.error(f"Failed to insert to {table}: {e}")
+            self.logger.error("Failed to insert to %s: %s", table, e)
             raise
 
-    def get_table_stats(self, table: str, database: Optional[str] = None) -> Dict[str, Any]:
+    def get_table_stats(self, table: str, database: str | None = None) -> dict[str, Any]:
         """Get table statistics with SQL injection protection.
 
         Args:
@@ -337,10 +337,10 @@ class ClickHouseClient:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get stats for {table}: {e}")
+            self.logger.exception("Failed to get stats for %s: %s", table, e)
             return {"table": full_table, "error": str(e)}
 
-    def truncate_table(self, table: str, database: Optional[str] = None):
+    def truncate_table(self, table: str, database: str | None = None):
         """Truncate a table with SQL injection protection.
 
         Args:
@@ -361,9 +361,9 @@ class ClickHouseClient:
 
         try:
             self.execute(f"TRUNCATE TABLE {full_table}")
-            self.logger.info(f"Truncated table {full_table}")
+            self.logger.info("Truncated table %s", full_table)
         except Exception as e:
-            self.logger.error(f"Failed to truncate {table}: {e}")
+            self.logger.error("Failed to truncate %s: %s", table, e)
             raise
 
     def __enter__(self):
@@ -375,7 +375,7 @@ class ClickHouseClient:
         """Context manager exit."""
         self.disconnect()
 
-    def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> dict[str, Any]:
         """Check ClickHouse connection health.
 
         Returns:

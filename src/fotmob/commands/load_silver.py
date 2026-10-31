@@ -1,0 +1,128 @@
+"""Load FotMob Silver data with explicit date, month, or full-history scope."""
+
+import argparse
+import time
+from contextlib import ExitStack
+
+from config.settings import get_settings
+from src.common.logging import get_logger, setup_logging
+from src.common.paths import PROJECT_ROOT
+from src.fotmob.silver import SilverRunResult, SilverService
+from src.integrations.telegram import LayerAlertData, TelegramClient
+from src.warehouse.contracts import LayerContractError
+from src.warehouse.identities import WarehouseConnectionError, warehouse_session
+from src.warehouse.scope import (
+    add_warehouse_scope_arguments,
+    execution_scope_from_args,
+)
+
+project_root = PROJECT_ROOT
+
+logger = get_logger(__name__)
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Load FotMob Silver SQL through two-phase staged replacement. "
+            "Exactly one execution scope is required."
+        )
+    )
+    add_warehouse_scope_arguments(parser)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview silver load jobs without executing SQL or optimizing tables",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None) -> int:
+    global logger
+    stage_start = time.perf_counter()
+    args = parse_args(argv)
+    try:
+        scope = execution_scope_from_args(args)
+    except ValueError as error:
+        logger.error("Invalid Silver execution scope: %s", error)
+        return 2
+    settings = get_settings()
+    logger = setup_logging(
+        name="clickhouse_silver_loader",
+        log_dir=settings.log_dir,
+        log_level=settings.log_level,
+    )
+    if args.dry_run:
+        logger.info("Running silver loader in dry-run mode (no SQL will be executed)")
+        service = SilverService(client=None)
+        result = service.run(scope=scope, dry_run=True)
+        if result.exit_code == 0:
+            logger.info("Silver dry-run completed successfully")
+        return result.exit_code
+
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(scope))
+        except WarehouseConnectionError as error:
+            logger.error(str(error))
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="silver",
+                    success=False,
+                    scope="runtime",
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "Jobs planned": "0",
+                        "Jobs completed": "0",
+                        "Contract checks": "not run",
+                    },
+                ),
+            )
+            return 1
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        exit_code = 0
+        result = SilverRunResult(exit_code=1)
+        try:
+            service = SilverService(client=client)
+            result = service.run(scope=scope, dry_run=False)
+            exit_code = result.exit_code
+            return exit_code
+        except LayerContractError as contract_error:
+            logger.error("Silver layer contract assertion failed", error=str(contract_error))
+            exit_code = 1
+            return exit_code
+        finally:
+            completion_rate = (
+                (result.completed_jobs / result.total_jobs * 100) if result.total_jobs > 0 else 0
+            )
+            telegram_client = TelegramClient()
+            telegram_client.render_and_send(
+                "layer_alert.html.j2",
+                LayerAlertData(
+                    layer="silver",
+                    success=exit_code == 0,
+                    scope=scope.label,
+                    duration_seconds=time.perf_counter() - stage_start,
+                    details={
+                        "Jobs planned": str(result.total_jobs),
+                        "Jobs completed": str(result.completed_jobs),
+                        "Contract checks": "passed"
+                        if result.contracts_checked
+                        else "failed or skipped",
+                    },
+                    insights={
+                        "Completion rate": f"{completion_rate:.1f}%",
+                        "Quality signal": "contracts passed"
+                        if result.contracts_checked
+                        else "contract check failed",
+                    },
+                ),
+            )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

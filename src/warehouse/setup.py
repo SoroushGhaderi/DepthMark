@@ -1,27 +1,23 @@
 """Shared helpers for ClickHouse layer setup scripts."""
 
-import os
 import re
-import sys
 import time
+from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Callable, Iterable, Optional
-
-from dotenv import dotenv_values
-
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 from config.settings import get_settings
 from src.common.logging import get_logger
+from src.common.paths import PROJECT_ROOT
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.identities import provision_application_user
+from src.warehouse.identities import Identity, provision_application_user, warehouse_client
 from src.warehouse.schema_drift import (
     assert_setup_sql_is_non_destructive,
     find_schema_drift,
     format_drift_report,
     parse_expected_tables,
 )
+
+project_root = PROJECT_ROOT
 
 logger = get_logger()
 
@@ -44,33 +40,14 @@ INSECURE_CLICKHOUSE_PASSWORDS = {
 }
 
 
-def load_local_env_files() -> None:
-    """Load .env via pydantic-settings (centralised env loading)."""
-    get_settings()
-
-
-load_local_env_files()
-
-
 def is_local_development_environment() -> bool:
-    """Return whether local-only development credentials are allowed."""
-    environment_names = ("DEPTHMARK_ENV", "ENVIRONMENT", "SCRAPER_ENV")
-    for name in environment_names:
-        environment = os.getenv(name)
-        if environment:
-            return environment.strip().lower() in LOCAL_ENVIRONMENT_VALUES
+    """Return whether local-only development credentials are allowed.
 
-    # pydantic-settings reads .env files without exporting their values into
-    # os.environ. Read only the environment selector here so a production
-    # value in either supported .env location cannot be mistaken for the
-    # Settings model's development default.
-    for env_path in (project_root / ".env", project_root.parent / ".env"):
-        values = dotenv_values(env_path)
-        for name in environment_names:
-            environment = values.get(name)
-            if environment:
-                return str(environment).strip().lower() in LOCAL_ENVIRONMENT_VALUES
-    return False
+    Reads DEPTHMARK_ENV, ENVIRONMENT, or SCRAPER_ENV (first set wins) from the
+    process environment or either .env file; an unset selector is not local.
+    """
+    environment = get_settings().deployment_environment
+    return bool(environment) and environment.strip().lower() in LOCAL_ENVIRONMENT_VALUES
 
 
 def validate_clickhouse_credentials(
@@ -146,13 +123,7 @@ def connect_clickhouse() -> ClickHouseClient:
             settings.clickhouse_port,
             username,
         )
-        client = ClickHouseClient(
-            host=candidate_host,
-            port=settings.clickhouse_port,
-            username=username,
-            password=password,
-            database="default",
-        )
+        client = warehouse_client(Identity.MAINTENANCE, host=candidate_host)
         if client.connect():
             if not create_user_if_not_exists(client, app_username, app_password):
                 client.disconnect()
@@ -175,7 +146,7 @@ def create_user_if_not_exists(client: ClickHouseClient, username: str, password:
         provision_application_user(client, username, password)
         return True
     except Exception as exc:
-        logger.error("Failed to provision user '%s': %s", username, exc)
+        logger.exception("Failed to provision user '%s': %s", username, exc)
         return False
 
 
@@ -193,7 +164,7 @@ def resolve_clickhouse_root() -> Path:
     return root
 
 
-def get_layer_sql_files(layer_name: str, clickhouse_root: Optional[Path] = None) -> list[Path]:
+def get_layer_sql_files(layer_name: str, clickhouse_root: Path | None = None) -> list[Path]:
     """Return ordered schema SQL files for a specific medallion layer."""
     if layer_name not in LAYER_ORDER:
         raise ValueError(f"Unknown layer '{layer_name}'")
@@ -263,9 +234,7 @@ def _is_excluded_from_layer_setup(sql_file: Path) -> bool:
     return any(part in normalized_name for part in SETUP_EXCLUDED_SQL_NAME_PARTS)
 
 
-def execute_sql_file(
-    client: ClickHouseClient, sql_file: Path, database: Optional[str] = None
-) -> bool:
+def execute_sql_file(client: ClickHouseClient, sql_file: Path, database: str | None = None) -> bool:
     """Execute an SQL file statement by statement."""
     try:
         sql_content = sql_file.read_text(encoding="utf-8")
@@ -311,7 +280,7 @@ def execute_sql_file(
                 if "already exists" in str(exc).lower():
                     executed_count += 1
                 else:
-                    logger.error("Failed while executing %s: %s", sql_file.name, exc)
+                    logger.exception("Failed while executing %s: %s", sql_file.name, exc)
                     logger.error("Statement: %s", statement)
                     return False
             elapsed_seconds = time.perf_counter() - statement_start
@@ -387,8 +356,8 @@ def _execute_layer_sql_files(
 
 def run_clickhouse_layer_setup(
     layer_name: str,
-    client: Optional[ClickHouseClient] = None,
-    sql_file_filter: Optional[Callable[[Path], bool]] = None,
+    client: ClickHouseClient | None = None,
+    sql_file_filter: Callable[[Path], bool] | None = None,
 ) -> int:
     """Create the missing tables of one ClickHouse medallion layer."""
     owns_client = client is None

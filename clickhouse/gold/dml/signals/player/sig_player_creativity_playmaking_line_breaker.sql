@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_creativity_playmaking_line_breaker (
+INSERT INTO gold_signals.sig_player_creativity_playmaking_line_breaker (
     match_id,
     match_date,
     home_team_id,

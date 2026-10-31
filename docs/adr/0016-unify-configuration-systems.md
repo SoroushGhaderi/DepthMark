@@ -62,3 +62,18 @@ of truth for all configuration:
   retained as legacy aliases but should be phased out in favor of the pydantic models.
 - `load_dotenv()` calls have been removed from all scripts. If a script needs env
   loading without `get_settings()`, it should call `get_settings()` explicitly.
+
+## Update (2026-10-31): Settings is the only reader
+
+The unification is complete. `config/settings.py` reads the process
+environment, both `.env` files, and the `fotmob`/`oddspedia` sections of
+`config.yaml` through pydantic-settings sources, and pydantic validates every
+value; the hand-written `_BOOL_KEYS`/`_INT_KEYS`/`_FLOAT_KEYS` coercion is gone.
+The documented flat names (`FOTMOB_X_MAS_TOKEN`, `ODDSPEDIA_MIN_DELAY`, ...)
+remain as aliases, and `__` sets any nested field. MongoDB, S3, the Oddspedia
+browser paths, the FotMob timezone, the Gold target database, and the
+deployment selector moved into `Settings`. `FotMobConfig` and `config/base.py`
+are deleted; FotMob code receives `Settings.fotmob`. Oddspedia values are read
+when used instead of being frozen into module constants, and its path layout
+lives in `src/oddspedia/scraping/paths.py`. Only terminal and OS conventions
+(`NO_COLOR`, `FORCE_COLOR`, `PROGRAMFILES`) are still read directly.

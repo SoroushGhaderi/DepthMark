@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_goalkeeping_defense_early_lockdown (
+INSERT INTO gold_signals.sig_team_goalkeeping_defense_early_lockdown (
     match_id,
     match_date,
     home_team_id,

@@ -3,9 +3,9 @@
 import json
 from datetime import date
 
-from scripts import report_scraping
 from src.fotmob.scraping.reporting import build_run_report as build_fotmob_report
 from src.operations import scraping_reporting
+from src.operations.commands import report_scraping
 
 
 def _common_report(source: str, status: str = "complete") -> dict:

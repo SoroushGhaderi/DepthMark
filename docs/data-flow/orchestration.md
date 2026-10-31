@@ -50,26 +50,33 @@ python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-bronze
 python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-silver
 python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-gold
 python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-clickhouse
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-fotmob
 
 # Options
 python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --force
 python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --debug
+python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --stage-timeout-minutes 120
 ```
 
 ### Execution Model
 
-Pipeline calls each layer script through CLI subprocesses (ADR 0002):
+`src/fotmob/commands/run_pipeline.py` builds the run as data before anything
+executes. `build_plan(scope, options)` returns chains of phases; `run_plan()`
+runs a phase only when every earlier phase of its chain succeeded. Each step is
+a subprocess call to the stage's script (ADR 0002).
 
-1. Each stage is a subprocess call to the layer script.
-2. The selected date, month, or full-history scope is propagated to downstream
-   layer scripts.
-3. `--skip-*` flags bypass stages entirely.
-4. `--*-only` flags run exactly one stage.
-5. Date ranges invoke downstream loads once per date; month mode invokes one
-   month-scoped load.
-6. Full-history mode skips scraping and runs Historical Bronze loading, Silver,
+1. A date or range runs one chain per date: scrape, Bronze load, Silver, Gold.
+   A failure skips the rest of that date; other dates still run.
+2. A month scrapes every date, then runs month-scoped Bronze load, Silver, and
+   Gold once; any failed scrape stops the month.
+3. Full-history mode skips scraping and runs Historical Bronze loading, Silver,
    and Gold with `--full-history`.
+4. `--skip-*` flags drop stages; `--*-only` flags keep exactly one.
+   `--skip-fotmob` is deprecated: it skips every stage.
+5. Each step runs in its own process group and is cancelled (SIGTERM, then
+   SIGKILL after 30 seconds) when it exceeds `--stage-timeout-minutes`
+   (default 360; 0 disables). A timed-out step exits 124 and counts as failed.
+6. Every failed step sends one Telegram alert; the run exits non-zero if any
+   step failed.
 
 ### Mutually Exclusive Flags
 
@@ -77,7 +84,7 @@ Pipeline calls each layer script through CLI subprocesses (ADR 0002):
   `--full-history` — one required
 - `--bronze-only` / `--silver-only` / `--gold-only` — at most one
 
-## Orchestrator (`src/orchestrator.py`)
+## Orchestrator (`src/fotmob/orchestration.py`)
 
 The `FotMobOrchestrator` handles sequential scraping:
 

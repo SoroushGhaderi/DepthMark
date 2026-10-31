@@ -1,17 +1,16 @@
 import random
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
-from config import FotMobConfig
-
-from src.core import ScraperProtocol
+from config.settings import FotMobSettings
 from src.common.logging import get_logger
+
 from .playwright_fetcher import PlaywrightFetcher
 
 logger = get_logger(__name__)
 
 
-class BaseScraper(ScraperProtocol):
+class BaseScraper:
     """
     Base class for FotMob API scrapers.
 
@@ -20,7 +19,7 @@ class BaseScraper(ScraperProtocol):
     a valid, URL-specific x-mas token to every outgoing request automatically.
     """
 
-    def __init__(self, config: FotMobConfig):
+    def __init__(self, config: FotMobSettings):
         self.config = config
         self.logger = logger
         self._fetcher = PlaywrightFetcher(config)
@@ -31,22 +30,22 @@ class BaseScraper(ScraperProtocol):
             self.config.request.delay_min,
             self.config.request.delay_max,
         )
-        self.logger.debug(f"Waiting {delay:.2f}s before next request")
+        self.logger.debug("Waiting %.2fs before next request", delay)
         time.sleep(delay)
 
     def make_request(
         self,
         url: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Dict[str, Any]]:
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any] | None:
         """Make a browser-based GET request with automatic x-mas token injection."""
         self._delay_request()
-        self.logger.debug(f"Browser request → {url}")
+        self.logger.debug("Browser request → %s", url)
 
         result = self._fetcher.fetch_json(url, params)
 
         if result is None:
-            self.logger.error(f"Request failed: {url}")
+            self.logger.error("Request failed: %s", url)
 
         return result
 

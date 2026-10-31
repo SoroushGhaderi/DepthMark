@@ -5,23 +5,28 @@ validated signal catalog (ADR 0033): only active signals run, and selecting a
 deprecated or uncatalogued signal is an error.
 """
 
-import os
 import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
-from src.fotmob.gold.signal_catalog import SignalCatalog, SignalDefinition, load_signal_catalog
+from config.settings import get_settings
+from src.fotmob.gold.signal_catalog import (
+    SIGNAL_TABLE_DATABASE,
+    SignalCatalog,
+    SignalDefinition,
+    load_signal_catalog,
+)
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.integrations.clickhouse.sql import split_sql_statements
+from src.warehouse.databases import gold_scenarios_db, gold_signals_db
 from src.warehouse.publication import gold_outputs_publication
+from src.warehouse.scope import WarehouseExecutionScope
 from src.warehouse.scoped_replace import (
     ScopedReplacementBatch,
     ScopedSqlJob,
 )
-from src.warehouse.scope import WarehouseExecutionScope
-from src.integrations.clickhouse.client import ClickHouseClient
-from src.integrations.clickhouse.sql import split_sql_statements
-from src.warehouse.databases import gold_scenarios_db, gold_signals_db
 
 GoldJobKind = Literal["scenario", "signal"]
 SignalEntity = Literal["match", "player", "team"]
@@ -32,6 +37,9 @@ GOLD_DML_DIR = GOLD_SQL_DIR / "dml"
 SCENARIO_DML_DIR = GOLD_DML_DIR / "scenarios"
 JOB_ID_RE = re.compile(r"^(scenario|sig|signal)_[a-z0-9_]+$")
 SIGNAL_FAMILY_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
+
+# Database that scenario SQL files name; the runner maps it to the configured one.
+SCENARIO_TABLE_DATABASE = "gold_scenarios"
 
 
 @dataclass(frozen=True)
@@ -72,17 +80,16 @@ def validate_signal_family(family: str) -> str:
     """Validate a signal family filter."""
     if not SIGNAL_FAMILY_RE.match(family):
         raise ValueError(
-            "Signal family must contain only lowercase letters, digits, and underscores: "
-            f"{family}"
+            f"Signal family must contain only lowercase letters, digits, and underscores: {family}"
         )
     return family
 
 
-def _resolved_target_db(kind: GoldJobKind, target_db: Optional[str]) -> str:
-    return target_db or os.getenv("CLICKHOUSE_GOLD_TARGET_DB") or default_target_db(kind)
+def _resolved_target_db(kind: GoldJobKind, target_db: str | None) -> str:
+    return target_db or get_settings().clickhouse_gold_target_db or default_target_db(kind)
 
 
-def _signal_job(definition: SignalDefinition, target_db: Optional[str]) -> GoldSqlJob:
+def _signal_job(definition: SignalDefinition, target_db: str | None) -> GoldSqlJob:
     resolved_target_db = _resolved_target_db("signal", target_db)
     return GoldSqlJob(
         kind="signal",
@@ -93,7 +100,7 @@ def _signal_job(definition: SignalDefinition, target_db: Optional[str]) -> GoldS
     )
 
 
-def _scenario_job(job_id: str, target_db: Optional[str]) -> GoldSqlJob:
+def _scenario_job(job_id: str, target_db: str | None) -> GoldSqlJob:
     sql_file = next(
         (path for path in SCENARIO_DML_DIR.rglob(f"{job_id}.sql") if path.is_file()),
         SCENARIO_DML_DIR / f"{job_id}.sql",
@@ -112,8 +119,8 @@ def resolve_gold_sql_job(
     kind: GoldJobKind,
     job_id: str,
     *,
-    target_db: Optional[str] = None,
-    signal_catalog: Optional[SignalCatalog] = None,
+    target_db: str | None = None,
+    signal_catalog: SignalCatalog | None = None,
 ) -> GoldSqlJob:
     """Resolve a Gold SQL job id to SQL path and target table metadata.
 
@@ -136,10 +143,10 @@ def resolve_gold_sql_job(
 def discover_gold_sql_jobs(
     kind: GoldJobKind,
     *,
-    entity: Optional[SignalEntity] = None,
-    family: Optional[str] = None,
-    target_db: Optional[str] = None,
-    signal_catalog: Optional[SignalCatalog] = None,
+    entity: SignalEntity | None = None,
+    family: str | None = None,
+    target_db: str | None = None,
+    signal_catalog: SignalCatalog | None = None,
 ) -> list[GoldSqlJob]:
     """Discover all executable Gold SQL jobs for a kind, ordered by job id.
 
@@ -177,13 +184,11 @@ def build_scoped_gold_job(job: GoldSqlJob) -> ScopedSqlJob:
 
     sql_content = job.sql_file.read_text(encoding="utf-8")
     if job.kind == "scenario":
-        sql_content = sql_content.replace(f"{gold_scenarios_db()}.", f"{job.target_db}.")
-        sql_content = sql_content.replace("gold.scenario_", f"{job.target_db}.scenario_")
+        # SQL names the canonical database; map it to the configured target.
+        sql_content = sql_content.replace(f"{SCENARIO_TABLE_DATABASE}.", f"{job.target_db}.")
         date_expression = "toDateOrNull(match_time_utc_date)"
     else:
-        sql_content = sql_content.replace(f"{gold_signals_db()}.", f"{job.target_db}.")
-        sql_content = sql_content.replace("gold.sig_", f"{job.target_db}.sig_")
-        sql_content = sql_content.replace("gold.signal_", f"{job.target_db}.signal_")
+        sql_content = sql_content.replace(f"{SIGNAL_TABLE_DATABASE}.", f"{job.target_db}.")
         date_expression = "match_date"
     statements = split_sql_statements(sql_content)
     if not statements:
@@ -197,7 +202,7 @@ def build_scoped_gold_job(job: GoldSqlJob) -> ScopedSqlJob:
 
 
 def execute_gold_sql_job(
-    client: Optional[ClickHouseClient],
+    client: ClickHouseClient | None,
     job: GoldSqlJob,
     *,
     scope: WarehouseExecutionScope,

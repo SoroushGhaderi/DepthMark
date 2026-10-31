@@ -1,7 +1,6 @@
-"""Canonical entry point for creating the Oddspedia warehouse layers."""
+"""Create the isolated Oddspedia Bronze and resolution warehouse tables."""
 
-from setup_warehouse import main
-
+from src.oddspedia.commands.setup_warehouse import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -2,7 +2,7 @@
 
 import pytest
 
-from scripts.gold import build_fotmob_signal_activations as builder
+from src.fotmob.commands import build_signal_activations as builder
 from src.fotmob.gold import service
 from src.fotmob.gold.signal_catalog import (
     CatalogViolation,
@@ -62,11 +62,11 @@ def test_invalid_catalog_fails_before_connecting(monkeypatch) -> None:
     def invalid_catalog(_catalog_dir):
         raise SignalCatalogError([CatalogViolation("catalogs/sig_x.md", "broken")])
 
-    def unexpected_client(_scope):
+    def unexpected_session(*_args, **_kwargs):
         raise AssertionError("activation builder must not connect with an invalid catalog")
 
     monkeypatch.setattr(builder, "load_signal_catalog", invalid_catalog)
-    monkeypatch.setattr(builder, "client_for_scope", unexpected_client)
+    monkeypatch.setattr(builder, "warehouse_session", unexpected_session)
 
     assert builder.main(["--date", "20251208", "--dry-run"]) == 1
 

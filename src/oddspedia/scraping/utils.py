@@ -1,14 +1,15 @@
+import contextlib
 import json
 import os
 import random
 import tempfile
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from selenium.common.exceptions import TimeoutException, WebDriverException
 
-from src.oddspedia.scraping.config import MAX_DELAY, MIN_DELAY
+from src.oddspedia.scraping.config import get_settings
 from src.oddspedia.scraping.driver import wait_for_cloudflare
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
@@ -49,9 +50,13 @@ def pin_oddspedia_event_url(url: str, event_id: object) -> str:
     return urlunparse(parsed._replace(query=urlencode(query)))
 
 
-def random_delay(min_s=MIN_DELAY, max_s=MAX_DELAY):
-    """Sleep for a random duration to mimic human behaviour."""
-    delay = random.uniform(min_s, max_s)
+def random_delay(min_s=None, max_s=None):
+    """Sleep for a random duration to mimic human behaviour (settings bounds by default)."""
+    settings = get_settings()
+    delay = random.uniform(
+        settings.min_delay if min_s is None else min_s,
+        settings.max_delay if max_s is None else max_s,
+    )
     logger.debug("sleeping", delay_s=round(delay, 1))
     time.sleep(delay)
 
@@ -109,13 +114,14 @@ def safe_get(driver, url, retries=3):
                     "driver_session_lost",
                     error=type(session_err).__name__,
                     error_detail=str(session_err),
+                    exc_info=True,
                 )
                 if hasattr(driver, "reconnect"):
                     try:
                         driver.reconnect()
                         logger.info("driver_reconnected", url=url)
                     except Exception as reconnect_err:
-                        logger.error("reconnect_failed", error=str(reconnect_err))
+                        logger.exception("reconnect_failed", error=str(reconnect_err))
                         return False
                 else:
                     logger.error("reconnect_not_supported")
@@ -152,6 +158,7 @@ def safe_get(driver, url, retries=3):
                                     url=url,
                                     attempt=attempt,
                                     error=str(reconnect_err),
+                                    exc_info=True,
                                 )
                         if attempt < retries:
                             random_delay(2, 5)
@@ -180,12 +187,13 @@ def safe_get(driver, url, retries=3):
                                     url=url,
                                     attempt=attempt,
                                     error=str(reconnect_err),
+                                    exc_info=True,
                                 )
                         random_delay(2, 5)
                         continue
                     return False
             except Exception as check_err:
-                logger.warning("page_check_failed", error=str(check_err))
+                logger.warning("page_check_failed", error=str(check_err), exc_info=True)
 
         except TimeoutException:
             logger.warning("request_timeout", url=url, attempt=attempt)
@@ -196,7 +204,7 @@ def safe_get(driver, url, retries=3):
             if attempt < retries:
                 random_delay(2, 5)
         except Exception as exc:
-            logger.warning("request_error", url=url, attempt=attempt, error=str(exc))
+            logger.warning("request_error", url=url, attempt=attempt, error=str(exc), exc_info=True)
             if attempt < retries:
                 random_delay(2, 5)
 
@@ -267,23 +275,21 @@ def save_json(data, path, artifact_type=None):
             os.fsync(fd)
         os.replace(tmp_path, path)
     except Exception:
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except Exception:
-            pass
         raise
     logger.info("json_saved", path=path)
 
 
 def load_json(path):
     """Read and return JSON from *path*."""
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         return json.load(fh)
 
 
 def now_iso():
     """Return current UTC time as ISO-8601 string."""
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def get_performance_logs(driver):
@@ -304,5 +310,5 @@ def extract_network_response_body(driver, request_id):
         resp = driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
         body = resp.get("body", "")
         return json.loads(body)
-    except Exception:
+    except (WebDriverException, ValueError):
         return None

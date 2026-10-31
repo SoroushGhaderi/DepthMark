@@ -1,12 +1,12 @@
 import pytest
 from fotmob_bronze_support import DATE, FakeClickHouse, load_payload, second_match, write_archive
 
-from scripts.bronze import remove_fotmob_bronze
 from src.fotmob.bronze.admission import load_bronze_table_specs
 from src.fotmob.bronze.loader import BronzeService
 from src.fotmob.bronze.removal import BronzeRemovalService, stale_scope_commands
 from src.fotmob.bronze.source import source_date_match_ids
 from src.fotmob.bronze.write_lock import fotmob_bronze_write_lock
+from src.fotmob.commands import remove_bronze as remove_fotmob_bronze
 
 
 @pytest.fixture(scope="module")
@@ -109,8 +109,8 @@ def test_stale_scopes_rerun_single_dates_or_whole_months():
     [
         ([], "one of the arguments"),
         (["--date", "2025-12-08"], "expected YYYYMMDD"),
-        (["--start-date", "20251208"], "requires --end-date"),
-        (["--start-date", "20251208", "--end-date", "20251201"], "must not be before"),
+        (["--start-date", "20251208"], "--end-date is required"),
+        (["--start-date", "20251208", "--end-date", "20251201"], "cannot be before"),
         (["--date", "20251208", "--month", "202512"], "not allowed with"),
     ],
 )

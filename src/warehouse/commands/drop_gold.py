@@ -1,0 +1,134 @@
+"""Drop FotMob gold scenario and/or signal tables in ClickHouse."""
+
+import argparse
+import time
+from contextlib import ExitStack
+
+from src.common.logging import get_logger
+from src.common.paths import PROJECT_ROOT
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.databases import gold_db, gold_scenarios_db, gold_signals_db
+from src.warehouse.identities import Identity, warehouse_session
+
+project_root = PROJECT_ROOT
+
+logger = get_logger()
+
+
+def parse_args(argv=None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Drop scenario/signal tables from the gold ClickHouse schema"
+    )
+    parser.add_argument(
+        "--part",
+        choices=("all", "scenarios", "signals"),
+        default="scenarios",
+        help="Which gold tables to drop: scenarios, signals, or all (default: scenarios)",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="List matching tables without dropping them",
+    )
+    return parser.parse_args(argv)
+
+
+def _find_tables(client: ClickHouseClient, database: str, part: str) -> list[str]:
+    prefixes = []
+    if part == "scenarios":
+        prefixes.append("scenario_")
+    elif part == "signals":
+        prefixes.append("sig_")
+    elif part == "metadata":
+        return ["signal_activations"]
+    if not prefixes:
+        return []
+
+    prefix_filter = " OR ".join(f"startsWith(name, '{prefix}')" for prefix in prefixes)
+    query = f"""
+        SELECT name
+        FROM system.tables
+        WHERE database = %(database)s
+          AND ({prefix_filter})
+        ORDER BY name
+    """
+    result = client.execute(query, {"database": database})
+    return [row[0] for row in result.result_rows]
+
+
+def main(argv=None) -> int:
+    args = parse_args(argv)
+
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(Identity.MAINTENANCE))
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        find_start = time.perf_counter()
+        db_targets = []
+        if args.part in ("all", "scenarios"):
+            db_targets.append(("scenarios", gold_scenarios_db(), "scenarios"))
+        if args.part in ("all", "signals"):
+            db_targets.append(("signals", gold_signals_db(), "signals"))
+        if args.part in ("all", "signals"):
+            db_targets.append(("metadata", gold_db(), "metadata"))
+
+        find_elapsed_seconds = time.perf_counter() - find_start
+        logger.info(
+            "Gold %s table discovery completed in %.2f seconds",
+            args.part,
+            find_elapsed_seconds,
+        )
+
+        dropped_any = False
+        for group_name, database, lookup_part in db_targets:
+            tables = _find_tables(client, database, lookup_part)
+            if not tables:
+                logger.info("No %s tables found in %s", group_name, database)
+                continue
+            total_tables = len(tables)
+            logger.info("Found %s gold %s table(s) in %s", total_tables, group_name, database)
+            dropped_any = True
+            for index, table in enumerate(tables, start=1):
+                full_table = f"{database}.{table}"
+                if args.dry_run:
+                    logger.info(
+                        "[dry-run] Would drop gold %s table %s/%s: %s",
+                        group_name,
+                        index,
+                        total_tables,
+                        full_table,
+                    )
+                    continue
+                logger.info(
+                    "Dropping gold %s table %s/%s: %s",
+                    group_name,
+                    index,
+                    total_tables,
+                    full_table,
+                )
+                drop_start = time.perf_counter()
+                client.execute(f"DROP TABLE IF EXISTS {full_table}")
+                drop_elapsed_seconds = time.perf_counter() - drop_start
+                logger.info(
+                    "Dropped gold %s table %s/%s: %s in %.2f seconds",
+                    group_name,
+                    index,
+                    total_tables,
+                    full_table,
+                    drop_elapsed_seconds,
+                )
+
+        if not dropped_any:
+            return 0
+
+        if args.dry_run:
+            logger.info("Dry-run completed")
+        else:
+            logger.info("All matching gold %s tables dropped successfully", args.part)
+        return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

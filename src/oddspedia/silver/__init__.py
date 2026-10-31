@@ -2,8 +2,8 @@
 
 from .match_resolution import (
     FotMobMatch,
-    OddspediaEvent,
     OddspediaBronzeNotPublishedError,
+    OddspediaEvent,
     OddspediaMatchResolver,
     OddspediaResolutionService,
     ResolutionResult,

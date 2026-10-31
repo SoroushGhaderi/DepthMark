@@ -2,7 +2,7 @@
 
 from argparse import Namespace
 
-from scripts.oddspedia import load_bronze, resolve_events
+from src.oddspedia.commands import load_bronze, resolve_events
 
 
 def _args(**values):

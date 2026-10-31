@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_persistent_threat (
+INSERT INTO gold_signals.sig_player_shooting_goals_persistent_threat (
     match_id,
     match_date,
     home_team_id,

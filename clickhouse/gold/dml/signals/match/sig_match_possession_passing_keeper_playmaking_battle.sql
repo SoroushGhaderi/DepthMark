@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_possession_passing_keeper_playmaking_battle (
+INSERT INTO gold_signals.sig_match_possession_passing_keeper_playmaking_battle (
     match_id,
     match_date,
     home_team_id,

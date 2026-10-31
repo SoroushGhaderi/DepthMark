@@ -6,7 +6,6 @@ import subprocess
 import time
 import urllib.request
 import zipfile
-from typing import Optional
 from urllib.error import HTTPError, URLError
 
 import undetected_chromedriver as uc
@@ -14,7 +13,7 @@ from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.chrome.options import Options as SeleniumChromeOptions
 
-from src.oddspedia.scraping.config import CLOUDFLARE_WAIT, PAGE_LOAD_TIMEOUT
+from src.oddspedia.scraping.config import get_settings
 from src.oddspedia.scraping.logging import get_logger
 
 logger = get_logger(__name__)
@@ -65,12 +64,11 @@ _BLOCKED_RESOURCE_URLS = (
 )
 
 
-def _configured_chrome_binary() -> Optional[str]:
+def _configured_chrome_binary() -> str | None:
     """Return an explicitly configured or discoverable Chrome executable."""
-    for variable in ("ODDSPEDIA_CHROME_BIN", "CHROME_BIN"):
-        configured = os.getenv(variable)
-        if configured:
-            return configured
+    configured = get_settings().chrome_binary
+    if configured:
+        return configured
 
     candidates = []
     if platform.system() == "Darwin":
@@ -91,7 +89,7 @@ def _configured_chrome_binary() -> Optional[str]:
     return next((path for path in candidates if path and os.path.isfile(path)), None)
 
 
-def detect_chrome_version(chrome_binary: Optional[str] = None) -> Optional[int]:
+def detect_chrome_version(chrome_binary: str | None = None) -> int | None:
     """Return the major Chrome version (e.g. 148) or None if detection fails."""
     chrome_binary = chrome_binary or _configured_chrome_binary()
     if chrome_binary:
@@ -106,13 +104,13 @@ def detect_chrome_version(chrome_binary: Optional[str] = None) -> Optional[int]:
             parts = result.stdout.strip().split()
             if parts:
                 return int(parts[-1].split(".")[0])
-        except Exception:
+        except (OSError, subprocess.SubprocessError, ValueError):
             pass
 
     try:
         with open(_CHROME_PLIST, "rb") as f:
             info = plistlib.load(f)
-    except Exception:
+    except (OSError, plistlib.InvalidFileException, ValueError):
         pass
     else:
         version = info.get("KSVersion") or info.get("CFBundleShortVersionString", "")
@@ -129,7 +127,7 @@ def detect_chrome_version(chrome_binary: Optional[str] = None) -> Optional[int]:
         parts = result.stdout.strip().split()
         if parts:
             return int(parts[-1].split(".")[0])
-    except Exception:
+    except (OSError, subprocess.SubprocessError, ValueError):
         pass
     logger.warning("chrome_version_detection_failed")
     return None
@@ -172,7 +170,7 @@ def get_driver(headless=False, load_resources=False, user_data_dir=None):
 
     chrome_ver = detect_chrome_version(chrome_binary)
     logger.info("creating_chrome_driver", version_main=chrome_ver)
-    driver_path = os.getenv("ODDSPEDIA_CHROMEDRIVER_PATH") or os.getenv("CHROMEDRIVER_PATH")
+    driver_path = get_settings().chromedriver_path
     if not driver_path and chrome_ver:
         try:
             driver_path = _cached_chromedriver_path(chrome_ver)
@@ -196,7 +194,7 @@ def get_driver(headless=False, load_resources=False, user_data_dir=None):
             driver_path=driver_path,
         )
 
-    driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT)
+    driver.set_page_load_timeout(get_settings().page_load_timeout)
     # Optional element searches use bounded explicit polling at their call
     # sites. A global implicit wait would silently add the same delay to every
     # absent-element lookup.
@@ -214,10 +212,10 @@ def get_driver(headless=False, load_resources=False, user_data_dir=None):
 
 def _fallback_driver(
     headless: bool,
-    user_data_dir: Optional[str],
-    chrome_ver: Optional[int],
-    chrome_binary: Optional[str] = None,
-    driver_path: Optional[str] = None,
+    user_data_dir: str | None,
+    chrome_ver: int | None,
+    chrome_binary: str | None = None,
+    driver_path: str | None = None,
 ):
     """Create a driver after undetected_chromedriver's own download is blocked."""
     if driver_path:
@@ -256,7 +254,10 @@ def _fallback_driver(
                 )
         except Exception as exc:
             logger.warning(
-                "chromedriver_cft_fallback_failed", error=str(exc), fallback="selenium_manager"
+                "chromedriver_cft_fallback_failed",
+                error=str(exc),
+                fallback="selenium_manager",
+                exc_info=True,
             )
 
     options = SeleniumChromeOptions()
@@ -268,8 +269,8 @@ def _fallback_driver(
 def _apply_common_chrome_options(
     options,
     headless: bool,
-    user_data_dir: Optional[str],
-    chrome_binary: Optional[str] = None,
+    user_data_dir: str | None,
+    chrome_binary: str | None = None,
 ) -> None:
     options.page_load_strategy = "eager"
     if chrome_binary:
@@ -358,7 +359,7 @@ def _ensure_chrome_for_testing_driver(version_main: int) -> str:
     return driver_path
 
 
-def _cached_chromedriver_path(version_main: int) -> Optional[str]:
+def _cached_chromedriver_path(version_main: int) -> str | None:
     """Return the existing per-version fallback without making a request."""
     path = os.path.join(
         os.path.expanduser("~"),
@@ -383,14 +384,16 @@ def _prepare_chromedriver_binary(driver_path: str) -> None:
         subprocess.run(
             ["xattr", "-dr", "com.apple.quarantine", driver_path], check=False, timeout=10
         )
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         pass
     try:
         subprocess.run(
             ["codesign", "--force", "--deep", "--sign", "-", driver_path], check=False, timeout=20
         )
     except Exception as exc:
-        logger.warning("chromedriver_codesign_failed", path=driver_path, error=str(exc))
+        logger.warning(
+            "chromedriver_codesign_failed", path=driver_path, error=str(exc), exc_info=True
+        )
 
 
 def _latest_driver_download(version_main: int, platform_name: str) -> tuple[str, str]:
@@ -434,8 +437,10 @@ def _chrome_for_testing_platform() -> str:
     raise RuntimeError(f"Unsupported Chrome for Testing platform: {system} {machine}")
 
 
-def wait_for_cloudflare(driver, timeout=CLOUDFLARE_WAIT):
+def wait_for_cloudflare(driver, timeout=None):
     """Block until the Cloudflare 'Just a moment...' challenge resolves."""
+    if timeout is None:
+        timeout = get_settings().cloudflare_wait
     logger.info("cloudflare_wait_start", timeout_s=timeout)
     deadline = time.time() + timeout
 
@@ -464,7 +469,7 @@ class DriverManager:
         self,
         headless: bool = False,
         load_resources: bool = False,
-        user_data_dir: Optional[str] = None,
+        user_data_dir: str | None = None,
     ):
         self._headless = headless
         self._load_resources = load_resources
@@ -478,7 +483,7 @@ class DriverManager:
         try:
             _ = self._driver.current_url
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 - any failure means the browser session is gone
             return False
 
     def reconnect(self) -> None:
@@ -489,8 +494,8 @@ class DriverManager:
         )
         try:
             self._driver.quit()
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001 - best-effort shutdown of a session being replaced
+            logger.debug("driver_quit_failed", exc_info=True)
         time.sleep(_RECONNECT_DELAY)
         self._driver = get_driver(
             self._headless,
@@ -503,6 +508,6 @@ class DriverManager:
         if self._driver is not None:
             try:
                 self._driver.quit()
-            except Exception:
-                pass
+            except Exception:  # noqa: BLE001 - best-effort shutdown at close
+                logger.debug("driver_quit_failed", exc_info=True)
             self._driver = None

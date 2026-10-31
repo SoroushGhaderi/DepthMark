@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_shooting_goals_unproductive_dominance (
+INSERT INTO gold_signals.sig_match_shooting_goals_unproductive_dominance (
     match_id,
     match_date,
     home_team_id,

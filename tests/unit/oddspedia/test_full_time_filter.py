@@ -1,27 +1,23 @@
-import os
 import json
-import sys
+import os
 import unittest
 from unittest.mock import patch
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
-
 from src.oddspedia.scraping.match_collector import (
-    DiscoveryResult,
     _JS_SPORT_STATE,
+    DiscoveryResult,
     _fetch_all_matches,
     _is_full_time_match,
+    _is_league_name,
     _listing_status_token,
-    _merge_league_names,
     _match_country,
     _match_country_slug,
     _match_league_name,
-    _is_league_name,
+    _merge_league_names,
     collect_match_links,
 )
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 class _FakeDriver:
@@ -31,7 +27,9 @@ class _FakeDriver:
 class FullTimeFilterTests(unittest.TestCase):
     def test_match_league_name_accepts_archived_api_shapes(self):
         self.assertEqual(_match_league_name({"league_name": "Premier League"}), "Premier League")
-        self.assertEqual(_match_league_name({"league": {"name": "NPL Queensland"}}), "NPL Queensland")
+        self.assertEqual(
+            _match_league_name({"league": {"name": "NPL Queensland"}}), "NPL Queensland"
+        )
         self.assertEqual(_match_league_name({"competition": {"title": "Chile Cup"}}), "Chile Cup")
 
     def test_match_league_name_rejects_card_navigation_and_score_text(self):
@@ -73,7 +71,9 @@ class FullTimeFilterTests(unittest.TestCase):
         self.assertEqual(matches["101"]["league_slug"], "primera-a-women")
 
     def test_merge_league_names_uses_internal_match_id_when_urls_are_missing(self):
-        fixture_path = os.path.join(ROOT, "tests", "fixtures", "oddspedia", "phase1_league_sources.json")
+        fixture_path = os.path.join(
+            ROOT, "tests", "fixtures", "oddspedia", "phase1_league_sources.json"
+        )
         with open(fixture_path, encoding="utf-8") as fixture_file:
             fixture = json.load(fixture_file)
 
@@ -84,7 +84,9 @@ class FullTimeFilterTests(unittest.TestCase):
         self.assertEqual(match["country"], "World")
 
     def test_merge_league_names_matches_archived_event_by_teams_and_date(self):
-        fixture_path = os.path.join(ROOT, "tests", "fixtures", "oddspedia", "phase1_league_sources.json")
+        fixture_path = os.path.join(
+            ROOT, "tests", "fixtures", "oddspedia", "phase1_league_sources.json"
+        )
         with open(fixture_path, encoding="utf-8") as fixture_file:
             fixture = json.load(fixture_file)
 
@@ -109,8 +111,7 @@ class FullTimeFilterTests(unittest.TestCase):
                     size = 50 if self.page < 3 else 100
                     return {
                         "matchList": [
-                            {"id": i, "ht": f"Home {i}", "at": f"Away {i}"}
-                            for i in range(size)
+                            {"id": i, "ht": f"Home {i}", "at": f"Away {i}"} for i in range(size)
                         ],
                         "currentPage": self.page,
                         "totalPages": 3,
@@ -186,9 +187,7 @@ class FullTimeFilterTests(unittest.TestCase):
         _build_urls,
         _sleep,
     ):
-        fetch_all_matches.return_value = DiscoveryResult(
-            anomalies=["sport_component_not_found"]
-        )
+        fetch_all_matches.return_value = DiscoveryResult(anomalies=["sport_component_not_found"])
         extract_sports_events.return_value = {}
         extract_vuex.return_value = {
             "42": {

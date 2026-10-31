@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_shooting_goals_late_surge_goals (
+INSERT INTO gold_signals.sig_team_shooting_goals_late_surge_goals (
     match_id,
     match_date,
     home_team_id,

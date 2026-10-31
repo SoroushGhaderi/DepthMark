@@ -1,25 +1,13 @@
-"""Create the FotMob bronze, silver, and gold ClickHouse layers."""
+"""Deprecated alias of scripts/orchestration/setup_fotmob_warehouse.py."""
 
-import argparse
-import sys
-from pathlib import Path
-from typing import Optional, Sequence
-
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from clickhouse_setup_common import LAYER_ORDER, run_clickhouse_layers
-
-
-def main(argv: Optional[Sequence[str]] = None) -> int:
-    """Create each FotMob warehouse layer in dependency order."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.parse_args(argv)
-    return run_clickhouse_layers(LAYER_ORDER)
-
+from src.common.deprecation import run_deprecated_script
+from src.fotmob.commands.setup_warehouse import main
 
 if __name__ == "__main__":
-    print(
-        "Warning: scripts/orchestration/setup_clickhouse.py is deprecated; use "
-        "scripts/orchestration/setup_fotmob_warehouse.py instead.",
-        file=sys.stderr,
+    raise SystemExit(
+        run_deprecated_script(
+            __file__,
+            "scripts/orchestration/setup_fotmob_warehouse.py",
+            main,
+        )
     )
-    sys.exit(main())

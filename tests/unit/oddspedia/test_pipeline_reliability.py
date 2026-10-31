@@ -1,26 +1,21 @@
-import os
 import json
-import sys
+import os
 import tempfile
 import unittest
 from unittest.mock import patch
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
-if ROOT not in sys.path:
-    sys.path.insert(0, ROOT)
+from selenium.common.exceptions import InvalidSessionIdException, WebDriverException
 
 from src.oddspedia.scraping import cli as main
 from src.oddspedia.scraping.audit import DateAudit
-from src.oddspedia.scraping.metrics import Metrics
 from src.oddspedia.scraping.manifest import ScrapeManifest
 from src.oddspedia.scraping.match_collector import DiscoveryResult
-from src.oddspedia.scraping.match_scraper import FootballOddsCoverageError
+from src.oddspedia.scraping.metrics import Metrics
+from src.oddspedia.scraping.odds_contract import (
+    FootballOddsCoverageError,
+)
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.scraping.utils import DataValidationError, save_json
-from selenium.common.exceptions import InvalidSessionIdException, WebDriverException
 
 
 class _Metrics:
@@ -450,23 +445,26 @@ class PipelineReliabilityTests(unittest.TestCase):
             manifest_path = os.path.join(directory, "manifest.json")
             output_path = os.path.join(directory, "match_42.json")
             manifest = ScrapeManifest(date="20260706", sport="football", total=1)
-            with patch(
-                "src.oddspedia.scraping.manifest.get_manifest_path",
-                return_value=manifest_path,
-            ), patch(
-                "src.oddspedia.scraping.cli.get_matches_dir", return_value=directory
-            ), patch(
-                "src.oddspedia.scraping.cli.get_match_file", return_value=output_path
-            ), patch(
-                "src.oddspedia.scraping.cli._audit_before_scrape",
-                return_value=(DateAudit(date="20260706", sport="football", expected=1), manifest),
-            ), patch(
-                "src.oddspedia.scraping.cli._select_matches_to_scrape",
-                return_value=([match], 0, 0),
-            ), patch(
-                "src.oddspedia.scraping.cli.scrape_match", return_value=incomplete_payload
-            ), patch(
-                "src.oddspedia.scraping.cli._warmup_cloudflare"
+            with (
+                patch(
+                    "src.oddspedia.scraping.manifest.get_manifest_path",
+                    return_value=manifest_path,
+                ),
+                patch("src.oddspedia.scraping.cli.get_matches_dir", return_value=directory),
+                patch("src.oddspedia.scraping.cli.get_match_file", return_value=output_path),
+                patch(
+                    "src.oddspedia.scraping.cli._audit_before_scrape",
+                    return_value=(
+                        DateAudit(date="20260706", sport="football", expected=1),
+                        manifest,
+                    ),
+                ),
+                patch(
+                    "src.oddspedia.scraping.cli._select_matches_to_scrape",
+                    return_value=([match], 0, 0),
+                ),
+                patch("src.oddspedia.scraping.cli.scrape_match", return_value=incomplete_payload),
+                patch("src.oddspedia.scraping.cli._warmup_cloudflare"),
             ):
                 from src.oddspedia.scraping.manifest import save_manifest
 
@@ -487,9 +485,7 @@ class PipelineReliabilityTests(unittest.TestCase):
             "url": "https://oddspedia.com/football/home-away-42",
             "status": "FT",
         }
-        partial_odds = [
-            {"market": "Full Time Result", "lines": [{"label": "Main Line"}]}
-        ]
+        partial_odds = [{"market": "Full Time Result", "lines": [{"label": "Main Line"}]}]
         coverage_error = FootballOddsCoverageError(
             "Football odds market coverage incomplete: extracted 1/2 markets",
             missing_markets=["Corners Odd or Even"],
@@ -499,36 +495,35 @@ class PipelineReliabilityTests(unittest.TestCase):
             manifest_path = os.path.join(directory, "manifest.json")
             output_path = os.path.join(directory, "match_42.json")
             manifest = ScrapeManifest(date="20260706", sport="football", total=1)
-            with patch(
-                "src.oddspedia.scraping.manifest.get_manifest_path",
-                return_value=manifest_path,
-            ), patch(
-                "src.oddspedia.scraping.cli.get_matches_dir", return_value=directory
-            ), patch(
-                "src.oddspedia.scraping.cli.get_match_file", return_value=output_path
-            ), patch(
-                "src.oddspedia.scraping.cli._audit_before_scrape",
-                return_value=(DateAudit(date="20260706", sport="football", expected=1), manifest),
-            ), patch(
-                "src.oddspedia.scraping.cli._select_matches_to_scrape",
-                return_value=([match], 0, 0),
-            ), patch(
-                "src.oddspedia.scraping.cli.scrape_match",
-                side_effect=[coverage_error, {"id": "42"}],
-            ) as scrape, patch(
-                "src.oddspedia.scraping.cli.save_json"
-            ), patch(
-                "src.oddspedia.scraping.cli.require_accepted_match_json"
-            ), patch(
-                "src.oddspedia.scraping.cli._warmup_cloudflare"
-            ), patch(
-                "src.oddspedia.scraping.cli._retry_delay", return_value=0
-            ), patch(
-                "src.oddspedia.scraping.cli.random.uniform", return_value=0
-            ), patch(
-                "src.oddspedia.scraping.cli.time.sleep"
-            ), patch(
-                "src.oddspedia.scraping.cli.random_delay"
+            with (
+                patch(
+                    "src.oddspedia.scraping.manifest.get_manifest_path",
+                    return_value=manifest_path,
+                ),
+                patch("src.oddspedia.scraping.cli.get_matches_dir", return_value=directory),
+                patch("src.oddspedia.scraping.cli.get_match_file", return_value=output_path),
+                patch(
+                    "src.oddspedia.scraping.cli._audit_before_scrape",
+                    return_value=(
+                        DateAudit(date="20260706", sport="football", expected=1),
+                        manifest,
+                    ),
+                ),
+                patch(
+                    "src.oddspedia.scraping.cli._select_matches_to_scrape",
+                    return_value=([match], 0, 0),
+                ),
+                patch(
+                    "src.oddspedia.scraping.cli.scrape_match",
+                    side_effect=[coverage_error, {"id": "42"}],
+                ) as scrape,
+                patch("src.oddspedia.scraping.cli.save_json"),
+                patch("src.oddspedia.scraping.cli.require_accepted_match_json"),
+                patch("src.oddspedia.scraping.cli._warmup_cloudflare"),
+                patch("src.oddspedia.scraping.cli._retry_delay", return_value=0),
+                patch("src.oddspedia.scraping.cli.random.uniform", return_value=0),
+                patch("src.oddspedia.scraping.cli.time.sleep"),
+                patch("src.oddspedia.scraping.cli.random_delay"),
             ):
                 from src.oddspedia.scraping.manifest import save_manifest
 
@@ -554,27 +549,32 @@ class PipelineReliabilityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             manifest_path = os.path.join(directory, "manifest.json")
             manifest = ScrapeManifest(date="20260706", sport="football", total=2)
-            with patch(
-                "src.oddspedia.scraping.manifest.get_manifest_path",
-                return_value=manifest_path,
-            ), patch(
-                "src.oddspedia.scraping.cli.get_matches_dir", return_value=directory
-            ), patch(
-                "src.oddspedia.scraping.cli._audit_before_scrape",
-                return_value=(DateAudit(date="20260706", sport="football", expected=2), manifest),
-            ), patch(
-                "src.oddspedia.scraping.cli._select_matches_to_scrape",
-                return_value=(matches, 0, 0),
-            ), patch(
-                "src.oddspedia.scraping.cli.DriverManager",
-                side_effect=RuntimeError("driver unavailable"),
+            with (
+                patch(
+                    "src.oddspedia.scraping.manifest.get_manifest_path",
+                    return_value=manifest_path,
+                ),
+                patch("src.oddspedia.scraping.cli.get_matches_dir", return_value=directory),
+                patch(
+                    "src.oddspedia.scraping.cli._audit_before_scrape",
+                    return_value=(
+                        DateAudit(date="20260706", sport="football", expected=2),
+                        manifest,
+                    ),
+                ),
+                patch(
+                    "src.oddspedia.scraping.cli._select_matches_to_scrape",
+                    return_value=(matches, 0, 0),
+                ),
+                patch(
+                    "src.oddspedia.scraping.cli.DriverManager",
+                    side_effect=RuntimeError("driver unavailable"),
+                ),
             ):
                 from src.oddspedia.scraping.manifest import save_manifest
 
                 save_manifest(manifest)
-                persisted = main.phase2_scrape(
-                    None, matches, "20260706", max_retries=0, workers=2
-                )
+                persisted = main.phase2_scrape(None, matches, "20260706", max_retries=0, workers=2)
 
         self.assertEqual(set(persisted.failed), {"41", "42"})
         self.assertEqual(persisted.in_progress, {})

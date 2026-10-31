@@ -6,23 +6,16 @@ import unittest
 from datetime import date
 from unittest.mock import patch
 
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
-
-from src.oddspedia.scraping.config import (
-    BASE_URL,
+from src.oddspedia.scraping.config import base_url, get_sport_listing_url, normalize_sport
+from src.oddspedia.scraping.match_collector import _build_urls
+from src.oddspedia.scraping.paths import (
     get_manifest_file,
     get_match_file,
     get_match_links_file,
     get_matches_dir,
     get_prioritized_match_links_file,
-    get_sport_listing_url,
     get_storage_aspect,
-    normalize_sport,
 )
-from src.oddspedia.scraping.match_collector import _build_urls
 from src.oddspedia.scraping.utils import (
     MATCH_LINKS_ARTIFACT,
     MATCH_PAYLOAD_ARTIFACT,
@@ -30,6 +23,8 @@ from src.oddspedia.scraping.utils import (
     load_json,
     save_json,
 )
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 class SportConfigTests(unittest.TestCase):
@@ -84,7 +79,7 @@ class SportConfigTests(unittest.TestCase):
             normalize_sport("tennis")
 
     def test_sport_listing_url(self):
-        self.assertEqual(get_sport_listing_url("football"), f"{BASE_URL}/football")
+        self.assertEqual(get_sport_listing_url("football"), f"{base_url()}/football")
 
     def test_normalize_sport_rejects_unknown_sport(self):
         with self.assertRaises(ValueError):
@@ -186,7 +181,7 @@ class MatchCollectorUrlTests(unittest.TestCase):
         _build_urls(matches, sport="football")
 
         self.assertEqual(matches["1"]["url"], "/football/arsenal-chelsea-1?m=1")
-        self.assertEqual(matches["1"]["full_url"], f"{BASE_URL}/football/arsenal-chelsea-1?m=1")
+        self.assertEqual(matches["1"]["full_url"], f"{base_url()}/football/arsenal-chelsea-1?m=1")
         self.assertEqual(matches["2"]["url"], "/football/legacy-2?m=2")
 
     def test_save_json_validates_match_links_list(self):

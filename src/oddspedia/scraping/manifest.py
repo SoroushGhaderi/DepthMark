@@ -1,11 +1,13 @@
+import contextlib
 import json
 import os
 import tempfile
 import threading
+from collections.abc import Callable, Mapping
 from copy import deepcopy
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, List, Mapping, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from src.oddspedia.scraping.logging import get_logger
 
@@ -34,7 +36,7 @@ _MANIFEST_FIELDS = {
 
 
 def _utc_now() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class ManifestCorruptError(ValueError):
@@ -54,18 +56,18 @@ class ScrapeManifest:
     date: str
     sport: str = "football"
     total: int = 0
-    done: List[str] = field(default_factory=list)
-    failed: List[str] = field(default_factory=list)
-    skipped: Dict[str, Dict] = field(default_factory=dict)
-    incomplete: List[str] = field(default_factory=list)
-    in_progress: Dict[str, str] = field(default_factory=dict)
-    retries: Dict[str, Dict] = field(default_factory=dict)
-    discovery: Dict = field(default_factory=dict)
-    priority_run: Dict = field(default_factory=dict)
-    metrics: Dict = field(default_factory=dict)
+    done: list[str] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
+    skipped: dict[str, dict] = field(default_factory=dict)
+    incomplete: list[str] = field(default_factory=list)
+    in_progress: dict[str, str] = field(default_factory=dict)
+    retries: dict[str, dict] = field(default_factory=dict)
+    discovery: dict = field(default_factory=dict)
+    priority_run: dict = field(default_factory=dict)
+    metrics: dict = field(default_factory=dict)
     started_at: str = field(default_factory=lambda: _utc_now().isoformat())
     updated_at: str = field(default_factory=lambda: _utc_now().isoformat())
-    extra_fields: Dict[str, Any] = field(default_factory=dict, repr=False)
+    extra_fields: dict[str, Any] = field(default_factory=dict, repr=False)
 
     @property
     def completed_count(self) -> int:
@@ -162,7 +164,7 @@ class ScrapeManifest:
         self.in_progress[str(worker_id)] = str(match_id)
         self.updated_at = _utc_now().isoformat()
 
-    def clear_in_progress(self, worker_id: Optional[str] = None) -> None:
+    def clear_in_progress(self, worker_id: str | None = None) -> None:
         if worker_id is None:
             self.in_progress = {}
         else:
@@ -185,7 +187,7 @@ class ScrapeManifest:
         self.retries.pop(str(match_id), None)
         self.updated_at = _utc_now().isoformat()
 
-    def record_discovery(self, result: Dict) -> None:
+    def record_discovery(self, result: dict) -> None:
         """Persist the acceptance or recovery state of event discovery."""
         previous = self.discovery or {}
         accepted = bool(result.get("complete"))
@@ -218,18 +220,18 @@ class ScrapeManifest:
         self.discovery = entry
         self.updated_at = now
 
-    def record_priority_run(self, summary: Dict) -> None:
+    def record_priority_run(self, summary: dict) -> None:
         """Persist the audit summary for the priority artifact used by a run."""
         self.priority_run = dict(summary)
         self.updated_at = _utc_now().isoformat()
 
-    def update_metrics(self, snapshot: Dict) -> None:
+    def update_metrics(self, snapshot: dict) -> None:
         """Store the latest in-memory run summary with this date's progress."""
         self.metrics = dict(snapshot)
         self.updated_at = _utc_now().isoformat()
 
     @property
-    def in_progress_ids(self) -> List[str]:
+    def in_progress_ids(self) -> list[str]:
         return list(self.in_progress.values())
 
     def _clear_match_in_progress(self, match_id: str) -> None:
@@ -240,7 +242,7 @@ class ScrapeManifest:
             if str(active_id) != match_id
         }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         payload = deepcopy(self.extra_fields)
         payload.update(
             {
@@ -265,7 +267,7 @@ class ScrapeManifest:
         return payload
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "ScrapeManifest":
+    def from_dict(cls, data: dict) -> "ScrapeManifest":
         _validate_manifest_document(data)
         return cls(
             date=str(data.get("date", "")),
@@ -321,7 +323,7 @@ def _validate_manifest_document(data: Mapping[str, Any]) -> None:
         raise TypeError("manifest completed_progress must be numeric")
 
 
-def _normalize_id_list(value) -> List[str]:
+def _normalize_id_list(value) -> list[str]:
     if not value:
         return []
     return [str(item) for item in value]
@@ -329,12 +331,12 @@ def _normalize_id_list(value) -> List[str]:
 
 def get_manifest_path(date_str: str, sport: str = "football") -> str:
     """Return the path to the manifest file for a given date."""
-    from src.oddspedia.scraping.config import get_manifest_file
+    from src.oddspedia.scraping.paths import get_manifest_file
 
     return get_manifest_file(date_str, sport=sport)
 
 
-def _normalize_in_progress(value) -> Dict[str, str]:
+def _normalize_in_progress(value) -> dict[str, str]:
     """Return worker-keyed in-progress state, accepting legacy manifests."""
     if not value:
         return {}
@@ -345,13 +347,13 @@ def _normalize_in_progress(value) -> Dict[str, str]:
     return {"main": str(value)}
 
 
-def load_manifest(date_str: str, sport: str = "football") -> Optional[ScrapeManifest]:
+def load_manifest(date_str: str, sport: str = "football") -> ScrapeManifest | None:
     """Load manifest from disk if it exists."""
     path = get_manifest_path(date_str, sport=sport)
     if not os.path.exists(path):
         return None
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         if not isinstance(data, dict) or not data.get("date"):
             raise ValueError("manifest root must be an object with a date")
@@ -384,10 +386,8 @@ def save_manifest(manifest: ScrapeManifest) -> None:
             os.fsync(fd)
         os.replace(tmp_path, path)
     except Exception:
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except Exception:
-            pass
         raise
     logger.debug("manifest_saved", path=path, completed_progress=manifest.completed_progress)
 
@@ -404,7 +404,7 @@ def update_manifest(
     date_str: str,
     modifier: Callable[[ScrapeManifest], None],
     sport: str = "football",
-) -> Optional[ScrapeManifest]:
+) -> ScrapeManifest | None:
     """Thread-safe manifest update: load, apply *modifier*, save.
 
     Args:

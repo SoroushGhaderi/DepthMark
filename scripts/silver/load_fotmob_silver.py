@@ -1,7 +1,6 @@
-"""Canonical entry point for building the FotMob Silver layer."""
+"""Load FotMob Silver data with explicit date, month, or full-history scope."""
 
-from load_clickhouse import main
-
+from src.fotmob.commands.load_silver import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

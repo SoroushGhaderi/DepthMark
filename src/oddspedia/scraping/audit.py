@@ -4,19 +4,16 @@ import json
 import os
 import unicodedata
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from src.oddspedia.scraping.config import (
-    get_match_file,
-    get_match_links_file,
-    normalize_sport,
-)
+from src.oddspedia.scraping.config import normalize_sport
 from src.oddspedia.scraping.manifest import (
     ScrapeManifest,
     create_manifest,
     load_manifest,
     save_manifest,
 )
+from src.oddspedia.scraping.paths import get_match_file, get_match_links_file
 from src.oddspedia.scraping.storage import iter_match_payloads
 
 MIN_USEFUL_FILE_BYTES = 750
@@ -75,9 +72,9 @@ class MatchAudit:
     match_id: str
     path: str
     status: str
-    sport: str = "tennis"
-    reasons: List[str] = field(default_factory=list)
-    observations: List[str] = field(default_factory=list)
+    sport: str = "football"
+    reasons: list[str] = field(default_factory=list)
+    observations: list[str] = field(default_factory=list)
     bytes: int = 0
 
     @property
@@ -90,17 +87,17 @@ class DateAudit:
     """Audit result for one scrape date."""
 
     date: str
-    sport: str = "tennis"
+    sport: str = "football"
     expected: int = 0
     existing: int = 0
     accepted_data_present: int = 0
     accepted_terminal_no_data: int = 0
-    missing: List[MatchAudit] = field(default_factory=list)
-    incomplete: List[MatchAudit] = field(default_factory=list)
-    invalid: List[MatchAudit] = field(default_factory=list)
-    extra: List[MatchAudit] = field(default_factory=list)
-    manifest_issues: List[str] = field(default_factory=list)
-    coverage_observations: List[MatchAudit] = field(default_factory=list)
+    missing: list[MatchAudit] = field(default_factory=list)
+    incomplete: list[MatchAudit] = field(default_factory=list)
+    invalid: list[MatchAudit] = field(default_factory=list)
+    extra: list[MatchAudit] = field(default_factory=list)
+    manifest_issues: list[str] = field(default_factory=list)
+    coverage_observations: list[MatchAudit] = field(default_factory=list)
 
     @property
     def problems(self) -> int:
@@ -186,13 +183,13 @@ def audit_match_json(
     match_id: str,
     path: str,
     sport: str = "football",
-    expected_match: Optional[Dict[str, Any]] = None,
+    expected_match: dict[str, Any] | None = None,
 ) -> MatchAudit:
     """Classify one saved match JSON for rescrape decisions."""
     sport = normalize_sport(sport)
     size = os.path.getsize(path)
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as exc:
         return _invalid_audit(date_str, match_id, path, sport, size, f"json parse error: {exc.msg}")
@@ -213,7 +210,7 @@ def require_accepted_match_json(
     match_id: str,
     path: str,
     sport: str = "football",
-    expected_match: Optional[Dict[str, Any]] = None,
+    expected_match: dict[str, Any] | None = None,
 ) -> MatchAudit:
     """Return the saved payload audit or raise before a terminal success is recorded."""
     audit = audit_match_json(
@@ -235,7 +232,7 @@ def audit_match_payload(
     source_file: str,
     size: int,
     sport: str = "football",
-    expected_match: Optional[Dict[str, Any]] = None,
+    expected_match: dict[str, Any] | None = None,
 ) -> MatchAudit:
     """Classify an already-loaded payload from JSON or a compressed archive."""
     sport = normalize_sport(sport)
@@ -306,7 +303,7 @@ def _invalid_audit(
     )
 
 
-def sync_manifest_incomplete(result: DateAudit) -> Optional[ScrapeManifest]:
+def sync_manifest_incomplete(result: DateAudit) -> ScrapeManifest | None:
     """Persist incomplete/invalid IDs into the date manifest.
 
     Missing files are intentionally not stored in ``incomplete``. The scraper
@@ -337,7 +334,7 @@ def sync_manifest_incomplete(result: DateAudit) -> Optional[ScrapeManifest]:
     return manifest
 
 
-def _payload_reasons(data: Dict[str, Any]) -> List[str]:
+def _payload_reasons(data: dict[str, Any]) -> list[str]:
     """Return reasons when data has missing or incomplete scrape content.
 
     Status is required for every match — a blank status always triggers a
@@ -396,7 +393,7 @@ def _payload_reasons(data: Dict[str, Any]) -> List[str]:
     return reasons
 
 
-def _football_coverage_observations(data: Dict[str, Any]) -> List[str]:
+def _football_coverage_observations(data: dict[str, Any]) -> list[str]:
     """Report optional odds gaps without turning accepted data into work."""
     if data.get("sport") != "football":
         return []
@@ -426,7 +423,7 @@ def _football_coverage_observations(data: Dict[str, Any]) -> List[str]:
     return observations
 
 
-def _football_coverage_reasons(data: Dict[str, Any]) -> List[str]:
+def _football_coverage_reasons(data: dict[str, Any]) -> list[str]:
     """Return retry reasons for missing or incomplete football market coverage."""
     if data.get("sport") != "football":
         return []
@@ -492,8 +489,8 @@ def _football_coverage_reasons(data: Dict[str, Any]) -> List[str]:
 
 
 def _listing_identity_reasons(
-    data: Dict[str, Any], expected_match: Optional[Dict[str, Any]]
-) -> List[str]:
+    data: dict[str, Any], expected_match: dict[str, Any] | None
+) -> list[str]:
     """Return mismatches between a payload and its discovery inventory row."""
     if not expected_match:
         return []
@@ -524,7 +521,7 @@ def _listing_identity_reasons(
     return reasons
 
 
-def _football_odds_schema_reasons(data: Dict[str, Any]) -> List[str]:
+def _football_odds_schema_reasons(data: dict[str, Any]) -> list[str]:
     """Reject ambiguous football odds lines instead of accepting lossy Bronze."""
     if data.get("sport") != "football":
         return []
@@ -578,12 +575,12 @@ def _date_key(value: Any) -> str:
     return text[:10] if len(text) >= 10 and text[4] == "-" and text[7] == "-" else ""
 
 
-def _load_links(date_str: str, sport: str = "football") -> List[Dict[str, Any]]:
+def _load_links(date_str: str, sport: str = "football") -> list[dict[str, Any]]:
     path = get_match_links_file(date_str, sport=sport)
     if not os.path.exists(path):
         return []
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError:
         return []

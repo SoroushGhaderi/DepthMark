@@ -122,8 +122,16 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 
 ## Code Style
 
-- Python formatting follows Black with 100-character lines.
-- Imports follow isort with the Black profile.
+- Python 3.11. Ruff formats (100-character lines) and lints, including import
+  sorting; `ruff check .` and `ruff format --check .` must pass. Run
+  `pre-commit install` once; CI runs the same checks on every pull request.
+- Dependencies live in `pyproject.toml` only. After changing them, run `uv lock`
+  and re-export `requirements.txt` (the pre-commit hooks do both).
+- Log messages are constant strings: pass values as `%s` arguments or structlog
+  key/value fields, never f-strings or `extra={...}`.
+- Catch the narrowest exception that can occur. A broad `except Exception` must
+  log with `logger.exception()`/`exc_info=True`, re-raise, or carry a
+  `# noqa: BLE001 - <reason>` comment.
 - Use descriptive `snake_case` names for functions and variables, `PascalCase` for classes, and `UPPER_SNAKE_CASE` for constants.
 - Prefer explicit, linear control flow.
 - Public functions and CLI helpers should have type hints.

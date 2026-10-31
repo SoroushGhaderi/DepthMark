@@ -67,8 +67,7 @@ adapter must:
 3. emit a deprecation warning to stderr naming the canonical replacement; and
 4. remain absent from current runbooks, orchestration, and generated guidance.
 
-No removal date is implied. Removing an adapter requires a separate explicit
-breaking-change decision after downstream automation has been audited.
+Adapters are removed in DepthMark 3.0.0 (see the 2026-10-31 update below).
 
 ## Consequences
 
@@ -104,3 +103,12 @@ Costs:
   runbooks change together with the command surface.
 - Source-specific phase differences remain explicit; naming symmetry must not
   become a provider abstraction.
+
+## Update (2026-10-31): removal version
+
+Compatibility scripts and `depthmark` aliases are removed in DepthMark 3.0.0.
+`src.common.deprecation.REMOVAL_VERSION` holds that version, and every adapter
+prints it through `run_deprecated_script()` or `warn_deprecated()`, so callers
+see the deadline. Before the 3.0.0 release, audit downstream automation for
+adapter paths; the release removes the adapters and their CLI aliases together.
+

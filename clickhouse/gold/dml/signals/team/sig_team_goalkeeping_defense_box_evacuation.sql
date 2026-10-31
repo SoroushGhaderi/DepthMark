@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_goalkeeping_defense_box_evacuation (
+INSERT INTO gold_signals.sig_team_goalkeeping_defense_box_evacuation (
     match_id,
     match_date,
     home_team_id,

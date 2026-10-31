@@ -108,8 +108,9 @@ DepthMark/
   src/                    source domains plus warehouse, integrations, common, and operations modules
   tests/                  unit tests and deterministic fixtures
   config.yaml             application settings for FotMob, Oddspedia, logging, and alerts
-  pyproject.toml          package metadata, dependencies, and pytest/Black/isort/mypy config
-  requirements.txt        dependency install list used by the Docker image
+  pyproject.toml          package metadata, dependencies, and pytest/Ruff/mypy config
+  uv.lock                 locked dependency versions (the single source for installs)
+  requirements.txt        hashed runtime export of uv.lock used by the Docker image
   .env.example            environment template; scripts/bootstrap.sh generates .env from it
   credentials.json.example  shape of the local, git-ignored credentials.json cookie file
 ```

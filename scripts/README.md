@@ -4,9 +4,13 @@ This file is a compact inventory of script locations and supported entry points.
 For the project-wide command surface and runbook, use `../docs/DEVELOPMENT_ARCHITECTURE.md`.
 For script behavior rules, naming/style handwriting, function design, and update policy, use `../docs/SCRIPTS_CONTRACT.md`.
 
-Scripts are the supported operational entry points. They may delegate reusable
-workflow coordination to source-owned or warehouse modules under `src/`, but
-they must preserve their CLI behavior, dry-run semantics, and exit-code contract.
+Scripts are the supported operational entry points. Each one is a thin shim
+that imports `main(argv)` from a command module under `src/<domain>/commands/`
+(`src/fotmob/commands`, `src/oddspedia/commands`, `src/warehouse/commands`,
+`src/operations/commands`) and exits with its result; `depthmark <command>`
+runs the same function in-process. Scripts never touch `sys.path`: run them
+from an editable install (`uv sync` or `pip install -e .`) or the Docker image,
+which sets `PYTHONPATH=/app`.
 
 Canonical source workflow filenames follow
 `<verb>_<source>[_<layer-or-entity>].py`. The same grammar is used by the
@@ -67,8 +71,9 @@ depthmark report-scraping --date 20260301
 
 ### Compatibility Migration
 
-The adapters below remain executable, but new callers must use the canonical
-path on the right.
+The adapters below remain executable until DepthMark 3.0.0, when they are
+removed (ADR 0024); each prints that removal version. New callers must use the
+canonical path on the right.
 
 | Compatibility path | Canonical path |
 | --- | --- |

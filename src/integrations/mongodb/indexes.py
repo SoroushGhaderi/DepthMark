@@ -1,7 +1,5 @@
 """MongoDB index bootstrap for DepthMark content catalog."""
 
-from typing import Dict, List
-
 from pymongo import ASCENDING, DESCENDING
 from pymongo.database import Database
 
@@ -14,15 +12,22 @@ from .collections import (
 )
 
 
-def ensure_content_catalog_indexes(database: Database) -> Dict[str, List[str]]:
+def ensure_content_catalog_indexes(database: Database) -> dict[str, list[str]]:
     """Create required indexes and return created index names per collection."""
     created = {}
 
     created[SIGNALS_COLLECTION] = [
         database[SIGNALS_COLLECTION].create_index([("signal_id", ASCENDING)], unique=True),
-        database[SIGNALS_COLLECTION].create_index([("status", ASCENDING), ("updated_at", DESCENDING)]),
         database[SIGNALS_COLLECTION].create_index(
-            [("entity", ASCENDING), ("family", ASCENDING), ("subfamily", ASCENDING), ("grain", ASCENDING)]
+            [("status", ASCENDING), ("updated_at", DESCENDING)]
+        ),
+        database[SIGNALS_COLLECTION].create_index(
+            [
+                ("entity", ASCENDING),
+                ("family", ASCENDING),
+                ("subfamily", ASCENDING),
+                ("grain", ASCENDING),
+            ]
         ),
         database[SIGNALS_COLLECTION].create_index([("source_path", ASCENDING)]),
     ]
@@ -53,9 +58,7 @@ def ensure_content_catalog_indexes(database: Database) -> Dict[str, List[str]]:
             [("content_type", ASCENDING), ("content_id", ASCENDING), ("version", DESCENDING)],
             unique=True,
         ),
-        database[CONTENT_VERSIONS_COLLECTION].create_index(
-            [("published_at", DESCENDING)]
-        ),
+        database[CONTENT_VERSIONS_COLLECTION].create_index([("published_at", DESCENDING)]),
     ]
 
     created[SCENARIO_SIGNAL_MAP_COLLECTION] = [

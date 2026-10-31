@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_creativity_playmaking_box_penetrator (
+INSERT INTO gold_signals.sig_player_creativity_playmaking_box_penetrator (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_possession_passing_final_third_efficiency (
+INSERT INTO gold_signals.sig_team_possession_passing_final_third_efficiency (
     match_id,
     match_date,
     home_team_id,

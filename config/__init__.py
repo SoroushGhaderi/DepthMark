@@ -1,20 +1,13 @@
 """Unified configuration system for DepthMark.
 
-All configuration lives in :class:`~config.settings.Settings`.  The
-``FotMobConfig`` adapter preserves backward-compatible attribute access
-for scraper code.
-
-Usage::
-
-    from config import FotMobConfig
-
-    config = FotMobConfig()
-
-Or use the single source of truth directly::
+:class:`~config.settings.Settings` is the only reader of environment variables,
+``.env`` files, and ``config.yaml``. FotMob scraping code receives the
+``Settings.fotmob`` model::
 
     from config.settings import get_settings
 
     settings = get_settings()
+    settings.fotmob.api.base_url
 """
 
 from .settings import (
@@ -29,22 +22,17 @@ from .settings import (
     FotMobScrapingSettings,
     FotMobSettings,
     FotMobStorageSettings,
+    OddspediaSettings,
     Settings,
     get_settings,
     reset_settings,
 )
-from .fotmob import FotMobConfig
-
-# Legacy aliases — still importable for any code that references them
-from .base import LoggingConfig, MetricsConfig, RetryConfig, StorageConfig
 
 __all__ = [
-    # Unified settings
     "Settings",
     "Environment",
     "get_settings",
     "reset_settings",
-    # FotMob nested models
     "FotMobSettings",
     "FotMobApiSettings",
     "FotMobRequestSettings",
@@ -55,13 +43,5 @@ __all__ = [
     "FotMobMetricsSettings",
     "FotMobDataQualitySettings",
     "FotMobProxySettings",
-    # Backward-compat adapter
-    "FotMobConfig",
-    # Legacy dataclass aliases
-    "StorageConfig",
-    "LoggingConfig",
-    "MetricsConfig",
-    "RetryConfig",
+    "OddspediaSettings",
 ]
-
-__version__ = "2.0.0"

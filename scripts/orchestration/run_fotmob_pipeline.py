@@ -1,7 +1,6 @@
-"""Canonical entry point for the complete FotMob warehouse pipeline."""
+"""Unified Pipeline Orchestrator."""
 
-from pipeline import cli_main
-
+from src.fotmob.commands.run_pipeline import main
 
 if __name__ == "__main__":
-    raise SystemExit(cli_main())
+    raise SystemExit(main())

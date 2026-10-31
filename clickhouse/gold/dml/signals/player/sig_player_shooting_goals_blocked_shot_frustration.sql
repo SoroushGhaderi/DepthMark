@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_blocked_shot_frustration (
+INSERT INTO gold_signals.sig_player_shooting_goals_blocked_shot_frustration (
     match_id,
     match_date,
     home_team_id,

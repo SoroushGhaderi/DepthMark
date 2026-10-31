@@ -1,6 +1,6 @@
 """Unit tests for standalone Bronze S3 CLI configuration."""
 
-from scripts.bronze.sync_s3 import _bucket_from_endpoint, _service_endpoint
+from src.fotmob.commands.sync_s3 import _bucket_from_endpoint, _service_endpoint
 
 
 def test_virtual_hosted_endpoint_is_normalized_to_service_endpoint() -> None:

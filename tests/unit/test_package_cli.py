@@ -138,36 +138,35 @@ def test_every_compatibility_script_warns_and_preserves_help() -> None:
         assert replacement in result.stderr, script_name
 
 
-def test_main_dispatches_a_canonical_command(monkeypatch) -> None:
-    invocation = {}
+def _record_target(monkeypatch, exit_code: int) -> dict:
+    invocation: dict = {}
 
-    def fake_run_script(script_name: str, script_args: list[str]) -> int:
-        invocation["script"] = script_name
-        invocation["args"] = script_args
-        return 17
+    def fake_resolve_target(target: str):
+        def run(argv: list[str]) -> int:
+            invocation["target"] = target
+            invocation["args"] = argv
+            return exit_code
 
-    monkeypatch.setattr(cli, "_run_script", fake_run_script)
+        return run
 
-    result = cli.main(["scrape-fotmob", "--today"])
+    monkeypatch.setattr(cli, "resolve_target", fake_resolve_target)
+    return invocation
 
-    assert result == 17
-    assert invocation == {"script": "bronze/scrape_fotmob.py", "args": ["--today"]}
+
+def test_main_runs_a_canonical_command_in_process(monkeypatch) -> None:
+    invocation = _record_target(monkeypatch, 17)
+
+    assert cli.main(["scrape-fotmob", "--today"]) == 17
+    assert invocation == {"target": "src.fotmob.commands.scrape:main", "args": ["--today"]}
 
 
 def test_main_warns_when_dispatching_a_compatibility_alias(monkeypatch, capsys) -> None:
-    invocation = {}
-
-    def fake_run_script(script_name: str, script_args: list[str]) -> int:
-        invocation["script"] = script_name
-        invocation["args"] = script_args
-        return 0
-
-    monkeypatch.setattr(cli, "_run_script", fake_run_script)
+    invocation = _record_target(monkeypatch, 0)
 
     assert cli.main(["oddspedia-status", "--date", "20260301"]) == 0
 
     assert invocation == {
-        "script": "report_scraping.py",
+        "target": "src.operations.commands.report_scraping:main",
         "args": [
             "--source",
             "oddspedia",
@@ -179,31 +178,28 @@ def test_main_warns_when_dispatching_a_compatibility_alias(monkeypatch, capsys) 
     }
     stderr = capsys.readouterr().err
     assert "deprecated" in stderr.lower()
+    assert "removed in DepthMark 3.0.0" in stderr
     assert "report-scraping" in stderr
 
 
-def test_run_script_reports_a_missing_registry_target(monkeypatch, tmp_path, capsys) -> None:
-    subprocess_run_called = False
-
-    def unexpected_subprocess_run(*args, **kwargs):
-        nonlocal subprocess_run_called
-        subprocess_run_called = True
-        raise AssertionError("missing script targets must fail before subprocess execution")
-
-    monkeypatch.setattr(cli, "SCRIPTS_DIR", Path(tmp_path))
-    monkeypatch.setattr(cli.subprocess, "run", unexpected_subprocess_run)
-
-    assert cli._run_script("missing.py", []) == 2
-    assert not subprocess_run_called
-    assert "missing.py" in capsys.readouterr().err
+def test_every_command_target_resolves_to_a_callable() -> None:
+    for command, spec in cli.COMMANDS.items():
+        assert callable(cli.resolve_target(spec.target)), command
 
 
-def test_run_script_requires_a_source_checkout(monkeypatch, tmp_path, capsys) -> None:
+def test_canonical_scripts_are_thin_shims_around_the_command_target() -> None:
+    for command, spec in cli.CANONICAL_COMMANDS.items():
+        module, function = spec.target.split(":")
+        shim = (cli.SCRIPTS_DIR / spec.script).read_text(encoding="utf-8")
+        assert f"from {module} import {function}" in shim, command
+        assert "sys.path" not in shim, command
+
+
+def test_run_command_requires_a_source_checkout(monkeypatch, tmp_path, capsys) -> None:
     monkeypatch.setattr(cli, "PROJECT_ROOT", Path(tmp_path))
-    monkeypatch.setattr(cli, "SCRIPTS_DIR", Path(tmp_path) / "scripts")
     monkeypatch.setattr(cli, "CLICKHOUSE_SQL_DIR", Path(tmp_path) / "clickhouse")
 
-    assert cli._run_script("health_check.py", []) == 2
+    assert cli.run_command(cli.CANONICAL_COMMANDS["health-check"], []) == 2
     assert "pip install -e ." in capsys.readouterr().err
 
 

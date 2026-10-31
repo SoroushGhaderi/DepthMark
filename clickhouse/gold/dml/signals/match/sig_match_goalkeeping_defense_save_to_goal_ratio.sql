@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_goalkeeping_defense_save_to_goal_ratio (
+INSERT INTO gold_signals.sig_match_goalkeeping_defense_save_to_goal_ratio (
     match_id,
     match_date,
     home_team_id,

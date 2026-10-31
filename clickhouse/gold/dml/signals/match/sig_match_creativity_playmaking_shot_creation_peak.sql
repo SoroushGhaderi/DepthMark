@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_creativity_playmaking_shot_creation_peak (
+INSERT INTO gold_signals.sig_match_creativity_playmaking_shot_creation_peak (
     match_id,
     match_date,
     home_team_id,

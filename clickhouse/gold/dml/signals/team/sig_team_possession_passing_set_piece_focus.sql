@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_possession_passing_set_piece_focus (
+INSERT INTO gold_signals.sig_team_possession_passing_set_piece_focus (
     match_id,
     match_date,
     home_team_id,

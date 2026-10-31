@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_discipline_cards_clean_fair_play (
+INSERT INTO gold_signals.sig_match_discipline_cards_clean_fair_play (
     match_id,
     match_date,
     home_team_id,

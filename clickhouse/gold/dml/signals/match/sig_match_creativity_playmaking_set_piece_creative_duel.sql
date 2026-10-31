@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_creativity_playmaking_set_piece_creative_duel (
+INSERT INTO gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel (
     match_id,
     match_date,
     home_team_id,

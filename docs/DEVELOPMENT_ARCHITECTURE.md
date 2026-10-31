@@ -131,6 +131,14 @@ Recreation, optimization, drop scripts, the Bronze `--rebuild`, and
 full-history Bronze removal. See
 `docs/data-flow/infrastructure.md` for the identity table.
 
+Code opens a warehouse connection only through
+`src.warehouse.identities.warehouse_session(identity_or_scope, database)`. It
+picks the identity (a full-history scope selects maintenance), raises
+`WarehouseConnectionError` instead of returning an unconnected client, and
+always disconnects. Setup, which tries several hosts, is the one caller of the
+lower-level `warehouse_client()`. The `src/operations/health.py` probe stays
+below this seam because `ClickHouseClient.health_check()` delegates to it.
+
 ## Canonical Command Surface
 
 Use these paths for documentation, automation, and daily operations. When using
@@ -537,10 +545,14 @@ src/
   integrations/           external-system adapters
   common/                 dependency-light shared helpers
   operations/             health and other operational workflows
-  core/                   stable application interfaces and exceptions
   models/                 football data models
-scripts/                  operational CLI entry points
+scripts/                  thin shims around src/<domain>/commands/*:main
 ```
+
+Each domain package has a `commands/` subpackage (`src/fotmob/commands`,
+`src/oddspedia/commands`, `src/warehouse/commands`, `src/operations/commands`)
+holding one module per command with `main(argv) -> int`. Scripts import that
+function and exit with its result; `depthmark` runs it in-process.
 
 Scripts remain the documented operational boundary, but reusable workflow
 coordination lives in source packages and `src/warehouse/` behind the same CLI
@@ -549,6 +561,13 @@ compatibility, and exit-code translation. These modules may coordinate SQL
 discovery/execution, client setup, contract checks, validation, alerts, and
 deterministic summaries. They must not become a home for Silver or Gold
 analytical logic, which remains in ClickHouse SQL.
+
+Every command parses its `--date`, `--start-date`/`--end-date`, `--month`, and
+`--full-history` selectors with `src.common.run_scope.RunScope` (declaring the
+kinds it accepts with `allow=`) and expands them with `RunScope.dates()`, so
+validation messages, reversed ranges, and the current month stopping at today
+behave the same in every CLI. `WarehouseExecutionScope.from_run_scope()` turns a
+date, month, or full-history `RunScope` into a warehouse partition scope.
 
 Scoped derived loads share this function flow:
 

@@ -1,0 +1,170 @@
+"""Explicit ClickHouse table optimization for operator-invoked maintenance."""
+
+from __future__ import annotations
+
+import argparse
+from collections.abc import Sequence
+from contextlib import ExitStack
+from dataclasses import dataclass
+
+from src.common.logging import get_logger
+from src.common.paths import PROJECT_ROOT
+from src.integrations.clickhouse.client import ClickHouseClient
+from src.warehouse.identities import Identity, warehouse_session
+
+project_root = PROJECT_ROOT
+
+logger = get_logger(__name__)
+
+LAYER_DATABASES = {
+    "bronze": ("bronze",),
+    "silver": ("silver",),
+    "gold": ("gold_scenarios", "gold_signals", "gold"),
+}
+
+
+@dataclass(frozen=True)
+class OptimizeTarget:
+    """One ClickHouse table selected for explicit maintenance optimization."""
+
+    database: str
+    table: str
+
+    @property
+    def qualified_name(self) -> str:
+        return f"{self.database}.{self.table}"
+
+
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    """Parse operator maintenance arguments."""
+    parser = argparse.ArgumentParser(
+        description=(
+            "Plan or execute explicit ClickHouse OPTIMIZE maintenance. Dry-run is the "
+            "default; pass --execute with an explicit --layer or --database to mutate tables."
+        )
+    )
+    parser.add_argument(
+        "--layer",
+        choices=("bronze", "silver", "gold", "all"),
+        default="all",
+        help="Warehouse layer to optimize (default: all).",
+    )
+    parser.add_argument(
+        "--database",
+        choices=("bronze", "silver", "gold_scenarios", "gold_signals", "gold"),
+        help="Optional exact ClickHouse database selector.",
+    )
+    parser.add_argument(
+        "--table",
+        help="Optional exact table name inside the selected database or layer.",
+    )
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="Execute OPTIMIZE statements. Omit this flag for dry-run planning.",
+    )
+    return parser.parse_args(argv)
+
+
+def _validate_identifier(value: str, label: str) -> str:
+    if not ClickHouseClient._SAFE_IDENT.fullmatch(value):
+        raise ValueError(f"Unsafe {label}: {value}")
+    return value
+
+
+def selected_databases(layer: str, database: str | None) -> tuple[str, ...]:
+    """Resolve the ClickHouse databases selected by CLI filters."""
+    if database:
+        _validate_identifier(database, "database")
+        if layer != "all" and database not in LAYER_DATABASES[layer]:
+            raise ValueError(f"Database {database} is not part of layer {layer}")
+        return (database,)
+    if layer == "all":
+        return tuple(database for databases in LAYER_DATABASES.values() for database in databases)
+    return LAYER_DATABASES[layer]
+
+
+def discover_targets(
+    client: ClickHouseClient,
+    databases: Sequence[str],
+    table: str | None,
+) -> list[OptimizeTarget]:
+    """Discover selected ClickHouse tables from system metadata."""
+    if table:
+        _validate_identifier(table, "table")
+    database_values = ", ".join(f"'{database}'" for database in databases)
+    table_predicate = f" AND name = '{table}'" if table else ""
+    rows = client.execute(
+        "SELECT database, name FROM system.tables "
+        f"WHERE database IN ({database_values}){table_predicate} "
+        "AND engine LIKE '%MergeTree%' "
+        "ORDER BY database, name",
+        log_query=False,
+    ).result_rows
+    return [OptimizeTarget(str(database), str(name)) for database, name in rows]
+
+
+def optimize_statement(target: OptimizeTarget) -> str:
+    """Build the maintenance OPTIMIZE statement for one selected table."""
+    _validate_identifier(target.database, "database")
+    _validate_identifier(target.table, "table")
+    return f"OPTIMIZE TABLE {target.qualified_name} FINAL DEDUPLICATE"
+
+
+def run(argv: Sequence[str] | None = None) -> int:
+    """Plan or execute explicit ClickHouse optimization."""
+    args = parse_args(argv)
+    if args.execute and args.layer == "all" and not args.database:
+        logger.error("Executing optimization requires an explicit --layer or --database scope")
+        return 2
+    try:
+        databases = selected_databases(args.layer, args.database)
+    except ValueError as error:
+        logger.error(str(error))
+        return 2
+
+    with ExitStack() as stack:
+        try:
+            client = stack.enter_context(warehouse_session(Identity.MAINTENANCE))
+        except RuntimeError as error:
+            logger.error(str(error))
+            return 1
+        try:
+            targets = discover_targets(client, databases, args.table)
+            if not targets:
+                logger.warning(
+                    "No ClickHouse tables selected for optimization",
+                    layer=args.layer,
+                    database=args.database,
+                    table=args.table,
+                )
+                return 0
+
+            logger.info(
+                "Planning ClickHouse optimization",
+                dry_run=not args.execute,
+                selected_tables=len(targets),
+                databases=list(databases),
+            )
+            for target in targets:
+                statement = optimize_statement(target)
+                if args.execute:
+                    logger.info("Executing ClickHouse optimization", table=target.qualified_name)
+                    client.execute(statement)
+                else:
+                    logger.info("Dry-run ClickHouse optimization", statement=statement)
+            return 0
+        except ValueError as error:
+            logger.error(str(error))
+            return 2
+        except Exception as error:
+            logger.exception("ClickHouse optimization failed", error=str(error))
+            return 1
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    return run(argv)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

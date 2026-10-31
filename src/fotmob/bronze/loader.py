@@ -18,14 +18,15 @@ then removes its matches, then inserts, so a date that fails keeps its rows;
 loads staging copies and swaps them in only when every date loaded.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Tuple
+from typing import Any
 from uuid import uuid4
 
 import pandas as pd
 
-from config import FotMobConfig
+from config.settings import get_settings
 from src.common.logging import get_logger
 from src.fotmob.bronze.admission import (
     BRONZE_DATABASE,
@@ -99,13 +100,13 @@ class BronzeRunResult:
     dates_processed: int = 0
     tables_loaded: int = 0
     total_rows: int = 0
-    row_counts: Dict[str, int] = field(default_factory=dict)
-    removed_rows: Dict[str, int] = field(default_factory=dict)
-    stale_match_dates: List[str] = field(default_factory=list)
-    dates_without_source: List[str] = field(default_factory=list)
-    failed_dates: Dict[str, str] = field(default_factory=dict)
-    run_error: Optional[str] = None
-    swapped: Optional[bool] = None
+    row_counts: dict[str, int] = field(default_factory=dict)
+    removed_rows: dict[str, int] = field(default_factory=dict)
+    stale_match_dates: list[str] = field(default_factory=list)
+    dates_without_source: list[str] = field(default_factory=list)
+    failed_dates: dict[str, str] = field(default_factory=dict)
+    run_error: str | None = None
+    swapped: bool | None = None
 
     def finish(self) -> "BronzeRunResult":
         """Derive totals and the exit code from the recorded outcome."""
@@ -122,8 +123,8 @@ class BronzeDateBatch:
 
     date_str: str
     match_count: int = 0
-    rows: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
-    rejected_rows: List[RowRejection] = field(default_factory=list)
+    rows: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    rejected_rows: list[RowRejection] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -131,11 +132,11 @@ class PreparedDate:
     """A Source Date read, processed, and admitted, ready to write."""
 
     date_str: str
-    match_ids: Tuple[int, ...]
-    admitted: Dict[str, AdmittedTable]
+    match_ids: tuple[int, ...]
+    admitted: dict[str, AdmittedTable]
 
     @property
-    def match_dates(self) -> List[str]:
+    def match_dates(self) -> list[str]:
         reference = self.admitted.get("match_reference")
         if reference is None:
             return []
@@ -166,7 +167,7 @@ def collect_date_rows(
 
 def admit_date_rows(
     batch: BronzeDateBatch, specs: Mapping[str, BronzeTableSpec]
-) -> Dict[str, AdmittedTable]:
+) -> dict[str, AdmittedTable]:
     """Admit every table with rows; raise once with every table's violations."""
     if batch.rejected_rows:
         raise BronzeAdmissionError(
@@ -174,8 +175,8 @@ def admit_date_rows(
             "validation in the processor: "
             + "; ".join(rejection.describe() for rejection in batch.rejected_rows[:5])
         )
-    admitted: Dict[str, AdmittedTable] = {}
-    errors: List[BronzeAdmissionError] = []
+    admitted: dict[str, AdmittedTable] = {}
+    errors: list[BronzeAdmissionError] = []
     for table in FOTMOB_TABLES:
         rows = batch.rows.get(table) or []
         if not rows:
@@ -196,8 +197,8 @@ def prepare_date(
     date_str: str,
     specs: Mapping[str, BronzeTableSpec],
     historical_root: Path,
-    processor: Optional[FotMobBronzeMatchProcessor] = None,
-) -> Optional[PreparedDate]:
+    processor: FotMobBronzeMatchProcessor | None = None,
+) -> PreparedDate | None:
     """Read, process, and admit a Source Date; ``None`` when nothing is stored for it.
 
     Raises only Date-Level Failures; nothing is written.
@@ -248,10 +249,10 @@ def insert_admitted_table(
     table: str,
     frame: pd.DataFrame,
     date_str: str,
-    dead_letter_queue: Optional[DeadLetterQueue] = None,
+    dead_letter_queue: DeadLetterQueue | None = None,
     *,
     database: str = BRONZE_DATABASE,
-    physical_table: Optional[str] = None,
+    physical_table: str | None = None,
 ) -> int:
     """Insert one admitted table; a failure goes to the DLQ and raises."""
     target = physical_table or table
@@ -285,7 +286,7 @@ def insert_admitted_table(
 
 def write_prepared_date(
     client: ClickHouseClient, prepared: PreparedDate, *, replace: bool, result: BronzeRunResult
-) -> Dict[str, int]:
+) -> dict[str, int]:
     """Write an admitted Source Date into Bronze and check the post-load contract.
 
     With ``replace``, the date's matches are removed first and the Match Dates
@@ -335,11 +336,11 @@ class BronzeService:
 
     def __init__(
         self,
-        client: Optional[ClickHouseClient] = None,
+        client: ClickHouseClient | None = None,
         force: bool = False,
-        historical_root: Optional[Path] = None,
-        specs: Optional[Mapping[str, BronzeTableSpec]] = None,
-        lock_path: Optional[Path] = None,
+        historical_root: Path | None = None,
+        specs: Mapping[str, BronzeTableSpec] | None = None,
+        lock_path: Path | None = None,
     ):
         self.client = client
         self.force = force
@@ -350,7 +351,9 @@ class BronzeService:
     @property
     def historical_root(self) -> Path:
         if self._historical_root is None:
-            self._historical_root = get_fotmob_historical_path(FotMobConfig().storage.bronze_path)
+            self._historical_root = get_fotmob_historical_path(
+                get_settings().fotmob.storage.bronze_path
+            )
         return self._historical_root
 
     @property
@@ -359,7 +362,7 @@ class BronzeService:
             self._specs = load_bronze_table_specs()
         return self._specs
 
-    def load_dates(self, dates: List[str], mode: str = "append") -> BronzeRunResult:
+    def load_dates(self, dates: list[str], mode: str = "append") -> BronzeRunResult:
         """Write dates in order; a Date-Level Failure fails only its date."""
         if mode not in WRITE_MODES:
             raise ValueError(f"Unknown Bronze write mode: {mode}")
@@ -374,13 +377,13 @@ class BronzeService:
                 else:
                     for date_str in dates:
                         self._write_one_date(date_str, result, replace=mode == "replace")
-        except Exception as error:
+        except Exception as error:  # noqa: BLE001 - logged by _record_run_failure; exits non-zero
             self._record_run_failure(result, error)
         return self._report(result.finish())
 
     def _prepare_or_record(
         self, date_str: str, result: BronzeRunResult, *, require_source: bool
-    ) -> Optional[PreparedDate]:
+    ) -> PreparedDate | None:
         """Prepare a date; record a Date-Level Failure or a date without source as ``None``."""
         logger.info("Loading data for date", database=BRONZE_DATABASE, date=date_str)
         try:
@@ -415,7 +418,7 @@ class BronzeService:
         for table, count in inserted.items():
             result.row_counts[table] = result.row_counts.get(table, 0) + count
 
-    def _rebuild(self, dates: List[str], result: BronzeRunResult) -> None:
+    def _rebuild(self, dates: list[str], result: BronzeRunResult) -> None:
         """Truncate-and-reload without the empty window: load staging copies, then swap.
 
         The copies clone each warehouse table, so the swap never changes a table
@@ -429,7 +432,7 @@ class BronzeService:
             table: f"_depthmark_{run_id}_{BRONZE_DATABASE}__{table}_rebuild"
             for table in FOTMOB_TABLES
         }
-        created: List[str] = []
+        created: list[str] = []
         result.swapped = False
         try:
             for table, stage_table in stage_tables.items():
@@ -513,7 +516,7 @@ class BronzeService:
     def run(
         self,
         *,
-        dates: Optional[List[str]] = None,
+        dates: list[str] | None = None,
         dry_run: bool = False,
         mode: str = "append",
     ) -> BronzeRunResult:

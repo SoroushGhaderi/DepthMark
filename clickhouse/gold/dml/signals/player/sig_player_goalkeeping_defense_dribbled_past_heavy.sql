@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_dribbled_past_heavy (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_creativity_playmaking_the_creativity_clash (
+INSERT INTO gold_signals.sig_match_creativity_playmaking_the_creativity_clash (
     match_id,
     match_date,
     home_team_id,

@@ -26,12 +26,8 @@ def test_date_lock_rejects_an_overlapping_operation(tmp_path) -> None:
 
 
 def test_date_lock_is_reusable_after_release(tmp_path) -> None:
-    with oddspedia_date_lock(
-        "20260706", sport="football", operation="scrape", lock_root=tmp_path
-    ):
+    with oddspedia_date_lock("20260706", sport="football", operation="scrape", lock_root=tmp_path):
         pass
 
-    with oddspedia_date_lock(
-        "20260706", sport="football", operation="load", lock_root=tmp_path
-    ):
+    with oddspedia_date_lock("20260706", sport="football", operation="load", lock_root=tmp_path):
         pass

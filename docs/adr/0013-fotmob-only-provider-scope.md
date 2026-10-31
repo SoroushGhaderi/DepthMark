@@ -42,3 +42,11 @@ Follow-up constraints:
 - A second provider abstraction must be introduced alongside a concrete second
   provider, not preemptively.
 - The decision to add a second provider should be captured in a new ADR.
+
+## Update (2026-10-31)
+
+`--skip-fotmob` turned out to skip every pipeline stage, so it was a no-op
+rather than a convenience. It is deprecated (removed in DepthMark 3.0.0); use
+the `--skip-*` and `--*-only` stage flags. The pipeline no longer carries
+`skip_fotmob` or `scraper="fotmob"` parameters.
+

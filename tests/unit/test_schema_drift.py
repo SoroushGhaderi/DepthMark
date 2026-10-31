@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pytest
 
-from scripts.clickhouse_setup_common import LAYER_ORDER, get_layer_sql_files
 from src.warehouse.schema_drift import (
     assert_setup_sql_is_non_destructive,
     find_disallowed_setup_statements,
@@ -10,6 +9,7 @@ from src.warehouse.schema_drift import (
     parse_create_table,
     parse_expected_tables,
 )
+from src.warehouse.setup import LAYER_ORDER, get_layer_sql_files
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 

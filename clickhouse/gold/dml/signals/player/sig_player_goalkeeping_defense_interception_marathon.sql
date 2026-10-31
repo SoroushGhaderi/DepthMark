@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_interception_marathon (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_interception_marathon (
     match_id,
     match_date,
     home_team_id,

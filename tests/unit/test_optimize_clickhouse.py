@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from scripts.maintenance.optimize_clickhouse import (
+from src.warehouse.commands.optimize import (
     OptimizeTarget,
     discover_targets,
     optimize_statement,

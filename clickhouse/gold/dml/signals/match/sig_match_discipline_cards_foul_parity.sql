@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_discipline_cards_foul_parity (
+INSERT INTO gold_signals.sig_match_discipline_cards_foul_parity (
     match_id,
     match_date,
     home_team_id,

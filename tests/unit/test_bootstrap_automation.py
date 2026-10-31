@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from scripts.orchestration import run_scheduled_job
+from src.operations.commands import run_scheduled_job
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 GENERATED_KEYS = ("CLICKHOUSE_PASSWORD", "CLICKHOUSE_MAINTENANCE_PASSWORD", "MONGODB_PASSWORD")

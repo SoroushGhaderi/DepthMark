@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_goalkeeping_defense_wide_blockade (
+INSERT INTO gold_signals.sig_team_goalkeeping_defense_wide_blockade (
     match_id,
     match_date,
     home_team_id,

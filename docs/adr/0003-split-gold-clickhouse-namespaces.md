@@ -74,3 +74,11 @@ specific namespace rather than saying `gold.*` as a catch-all.
 Scenario bulk loading should remain disabled until scenario execution is
 validated through the generic Gold SQL runner and intentionally re-enabled. New
 scenario work should target `gold_scenarios.scenario_*`.
+
+## Implementation note (2026-10-31)
+
+The migration is complete. All 344 signal DML files insert into
+`gold_signals.<signal_id>`, and the signal catalog rejects any other `INSERT`
+target. The runner no longer rewrites legacy `gold.sig_*` or `gold.scenario_*`
+names; it only maps the canonical `gold_signals.` and `gold_scenarios.`
+prefixes to the configured target database.

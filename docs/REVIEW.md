@@ -1,29 +1,32 @@
 # DepthMark Repository Review
 
-Review date: 2026-10-11
+Review date: 2026-10-11 (status updated 2026-10-31)
 Branch reviewed: `fix/non-destructive-warehouse-setup`
 Supersedes: every earlier review under `docs/` (see [Review history](#review-history)).
 
 This is the single current review. It replaces the production-readiness report
 and the five architecture reviews that previously lived in `docs/` and
 `docs/reviews/`. Resolved findings are recorded once, with the ADR that closed
-them; everything open is in [Open findings](#open-findings).
+them; everything open is in [Open findings](#open-findings). Module-structure
+candidates live in the companion [`ARCHITECTURE_REVIEW.html`](ARCHITECTURE_REVIEW.html);
+all of them are resolved.
 
 ## Summary
 
 DepthMark has two source-isolated medallion pipelines (FotMob and Oddspedia)
 with explicit raw contracts and one audited cross-source edge. Every P0 and P1
-finding raised since June 2026 is resolved. What remains is automation and
-hardening work: no CI, floating dependencies, a lint/type baseline that is not
-clean, and a few query-cost and retention decisions.
+finding raised since June 2026 is resolved. CI, a locked dependency set, a
+clean Ruff baseline and pipeline timeouts landed on 2026-10-31. What remains is
+integration testing, the mypy baseline, and query-cost and retention decisions.
 
-| Check | Result (2026-10-11) |
+| Check | Result (2026-10-31) |
 | --- | --- |
-| `pytest -q` | 334 passed |
+| `pytest` | 514 passed, 65% coverage (floor 64%) |
+| `ruff check .` / `ruff format --check .` | clean |
 | Open P0 | 0 |
 | Open P1 | 0 |
-| Open P2 | 6 |
-| Open P3 | 3 |
+| Open P2 | 3 (findings 2, 3, 5) |
+| Open P3 | 2 (finding 7; query IDs in finding 8) |
 
 ## Resolved since the earlier reviews
 
@@ -39,6 +42,12 @@ clean, and a few query-cost and retention decisions.
 | Wheel omitted most runtime packages | 2026-10-02 | Package discovery plus a test; editable checkout install is the supported mode |
 | No one-command server setup | 2026-10-10 | ADR 0030: `scripts/bootstrap.sh` |
 | Bronze loads reported success after swallowed insert, read, and processor errors; values were clipped or defaulted to fit | 2026-08-24, 2026-10-11 | ADR 0031: DDL-driven Bronze Admission before any insert; every failure stops the date |
+| Three signal catalog parsers with different failure policies; `sig_match_*` entity mismatch between ClickHouse and MongoDB; Gold runner ignored catalog `status` | 2026-10-11 | ADR 0033: one validated catalog reader used by every consumer |
+| No CI or automated gates (P2 #1) | 2026-10-02 | `.github/workflows/ci.yml` and pre-commit run Ruff, format, lock, logging-style, signal-catalog and test checks |
+| Dependencies floating (P2 #4) | 2026-10-02 | `uv.lock`; the image installs a hashed `requirements.txt` export with `--require-hashes` |
+| Source protocols drift from implementations (P2 #6) | 2026-10-02 | Unused `src/core` protocols deleted |
+| No subprocess timeout or process-group cancellation (P3 #8) | 2026-08-24 | FotMob pipeline steps run in their own process group with `--stage-timeout-minutes` |
+| Large Oddspedia intake modules (P3 #9) | 2026-08-12 | Pure `odds_contract.py`, one `scrape_one()` worker loop, tennis code removed |
 | Pipeline continued after upstream failures | 2026-06 readiness review | Downstream stages gated in daily, monthly, and full-history modes |
 | Bronze truncate had no dry-run | 2026-06 readiness review | `--truncate --dry-run` implemented |
 | Pytest collection broken from repo root | 2026-06 readiness review | Fixed; root `pytest -q` collects and passes |
@@ -53,26 +62,26 @@ clean, and a few query-cost and retention decisions.
 
 ### P2 — This quarter
 
-1. **No CI or automated gates.** There is no `.github/workflows`, GitLab, or
+1. ~~**No CI or automated gates.**~~ Resolved 2026-10-31 (see above). There is no `.github/workflows`, GitLab, or
    Jenkins config. Tests, formatting, SQL parsing, setup idempotence, and secret
    scanning depend on manual runs. Add a PR gate for build/import, Ruff, Black,
    tests, and SQL parsing, then a small ClickHouse integration suite.
 2. **No SQL logic or setup-idempotence integration test.** The sentinel-row
    behavior of ADR 0026 and the grant model of ADR 0029 were verified manually
    against a throwaway ClickHouse 24.10. Automate both.
-3. **Static quality baseline is not clean and coverage is unenforced.** The
+3. **Static quality baseline: mypy only.** Ruff is clean and coverage is enforced at 64% (2026-10-31); the mypy baseline is still open. Original finding: The
    2026-10-02 run reported Ruff 162 errors, Black 33 files, mypy 205 errors, and
    52% coverage with no `fail-under`. These figures were not re-measured on
    2026-10-11. Stage the cleanup: typing and import paths, then formatting and
    lint, then targeted coverage for ingestion, staging, and publication.
-4. **Dependencies are floating.** `pyproject.toml` and `requirements.txt` use
+4. ~~**Dependencies are floating.**~~ Resolved 2026-10-31 (see above). `pyproject.toml` and `requirements.txt` use
    `>=` and the image installs latest-at-build. Add a hashed lock file and build
    from it.
 5. **`SELECT *` and repeated `FINAL` in production paths.** `SELECT *` remains in
    two Gold signal SQL files, `src/warehouse/scoped_replace.py`,
    `src/warehouse/quality.py`, and `src/oddspedia/bronze/loader.py`. Replace with
    explicit projections; reserve `FINAL` for controlled reconciliation.
-6. **Source protocols drift from implementations.** `src/core/interfaces.py`
+6. ~~**Source protocols drift from implementations.**~~ Resolved 2026-10-31 (see above). `src/core/interfaces.py`
    declares methods the FotMob classes do not implement (the cause of the mypy
    abstract-class errors). Define interfaces around real workflow behavior or
    drop the inheritance.
@@ -81,11 +90,11 @@ clean, and a few query-cost and retention decisions.
 
 7. **Retention is implicit.** No ClickHouse DDL declares a TTL. Bronze files are
    retained indefinitely by ADR 0012; decide and document the warehouse policy.
-8. **Subprocess and query timeouts.** Not re-verified on 2026-10-11. The
+8. **Query timeouts.** Subprocess timeouts and process-group cancellation are resolved (2026-10-31); a shared query ID and retry policy are still open. Original finding: Not re-verified on 2026-10-11. The
    2026-08-24 review found the orchestrator's subprocesses had no timeout or
    process-group cancellation and queries had no shared query ID or retry
    policy. Confirm and, if still true, add a bounded run controller.
-9. **Large Oddspedia intake modules.** `cli.py`, `match_scraper.py`, and
+9. ~~**Large Oddspedia intake modules.**~~ Resolved 2026-10-31 (see above). `cli.py`, `match_scraper.py`, and
    `match_collector.py` were 2,100, 3,500, and 1,800 lines at review time.
    Split along the inventory → scrape → audit → manifest workflow only when the
    next Oddspedia change touches them.
@@ -115,12 +124,10 @@ clean, and a few query-cost and retention decisions.
 
 ## Remediation order
 
-1. CI gate with tests, Ruff/Black, SQL parsing (finding 1).
-2. Setup-idempotence and grant integration tests (finding 2).
-3. Lock file and pinned image build (finding 4).
-4. Remove `SELECT *` (finding 5), then clean typing and protocols (findings 3, 6).
-5. Retention, timeouts, and Oddspedia module splits as separate decisions
-   (findings 7–9).
+1. Setup-idempotence and grant integration tests in CI (finding 2).
+2. Remove `SELECT *` (finding 5).
+3. Clean the mypy baseline and add it to CI (finding 3).
+4. Retention policy and a shared query ID/retry policy (findings 7, 8).
 
 ## Review history
 

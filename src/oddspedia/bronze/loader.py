@@ -2,22 +2,24 @@
 
 import json
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any
 
 import pandas as pd
 
+from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
 from src.integrations.clickhouse.client import ClickHouseClient
-from src.warehouse.databases import STAGING_DATABASE
 from src.oddspedia.scraping.audit import audit_match_payload
-from src.oddspedia.scraping.config import get_match_links_file, normalize_date
 from src.oddspedia.scraping.link_prioritization import source_inventory_checksum
 from src.oddspedia.scraping.manifest import ManifestCorruptError, load_manifest
 from src.oddspedia.scraping.match_collector import listing_matches_target_date
+from src.oddspedia.scraping.paths import get_match_links_file
 from src.oddspedia.scraping.storage import StoredMatchPayload, iter_match_payloads
+from src.warehouse.databases import STAGING_DATABASE
 
 logger = get_logger(__name__)
 
@@ -42,7 +44,7 @@ class OddspediaBronzeLoadResult:
     payload_rows: int = 0
     market_rows: int = 0
     dry_run: bool = False
-    run_id: Optional[str] = None
+    run_id: str | None = None
     published: bool = False
 
 
@@ -53,7 +55,7 @@ def _parse_datetime(value: Any):
         parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
         if parsed.tzinfo is None:
             return parsed
-        return parsed.astimezone(timezone.utc).replace(tzinfo=None)
+        return parsed.astimezone(UTC).replace(tzinfo=None)
     except ValueError:
         return None
 
@@ -66,7 +68,7 @@ class OddspediaBronzeLoader:
         self.database = database
 
     def load_date(self, date_str: str, dry_run: bool = False) -> OddspediaBronzeLoadResult:
-        date_id = normalize_date(date_str)
+        date_id = normalize_compact_date(date_str)
         result = OddspediaBronzeLoadResult(date=date_id, dry_run=dry_run)
         event_records, stored_payloads = self._validated_artifacts(date_id)
         event_rows = self._event_rows(date_id, records=event_records)
@@ -107,9 +109,9 @@ class OddspediaBronzeLoader:
     def _publish_date(
         self,
         date_id: str,
-        event_rows: List[Dict[str, Any]],
-        payload_rows: List[Dict[str, Any]],
-        market_rows: List[Dict[str, Any]],
+        event_rows: list[dict[str, Any]],
+        payload_rows: list[dict[str, Any]],
+        market_rows: list[dict[str, Any]],
         *,
         inventory_checksum: str,
         run_id: str,
@@ -188,7 +190,7 @@ class OddspediaBronzeLoader:
                     error=str(exc),
                 )
             except Exception as status_exc:
-                logger.error(
+                logger.exception(
                     "Oddspedia Bronze failure status could not be recorded",
                     date=date_id,
                     run_id=run_id,
@@ -204,9 +206,10 @@ class OddspediaBronzeLoader:
                         "Oddspedia Bronze staging table cleanup failed",
                         table=f"{STAGING_DATABASE}.{stage}",
                         error=str(exc),
+                        exc_info=True,
                     )
 
-    def _insert_stage(self, stage: str, rows: List[Dict[str, Any]]) -> None:
+    def _insert_stage(self, stage: str, rows: list[dict[str, Any]]) -> None:
         if not rows:
             return
         self.client.insert_dataframe_qualified_table(
@@ -219,7 +222,7 @@ class OddspediaBronzeLoader:
         self, stage_table: str, date_column: str, date_iso: str, expected: int
     ) -> None:
         result = self.client.execute(
-            f"SELECT count() FROM {stage_table} " f"WHERE {date_column} = toDate('{date_iso}')"
+            f"SELECT count() FROM {stage_table} WHERE {date_column} = toDate('{date_iso}')"
         )
         actual = int(result.result_rows[0][0]) if result.result_rows else 0
         if actual != expected:
@@ -238,7 +241,7 @@ class OddspediaBronzeLoader:
         event_rows: int,
         payload_rows: int,
         market_rows: int,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         self._insert(
             "load_status",
@@ -252,14 +255,14 @@ class OddspediaBronzeLoader:
                     "payload_rows": payload_rows,
                     "market_rows": market_rows,
                     "error": error,
-                    "updated_at": datetime.now(timezone.utc),
+                    "updated_at": datetime.now(UTC),
                 }
             ],
         )
 
     def _validated_artifacts(
         self, date_id: str
-    ) -> Tuple[List[Dict[str, Any]], List[StoredMatchPayload]]:
+    ) -> tuple[list[dict[str, Any]], list[StoredMatchPayload]]:
         path = Path(get_match_links_file(date_id))
         if not path.exists():
             raise OddspediaBronzeAdmissionError(
@@ -302,7 +305,7 @@ class OddspediaBronzeLoader:
             raise OddspediaBronzeAdmissionError(
                 f"Oddspedia discovery manifest is missing for {date_id}"
             )
-        if normalize_date(manifest.date) != date_id:
+        if normalize_compact_date(manifest.date) != date_id:
             raise OddspediaBronzeAdmissionError(
                 f"Oddspedia discovery manifest date does not match {date_id}"
             )
@@ -386,8 +389,8 @@ class OddspediaBronzeLoader:
         return records, stored_payloads
 
     def _event_rows(
-        self, date_id: str, records: Optional[List[Dict[str, Any]]] = None
-    ) -> List[Dict[str, Any]]:
+        self, date_id: str, records: list[dict[str, Any]] | None = None
+    ) -> list[dict[str, Any]]:
         path = Path(get_match_links_file(date_id))
         if records is None:
             if not path.exists():
@@ -395,7 +398,7 @@ class OddspediaBronzeLoader:
                 return []
             records = _load_json(path)
         if not isinstance(records, list):
-            raise ValueError("Oddspedia daily listing must contain a list: %s" % path)
+            raise ValueError(f"Oddspedia daily listing must contain a list: {path}")
         discovery_date = datetime.strptime(date_id, "%Y%m%d").date()
         rows = []
         for record in records:
@@ -422,11 +425,11 @@ class OddspediaBronzeLoader:
     def _payload_rows(
         self,
         date_id: str,
-        stored_payloads: Optional[Iterable[StoredMatchPayload]] = None,
+        stored_payloads: Iterable[StoredMatchPayload] | None = None,
     ):
         event_date = datetime.strptime(date_id, "%Y%m%d").date()
-        payload_rows: List[Dict[str, Any]] = []
-        market_rows: List[Dict[str, Any]] = []
+        payload_rows: list[dict[str, Any]] = []
+        market_rows: list[dict[str, Any]] = []
         for stored in (
             stored_payloads if stored_payloads is not None else iter_match_payloads(date_id)
         ):
@@ -467,7 +470,7 @@ class OddspediaBronzeLoader:
                 )
         return payload_rows, market_rows
 
-    def _insert(self, table: str, rows: List[Dict[str, Any]]) -> None:
+    def _insert(self, table: str, rows: list[dict[str, Any]]) -> None:
         if not rows:
             return
         self.client.insert_dataframe(table, pd.DataFrame(rows), database=self.database)

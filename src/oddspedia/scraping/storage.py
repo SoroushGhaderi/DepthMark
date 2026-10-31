@@ -13,17 +13,14 @@ import os
 import shutil
 import tarfile
 import tempfile
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterator, Optional
 
+from src.common.dates import normalize_compact_date
 from src.common.logging import get_logger
-from src.oddspedia.scraping.config import (
-    get_match_file,
-    get_matches_dir,
-    normalize_date,
-    normalize_sport,
-)
+from src.oddspedia.scraping.config import normalize_sport
+from src.oddspedia.scraping.paths import get_match_file, get_matches_dir
 
 logger = get_logger(__name__)
 
@@ -33,7 +30,7 @@ def _storage_date(date_str: str) -> str:
     value = str(date_str).strip()
     if len(value) == 10 and value[4] == "-" and value[7] == "-":
         value = value.replace("-", "")
-    return normalize_date(value)
+    return normalize_compact_date(value)
 
 
 @dataclass(frozen=True)
@@ -41,7 +38,7 @@ class StoredMatchPayload:
     """One payload and the artifact from which it was read."""
 
     match_id: str
-    payload: Dict
+    payload: dict
     source_file: str
     size_bytes: int
 
@@ -55,7 +52,7 @@ def get_match_archive_file(date_str: str, sport: str = "football") -> str:
 
 def read_match_payload(
     date_str: str, match_id: str, sport: str = "football"
-) -> Optional[StoredMatchPayload]:
+) -> StoredMatchPayload | None:
     """Read one payload from plain JSON, then from the date archive.
 
     Plain JSON takes precedence so a newly re-scraped payload can replace an
@@ -113,7 +110,7 @@ def iter_match_payloads(date_str: str, sport: str = "football") -> Iterator[Stor
     """Yield every stored payload once, preferring new plain JSON over archives."""
     date_id = _storage_date(date_str)
     matches_dir = Path(get_matches_dir(date_id, sport=sport))
-    payloads: Dict[str, StoredMatchPayload] = {}
+    payloads: dict[str, StoredMatchPayload] = {}
 
     archive_path = Path(get_match_archive_file(date_id, sport=sport))
     if archive_path.exists():
@@ -151,7 +148,7 @@ def iter_match_payloads(date_str: str, sport: str = "football") -> Iterator[Stor
     yield from (payloads[match_id] for match_id in sorted(payloads))
 
 
-def compress_date_files(date_str: str, force: bool = False, sport: str = "football") -> Dict:
+def compress_date_files(date_str: str, force: bool = False, sport: str = "football") -> dict:
     """Compress one complete Oddspedia date using the FotMob local protocol.
 
     The archive is rebuilt in a temporary file and replaced only after every
@@ -204,9 +201,10 @@ def compress_date_files(date_str: str, force: bool = False, sport: str = "footba
             )
             os.close(fd)
             temp_gz = Path(temp_name)
-            with json_path.open("rb") as source, gzip.open(
-                temp_gz, "wb", compresslevel=6
-            ) as target:
+            with (
+                json_path.open("rb") as source,
+                gzip.open(temp_gz, "wb", compresslevel=6) as target,
+            ):
                 shutil.copyfileobj(source, target)
             temp_gz_paths.append((temp_gz, f"{json_path.name}.gz"))
 
@@ -263,7 +261,7 @@ def compress_date_files(date_str: str, force: bool = False, sport: str = "footba
             "status": "success",
         }
     except Exception as exc:
-        logger.error("oddspedia_date_compression_failed", date=date_id, error=str(exc))
+        logger.exception("oddspedia_date_compression_failed", date=date_id, error=str(exc))
         return {
             "compressed": 0,
             "size_before_mb": 0,

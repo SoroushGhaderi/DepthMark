@@ -1,7 +1,6 @@
-"""Canonical entry point for building the FotMob Gold layer."""
+"""Run scope-aware FotMob Gold orchestration in ClickHouse."""
 
-from load_clickhouse_gold import main
-
+from src.fotmob.commands.load_gold import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

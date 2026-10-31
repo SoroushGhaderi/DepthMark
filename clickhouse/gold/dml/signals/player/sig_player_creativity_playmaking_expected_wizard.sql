@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_creativity_playmaking_expected_wizard (
+INSERT INTO gold_signals.sig_player_creativity_playmaking_expected_wizard (
     match_id,
     match_date,
     home_team_id,

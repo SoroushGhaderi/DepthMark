@@ -12,14 +12,15 @@ Strategy:
 import re
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from urllib.parse import urlparse
 
-from src.oddspedia.scraping.config import BASE_URL, get_sport_listing_url, normalize_sport
-from src.oddspedia.scraping.utils import pin_oddspedia_event_url, safe_get
+from selenium.common.exceptions import WebDriverException
+
+from src.oddspedia.scraping.config import base_url, get_sport_listing_url, normalize_sport
 from src.oddspedia.scraping.logging import get_logger
 from src.oddspedia.scraping.metrics import get_metrics
-from selenium.common.exceptions import WebDriverException
+from src.oddspedia.scraping.utils import pin_oddspedia_event_url, safe_get
 
 logger = get_logger(__name__)
 
@@ -88,8 +89,13 @@ def _match_league_name(match):
         return ""
 
     keys = (
-        "league_name", "league", "tournament", "competition",
-        "leagueName", "tournament_name", "competition_name",
+        "league_name",
+        "league",
+        "tournament",
+        "competition",
+        "leagueName",
+        "tournament_name",
+        "competition_name",
     )
     name_keys = ("name", "title", "league_name", "league", "tournament", "competition")
     for key in keys:
@@ -201,8 +207,8 @@ def _clean_player_name(name):
     """Clean player name - remove extra spaces, special chars."""
     if not name:
         return ""
-    name = re.sub(r'\s+', ' ', name.strip())
-    name = re.sub(r'[^\w\s\.\-\']', '', name)
+    name = re.sub(r"\s+", " ", name.strip())
+    name = re.sub(r"[^\w\s\.\-\']", "", name)
     return name.strip()
 
 
@@ -291,6 +297,7 @@ _JS_DATE_NAV_DEBUG = """
 def _debug_date_nav(driver):
     """Log the DOM structure around the date navigation bar."""
     import json
+
     result = driver.execute_script(_JS_DATE_NAV_DEBUG)
     logger.warning("date_nav_dom_dump", dom_structure=json.dumps(result, indent=2))
     return result
@@ -301,7 +308,7 @@ _JS_EXTRACT_VUEX_FALLBACK = """
     var results = [];
     var seen = {};
     var origin = window.location.origin;
-    var sportSlug = arguments[0] || 'tennis';
+    var sportSlug = arguments[0] || 'football';
     function toSlug(name) {
         return (name || '').toLowerCase()
             .replace(/[éèêë]/g,'e').replace(/[àâä]/g,'a').replace(/[ùûü]/g,'u')
@@ -331,8 +338,18 @@ _JS_EXTRACT_VUEX_FALLBACK = """
 """
 
 _MONTH_ABBR = {
-    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
-    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
 }
 
 
@@ -344,7 +361,7 @@ def _read_displayed_date(driver, reference_date=None):
     """)
     if not text:
         return None
-    m = re.search(r'(\d{1,2})\s+([A-Za-z]+)|([A-Za-z]+)\s+(\d{1,2})', text)
+    m = re.search(r"(\d{1,2})\s+([A-Za-z]+)|([A-Za-z]+)\s+(\d{1,2})", text)
     if not m:
         return None
     if m.group(1):
@@ -354,7 +371,7 @@ def _read_displayed_date(driver, reference_date=None):
     month = _MONTH_ABBR.get(mon_str)
     if not month:
         return None
-    reference = reference_date or datetime.now(timezone.utc).date()
+    reference = reference_date or datetime.now(UTC).date()
     candidates = []
     for year in (reference.year - 1, reference.year, reference.year + 1):
         try:
@@ -379,7 +396,8 @@ def _navigate_to_date(driver, target_date_str):
     for picker_attempt in range(DATE_PICKER_RETRY_ATTEMPTS):
         if picker_attempt:
             time.sleep(DATE_PICKER_RETRY_DELAY_SECONDS)
-        selected_by_calendar = driver.execute_script("""
+        selected_by_calendar = driver.execute_script(
+            """
         var targetIso = arguments[0];
         var d = Number(targetIso.slice(8, 10));
         var pretty = targetIso.replace(/-/g, '/');
@@ -549,7 +567,9 @@ def _navigate_to_date(driver, target_date_str):
             return vueRes;
         }
         return picked + '|' + inputRes + '|' + vueRes;
-        """, target.isoformat())
+        """,
+            target.isoformat(),
+        )
 
         selected_by_calendar = str(selected_by_calendar)
         if (
@@ -595,7 +615,7 @@ def _navigate_to_date(driver, target_date_str):
 
     # Use the page's displayed date as the base — more reliable than datetime.now()
     page_date = _read_displayed_date(driver, reference_date=target)
-    today = page_date or datetime.now(timezone.utc).date()
+    today = page_date or datetime.now(UTC).date()
     if page_date:
         logger.info("current_date_displayed", date=str(page_date))
     else:
@@ -609,13 +629,16 @@ def _navigate_to_date(driver, target_date_str):
 
     direction = "next" if offset > 0 else "prev"
     steps = abs(offset)
-    logger.info("navigating_to_target_date", steps=steps, direction=direction, target_date=target_date_str)
+    logger.info(
+        "navigating_to_target_date", steps=steps, direction=direction, target_date=target_date_str
+    )
 
     last_observed = today
     no_progress_count = 0
     unreadable_count = 0
     for step in range(steps):
-        clicked = driver.execute_script("""
+        clicked = driver.execute_script(
+            """
             var dir = arguments[0];
 
             // Find the date display element
@@ -680,17 +703,26 @@ def _navigate_to_date(driver, target_date_str):
                 candidates[candidates.length - 1].click();
             }
             return 'ok:' + candidates[0].tagName + 'x' + candidates.length;
-        """, direction)
+        """,
+            direction,
+        )
 
         if not str(clicked).startswith("ok") and not str(clicked).startswith("vue-"):
-            logger.warning("date_navigation_click_failed", step=step + 1, total_steps=steps, result=str(clicked))
+            logger.warning(
+                "date_navigation_click_failed",
+                step=step + 1,
+                total_steps=steps,
+                result=str(clicked),
+            )
             if step == 0:
                 _debug_date_nav(driver)
             if clicked == "no-date-btn":
                 logger.error("date_button_not_found")
                 return False
         else:
-            logger.debug("date_navigation_click", step=step + 1, total_steps=steps, result=str(clicked))
+            logger.debug(
+                "date_navigation_click", step=step + 1, total_steps=steps, result=str(clicked)
+            )
         time.sleep(DATE_ARROW_DELAY_SECONDS)
 
         observed = _read_displayed_date(driver, reference_date=target)
@@ -713,9 +745,7 @@ def _navigate_to_date(driver, target_date_str):
             logger.info("date_navigation_success", target_date=target_date_str, step=step + 1)
             return True
 
-        progressed = (
-            observed < last_observed if direction == "prev" else observed > last_observed
-        )
+        progressed = observed < last_observed if direction == "prev" else observed > last_observed
         if not progressed:
             no_progress_count += 1
             logger.warning(
@@ -764,7 +794,8 @@ def _navigate_to_date(driver, target_date_str):
             direction=direction,
             attempt=correction + 1,
         )
-        driver.execute_script("""
+        driver.execute_script(
+            """
             var dir = arguments[0];
             var dateBtn = document.querySelector('.flex.align-items-center.p-0');
             if (!dateBtn) return;
@@ -777,7 +808,9 @@ def _navigate_to_date(driver, target_date_str):
                 }
                 container = container.parentElement;
             }
-        """, direction)
+        """,
+            direction,
+        )
         time.sleep(DATE_ARROW_DELAY_SECONDS)
 
     logger.warning("date_navigation_failed", target_date=target_date_str)
@@ -920,10 +953,14 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
     samples = (final_state or {}).get("sampleMatches", [])
     if samples:
         import json as _json
+
         first = samples[0]
         logger.debug("sample_match_keys", keys=list(first.keys()))
-        url_like = {k: v for k, v in first.items()
-                    if any(kw in k.lower() for kw in ('id', 'url', 'path', 'slug', 'key', 'link'))}
+        url_like = {
+            k: v
+            for k, v in first.items()
+            if any(kw in k.lower() for kw in ("id", "url", "path", "slug", "key", "link"))
+        }
         logger.debug("sample_match_url_fields", fields=_json.dumps(url_like))
 
     matches = {}
@@ -940,23 +977,25 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
         # internal 'id'). Archived matches use /a/{sport}/ with away-home slug order.
         match_key = m.get("match_key")
         url_id = match_key or (
-            m.get("sr_id") or
-            m.get("eid") or
-            m.get("external_id") or
-            m.get("event_id") or
-            m.get("url_id") or
-            m.get("sid") or
-            m.get("match_id") or
-            m.get("id", mid)
+            m.get("sr_id")
+            or m.get("eid")
+            or m.get("external_id")
+            or m.get("event_id")
+            or m.get("url_id")
+            or m.get("sid")
+            or m.get("match_id")
+            or m.get("id", mid)
         )
 
         # If a direct URL or path is stored on the match item, prefer that
         direct_path = m.get("url") or m.get("path") or m.get("match_url") or m.get("link") or ""
         sport_path = f"/{sport}/"
         archived_sport_path = f"/a/{sport}/"
-        if direct_path and (direct_path.startswith(sport_path) or direct_path.startswith(archived_sport_path)):
+        if direct_path and (
+            direct_path.startswith(sport_path) or direct_path.startswith(archived_sport_path)
+        ):
             path = direct_path
-            slug = re.sub(rf'^/(?:a/)?{re.escape(sport)}/', '', direct_path)
+            slug = re.sub(rf"^/(?:a/)?{re.escape(sport)}/", "", direct_path)
         elif is_archived:
             # Archived completed matches: /a/{sport}/{at_slug}-{ht_slug}-{match_key}
             slug = f"{as_}-{hs}-{url_id}" if hs and as_ else str(url_id)
@@ -967,20 +1006,20 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
             path = f"/{sport}/{slug}"
 
         matches[mid] = {
-            "matchId":  mid,
+            "matchId": mid,
             "matchKey": slug,
-            "home":     m.get("ht", ""),
-            "away":     m.get("at", ""),
+            "home": m.get("ht", ""),
+            "away": m.get("at", ""),
             "home_slug": hs,
             "away_slug": as_,
             "league_name": _match_league_name(m),
             "league_slug": (m.get("league_slug") or m.get("tournament_slug") or "").strip(),
-            "country":  _match_country(m),
+            "country": _match_country(m),
             "country_slug": _match_country_slug(m),
-            "date":     m.get("md", ""),
-            "status":   _listing_status_token(m),
-            "url":      path,
-            "full_url": BASE_URL + path,
+            "date": m.get("md", ""),
+            "status": _listing_status_token(m),
+            "url": path,
+            "full_url": base_url() + path,
         }
 
     # --- Enrich URLs from rendered DOM <a href> links ---
@@ -1002,13 +1041,21 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
 
         slug_to_info = {info["slug"]: info for info in dom_links.values()}
         slug_to_path = {slug: info["path"] for slug, info in slug_to_info.items()}
-        slug_to_status = {info["slug"]: _normalize_match_status(info.get("status")) for info in dom_links.values() if info.get("status")}
-        path_to_status = {info["path"]: _normalize_match_status(info.get("status")) for info in dom_links.values() if info.get("status")}
+        slug_to_status = {
+            info["slug"]: _normalize_match_status(info.get("status"))
+            for info in dom_links.values()
+            if info.get("status")
+        }
+        path_to_status = {
+            info["path"]: _normalize_match_status(info.get("status"))
+            for info in dom_links.values()
+            if info.get("status")
+        }
 
         dom_wordsets = {}
         for dom_slug, dom_path in slug_to_path.items():
-            prefix = re.sub(r'-\d+$', '', dom_slug)
-            words = frozenset(prefix.split('-')) if prefix else None
+            prefix = re.sub(r"-\d+$", "", dom_slug)
+            words = frozenset(prefix.split("-")) if prefix else None
             if words:
                 dom_wordsets[words] = (dom_slug, dom_path)
 
@@ -1021,25 +1068,27 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
                     m["status"] = slug_to_status.get(old_slug, "")
                 continue
 
-            prefix = re.sub(r'-\d+$', '', old_slug)
+            prefix = re.sub(r"-\d+$", "", old_slug)
 
             matched_slug, matched_path = None, None
             for dom_slug, dom_path in slug_to_path.items():
-                if re.sub(r'-\d+$', '', dom_slug) == prefix:
+                if re.sub(r"-\d+$", "", dom_slug) == prefix:
                     matched_slug, matched_path = dom_slug, dom_path
                     break
 
             if matched_slug is None and prefix:
-                words = frozenset(prefix.split('-'))
+                words = frozenset(prefix.split("-"))
                 if words in dom_wordsets:
                     matched_slug, matched_path = dom_wordsets[words]
 
             if matched_slug is not None:
                 m["matchKey"] = matched_slug
                 m["url"] = matched_path
-                m["full_url"] = BASE_URL + matched_path
+                m["full_url"] = base_url() + matched_path
                 if not m.get("status"):
-                    m["status"] = slug_to_status.get(matched_slug, "") or path_to_status.get(matched_path, "")
+                    m["status"] = slug_to_status.get(matched_slug, "") or path_to_status.get(
+                        matched_path, ""
+                    )
                 corrected += 1
             else:
                 unmatched += 1
@@ -1047,7 +1096,9 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
         for m in matches.values():
             if m.get("status"):
                 continue
-            dom_status = path_to_status.get(m.get("url", "")) or slug_to_status.get(m.get("matchKey", ""))
+            dom_status = path_to_status.get(m.get("url", "")) or slug_to_status.get(
+                m.get("matchKey", "")
+            )
             if dom_status:
                 m["status"] = dom_status
 
@@ -1093,7 +1144,13 @@ def _fetch_all_matches(driver, sport="football", return_result=False):
         anomalies=anomalies,
         dom_count=dom_count,
     )
-    logger.info("matches_collected", count=len(matches), expected_pages=total_pages, observed_pages=observed_pages, complete=result.complete)
+    logger.info(
+        "matches_collected",
+        count=len(matches),
+        expected_pages=total_pages,
+        observed_pages=observed_pages,
+        complete=result.complete,
+    )
     return result if return_result else result.matches
 
 
@@ -1102,7 +1159,7 @@ _JS_EXTRACT_DOM_LINKS = """
     // Live matches use /<sport>/<slug>-<id>
     // Past/archived matches use /a/<sport>/<slug>-<id>
     var links = {};
-    var sportSlug = arguments[0] || 'tennis';
+    var sportSlug = arguments[0] || 'football';
     var livePrefix = '/' + sportSlug + '/';
     var archivedPrefix = '/a/' + sportSlug + '/';
     var anchors = document.querySelectorAll(
@@ -1552,7 +1609,7 @@ def _build_urls(matches, sport="football"):
         match_id = str(m.get("matchId") or m.get("id") or "")
         if m.get("url") and m.get("full_url"):
             if not m["full_url"].startswith("http"):
-                m["full_url"] = BASE_URL + m["full_url"]
+                m["full_url"] = base_url() + m["full_url"]
             if sport == "football":
                 m["url"] = pin_oddspedia_event_url(m["url"], match_id)
                 m["full_url"] = pin_oddspedia_event_url(m["full_url"], match_id)
@@ -1567,7 +1624,7 @@ def _build_urls(matches, sport="football"):
             m["full_url"] = ""
             continue
         m["url"] = path
-        m["full_url"] = BASE_URL + path
+        m["full_url"] = base_url() + path
         if sport == "football":
             m["url"] = pin_oddspedia_event_url(m["url"], match_id)
             m["full_url"] = pin_oddspedia_event_url(m["full_url"], match_id)
@@ -1593,13 +1650,11 @@ def _merge_league_names(matches, league_matches, overwrite=False, sport="footbal
         home = info.get("home") or info.get("ht") or ""
         away = info.get("away") or info.get("at") or ""
         date = str(info.get("date") or info.get("md") or "").strip()[:10]
-        teams = sorted(
-            re.sub(r"[^a-z0-9]+", "", str(team).casefold())
-            for team in (home, away)
-        )
+        teams = sorted(re.sub(r"[^a-z0-9]+", "", str(team).casefold()) for team in (home, away))
         if not all(teams) or not date:
             return None
         return teams[0], teams[1], date
+
     for info in league_matches.values():
         if not isinstance(info, dict):
             continue
@@ -1623,8 +1678,8 @@ def _merge_league_names(matches, league_matches, overwrite=False, sport="footbal
             by_id[match_id] = context
         if path:
             by_path[path] = context
-            if path.startswith(BASE_URL):
-                by_path[path[len(BASE_URL):]] = context
+            if path.startswith(base_url()):
+                by_path[path[len(base_url()) :]] = context
         if slug:
             by_slug[slug] = context
         identity = event_identity(info)
@@ -1674,13 +1729,15 @@ def _merge_league_names(matches, league_matches, overwrite=False, sport="footbal
             source_path = parsed.path or source_url
             if source_path.startswith(f"/{sport}/") or source_path.startswith(f"/a/{sport}/"):
                 match["url"] = source_path
-                match["full_url"] = BASE_URL + source_path
+                match["full_url"] = base_url() + source_path
                 match["matchKey"] = source_path.rstrip("/").rsplit("/", 1)[-1]
     if identity_matches:
         logger.info("league_names_merged_by_event_identity", count=identity_matches)
 
 
-def collect_match_links(driver, target_date=None, sport="football", reuse_listing=False, return_result=False):
+def collect_match_links(
+    driver, target_date=None, sport="football", reuse_listing=False, return_result=False
+):
     """Navigate to a sport listing page and collect all match links.
 
     Args:
@@ -1698,7 +1755,7 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
     t0 = time.time()
 
     if target_date is None:
-        target_date = datetime.now(timezone.utc).strftime("%Y%m%d")
+        target_date = datetime.now(UTC).strftime("%Y%m%d")
 
     url = get_sport_listing_url(sport)
     logger.info("collecting_matches", sport=sport, url=url, target_date=target_date)
@@ -1717,7 +1774,9 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
 
     date_navigation_succeeded = _navigate_to_date(driver, target_date)
     if not date_navigation_succeeded and reuse_listing:
-        logger.warning("reused_listing_navigation_failed_reloading", sport=sport, target_date=target_date)
+        logger.warning(
+            "reused_listing_navigation_failed_reloading", sport=sport, target_date=target_date
+        )
         if not safe_get(driver, url):
             logger.error("listing_reload_failed", url=url)
             metrics.record_scrape_error("listing_reload_failed")
@@ -1737,8 +1796,14 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
 
     fetched = _fetch_all_matches(driver, sport=sport, return_result=True)
     # Preserve compatibility with tests and third-party patches that return a dict.
-    discovery = fetched if isinstance(fetched, DiscoveryResult) else DiscoveryResult(
-        matches=fetched or {}, expected_pages=1, observed_pages=1,
+    discovery = (
+        fetched
+        if isinstance(fetched, DiscoveryResult)
+        else DiscoveryResult(
+            matches=fetched or {},
+            expected_pages=1,
+            observed_pages=1,
+        )
     )
     matches = discovery.matches
 
@@ -1821,7 +1886,8 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
     missing_leagues = [m.get("id", "") for m in result if not m.get("league_name")]
     if missing_leagues:
         archived_missing = sum(
-            1 for m in result
+            1
+            for m in result
             if not m.get("league_name") and str(m.get("url", "")).startswith("/a/")
         )
         logger.warning(
@@ -1836,7 +1902,9 @@ def collect_match_links(driver, target_date=None, sport="football", reuse_listin
         )
 
     duration_seconds = int(time.time() - t0)
-    metrics.phase1_complete(total=len(result), success=len(result), duration_seconds=duration_seconds)
+    metrics.phase1_complete(
+        total=len(result), success=len(result), duration_seconds=duration_seconds
+    )
 
     logger.info(
         "event_discovery_complete",

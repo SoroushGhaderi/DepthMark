@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_possession_passing_passing_clinic (
+INSERT INTO gold_signals.sig_match_possession_passing_passing_clinic (
     match_id,
     match_date,
     home_team_id,

@@ -4,11 +4,12 @@ import json
 import re
 import unicodedata
 from collections import Counter
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any
 
 import yaml
 
@@ -30,17 +31,17 @@ class OddspediaBronzeNotPublishedError(RuntimeError):
 class ReferenceWindowVerification:
     """Machine-verifiable reconciliation evidence for the FotMob reference window."""
 
-    dates: Tuple[date, ...]
-    bronze_counts: Dict[date, int]
-    silver_counts: Dict[date, int]
-    missing_dates: Tuple[date, ...]
-    mismatched_dates: Tuple[date, ...]
+    dates: tuple[date, ...]
+    bronze_counts: dict[date, int]
+    silver_counts: dict[date, int]
+    missing_dates: tuple[date, ...]
+    mismatched_dates: tuple[date, ...]
 
     @property
     def complete(self) -> bool:
         return not self.missing_dates and not self.mismatched_dates
 
-    def as_dict(self) -> Dict[str, Any]:
+    def as_dict(self) -> dict[str, Any]:
         return {
             "verified": self.complete,
             "dates": [value.strftime("%Y%m%d") for value in self.dates],
@@ -122,7 +123,7 @@ class FotMobReferenceWindowVerifier:
 class OddspediaEvent:
     oddspedia_match_id: str
     discovery_date: date
-    kickoff_utc: Optional[datetime]
+    kickoff_utc: datetime | None
     home_team_name: str
     away_team_name: str
     league_name: str = ""
@@ -132,7 +133,7 @@ class OddspediaEvent:
 class FotMobMatch:
     match_id: int
     match_date: date
-    kickoff_utc: Optional[datetime]
+    kickoff_utc: datetime | None
     home_team_name: str
     away_team_name: str
     coverage_level: str = ""
@@ -142,7 +143,7 @@ class FotMobMatch:
 @dataclass(frozen=True)
 class TeamName:
     core: str
-    qualifiers: Tuple[str, ...]
+    qualifiers: tuple[str, ...]
     alias_used: bool
 
 
@@ -150,7 +151,7 @@ class TeamName:
 class Candidate:
     match: FotMobMatch
     score: float
-    time_difference_minutes: Optional[int]
+    time_difference_minutes: int | None
     home_rule: str
     away_rule: str
 
@@ -159,20 +160,20 @@ class Candidate:
 class ResolutionResult:
     oddspedia_match_id: str
     discovery_date: date
-    fotmob_match_id: Optional[int]
+    fotmob_match_id: int | None
     resolution_status: str
-    coverage_category: Optional[str]
-    confidence: Optional[str]
-    match_score: Optional[float]
-    score_margin: Optional[float]
-    time_difference_minutes: Optional[int]
-    home_match_rule: Optional[str]
-    away_match_rule: Optional[str]
-    candidate_dates_checked: Tuple[date, ...]
+    coverage_category: str | None
+    confidence: str | None
+    match_score: float | None
+    score_margin: float | None
+    time_difference_minutes: int | None
+    home_match_rule: str | None
+    away_match_rule: str | None
+    candidate_dates_checked: tuple[date, ...]
     rule_version: str
-    details: Dict[str, Any]
+    details: dict[str, Any]
 
-    def as_row(self) -> Dict[str, Any]:
+    def as_row(self) -> dict[str, Any]:
         return {
             "oddspedia_match_id": self.oddspedia_match_id,
             "oddspedia_discovery_date": self.discovery_date,
@@ -196,11 +197,11 @@ class FotMobCandidateIndex:
 
     def __init__(self, resolver: "OddspediaMatchResolver", matches: Iterable[FotMobMatch]):
         self.resolver = resolver
-        self.exact: Dict[Tuple[str, Tuple[str, ...], str, Tuple[str, ...]], List[FotMobMatch]] = {}
-        self.home_tokens: Dict[str, set] = {}
-        self.away_tokens: Dict[str, set] = {}
-        self.home_ngrams: Dict[str, set] = {}
-        self.away_ngrams: Dict[str, set] = {}
+        self.exact: dict[tuple[str, tuple[str, ...], str, tuple[str, ...]], list[FotMobMatch]] = {}
+        self.home_tokens: dict[str, set] = {}
+        self.away_tokens: dict[str, set] = {}
+        self.home_ngrams: dict[str, set] = {}
+        self.away_ngrams: dict[str, set] = {}
         self.home_token_frequencies: Counter = Counter()
         self.away_token_frequencies: Counter = Counter()
         for match in matches:
@@ -273,7 +274,7 @@ class OddspediaMatchResolver:
             if key and value
         }
 
-    def candidate_dates(self, discovery_date: date) -> Tuple[date, ...]:
+    def candidate_dates(self, discovery_date: date) -> tuple[date, ...]:
         return tuple(
             discovery_date + timedelta(days=offset)
             for offset in range(-self.candidate_window_days, self.candidate_window_days + 1)
@@ -303,8 +304,8 @@ class OddspediaMatchResolver:
         event: OddspediaEvent,
         fotmob_matches: Iterable[FotMobMatch],
         reference_window_complete: bool = False,
-        home_token_frequencies: Optional[Mapping[str, int]] = None,
-        away_token_frequencies: Optional[Mapping[str, int]] = None,
+        home_token_frequencies: Mapping[str, int] | None = None,
+        away_token_frequencies: Mapping[str, int] | None = None,
     ) -> ResolutionResult:
         candidate_dates = self.candidate_dates(event.discovery_date)
         candidates = []
@@ -374,9 +375,9 @@ class OddspediaMatchResolver:
         self,
         event: OddspediaEvent,
         match: FotMobMatch,
-        home_token_frequencies: Optional[Mapping[str, int]] = None,
-        away_token_frequencies: Optional[Mapping[str, int]] = None,
-    ) -> Optional[Candidate]:
+        home_token_frequencies: Mapping[str, int] | None = None,
+        away_token_frequencies: Mapping[str, int] | None = None,
+    ) -> Candidate | None:
         home_similarity, home_rule = self._team_similarity(
             event.home_team_name, match.home_team_name, home_token_frequencies
         )
@@ -402,8 +403,8 @@ class OddspediaMatchResolver:
         self,
         source_name: str,
         reference_name: str,
-        token_frequencies: Optional[Mapping[str, int]] = None,
-    ) -> Tuple[float, str]:
+        token_frequencies: Mapping[str, int] | None = None,
+    ) -> tuple[float, str]:
         source = self._normalize_team(source_name)
         reference = self._normalize_team(reference_name)
         if not source.core or not reference.core or source.qualifiers != reference.qualifiers:
@@ -446,13 +447,13 @@ class OddspediaMatchResolver:
     def _result(
         self,
         event: OddspediaEvent,
-        candidate_dates: Tuple[date, ...],
+        candidate_dates: tuple[date, ...],
         status: str,
-        category: Optional[str] = None,
-        confidence: Optional[str] = None,
-        candidate: Optional[Candidate] = None,
-        margin: Optional[float] = None,
-        details: Optional[Dict[str, Any]] = None,
+        category: str | None = None,
+        confidence: str | None = None,
+        candidate: Candidate | None = None,
+        margin: float | None = None,
+        details: dict[str, Any] | None = None,
     ) -> ResolutionResult:
         return ResolutionResult(
             oddspedia_match_id=event.oddspedia_match_id,
@@ -484,7 +485,7 @@ class OddspediaResolutionService:
         discovery_date: date,
         reference_window_complete: bool,
         persist: bool = True,
-    ) -> List[ResolutionResult]:
+    ) -> list[ResolutionResult]:
         self._require_bronze_published(discovery_date)
         reference_dates = self.resolver.candidate_dates(discovery_date)
         if reference_window_complete:
@@ -518,7 +519,7 @@ class OddspediaResolutionService:
             f"Oddspedia Bronze batch is not published for {discovery_date.isoformat()}: {status}"
         )
 
-    def _load_events(self, discovery_date: date) -> List[OddspediaEvent]:
+    def _load_events(self, discovery_date: date) -> list[OddspediaEvent]:
         query = """
             SELECT oddspedia_match_id, discovery_date, scheduled_kickoff_utc,
                    home_team_name, away_team_name, league_name
@@ -540,7 +541,7 @@ class OddspediaResolutionService:
             for row in rows
         ]
 
-    def _load_fotmob_matches(self, dates: Tuple[date, ...]) -> List[FotMobMatch]:
+    def _load_fotmob_matches(self, dates: tuple[date, ...]) -> list[FotMobMatch]:
         start, end = min(dates).isoformat(), max(dates).isoformat()
         query = """
             SELECT match_id, match_date, match_time_utc, home_team_name,
@@ -562,7 +563,7 @@ class OddspediaResolutionService:
             for row in rows
         ]
 
-    def _persist(self, results: List[ResolutionResult]) -> None:
+    def _persist(self, results: list[ResolutionResult]) -> None:
         if not results:
             return
         import pandas as pd
@@ -574,14 +575,14 @@ class OddspediaResolutionService:
         )
 
 
-def _load_yaml(path: Path) -> Dict[str, Any]:
+def _load_yaml(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as source:
         return yaml.safe_load(source) or {}
 
 
 def _ids_by_date(
-    rows: Iterable[Tuple[Any, Any]], expected_dates: Tuple[date, ...]
-) -> Dict[date, set]:
+    rows: Iterable[tuple[Any, Any]], expected_dates: tuple[date, ...]
+) -> dict[date, set]:
     expected = set(expected_dates)
     result = {value: set() for value in expected_dates}
     for match_id, raw_date in rows:
@@ -622,12 +623,12 @@ def _simple_text(value: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]+", " ", normalized.casefold())).strip()
 
 
-def _coverage_category(value: str) -> Optional[str]:
+def _coverage_category(value: str) -> str | None:
     normalized = _simple_text(value)
     return {"xg": "xG", "ratings": "ratings", "lower": "lower"}.get(normalized)
 
 
-def _team_ngrams(value: str) -> Tuple[str, ...]:
+def _team_ngrams(value: str) -> tuple[str, ...]:
     """Return distinctive character n-grams for controlled spelling fallbacks."""
     compact = value.replace(" ", "")
     if len(compact) < 3:
@@ -636,7 +637,7 @@ def _team_ngrams(value: str) -> Tuple[str, ...]:
 
 
 def _has_distinctive_token_containment(
-    source_tokens: Tuple[str, ...], reference_tokens: Tuple[str, ...], minimum_length: int
+    source_tokens: tuple[str, ...], reference_tokens: tuple[str, ...], minimum_length: int
 ) -> bool:
     """Recognize a provider abbreviation only when its remaining token is distinctive."""
     source_set = set(source_tokens)
@@ -652,9 +653,9 @@ def _has_distinctive_token_containment(
 
 
 def _has_unique_shared_token(
-    source_tokens: Tuple[str, ...],
-    reference_tokens: Tuple[str, ...],
-    token_frequencies: Optional[Mapping[str, int]],
+    source_tokens: tuple[str, ...],
+    reference_tokens: tuple[str, ...],
+    token_frequencies: Mapping[str, int] | None,
     minimum_length: int,
 ) -> bool:
     """Return whether a shared team token is unique on this fixture side/window."""
@@ -676,7 +677,7 @@ def _unique_token_rescue_has_anchor(home_rule: str, away_rule: str) -> bool:
     )
 
 
-def _ngram_candidates(core: str, index: Dict[str, set]) -> set:
+def _ngram_candidates(core: str, index: dict[str, set]) -> set:
     """Find candidates sharing at least two spelling fragments with a team name."""
     ngrams = _team_ngrams(core)
     minimum_shared = min(2, len(ngrams))

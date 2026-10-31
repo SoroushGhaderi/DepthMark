@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_creativity_playmaking_assist_hat_trick (
+INSERT INTO gold_signals.sig_player_creativity_playmaking_assist_hat_trick (
     match_id,
     match_date,
     home_team_id,

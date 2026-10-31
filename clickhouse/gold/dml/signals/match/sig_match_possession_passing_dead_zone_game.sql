@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_possession_passing_dead_zone_game (
+INSERT INTO gold_signals.sig_match_possession_passing_dead_zone_game (
     match_id,
     match_date,
     home_team_id,

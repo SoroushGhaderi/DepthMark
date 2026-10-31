@@ -1,0 +1,27 @@
+# Install once with `pre-commit install`; CI runs the same hooks.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.13.6
+    hooks:
+      - id: uv-lock
+      - id: uv-export
+        args: [--frozen, --no-dev, --no-emit-project, --format, requirements-txt, --hashes, -o, requirements.txt, --quiet]
+  - repo: local
+    hooks:
+      - id: logging-style
+        name: logging style
+        entry: python scripts/quality/check_logging_style.py
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: signal-catalogs
+        name: signal catalogs
+        entry: python scripts/quality/check_signal_catalogs.py
+        language: system
+        pass_filenames: false
+        files: ^(catalogs/signals/|clickhouse/gold/)

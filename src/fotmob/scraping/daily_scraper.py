@@ -1,7 +1,6 @@
 """Scraper for fetching daily match listings."""
 
-import os
-from typing import Any, Dict, List
+from typing import Any
 
 from .base_scraper import BaseScraper
 
@@ -9,7 +8,7 @@ from .base_scraper import BaseScraper
 class DailyScraper(BaseScraper):
     """Scraper for fetching all matches for a given date."""
 
-    def fetch_matches_for_date(self, date_str: str) -> List[int]:
+    def fetch_matches_for_date(self, date_str: str) -> list[int]:
         """
         Fetch all match IDs for a specific date.
 
@@ -19,24 +18,23 @@ class DailyScraper(BaseScraper):
         Returns:
             List of match IDs
         """
-        self.logger.info(f"Fetching matches for date: {date_str}")
+        self.logger.info("Fetching matches for date: %s", date_str)
 
         url = f"{self.config.api.base_url}/matches"
-        timezone = os.getenv("FOTMOB_TIMEZONE", "Asia/Tehran")
-        params = {"date": date_str, "timezone": timezone}
+        params = {"date": date_str, "timezone": self.config.scraping.timezone}
 
         response_data = self.make_request(url, params=params)
 
         if not response_data:
-            self.logger.error(f"Failed to fetch matches for date: {date_str}")
+            self.logger.error("Failed to fetch matches for date: %s", date_str)
             return []
 
         match_ids = self._extract_match_ids(response_data)
-        self.logger.info(f"Found {len(match_ids)} matches for {date_str}")
+        self.logger.info("Found %s matches for %s", len(match_ids), date_str)
 
         return match_ids
 
-    def _extract_match_ids(self, response_data: Dict[str, Any]) -> List[int]:
+    def _extract_match_ids(self, response_data: dict[str, Any]) -> list[int]:
         """
         Extract all match IDs from the API response.
 
@@ -87,16 +85,17 @@ class DailyScraper(BaseScraper):
                     else:
                         filtered_count += 1
                         self.logger.debug(
-                            f"Filtered out match {match['id']} " f"with status: {status_short}"
+                            "Filtered out match %s with status: %s", match["id"], status_short
                         )
                 else:
                     match_ids.append(match["id"])
 
         if self.config.scraping.filter_by_status:
             self.logger.info(
-                f"Status filter: {len(match_ids)} matches included, "
-                f"{filtered_count} matches filtered out"
+                "Status filter: %s matches included, %s matches filtered out",
+                len(match_ids),
+                filtered_count,
             )
-        self.logger.debug(f"Status breakdown: {status_counts}")
+        self.logger.debug("Status breakdown: %s", status_counts)
 
         return match_ids

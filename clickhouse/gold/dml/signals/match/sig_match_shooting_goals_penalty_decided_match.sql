@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_shooting_goals_penalty_decided_match (
+INSERT INTO gold_signals.sig_match_shooting_goals_penalty_decided_match (
     match_id,
     match_date,
     home_team_id,

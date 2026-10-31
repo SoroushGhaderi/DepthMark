@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_the_tap_in_merchant (
+INSERT INTO gold_signals.sig_player_shooting_goals_the_tap_in_merchant (
     match_id,
     match_date,
     home_team_id,

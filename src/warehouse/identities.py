@@ -10,7 +10,10 @@ Recreation, optimization, truncation, and drop scripts.
 from __future__ import annotations
 
 import re
-from typing import Any, Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
+from enum import StrEnum
+from typing import Any
 
 from config.settings import get_settings
 from src.integrations.clickhouse.client import ClickHouseClient
@@ -40,43 +43,91 @@ APPLICATION_STAGING_PRIVILEGES = (
 )
 
 
-def _client(username: str, password: str, database: str) -> ClickHouseClient:
+class Identity(StrEnum):
+    """The two ClickHouse identities (ADR 0029)."""
+
+    APPLICATION = "application"
+    MAINTENANCE = "maintenance"
+
+
+class WarehouseConnectionError(RuntimeError):
+    """Raised when a warehouse session cannot connect to ClickHouse."""
+
+
+def identity_for_scope(scope: WarehouseExecutionScope) -> Identity:
+    """Full-history loads swap whole tables, which only the maintenance identity may do."""
+    if scope.kind == "full-history":
+        return Identity.MAINTENANCE
+    return Identity.APPLICATION
+
+
+def warehouse_client(
+    identity: Identity = Identity.APPLICATION,
+    database: str = "default",
+    *,
+    host: str | None = None,
+    port: int | None = None,
+    username: str | None = None,
+    password: str | None = None,
+) -> ClickHouseClient:
+    """Return an unconnected client for ``identity``.
+
+    Prefer :func:`warehouse_session`; use this only where the caller must manage
+    the connection itself (setup tries several hosts). ``host`` and ``port``
+    override the configured endpoint. ``username``/``password`` override the
+    application credentials (CLI flags); the maintenance identity always comes
+    from settings.
+    """
     settings = get_settings()
+    if identity is Identity.MAINTENANCE:
+        if not settings.clickhouse_maintenance_user:
+            raise RuntimeError(
+                "This command needs the ClickHouse maintenance identity; set "
+                "CLICKHOUSE_MAINTENANCE_USER and CLICKHOUSE_MAINTENANCE_PASSWORD (ADR 0029)."
+            )
+        username = settings.clickhouse_maintenance_user
+        password = settings.clickhouse_maintenance_password
+    else:
+        username = username or settings.clickhouse_user
+        password = settings.clickhouse_password if password is None else password
     return ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
+        host=host or settings.clickhouse_host,
+        port=port or settings.clickhouse_port,
         username=username,
         password=password,
         database=database,
     )
 
 
-def application_client(database: str = "default") -> ClickHouseClient:
-    """Return an unconnected client for the application identity."""
-    settings = get_settings()
-    return _client(settings.clickhouse_user, settings.clickhouse_password, database)
+@contextmanager
+def warehouse_session(
+    target: Identity | WarehouseExecutionScope = Identity.APPLICATION,
+    database: str = "default",
+    *,
+    host: str | None = None,
+    port: int | None = None,
+    username: str | None = None,
+    password: str | None = None,
+) -> Iterator[ClickHouseClient]:
+    """Yield a connected client for an identity, or for the identity a scope needs.
 
-
-def maintenance_client(database: str = "default") -> ClickHouseClient:
-    """Return an unconnected client for the maintenance identity."""
-    settings = get_settings()
-    if not settings.clickhouse_maintenance_user:
-        raise RuntimeError(
-            "This command needs the ClickHouse maintenance identity; set "
-            "CLICKHOUSE_MAINTENANCE_USER and CLICKHOUSE_MAINTENANCE_PASSWORD (ADR 0029)."
-        )
-    return _client(
-        settings.clickhouse_maintenance_user,
-        settings.clickhouse_maintenance_password,
-        database,
+    This is the way to open a warehouse connection: it picks the ADR 0029
+    identity, raises :class:`WarehouseConnectionError` instead of returning a
+    half-open client, and always disconnects.
+    """
+    identity = identity_for_scope(target) if isinstance(target, WarehouseExecutionScope) else target
+    client = warehouse_client(
+        identity, database, host=host, port=port, username=username, password=password
     )
-
-
-def client_for_scope(scope: WarehouseExecutionScope, database: str = "default") -> ClickHouseClient:
-    """Full-history loads swap whole tables, which only the maintenance identity may do."""
-    if scope.kind == "full-history":
-        return maintenance_client(database)
-    return application_client(database)
+    if not client.connect():
+        raise WarehouseConnectionError(
+            f"Could not connect to ClickHouse at {client.host}:{client.port}/{database} "
+            f"as the {identity} identity"
+        )
+    try:
+        yield client
+    finally:
+        client.disconnect()
 
 
 def application_grant_statements(

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_shooting_goals_one_sided_shooting (
+INSERT INTO gold_signals.sig_match_shooting_goals_one_sided_shooting (
     match_id,
     match_date,
     home_team_id,

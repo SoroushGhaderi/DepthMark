@@ -5,12 +5,12 @@ must not serialize ``model_dump()`` as the artifact: validation is deliberately
 separate from writing so defaults and coercions cannot rewrite source JSON.
 """
 
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
-OddsValue = Union[int, float]
-ScoreValue = Union[int, float, str]
+OddsValue = int | float
+ScoreValue = int | float | str
 
 
 class _SourceArtifactModel(BaseModel):
@@ -22,26 +22,26 @@ class _SourceArtifactModel(BaseModel):
 class OddsLine(_SourceArtifactModel):
     type: str
     label: str
-    home: Optional[OddsValue] = None
-    draw: Optional[OddsValue] = None
-    away: Optional[OddsValue] = None
-    over: Optional[OddsValue] = None
-    under: Optional[OddsValue] = None
-    yes: Optional[OddsValue] = None
-    no: Optional[OddsValue] = None
-    odd: Optional[OddsValue] = None
-    even: Optional[OddsValue] = None
-    home_draw: Optional[OddsValue] = None
-    draw_away: Optional[OddsValue] = None
-    home_away: Optional[OddsValue] = None
-    no_goal: Optional[OddsValue] = None
-    combinations: Optional[Dict[str, OddsValue]] = None
-    scores: Optional[Dict[str, OddsValue]] = None
+    home: OddsValue | None = None
+    draw: OddsValue | None = None
+    away: OddsValue | None = None
+    over: OddsValue | None = None
+    under: OddsValue | None = None
+    yes: OddsValue | None = None
+    no: OddsValue | None = None
+    odd: OddsValue | None = None
+    even: OddsValue | None = None
+    home_draw: OddsValue | None = None
+    draw_away: OddsValue | None = None
+    home_away: OddsValue | None = None
+    no_goal: OddsValue | None = None
+    combinations: dict[str, OddsValue] | None = None
+    scores: dict[str, OddsValue] | None = None
 
 
 class OddsMarket(_SourceArtifactModel):
     market: str
-    lines: List[OddsLine]
+    lines: list[OddsLine]
 
 
 class FootballScore(_SourceArtifactModel):
@@ -55,36 +55,36 @@ class MatchResult(_SourceArtifactModel):
 
     sport: Literal["football"] = "football"
     id: str
-    source_event_id: Optional[str] = ""
+    source_event_id: str | None = ""
     home: str
     away: str
     tournament: str
-    round: Optional[str] = ""
-    date: Optional[str] = ""
-    url: Optional[str] = ""
-    home_rank: Optional[str] = ""
-    away_rank: Optional[str] = ""
-    category: Optional[str] = ""
+    round: str | None = ""
+    date: str | None = ""
+    url: str | None = ""
+    home_rank: str | None = ""
+    away_rank: str | None = ""
+    category: str | None = ""
     status: str = ""
     odds_unavailable: bool = False
-    odds_unavailable_reason: Optional[Literal["source_notice", "empty_attempts_exhausted"]] = None
-    odds_total_markets: Optional[int] = None
-    odds_extracted_markets: Optional[int] = None
-    odds_attempt: Optional[int] = None
-    odds_max_attempts: Optional[int] = None
-    odds_empty_attempts: Optional[int] = None
-    score: Optional[FootballScore] = None
-    stats_source: Optional[str] = ""
+    odds_unavailable_reason: Literal["source_notice", "empty_attempts_exhausted"] | None = None
+    odds_total_markets: int | None = None
+    odds_extracted_markets: int | None = None
+    odds_attempt: int | None = None
+    odds_max_attempts: int | None = None
+    odds_empty_attempts: int | None = None
+    score: FootballScore | None = None
+    stats_source: str | None = ""
     result_unavailable: bool = False
-    winner: Optional[str] = ""
-    home_sets: Optional[str] = ""
-    away_sets: Optional[str] = ""
-    set_scores: Optional[Union[List[dict], str]] = None
-    odds: List[OddsMarket]
-    live_odds: List[OddsMarket] = Field(default_factory=list)
-    stats: List[dict]
-    point_by_point: List[dict] = Field(default_factory=list)
-    overall_stats: Dict[str, Any] = Field(default_factory=dict)
+    winner: str | None = ""
+    home_sets: str | None = ""
+    away_sets: str | None = ""
+    set_scores: list[dict] | str | None = None
+    odds: list[OddsMarket]
+    live_odds: list[OddsMarket] = Field(default_factory=list)
+    stats: list[dict]
+    point_by_point: list[dict] = Field(default_factory=list)
+    overall_stats: dict[str, Any] = Field(default_factory=dict)
     scraped_at: str
 
     @field_validator("winner", "home_sets", "away_sets", mode="before")
@@ -107,18 +107,18 @@ class MatchLink(_SourceArtifactModel):
     id: str
     home: str
     away: str
-    league_name: Optional[str] = ""
-    league_slug: Optional[str] = ""
-    country: Optional[str] = ""
-    country_slug: Optional[str] = ""
+    league_name: str | None = ""
+    league_slug: str | None = ""
+    country: str | None = ""
+    country_slug: str | None = ""
     date: str
     url: str
-    full_url: Optional[str] = None
-    status: Optional[str] = ""
+    full_url: str | None = None
+    status: str | None = ""
 
 
-_MATCH_LINK_LIST_ADAPTER = TypeAdapter(List[MatchLink])
-_MATCH_RESULT_LIST_ADAPTER = TypeAdapter(List[MatchResult])
+_MATCH_LINK_LIST_ADAPTER = TypeAdapter(list[MatchLink])
+_MATCH_RESULT_LIST_ADAPTER = TypeAdapter(list[MatchResult])
 
 
 def validate_match_result(data: dict) -> MatchResult:
@@ -131,11 +131,11 @@ def validate_match_links(data: dict) -> MatchLink:
     return MatchLink(**data)
 
 
-def validate_match_link_list(data: List[dict]) -> List[MatchLink]:
+def validate_match_link_list(data: list[dict]) -> list[MatchLink]:
     """Validate a complete listing, including an accepted empty inventory."""
     return _MATCH_LINK_LIST_ADAPTER.validate_python(data)
 
 
-def validate_match_result_list(data: List[dict]) -> List[MatchResult]:
+def validate_match_result_list(data: list[dict]) -> list[MatchResult]:
     """Validate a list of match payloads without changing the input objects."""
     return _MATCH_RESULT_LIST_ADAPTER.validate_python(data)

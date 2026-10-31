@@ -4,8 +4,13 @@ Single source of truth for all configuration. Loads from:
 1. .env file - Environment variables (pydantic-settings)
 2. config.yaml - Application settings (YAML fallback for FotMob scraping config)
 
-Environment variables override YAML values. FotMob-specific env vars use the
-pattern FOTMOB_<SECTION>_<KEY> (e.g., FOTMOB_API_BASE_URL).
+Precedence, highest first: constructor arguments, process environment
+variables, the documented flat FotMob/Oddspedia variables in
+:data:`NESTED_ENV_ALIASES` (e.g. ``FOTMOB_X_MAS_TOKEN``), ``.env`` files, the
+``fotmob`` and ``oddspedia`` sections of ``config.yaml``, then field defaults.
+Nested fields can also be set with ``__`` (e.g. ``FOTMOB__API__BASE_URL``).
+pydantic validates and coerces every value; no module reads ``os.environ``
+for application configuration.
 
 Usage:
     from config.settings import get_settings, Environment
@@ -15,25 +20,31 @@ Usage:
     if settings.environment == Environment.PRODUCTION:
         logger.info("Running in production")
 
-    logger.info(f"ClickHouse host: {settings.clickhouse_host}")
-    logger.info(f"FotMob API URL: {settings.fotmob.api.base_url}")
+    logger.info("ClickHouse host: %s", settings.clickhouse_host)
 """
 
 import os
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
-from pydantic import BaseModel, field_validator, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, BaseModel, Field, field_validator
+from pydantic.fields import FieldInfo
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+    YamlConfigSettingsSource,
+)
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # ---------------------------------------------------------------------------
 # Environment enum
 # ---------------------------------------------------------------------------
 
 
-class Environment(str, Enum):
+class Environment(StrEnum):
     """Application environment types."""
 
     DEVELOPMENT = "development"
@@ -54,7 +65,7 @@ class FotMobApiSettings(BaseModel):
     user_agent: str = ""
     x_mas_token: str = ""
     cookies: str = ""
-    user_agents: List[str] = []
+    user_agents: list[str] = []
 
 
 class FotMobRequestSettings(BaseModel):
@@ -68,11 +79,9 @@ class FotMobRequestSettings(BaseModel):
 class FotMobScrapingSettings(BaseModel):
     """Scraping behaviour settings."""
 
-    max_workers: int = 2
-    enable_parallel: bool = True
     metrics_update_interval: int = 20
     filter_by_status: bool = True
-    allowed_match_statuses: Tuple[str, ...] = (
+    allowed_match_statuses: tuple[str, ...] = (
         "Finished",
         "FullTime",
         "FT",
@@ -83,6 +92,15 @@ class FotMobScrapingSettings(BaseModel):
     )
     enable_caching: bool = True
     cache_ttl_hours: int = 24
+    # Timezone FotMob uses to assign matches to a calendar date.
+    timezone: str = "Asia/Tehran"
+
+    @field_validator("allowed_match_statuses", mode="before")
+    @classmethod
+    def split_comma_separated(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return tuple(status.strip() for status in value.split(",") if status.strip())
+        return value
 
 
 class FotMobStorageSettings(BaseModel):
@@ -100,7 +118,7 @@ class FotMobRetrySettings(BaseModel):
     max_wait: float = 10.0
     exponential_base: float = 2.0
     backoff_factor: float = 2.0
-    status_codes: Tuple[int, ...] = (429, 500, 502, 503, 504)
+    status_codes: tuple[int, ...] = (429, 500, 502, 503, 504)
 
 
 class FotMobLoggingSettings(BaseModel):
@@ -164,6 +182,9 @@ class OddspediaSettings(BaseModel):
     page_load_timeout: int = 60
     cloudflare_wait: int = 40
     data_dir: str = "data/oddspedia"
+    # Explicit browser binaries; None means discover them on the host.
+    chrome_binary: str | None = None
+    chromedriver_path: str | None = None
 
     @field_validator("max_delay")
     @classmethod
@@ -181,176 +202,85 @@ class OddspediaSettings(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Env-var → FotMob nested-field mapping
+# Configuration sources
 # ---------------------------------------------------------------------------
 
-_FOTMOB_ENV_MAP: Dict[str, Tuple[str, str]] = {
-    # env var name → (nested_path, key)
-    "FOTMOB_X_MAS_TOKEN": ("api", "x_mas_token"),
-    "FOTMOB_COOKIES": ("api", "cookies"),
-    "FOTMOB_USER_AGENT": ("api", "user_agent"),
-    "FOTMOB_API_BASE_URL": ("api", "base_url"),
-    "FOTMOB_REQUEST_TIMEOUT": ("request", "timeout"),
-    "FOTMOB_DELAY_MIN": ("request", "delay_min"),
-    "FOTMOB_DELAY_MAX": ("request", "delay_max"),
-    "FOTMOB_MAX_WORKERS": ("scraping", "max_workers"),
-    "FOTMOB_ENABLE_PARALLEL": ("scraping", "enable_parallel"),
-    "FOTMOB_ENABLE_CACHING": ("scraping", "enable_caching"),
-    "FOTMOB_CACHE_TTL_HOURS": ("scraping", "cache_ttl_hours"),
-    "FOTMOB_METRICS_UPDATE_INTERVAL": ("scraping", "metrics_update_interval"),
-    "FOTMOB_FILTER_BY_STATUS": ("scraping", "filter_by_status"),
-    "FOTMOB_ALLOWED_MATCH_STATUSES": ("scraping", "allowed_match_statuses"),
-    "FOTMOB_BRONZE_PATH": ("storage", "bronze_path"),
-    "FOTMOB_STORAGE_ENABLED": ("storage", "enabled"),
-    "FOTMOB_RETRY_MAX_ATTEMPTS": ("retry", "max_attempts"),
-    "FOTMOB_RETRY_INITIAL_WAIT": ("retry", "initial_wait"),
-    "FOTMOB_RETRY_MAX_WAIT": ("retry", "max_wait"),
-    "FOTMOB_DATA_QUALITY_ENABLED": ("data_quality", "enabled"),
-    "FOTMOB_DATA_QUALITY_FAIL_ON_ISSUES": ("data_quality", "fail_on_issues"),
-    "FOTMOB_PROXY_ENABLED": ("proxy", "enabled"),
-    "FOTMOB_PROXY_HTTP": ("proxy", "http"),
-    "FOTMOB_PROXY_HTTPS": ("proxy", "https"),
+# Documented flat environment names for nested fields, kept for existing .env
+# files and deployments. Values are raw strings; pydantic coerces them.
+NESTED_ENV_ALIASES: dict[str, tuple[str, ...]] = {
+    "FOTMOB_X_MAS_TOKEN": ("fotmob", "api", "x_mas_token"),
+    "FOTMOB_COOKIES": ("fotmob", "api", "cookies"),
+    "FOTMOB_USER_AGENT": ("fotmob", "api", "user_agent"),
+    "FOTMOB_API_BASE_URL": ("fotmob", "api", "base_url"),
+    "FOTMOB_REQUEST_TIMEOUT": ("fotmob", "request", "timeout"),
+    "FOTMOB_DELAY_MIN": ("fotmob", "request", "delay_min"),
+    "FOTMOB_DELAY_MAX": ("fotmob", "request", "delay_max"),
+    "FOTMOB_ENABLE_CACHING": ("fotmob", "scraping", "enable_caching"),
+    "FOTMOB_CACHE_TTL_HOURS": ("fotmob", "scraping", "cache_ttl_hours"),
+    "FOTMOB_METRICS_UPDATE_INTERVAL": ("fotmob", "scraping", "metrics_update_interval"),
+    "FOTMOB_FILTER_BY_STATUS": ("fotmob", "scraping", "filter_by_status"),
+    "FOTMOB_ALLOWED_MATCH_STATUSES": ("fotmob", "scraping", "allowed_match_statuses"),
+    "FOTMOB_TIMEZONE": ("fotmob", "scraping", "timezone"),
+    "FOTMOB_BRONZE_PATH": ("fotmob", "storage", "bronze_path"),
+    "FOTMOB_STORAGE_ENABLED": ("fotmob", "storage", "enabled"),
+    "FOTMOB_RETRY_MAX_ATTEMPTS": ("fotmob", "retry", "max_attempts"),
+    "FOTMOB_RETRY_INITIAL_WAIT": ("fotmob", "retry", "initial_wait"),
+    "FOTMOB_RETRY_MAX_WAIT": ("fotmob", "retry", "max_wait"),
+    "FOTMOB_DATA_QUALITY_ENABLED": ("fotmob", "data_quality", "enabled"),
+    "FOTMOB_DATA_QUALITY_FAIL_ON_ISSUES": ("fotmob", "data_quality", "fail_on_issues"),
+    "FOTMOB_PROXY_ENABLED": ("fotmob", "proxy", "enabled"),
+    "FOTMOB_PROXY_HTTP": ("fotmob", "proxy", "http"),
+    "FOTMOB_PROXY_HTTPS": ("fotmob", "proxy", "https"),
+    "ODDSPEDIA_BASE_URL": ("oddspedia", "base_url"),
+    "ODDSPEDIA_SCRAPER_ENV": ("oddspedia", "scraper_env"),
+    "ODDSPEDIA_MIN_DELAY": ("oddspedia", "min_delay"),
+    "ODDSPEDIA_MAX_DELAY": ("oddspedia", "max_delay"),
+    "ODDSPEDIA_WORKER_MIN_DELAY": ("oddspedia", "worker_min_delay"),
+    "ODDSPEDIA_WORKER_MAX_DELAY": ("oddspedia", "worker_max_delay"),
+    "ODDSPEDIA_SCROLL_PAUSE": ("oddspedia", "scroll_pause"),
+    "ODDSPEDIA_PAGE_LOAD_TIMEOUT": ("oddspedia", "page_load_timeout"),
+    "ODDSPEDIA_CLOUDFLARE_WAIT": ("oddspedia", "cloudflare_wait"),
+    "ODDSPEDIA_DATA_DIR": ("oddspedia", "data_dir"),
+    # The first variable set wins, so the source-specific name beats the image default.
+    "CHROME_BIN": ("oddspedia", "chrome_binary"),
+    "ODDSPEDIA_CHROME_BIN": ("oddspedia", "chrome_binary"),
+    "CHROMEDRIVER_PATH": ("oddspedia", "chromedriver_path"),
+    "ODDSPEDIA_CHROMEDRIVER_PATH": ("oddspedia", "chromedriver_path"),
 }
-
-_ODDSPEDIA_ENV_MAP: Dict[str, str] = {
-    "ODDSPEDIA_BASE_URL": "base_url",
-    "ODDSPEDIA_SCRAPER_ENV": "scraper_env",
-    "ODDSPEDIA_MIN_DELAY": "min_delay",
-    "ODDSPEDIA_MAX_DELAY": "max_delay",
-    "ODDSPEDIA_WORKER_MIN_DELAY": "worker_min_delay",
-    "ODDSPEDIA_WORKER_MAX_DELAY": "worker_max_delay",
-    "ODDSPEDIA_SCROLL_PAUSE": "scroll_pause",
-    "ODDSPEDIA_PAGE_LOAD_TIMEOUT": "page_load_timeout",
-    "ODDSPEDIA_CLOUDFLARE_WAIT": "cloudflare_wait",
-    "ODDSPEDIA_DATA_DIR": "data_dir",
-}
-
-_BOOL_KEYS = frozenset(
-    {
-        "enable_parallel",
-        "enable_caching",
-        "filter_by_status",
-        "enabled",
-        "fail_on_issues",
-    }
-)
-_INT_KEYS = frozenset(
-    {
-        "timeout",
-        "max_workers",
-        "cache_ttl_hours",
-        "metrics_update_interval",
-        "max_attempts",
-        "max_bytes",
-        "backup_count",
-        "page_load_timeout",
-        "cloudflare_wait",
-    }
-)
-_FLOAT_KEYS = frozenset(
-    {
-        "delay_min",
-        "delay_max",
-        "initial_wait",
-        "max_wait",
-        "exponential_base",
-        "backoff_factor",
-        "min_delay",
-        "max_delay",
-        "worker_min_delay",
-        "worker_max_delay",
-        "scroll_pause",
-    }
-)
+YAML_SECTIONS = ("fotmob", "oddspedia")
 
 
-def _coerce_value(key: str, raw: str) -> Any:
-    """Coerce a raw env-var string to the correct Python type."""
-    if key in _BOOL_KEYS:
-        return raw.lower() == "true"
-    if key in _INT_KEYS:
-        return int(raw)
-    if key in _FLOAT_KEYS:
-        return float(raw)
-    if key == "allowed_match_statuses":
-        return tuple(s.strip() for s in raw.split(","))
-    return raw
+class NestedEnvAliasSource(PydanticBaseSettingsSource):
+    """Read :data:`NESTED_ENV_ALIASES` from the process environment into nested values."""
+
+    def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
+        return None, field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        values: dict[str, Any] = {}
+        for env_name, path in NESTED_ENV_ALIASES.items():
+            raw = os.environ.get(env_name)
+            if raw is None:
+                continue
+            node = values
+            for key in path[:-1]:
+                node = node.setdefault(key, {})
+            node[path[-1]] = raw
+        return values
 
 
-def _load_yaml_fotmob() -> Dict[str, Any]:
-    """Load the ``fotmob`` section from config.yaml, if it exists."""
-    try:
-        import yaml
-    except ImportError:
-        return {}
+class ScraperYamlSource(YamlConfigSettingsSource):
+    """Read only the ``fotmob`` and ``oddspedia`` sections of ``config.yaml``."""
 
-    config_path = os.getenv("CONFIG_FILE_PATH", "config.yaml")
-    if not Path(config_path).exists():
-        config_path = Path(__file__).parent.parent / "config.yaml"
-    if not Path(config_path).exists():
-        return {}
-
-    with open(config_path, "r") as fh:
-        data = yaml.safe_load(fh) or {}
-
-    return data.get("fotmob", {})
+    def __call__(self) -> dict[str, Any]:
+        data = super().__call__()
+        return {section: data[section] for section in YAML_SECTIONS if section in data}
 
 
-def _load_yaml_oddspedia() -> Dict[str, Any]:
-    """Load the ``oddspedia`` section from config.yaml, if it exists."""
-    try:
-        import yaml
-    except ImportError:
-        return {}
-
-    config_path = os.getenv("CONFIG_FILE_PATH", "config.yaml")
-    if not Path(config_path).exists():
-        config_path = Path(__file__).parent.parent / "config.yaml"
-    if not Path(config_path).exists():
-        return {}
-    with open(config_path, "r") as fh:
-        data = yaml.safe_load(fh) or {}
-    return data.get("oddspedia", {})
-
-
-def _build_fotmob_overrides() -> Dict[str, Any]:
-    """Build a nested dict from FOTMOB_* env vars (env vars win over YAML)."""
-    yaml_data = _load_yaml_fotmob()
-    overrides: Dict[str, Any] = {}
-
-    for env_name, (section, key) in _FOTMOB_ENV_MAP.items():
-        raw = os.getenv(env_name)
-        if raw is not None:
-            overrides.setdefault(section, {})[key] = _coerce_value(key, raw)
-
-    # Merge: YAML provides defaults, env-var overrides win
-    merged: Dict[str, Any] = {}
-    for section_name in (
-        "api",
-        "request",
-        "scraping",
-        "storage",
-        "retry",
-        "logging",
-        "metrics",
-        "data_quality",
-        "proxy",
-    ):
-        section_data = yaml_data.get(section_name, {})
-        env_data = overrides.get(section_name, {})
-        merged[section_name] = {**section_data, **env_data}
-
-    return merged
-
-
-def _build_oddspedia_overrides() -> Dict[str, Any]:
-    """Merge Oddspedia YAML defaults with explicit environment overrides."""
-    values = dict(_load_yaml_oddspedia())
-    for env_name, key in _ODDSPEDIA_ENV_MAP.items():
-        raw = os.getenv(env_name)
-        if raw is not None:
-            values[key] = _coerce_value(key, raw)
-    return values
+def config_file_path() -> Path:
+    """Return ``CONFIG_FILE_PATH``, else ``config.yaml`` in the cwd or the checkout."""
+    configured = Path(os.environ.get("CONFIG_FILE_PATH", "config.yaml"))
+    return configured if configured.exists() else PROJECT_ROOT / "config.yaml"
 
 
 # ---------------------------------------------------------------------------
@@ -367,13 +297,21 @@ class Settings(BaseSettings):
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        # The checkout's .env wins over one in its parent directory.
+        env_file=(PROJECT_ROOT.parent / ".env", PROJECT_ROOT / ".env"),
         env_file_encoding="utf-8",
+        env_nested_delimiter="__",
         case_sensitive=False,
         extra="allow",
     )
 
     environment: Environment = Environment.DEVELOPMENT
+    # Deployment selector used by the local-credential guard and log rendering;
+    # None when no selector is set anywhere (unlike ``environment``'s default).
+    deployment_environment: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("DEPTHMARK_ENV", "ENVIRONMENT", "SCRAPER_ENV"),
+    )
 
     log_level: str = "INFO"
     log_dir: str = "logs"
@@ -387,13 +325,15 @@ class Settings(BaseSettings):
     clickhouse_password: str = ""
     # Maintenance identity (ADR 0029): setup, full-history swaps, and maintenance
     # commands. The application identity above has no DDL rights on warehouse tables.
-    clickhouse_maintenance_user: Optional[str] = None
+    clickhouse_maintenance_user: str | None = None
     clickhouse_maintenance_password: str = ""
     clickhouse_database: str = "default"
     clickhouse_db_fotmob: str = "fotmob"
     clickhouse_db_gold: str = "gold"
     clickhouse_db_gold_scenarios: str = "gold_scenarios"
     clickhouse_db_gold_signals: str = "gold_signals"
+    # Redirect Gold job output to another database (testing and backfills).
+    clickhouse_gold_target_db: str | None = None
 
     # Feature flags
     enable_metrics: bool = True
@@ -401,8 +341,8 @@ class Settings(BaseSettings):
 
     # Telegram
     telegram_enabled: bool = True
-    telegram_bot_token: Optional[str] = None
-    telegram_chat_id: Optional[str] = None
+    telegram_bot_token: str | None = None
+    telegram_chat_id: str | None = None
 
     # YAML config path
     config_file_path: str = "config.yaml"
@@ -410,43 +350,46 @@ class Settings(BaseSettings):
     # FotMob browser/proxy (kept for backward compat with .env)
     fotmob_browser_enabled: bool = False
     fotmob_proxy_enabled: bool = False
-    fotmob_proxy_http: Optional[str] = None
-    fotmob_proxy_https: Optional[str] = None
+    fotmob_proxy_http: str | None = None
+    fotmob_proxy_https: str | None = None
+
+    # MongoDB content/catalog store
+    mongodb_host: str = "localhost"
+    mongodb_port: int = 27017
+    mongodb_user: str | None = None
+    mongodb_password: str | None = None
+    mongodb_database: str = "orbit_content"
+    mongodb_auth_source: str = "admin"
+    mongodb_uri: str | None = None
 
     # S3
-    s3_endpoint: Optional[str] = None
-    s3_access_key: Optional[str] = None
-    s3_secret_key: Optional[str] = None
+    s3_endpoint: str | None = None
+    s3_access_key: str | None = None
+    s3_secret_key: str | None = None
+    s3_region: str | None = None
+    s3_bucket: str | None = None
 
     # FotMob scraping configuration (nested)
     fotmob: FotMobSettings = FotMobSettings()
     oddspedia: OddspediaSettings = OddspediaSettings()
 
-    @model_validator(mode="before")
     @classmethod
-    def _load_fotmob_from_yaml(cls, values: Dict[str, Any]) -> Dict[str, Any]:
-        """Merge YAML-based FotMob config with env-var overrides."""
-        fotmob_overrides = _build_fotmob_overrides()
-        existing_fotmob = values.get("fotmob")
-        if isinstance(existing_fotmob, dict):
-            # Deep merge: existing values < YAML < env vars
-            for section, section_data in fotmob_overrides.items():
-                if section in existing_fotmob:
-                    if isinstance(existing_fotmob[section], dict):
-                        existing_fotmob[section] = {**section_data, **existing_fotmob[section]}
-                    else:
-                        existing_fotmob[section] = section_data
-                else:
-                    existing_fotmob[section] = section_data
-        else:
-            values["fotmob"] = fotmob_overrides
-        oddspedia_overrides = _build_oddspedia_overrides()
-        existing_oddspedia = values.get("oddspedia")
-        if isinstance(existing_oddspedia, dict):
-            values["oddspedia"] = {**oddspedia_overrides, **existing_oddspedia}
-        else:
-            values["oddspedia"] = oddspedia_overrides
-        return values
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            env_settings,
+            NestedEnvAliasSource(settings_cls),
+            dotenv_settings,
+            ScraperYamlSource(settings_cls, yaml_file=config_file_path()),
+            file_secret_settings,
+        )
 
     # ------------------------------------------------------------------
     # Helpers
@@ -492,7 +435,7 @@ class Settings(BaseSettings):
 # Lazy singleton
 # ---------------------------------------------------------------------------
 
-_settings: Optional[Settings] = None
+_settings: Settings | None = None
 
 
 def get_settings() -> Settings:
@@ -517,7 +460,7 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = [
+__all__ = [  # noqa: F822 - "settings" resolves lazily via __getattr__
     "settings",
     "Settings",
     "Environment",
@@ -534,4 +477,5 @@ __all__ = [
     "FotMobDataQualitySettings",
     "FotMobProxySettings",
     "OddspediaSettings",
+    "NESTED_ENV_ALIASES",
 ]

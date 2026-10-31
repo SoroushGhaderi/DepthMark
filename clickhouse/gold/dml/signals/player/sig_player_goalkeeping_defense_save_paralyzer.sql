@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_save_paralyzer (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_save_paralyzer (
     match_id,
     match_date,
     home_team_id,

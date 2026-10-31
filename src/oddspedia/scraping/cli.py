@@ -16,22 +16,19 @@ Alternatively (after ``pip install -e .``):
 
 import argparse
 import os
-import sys
-import threading
-import time
-from contextlib import nullcontext
-from typing import Optional, Sequence, Tuple
-
-# Make the src/ package discoverable when running main.py directly.
-_src = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
-if _src not in sys.path:
-    sys.path.insert(0, _src)
 import random
 import shutil
+import sys
 import tempfile
+import threading
+import time
+from collections.abc import Iterator, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timezone
+from contextlib import contextmanager, nullcontext
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from selenium.common.exceptions import (
     InvalidSessionIdException,
@@ -39,9 +36,8 @@ from selenium.common.exceptions import (
     WebDriverException,
 )
 
-from config.settings import get_settings as get_depthmark_settings
-from src.common.dates import resolve_date_scope
-from src.integrations.clickhouse.client import ClickHouseClient
+from src.common.dates import normalize_compact_date
+from src.common.run_scope import resolve_date_scope
 from src.oddspedia.scraping.audit import (
     audit_date,
     audit_match_json,
@@ -51,17 +47,8 @@ from src.oddspedia.scraping.audit import (
 )
 from src.oddspedia.scraping.config import (
     FOOTBALL_ODDS_MAX_ATTEMPTS,
-    WORKER_MAX_DELAY,
-    WORKER_MIN_DELAY,
-    get_discovery_snapshot_file,
-    get_match_file,
-    get_match_links_file,
-    get_matches_dir,
-    get_prioritized_match_links_file,
-    get_run_logs_dir,
+    get_settings,
     get_sport_listing_url,
-    get_storage_aspect,
-    normalize_date,
     normalize_sport,
 )
 from src.oddspedia.scraping.driver import DriverManager
@@ -83,14 +70,25 @@ from src.oddspedia.scraping.manifest import (
 )
 from src.oddspedia.scraping.match_collector import collect_match_links, listing_matches_target_date
 from src.oddspedia.scraping.match_scraper import (
-    FootballOddsCoverageError,
-    FootballOddsRetryableError,
-    FootballOddsUnavailableError,
     MatchPageNotRenderedError,
     scrape_match,
 )
 from src.oddspedia.scraping.metrics import get_metrics, reset_metrics
+from src.oddspedia.scraping.odds_contract import (
+    FootballOddsCoverageError,
+    FootballOddsRetryableError,
+    FootballOddsUnavailableError,
+)
 from src.oddspedia.scraping.operation_lock import oddspedia_date_lock
+from src.oddspedia.scraping.paths import (
+    get_discovery_snapshot_file,
+    get_match_file,
+    get_match_links_file,
+    get_matches_dir,
+    get_prioritized_match_links_file,
+    get_run_logs_dir,
+    get_storage_aspect,
+)
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.scraping.storage import (
     compress_date_files,
@@ -104,6 +102,7 @@ from src.oddspedia.scraping.utils import (
     save_json,
 )
 from src.oddspedia.silver.match_resolution import OddspediaMatchResolver
+from src.warehouse.identities import warehouse_session
 
 configure_logging()
 logger = get_logger("oddspedia")
@@ -502,7 +501,9 @@ def _needs_discovery_retry(date_str, sport: str) -> bool:
             or discovery.get("inventory_checksum") != source_inventory_checksum(links)
         )
     except Exception as exc:
-        logger.warning("discovery_inventory_validation_failed", date=date_str, error=str(exc))
+        logger.warning(
+            "discovery_inventory_validation_failed", date=date_str, error=str(exc), exc_info=True
+        )
         return True
 
 
@@ -525,14 +526,16 @@ def _existing_inventory_matches_target(links_file, date_str, sport: str = "footb
         discovery = manifest.discovery if manifest else {}
         return (
             manifest is not None
-            and normalize_date(manifest.date) == normalize_date(date_str)
+            and normalize_compact_date(manifest.date) == normalize_compact_date(date_str)
             and discovery.get("status") == "no_events"
             and bool(discovery.get("empty_confirmed"))
             and int(discovery.get("match_count", -1)) == 0
             and discovery.get("inventory_checksum") == source_inventory_checksum([])
         )
     except Exception as exc:
-        logger.warning("existing_inventory_unreadable", links_file=links_file, error=str(exc))
+        logger.warning(
+            "existing_inventory_unreadable", links_file=links_file, error=str(exc), exc_info=True
+        )
         return False
 
 
@@ -552,7 +555,9 @@ def _discovery_is_accepted(date_str: str, sport: str = "football") -> bool:
             and discovery.get("inventory_checksum") == source_inventory_checksum(links)
         )
     except Exception as exc:
-        logger.warning("accepted_discovery_validation_failed", date=date_str, error=str(exc))
+        logger.warning(
+            "accepted_discovery_validation_failed", date=date_str, error=str(exc), exc_info=True
+        )
         return False
 
 
@@ -658,19 +663,11 @@ def phase1_collect(
     return matches
 
 
-def _create_priority_service() -> Tuple[ClickHouseClient, LinkPriorityService]:
+@contextmanager
+def _priority_service() -> Iterator[LinkPriorityService]:
     """Connect a source-workflow service to the canonical Silver reference."""
-    settings = get_depthmark_settings()
-    client = ClickHouseClient(
-        host=settings.clickhouse_host,
-        port=settings.clickhouse_port,
-        username=settings.clickhouse_user,
-        password=settings.clickhouse_password,
-        database="default",
-    )
-    if not client.connect():
-        raise RuntimeError("Unable to connect to ClickHouse for link prioritization")
-    return client, LinkPriorityService(client, _priority_resolver())
+    with warehouse_session() as client:
+        yield LinkPriorityService(client, _priority_resolver())
 
 
 def _priority_resolver() -> OddspediaMatchResolver:
@@ -705,11 +702,8 @@ def prioritize_date(
     if links and not listing_matches_target_date(links, date_str):
         raise ValueError(f"Source links do not target {date_str}: {links_file}")
 
-    client, service = _create_priority_service()
-    try:
+    with _priority_service() as service:
         artifact = service.prioritize(date_str, links, sport=sport)
-    finally:
-        client.disconnect()
 
     artifact_path = get_prioritized_match_links_file(date_str, sport=sport)
     if not dry_run:
@@ -863,6 +857,305 @@ def _compress_completed_date(manifest, date_str: str, sport: str = "football") -
     )
 
 
+@dataclass
+class _Phase2Run:
+    """Shared state for one date's match-detail extraction."""
+
+    date_str: str
+    sport: str
+    max_retries: int
+    odds_max_attempts: int
+    metrics: Any
+    outcome_checkpoint: TerminalOutcomeCheckpoint
+    progress_reporter: "_MatchProgressReporter"
+    circuit_breaker: "_CircuitBreaker"
+    progress_matches: list
+    started_at: float
+
+
+def _start_phase2(matches, date_str, retry_failed, max_retries, sport, workers):
+    """Load and audit the manifest and choose the matches still to scrape.
+
+    Returns ``(run, matches_to_scrape, manifest)``.
+    """
+    metrics = get_metrics()
+    outcome_checkpoint = TerminalOutcomeCheckpoint(date_str, sport, metrics)
+    started_at = time.time()
+    logger.info(
+        "match_detail_extraction_start",
+        sport=sport,
+        total_matches=len(matches),
+        date=date_str,
+        retry_failed=retry_failed,
+        workers=workers,
+    )
+    matches_dir = get_matches_dir(date_str, sport=sport)
+    os.makedirs(matches_dir, exist_ok=True)
+
+    manifest = load_manifest(date_str, sport=sport)
+    if manifest is None:
+        manifest = create_manifest(date_str, len(matches), sport=sport)
+    elif manifest.total != len(matches):
+        manifest.total = len(matches)
+        save_manifest(manifest)
+
+    audit_result, audited_manifest = _audit_before_scrape(date_str, sport=sport)
+    manifest = audited_manifest or manifest
+
+    failed_set = {str(match_id) for match_id in manifest.failed}
+    if retry_failed and failed_set:
+        logger.info("retrying_failed_matches", failed_count=len(failed_set))
+
+    matches_to_scrape, skipped_count, reconciled_count = _select_matches_to_scrape(
+        matches,
+        matches_dir,
+        manifest,
+        date_str,
+        retry_failed=retry_failed,
+        sport=sport,
+        audit_result=audit_result,
+    )
+    if reconciled_count:
+        save_manifest(manifest)
+        logger.info("manifest_reconciled_from_json_files", count=reconciled_count)
+    match_ids = {_match_id(match_info) for match_info in matches}
+    previously_scraped = len(match_ids & {str(match_id) for match_id in manifest.done})
+    previously_skipped = len(match_ids & {str(match_id) for match_id in manifest.skipped})
+    progress_reporter = _MatchProgressReporter(
+        date_str,
+        sport,
+        len(matches_to_scrape),
+        previously_scraped=previously_scraped,
+        previously_skipped=previously_skipped,
+    )
+    progress_matches = matches_to_scrape or matches
+    outcome_checkpoint.set_scope(_match_id(match_info) for match_info in progress_matches)
+    metrics.phase2_start(total=len(progress_matches))
+    outcome_checkpoint.sync(manifest)
+
+    logger.info(
+        "scraping_matches",
+        to_scrape=len(matches_to_scrape),
+        already_done=skipped_count,
+        previously_failed=len(failed_set),
+        workers=workers,
+        completed_progress=_scrape_scope_progress(progress_matches, manifest),
+        previously_scraped_matches=previously_scraped,
+        skipped_matches=previously_scraped + previously_skipped,
+    )
+    run = _Phase2Run(
+        date_str=date_str,
+        sport=sport,
+        max_retries=max_retries,
+        odds_max_attempts=min(FOOTBALL_ODDS_MAX_ATTEMPTS, max_retries + 1),
+        metrics=metrics,
+        outcome_checkpoint=outcome_checkpoint,
+        progress_reporter=progress_reporter,
+        circuit_breaker=_CircuitBreaker(metrics),
+        progress_matches=progress_matches,
+        started_at=started_at,
+    )
+    return run, matches_to_scrape, manifest
+
+
+def _finish_phase2(run: _Phase2Run):
+    """Clear in-progress markers, record metrics, and return the saved manifest."""
+    manifest = update_manifest(run.date_str, lambda m: m.clear_in_progress(), sport=run.sport)
+    manifest = manifest or load_manifest(run.date_str, sport=run.sport)
+    duration_seconds = int(time.time() - run.started_at)
+    selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
+        run.progress_matches, manifest
+    )
+    run.metrics.phase2_complete(
+        total=len(run.progress_matches),
+        success=selected_done,
+        skipped=selected_skipped,
+        duration_seconds=duration_seconds,
+    )
+    run.outcome_checkpoint.sync(manifest)
+    save_manifest(manifest)
+    logger.info(
+        "match_detail_extraction_complete",
+        done=selected_done,
+        failed=selected_failed,
+        skipped=selected_skipped,
+        completed_progress=_scrape_scope_progress(run.progress_matches, manifest),
+        duration_seconds=duration_seconds,
+        **run.progress_reporter.snapshot(),
+    )
+    return manifest
+
+
+def _reconnect(driver, run: _Phase2Run, worker_id: int) -> None:
+    """Replace a broken browser session; the next attempt reports any failure."""
+    if not hasattr(driver, "reconnect"):
+        return
+    try:
+        driver.reconnect()
+        _warmup_cloudflare(driver, sport=run.sport)
+    except Exception as reconnect_error:  # noqa: BLE001 - the next attempt fails and is retried
+        logger.warning(
+            "driver_reconnect_failed",
+            worker=worker_id,
+            error=str(reconnect_error),
+            exc_info=True,
+        )
+
+
+def scrape_one(driver, match_info, run: _Phase2Run, worker_id: int = 0) -> str:
+    """Scrape, save, and accept one match with retries; return its terminal outcome.
+
+    The outcome is ``"success"``, ``"skipped"`` (no odds published), or
+    ``"failed"`` (every attempt failed); each is persisted to the manifest.
+    """
+    match_id = _match_id(match_info)
+    out_path = get_match_file(run.date_str, match_id, sport=run.sport)
+    update_manifest(
+        run.date_str,
+        lambda m: m.set_in_progress(match_id, worker_id=worker_id),
+        sport=run.sport,
+    )
+    logger.info("match_scrape_start", worker=worker_id, match_id=match_id)
+
+    empty_odds_attempts = 0
+    partial_odds = None
+    retry_market_names = None
+    for attempt in range(run.max_retries + 1):
+        try:
+            match_data = scrape_match(
+                driver,
+                match_info,
+                sport=run.sport,
+                odds_attempt=min(attempt + 1, run.odds_max_attempts),
+                odds_max_attempts=run.odds_max_attempts,
+                previous_empty_odds_attempts=empty_odds_attempts,
+                previous_odds=partial_odds,
+                retry_market_names=retry_market_names,
+            )
+            save_json(match_data, out_path, artifact_type=MATCH_PAYLOAD_ARTIFACT)
+            require_accepted_match_json(
+                run.date_str, match_id, out_path, sport=run.sport, expected_match=match_info
+            )
+            run.outcome_checkpoint.done(match_id)
+            run.circuit_breaker.record_success()
+            run.progress_reporter.record("success", match_id)
+            logger.info("match_scrape_success", worker=worker_id, match_id=match_id)
+            return "success"
+        except FootballOddsUnavailableError as e:
+            run.outcome_checkpoint.skipped(
+                match_id, "all_odds_unavailable", error=str(e), url=_match_link(match_info)
+            )
+            run.circuit_breaker.record_success()
+            run.progress_reporter.record("skipped", match_id)
+            logger.warning(
+                "match_skipped",
+                worker=worker_id,
+                match_id=match_id,
+                reason="all_odds_unavailable",
+                error=str(e),
+                source="match_page",
+            )
+            return "skipped"
+        except Exception as e:  # noqa: BLE001 - retried; the final error is recorded
+            if isinstance(e, FootballOddsRetryableError):
+                empty_odds_attempts += 1
+            elif isinstance(e, FootballOddsCoverageError):
+                # Keep what was saved and target only the missing markets next time.
+                if e.partial_odds and e.missing_markets:
+                    partial_odds, retry_market_names = e.partial_odds, e.missing_markets
+                else:
+                    partial_odds, retry_market_names = None, None
+            if attempt == run.max_retries:
+                logger.error(
+                    "match_scrape_failed", worker=worker_id, match_id=match_id, error=str(e)
+                )
+                run.metrics.record_scrape_error(type(e).__name__)
+                run.outcome_checkpoint.failed(match_id)
+                run.circuit_breaker.record_failure()
+                run.progress_reporter.record("failed", match_id)
+                return "failed"
+            update_manifest(
+                run.date_str, lambda m, err=str(e): m.record_retry(match_id, err), sport=run.sport
+            )
+            delay = _retry_delay(attempt, e)
+            jitter = random.uniform(0, delay * 0.5)
+            restart_driver = _driver_restart_required(e)
+            logger.warning(
+                "match_retry",
+                worker=worker_id,
+                match_id=match_id,
+                attempt=attempt + 1,
+                max_retries=run.max_retries,
+                delay_s=round(delay + jitter, 1),
+                restart_driver=restart_driver,
+                missing_markets=getattr(e, "missing_markets", None),
+                error=str(e),
+            )
+            if restart_driver:
+                _reconnect(driver, run, worker_id)
+            time.sleep(delay + jitter)
+    raise AssertionError("unreachable: the last attempt always returns")
+
+
+def _pause_between_matches(workers: int) -> None:
+    """Sequential runs use the page delay; parallel workers use the slower worker delay."""
+    if workers <= 1:
+        random_delay()
+        return
+    settings = get_settings()
+    delay = random.uniform(settings.worker_min_delay, settings.worker_max_delay)
+    logger.debug("worker_delay", delay_s=round(delay, 1))
+    time.sleep(delay)
+
+
+def _run_worker(driver, batch, run: _Phase2Run, worker_id: int, workers: int) -> None:
+    """Process one batch of matches in order with one browser session."""
+    if driver is None:
+        logger.error("worker_no_driver", worker=worker_id)
+        return
+    try:
+        _warmup_cloudflare(driver, sport=run.sport)
+    except Exception as e:  # noqa: BLE001 - a fresh session is tried before the first match
+        logger.warning("worker_warmup_failed", worker=worker_id, error=str(e), exc_info=True)
+        _reconnect(driver, run, worker_id)
+    for position, match_info in enumerate(batch):
+        if run.circuit_breaker.aborted:
+            logger.warning(
+                "circuit_breaker_skipping_remaining",
+                worker=worker_id,
+                remaining=len(batch) - position,
+            )
+            return
+        outcome = scrape_one(driver, match_info, run, worker_id=worker_id)
+        if position < len(batch) - 1 and outcome != "failed":
+            _pause_between_matches(workers)
+
+
+def _fail_unresolved(batch, run: _Phase2Run, reason: str) -> None:
+    """Persist a retryable failure for every batch match without a terminal outcome."""
+    current = load_manifest(run.date_str, sport=run.sport)
+    if current is None:
+        raise RuntimeError(
+            f"Cannot recover worker batch without manifest: {run.sport} {run.date_str}"
+        )
+    terminal_ids = {
+        str(match_id)
+        for match_id in (*current.done, *current.skipped, *current.failed, *current.incomplete)
+    }
+    recovered = 0
+    for match_info in batch:
+        match_id = _match_id(match_info)
+        if match_id in terminal_ids:
+            continue
+        run.outcome_checkpoint.failed(match_id)
+        run.progress_reporter.record("failed", match_id)
+        run.metrics.record_scrape_error(reason)
+        terminal_ids.add(match_id)
+        recovered += 1
+    if recovered:
+        logger.error("worker_batch_recovered_as_failed", reason=reason, recovered=recovered)
+
+
 def phase2_scrape(
     driver,
     matches,
@@ -874,714 +1167,71 @@ def phase2_scrape(
     headless: bool = False,
     load_resources: bool = False,
 ):
-    """Run phase 2 for one sport/date."""
+    """Extract match details for one date with ``workers`` browser sessions.
+
+    ``workers=1`` runs the batch in order on ``driver``, which the caller owns.
+    With more workers each gets its own Chrome profile and a disjoint batch;
+    the same per-match flow (:func:`scrape_one`) runs in every worker.
+    Matches left without an outcome (crash, circuit-breaker abort, no driver)
+    are persisted as retryable failures.
+    """
     sport = normalize_sport(sport)
+    workers = max(1, workers)
+    run, matches_to_scrape, _manifest = _start_phase2(
+        matches, date_str, retry_failed, max_retries, sport, workers
+    )
+    if not matches_to_scrape:
+        return _finish_phase2(run)
+
+    batches = [matches_to_scrape[w::workers] for w in range(workers)]
+    profile_dirs: list[str] = []
+    drivers = [driver] if workers == 1 else []
     if workers > 1:
-        return _phase2_scrape_concurrent(
-            matches,
-            date_str,
-            retry_failed,
-            workers,
-            max_retries=max_retries,
-            sport=sport,
-            headless=headless,
-            load_resources=load_resources,
-        )
-    return _phase2_scrape_sequential(
-        driver,
-        matches,
-        date_str,
-        retry_failed=retry_failed,
-        max_retries=max_retries,
-        sport=sport,
-    )
-
-
-def _phase2_scrape_sequential(
-    driver,
-    matches,
-    date_str,
-    retry_failed: bool = False,
-    max_retries: int = 3,
-    sport: str = "football",
-):
-    """Extract match details from the event-link inventory.
-
-    When *workers* > 1, each worker gets its own Chrome instance and processes
-    a disjoint batch of matches concurrently.
-
-    Args:
-        driver: Selenium driver instance (unused when workers > 1)
-        matches: List of match info dicts
-        date_str: Date string for the scrape
-        retry_failed: If True, only retry matches that previously failed
-        max_retries: Maximum retry attempts for failed matches
-        workers: Number of concurrent browser workers (1 = sequential)
-    """
-    sport = normalize_sport(sport)
-    metrics = get_metrics()
-    outcome_checkpoint = TerminalOutcomeCheckpoint(date_str, sport, metrics)
-    t0 = time.time()
-
-    logger.info(
-        "match_detail_extraction_start",
-        sport=sport,
-        total_matches=len(matches),
-        date=date_str,
-        retry_failed=retry_failed,
-    )
-    matches_dir = get_matches_dir(date_str, sport=sport)
-    os.makedirs(matches_dir, exist_ok=True)
-
-    manifest = load_manifest(date_str, sport=sport)
-    if manifest is None:
-        manifest = create_manifest(date_str, len(matches), sport=sport)
-    elif manifest.total != len(matches):
-        manifest.total = len(matches)
-        save_manifest(manifest)
-
-    audit_result, audited_manifest = _audit_before_scrape(date_str, sport=sport)
-    manifest = audited_manifest or manifest
-
-    success_count = 0
-    skipped_count = 0
-    failed_count = 0
-    circuit_breaker = _CircuitBreaker(metrics)
-
-    failed_set = {str(match_id) for match_id in manifest.failed}
-    if retry_failed and failed_set:
-        logger.info("retrying_failed_matches", failed_count=len(failed_set))
-
-    matches_to_scrape, skipped_count, reconciled_count = _select_matches_to_scrape(
-        matches,
-        matches_dir,
-        manifest,
-        date_str,
-        retry_failed=retry_failed,
-        sport=sport,
-        audit_result=audit_result,
-    )
-    if reconciled_count:
-        save_manifest(manifest)
-        logger.info("manifest_reconciled_from_json_files", count=reconciled_count)
-    match_ids = {_match_id(match_info) for match_info in matches}
-    previously_scraped_count = len(match_ids & {str(match_id) for match_id in manifest.done})
-    previously_skipped_count = len(match_ids & {str(match_id) for match_id in manifest.skipped})
-    progress_reporter = _MatchProgressReporter(
-        date_str,
-        sport,
-        len(matches_to_scrape),
-        previously_scraped=previously_scraped_count,
-        previously_skipped=previously_skipped_count,
-    )
-    progress_matches = matches_to_scrape or matches
-    outcome_checkpoint.set_scope(_match_id(match_info) for match_info in progress_matches)
-    metrics.phase2_start(total=len(progress_matches))
-    outcome_checkpoint.sync(manifest)
-    selected_progress = _scrape_scope_progress(progress_matches, manifest)
-
-    logger.info(
-        "scraping_matches",
-        to_scrape=len(matches_to_scrape),
-        already_done=skipped_count,
-        previously_failed=len(failed_set),
-        completed_progress=selected_progress,
-        previously_scraped_matches=previously_scraped_count,
-        skipped_matches=previously_scraped_count + previously_skipped_count,
-    )
-
-    if not matches_to_scrape:
-        manifest.clear_in_progress()
-        save_manifest(manifest)
-        duration_seconds = int(time.time() - t0)
-        selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
-            progress_matches, manifest
-        )
-        metrics.phase2_complete(
-            total=len(progress_matches),
-            success=selected_done,
-            skipped=selected_skipped,
-            duration_seconds=duration_seconds,
-        )
-        outcome_checkpoint.sync(manifest)
-        save_manifest(manifest)
-        logger.info(
-            "match_detail_extraction_complete",
-            completed=0,
-            total=0,
-            progress_pct=100.0,
-            successful_matches=0,
-            failed_matches=0,
-            skipped_matches=previously_scraped_count + previously_skipped_count,
-            previously_scraped_matches=previously_scraped_count,
-            done=selected_done,
-            failed=selected_failed,
-            skipped=selected_skipped,
-            completed_progress=_scrape_scope_progress(progress_matches, manifest),
-            duration_seconds=duration_seconds,
-        )
-        return manifest
-
-    _warmup_cloudflare(driver, sport=sport)
-
-    odds_max_attempts = min(FOOTBALL_ODDS_MAX_ATTEMPTS, max_retries + 1)
-
-    for i, match_info in enumerate(matches_to_scrape, 1):
-        match_id = _match_id(match_info)
-        out_path = get_match_file(date_str, match_id, sport=sport)
-
-        if circuit_breaker.aborted:
-            logger.warning(
-                "circuit_breaker_skipping_remaining", remaining=len(matches_to_scrape) - i + 1
-            )
-            break
-
-        manifest.set_in_progress(match_id)
-        save_manifest(manifest)
-
-        logger.info(
-            "match_scrape_start",
-            match_id=match_id,
-            progress=f"{i}/{len(matches_to_scrape)}",
-            completed_progress=_scrape_scope_progress(progress_matches, manifest),
-        )
-
-        last_error = None
-        empty_odds_attempts = 0
-        partial_odds = None
-        retry_market_names = None
-        for attempt in range(max_retries + 1):
+        # Create drivers serially so undetected_chromedriver does not race on patching.
+        logger.info("initialising_worker_drivers", count=workers)
+        for worker_id in range(workers):
+            profile_dir = tempfile.mkdtemp(prefix=f"oddspedia_profile_{worker_id}_")
+            profile_dirs.append(profile_dir)
             try:
-                match_data = scrape_match(
-                    driver,
-                    match_info,
-                    sport=sport,
-                    odds_attempt=min(attempt + 1, odds_max_attempts),
-                    odds_max_attempts=odds_max_attempts,
-                    previous_empty_odds_attempts=empty_odds_attempts,
-                    previous_odds=partial_odds,
-                    retry_market_names=retry_market_names,
-                )
-                save_json(match_data, out_path, artifact_type=MATCH_PAYLOAD_ARTIFACT)
-                require_accepted_match_json(
-                    date_str,
-                    match_id,
-                    out_path,
-                    sport=sport,
-                    expected_match=match_info,
-                )
-
-                manifest = outcome_checkpoint.done(match_id)
-
-                success_count += 1
-                circuit_breaker.record_success()
-
-                logger.info(
-                    "match_scrape_success",
-                    match_id=match_id,
-                    progress=f"{i}/{len(matches_to_scrape)}",
-                    completed_progress=_scrape_scope_progress(progress_matches, manifest),
-                )
-                progress_reporter.record("success", match_id)
-                last_error = None
-                break
-
-            except FootballOddsUnavailableError as e:
-                manifest = outcome_checkpoint.skipped(
-                    match_id,
-                    "all_odds_unavailable",
-                    error=str(e),
-                    url=_match_link(match_info),
-                )
-                skipped_count += 1
-                circuit_breaker.record_success()
-                logger.warning(
-                    "match_skipped",
-                    match_id=match_id,
-                    reason="all_odds_unavailable",
-                    error=str(e),
-                    source="match_page",
-                )
-                progress_reporter.record("skipped", match_id)
-                last_error = None
-                break
-            except Exception as e:
-                last_error = e
-                if isinstance(e, FootballOddsRetryableError):
-                    empty_odds_attempts += 1
-                if isinstance(e, FootballOddsCoverageError) and not isinstance(
-                    e, FootballOddsRetryableError
-                ):
-                    if e.partial_odds and e.missing_markets:
-                        partial_odds = e.partial_odds
-                        retry_market_names = e.missing_markets
-                    else:
-                        partial_odds = None
-                        retry_market_names = None
-                if attempt < max_retries:
-                    manifest.record_retry(match_id, str(e))
-                    save_manifest(manifest)
-                    delay = _retry_delay(attempt, e)
-                    jitter = random.uniform(0, delay * 0.5)
-                    restart_driver = _driver_restart_required(e)
-                    logger.warning(
-                        "match_retry",
-                        match_id=match_id,
-                        attempt=attempt + 1,
-                        max_retries=max_retries,
-                        delay_s=round(delay + jitter, 1),
-                        restart_driver=restart_driver,
-                        missing_markets=getattr(e, "missing_markets", None),
-                        error=str(e),
+                drivers.append(
+                    DriverManager(
+                        headless=headless,
+                        load_resources=load_resources,
+                        user_data_dir=profile_dir,
                     )
-                    if restart_driver and hasattr(driver, "reconnect"):
-                        try:
-                            driver.reconnect()
-                            _warmup_cloudflare(driver, sport=sport)
-                        except Exception as reconnect_error:
-                            logger.warning("driver_reconnect_failed", error=str(reconnect_error))
-                    time.sleep(delay + jitter)
-                else:
-                    logger.error(
-                        "match_scrape_failed",
-                        match_id=match_id,
-                        error=str(e),
-                        retries=manifest.get_retry_count(match_id),
-                    )
-                    metrics.record_scrape_error(type(e).__name__)
-                    manifest = outcome_checkpoint.failed(match_id)
-                    failed_count += 1
-                    circuit_breaker.record_failure()
-                    progress_reporter.record("failed", match_id)
-
-        if i < len(matches_to_scrape) and last_error is None:
-            random_delay()
-
-    manifest.clear_in_progress()
-    save_manifest(manifest)
-
-    duration_seconds = int(time.time() - t0)
-    selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
-        progress_matches, manifest
-    )
-    metrics.phase2_complete(
-        total=len(progress_matches),
-        success=selected_done,
-        skipped=selected_skipped,
-        duration_seconds=duration_seconds,
-    )
-    outcome_checkpoint.sync(manifest)
-    save_manifest(manifest)
-
-    logger.info(
-        "match_detail_extraction_complete",
-        done=selected_done,
-        failed=selected_failed,
-        skipped=selected_skipped,
-        completed_progress=_scrape_scope_progress(progress_matches, manifest),
-        duration_seconds=duration_seconds,
-        **progress_reporter.snapshot(),
-    )
-    return manifest
-
-
-def _phase2_scrape_concurrent(
-    matches,
-    date_str,
-    retry_failed,
-    workers,
-    max_retries: int = 3,
-    sport: str = "football",
-    headless: bool = False,
-    load_resources: bool = False,
-):
-    """Extract match details concurrently with one Chrome instance per worker.
-
-    Workers process disjoint batches sequentially (with delays between matches
-    per worker) to respect rate limits.  Manifest updates are serialised via
-    a thread lock.
-    """
-    sport = normalize_sport(sport)
-    metrics = get_metrics()
-    outcome_checkpoint = TerminalOutcomeCheckpoint(date_str, sport, metrics)
-    t0 = time.time()
-
-    logger.info(
-        "match_detail_extraction_concurrent_start",
-        sport=sport,
-        total_matches=len(matches),
-        date=date_str,
-        workers=workers,
-    )
-    matches_dir = get_matches_dir(date_str, sport=sport)
-    os.makedirs(matches_dir, exist_ok=True)
-
-    manifest = load_manifest(date_str, sport=sport)
-    if manifest is None:
-        manifest = create_manifest(date_str, len(matches), sport=sport)
-    elif manifest.total != len(matches):
-        manifest.total = len(matches)
-        save_manifest(manifest)
-
-    audit_result, audited_manifest = _audit_before_scrape(date_str, sport=sport)
-    manifest = audited_manifest or manifest
-
-    failed_set = {str(match_id) for match_id in manifest.failed}
-    if retry_failed and failed_set:
-        logger.info("retrying_failed_matches", failed_count=len(failed_set))
-
-    matches_to_scrape, skipped_count, reconciled_count = _select_matches_to_scrape(
-        matches,
-        matches_dir,
-        manifest,
-        date_str,
-        retry_failed=retry_failed,
-        sport=sport,
-        audit_result=audit_result,
-    )
-    if reconciled_count:
-        save_manifest(manifest)
-        logger.info("manifest_reconciled_from_json_files", count=reconciled_count)
-    match_ids = {_match_id(match_info) for match_info in matches}
-    previously_scraped_count = len(match_ids & {str(match_id) for match_id in manifest.done})
-    previously_skipped_count = len(match_ids & {str(match_id) for match_id in manifest.skipped})
-    progress_reporter = _MatchProgressReporter(
-        date_str,
-        sport,
-        len(matches_to_scrape),
-        previously_scraped=previously_scraped_count,
-        previously_skipped=previously_skipped_count,
-    )
-    progress_matches = matches_to_scrape or matches
-    outcome_checkpoint.set_scope(_match_id(match_info) for match_info in progress_matches)
-    metrics.phase2_start(total=len(progress_matches))
-    outcome_checkpoint.sync(manifest)
-    selected_progress = _scrape_scope_progress(progress_matches, manifest)
-
-    logger.info(
-        "scraping_matches_concurrent",
-        to_scrape=len(matches_to_scrape),
-        already_done=skipped_count,
-        previously_failed=len(failed_set),
-        workers=workers,
-        completed_progress=selected_progress,
-        previously_scraped_matches=previously_scraped_count,
-        skipped_matches=previously_scraped_count + previously_skipped_count,
-    )
-
-    if not matches_to_scrape:
-        manifest.clear_in_progress()
-        save_manifest(manifest)
-        duration_seconds = int(time.time() - t0)
-        selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
-            progress_matches, manifest
-        )
-        metrics.phase2_complete(
-            total=len(progress_matches),
-            success=selected_done,
-            skipped=selected_skipped,
-            duration_seconds=duration_seconds,
-        )
-        outcome_checkpoint.sync(manifest)
-        save_manifest(manifest)
-        logger.info(
-            "match_detail_extraction_concurrent_complete",
-            completed=0,
-            total=0,
-            progress_pct=100.0,
-            successful_matches=0,
-            failed_matches=0,
-            skipped_matches=previously_scraped_count + previously_skipped_count,
-            previously_scraped_matches=previously_scraped_count,
-            done=selected_done,
-            failed=selected_failed,
-            skipped=selected_skipped,
-            completed_progress=_scrape_scope_progress(progress_matches, manifest),
-            duration_seconds=duration_seconds,
-        )
-        return manifest
-
-    # Split matches into roughly equal batches per worker
-    batches = [[] for _ in range(workers)]
-    for i, match_info in enumerate(matches_to_scrape):
-        batches[i % workers].append(match_info)
-
-    # Pre-initialise all drivers in the main thread (serialised) so that
-    # undetected_chromedriver does not race on binary patching.
-    logger.info("initialising_worker_drivers", count=workers)
-    worker_dirs = []
-    worker_drivers = []
-    for w in range(workers):
-        d = tempfile.mkdtemp(prefix=f"oddspedia_profile_{w}_")
-        worker_dirs.append(d)
-        try:
-            driver = DriverManager(
-                headless=headless,
-                load_resources=load_resources,
-                user_data_dir=d,
-            )
-            worker_drivers.append(driver)
-        except Exception as e:
-            logger.error("worker_driver_init_failed", worker=w, error=str(e))
-            worker_drivers.append(None)
-
-    success_count = 0
-    failed_count = 0
-    circuit_breaker = _CircuitBreaker(metrics)
-    odds_max_attempts = min(FOOTBALL_ODDS_MAX_ATTEMPTS, max_retries + 1)
-
-    def _fail_unresolved_batch(batch, reason: str) -> int:
-        """Persist a retryable failure for every batch item without a terminal outcome."""
-        current = load_manifest(date_str, sport=sport)
-        if current is None:
-            raise RuntimeError(f"Cannot recover worker batch without manifest: {sport} {date_str}")
-        terminal_ids = (
-            set(map(str, current.done))
-            | set(map(str, current.skipped))
-            | set(map(str, current.failed))
-            | set(map(str, current.incomplete))
-        )
-        recovered = 0
-        for match_info in batch:
-            match_id = _match_id(match_info)
-            if match_id in terminal_ids:
-                continue
-            outcome_checkpoint.failed(match_id)
-            progress_reporter.record("failed", match_id)
-            metrics.record_scrape_error(reason)
-            terminal_ids.add(match_id)
-            recovered += 1
-        if recovered:
-            logger.error(
-                "worker_batch_recovered_as_failed",
-                reason=reason,
-                recovered=recovered,
-            )
-        return recovered
-
-    def _worker_task(batch, worker_id, driver):
-        """Long-lived worker: owns one Chrome instance, processes its batch."""
-        worker_results = []
-        if driver is None:
-            logger.error("worker_no_driver", worker=worker_id)
-            for match_info in batch:
-                match_id = _match_id(match_info)
-                outcome_checkpoint.failed(match_id)
-                progress_reporter.record("failed", match_id)
-            return [
-                (match_id, False, "driver_init_failed")
-                for match_info in batch
-                for match_id in [_match_id(match_info)]
-            ]
-
-        try:
-            try:
-                _warmup_cloudflare(driver, sport=sport)
-            except Exception as e:
-                logger.warning("worker_warmup_failed", worker=worker_id, error=str(e))
-                if hasattr(driver, "reconnect"):
-                    try:
-                        driver.reconnect()
-                    except Exception:
-                        pass
-            for j, match_info in enumerate(batch):
-                match_id = _match_id(match_info)
-                out_path = get_match_file(date_str, match_id, sport=sport)
-
-                if circuit_breaker.aborted:
-                    logger.warning(
-                        "circuit_breaker_skipping_worker_batch",
-                        worker=worker_id,
-                        remaining=len(batch) - j,
-                    )
-                    break
-
-                update_manifest(
-                    date_str,
-                    lambda m, mid=match_id, wid=worker_id: m.set_in_progress(mid, worker_id=wid),
-                    sport=sport,
                 )
+            except Exception as e:  # noqa: BLE001 - that worker's batch is recorded as failed
+                logger.exception("worker_driver_init_failed", worker=worker_id, error=str(e))
+                drivers.append(None)
 
-                logger.info(
-                    "concurrent_match_start",
-                    worker=worker_id,
-                    match_id=match_id,
-                    progress=f"{j + 1}/{len(batch)}",
-                )
+    try:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(_run_worker, drivers[w], batch, run, w, workers): (w, batch)
+                for w, batch in enumerate(batches)
+                if batch
+            }
+            for future in as_completed(futures):
+                worker_id, batch = futures[future]
+                reason = "worker_incomplete_batch"
+                try:
+                    future.result()
+                except Exception as e:  # noqa: BLE001 - its unresolved matches are failed below
+                    logger.exception("worker_crashed", worker=worker_id, error=str(e))
+                    reason = "worker_crashed"
+                if drivers[worker_id] is None:
+                    reason = "driver_init_failed"
+                _fail_unresolved(batch, run, reason)
+                logger.info("worker_finished", worker=worker_id, count=len(batch))
+    finally:
+        if workers > 1:
+            for worker_driver in drivers:
+                if worker_driver is not None:
+                    worker_driver.quit()
+            for profile_dir in profile_dirs:
+                shutil.rmtree(profile_dir, ignore_errors=True)
 
-                last_error = None
-                empty_odds_attempts = 0
-                partial_odds = None
-                retry_market_names = None
-                for attempt in range(max_retries + 1):
-                    try:
-                        match_data = scrape_match(
-                            driver,
-                            match_info,
-                            sport=sport,
-                            odds_attempt=min(attempt + 1, odds_max_attempts),
-                            odds_max_attempts=odds_max_attempts,
-                            previous_empty_odds_attempts=empty_odds_attempts,
-                            previous_odds=partial_odds,
-                            retry_market_names=retry_market_names,
-                        )
-                        save_json(match_data, out_path, artifact_type=MATCH_PAYLOAD_ARTIFACT)
-                        require_accepted_match_json(
-                            date_str,
-                            match_id,
-                            out_path,
-                            sport=sport,
-                            expected_match=match_info,
-                        )
-                        outcome_checkpoint.done(match_id)
-                        worker_results.append((match_id, True, None))
-                        logger.info("concurrent_match_success", worker=worker_id, match_id=match_id)
-                        progress_reporter.record("success", match_id)
-                        last_error = None
-                        circuit_breaker.record_success()
-                        break
-                    except FootballOddsUnavailableError as e:
-                        outcome_checkpoint.skipped(
-                            match_id,
-                            "all_odds_unavailable",
-                            error=str(e),
-                            url=_match_link(match_info),
-                        )
-                        worker_results.append((match_id, None, str(e)))
-                        logger.warning(
-                            "match_skipped",
-                            worker=worker_id,
-                            match_id=match_id,
-                            reason="all_odds_unavailable",
-                            error=str(e),
-                            source="match_page",
-                        )
-                        progress_reporter.record("skipped", match_id)
-                        last_error = None
-                        circuit_breaker.record_success()
-                        break
-                    except Exception as e:
-                        last_error = e
-                        if isinstance(e, FootballOddsRetryableError):
-                            empty_odds_attempts += 1
-                        if isinstance(e, FootballOddsCoverageError) and not isinstance(
-                            e, FootballOddsRetryableError
-                        ):
-                            if e.partial_odds and e.missing_markets:
-                                partial_odds = e.partial_odds
-                                retry_market_names = e.missing_markets
-                            else:
-                                partial_odds = None
-                                retry_market_names = None
-                        if attempt < max_retries:
-                            update_manifest(
-                                date_str,
-                                lambda m, mid=match_id, err=str(e): m.record_retry(mid, err),
-                                sport=sport,
-                            )
-                            delay = _retry_delay(attempt, e)
-                            jitter = random.uniform(0, delay * 0.5)
-                            restart_driver = _driver_restart_required(e)
-                            logger.warning(
-                                "concurrent_match_retry",
-                                worker=worker_id,
-                                match_id=match_id,
-                                attempt=attempt + 1,
-                                max_retries=max_retries,
-                                delay_s=round(delay + jitter, 1),
-                                restart_driver=restart_driver,
-                                missing_markets=getattr(e, "missing_markets", None),
-                                error=str(e),
-                            )
-                            if restart_driver and hasattr(driver, "reconnect"):
-                                try:
-                                    driver.reconnect()
-                                    _warmup_cloudflare(driver, sport=sport)
-                                except Exception as reconnect_error:
-                                    logger.warning(
-                                        "driver_reconnect_failed",
-                                        worker=worker_id,
-                                        error=str(reconnect_error),
-                                    )
-                            time.sleep(delay + jitter)
-                        else:
-                            logger.error(
-                                "concurrent_match_failed",
-                                worker=worker_id,
-                                match_id=match_id,
-                                error=str(e),
-                            )
-                            metrics.record_scrape_error(type(e).__name__)
-                            outcome_checkpoint.failed(match_id)
-                            worker_results.append((match_id, False, str(e)))
-                            progress_reporter.record("failed", match_id)
-                            circuit_breaker.record_failure()
-
-                if j < len(batch) - 1 and last_error is None:
-                    delay = random.uniform(WORKER_MIN_DELAY, WORKER_MAX_DELAY)
-                    logger.debug("worker_delay", worker=worker_id, delay_s=round(delay, 1))
-                    time.sleep(delay)
-        finally:
-            driver.quit()
-        return worker_results
-
-    completed_futures = 0
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = {
-            pool.submit(_worker_task, batch, wid, worker_drivers[wid]): (wid, batch)
-            for wid, batch in enumerate(batches)
-            if batch
-        }
-        for future in as_completed(futures):
-            wid, batch = futures[future]
-            try:
-                results = future.result()
-                for match_id, success, err in results:
-                    if success is True:
-                        success_count += 1
-                    elif success is False:
-                        failed_count += 1
-                completed_futures += 1
-                failed_count += _fail_unresolved_batch(batch, "worker_incomplete_batch")
-                logger.info("worker_finished", worker=wid, count=len(results))
-            except Exception as e:
-                logger.error("worker_crashed", worker=wid, error=str(e))
-                failed_count += _fail_unresolved_batch(batch, "worker_crashed")
-
-    update_manifest(date_str, lambda m: m.clear_in_progress(), sport=sport)
-    manifest = load_manifest(date_str, sport=sport) or manifest
-
-    duration_seconds = int(time.time() - t0)
-    selected_done, selected_skipped, selected_failed = _scrape_scope_terminal_counts(
-        progress_matches, manifest
-    )
-    metrics.phase2_complete(
-        total=len(progress_matches),
-        success=selected_done,
-        skipped=selected_skipped,
-        duration_seconds=duration_seconds,
-    )
-    outcome_checkpoint.sync(manifest)
-    save_manifest(manifest)
-
-    logger.info(
-        "match_detail_extraction_concurrent_complete",
-        done=selected_done,
-        failed=selected_failed,
-        skipped=selected_skipped,
-        completed_progress=_scrape_scope_progress(progress_matches, manifest),
-        duration_seconds=duration_seconds,
-        **progress_reporter.snapshot(),
-    )
-
-    # Clean up temp Chrome profile directories
-    for d in worker_dirs:
-        try:
-            shutil.rmtree(d, ignore_errors=True)
-        except Exception:
-            pass
-
-    return manifest
+    return _finish_phase2(run)
 
 
 def _resolve_dates(args, current_date=None):
@@ -1632,9 +1282,9 @@ def _warn_deprecated_options(argv: Sequence[str]) -> None:
 
 
 def main(
-    argv: Optional[Sequence[str]] = None,
+    argv: Sequence[str] | None = None,
     default_sport: str = "football",
-    fixed_command: Optional[str] = None,
+    fixed_command: str | None = None,
 ) -> None:
     """Run the shared pipeline.
 
@@ -1844,7 +1494,7 @@ def main(
     # Persist every terminal event alongside the data being scraped. A month
     # run receives its own directory because its events span multiple dates.
     log_date = dates[0]
-    run_started_at = datetime.now(timezone.utc)
+    run_started_at = datetime.now(UTC)
     run_id = run_started_at.strftime("%Y%m%dT%H%M%S")
     run_dir = get_run_logs_dir(log_date, sport=sport)
     log_path = None if args.dry_run else os.path.join(run_dir, f"run_{run_id}.log")

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_clutch_brace_winning (
+INSERT INTO gold_signals.sig_player_shooting_goals_clutch_brace_winning (
     match_id,
     match_date,
     home_team_id,
