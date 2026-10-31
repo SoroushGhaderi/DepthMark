@@ -1,846 +1,395 @@
-"""Unified Pipeline Orchestrator.
+"""FotMob warehouse pipeline: scrape, Bronze load, Silver, and Gold for one scope.
 
-PURPOSE: Orchestrates the complete data pipeline:
-    1. FotMob Bronze Layer (scraping)
-    2. Load FotMob raw files into ClickHouse Bronze tables
-    3. Build FotMob Silver layer
-    4. Build FotMob Gold layer
+The pipeline is built as data before anything runs. :func:`build_plan` turns a
+:class:`RunScope` and the selected stages into chains of phases; :func:`run_plan`
+executes them, running a phase only when every earlier phase of its chain
+succeeded. Each step is a subprocess call to the stage's script (ADR 0002),
+bounded by a timeout and cancelled as a whole process group.
 
-This script runs all steps sequentially, handling errors gracefully
-and providing a comprehensive summary at the end.
+- A date or range runs one chain per date: scrape, load, Silver, Gold.
+- A month scrapes every date, then loads, builds Silver, and builds Gold once
+  for the month; any failed scrape stops the month.
+- Full history skips scraping and runs the warehouse stages with
+  ``--full-history``.
 
 Usage:
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113
-    python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251113
-    python3 scripts/orchestration/run_fotmob_pipeline.py --month 202511
-    python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --bronze-only
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --silver-only
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --gold-only
-"""
-
-import argparse
-import logging
-import subprocess
-import sys
-import time
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any
-
-from src.common.logging import get_logger, setup_logging
-from src.common.paths import PROJECT_ROOT
-from src.common.run_scope import RunScope, ScopeError
-from src.fotmob.commands.support import (
-    DateRangeInfo,
-    StepResult,
-    create_date_range_info,
-    format_elapsed_time,
-)
-from src.integrations.telegram import ErrorAlertData, TelegramClient
-
-RESULT_CATEGORIES = {
-    "fotmob_bronze": "FotMob Bronze",
-    "fotmob_clickhouse": "FotMob Bronze -> ClickHouse",
-    "fotmob_silver": "FotMob Silver",
-    "fotmob_gold": "FotMob Gold",
-}
-
-
-def _run_script(script_path: Path, args: list[str]) -> int:
-    """Run a canonical script entry point and return its exit code."""
-    command = [sys.executable, str(script_path), *args]
-    result = subprocess.run(command, cwd=PROJECT_ROOT)
-    return result.returncode
-
-
-@dataclass
-class PipelineConfig:
-    """Configuration for pipeline execution."""
-
-    skip_fotmob: bool = False
-    skip_bronze: bool = False
-    skip_clickhouse: bool = False
-    skip_silver: bool = False
-    skip_gold: bool = False
-    bronze_only: bool = False
-    silver_only: bool = False
-    gold_only: bool = False
-    force: bool = False
-    debug: bool = False
-
-
-@dataclass
-class PipelineResults:
-    """Results tracking for pipeline execution."""
-
-    fotmob_bronze: list[StepResult] = field(default_factory=list)
-    fotmob_clickhouse: list[StepResult] = field(default_factory=list)
-    fotmob_silver: list[StepResult] = field(default_factory=list)
-    fotmob_gold: list[StepResult] = field(default_factory=list)
-
-    def add_result(self, category: str, result: StepResult) -> None:
-        """Add a result to the appropriate category."""
-        getattr(self, category).append(result)
-
-    def all_successful(self) -> bool:
-        """Check if all steps were successful."""
-        categories = ["fotmob_bronze", "fotmob_clickhouse", "fotmob_silver", "fotmob_gold"]
-        for category in categories:
-            results = getattr(self, category)
-            if results and not all(r.success for r in results):
-                return False
-        return True
-
-    def get_summary(self) -> dict[str, dict[str, Any]]:
-        """Get summary statistics for all categories."""
-        summary = {}
-        categories = ["fotmob_bronze", "fotmob_clickhouse", "fotmob_silver", "fotmob_gold"]
-        for category in categories:
-            results = getattr(self, category)
-            if results:
-                successful = sum(1 for r in results if r.success)
-                failed = len(results) - successful
-                total_time = sum(r.elapsed_time for r in results)
-                failed_dates = [r.name.split(" - ")[-1] for r in results if not r.success]
-                summary[category] = {
-                    "total": len(results),
-                    "successful": successful,
-                    "failed": failed,
-                    "total_time": total_time,
-                    "failed_dates": failed_dates,
-                }
-        return summary
-
-
-def create_argument_parser() -> argparse.ArgumentParser:
-    """Create and configure the argument parser."""
-    parser = argparse.ArgumentParser(
-        description=(
-            "Unified Pipeline Orchestrator - "
-            "Runs FotMob bronze scraping, ClickHouse bronze load, silver, and gold stages"
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  Full Pipeline:
     python3 scripts/orchestration/run_fotmob_pipeline.py 20251113
     python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251113
     python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251101 --end-date 20251107
     python3 scripts/orchestration/run_fotmob_pipeline.py --month 202511
     python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
-  Partial Pipeline:
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --bronze-only
     python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --silver-only
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --gold-only
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --skip-bronze
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --skip-fotmob
-  Options:
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --force
-        """,
-    )
-    _add_date_arguments(parser)
-    _add_pipeline_control_arguments(parser)
-    _add_option_arguments(parser)
-    return parser
+"""
+
+from __future__ import annotations
+
+import argparse
+import os
+import signal
+import subprocess
+import sys
+import time
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass, field
+
+from src.common.deprecation import warn_deprecated
+from src.common.logging import get_logger, setup_logging
+from src.common.paths import PROJECT_ROOT
+from src.common.run_scope import RunScope, ScopeError
+from src.fotmob.commands.support import format_elapsed_time
+from src.integrations.telegram import ErrorAlertData, TelegramClient
+
+logger = get_logger("pipeline")
+
+# A step that runs longer than this is cancelled (0 disables the limit).
+DEFAULT_STAGE_TIMEOUT_MINUTES = 360
+# Grace period between SIGTERM and SIGKILL when cancelling a step.
+CANCEL_GRACE_SECONDS = 30
+TIMEOUT_EXIT_CODE = 124
 
 
-def _add_date_arguments(parser: argparse.ArgumentParser) -> None:
-    """Add date-related arguments to parser."""
-    date_group = parser.add_mutually_exclusive_group(required=True)
-    date_group.add_argument(
-        "date",
-        type=str,
-        nargs="?",
-        help=(
-            "Date to process (YYYYMMDD format). Required unless --start-date or --month is used."
-        ),
-    )
-    date_group.add_argument(
-        "--single-date",
-        type=str,
-        help="Process a single date (YYYYMMDD format). Equivalent to the positional date argument.",
-    )
-    date_group.add_argument(
-        "--date",
-        dest="named_date",
-        type=str,
-        help="Process a single date (YYYYMMDD format).",
-    )
-    date_group.add_argument(
-        "--start-date", type=str, help="Start date for range processing (YYYYMMDD format)"
-    )
-    date_group.add_argument(
-        "--month",
-        type=str,
-        help="Process entire month (YYYYMM format, e.g., 202511 for November 2025)",
-    )
-    date_group.add_argument(
-        "--full-history",
-        action="store_true",
-        help="Load all available Historical Bronze files and rebuild Silver and Gold",
-    )
-    parser.add_argument(
-        "--end-date",
-        type=str,
-        help=("End date for range processing (YYYYMMDD format). Required if --start-date is used."),
-    )
+@dataclass(frozen=True)
+class Stage:
+    """One pipeline stage and the script that runs it."""
+
+    key: str
+    label: str
+    script: str
 
 
-def _add_pipeline_control_arguments(parser: argparse.ArgumentParser) -> None:
-    """Add pipeline control arguments to parser."""
-    parser.add_argument(
-        "--bronze-only",
-        action="store_true",
-        help="Run bronze scraping only (skip ClickHouse loading, silver, gold)",
-    )
-    parser.add_argument(
-        "--silver-only",
-        action="store_true",
-        help="Run silver processing only (skip bronze, ClickHouse loading, gold)",
-    )
-    parser.add_argument(
-        "--gold-only",
-        action="store_true",
-        help="Run gold processing only (skip bronze, ClickHouse loading, silver)",
-    )
-    parser.add_argument(
-        "--skip-bronze",
-        action="store_true",
-        help="Skip bronze scraping (run ClickHouse bronze loading, silver, and/or gold only)",
-    )
-    parser.add_argument(
-        "--skip-fotmob",
-        action="store_true",
-        help="Skip all FotMob processing (bronze + ClickHouse + silver + gold)",
-    )
-    parser.add_argument(
-        "--skip-clickhouse",
-        action="store_true",
-        help="Skip ClickHouse loading",
-    )
-    parser.add_argument(
-        "--skip-silver",
-        action="store_true",
-        help="Skip silver processing",
-    )
-    parser.add_argument(
-        "--skip-gold",
-        action="store_true",
-        help="Skip gold processing",
-    )
+SCRAPE = Stage("scrape", "FotMob Bronze scrape", "scripts/bronze/scrape_fotmob.py")
+BRONZE = Stage("bronze", "Bronze load", "scripts/bronze/load_fotmob_bronze.py")
+SILVER = Stage("silver", "Silver", "scripts/silver/load_fotmob_silver.py")
+GOLD = Stage("gold", "Gold", "scripts/gold/load_fotmob_gold.py")
+STAGES: tuple[Stage, ...] = (SCRAPE, BRONZE, SILVER, GOLD)
+WAREHOUSE_STAGES: tuple[Stage, ...] = (BRONZE, SILVER, GOLD)
 
 
-def _add_option_arguments(parser: argparse.ArgumentParser) -> None:
-    """Add option arguments to parser."""
-    parser.add_argument(
-        "--force", action="store_true", help="Force re-scrape/reload even if data exists"
-    )
-    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+@dataclass(frozen=True)
+class PipelineOptions:
+    """Which stages run and the flags they receive."""
+
+    stages: frozenset[str] = frozenset(stage.key for stage in STAGES)
+    force: bool = False
+    debug: bool = False
+    timeout_seconds: float | None = DEFAULT_STAGE_TIMEOUT_MINUTES * 60
 
 
-def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    """Parse and validate command-line arguments."""
-    parser = create_argument_parser()
-    args = parser.parse_args(argv)
-    _validate_scope_arguments(parser, args)
-    _validate_pipeline_flags(parser, args)
-    return args
+@dataclass(frozen=True)
+class Step:
+    """One script invocation for one stage and scope label."""
+
+    stage: Stage
+    scope_label: str
+    argv: tuple[str, ...]
+
+    @property
+    def name(self) -> str:
+        return f"{self.stage.label} - {self.scope_label}"
 
 
-def _validate_pipeline_flags(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
-    """Validate pipeline-only flag combinations."""
-    only_flags = [args.bronze_only, args.silver_only, args.gold_only]
-    if sum(bool(f) for f in only_flags) > 1:
-        parser.error("Use only one of --bronze-only, --silver-only, --gold-only")
-    if args.full_history and args.bronze_only:
-        parser.error("--full-history cannot use --bronze-only because scraping is excluded")
+# A chain is a list of phases; a phase runs only if every earlier phase succeeded.
+Phase = list[Step]
+Chain = list[Phase]
 
 
-def _validate_scope_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
-    """Fold named date aliases into ``args.date`` and validate the run scope."""
-    named_date = args.single_date or args.named_date
-    if named_date:
-        if args.date:
-            parser.error("Use either the positional date or a named date selector, not both")
-        args.date = named_date
-    try:
-        RunScope.from_args(args)
-    except ScopeError as error:
-        parser.error(str(error))
+@dataclass
+class StepOutcome:
+    step: Step
+    exit_code: int
+    elapsed_seconds: float
+
+    @property
+    def success(self) -> bool:
+        return self.exit_code == 0
 
 
-def create_pipeline_config(args: argparse.Namespace) -> PipelineConfig:
-    """Create PipelineConfig from parsed arguments."""
-    return PipelineConfig(
-        skip_fotmob=args.skip_fotmob,
-        skip_bronze=args.skip_bronze,
-        skip_clickhouse=args.skip_clickhouse,
-        skip_silver=args.skip_silver,
-        skip_gold=args.skip_gold,
-        bronze_only=args.bronze_only,
-        silver_only=args.silver_only,
-        gold_only=args.gold_only,
-        force=args.force,
-        debug=args.debug,
-    )
+@dataclass
+class PipelineReport:
+    """What ran, what failed, and which steps were skipped behind a failure."""
+
+    outcomes: list[StepOutcome] = field(default_factory=list)
+    skipped: list[Step] = field(default_factory=list)
+
+    @property
+    def exit_code(self) -> int:
+        return 0 if all(outcome.success for outcome in self.outcomes) else 1
 
 
-def create_date_info(args: argparse.Namespace) -> DateRangeInfo:
-    """Create DateRangeInfo from parsed arguments."""
-    if args.full_history:
-        return DateRangeInfo(
-            dates=[],
-            display_text="Full history",
-            mode_text="full_history",
-            log_suffix="full_history",
-        )
-    return create_date_range_info(
-        date=args.date,
-        start_date=args.start_date,
-        end_date=args.end_date,
-        month=args.month,
-    )
-
-
-def run_step(
-    name: str,
-    operation: str,
-    runner: Callable[[], int],
-    continue_on_error: bool = False,
-    date_str: str | None = None,
-) -> StepResult:
-    """
-    Run a pipeline step and return result.
-    Args:
-        name: Step name for logging
-        operation: Human-readable operation description
-        runner: Callable that executes the step and returns an exit code
-        continue_on_error: Whether to continue on failure
-        date_str: Date being processed (for alerts)
-    Returns:
-        StepResult with execution details
-    """
-    logger = get_logger("pipeline")
-    _log_step_header(logger, name, operation)
-    start_time = time.time()
-    exit_code = _execute_runner(runner, logger)
-    elapsed_time = time.time() - start_time
-    success = exit_code == 0
-    step_result = StepResult(
-        name=name,
-        success=success,
-        exit_code=exit_code,
-        elapsed_time=elapsed_time,
-        date_str=date_str,
-    )
-    _handle_step_result(logger, step_result, continue_on_error)
-    return step_result
-
-
-def _log_step_header(logger: logging.Logger, name: str, operation: str) -> None:
-    """Log step header information."""
-    logger.info("\n" + "=" * 80)
-    logger.info("STEP: %s", name)
-    logger.info("=" * 80)
-    logger.info("Operation: %s", operation)
-    logger.info("=" * 80 + "\n")
-
-
-def _execute_runner(runner: Callable[[], int], logger: logging.Logger) -> int:
-    """Execute a step runner and normalize the resulting exit code."""
-    try:
-        result = runner()
-        return int(result) if result is not None else 0
-    except SystemExit as exc:
-        code = exc.code if isinstance(exc.code, int) else 1
-        return code
-    except (RuntimeError, OSError, ValueError) as exc:
-        logger.error("Step failed with runtime error: %s", exc, exc_info=True)
-        return 1
-
-
-def _handle_step_result(
-    logger: logging.Logger, result: StepResult, continue_on_error: bool
-) -> None:
-    """Handle step result logging and alerting."""
-    if result.success:
-        logger.info("\n[SUCCESS] %s completed in %.1fs", result.name, result.elapsed_time)
-        return
-    if continue_on_error:
-        logger.warning(
-            "\n[WARNING] %s failed (exit code: %s) but continuing...", result.name, result.exit_code
-        )
+def _step(stage: Stage, scope: RunScope, options: PipelineOptions) -> Step:
+    if scope.kind == "full-history":
+        argv = ["--full-history"]
+    elif scope.kind == "month":
+        argv = ["--month", scope.start]
+    elif stage is SCRAPE:
+        argv = [scope.start]
     else:
-        logger.error("\n[ERROR] %s failed (exit code: %s)", result.name, result.exit_code)
-    _send_step_failure_alert(result)
+        argv = ["--date", scope.start]
+    if options.force and stage in (SCRAPE, BRONZE):
+        argv.append("--force")
+    if options.debug and stage is SCRAPE:
+        argv.append("--debug")
+    return Step(stage, scope.label, tuple(argv))
 
 
-def _send_step_failure_alert(result: StepResult) -> None:
-    """Send alert for step failure."""
-    telegram_client = TelegramClient()
-    telegram_client.render_and_send(
+def build_plan(scope: RunScope, options: PipelineOptions) -> list[Chain]:
+    """Return the chains of phases the pipeline runs for ``scope``. Pure: no I/O."""
+    selected = [stage for stage in STAGES if stage.key in options.stages]
+    if scope.kind == "full-history":
+        warehouse = [stage for stage in selected if stage is not SCRAPE]
+        chain = [[_step(stage, scope, options)] for stage in warehouse]
+        return [chain] if chain else []
+    if scope.kind == "month":
+        chain: Chain = []
+        if SCRAPE in selected:
+            chain.append(
+                [_step(SCRAPE, RunScope.for_date(date), options) for date in scope.dates()]
+            )
+        chain.extend([_step(stage, scope, options)] for stage in selected if stage is not SCRAPE)
+        return [chain] if chain else []
+    chains = []
+    for date in scope.dates():
+        chain = [[_step(stage, RunScope.for_date(date), options)] for stage in selected]
+        if chain:
+            chains.append(chain)
+    return chains
+
+
+StepRunner = Callable[[Step, "float | None"], int]
+
+
+def run_step_subprocess(step: Step, timeout_seconds: float | None) -> int:
+    """Run a step's script in its own process group, cancelling it on timeout."""
+    command = [sys.executable, str(PROJECT_ROOT / step.stage.script), *step.argv]
+    process = subprocess.Popen(command, cwd=PROJECT_ROOT, start_new_session=True)
+    try:
+        return process.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        logger.error("[ERROR] Step timed out; cancelling it", step=step.name)
+        _cancel(process)
+        return TIMEOUT_EXIT_CODE
+    except KeyboardInterrupt:
+        _cancel(process)
+        raise
+
+
+def _cancel(process: subprocess.Popen) -> None:
+    """Terminate the step's whole process group, then kill it after a grace period."""
+    try:
+        os.killpg(process.pid, signal.SIGTERM)
+        process.wait(timeout=CANCEL_GRACE_SECONDS)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+    except ProcessLookupError:
+        pass
+
+
+def run_plan(
+    plan: list[Chain],
+    options: PipelineOptions,
+    runner: StepRunner = run_step_subprocess,
+    on_failure: Callable[[StepOutcome], None] | None = None,
+) -> PipelineReport:
+    """Run every chain; within a chain, stop at the first phase with a failure."""
+    report = PipelineReport()
+    for chain in plan:
+        for index, phase in enumerate(chain):
+            failed = False
+            for step in phase:
+                logger.info(
+                    "Running step", step=step.name, script=step.stage.script, argv=step.argv
+                )
+                started = time.monotonic()
+                outcome = StepOutcome(
+                    step, runner(step, options.timeout_seconds), time.monotonic() - started
+                )
+                report.outcomes.append(outcome)
+                if outcome.success:
+                    logger.info(
+                        "[OK] Step completed",
+                        step=step.name,
+                        seconds=round(outcome.elapsed_seconds, 1),
+                    )
+                    continue
+                failed = True
+                logger.error("[ERROR] Step failed", step=step.name, exit_code=outcome.exit_code)
+                if on_failure is not None:
+                    on_failure(outcome)
+            if failed:
+                remaining = [step for later in chain[index + 1 :] for step in later]
+                if remaining:
+                    logger.error(
+                        "Skipping downstream steps after a failure",
+                        skipped=[step.name for step in remaining],
+                    )
+                report.skipped.extend(remaining)
+                break
+    return report
+
+
+def send_failure_alert(outcome: StepOutcome) -> None:
+    """Send the Telegram alert for one failed step."""
+    TelegramClient().render_and_send(
         "error_alert.html.j2",
         ErrorAlertData(
             level="ERROR",
-            title=f"Pipeline Step Failed: {result.name}",
+            title=f"Pipeline Step Failed: {outcome.step.name}",
             message=(
-                f"Step '{result.name}' failed with exit code "
-                f"{result.exit_code}.\n\nElapsed time: "
-                f"{result.elapsed_time:.1f}s"
+                f"Step '{outcome.step.name}' failed with exit code {outcome.exit_code}.\n\n"
+                f"Elapsed time: {outcome.elapsed_seconds:.1f}s"
             ),
             context={
-                "step_name": result.name,
-                "exit_code": str(result.exit_code),
-                "elapsed_time": f"{result.elapsed_time:.1f}s",
-                "date": result.date_str or "",
+                "step_name": outcome.step.name,
+                "exit_code": str(outcome.exit_code),
+                "elapsed_time": f"{outcome.elapsed_seconds:.1f}s",
+                "date": outcome.step.scope_label,
                 "error_output": "Check logs for details",
             },
         ),
     )
 
 
-def run_fotmob_bronze(date_str: str, config: PipelineConfig) -> StepResult:
-    """Run FotMob bronze scraping for a date."""
-    script_path = PROJECT_ROOT / "scripts" / "bronze" / "scrape_fotmob.py"
-    argv = [date_str]
-    if config.force:
-        argv.append("--force")
-    if config.debug:
-        argv.append("--debug")
-    return run_step(
-        f"FotMob Bronze - {date_str}",
-        f"{script_path} {' '.join(argv)}",
-        lambda: _run_script(script_path, argv),
-        date_str=date_str,
-    )
-
-
-def run_clickhouse_load(
-    scraper: str,
-    date_str: str,
-    config: PipelineConfig,
-) -> StepResult:
-    """Load data to ClickHouse for a scraper and date."""
-    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_fotmob_bronze.py"
-    argv = ["--date", date_str]
-    if config.force:
-        argv.append("--force")
-    return run_step(
-        f"ClickHouse Load - {scraper} - {date_str}",
-        f"{script_path} {' '.join(argv)}",
-        lambda: _run_script(script_path, argv),
-        date_str=date_str,
-    )
-
-
-def run_clickhouse_load_month(
-    scraper: str,
-    month_str: str,
-    config: PipelineConfig,
-) -> StepResult:
-    """Load data to ClickHouse for a scraper and month."""
-    script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_fotmob_bronze.py"
-    argv = ["--month", month_str]
-    if config.force:
-        argv.append("--force")
-    return run_step(
-        f"ClickHouse Load - {scraper} - Month {month_str}",
-        f"{script_path} {' '.join(argv)}",
-        lambda: _run_script(script_path, argv),
-        date_str=month_str,
-    )
-
-
-def run_silver_process(
-    date_str: str,
-) -> StepResult:
-    """Run silver processing for a date."""
-    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_fotmob_silver.py"
-    argv: list[str] = ["--date", date_str]
-    return run_step(
-        f"Silver Process - {date_str}",
-        str(script_path),
-        lambda: _run_script(script_path, argv),
-        date_str=date_str,
-    )
-
-
-def run_silver_process_month(
-    month_str: str,
-) -> StepResult:
-    """Run silver processing for a month."""
-    script_path = PROJECT_ROOT / "scripts" / "silver" / "load_fotmob_silver.py"
-    argv: list[str] = ["--month", month_str]
-    return run_step(
-        f"Silver Process - Month {month_str}",
-        str(script_path),
-        lambda: _run_script(script_path, argv),
-        date_str=month_str,
-    )
-
-
-def run_gold_process(
-    date_str: str,
-) -> StepResult:
-    """Run gold processing for a date."""
-    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_fotmob_gold.py"
-    argv: list[str] = ["--date", date_str]
-    return run_step(
-        f"Gold Process - {date_str}",
-        str(script_path),
-        lambda: _run_script(script_path, argv),
-        date_str=date_str,
-    )
-
-
-def run_gold_process_month(
-    month_str: str,
-) -> StepResult:
-    """Run gold processing for a month."""
-    script_path = PROJECT_ROOT / "scripts" / "gold" / "load_fotmob_gold.py"
-    argv: list[str] = ["--month", month_str]
-    return run_step(
-        f"Gold Process - Month {month_str}",
-        str(script_path),
-        lambda: _run_script(script_path, argv),
-        date_str=month_str,
-    )
-
-
-def setup_pipeline_logging(
-    project_root: Path, date_info: DateRangeInfo, debug: bool = False
-) -> tuple[logging.Logger, Path]:
-    """Setup logging for pipeline execution."""
-    log_file = project_root / "logs" / "pipeline.log"
-    log_file.parent.mkdir(parents=True, exist_ok=True)
-    logger = setup_logging(name="pipeline", log_dir="logs", log_level="DEBUG" if debug else "INFO")
-    return logger, log_file
-
-
-def log_pipeline_header(
-    logger: logging.Logger, date_info: DateRangeInfo, config: PipelineConfig, log_file: Path
-) -> None:
-    """Log pipeline header information."""
-    logger.info("\n" + "=" * 80)
-    logger.info("UNIFIED PIPELINE ORCHESTRATOR")
-    logger.info("=" * 80)
-    logger.info("Mode:             %s", date_info.display_text)
-    logger.info("Total dates:      %s", len(date_info.dates))
-    logger.info("Skip FotMob:      %s", config.skip_fotmob)
-    logger.info("Skip Bronze:      %s", config.skip_bronze)
-    logger.info(
-        "Skip ClickHouse:  %s",
-        config.skip_clickhouse or config.bronze_only or config.silver_only or config.gold_only,
-    )
-    logger.info(
-        "Skip Silver:      %s", config.skip_silver or config.bronze_only or config.gold_only
-    )
-    logger.info(
-        "Skip Gold:        %s", config.skip_gold or config.bronze_only or config.silver_only
-    )
-    logger.info("Force mode:       %s", config.force)
-    logger.info("Log file:         %s", log_file)
-    logger.info("=" * 80)
-
-
-def process_bronze_scraping(
-    date_str: str,
-    config: PipelineConfig,
-    results: PipelineResults,
-) -> StepResult | None:
-    """Process bronze scraping for a single date."""
-    if not config.skip_fotmob and not config.skip_bronze:
-        result = run_fotmob_bronze(date_str, config)
-        results.add_result("fotmob_bronze", result)
-        return result
-    return None
-
-
-def process_clickhouse_loading_per_date(
-    date_str: str,
-    config: PipelineConfig,
-    results: PipelineResults,
-) -> StepResult | None:
-    """Process ClickHouse loading for a single date."""
-    if not config.skip_fotmob:
-        result = run_clickhouse_load("fotmob", date_str, config)
-        results.add_result("fotmob_clickhouse", result)
-        return result
-    return None
-
-
-def process_clickhouse_loading_monthly(
-    month_str: str,
-    config: PipelineConfig,
-    results: PipelineResults,
-    logger: logging.Logger,
-) -> StepResult | None:
-    """Process ClickHouse loading for monthly mode."""
-    logger.info("\n\n%s", "#" * 80)
-    logger.info("# Loading to ClickHouse (Monthly Mode)")
-    logger.info("%s\n", "#" * 80)
-    if not config.skip_fotmob:
-        result = run_clickhouse_load_month("fotmob", month_str, config)
-        results.add_result("fotmob_clickhouse", result)
-        return result
-    return None
-
-
-def process_silver_per_date(
-    date_str: str,
-    config: PipelineConfig,
-    results: PipelineResults,
-) -> StepResult | None:
-    """Process silver layer for a single date."""
-    if not config.skip_fotmob:
-        result = run_silver_process(date_str)
-        results.add_result("fotmob_silver", result)
-        return result
-    return None
-
-
-def process_silver_monthly(
-    month_str: str,
-    config: PipelineConfig,
-    results: PipelineResults,
-) -> StepResult | None:
-    """Process silver layer for monthly mode."""
-    if not config.skip_fotmob:
-        result = run_silver_process_month(month_str)
-        results.add_result("fotmob_silver", result)
-        return result
-    return None
-
-
-def process_gold_per_date(
-    date_str: str,
-    config: PipelineConfig,
-    results: PipelineResults,
-) -> StepResult | None:
-    """Process gold layer for a single date."""
-    if not config.skip_fotmob:
-        result = run_gold_process(date_str)
-        results.add_result("fotmob_gold", result)
-        return result
-    return None
-
-
-def process_gold_monthly(
-    month_str: str,
-    config: PipelineConfig,
-    results: PipelineResults,
-) -> StepResult | None:
-    """Process gold layer for monthly mode."""
-    if not config.skip_fotmob:
-        result = run_gold_process_month(month_str)
-        results.add_result("fotmob_gold", result)
-        return result
-    return None
-
-
-def process_full_history(
-    config: PipelineConfig,
-    results: PipelineResults,
-) -> None:
-    """Run every non-scraping warehouse stage in explicit full-history mode."""
-    clickhouse_result: StepResult | None = None
-    if (
-        not config.skip_fotmob
-        and not config.skip_clickhouse
-        and not config.bronze_only
-        and not config.silver_only
-        and not config.gold_only
-    ):
-        script_path = PROJECT_ROOT / "scripts" / "bronze" / "load_fotmob_bronze.py"
-        argv = ["--full-history"]
-        if config.force:
-            argv.append("--force")
-        clickhouse_result = run_step(
-            "ClickHouse Load - FotMob - Full History",
-            f"{script_path} {' '.join(argv)}",
-            lambda: _run_script(script_path, argv),
-            date_str="full-history",
-        )
-        results.add_result("fotmob_clickhouse", clickhouse_result)
-    if clickhouse_result is not None and not clickhouse_result.success:
-        return
-
-    silver_result: StepResult | None = None
-    if (
-        not config.skip_fotmob
-        and not config.skip_silver
-        and not config.bronze_only
-        and not config.gold_only
-    ):
-        script_path = PROJECT_ROOT / "scripts" / "silver" / "load_fotmob_silver.py"
-        silver_result = run_step(
-            "Silver Process - Full History",
-            f"{script_path} --full-history",
-            lambda: _run_script(script_path, ["--full-history"]),
-            date_str="full-history",
-        )
-        results.add_result("fotmob_silver", silver_result)
-    if silver_result is not None and not silver_result.success:
-        return
-
-    if (
-        not config.skip_fotmob
-        and not config.skip_gold
-        and not config.bronze_only
-        and not config.silver_only
-    ):
-        script_path = PROJECT_ROOT / "scripts" / "gold" / "load_fotmob_gold.py"
-        results.add_result(
-            "fotmob_gold",
-            run_step(
-                "Gold Process - Full History",
-                f"{script_path} --full-history",
-                lambda: _run_script(script_path, ["--full-history"]),
-                date_str="full-history",
-            ),
-        )
-
-
-def log_pipeline_summary(
-    logger: logging.Logger,
-    results: PipelineResults,
-    total_dates: int,
-    elapsed_time: float,
-    log_file: Path,
-) -> None:
-    """Log pipeline summary."""
-    logger.info("\n\n" + "=" * 80)
-    logger.info("PIPELINE SUMMARY")
-    logger.info("=" * 80)
-    logger.info("Total time: %s", format_elapsed_time(elapsed_time))
-    logger.info("Dates processed: %s", total_dates)
-    logger.info("Log file: %s", log_file)
-    logger.info("\nResults by step:")
-    summary = results.get_summary()
-    for step_name, stats in summary.items():
-        display_name = RESULT_CATEGORIES.get(step_name, step_name.replace("_", " ").title())
-        logger.info("\n  %s:", display_name)
-        logger.info("    Successful: %s/%s", stats["successful"], stats["total"])
-        logger.info("    Failed: %s", stats["failed"])
-        logger.info("    Total time: %.1fs", stats["total_time"])
-        if stats["failed"] > 0:
-            logger.info("    Failed dates: %s", stats["failed_dates"])
-    logger.info("\n" + "=" * 80)
-
-
-def run_pipeline(args: argparse.Namespace) -> int:
-    """
-    Run the complete pipeline.
-    Args:
-        args: Parsed command-line arguments
-    Returns:
-        Exit code (0 for success, 1 for failure)
-    """
-    project_root = PROJECT_ROOT
-    config = create_pipeline_config(args)
-    date_info = create_date_info(args)
-    logger, log_file = setup_pipeline_logging(project_root, date_info, config.debug)
-    log_pipeline_header(logger, date_info, config, log_file)
-    results = PipelineResults()
-    pipeline_start = time.time()
-    if args.full_history:
-        logger.info("Scraping is intentionally excluded from full-history pipeline mode")
-        process_full_history(config, results)
-    for idx, date_str in enumerate(date_info.dates, 1):
-        logger.info("\n\n%s", "#" * 80)
-        logger.info("# Processing date %s/%s: %s", idx, len(date_info.dates), date_str)
-        logger.info("%s\n", "#" * 80)
-        bronze_result: StepResult | None = None
-        if not config.silver_only and not config.gold_only:
-            bronze_result = process_bronze_scraping(date_str, config, results)
-        if bronze_result is not None and not bronze_result.success:
-            logger.error(
-                "Skipping downstream stages for %s because FotMob Bronze failed",
-                date_str,
-            )
+def log_summary(report: PipelineReport, elapsed_seconds: float) -> None:
+    """Log one summary line per stage plus the skipped steps."""
+    logger.info("PIPELINE SUMMARY", total_time=format_elapsed_time(elapsed_seconds))
+    for stage in STAGES:
+        outcomes = [outcome for outcome in report.outcomes if outcome.step.stage is stage]
+        if not outcomes:
             continue
-
-        clickhouse_result: StepResult | None = None
-        if (
-            not args.month
-            and not config.skip_clickhouse
-            and not config.bronze_only
-            and not config.silver_only
-            and not config.gold_only
-        ):
-            clickhouse_result = process_clickhouse_loading_per_date(date_str, config, results)
-        if clickhouse_result is not None and not clickhouse_result.success:
-            logger.error(
-                "Skipping Silver and Gold for %s because ClickHouse Bronze load failed",
-                date_str,
-            )
-            continue
-
-        silver_result: StepResult | None = None
-        if (
-            not args.month
-            and not config.skip_silver
-            and not config.bronze_only
-            and not config.gold_only
-        ):
-            silver_result = process_silver_per_date(date_str, config, results)
-        if silver_result is not None and not silver_result.success:
-            logger.error("Skipping Gold for %s because Silver failed", date_str)
-            continue
-
-        if (
-            not args.month
-            and not config.skip_gold
-            and not config.bronze_only
-            and not config.silver_only
-        ):
-            process_gold_per_date(date_str, config, results)
-
-    if args.month and results.fotmob_bronze and not all(r.success for r in results.fotmob_bronze):
-        logger.error("Skipping monthly warehouse stages because one or more Bronze dates failed")
-        pipeline_elapsed = time.time() - pipeline_start
-        log_pipeline_summary(logger, results, len(date_info.dates), pipeline_elapsed, log_file)
-        return 1
-
-    monthly_clickhouse_result: StepResult | None = None
-    if (
-        args.month
-        and not config.skip_clickhouse
-        and not config.bronze_only
-        and not config.silver_only
-        and not config.gold_only
-    ):
-        monthly_clickhouse_result = process_clickhouse_loading_monthly(
-            args.month, config, results, logger
+        logger.info(
+            "Stage results",
+            stage=stage.label,
+            successful=sum(outcome.success for outcome in outcomes),
+            total=len(outcomes),
+            failed_scopes=[o.step.scope_label for o in outcomes if not o.success],
+            seconds=round(sum(outcome.elapsed_seconds for outcome in outcomes), 1),
         )
-    if monthly_clickhouse_result is not None and not monthly_clickhouse_result.success:
-        logger.error("Skipping monthly Silver and Gold because ClickHouse Bronze load failed")
-        pipeline_elapsed = time.time() - pipeline_start
-        log_pipeline_summary(logger, results, len(date_info.dates), pipeline_elapsed, log_file)
-        return 1
+    if report.skipped:
+        logger.info("Skipped steps", steps=[step.name for step in report.skipped])
 
-    monthly_silver_result: StepResult | None = None
-    if args.month and not config.skip_silver and not config.bronze_only and not config.gold_only:
-        monthly_silver_result = process_silver_monthly(args.month, config, results)
-    if monthly_silver_result is not None and not monthly_silver_result.success:
-        logger.error("Skipping monthly Gold because Silver failed")
-        pipeline_elapsed = time.time() - pipeline_start
-        log_pipeline_summary(logger, results, len(date_info.dates), pipeline_elapsed, log_file)
-        return 1
 
-    if args.month and not config.skip_gold and not config.bronze_only and not config.silver_only:
-        process_gold_monthly(args.month, config, results)
-    pipeline_elapsed = time.time() - pipeline_start
-    total_dates = len(date_info.dates) if not args.full_history else 0
-    log_pipeline_summary(logger, results, total_dates, pipeline_elapsed, log_file)
-    if results.all_successful():
-        logger.info("[OK] Pipeline completed successfully!")
-        return 0
+def create_argument_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser."""
+    parser = argparse.ArgumentParser(
+        description="Run the FotMob pipeline: Bronze scrape, Bronze load, Silver, and Gold",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 scripts/orchestration/run_fotmob_pipeline.py 20251113
+  python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251101 --end-date 20251107
+  python3 scripts/orchestration/run_fotmob_pipeline.py --month 202511
+  python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
+  python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --silver-only
+  python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --skip-bronze --force
+        """,
+    )
+    scope = parser.add_mutually_exclusive_group(required=True)
+    scope.add_argument("date", nargs="?", help="Date to process (YYYYMMDD)")
+    scope.add_argument("--single-date", help="Alias for the positional date (YYYYMMDD)")
+    scope.add_argument("--date", dest="named_date", help="Date to process (YYYYMMDD)")
+    scope.add_argument("--start-date", help="First date of an inclusive range (YYYYMMDD)")
+    scope.add_argument("--month", help="Process a whole month (YYYYMM)")
+    scope.add_argument(
+        "--full-history",
+        action="store_true",
+        help="Load all Historical Bronze files and rebuild Silver and Gold (no scraping)",
+    )
+    parser.add_argument("--end-date", help="Last date of the range (YYYYMMDD)")
+
+    only = parser.add_mutually_exclusive_group()
+    only.add_argument("--bronze-only", action="store_true", help="Run the Bronze scrape only")
+    only.add_argument("--silver-only", action="store_true", help="Run Silver only")
+    only.add_argument("--gold-only", action="store_true", help="Run Gold only")
+    parser.add_argument("--skip-bronze", action="store_true", help="Skip the Bronze scrape")
+    parser.add_argument("--skip-clickhouse", action="store_true", help="Skip the Bronze load")
+    parser.add_argument("--skip-silver", action="store_true", help="Skip Silver")
+    parser.add_argument("--skip-gold", action="store_true", help="Skip Gold")
+    parser.add_argument("--skip-fotmob", action="store_true", help=argparse.SUPPRESS)
+
+    parser.add_argument(
+        "--force", action="store_true", help="Re-scrape and reload even if data exists"
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument(
+        "--stage-timeout-minutes",
+        type=float,
+        default=DEFAULT_STAGE_TIMEOUT_MINUTES,
+        help=(
+            "Cancel any single step that runs longer than this "
+            f"(default: {DEFAULT_STAGE_TIMEOUT_MINUTES}; 0 disables)"
+        ),
+    )
+    return parser
+
+
+def parse_arguments(argv: Sequence[str] | None = None) -> argparse.Namespace:
+    """Parse and validate command-line arguments; ``args.scope`` holds the RunScope."""
+    parser = create_argument_parser()
+    args = parser.parse_args(argv)
+    named_date = args.single_date or args.named_date
+    if named_date:
+        if args.date:
+            parser.error("Use either the positional date or a named date selector, not both")
+        args.date = named_date
+    try:
+        args.scope = RunScope.from_args(args)
+    except ScopeError as error:
+        parser.error(str(error))
+    if args.full_history and args.bronze_only:
+        parser.error("--full-history cannot use --bronze-only because scraping is excluded")
+    if args.stage_timeout_minutes < 0:
+        parser.error("--stage-timeout-minutes cannot be negative")
+    return args
+
+
+def options_from_args(args: argparse.Namespace) -> PipelineOptions:
+    """Translate the stage flags into the selected stages."""
+    if args.bronze_only:
+        stages = {SCRAPE.key}
+    elif args.silver_only:
+        stages = {SILVER.key}
+    elif args.gold_only:
+        stages = {GOLD.key}
     else:
-        logger.warning("[WARN] Pipeline completed with some failures (see details above)")
-        return 1
+        skipped = {
+            SCRAPE.key: args.skip_bronze,
+            BRONZE.key: args.skip_clickhouse,
+            SILVER.key: args.skip_silver,
+            GOLD.key: args.skip_gold,
+        }
+        stages = {key for key, skip in skipped.items() if not skip}
+    if args.skip_fotmob:
+        warn_deprecated("--skip-fotmob", "the --skip-* stage flags (it skips every stage)")
+        stages = set()
+    timeout = args.stage_timeout_minutes * 60 or None
+    return PipelineOptions(
+        stages=frozenset(stages), force=args.force, debug=args.debug, timeout_seconds=timeout
+    )
+
+
+def run_pipeline(args: argparse.Namespace, runner: StepRunner = run_step_subprocess) -> int:
+    """Plan and run the pipeline for parsed arguments; return the exit code."""
+    setup_logging(name="pipeline", log_dir="logs", log_level="DEBUG" if args.debug else "INFO")
+    options = options_from_args(args)
+    plan = build_plan(args.scope, options)
+    logger.info(
+        "Starting FotMob pipeline",
+        scope=args.scope.label,
+        stages=[stage.key for stage in STAGES if stage.key in options.stages],
+        steps=sum(len(phase) for chain in plan for phase in chain),
+        timeout_seconds=options.timeout_seconds,
+    )
+    if args.scope.kind == "full-history":
+        logger.info("Scraping is intentionally excluded from full-history pipeline mode")
+    started = time.monotonic()
+    report = run_plan(plan, options, runner=runner, on_failure=send_failure_alert)
+    log_summary(report, time.monotonic() - started)
+    if report.exit_code == 0:
+        logger.info("[OK] Pipeline completed successfully")
+    else:
+        logger.warning("[WARN] Pipeline completed with failures")
+    return report.exit_code
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -848,13 +397,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         return run_pipeline(parse_arguments(argv))
     except KeyboardInterrupt:
-        logger = get_logger("pipeline")
-        logger.warning("\n\nPipeline interrupted by user. Exiting...")
+        logger.warning("Pipeline interrupted by user")
         return 130
-    except (RuntimeError, OSError, ValueError) as e:
-        logger = get_logger("pipeline")
-        logger.error("\nFatal error: %s", e, exc_info=True)
-        return 1
 
 
 if __name__ == "__main__":
