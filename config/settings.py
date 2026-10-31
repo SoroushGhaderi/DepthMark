@@ -20,7 +20,7 @@ Usage:
 """
 
 import os
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +32,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # ---------------------------------------------------------------------------
 
 
-class Environment(str, Enum):
+class Environment(StrEnum):
     """Application environment types."""
 
     DEVELOPMENT = "development"
@@ -516,7 +516,7 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = [
+__all__ = [  # noqa: F822 - "settings" resolves lazily via __getattr__
     "settings",
     "Settings",
     "Environment",

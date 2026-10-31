@@ -5,12 +5,12 @@ must not serialize ``model_dump()`` as the artifact: validation is deliberately
 separate from writing so defaults and coercions cannot rewrite source JSON.
 """
 
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
-OddsValue = Union[int, float]
-ScoreValue = Union[int, float, str]
+OddsValue = int | float
+ScoreValue = int | float | str
 
 
 class _SourceArtifactModel(BaseModel):

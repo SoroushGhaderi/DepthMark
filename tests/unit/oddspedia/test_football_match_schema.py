@@ -1,14 +1,8 @@
 import json
 import os
-import sys
 import tempfile
 import unittest
 from unittest.mock import patch
-
-ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-SRC = os.path.join(ROOT, "src")
-if SRC not in sys.path:
-    sys.path.insert(0, SRC)
 
 from src.oddspedia.scraping.match_scraper import (
     _JS_EXTRACT_ODDS,
@@ -34,6 +28,8 @@ from src.oddspedia.scraping.match_scraper import (
     scrape_match,
 )
 from src.oddspedia.scraping.utils import load_json, save_json
+
+ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 
 class _FootballDriver:
@@ -546,12 +542,6 @@ class FootballMatchSchemaTests(unittest.TestCase):
                     }
                 return super().execute_script(script, *args)
 
-        available_odds = [
-            {
-                "market": "Full Time Result",
-                "lines": [{"type": "main", "label": "Main Line", "home": 2.1, "away": 3.2}],
-            }
-        ]
         with (
             patch("src.oddspedia.scraping.match_scraper.safe_get", return_value=True),
             patch(

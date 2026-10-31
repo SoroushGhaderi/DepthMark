@@ -189,7 +189,7 @@ class OddspediaBronzeLoader:
                     error=str(exc),
                 )
             except Exception as status_exc:
-                logger.error(
+                logger.exception(
                     "Oddspedia Bronze failure status could not be recorded",
                     date=date_id,
                     run_id=run_id,
@@ -205,6 +205,7 @@ class OddspediaBronzeLoader:
                         "Oddspedia Bronze staging table cleanup failed",
                         table=f"{STAGING_DATABASE}.{stage}",
                         error=str(exc),
+                        exc_info=True,
                     )
 
     def _insert_stage(self, stage: str, rows: list[dict[str, Any]]) -> None:
@@ -396,7 +397,7 @@ class OddspediaBronzeLoader:
                 return []
             records = _load_json(path)
         if not isinstance(records, list):
-            raise ValueError("Oddspedia daily listing must contain a list: %s" % path)
+            raise ValueError(f"Oddspedia daily listing must contain a list: {path}")
         discovery_date = datetime.strptime(date_id, "%Y%m%d").date()
         rows = []
         for record in records:

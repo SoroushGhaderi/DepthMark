@@ -4,6 +4,7 @@ import argparse
 import sys
 from collections.abc import Sequence
 from contextlib import nullcontext
+from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -104,7 +105,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             summary = {}
             for result in results:
                 summary[result.resolution_status] = summary.get(result.resolution_status, 0) + 1
-            print("%s %s" % (date_id, summary))
+            print(f"{date_id} {summary}")
         return 0
     finally:
         client.disconnect()
