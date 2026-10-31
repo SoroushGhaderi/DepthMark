@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_possession_passing_accurate_long_range (
+INSERT INTO gold_signals.sig_player_possession_passing_accurate_long_range (
     match_id,
     match_date,
     home_team_id,

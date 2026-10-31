@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_unbeatable_duelist (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist (
     match_id,
     match_date,
     home_team_id,

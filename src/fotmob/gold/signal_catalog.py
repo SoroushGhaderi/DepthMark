@@ -18,7 +18,8 @@ The rules:
   player signals and ``match_team`` otherwise.
 - ``asset_paths.table`` is ``gold_signals.<signal_id>`` and
   ``asset_paths.sql`` is ``clickhouse/gold/dml/signals/<entity>/<signal_id>.sql``,
-  which must exist. Every signal DML file and DDL table has a catalog.
+  which must exist and insert into ``asset_paths.table``. Every signal DML
+  file and DDL table has a catalog.
 - The identity chain holds: every ``row_identity`` column exists in the DDL
   table, the DDL ``signal_instance_id`` default equals
   :func:`signal_instance_id_expression`, and ``ORDER BY`` ends with
@@ -55,6 +56,9 @@ SIGNAL_TABLE_DATABASE = "gold_signals"
 SIGNAL_IDENTITY_SCHEME_VERSION = "v1"
 SIGNAL_INSTANCE_ID_COLUMN = "signal_instance_id"
 INDEX_FILE_NAME = "README.md"
+INSERT_TARGET_RE = re.compile(
+    r"\bINSERT\s+INTO\s+`?([A-Za-z0-9_]+\.[A-Za-z0-9_]+)`?", re.IGNORECASE
+)
 INDEX_START_MARKER = "<!-- signal-index:start -->"
 INDEX_END_MARKER = "<!-- signal-index:end -->"
 
@@ -373,6 +377,10 @@ def _read_definition(
                 violate(f"asset_paths.sql '{expected_sql}' does not exist")
             else:
                 sql_path = project_root / expected_sql
+                insert_target = _insert_target(sql_path.read_text(encoding="utf-8"))
+                expected_target = f"{SIGNAL_TABLE_DATABASE}.{signal_id}"
+                if insert_target != expected_target:
+                    violate(f"signal SQL must INSERT INTO {expected_target}, not {insert_target}")
 
     violations.extend(file_violations)
     if file_violations or sql_path is None or row_identity is None:
@@ -394,6 +402,12 @@ def _read_definition(
         frontmatter=MappingProxyType(copy.deepcopy(frontmatter)),
         body=body,
     )
+
+
+def _insert_target(sql: str) -> str | None:
+    """Return the first ``INSERT INTO <database>.<table>`` target in ``sql``."""
+    match = INSERT_TARGET_RE.search(sql)
+    return match.group(1) if match else None
 
 
 def _check_dml_coverage(

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_creativity_playmaking_playmaker_to_striker_connection (
+INSERT INTO gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection (
     match_id,
     match_date,
     home_team_id,

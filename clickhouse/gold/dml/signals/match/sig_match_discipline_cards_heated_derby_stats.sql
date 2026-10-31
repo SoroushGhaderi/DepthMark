@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_discipline_cards_heated_derby_stats (
+INSERT INTO gold_signals.sig_match_discipline_cards_heated_derby_stats (
     match_id,
     match_date,
     home_team_id,

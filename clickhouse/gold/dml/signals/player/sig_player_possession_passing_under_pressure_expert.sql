@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_possession_passing_under_pressure_expert (
+INSERT INTO gold_signals.sig_player_possession_passing_under_pressure_expert (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_discipline_cards_man_advantage_collapse (
+INSERT INTO gold_signals.sig_team_discipline_cards_man_advantage_collapse (
     match_id,
     match_date,
     home_team_id,

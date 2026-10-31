@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_possession_passing_shot_per_possession (
+INSERT INTO gold_signals.sig_team_possession_passing_shot_per_possession (
     match_id,
     match_date,
     home_team_id,

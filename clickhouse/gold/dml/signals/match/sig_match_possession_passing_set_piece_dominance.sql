@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_possession_passing_set_piece_dominance (
+INSERT INTO gold_signals.sig_match_possession_passing_set_piece_dominance (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_possession_passing_midfield_workhorse (
+INSERT INTO gold_signals.sig_player_possession_passing_midfield_workhorse (
     match_id,
     match_date,
     home_team_id,

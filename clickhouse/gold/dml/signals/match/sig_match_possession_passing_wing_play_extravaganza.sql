@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_possession_passing_wing_play_extravaganza (
+INSERT INTO gold_signals.sig_match_possession_passing_wing_play_extravaganza (
     match_id,
     match_date,
     home_team_id,

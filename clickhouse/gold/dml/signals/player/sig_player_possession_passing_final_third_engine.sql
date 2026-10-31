@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_possession_passing_final_third_engine (
+INSERT INTO gold_signals.sig_player_possession_passing_final_third_engine (
     match_id,
     match_date,
     home_team_id,

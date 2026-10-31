@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_creativity_playmaking_dribbling_exhibition (
+INSERT INTO gold_signals.sig_team_creativity_playmaking_dribbling_exhibition (
     match_id,
     match_date,
     home_team_id,

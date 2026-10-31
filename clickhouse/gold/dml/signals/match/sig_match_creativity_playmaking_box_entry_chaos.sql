@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_creativity_playmaking_box_entry_chaos (
+INSERT INTO gold_signals.sig_match_creativity_playmaking_box_entry_chaos (
     match_id,
     match_date,
     home_team_id,

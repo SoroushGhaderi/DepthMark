@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_goalkeeping_defense_keeper_masterclass_duel (
+INSERT INTO gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel (
     match_id,
     match_date,
     home_team_id,

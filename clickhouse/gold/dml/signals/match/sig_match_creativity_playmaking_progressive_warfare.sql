@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_creativity_playmaking_progressive_warfare (
+INSERT INTO gold_signals.sig_match_creativity_playmaking_progressive_warfare (
     match_id,
     match_date,
     home_team_id,

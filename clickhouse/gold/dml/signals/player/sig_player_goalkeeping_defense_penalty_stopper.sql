@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_penalty_stopper (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_penalty_stopper (
     match_id,
     match_date,
     home_team_id,

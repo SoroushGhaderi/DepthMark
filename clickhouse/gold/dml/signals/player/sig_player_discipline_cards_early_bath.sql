@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_discipline_cards_early_bath (
+INSERT INTO gold_signals.sig_player_discipline_cards_early_bath (
     match_id,
     match_date,
     home_team_id,

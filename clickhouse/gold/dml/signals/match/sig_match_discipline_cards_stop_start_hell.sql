@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_discipline_cards_stop_start_hell (
+INSERT INTO gold_signals.sig_match_discipline_cards_stop_start_hell (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_volume_over_quality (
+INSERT INTO gold_signals.sig_player_shooting_goals_volume_over_quality (
     match_id,
     match_date,
     home_team_id,

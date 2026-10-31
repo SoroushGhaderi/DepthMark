@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_possession_passing_high_press_victim (
+INSERT INTO gold_signals.sig_team_possession_passing_high_press_victim (
     match_id,
     match_date,
     home_team_id,

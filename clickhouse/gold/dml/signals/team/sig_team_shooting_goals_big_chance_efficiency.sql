@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_shooting_goals_big_chance_efficiency (
+INSERT INTO gold_signals.sig_team_shooting_goals_big_chance_efficiency (
     match_id,
     match_date,
     home_team_id,

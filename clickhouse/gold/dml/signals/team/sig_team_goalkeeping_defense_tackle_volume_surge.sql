@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_goalkeeping_defense_tackle_volume_surge (
+INSERT INTO gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge (
     match_id,
     match_date,
     home_team_id,

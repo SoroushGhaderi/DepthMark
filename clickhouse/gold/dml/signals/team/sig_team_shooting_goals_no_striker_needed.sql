@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_shooting_goals_no_striker_needed (
+INSERT INTO gold_signals.sig_team_shooting_goals_no_striker_needed (
     match_id,
     match_date,
     home_team_id,

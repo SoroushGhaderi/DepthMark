@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_possession_passing_high_risk_passer (
+INSERT INTO gold_signals.sig_player_possession_passing_high_risk_passer (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_possession_passing_long_ball_specialist (
+INSERT INTO gold_signals.sig_player_possession_passing_long_ball_specialist (
     match_id,
     match_date,
     home_team_id,

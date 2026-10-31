@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_aerial_stronghold (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_aerial_stronghold (
     match_id,
     match_date,
     home_team_id,

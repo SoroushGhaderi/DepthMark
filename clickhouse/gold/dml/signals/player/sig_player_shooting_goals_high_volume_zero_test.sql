@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_high_volume_zero_test (
+INSERT INTO gold_signals.sig_player_shooting_goals_high_volume_zero_test (
     match_id,
     match_date,
     home_team_id,

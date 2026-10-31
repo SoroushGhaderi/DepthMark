@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_discipline_cards_instant_impact_red (
+INSERT INTO gold_signals.sig_player_discipline_cards_instant_impact_red (
     match_id,
     match_date,
     home_team_id,

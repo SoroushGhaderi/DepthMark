@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_discipline_cards_captain_reprimand (
+INSERT INTO gold_signals.sig_player_discipline_cards_captain_reprimand (
     match_id,
     match_date,
     home_team_id,

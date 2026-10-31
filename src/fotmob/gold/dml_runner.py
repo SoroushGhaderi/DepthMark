@@ -12,7 +12,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from src.fotmob.gold.signal_catalog import SignalCatalog, SignalDefinition, load_signal_catalog
+from src.fotmob.gold.signal_catalog import (
+    SIGNAL_TABLE_DATABASE,
+    SignalCatalog,
+    SignalDefinition,
+    load_signal_catalog,
+)
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.integrations.clickhouse.sql import split_sql_statements
 from src.warehouse.databases import gold_scenarios_db, gold_signals_db
@@ -32,6 +37,9 @@ GOLD_DML_DIR = GOLD_SQL_DIR / "dml"
 SCENARIO_DML_DIR = GOLD_DML_DIR / "scenarios"
 JOB_ID_RE = re.compile(r"^(scenario|sig|signal)_[a-z0-9_]+$")
 SIGNAL_FAMILY_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
+
+# Database that scenario SQL files name; the runner maps it to the configured one.
+SCENARIO_TABLE_DATABASE = "gold_scenarios"
 
 
 @dataclass(frozen=True)
@@ -176,13 +184,11 @@ def build_scoped_gold_job(job: GoldSqlJob) -> ScopedSqlJob:
 
     sql_content = job.sql_file.read_text(encoding="utf-8")
     if job.kind == "scenario":
-        sql_content = sql_content.replace(f"{gold_scenarios_db()}.", f"{job.target_db}.")
-        sql_content = sql_content.replace("gold.scenario_", f"{job.target_db}.scenario_")
+        # SQL names the canonical database; map it to the configured target.
+        sql_content = sql_content.replace(f"{SCENARIO_TABLE_DATABASE}.", f"{job.target_db}.")
         date_expression = "toDateOrNull(match_time_utc_date)"
     else:
-        sql_content = sql_content.replace(f"{gold_signals_db()}.", f"{job.target_db}.")
-        sql_content = sql_content.replace("gold.sig_", f"{job.target_db}.sig_")
-        sql_content = sql_content.replace("gold.signal_", f"{job.target_db}.signal_")
+        sql_content = sql_content.replace(f"{SIGNAL_TABLE_DATABASE}.", f"{job.target_db}.")
         date_expression = "match_date"
     statements = split_sql_statements(sql_content)
     if not statements:

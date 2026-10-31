@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_discipline_cards_collective_aggression (
+INSERT INTO gold_signals.sig_team_discipline_cards_collective_aggression (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_creativity_playmaking_unproductive_beauty (
+INSERT INTO gold_signals.sig_match_creativity_playmaking_unproductive_beauty (
     match_id,
     match_date,
     home_team_id,

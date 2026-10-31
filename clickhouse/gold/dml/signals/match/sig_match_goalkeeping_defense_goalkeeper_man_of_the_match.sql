@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match (
+INSERT INTO gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match (
     match_id,
     match_date,
     home_team_id,

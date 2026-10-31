@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_shooting_goals_the_brace_battle (
+INSERT INTO gold_signals.sig_match_shooting_goals_the_brace_battle (
     match_id,
     match_date,
     home_team_id,

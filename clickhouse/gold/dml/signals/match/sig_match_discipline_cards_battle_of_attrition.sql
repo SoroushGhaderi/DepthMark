@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_discipline_cards_battle_of_attrition (
+INSERT INTO gold_signals.sig_match_discipline_cards_battle_of_attrition (
     match_id,
     match_date,
     home_team_id,

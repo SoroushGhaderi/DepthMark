@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_possession_passing_passing_fatigue_index (
+INSERT INTO gold_signals.sig_team_possession_passing_passing_fatigue_index (
     match_id,
     match_date,
     home_team_id,

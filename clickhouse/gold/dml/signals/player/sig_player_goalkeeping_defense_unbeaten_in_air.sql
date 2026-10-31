@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_unbeaten_in_air (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air (
     match_id,
     match_date,
     home_team_id,

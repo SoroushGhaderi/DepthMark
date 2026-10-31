@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_discipline_cards_first_half_frenzy (
+INSERT INTO gold_signals.sig_team_discipline_cards_first_half_frenzy (
     match_id,
     match_date,
     home_team_id,

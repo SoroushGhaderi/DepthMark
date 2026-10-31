@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_clean_sheet_contributor (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor (
     match_id,
     match_date,
     home_team_id,

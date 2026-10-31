@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_discipline_cards_boiling_over (
+INSERT INTO gold_signals.sig_match_discipline_cards_boiling_over (
     match_id, match_date, home_team_id, home_team_name, away_team_id, away_team_name,
     home_score, away_score, triggered_side, triggered_team_id, triggered_team_name,
     opponent_team_id, opponent_team_name, trigger_threshold_min_late_window_cards,

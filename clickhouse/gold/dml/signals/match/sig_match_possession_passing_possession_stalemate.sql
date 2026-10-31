@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_possession_passing_possession_stalemate (
+INSERT INTO gold_signals.sig_match_possession_passing_possession_stalemate (
     match_id,
     match_date,
     home_team_id,

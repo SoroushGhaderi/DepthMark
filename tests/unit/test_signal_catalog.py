@@ -241,6 +241,16 @@ def test_asset_paths_must_follow_convention_and_exist(tmp_path: Path) -> None:
     ) in violations
 
 
+def test_signal_sql_must_insert_into_its_catalog_table(project: SignalProject) -> None:
+    sql_path = project.root / f"clickhouse/gold/dml/signals/match/{MATCH_SIGNAL}.sql"
+    sql_path.write_text(f"INSERT INTO gold.{MATCH_SIGNAL} SELECT 1;\n")
+
+    assert project.violations() == [
+        f"catalogs/{MATCH_SIGNAL}.md: signal SQL must INSERT INTO "
+        f"gold_signals.{MATCH_SIGNAL}, not gold.{MATCH_SIGNAL}"
+    ]
+
+
 def test_signal_sql_and_ddl_without_catalog_are_violations(project: SignalProject) -> None:
     orphan = "sig_team_shooting_goals_orphan"
     project.add_signal(orphan, frontmatter=_frontmatter(orphan), write_catalog=False)

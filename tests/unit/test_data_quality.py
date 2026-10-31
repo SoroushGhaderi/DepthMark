@@ -105,9 +105,9 @@ def _signal_ddl_columns(project_root: Path) -> dict[str, tuple[str, ...]]:
 
 
 def _signal_insert_columns(sql: str) -> tuple[str, tuple[str, ...]]:
-    match = re.search(r"INSERT\s+INTO\s+gold\.(sig_[a-z0-9_]+)\s*\(", sql, re.IGNORECASE)
+    match = re.search(r"INSERT\s+INTO\s+gold_signals\.(sig_[a-z0-9_]+)\s*\(", sql, re.IGNORECASE)
     if not match:
-        raise ValueError("Signal SQL must insert into gold.sig_*")
+        raise ValueError("Signal SQL must insert into gold_signals.sig_*")
     body = _parenthesized_body(sql, sql.find("(", match.end() - 1))
     columns = tuple(item.strip().strip("`") for item in _split_top_level_csv(body))
     return match.group(1), columns

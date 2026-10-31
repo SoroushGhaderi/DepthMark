@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_shooting_goals_one_man_army (
+INSERT INTO gold_signals.sig_player_shooting_goals_one_man_army (
     match_id,
     match_date,
     home_team_id,

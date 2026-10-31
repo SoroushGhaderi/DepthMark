@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_shooting_goals_rapid_fire_exchange (
+INSERT INTO gold_signals.sig_match_shooting_goals_rapid_fire_exchange (
     match_id,
     match_date,
     home_team_id,

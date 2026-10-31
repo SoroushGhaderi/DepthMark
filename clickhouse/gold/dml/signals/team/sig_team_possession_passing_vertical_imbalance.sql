@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_possession_passing_vertical_imbalance (
+INSERT INTO gold_signals.sig_team_possession_passing_vertical_imbalance (
     match_id,
     match_date,
     home_team_id,

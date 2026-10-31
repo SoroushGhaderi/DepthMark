@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_match_discipline_cards_blood_and_thunder (
+INSERT INTO gold_signals.sig_match_discipline_cards_blood_and_thunder (
     match_id,
     match_date,
     home_team_id,

@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_possession_passing_high_tempo_passing (
+INSERT INTO gold_signals.sig_team_possession_passing_high_tempo_passing (
     match_id,
     match_date,
     home_team_id,

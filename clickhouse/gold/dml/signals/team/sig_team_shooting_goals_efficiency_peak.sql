@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_team_shooting_goals_efficiency_peak (
+INSERT INTO gold_signals.sig_team_shooting_goals_efficiency_peak (
     match_id,
     match_date,
     home_team_id,

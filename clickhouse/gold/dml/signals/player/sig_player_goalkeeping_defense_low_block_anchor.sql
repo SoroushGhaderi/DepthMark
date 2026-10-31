@@ -1,4 +1,4 @@
-INSERT INTO gold.sig_player_goalkeeping_defense_low_block_anchor (
+INSERT INTO gold_signals.sig_player_goalkeeping_defense_low_block_anchor (
     match_id,
     match_date,
     home_team_id,
