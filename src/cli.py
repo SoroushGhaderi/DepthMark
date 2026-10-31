@@ -1,16 +1,20 @@
 """DepthMark CLI entrypoint.
 
-This command provides a stable package entrypoint and proxies to the existing
-scripts-based workflows.
+``depthmark <command>`` imports the command's ``main(argv)`` from ``src/`` and
+runs it in-process. The matching script under ``scripts/`` is a thin shim
+around the same function, so both entry points behave identically.
 """
 
 from __future__ import annotations
 
 import argparse
-import subprocess
+import importlib
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+
+from src.common.deprecation import warn_deprecated
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
@@ -19,49 +23,91 @@ CLICKHOUSE_SQL_DIR = PROJECT_ROOT / "clickhouse"
 
 @dataclass(frozen=True)
 class CommandSpec:
-    """One package command and its script target."""
+    """One package command: its ``module:function`` target and script shim."""
 
+    target: str
     script: str
     replacement: str | None = None
     arguments: tuple[str, ...] = ()
 
 
 CANONICAL_COMMANDS: dict[str, CommandSpec] = {
-    "health-check": CommandSpec("health_check.py"),
-    "report-scraping": CommandSpec("report_scraping.py"),
-    "scrape-fotmob": CommandSpec("bronze/scrape_fotmob.py"),
-    "load-fotmob-bronze": CommandSpec("bronze/load_fotmob_bronze.py"),
-    "remove-fotmob-bronze": CommandSpec("bronze/remove_fotmob_bronze.py"),
-    "load-fotmob-silver": CommandSpec("silver/load_fotmob_silver.py"),
-    "load-fotmob-gold": CommandSpec("gold/load_fotmob_gold.py"),
-    "run-fotmob-gold-jobs": CommandSpec("gold/run_fotmob_gold_jobs.py"),
-    "build-fotmob-signal-activations": CommandSpec("gold/build_fotmob_signal_activations.py"),
-    "check-signal-catalogs": CommandSpec("quality/check_signal_catalogs.py"),
-    "run-fotmob-pipeline": CommandSpec("orchestration/run_fotmob_pipeline.py"),
-    "setup-fotmob-warehouse": CommandSpec("orchestration/setup_fotmob_warehouse.py"),
-    "discover-oddspedia-events": CommandSpec("oddspedia/discover_oddspedia_events.py"),
-    "prioritize-oddspedia-events": CommandSpec("oddspedia/prioritize_oddspedia_events.py"),
-    "scrape-oddspedia-matches": CommandSpec("oddspedia/scrape_oddspedia_matches.py"),
-    "run-oddspedia-pipeline": CommandSpec("oddspedia/run_oddspedia_pipeline.py"),
-    "setup-oddspedia-warehouse": CommandSpec("oddspedia/setup_oddspedia_warehouse.py"),
-    "load-oddspedia-bronze": CommandSpec("oddspedia/load_oddspedia_bronze.py"),
-    "resolve-oddspedia-events": CommandSpec("oddspedia/resolve_oddspedia_events.py"),
+    "health-check": CommandSpec("src.operations.commands.health_check:main", "health_check.py"),
+    "report-scraping": CommandSpec(
+        "src.operations.commands.report_scraping:main", "report_scraping.py"
+    ),
+    "scrape-fotmob": CommandSpec("src.fotmob.commands.scrape:main", "bronze/scrape_fotmob.py"),
+    "load-fotmob-bronze": CommandSpec(
+        "src.fotmob.commands.load_bronze:main", "bronze/load_fotmob_bronze.py"
+    ),
+    "remove-fotmob-bronze": CommandSpec(
+        "src.fotmob.commands.remove_bronze:main", "bronze/remove_fotmob_bronze.py"
+    ),
+    "load-fotmob-silver": CommandSpec(
+        "src.fotmob.commands.load_silver:main", "silver/load_fotmob_silver.py"
+    ),
+    "load-fotmob-gold": CommandSpec(
+        "src.fotmob.commands.load_gold:main", "gold/load_fotmob_gold.py"
+    ),
+    "run-fotmob-gold-jobs": CommandSpec(
+        "src.fotmob.commands.run_gold_jobs:main", "gold/run_fotmob_gold_jobs.py"
+    ),
+    "build-fotmob-signal-activations": CommandSpec(
+        "src.fotmob.commands.build_signal_activations:main",
+        "gold/build_fotmob_signal_activations.py",
+    ),
+    "check-signal-catalogs": CommandSpec(
+        "src.fotmob.commands.check_signal_catalogs:main", "quality/check_signal_catalogs.py"
+    ),
+    "run-fotmob-pipeline": CommandSpec(
+        "src.fotmob.commands.run_pipeline:main", "orchestration/run_fotmob_pipeline.py"
+    ),
+    "setup-fotmob-warehouse": CommandSpec(
+        "src.fotmob.commands.setup_warehouse:main", "orchestration/setup_fotmob_warehouse.py"
+    ),
+    "discover-oddspedia-events": CommandSpec(
+        "src.oddspedia.scraping.entrypoints:discover_main",
+        "oddspedia/discover_oddspedia_events.py",
+    ),
+    "prioritize-oddspedia-events": CommandSpec(
+        "src.oddspedia.scraping.entrypoints:prioritize_main",
+        "oddspedia/prioritize_oddspedia_events.py",
+    ),
+    "scrape-oddspedia-matches": CommandSpec(
+        "src.oddspedia.scraping.entrypoints:scrape_main", "oddspedia/scrape_oddspedia_matches.py"
+    ),
+    "run-oddspedia-pipeline": CommandSpec(
+        "src.oddspedia.scraping.entrypoints:run_main", "oddspedia/run_oddspedia_pipeline.py"
+    ),
+    "setup-oddspedia-warehouse": CommandSpec(
+        "src.oddspedia.commands.setup_warehouse:main", "oddspedia/setup_oddspedia_warehouse.py"
+    ),
+    "load-oddspedia-bronze": CommandSpec(
+        "src.oddspedia.commands.load_bronze:main", "oddspedia/load_oddspedia_bronze.py"
+    ),
+    "resolve-oddspedia-events": CommandSpec(
+        "src.oddspedia.commands.resolve_events:main", "oddspedia/resolve_oddspedia_events.py"
+    ),
 }
 
 
 def _alias(canonical_command: str) -> CommandSpec:
     """Build a compatibility command that targets a canonical command."""
+    canonical = CANONICAL_COMMANDS[canonical_command]
     return CommandSpec(
-        script=CANONICAL_COMMANDS[canonical_command].script,
+        target=canonical.target,
+        script=canonical.script,
         replacement=canonical_command,
-        arguments=CANONICAL_COMMANDS[canonical_command].arguments,
+        arguments=canonical.arguments,
     )
 
 
 def _oddspedia_report_alias(output_format: str) -> CommandSpec:
     """Build an old Oddspedia reporting command on the unified interface."""
+    report = CANONICAL_COMMANDS["report-scraping"]
     return CommandSpec(
-        script=CANONICAL_COMMANDS["report-scraping"].script,
+        target=report.target,
+        script=report.script,
         replacement="report-scraping",
         arguments=("--source", "oddspedia", "--format", output_format),
     )
@@ -84,44 +130,54 @@ COMPATIBILITY_COMMANDS: dict[str, CommandSpec] = {
     "oddspedia-load-bronze": _alias("load-oddspedia-bronze"),
     "oddspedia-resolve-events": _alias("resolve-oddspedia-events"),
     # Older umbrella and ClickHouse-named commands keep their argument behavior.
-    "oddspedia-events": CommandSpec("oddspedia/events.py", "a phase-specific Oddspedia command"),
-    "oddspedia-football": CommandSpec("oddspedia/football.py", "run-oddspedia-pipeline"),
+    "oddspedia-events": CommandSpec(
+        "src.oddspedia.scraping.entrypoints:football_main",
+        "oddspedia/events.py",
+        "a phase-specific Oddspedia command",
+    ),
+    "oddspedia-football": CommandSpec(
+        "src.oddspedia.scraping.entrypoints:football_main",
+        "oddspedia/football.py",
+        "run-oddspedia-pipeline",
+    ),
     "oddspedia-setup-clickhouse": CommandSpec(
-        "oddspedia/setup_clickhouse.py", "setup-oddspedia-warehouse"
+        "src.oddspedia.commands.setup_warehouse:main",
+        "oddspedia/setup_clickhouse.py",
+        "setup-oddspedia-warehouse",
     ),
     "oddspedia-load-clickhouse": CommandSpec(
-        "oddspedia/load_clickhouse.py", "load-oddspedia-bronze"
+        "src.oddspedia.commands.load_bronze:main",
+        "oddspedia/load_clickhouse.py",
+        "load-oddspedia-bronze",
     ),
     "oddspedia-resolve-matches": CommandSpec(
-        "oddspedia/resolve_matches.py", "resolve-oddspedia-events"
+        "src.oddspedia.commands.resolve_events:main",
+        "oddspedia/resolve_matches.py",
+        "resolve-oddspedia-events",
     ),
 }
 
 COMMANDS: dict[str, CommandSpec] = {**CANONICAL_COMMANDS, **COMPATIBILITY_COMMANDS}
 
-# Kept as a compatibility view for callers that imported the old registry.
-SCRIPT_MAP: dict[str, str] = {command: spec.script for command, spec in COMMANDS.items()}
+
+def resolve_target(target: str) -> Callable[[list[str]], int | None]:
+    """Import and return the ``module:function`` a command runs."""
+    module_name, function_name = target.split(":")
+    return getattr(importlib.import_module(module_name), function_name)
 
 
-def _run_script(script_name: str, script_args: list[str]) -> int:
-    """Execute a script from the scripts directory."""
-    if not SCRIPTS_DIR.is_dir() or not CLICKHOUSE_SQL_DIR.is_dir():
+def run_command(spec: CommandSpec, command_args: list[str]) -> int:
+    """Run one command's ``main`` in-process and return its exit code."""
+    if not CLICKHOUSE_SQL_DIR.is_dir():
         print(
             f"DepthMark commands run from a source checkout, but {PROJECT_ROOT} has no "
-            "scripts/ or clickhouse/ directory. Install with `pip install -e .` from the "
+            "clickhouse/ directory. Install with `pip install -e .` from the "
             "repository root.",
             file=sys.stderr,
         )
         return 2
-    script_path = SCRIPTS_DIR / script_name
-    if not script_path.is_file():
-        print(
-            f"DepthMark command registry target does not exist: {script_path}",
-            file=sys.stderr,
-        )
-        return 2
-    cmd = [sys.executable, str(script_path), *script_args]
-    return subprocess.run(cmd, cwd=PROJECT_ROOT, text=True).returncode
+    result = resolve_target(spec.target)([*spec.arguments, *command_args])
+    return 0 if result is None else int(result)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -155,12 +211,9 @@ def main(argv: list[str] | None = None) -> int:
             if command.replacement in CANONICAL_COMMANDS
             else command.replacement
         )
-        print(
-            f"Warning: 'depthmark {parsed.command}' is deprecated; use {replacement} instead.",
-            file=sys.stderr,
-        )
+        warn_deprecated(f"'depthmark {parsed.command}'", replacement)
 
-    return _run_script(command.script, [*command.arguments, *parsed.args])
+    return run_command(command, parsed.args)
 
 
 if __name__ == "__main__":

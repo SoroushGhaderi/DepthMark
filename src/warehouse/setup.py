@@ -2,18 +2,15 @@
 
 import os
 import re
-import sys
 import time
 from collections.abc import Callable, Iterable
 from pathlib import Path
 
 from dotenv import dotenv_values
 
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
 from config.settings import get_settings
 from src.common.logging import get_logger
+from src.common.paths import PROJECT_ROOT
 from src.integrations.clickhouse.client import ClickHouseClient
 from src.warehouse.identities import Identity, provision_application_user, warehouse_client
 from src.warehouse.schema_drift import (
@@ -22,6 +19,8 @@ from src.warehouse.schema_drift import (
     format_drift_report,
     parse_expected_tables,
 )
+
+project_root = PROJECT_ROOT
 
 logger = get_logger()
 

@@ -1,18 +1,15 @@
-"""Deprecated Oddspedia status adapter for the unified scraping report."""
+"""Deprecated alias of scripts/report_scraping.py --source oddspedia --format summary."""
 
-import sys
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from scripts.report_scraping import main
+from src.common.deprecation import run_deprecated_script
+from src.operations.commands.report_scraping import main
 
 if __name__ == "__main__":
-    print(
-        "Warning: scripts/oddspedia/status_oddspedia.py is deprecated; use "
-        "scripts/report_scraping.py --source oddspedia --format summary instead.",
-        file=sys.stderr,
+    raise SystemExit(
+        run_deprecated_script(
+            __file__,
+            "scripts/report_scraping.py --source oddspedia --format summary",
+            main,
+            default_source="oddspedia",
+            default_format="summary",
+        )
     )
-    raise SystemExit(main(default_source="oddspedia", default_format="summary"))

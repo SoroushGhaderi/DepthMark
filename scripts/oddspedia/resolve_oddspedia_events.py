@@ -1,6 +1,6 @@
-"""Canonical entry point for resolving Oddspedia events to FotMob fixtures."""
+"""Resolve Oddspedia source events against canonical FotMob fixtures."""
 
-from resolve_events import main
+from src.oddspedia.commands.resolve_events import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

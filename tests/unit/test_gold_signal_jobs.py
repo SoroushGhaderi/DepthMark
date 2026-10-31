@@ -4,7 +4,7 @@ from dataclasses import replace
 
 import pytest
 
-from scripts.gold import run_fotmob_gold_jobs
+from src.fotmob.commands import run_gold_jobs as run_fotmob_gold_jobs
 from src.fotmob.gold import service as gold_service
 from src.fotmob.gold.dml_runner import discover_gold_sql_jobs, resolve_gold_sql_job
 from src.fotmob.gold.service import GoldService

@@ -38,11 +38,15 @@ stability rules in DepthMark. The canonical command list lives in
 
 ## Script And Application-Service Boundary
 
-1. Scripts are the documented operational command surface.
-2. Scripts own CLI parsing, `.env` loading, import-path bootstrap, help text,
-   backward-compatible arguments, dry-run flags, and process exit codes.
-3. Reusable workflow coordination may live in stable source-specific or
-   warehouse modules under `src/`.
+1. Scripts are the documented operational command surface, and each one is a
+   thin shim: it imports one `main(argv) -> int` from a command module under
+   `src/<domain>/commands/` and calls it. Deprecated paths call
+   `src.common.deprecation.run_deprecated_script()` around the same function.
+2. Command modules own CLI parsing, `.env` loading, help text,
+   backward-compatible arguments, dry-run flags, and exit codes. `depthmark`
+   imports the same `main` and runs it in-process.
+3. Reusable workflow coordination lives in stable source-specific or
+   warehouse modules under `src/`, which command modules call.
 4. These workflow modules may coordinate SQL discovery and execution, client
    setup, contract checks, validation, alerts, reports, and deterministic
    summaries.
@@ -137,7 +141,10 @@ stability rules in DepthMark. The canonical command list lives in
 ## Imports and Module Layout
 
 1. Import order is standard library, third-party, then local modules.
-2. Avoid duplicate `sys.path` insertions; guard before inserting.
+2. Never modify `sys.path`. The editable install (`uv sync` or
+   `pip install -e .`) and `PYTHONPATH=/app` in the image make `src`, `scripts`,
+   and `config` importable; resolve checkout paths from
+   `src.common.paths.PROJECT_ROOT`.
 3. Keep module-level setup minimal and deterministic.
 4. Avoid heavyweight runtime work at import time.
 5. Scripts that depend on local credentials/config should load `.env` files from

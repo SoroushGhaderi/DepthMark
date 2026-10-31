@@ -2,7 +2,7 @@
 
 import pytest
 
-from scripts.gold import build_fotmob_signal_activations as builder
+from src.fotmob.commands import build_signal_activations as builder
 from src.fotmob.gold import service
 from src.fotmob.gold.signal_catalog import (
     CatalogViolation,

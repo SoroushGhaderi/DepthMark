@@ -93,3 +93,12 @@ test friction while preserving SQL ownership for analytical transformations.
 Service result dataclasses (`GoldRunResult`, `SilverRunResult`) replace ad-hoc
 tuple returns and give scripts structured data for alerting and exit-code
 mapping.
+
+## Update (2026-10-31): command modules
+
+The move this ADR started is complete. Every script's CLI logic lives in a
+command module under `src/<domain>/commands/` exposing `main(argv) -> int`;
+scripts are thin shims around it, and `depthmark` imports and runs it
+in-process instead of starting a subprocess. ADR 0002's subprocess boundary
+still applies between pipeline stages.
+

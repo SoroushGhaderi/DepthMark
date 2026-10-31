@@ -1,6 +1,6 @@
-"""Canonical entry point for loading Oddspedia Bronze data into ClickHouse."""
+"""Load Oddspedia Historical artifacts into the source Bronze database."""
 
-from load_bronze import main
+from src.oddspedia.commands.load_bronze import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

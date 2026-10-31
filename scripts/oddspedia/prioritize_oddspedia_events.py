@@ -1,13 +1,6 @@
-"""Canonical entry point for prioritizing Oddspedia events."""
+"""Prioritize discovered Oddspedia events against the Silver reference."""
 
-import sys
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.oddspedia.scraping.entrypoints import run_event_command
+from src.oddspedia.scraping.entrypoints import prioritize_main as main
 
 if __name__ == "__main__":
-    run_event_command("prioritize")
+    raise SystemExit(main())

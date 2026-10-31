@@ -1,19 +1,10 @@
-"""Shared utilities for scraping scripts to reduce code duplication and improve performance.
-
-This module centralizes common operations used across scraping scripts.
-"""
+"""Shared helpers for the FotMob scrape and pipeline commands."""
 
 import logging
-import sys
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from pathlib import Path
 from typing import Any
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from selenium.common.exceptions import WebDriverException
 
@@ -75,29 +66,7 @@ class PipelineMode(Enum):
     MONTHLY = "monthly"
 
 
-_PROJECT_ROOT: Path | None = None
 logger = get_logger(__name__)
-
-
-def get_project_root() -> Path:
-    """Get project root directory (cached for performance).
-
-    Returns:
-        Path to project root directory
-    """
-    global _PROJECT_ROOT
-    if _PROJECT_ROOT is None:
-        current_file = Path(__file__).resolve()
-        _PROJECT_ROOT = current_file.parent.parent.parent
-    return _PROJECT_ROOT
-
-
-def add_project_to_path() -> None:
-    """Add project root to Python path if not already present."""
-    project_root = get_project_root()
-    project_root_str = str(project_root)
-    if project_root_str not in sys.path:
-        sys.path.insert(0, project_root_str)
 
 
 def extract_year_month(month_str: str) -> tuple[str, str]:

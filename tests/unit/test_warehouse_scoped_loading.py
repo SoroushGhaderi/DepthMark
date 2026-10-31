@@ -4,12 +4,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from scripts.bronze import load_clickhouse as bronze_loader
-from scripts.bronze.load_clickhouse import discover_historical_dates
-from scripts.gold import load_clickhouse_gold as gold_loader
-from scripts.orchestration import pipeline
-from scripts.silver import load_clickhouse as silver_loader
 from src.fotmob.bronze import BronzeService
+from src.fotmob.commands import load_bronze as bronze_loader
+from src.fotmob.commands import load_gold as gold_loader
+from src.fotmob.commands import load_silver as silver_loader
+from src.fotmob.commands import run_pipeline as pipeline
+from src.fotmob.commands.load_bronze import discover_historical_dates
 from src.warehouse.scope import (
     WarehouseExecutionScope,
     add_warehouse_scope_arguments,

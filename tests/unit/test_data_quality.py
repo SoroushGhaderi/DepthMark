@@ -2,8 +2,8 @@ import re
 from pathlib import Path
 from types import SimpleNamespace
 
-from scripts.quality.check_data_quality import strict_exit_code
 from src.fotmob.gold.signal_catalog import load_signal_catalog
+from src.warehouse.commands.check_data_quality import strict_exit_code
 from src.warehouse.quality import (
     DataQualityService,
     DataQualitySummary,
@@ -338,8 +338,8 @@ def test_bronze_date_duplicate_query_scopes_through_match_reference():
 
 
 def test_invalid_signal_catalog_fails_quality_check_before_connecting(monkeypatch):
-    from scripts.quality import check_data_quality
     from src.fotmob.gold.signal_catalog import CatalogViolation, SignalCatalogError
+    from src.warehouse.commands import check_data_quality
 
     def invalid_catalog(_project_root):
         raise SignalCatalogError([CatalogViolation("catalogs/sig_x.md", "broken")])

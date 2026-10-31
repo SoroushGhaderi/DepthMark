@@ -6,7 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from scripts.bronze.scrape_fotmob import create_date_info, parse_arguments, process_single_date
+from src.fotmob.commands.scrape import create_date_info, parse_arguments, process_single_date
 
 TODAY = date(2026, 6, 19)
 

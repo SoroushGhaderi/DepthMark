@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from scripts import clickhouse_setup_common
 from src.warehouse import identities
+from src.warehouse import setup as clickhouse_setup_common
 from src.warehouse.identities import (
     WAREHOUSE_DATABASES,
     Identity,

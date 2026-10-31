@@ -546,8 +546,13 @@ src/
   common/                 dependency-light shared helpers
   operations/             health and other operational workflows
   models/                 football data models
-scripts/                  operational CLI entry points
+scripts/                  thin shims around src/<domain>/commands/*:main
 ```
+
+Each domain package has a `commands/` subpackage (`src/fotmob/commands`,
+`src/oddspedia/commands`, `src/warehouse/commands`, `src/operations/commands`)
+holding one module per command with `main(argv) -> int`. Scripts import that
+function and exit with its result; `depthmark` runs it in-process.
 
 Scripts remain the documented operational boundary, but reusable workflow
 coordination lives in source packages and `src/warehouse/` behind the same CLI

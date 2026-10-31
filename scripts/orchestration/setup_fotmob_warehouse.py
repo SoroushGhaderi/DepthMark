@@ -1,6 +1,6 @@
-"""Canonical entry point for creating the FotMob warehouse layers."""
+"""Create the FotMob bronze, silver, and gold ClickHouse layers."""
 
-from setup_clickhouse import main
+from src.fotmob.commands.setup_warehouse import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

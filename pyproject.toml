@@ -167,7 +167,3 @@ ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src", "scripts", "config"]
-
-[tool.ruff.lint.per-file-ignores]
-# Script entry points still put the checkout on sys.path before importing it.
-"scripts/**" = ["E402"]

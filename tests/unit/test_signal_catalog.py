@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 import yaml
 
-from scripts.quality import check_signal_catalogs
+from src.fotmob.commands import check_signal_catalogs
 from src.fotmob.gold.signal_catalog import (
     INDEX_END_MARKER,
     INDEX_FILE_NAME,

@@ -1,12 +1,12 @@
 import pytest
 from fotmob_bronze_support import DATE, FakeClickHouse, load_payload, second_match, write_archive
 
-from scripts.bronze import remove_fotmob_bronze
 from src.fotmob.bronze.admission import load_bronze_table_specs
 from src.fotmob.bronze.loader import BronzeService
 from src.fotmob.bronze.removal import BronzeRemovalService, stale_scope_commands
 from src.fotmob.bronze.source import source_date_match_ids
 from src.fotmob.bronze.write_lock import fotmob_bronze_write_lock
+from src.fotmob.commands import remove_bronze as remove_fotmob_bronze
 
 
 @pytest.fixture(scope="module")

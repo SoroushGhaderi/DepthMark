@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from scripts import clickhouse_setup_common
-from scripts.clickhouse_setup_common import get_layer_sql_files
+from src.warehouse import setup as clickhouse_setup_common
+from src.warehouse.setup import get_layer_sql_files
 
 
 def test_layer_setup_excludes_optimization_sql(tmp_path: Path):

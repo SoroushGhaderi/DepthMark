@@ -1,18 +1,13 @@
-"""Compatibility adapter for building Gold signal activations."""
+"""Deprecated alias of scripts/gold/build_fotmob_signal_activations.py."""
 
-import sys
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from scripts.gold.build_fotmob_signal_activations import main
+from src.common.deprecation import run_deprecated_script
+from src.fotmob.commands.build_signal_activations import main
 
 if __name__ == "__main__":
-    print(
-        "Warning: scripts/gold/activations/build_signal_activations.py is deprecated; use "
-        "scripts/gold/build_fotmob_signal_activations.py instead.",
-        file=sys.stderr,
+    raise SystemExit(
+        run_deprecated_script(
+            __file__,
+            "scripts/gold/build_fotmob_signal_activations.py",
+            main,
+        )
     )
-    raise SystemExit(main())

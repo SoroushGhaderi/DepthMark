@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 
-from scripts.mongodb import sync_signal_catalogs as sync
+from src.fotmob.commands import sync_signal_catalogs as sync
 from src.fotmob.gold.signal_catalog import (
     CatalogViolation,
     SignalCatalog,

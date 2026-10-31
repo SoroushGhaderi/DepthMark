@@ -1,18 +1,13 @@
-"""Discover Oddspedia event links for a date or month."""
+"""Deprecated alias of scripts/oddspedia/discover_oddspedia_events.py."""
 
-import sys
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from src.oddspedia.scraping.entrypoints import run_event_command
+from src.common.deprecation import run_deprecated_script
+from src.oddspedia.scraping.entrypoints import discover_main
 
 if __name__ == "__main__":
-    print(
-        "Warning: scripts/oddspedia/discover_events.py is deprecated; use "
-        "scripts/oddspedia/discover_oddspedia_events.py instead.",
-        file=sys.stderr,
+    raise SystemExit(
+        run_deprecated_script(
+            __file__,
+            "scripts/oddspedia/discover_oddspedia_events.py",
+            discover_main,
+        )
     )
-    run_event_command("discover")
