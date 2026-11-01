@@ -25,9 +25,9 @@ the detailed interfaces that govern execution.
 - `REVIEW.md`: the single current repository review with resolved history,
   prioritized open findings, and remediation order. Earlier reviews were merged
   into it and remain in git history.
-- `ARCHITECTURE_REVIEW.html`: architecture refactoring candidates (deeper
-  modules, seams, and code-quality fixes) that complement `REVIEW.md`. One
-  self-contained file; open it in a browser.
+- `ARCHITECTURE_REVIEW.html`: open architecture refactoring candidates (deeper
+  modules and seams) that complement `REVIEW.md`; resolved candidates remain in
+  git history. One self-contained file; open it in a browser.
 - `adr/0024-source-qualified-operational-script-names.md`: accepted naming
   grammar, package registry, and compatibility-adapter policy.
 - `adr/0025-unify-scraping-status-and-reports.md`: one read-only reporting

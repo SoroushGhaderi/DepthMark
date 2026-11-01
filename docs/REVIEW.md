@@ -8,8 +8,8 @@ This is the single current review. It replaces the production-readiness report
 and the five architecture reviews that previously lived in `docs/` and
 `docs/reviews/`. Resolved findings are recorded once, with the ADR that closed
 them; everything open is in [Open findings](#open-findings). Module-structure
-candidates live in the companion [`ARCHITECTURE_REVIEW.html`](ARCHITECTURE_REVIEW.html);
-all of them are resolved.
+candidates live in the companion [`ARCHITECTURE_REVIEW.html`](ARCHITECTURE_REVIEW.html),
+which lists only the open ones; the resolved 2026-10-11 candidates are in git history.
 
 ## Summary
 
