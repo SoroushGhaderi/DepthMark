@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_clinical_bench_impact
+  table: fotmob_gold_signals.sig_team_shooting_goals_clinical_bench_impact
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_clinical_bench_impact.sql
 ---
 # sig_team_shooting_goals_clinical_bench_impact
@@ -26,22 +26,22 @@ Detect matches where every triggered-team goal is scored by substitutes, isolati
   - `triggered_team_substitute_non_own_goals >= 1`
   - `triggered_team_substitute_non_own_goals = triggered_team_goals`
   - `triggered_team_substitute_goal_share_pct = 100`
-- Substitute scorers are derived from `silver.match_personnel` (`role = 'substitute'`, `substitution_time > 0`) joined to non-own goals in `silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
+- Substitute scorers are derived from `fotmob_silver.match_personnel` (`role = 'substitute'`, `substitution_time > 0`) joined to non-own goals in `fotmob_silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
 - Goal events are counted only when goal effective minute (`goal_time + goal_overload_time`) is at or after the recorded substitution time.
-- Trigger is evaluated separately for home and away teams in finished matches (`silver.match.match_finished = 1`).
+- Trigger is evaluated separately for home and away teams in finished matches (`fotmob_silver.match.match_finished = 1`).
 - Substitute-goal share is computed against official team goals (`home_score` / `away_score`) so the trigger matches the business rule "100% of team goals".
 - Similarity gate note: closest active signal is `sig_team_shooting_goals_bench_goals_impact`. By your explicit decision, both coexist: this signal is stricter share-based logic (`100%`), while the existing signal is volume-based logic (`>= 2` substitute non-own goals).
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_clinical_bench_impact.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_clinical_bench_impact`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_clinical_bench_impact`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_clinical_bench_impact
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_clinical_bench_impact
 ```
 
 ## Output Schema

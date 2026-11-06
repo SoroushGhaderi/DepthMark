@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_end_to_end_drama
+  table: fotmob_gold_signals.sig_match_shooting_goals_end_to_end_drama
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_end_to_end_drama.sql
 ---
 # sig_match_shooting_goals_end_to_end_drama
@@ -27,7 +27,7 @@ Flag high-volatility matches where each side scores in both halves, then expose 
   - `away_first_half_goals >= 1`
   - `home_second_half_goals >= 1`
   - `away_second_half_goals >= 1`
-- Half-goal counts are derived from `silver.shot` goal events with `period in {'FirstHalf', 'SecondHalf'}` and side attribution from `is_home_goal`.
+- Half-goal counts are derived from `fotmob_silver.shot` goal events with `period in {'FirstHalf', 'SecondHalf'}` and side attribution from `is_home_goal`.
 - Emits two rows per triggered match (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Enrichment emphasizes half-level scoring symmetry and bilateral shooting context (`total_shots`, `shots_on_target`, `shot_accuracy_pct`, `xg`, `shot_conversion_pct`) with possession and pass-quality context for tactical interpretation.
 - Similarity gate note: closest active signals are `sig_match_shooting_goals_goal_fest` and `sig_match_shooting_goals_basketball_match`; this signal is distinct because trigger activation requires bilateral half-by-half scoring structure, not only aggregate goals or aggregate shot volume.
@@ -35,13 +35,13 @@ Flag high-volatility matches where each side scores in both halves, then expose 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_end_to_end_drama.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_end_to_end_drama`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_end_to_end_drama`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_end_to_end_drama
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_end_to_end_drama
 ```
 
 ## Output Schema

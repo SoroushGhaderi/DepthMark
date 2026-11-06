@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_creative_monopoly
+  table: fotmob_gold_signals.sig_player_possession_passing_creative_monopoly
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_monopoly.sql
 ---
 # sig_player_possession_passing_creative_monopoly
@@ -26,20 +26,20 @@ Triggers when a player creates at least 50% of their team's total chances in a s
 - Trigger conditions:
   - `triggered_team_total_chances_created > 0`
   - `player_share_of_team_chances_created_pct >= 50.0`
-- Team total chances are computed from player-level `chances_created` in `silver.player_match_stat` grouped by `match_id` and `team_id`.
-- Signal preserves bilateral passing, possession, and territorial context from `silver.period_stat` (`period = 'All'`) to separate player-level creative concentration from overall team match state.
+- Team total chances are computed from player-level `chances_created` in `fotmob_silver.player_match_stat` grouped by `match_id` and `team_id`.
+- Signal preserves bilateral passing, possession, and territorial context from `fotmob_silver.period_stat` (`period = 'All'`) to separate player-level creative concentration from overall team match state.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_monopoly.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_creative_monopoly`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_creative_monopoly`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_creative_monopoly
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_creative_monopoly
 ```
 
 ## Output Schema

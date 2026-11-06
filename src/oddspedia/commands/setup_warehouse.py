@@ -24,10 +24,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Create Oddspedia warehouse tables")
     parser.add_argument("--dry-run", action="store_true", help="Print planned SQL files only")
     args = parser.parse_args(argv)
-    sql_paths = sorted((PROJECT_ROOT / "clickhouse" / "oddspedia_bronze" / "ddl").glob("*.sql"))
-    sql_paths.append(
-        PROJECT_ROOT / "clickhouse" / "silver" / "ddl" / "09_oddspedia_match_resolution.sql"
-    )
+    sql_paths = [
+        *sorted((PROJECT_ROOT / "clickhouse" / "oddspedia_bronze" / "ddl").glob("*.sql")),
+        *sorted((PROJECT_ROOT / "clickhouse" / "oddspedia_silver" / "ddl").glob("*.sql")),
+    ]
     try:
         assert_setup_sql_is_non_destructive(sql_paths)
     except ValueError as error:

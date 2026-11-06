@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_early_goal_late_goal
+  table: fotmob_gold_signals.sig_match_shooting_goals_early_goal_late_goal
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_early_goal_late_goal.sql
 ---
 # sig_match_shooting_goals_early_goal_late_goal
@@ -25,7 +25,7 @@ Flag finished matches that feature both an opening-phase breakthrough and an end
 - Trigger condition:
   - `match_early_goal_count >= 1` in effective-minute window `[1, 5]`.
   - `match_late_goal_count >= 1` in effective-minute window `[86, +inf)`.
-- Goal events come from `silver.shot` where `is_goal = 1` and `is_own_goal = 0`; ordering minute is `goal_time + goal_overload_time` with minute fallbacks.
+- Goal events come from `fotmob_silver.shot` where `is_goal = 1` and `is_own_goal = 0`; ordering minute is `goal_time + goal_overload_time` with minute fallbacks.
 - Triggered matches emit two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Window diagnostics capture bilateral early/late split counts plus span from first early goal to last late goal.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_early_blitz`, `sig_team_shooting_goals_late_surge_goals`, and `sig_match_shooting_goals_rapid_fire_exchange`; this signal is distinct because it is a match-level conjunction requiring at least one early-window and one late-window goal in the same match.
@@ -33,13 +33,13 @@ Flag finished matches that feature both an opening-phase breakthrough and an end
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_early_goal_late_goal.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_early_goal_late_goal`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_early_goal_late_goal`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_early_goal_late_goal
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_early_goal_late_goal
 ```
 
 ## Output Schema

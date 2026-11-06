@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_battle_of_attrition
+  table: fotmob_gold_signals.sig_match_discipline_cards_battle_of_attrition
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_battle_of_attrition.sql
 ---
 # sig_match_discipline_cards_battle_of_attrition
@@ -23,20 +23,20 @@ Flags high-friction matches where total whistle volume is extreme (35+ combined 
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - `fouls_home + fouls_away >= 35` from `silver.period_stat` at `period = 'All'`.
+  - `fouls_home + fouls_away >= 35` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) so downstream team pipelines can consume bilateral context consistently.
 - Signal keeps foul share, card conversion, defensive action load, and possession balance to separate mutual attrition from one-sided over-aggression.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_battle_of_attrition.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_battle_of_attrition`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_battle_of_attrition`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_battle_of_attrition
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_battle_of_attrition
 ```
 
 ## Output Schema

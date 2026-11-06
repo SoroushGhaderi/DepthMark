@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_high_tempo_passing
+  table: fotmob_gold_signals.sig_team_possession_passing_high_tempo_passing
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_high_tempo_passing.sql
 ---
 # sig_team_possession_passing_high_tempo_passing
@@ -29,13 +29,13 @@ Triggers when either side reaches a peak half passing tempo of `>= 6.5` passes p
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_high_tempo_passing.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_high_tempo_passing`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_high_tempo_passing`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_high_tempo_passing
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_high_tempo_passing
 ```
 
 ## Output Schema

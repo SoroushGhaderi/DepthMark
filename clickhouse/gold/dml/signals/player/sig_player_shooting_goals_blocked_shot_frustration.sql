@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_blocked_shot_frustration (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_blocked_shot_frustration (
     match_id,
     match_date,
     home_team_id,
@@ -69,7 +69,7 @@ WITH player_blocked_shot_stats AS (
             coalesce(s.is_own_goal, 0) = 0
             AND coalesce(s.is_blocked, 0) = 1
         )) AS triggered_player_blocked_shots
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.player_id, 0) > 0
       AND coalesce(s.team_id, 0) > 0
     GROUP BY
@@ -90,7 +90,7 @@ team_blocked_shot_stats AS (
             coalesce(s.is_own_goal, 0) = 0
             AND coalesce(s.is_blocked, 0) = 1
         )) AS team_blocked_shots
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.team_id, 0) > 0
     GROUP BY
         s.match_id,
@@ -291,14 +291,14 @@ SELECT
         1
     ), 0.0)) AS player_share_of_team_blocked_shots_pct
 
-FROM silver.player_match_stat AS p
+FROM fotmob_silver.player_match_stat AS p
 INNER JOIN player_blocked_shot_stats AS c
     ON c.match_id = p.match_id
    AND c.triggered_player_id = p.player_id
    AND c.triggered_team_id = p.team_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN team_blocked_shot_stats AS ts

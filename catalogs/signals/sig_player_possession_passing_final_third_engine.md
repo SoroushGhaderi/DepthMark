@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_final_third_engine
+  table: fotmob_gold_signals.sig_player_possession_passing_final_third_engine
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_final_third_engine.sql
 ---
 # sig_player_possession_passing_final_third_engine
@@ -25,21 +25,21 @@ Triggers when a player records at least 20 passes into the final third in a sing
 
 - Trigger condition:
   - `triggered_player_passes_final_third >= 20`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent passing quality, possession control, and opposition-half passing context from `silver.period_stat` (`period = 'All'`) to separate individual progression volume from overall team dominance.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent passing quality, possession control, and opposition-half passing context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual progression volume from overall team dominance.
 - Signal includes player-level creation and box-touch context to show whether final-third progression translated into chance-generation pressure.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_final_third_engine.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_final_third_engine`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_final_third_engine`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_final_third_engine
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_final_third_engine
 ```
 
 ## Output Schema

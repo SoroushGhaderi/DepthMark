@@ -22,12 +22,13 @@ from src.warehouse.scope import WarehouseExecutionScope
 
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 WAREHOUSE_DATABASES = (
-    "bronze",
+    "fotmob_bronze",
+    "fotmob_silver",
+    "fotmob_gold",
+    "fotmob_gold_scenarios",
+    "fotmob_gold_signals",
     "oddspedia_bronze",
-    "silver",
-    "gold",
-    "gold_scenarios",
-    "gold_signals",
+    "oddspedia_silver",
 )
 # ALTER DELETE covers REPLACE PARTITION and DROP PARTITION; a plain ALTER grant
 # would also allow dropping or modifying columns.

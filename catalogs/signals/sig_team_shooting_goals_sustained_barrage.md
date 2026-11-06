@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_sustained_barrage
+  table: fotmob_gold_signals.sig_team_shooting_goals_sustained_barrage
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_sustained_barrage.sql
 ---
 # sig_team_shooting_goals_sustained_barrage
@@ -32,13 +32,13 @@ Detect team-level shot barrages where one side compresses high attempt volume in
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_sustained_barrage.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_sustained_barrage`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_sustained_barrage`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_sustained_barrage
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_sustained_barrage
 ```
 
 ## Output Schema

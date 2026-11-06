@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_the_quarterback
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_the_quarterback
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_the_quarterback.sql
 ---
 # sig_player_creativity_playmaking_the_quarterback
@@ -29,9 +29,9 @@ Detect center-back playmakers who drive long-range distribution by completing at
   - `triggered_player_position_id IN (3, 4)` (center-back proxy)
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Position scope is resolved from `silver.match_personnel` with starter-priority role resolution per `(match_id, person_id)`.
-- Successful long balls are mapped to `silver.player_match_stat.accurate_long_balls`.
-- Bilateral passing and long-ball context is preserved through symmetric `triggered_team_*` and `opponent_*` fields from `silver.period_stat` (`period = 'All'`).
+- Position scope is resolved from `fotmob_silver.match_personnel` with starter-priority role resolution per `(match_id, person_id)`.
+- Successful long balls are mapped to `fotmob_silver.player_match_stat.accurate_long_balls`.
+- Bilateral passing and long-ball context is preserved through symmetric `triggered_team_*` and `opponent_*` fields from `fotmob_silver.period_stat` (`period = 'All'`).
 - Similarity gate note:
   - `sig_player_possession_passing_long_ball_specialist`: strongest metric overlap (accurate long balls), but that signal is position-agnostic and also requires long-ball success rate `> 80%`.
   - `sig_player_goalkeeping_defense_cb_playmaker_defense`: same center-back role framing, but trigger is interceptions plus high accurate passes, not long-ball completion volume.
@@ -40,13 +40,13 @@ Detect center-back playmakers who drive long-range distribution by completing at
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_the_quarterback.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_the_quarterback`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_the_quarterback`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_the_quarterback
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_the_quarterback
 ```
 
 ## Output Schema

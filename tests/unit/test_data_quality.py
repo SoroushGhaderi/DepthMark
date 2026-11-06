@@ -86,7 +86,7 @@ def _split_top_level_csv(value: str) -> list[str]:
 def _signal_ddl_columns(project_root: Path) -> dict[str, tuple[str, ...]]:
     contracts: dict[str, tuple[str, ...]] = {}
     table_pattern = re.compile(
-        r"CREATE TABLE IF NOT EXISTS\s+gold_signals\.(sig_[a-z0-9_]+)\s*\(",
+        r"CREATE TABLE IF NOT EXISTS\s+fotmob_gold_signals\.(sig_[a-z0-9_]+)\s*\(",
         re.IGNORECASE,
     )
     for path in (project_root / "clickhouse/gold/ddl/signals").rglob("create_table_*.sql"):
@@ -105,25 +105,27 @@ def _signal_ddl_columns(project_root: Path) -> dict[str, tuple[str, ...]]:
 
 
 def _signal_insert_columns(sql: str) -> tuple[str, tuple[str, ...]]:
-    match = re.search(r"INSERT\s+INTO\s+gold_signals\.(sig_[a-z0-9_]+)\s*\(", sql, re.IGNORECASE)
+    match = re.search(
+        r"INSERT\s+INTO\s+fotmob_gold_signals\.(sig_[a-z0-9_]+)\s*\(", sql, re.IGNORECASE
+    )
     if not match:
-        raise ValueError("Signal SQL must insert into gold_signals.sig_*")
+        raise ValueError("Signal SQL must insert into fotmob_gold_signals.sig_*")
     body = _parenthesized_body(sql, sql.find("(", match.end() - 1))
     columns = tuple(item.strip().strip("`") for item in _split_top_level_csv(body))
     return match.group(1), columns
 
 
 def test_table_without_duplicates_passes():
-    identity = TableIdentity("bronze", "general", ("match_id",))
+    identity = TableIdentity("fotmob_bronze", "general", ("match_id",))
     client = FakeClickHouseClient(
-        ["bronze.general"],
-        {"bronze.general": {"match_id"}},
+        ["fotmob_bronze.general"],
+        {"fotmob_bronze.general": {"match_id"}},
         {
-            "logical_duplicate_count:bronze.general": [[0, 0]],
-            "physical_version_count:bronze.general": [[0, 0]],
+            "logical_duplicate_count:fotmob_bronze.general": [[0, 0]],
+            "physical_version_count:fotmob_bronze.general": [[0, 0]],
         },
     )
-    service = DataQualityService(client, Path.cwd(), {"bronze.general": identity})
+    service = DataQualityService(client, Path.cwd(), {"fotmob_bronze.general": identity})
 
     results, skipped = service.run_duplicates(
         WarehouseExecutionScope.full_history(), ["bronze"], 10
@@ -135,18 +137,18 @@ def test_table_without_duplicates_passes():
 
 
 def test_duplicate_row_identities_include_counts_and_samples():
-    identity = TableIdentity("silver", "shot", ("match_id", "shot_id"), "match_date")
+    identity = TableIdentity("fotmob_silver", "shot", ("match_id", "shot_id"), "match_date")
     client = FakeClickHouseClient(
-        ["silver.shot"],
-        {"silver.shot": {"match_id", "shot_id", "match_date"}},
+        ["fotmob_silver.shot"],
+        {"fotmob_silver.shot": {"match_id", "shot_id", "match_date"}},
         {
-            "logical_duplicate_count:silver.shot": [[1, 2]],
-            "logical_duplicate_samples:silver.shot": [[123, 7, 3]],
-            "physical_version_count:silver.shot": [[1, 2]],
-            "physical_version_samples:silver.shot": [[123, 7, 3]],
+            "logical_duplicate_count:fotmob_silver.shot": [[1, 2]],
+            "logical_duplicate_samples:fotmob_silver.shot": [[123, 7, 3]],
+            "physical_version_count:fotmob_silver.shot": [[1, 2]],
+            "physical_version_samples:fotmob_silver.shot": [[123, 7, 3]],
         },
     )
-    service = DataQualityService(client, Path.cwd(), {"silver.shot": identity})
+    service = DataQualityService(client, Path.cwd(), {"fotmob_silver.shot": identity})
 
     results, _ = service.run_duplicates(WarehouseExecutionScope.for_month("202601"), ["silver"], 10)
 
@@ -158,17 +160,17 @@ def test_duplicate_row_identities_include_counts_and_samples():
 
 
 def test_physical_versions_are_diagnostic_not_logical_duplicates():
-    identity = TableIdentity("bronze", "general", ("match_id",))
+    identity = TableIdentity("fotmob_bronze", "general", ("match_id",))
     client = FakeClickHouseClient(
-        ["bronze.general"],
-        {"bronze.general": {"match_id"}},
+        ["fotmob_bronze.general"],
+        {"fotmob_bronze.general": {"match_id"}},
         {
-            "logical_duplicate_count:bronze.general": [[0, 0]],
-            "physical_version_count:bronze.general": [[1, 3]],
-            "physical_version_samples:bronze.general": [[123, 4]],
+            "logical_duplicate_count:fotmob_bronze.general": [[0, 0]],
+            "physical_version_count:fotmob_bronze.general": [[1, 3]],
+            "physical_version_samples:fotmob_bronze.general": [[123, 4]],
         },
     )
-    service = DataQualityService(client, Path.cwd(), {"bronze.general": identity})
+    service = DataQualityService(client, Path.cwd(), {"fotmob_bronze.general": identity})
 
     result = service.run_duplicates(WarehouseExecutionScope.full_history(), ["bronze"], 10)[0][0]
 
@@ -180,22 +182,22 @@ def test_physical_versions_are_diagnostic_not_logical_duplicates():
 
 def test_missing_or_undefined_row_identity_is_reported():
     client = FakeClickHouseClient(
-        ["gold_scenarios.scenario_without_contract"],
-        {"gold_scenarios.scenario_without_contract": {"match_id"}},
+        ["fotmob_gold_scenarios.scenario_without_contract"],
+        {"fotmob_gold_scenarios.scenario_without_contract": {"match_id"}},
     )
     service = DataQualityService(client, Path.cwd(), {})
 
     results, skipped = service.run_duplicates(WarehouseExecutionScope.full_history(), ["gold"], 10)
 
     assert results == []
-    assert skipped[0].table == "gold_scenarios.scenario_without_contract"
+    assert skipped[0].table == "fotmob_gold_scenarios.scenario_without_contract"
     assert "undefined" in skipped[0].reason
 
 
 def test_declared_identity_with_missing_columns_is_reported():
-    table = "gold_signals.sig_drifted"
+    table = "fotmob_gold_signals.sig_drifted"
     identity = TableIdentity(
-        "gold_signals", "sig_drifted", ("match_id", "triggered_team_id"), "match_date"
+        "fotmob_gold_signals", "sig_drifted", ("match_id", "triggered_team_id"), "match_date"
     )
     client = FakeClickHouseClient([table], {table: {"match_id", "match_date"}})
     service = DataQualityService(client, Path.cwd(), {table: identity})
@@ -232,9 +234,9 @@ def test_bronze_to_silver_count_and_key_mismatches_fail_reconciliation():
 
 
 def test_gold_duplicates_are_checked_without_reconciliation():
-    table = "gold_signals.sig_example"
+    table = "fotmob_gold_signals.sig_example"
     identity = TableIdentity(
-        "gold_signals", "sig_example", ("match_id", "triggered_team_id"), "match_date"
+        "fotmob_gold_signals", "sig_example", ("match_id", "triggered_team_id"), "match_date"
     )
     client = FakeClickHouseClient(
         [table],
@@ -262,16 +264,16 @@ def test_gold_duplicates_are_checked_without_reconciliation():
 
 def test_strict_mode_exit_behavior():
     clean = DataQualitySummary(
-        duplicate_results=[DuplicateResult("bronze.general", ("match_id",), 0, 0)]
+        duplicate_results=[DuplicateResult("fotmob_bronze.general", ("match_id",), 0, 0)]
     )
     failed = DataQualitySummary(reconciliation_results=[ReconciliationResult("match", 2, 1, 1, 0)])
     duplicate_failed = DataQualitySummary(
-        duplicate_results=[DuplicateResult("bronze.general", ("match_id",), 1, 1)]
+        duplicate_results=[DuplicateResult("fotmob_bronze.general", ("match_id",), 1, 1)]
     )
     physical_only = DataQualitySummary(
         duplicate_results=[
             DuplicateResult(
-                "bronze.general",
+                "fotmob_bronze.general",
                 ("match_id",),
                 0,
                 0,
@@ -291,11 +293,11 @@ def test_strict_mode_exit_behavior():
 def test_repository_contracts_cover_all_declared_warehouse_outputs():
     contracts = build_identity_contracts(Path.cwd())
 
-    assert len([name for name in contracts if name.startswith("bronze.")]) == 15
-    assert len([name for name in contracts if name.startswith("silver.")]) == 8
-    assert len([name for name in contracts if name.startswith("gold_scenarios.")]) == 48
-    assert len([name for name in contracts if name.startswith("gold_signals.")]) == 344
-    assert contracts["gold.signal_activations"].columns == ("signal_instance_id",)
+    assert len([name for name in contracts if name.startswith("fotmob_bronze.")]) == 15
+    assert len([name for name in contracts if name.startswith("fotmob_silver.")]) == 8
+    assert len([name for name in contracts if name.startswith("fotmob_gold_scenarios.")]) == 48
+    assert len([name for name in contracts if name.startswith("fotmob_gold_signals.")]) == 344
+    assert contracts["fotmob_gold.signal_activations"].columns == ("signal_instance_id",)
 
 
 def test_signal_dml_insert_columns_match_ddl_and_catalog_identity():
@@ -325,15 +327,18 @@ def test_signal_dml_insert_columns_match_ddl_and_catalog_identity():
 
 def test_bronze_date_duplicate_query_scopes_through_match_reference():
     identity = TableIdentity(
-        "bronze", "player", ("match_id", "player_id"), scope_expression="match_id"
+        "fotmob_bronze", "player", ("match_id", "player_id"), scope_expression="match_id"
     )
 
     queries = build_duplicate_queries(identity, WarehouseExecutionScope.for_date("20260102"), 10)
 
-    assert "FROM bronze.player FINAL" in queries.logical_count_sql
-    assert "FROM bronze.player\n" in queries.physical_count_sql
+    assert "FROM fotmob_bronze.player FINAL" in queries.logical_count_sql
+    assert "FROM fotmob_bronze.player\n" in queries.physical_count_sql
     assert "r.identity_row_count - f.identity_row_count" in queries.physical_count_sql
-    assert "match_id IN (SELECT match_id FROM bronze.match_reference" in queries.logical_count_sql
+    assert (
+        "match_id IN (SELECT match_id FROM fotmob_bronze.match_reference"
+        in queries.logical_count_sql
+    )
     assert "toDate(match_date) = toDate('2026-01-02')" in queries.logical_count_sql
 
 

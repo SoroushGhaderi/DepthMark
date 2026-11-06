@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_heavy_hitter (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_heavy_hitter (
     match_id,
     match_date,
     home_team_id,
@@ -50,7 +50,7 @@ WITH player_cards AS (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
         ) AS triggered_player_red_cards
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
     GROUP BY
@@ -163,10 +163,10 @@ SELECT
         0
     )) AS opponent_possession_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN player_cards AS pc

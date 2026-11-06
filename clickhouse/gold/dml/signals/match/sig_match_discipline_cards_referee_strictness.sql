@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_discipline_cards_referee_strictness (
+INSERT INTO fotmob_gold_signals.sig_match_discipline_cards_referee_strictness (
     match_id,
     match_date,
     home_team_id,
@@ -57,7 +57,7 @@ WITH yellow_card_events AS (
         toInt32(coalesce(c.event_id, 0)) AS event_id,
         toInt32(coalesce(c.player_id, 0)) AS player_id,
         coalesce(c.player_name, 'Unknown') AS player_name
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
       AND toInt32(coalesce(c.card_minute, 0)) > 0
@@ -170,8 +170,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0) - coalesce(ps.ball_possession_away, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN eligible_matches AS em
@@ -259,8 +259,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0) - coalesce(ps.ball_possession_home, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN eligible_matches AS em

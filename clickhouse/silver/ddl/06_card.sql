@@ -1,5 +1,5 @@
--- silver.card
-CREATE TABLE IF NOT EXISTS silver.card
+-- fotmob_silver.card
+CREATE TABLE IF NOT EXISTS fotmob_silver.card
 (
     match_id        Int32,
     match_date      Date,

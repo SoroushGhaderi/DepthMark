@@ -51,7 +51,7 @@ class ClickHouseClient:
         "match_payload",
         "market",
         "load_status",
-        "oddspedia_match_resolution",
+        "match_resolution",
         "scenario_demolition",
         "scenario_defensive_shutdown_win",
         "scenario_underdog_heist",

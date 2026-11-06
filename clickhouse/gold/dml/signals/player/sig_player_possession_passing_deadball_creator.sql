@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_deadball_creator (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_deadball_creator (
     match_id,
     match_date,
     home_team_id,
@@ -64,7 +64,7 @@ WITH
             countIf(coalesce(s.is_on_target, 0) = 1) AS triggered_player_indirect_free_kick_assisted_shots_on_target,
             toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS triggered_player_indirect_free_kick_assisted_shot_expected_goals,
             countIf(coalesce(s.is_goal, 0) = 1 AND coalesce(s.is_own_goal, 0) = 0) AS triggered_player_indirect_free_kick_assisted_goals
-        FROM silver.shot AS s
+        FROM fotmob_silver.shot AS s
         WHERE s.situation IN ('FreeKick', 'SetPiece')
           AND s.assist_player_id IS NOT NULL
         GROUP BY
@@ -78,7 +78,7 @@ WITH
             assumeNotNull(s.team_id) AS team_id,
             countIf(coalesce(s.expected_goals, 0.0) >= 0.30) AS team_indirect_free_kick_big_chances,
             count() AS team_indirect_free_kick_chances
-        FROM silver.shot AS s
+        FROM fotmob_silver.shot AS s
         WHERE s.situation IN ('FreeKick', 'SetPiece')
           AND s.team_id IS NOT NULL
         GROUP BY
@@ -90,7 +90,7 @@ WITH
             s.match_id,
             assumeNotNull(s.team_id) AS team_id,
             count() AS team_set_piece_shots
-        FROM silver.shot AS s
+        FROM fotmob_silver.shot AS s
         WHERE s.situation IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')
           AND s.team_id IS NOT NULL
         GROUP BY
@@ -298,13 +298,13 @@ SELECT
         0.0
     )) AS player_share_of_team_crosses_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN deadball_player_creation AS c
     ON c.match_id = p.match_id
    AND c.triggered_player_id = p.player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN deadball_team_chances AS tdc

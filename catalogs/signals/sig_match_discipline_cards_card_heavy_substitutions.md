@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_card_heavy_substitutions
+  table: fotmob_gold_signals.sig_match_discipline_cards_card_heavy_substitutions
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_card_heavy_substitutions.sql
 ---
 # sig_match_discipline_cards_card_heavy_substitutions
@@ -24,21 +24,21 @@ Flags matches where bench usage is strongly associated with discipline risk, def
 
 - Trigger condition:
   - `match_distinct_substitute_yellow_carded_players >= 4`
-- Substitute identity is sourced from `silver.match_personnel` where `role = 'substitute'` and `substitution_time > 0`.
-- Qualifying card events are yellow-card events from `silver.card`, linked by `match_id`, `player_id`, and `team_side`.
+- Substitute identity is sourced from `fotmob_silver.match_personnel` where `role = 'substitute'` and `substitution_time > 0`.
+- Qualifying card events are yellow-card events from `fotmob_silver.card`, linked by `match_id`, `player_id`, and `team_side`.
 - Trigger is match-level and emits two side-oriented rows (`home` and `away`) for stable `match_team` downstream consumption.
-- Output preserves substitute-booking concentration, timing of first substitute booking by side, and bilateral discipline/control context from `silver.period_stat` (`period = 'All'`).
+- Output preserves substitute-booking concentration, timing of first substitute booking by side, and bilateral discipline/control context from `fotmob_silver.period_stat` (`period = 'All'`).
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_card_heavy_substitutions.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_card_heavy_substitutions`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_card_heavy_substitutions`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_card_heavy_substitutions
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_card_heavy_substitutions
 ```
 
 ## Output Schema

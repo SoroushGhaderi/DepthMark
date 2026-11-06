@@ -1,5 +1,5 @@
--- silver.player_match_stat
-CREATE TABLE IF NOT EXISTS silver.player_match_stat
+-- fotmob_silver.player_match_stat
+CREATE TABLE IF NOT EXISTS fotmob_silver.player_match_stat
 (
     match_id                 Int32,
     match_date               Date,

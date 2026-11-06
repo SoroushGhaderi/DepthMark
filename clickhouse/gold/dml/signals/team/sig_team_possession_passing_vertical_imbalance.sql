@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_vertical_imbalance (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_vertical_imbalance (
     match_id,
     match_date,
     home_team_id,
@@ -105,8 +105,8 @@ SELECT
       - coalesce(round(100.0 * coalesce(ps.aerials_won_away, 0) / nullIf(coalesce(ps.aerial_attempts_away, 0), 0), 1), 0.0),
         1
     ) AS aerial_success_delta_pct
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1
@@ -175,8 +175,8 @@ SELECT
       - coalesce(round(100.0 * coalesce(ps.aerials_won_home, 0) / nullIf(coalesce(ps.aerial_attempts_home, 0), 0), 1), 0.0),
         1
     ) AS aerial_success_delta_pct
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

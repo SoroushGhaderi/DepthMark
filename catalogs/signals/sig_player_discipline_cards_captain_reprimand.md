@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_captain_reprimand
+  table: fotmob_gold_signals.sig_player_discipline_cards_captain_reprimand
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_captain_reprimand.sql
 ---
 # sig_player_discipline_cards_captain_reprimand
@@ -25,22 +25,22 @@ Flags matches where the on-field captain is cautioned for dissent/reprimand, pre
 
 - Trigger condition:
   - `triggered_player_is_captain = 1`
-  - at least one yellow-card event tagged with dissent/reprimand text in `silver.card` (`card_type` or `description`).
-- Captains are sourced from `silver.match_personnel` (`role = 'starter'`, `is_captain = 1`) and aligned by match, player, and side.
+  - at least one yellow-card event tagged with dissent/reprimand text in `fotmob_silver.card` (`card_type` or `description`).
+- Captains are sourced from `fotmob_silver.match_personnel` (`role = 'starter'`, `is_captain = 1`) and aligned by match, player, and side.
 - The signal emits one row per triggered captain per match using the first qualifying dissent yellow-card event.
 - Output stores player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) at player grain.
-- Bilateral team context (cards, fouls, possession, and passing) is attached from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
+- Bilateral team context (cards, fouls, possession, and passing) is attached from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_captain_reprimand.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_captain_reprimand`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_captain_reprimand`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_captain_reprimand
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_captain_reprimand
 ```
 
 ## Output Schema

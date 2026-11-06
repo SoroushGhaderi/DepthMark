@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_recovery_engine
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_recovery_engine
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_recovery_engine.sql
 ---
 # sig_player_goalkeeping_defense_recovery_engine
@@ -28,9 +28,9 @@ Flags defender and midfielder performances with elite ball-recovery volume (`>= 
   - `triggered_player_usual_playing_position_id IN (1, 2)` (defender or midfielder scope)
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Player role scope is resolved from `silver.match_personnel` with starter-priority position resolution per `(match_id, person_id)`.
-- Player-level defensive diagnostics are sourced from `silver.player_match_stat`, including recoveries, tackles, duels, interceptions, clearances, and defensive actions.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics, plus explicit deltas.
+- Player role scope is resolved from `fotmob_silver.match_personnel` with starter-priority position resolution per `(match_id, person_id)`.
+- Player-level defensive diagnostics are sourced from `fotmob_silver.player_match_stat`, including recoveries, tackles, duels, interceptions, clearances, and defensive actions.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics, plus explicit deltas.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_interception_king`: same entity/family/subfamily and defensive profile context, but trigger metric is interceptions (`>= 7`) rather than recoveries.
   - `sig_player_goalkeeping_defense_clearance_machine`: same defensive package shape, but trigger metric is clearances (`>= 15`) and defender-only scope.
@@ -39,13 +39,13 @@ Flags defender and midfielder performances with elite ball-recovery volume (`>= 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_recovery_engine.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_recovery_engine`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_recovery_engine`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_recovery_engine
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_recovery_engine
 ```
 
 ## Output Schema

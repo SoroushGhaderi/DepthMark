@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_discipline_meltdown
+  table: fotmob_gold_signals.sig_team_discipline_cards_discipline_meltdown
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_discipline_meltdown.sql
 ---
 # sig_team_discipline_cards_discipline_meltdown
@@ -24,19 +24,19 @@ Flags team-match performances with multiple dismissals (two or more red cards), 
 
 - Trigger condition:
   - `triggered_team_red_cards >= 2`
-- Trigger is evaluated symmetrically for home and away teams from `silver.period_stat` with `period = 'All'`.
+- Trigger is evaluated symmetrically for home and away teams from `fotmob_silver.period_stat` with `period = 'All'`.
 - The signal preserves bilateral card pressure, foul load, defensive-action profile, and possession balance so analysts can separate extreme discipline breakdown from normal physical matches.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_discipline_meltdown.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_discipline_meltdown`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_discipline_meltdown`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_discipline_meltdown
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_discipline_meltdown
 ```
 
 ## Output Schema

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_shot_suppression_mastery.sql
 ---
 # sig_team_goalkeeping_defense_shot_suppression_mastery
@@ -30,7 +30,7 @@ pressure, duel, control, and scoreline context.
   - finished-match scope (`match_finished = 1`) with full-match context (`period = 'All'`)
 - Core trigger metric is computed as:
   - `opposition_expected_goals / opposition_total_shots`
-  - from `silver.period_stat` with home/away orientation mapped into `triggered_side`
+  - from `fotmob_silver.period_stat` with home/away orientation mapped into `triggered_side`
 - Rows are emitted at `match_team` grain with canonical `triggered_side`, so either side can
   trigger in different matches when it suppresses opposition shot quality below the threshold.
 - Trigger severity is preserved with
@@ -46,13 +46,13 @@ pressure, duel, control, and scoreline context.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_shot_suppression_mastery.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_shot_suppression_mastery`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_shot_suppression_mastery
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_shot_suppression_mastery
 ```
 
 ## Output Schema

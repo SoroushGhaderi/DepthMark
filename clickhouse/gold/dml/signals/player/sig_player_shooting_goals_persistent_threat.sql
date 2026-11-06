@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_persistent_threat (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_persistent_threat (
     match_id,
     match_date,
     home_team_id,
@@ -69,7 +69,7 @@ WITH player_segment_shots AS (
         toInt32(sum(if(toInt32(coalesce(s.goal_time, s.minute, 0)) BETWEEN 46 AND 60, 1, 0))) AS shots_segment_46_60,
         toInt32(sum(if(toInt32(coalesce(s.goal_time, s.minute, 0)) BETWEEN 61 AND 75, 1, 0))) AS shots_segment_61_75,
         toInt32(sum(if(toInt32(coalesce(s.goal_time, s.minute, 0)) >= 76, 1, 0))) AS shots_segment_76_90_plus
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.player_id, 0) > 0
       AND coalesce(s.team_id, 0) > 0
       AND toInt32(coalesce(s.goal_time, s.minute, 0)) >= 0
@@ -294,13 +294,13 @@ SELECT
     ), 0.0)) AS player_share_of_team_shots_on_target_pct
 
 FROM triggered_players AS tp
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = tp.match_id
    AND p.player_id = tp.player_id
    AND p.team_id = tp.team_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = tp.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tp.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

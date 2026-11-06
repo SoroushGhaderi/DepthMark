@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_playmaker_showdown
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_playmaker_showdown
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_playmaker_showdown.sql
 ---
 # sig_match_creativity_playmaking_playmaker_showdown
@@ -26,7 +26,7 @@ Detect bilateral creator duels where each team has at least one player producing
   - `home_top_playmaker_key_passes >= 5`
   - `away_top_playmaker_key_passes >= 5`
   - `match_finished = 1`, `period = 'All'`, `match_id > 0`
-- Player key passes are sourced from `silver.player_match_stat.chances_created` and aggregated at `match_id + team_id + player_id` grain.
+- Player key passes are sourced from `fotmob_silver.player_match_stat.chances_created` and aggregated at `match_id + team_id + player_id` grain.
 - A deterministic top playmaker per team is selected with `argMax` ordered by:
   - `player_key_passes` desc
   - `player_expected_assists` desc
@@ -41,13 +41,13 @@ Detect bilateral creator duels where each team has at least one player producing
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_playmaker_showdown.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_playmaker_showdown`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_playmaker_showdown`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_playmaker_showdown
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_playmaker_showdown
 ```
 
 ## Output Schema

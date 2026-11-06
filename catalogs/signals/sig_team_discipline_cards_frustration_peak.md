@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_frustration_peak
+  table: fotmob_gold_signals.sig_team_discipline_cards_frustration_peak
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_frustration_peak.sql
 ---
 # sig_team_discipline_cards_frustration_peak
@@ -27,19 +27,19 @@ Flags team-match performances where late-game scoreboard pressure (trailing stat
   - `card_minute > 75`.
   - Carded side is trailing at event-time score snapshot.
   - Team accumulates `>= 3` qualifying cards in the same match.
-- Trigger is evaluated symmetrically for home and away via `silver.card` event states (`team_side`, `card_minute`, `score_home_at_time`, `score_away_at_time`).
-- The signal preserves bilateral total-card context from `silver.period_stat` (`period = 'All'`) plus fouls, defensive actions, and possession for tactical interpretation.
+- Trigger is evaluated symmetrically for home and away via `fotmob_silver.card` event states (`team_side`, `card_minute`, `score_home_at_time`, `score_away_at_time`).
+- The signal preserves bilateral total-card context from `fotmob_silver.period_stat` (`period = 'All'`) plus fouls, defensive actions, and possession for tactical interpretation.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_frustration_peak.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_frustration_peak`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_frustration_peak`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_frustration_peak
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_frustration_peak
 ```
 
 ## Output Schema

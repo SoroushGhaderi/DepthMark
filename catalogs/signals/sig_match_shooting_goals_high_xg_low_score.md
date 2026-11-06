@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_high_xg_low_score
+  table: fotmob_gold_signals.sig_match_shooting_goals_high_xg_low_score
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_xg_low_score.sql
 ---
 # sig_match_shooting_goals_high_xg_low_score
@@ -30,13 +30,13 @@ Detect matches with extreme combined chance creation but very low scoring output
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_xg_low_score.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_high_xg_low_score`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_high_xg_low_score`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_high_xg_low_score
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_high_xg_low_score
 ```
 
 ## Output Schema

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_late_winner_clutch
+  table: fotmob_gold_signals.sig_player_shooting_goals_late_winner_clutch
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_late_winner_clutch.sql
 ---
 # sig_player_shooting_goals_late_winner_clutch
@@ -32,21 +32,21 @@ Detects player-level clutch finishing where a player scores the decisive match-w
   - Events are grouped at `match_id + team_id + player_id` to emit one row per triggered player per match.
   - First decisive late-winner timing and first before/after score state are preserved.
 - Match-context enrichment:
-  - Player finishing context comes from `silver.player_match_stat`.
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player finishing context comes from `fotmob_silver.player_match_stat`.
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity note:
   - Closest active signals are `sig_player_shooting_goals_clutch_equalizer` and `sig_player_shooting_goals_winning_impact`; this signal is distinct because it requires both 90+ timing and decisive winner persistence after the goal.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_late_winner_clutch.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_late_winner_clutch`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_late_winner_clutch`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_late_winner_clutch
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_late_winner_clutch
 ```
 
 ## Output Schema

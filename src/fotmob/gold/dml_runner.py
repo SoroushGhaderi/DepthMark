@@ -39,7 +39,7 @@ JOB_ID_RE = re.compile(r"^(scenario|sig|signal)_[a-z0-9_]+$")
 SIGNAL_FAMILY_RE = re.compile(r"^[a-z0-9]+(?:_[a-z0-9]+)*$")
 
 # Database that scenario SQL files name; the runner maps it to the configured one.
-SCENARIO_TABLE_DATABASE = "gold_scenarios"
+SCENARIO_TABLE_DATABASE = "fotmob_gold_scenarios"
 
 
 @dataclass(frozen=True)

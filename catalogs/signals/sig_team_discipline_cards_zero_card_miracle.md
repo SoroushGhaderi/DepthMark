@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_zero_card_miracle
+  table: fotmob_gold_signals.sig_team_discipline_cards_zero_card_miracle
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_zero_card_miracle.sql
 ---
 # sig_team_discipline_cards_zero_card_miracle
@@ -25,19 +25,19 @@ Flags team-match performances where foul volume is extreme (20 or more fouls) wh
 - Trigger condition:
   - `triggered_team_fouls_committed >= 20`
   - `triggered_team_yellow_cards = 0`
-- Trigger is evaluated symmetrically for home and away teams using `silver.period_stat` with `period = 'All'`.
+- Trigger is evaluated symmetrically for home and away teams using `fotmob_silver.period_stat` with `period = 'All'`.
 - The signal preserves bilateral foul burden, yellow/red composition, defensive actions, and possession context so analysts can separate officiating asymmetry from match-state-driven physicality.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_zero_card_miracle.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_zero_card_miracle`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_zero_card_miracle`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_zero_card_miracle
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_zero_card_miracle
 ```
 
 ## Output Schema

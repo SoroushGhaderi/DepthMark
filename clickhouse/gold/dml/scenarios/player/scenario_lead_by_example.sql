@@ -1,5 +1,5 @@
 -- scenario_lead_by_example: captains leading winning teams with above-average impact
-INSERT INTO gold_scenarios.scenario_lead_by_example
+INSERT INTO fotmob_gold_scenarios.scenario_lead_by_example
 (
     -- 1. Match Identity
     match_id,
@@ -31,7 +31,7 @@ INSERT INTO gold_scenarios.scenario_lead_by_example
 )
 WITH avg_rating AS (
     SELECT avg(fotmob_rating) AS overall_avg_rating
-    FROM silver.player_match_stat
+    FROM fotmob_silver.player_match_stat
     WHERE fotmob_rating IS NOT NULL
 )
 SELECT
@@ -74,10 +74,10 @@ SELECT
         ELSE 'draw'
     END AS winning_side,
     toString(g.match_date)
-FROM silver.match_personnel AS st
-INNER JOIN silver.match AS g
+FROM fotmob_silver.match_personnel AS st
+INNER JOIN fotmob_silver.match AS g
     ON st.match_id = g.match_id
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON st.match_id = p.match_id
     AND st.person_id = p.player_id
 CROSS JOIN avg_rating AS ar

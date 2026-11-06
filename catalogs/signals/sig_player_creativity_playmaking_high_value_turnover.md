@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_high_value_turnover
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_high_value_turnover
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_high_value_turnover.sql
 ---
 # sig_player_creativity_playmaking_high_value_turnover
@@ -27,12 +27,12 @@ Detect high-volume key-pass creators whose output was not converted into assists
   - `triggered_player_key_passes >= 5`
   - `triggered_player_assists = 0`
   - finished match scope (`match_finished = 1`)
-- Key passes are sourced from `silver.player_match_stat.chances_created`, with assist outcomes from `silver.player_match_stat.assists`.
+- Key passes are sourced from `fotmob_silver.player_match_stat.chances_created`, with assist outcomes from `fotmob_silver.player_match_stat.assists`.
 - Severity is preserved with:
   - `triggered_player_key_passes_above_threshold`
   - `triggered_player_unconverted_key_passes`
   - `triggered_player_assist_minus_expected_assists`
-- Bilateral team context from `silver.period_stat` (`period = 'All'`) is retained to contextualize whether unconverted creation happened in dominant or low-control match states.
+- Bilateral team context from `fotmob_silver.period_stat` (`period = 'All'`) is retained to contextualize whether unconverted creation happened in dominant or low-control match states.
 - Similarity gate note:
   - `sig_player_creativity_playmaking_maestro_output`: same key-pass floor (`>= 5`) but no assist-outcome guard.
   - `sig_player_creativity_playmaking_expected_wizard`: same zero-assist outcome guard but trigger is xA (`>= 1.0`), not key-pass volume.
@@ -41,13 +41,13 @@ Detect high-volume key-pass creators whose output was not converted into assists
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_high_value_turnover.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_high_value_turnover`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_high_value_turnover`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_high_value_turnover
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_high_value_turnover
 ```
 
 ## Output Schema

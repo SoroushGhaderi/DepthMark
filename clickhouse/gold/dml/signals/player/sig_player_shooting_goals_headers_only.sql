@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_headers_only (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_headers_only (
     match_id,
     match_date,
     home_team_id,
@@ -88,7 +88,7 @@ WITH player_header_stats AS (
             coalesce(s.expected_goals, 0.0),
             0.0
         )), 3)) AS triggered_player_header_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.player_id, 0) > 0
       AND coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_own_goal, 0) = 0
@@ -117,7 +117,7 @@ team_header_stats AS (
             coalesce(s.expected_goals, 0.0),
             0.0
         )), 3)) AS team_header_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_own_goal, 0) = 0
     GROUP BY
@@ -281,10 +281,10 @@ SELECT
         1
     ), 0.0)) AS player_share_of_team_header_goals_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN player_header_stats AS phs

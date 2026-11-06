@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air (
+INSERT INTO fotmob_gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air (
     match_id,
     match_date,
     home_team_id,
@@ -286,8 +286,8 @@ SELECT
             )), 0.0),
         1
     ), 0.0)) AS player_share_of_team_aerials_won_pct
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN (
     SELECT
@@ -295,7 +295,7 @@ INNER JOIN (
         person_id,
         min(position_id) AS player_position_id,
         min(usual_playing_position_id) AS player_usual_playing_position_id
-    FROM silver.match_personnel
+    FROM fotmob_silver.match_personnel
     WHERE coalesce(usual_playing_position_id, 0) = 1
     GROUP BY
         match_id,
@@ -303,7 +303,7 @@ INNER JOIN (
 ) AS mp
     ON mp.match_id = p.match_id
    AND mp.person_id = p.player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

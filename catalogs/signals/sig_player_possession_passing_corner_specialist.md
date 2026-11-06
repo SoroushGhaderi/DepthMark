@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_corner_specialist
+  table: fotmob_gold_signals.sig_player_possession_passing_corner_specialist
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_corner_specialist.sql
 ---
 # sig_player_possession_passing_corner_specialist
@@ -25,20 +25,20 @@ Triggers when a player creates more than 1 chance from corner-kick deliveries in
 
 - Trigger condition:
   - `triggered_player_corner_chances_created > 1`
-- Trigger is computed from `silver.shot` rows where `situation = 'FromCorner'` and the player is recorded as `assist_player_id`, capturing shot-creating corner deliveries.
-- Signal keeps bilateral team/opponent context via `silver.period_stat` (`period = 'All'`) and adds corner-shot team context from `silver.shot`.
+- Trigger is computed from `fotmob_silver.shot` rows where `situation = 'FromCorner'` and the player is recorded as `assist_player_id`, capturing shot-creating corner deliveries.
+- Signal keeps bilateral team/opponent context via `fotmob_silver.period_stat` (`period = 'All'`) and adds corner-shot team context from `fotmob_silver.shot`.
 - Output stores both player identity (`triggered_player_*`) and team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_corner_specialist.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_corner_specialist`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_corner_specialist`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_corner_specialist
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_corner_specialist
 ```
 
 ## Output Schema

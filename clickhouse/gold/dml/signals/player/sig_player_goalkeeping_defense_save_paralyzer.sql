@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_goalkeeping_defense_save_paralyzer (
+INSERT INTO fotmob_gold_signals.sig_player_goalkeeping_defense_save_paralyzer (
     match_id,
     match_date,
     home_team_id,
@@ -76,8 +76,8 @@ WITH keeper_shot_events AS (
         toFloat32(coalesce(s.expected_goals, 0.0)) AS shot_expected_goals,
         toInt32(coalesce(s.home_score_after, 0)) AS home_score_after,
         toInt32(coalesce(s.away_score_after, 0)) AS away_score_after
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND s.keeper_id IS NOT NULL
@@ -331,10 +331,10 @@ SELECT
     ) AS save_volume_delta_vs_opponent_keeper
 
 FROM trigger_rollup AS tr
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = tr.match_id
    AND p.player_id = tr.triggered_player_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = tr.match_id
 LEFT JOIN keeper_match_totals AS kmt
     ON kmt.match_id = tr.match_id
@@ -345,7 +345,7 @@ LEFT JOIN trigger_side_rollup AS tsr
 LEFT JOIN trigger_side_rollup AS osr
     ON osr.match_id = tr.match_id
    AND osr.keeper_side = if(p.team_id = m.home_team_id, 'away', 'home')
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tr.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_shot_shy
+  table: fotmob_gold_signals.sig_team_shooting_goals_shot_shy
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shot_shy.sql
 ---
 # sig_team_shooting_goals_shot_shy
@@ -23,7 +23,7 @@ Detect team-level half-game attacking droughts where a side fails to take a sing
 ## Tactical And Statistical Logic
 
 - Trigger condition: `triggered_team_shots_first_half = 0` OR `triggered_team_shots_second_half = 0`.
-- Half splits are computed from `silver.period_stat` using `period IN ('FirstHalf', 'SecondHalf')`.
+- Half splits are computed from `fotmob_silver.period_stat` using `period IN ('FirstHalf', 'SecondHalf')`.
 - Trigger evaluation is restricted to finished matches only.
 - The signal emits one row per `match_id` + `triggered_side`; `triggered_half_without_shot` is `FirstHalf`, `SecondHalf`, or `BothHalves`.
 - Full-match bilateral context (`period = 'All'`) is preserved for scoreline, shot quality, chance volume, and control interpretation.
@@ -32,13 +32,13 @@ Detect team-level half-game attacking droughts where a side fails to take a sing
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shot_shy.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_shot_shy`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_shot_shy`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_shot_shy
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_shot_shy
 ```
 
 ## Output Schema

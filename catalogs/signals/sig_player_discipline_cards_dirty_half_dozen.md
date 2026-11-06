@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_dirty_half_dozen
+  table: fotmob_gold_signals.sig_player_discipline_cards_dirty_half_dozen
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_dirty_half_dozen.sql
 ---
 # sig_player_discipline_cards_dirty_half_dozen
@@ -26,20 +26,20 @@ Flags players with extreme foul volume and zero tackle wins, surfacing high-cont
 - Trigger condition:
   - `triggered_player_fouls_committed >= 6`
   - `triggered_player_tackles_won = 0`
-- Player foul/tackle context is sourced from `silver.player_match_stat`.
-- Player card context is sourced from `silver.card` at `match_id + player_id` grain.
-- Bilateral team context (fouls, cards, tackles won, duels won, possession) is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
+- Player foul/tackle context is sourced from `fotmob_silver.player_match_stat`.
+- Player card context is sourced from `fotmob_silver.card` at `match_id + player_id` grain.
+- Bilateral team context (fouls, cards, tackles won, duels won, possession) is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_dirty_half_dozen.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_dirty_half_dozen`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_dirty_half_dozen`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_dirty_half_dozen
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_dirty_half_dozen
 ```
 
 ## Output Schema

@@ -258,7 +258,7 @@ grep -rnE "ClickHouseClient\(|clickhouse_connect\.get_client" src scripts \
   | grep -v -e src/warehouse/identities.py -e src/integrations/clickhouse/client.py | wc -l
 # Accepted: direct env reads (4: NO_COLOR, FORCE_COLOR, PROGRAMFILES x2)
 grep -rnE "os\.getenv|os\.environ\.get" src scripts | wc -l
-# Resolved items stay resolved: sys.path hacks (0), signal DML into gold.sig_* (0)
+# Resolved items stay resolved: sys.path hacks (0), signal DML into fotmob_gold.sig_* (0)
 grep -rl "sys.path.insert" scripts src | wc -l
 grep -rlE "INSERT INTO\s+gold\.sig_" clickhouse/gold/dml/signals | wc -l</code></pre>
 </section>

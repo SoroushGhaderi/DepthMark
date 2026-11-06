@@ -1,5 +1,5 @@
--- silver.match
-CREATE TABLE IF NOT EXISTS silver.match
+-- fotmob_silver.match
+CREATE TABLE IF NOT EXISTS fotmob_silver.match
 (
     match_id                        Int32,
     match_date                      Date,

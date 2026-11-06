@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_keeper_reliance_index.sql
 ---
 # sig_team_goalkeeping_defense_keeper_reliance_index
@@ -37,13 +37,13 @@ Detect low-possession matches where defensive survival depends on high goalkeepe
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_keeper_reliance_index.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_keeper_reliance_index`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_keeper_reliance_index
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_keeper_reliance_index
 ```
 
 ## Output Schema

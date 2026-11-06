@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_wing_play_extravaganza (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_wing_play_extravaganza (
     match_id,
     match_date,
     home_team_id,
@@ -75,8 +75,8 @@ WITH base_stats AS (
             ),
             1
         )) AS match_cross_accuracy_pct
-    FROM silver.match AS m FINAL
-    INNER JOIN silver.period_stat AS ps FINAL
+    FROM fotmob_silver.match AS m FINAL
+    INNER JOIN fotmob_silver.period_stat AS ps FINAL
         ON  ps.match_id = m.match_id
         AND ps.period = 'All'
     WHERE m.match_finished = 1

@@ -13,12 +13,12 @@ bounded by a timeout and cancelled as a whole process group.
   ``--full-history``.
 
 Usage:
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113
-    python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251113
-    python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251101 --end-date 20251107
-    python3 scripts/orchestration/run_fotmob_pipeline.py --month 202511
-    python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
-    python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --silver-only
+    python3 scripts/fotmob/run_fotmob_pipeline.py 20251113
+    python3 scripts/fotmob/run_fotmob_pipeline.py --date 20251113
+    python3 scripts/fotmob/run_fotmob_pipeline.py --start-date 20251101 --end-date 20251107
+    python3 scripts/fotmob/run_fotmob_pipeline.py --month 202511
+    python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
+    python3 scripts/fotmob/run_fotmob_pipeline.py 20251113 --silver-only
 """
 
 from __future__ import annotations
@@ -57,10 +57,10 @@ class Stage:
     script: str
 
 
-SCRAPE = Stage("scrape", "FotMob Bronze scrape", "scripts/bronze/scrape_fotmob.py")
-BRONZE = Stage("bronze", "Bronze load", "scripts/bronze/load_fotmob_bronze.py")
-SILVER = Stage("silver", "Silver", "scripts/silver/load_fotmob_silver.py")
-GOLD = Stage("gold", "Gold", "scripts/gold/load_fotmob_gold.py")
+SCRAPE = Stage("scrape", "FotMob Bronze scrape", "scripts/fotmob/scrape_fotmob.py")
+BRONZE = Stage("bronze", "Bronze load", "scripts/fotmob/load_fotmob_bronze.py")
+SILVER = Stage("silver", "Silver", "scripts/fotmob/load_fotmob_silver.py")
+GOLD = Stage("gold", "Gold", "scripts/fotmob/load_fotmob_gold.py")
 STAGES: tuple[Stage, ...] = (SCRAPE, BRONZE, SILVER, GOLD)
 WAREHOUSE_STAGES: tuple[Stage, ...] = (BRONZE, SILVER, GOLD)
 
@@ -276,12 +276,12 @@ def create_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python3 scripts/orchestration/run_fotmob_pipeline.py 20251113
-  python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251101 --end-date 20251107
-  python3 scripts/orchestration/run_fotmob_pipeline.py --month 202511
-  python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
-  python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --silver-only
-  python3 scripts/orchestration/run_fotmob_pipeline.py 20251113 --skip-bronze --force
+  python3 scripts/fotmob/run_fotmob_pipeline.py 20251113
+  python3 scripts/fotmob/run_fotmob_pipeline.py --start-date 20251101 --end-date 20251107
+  python3 scripts/fotmob/run_fotmob_pipeline.py --month 202511
+  python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
+  python3 scripts/fotmob/run_fotmob_pipeline.py 20251113 --silver-only
+  python3 scripts/fotmob/run_fotmob_pipeline.py 20251113 --skip-bronze --force
         """,
     )
     scope = parser.add_mutually_exclusive_group(required=True)

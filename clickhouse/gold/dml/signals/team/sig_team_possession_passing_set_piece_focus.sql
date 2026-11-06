@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_set_piece_focus (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_set_piece_focus (
     match_id,
     match_date,
     home_team_id,
@@ -55,7 +55,7 @@ WITH set_piece_team_shots AS (
         s.match_id,
         assumeNotNull(s.team_id) AS team_id,
         count() AS team_set_piece_shots
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.team_id IS NOT NULL
       AND s.situation IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')
     GROUP BY
@@ -94,8 +94,8 @@ base_stats AS (
         toFloat32(coalesce(ps.expected_goals_set_play_away, 0)) AS expected_goals_set_play_away,
         coalesce(hs.team_set_piece_shots, 0) AS set_piece_shots_home,
         coalesce(away_sp.team_set_piece_shots, 0) AS set_piece_shots_away
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

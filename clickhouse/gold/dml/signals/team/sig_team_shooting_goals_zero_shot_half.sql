@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_zero_shot_half (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_zero_shot_half (
     match_id,
     match_date,
     home_team_id,
@@ -68,7 +68,7 @@ WITH half_shot_stats AS (
         maxIf(coalesce(ps.total_shots_away, 0), ps.period = 'SecondHalf') AS away_shots_second_half,
         toInt8(maxIf(1, ps.period = 'FirstHalf')) AS has_first_half_period_row_flag,
         toInt8(maxIf(1, ps.period = 'SecondHalf')) AS has_second_half_period_row_flag
-    FROM silver.period_stat AS ps
+    FROM fotmob_silver.period_stat AS ps
     WHERE ps.period IN ('FirstHalf', 'SecondHalf')
     GROUP BY ps.match_id
 )
@@ -199,8 +199,8 @@ SELECT
     toInt32(coalesce(ps.corners_home, 0)) AS triggered_team_corners,
     toInt32(coalesce(ps.corners_away, 0)) AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -339,8 +339,8 @@ SELECT
     toInt32(coalesce(ps.corners_away, 0)) AS triggered_team_corners,
     toInt32(coalesce(ps.corners_home, 0)) AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

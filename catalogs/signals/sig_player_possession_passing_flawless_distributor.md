@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_flawless_distributor
+  table: fotmob_gold_signals.sig_player_possession_passing_flawless_distributor
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_flawless_distributor.sql
 ---
 # sig_player_possession_passing_flawless_distributor
@@ -26,20 +26,20 @@ Triggers when a player attempts at least 40 passes and completes every pass, ide
 - Trigger condition:
   - `triggered_player_pass_attempts >= 40`
   - `triggered_player_accurate_passes = triggered_player_pass_attempts`
-- Uses player full-match passing totals from `silver.player_match_stat`.
-- Adds bilateral team/opponent passing and possession context from `silver.period_stat` (`period = 'All'`) to separate truly controlled distribution from low-involvement clean passing.
+- Uses player full-match passing totals from `fotmob_silver.player_match_stat`.
+- Adds bilateral team/opponent passing and possession context from `fotmob_silver.period_stat` (`period = 'All'`) to separate truly controlled distribution from low-involvement clean passing.
 - Persists both player and team identity fields for contract-compliant player-grain traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_flawless_distributor.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_flawless_distributor`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_flawless_distributor`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_flawless_distributor
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_flawless_distributor
 ```
 
 ## Output Schema

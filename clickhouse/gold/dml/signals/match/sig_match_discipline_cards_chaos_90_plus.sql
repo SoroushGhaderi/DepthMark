@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_discipline_cards_chaos_90_plus (
+INSERT INTO fotmob_gold_signals.sig_match_discipline_cards_chaos_90_plus (
     match_id,
     match_date,
     home_team_id,
@@ -71,7 +71,7 @@ WITH red_card_events AS (
         toInt32(coalesce(c.added_time, 0)) AS card_added_time,
         toInt32(coalesce(c.card_minute, 0)) + toInt32(coalesce(c.added_time, 0)) AS card_effective_minute,
         toInt64(c.event_id) AS event_id
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
       AND toInt32(coalesce(c.card_minute, 0)) >= 90
@@ -164,8 +164,8 @@ base_stats AS (
         + coalesce(ps.yellow_cards_away, 0)
         + coalesce(ps.red_cards_home, 0)
         + coalesce(ps.red_cards_away, 0) AS match_total_cards
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     INNER JOIN eligible_matches AS em

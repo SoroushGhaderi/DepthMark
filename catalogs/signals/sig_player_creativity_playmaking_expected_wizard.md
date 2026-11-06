@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_expected_wizard
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_expected_wizard
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_expected_wizard.sql
 ---
 # sig_player_creativity_playmaking_expected_wizard
@@ -27,7 +27,7 @@ Detect player-level high-quality chance creation performances where expected ass
   - `triggered_player_expected_assists >= 1.0`
   - `triggered_player_assists = 0`
   - finished match scope (`match_finished = 1`)
-- Trigger values are sourced from `silver.player_match_stat` and enriched with bilateral team context from `silver.period_stat` (`period = 'All'`).
+- Trigger values are sourced from `fotmob_silver.player_match_stat` and enriched with bilateral team context from `fotmob_silver.period_stat` (`period = 'All'`).
 - Rows are emitted at `match_player` grain with contract-compliant identity fields for player and team.
 - Severity is preserved using:
   - `expected_assists_above_threshold`
@@ -40,13 +40,13 @@ Detect player-level high-quality chance creation performances where expected ass
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_expected_wizard.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_expected_wizard`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_expected_wizard`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_expected_wizard
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_expected_wizard
 ```
 
 ## Output Schema

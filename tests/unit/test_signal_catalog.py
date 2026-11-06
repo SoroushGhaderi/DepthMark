@@ -42,7 +42,7 @@ def _frontmatter(signal_id: str, **overrides: Any) -> dict[str, Any]:
         "trigger": "Trigger",
         "row_identity": PLAYER_IDENTITY if entity == "player" else TEAM_IDENTITY,
         "asset_paths": {
-            "table": f"gold_signals.{signal_id}",
+            "table": f"fotmob_gold_signals.{signal_id}",
             "sql": f"clickhouse/gold/dml/signals/{entity}/{signal_id}.sql",
         },
     }
@@ -88,7 +88,7 @@ class SignalProject:
         if write_sql:
             sql_path = self.root / "clickhouse/gold/dml/signals" / entity / f"{signal_id}.sql"
             sql_path.parent.mkdir(parents=True, exist_ok=True)
-            sql_path.write_text(f"INSERT INTO gold_signals.{signal_id} SELECT 1;\n")
+            sql_path.write_text(f"INSERT INTO fotmob_gold_signals.{signal_id} SELECT 1;\n")
         if write_ddl:
             columns = list(ddl_columns if ddl_columns is not None else identity)
             hashed = hashed_columns if hashed_columns is not None else identity
@@ -98,7 +98,7 @@ class SignalProject:
             ddl_path = self.root / "clickhouse/gold/ddl/signals" / entity / f"{signal_id}.sql"
             ddl_path.parent.mkdir(parents=True, exist_ok=True)
             ddl_path.write_text(
-                f"CREATE TABLE IF NOT EXISTS gold_signals.{signal_id} (\n"
+                f"CREATE TABLE IF NOT EXISTS fotmob_gold_signals.{signal_id} (\n"
                 f"{column_sql},\n"
                 f"    signal_instance_id String DEFAULT {_hash(signal_id, hashed)},\n"
                 "    inserted_at DateTime DEFAULT now()\n"
@@ -138,7 +138,7 @@ def test_valid_catalog_loads_ordered_definitions(project: SignalProject) -> None
     assert match_signal.grain == "match_team"
     assert match_signal.name == "goal_fest"
     assert match_signal.tags == ("shooting", "goals")
-    assert match_signal.table == f"gold_signals.{MATCH_SIGNAL}"
+    assert match_signal.table == f"fotmob_gold_signals.{MATCH_SIGNAL}"
     assert match_signal.body == f"# {MATCH_SIGNAL}"
     assert match_signal.frontmatter_dict()["headline"] == "Headline"
 
@@ -227,7 +227,7 @@ def test_asset_paths_must_follow_convention_and_exist(tmp_path: Path) -> None:
     signal_project = SignalProject(tmp_path)
     signal_project.add_signal(MATCH_SIGNAL, write_sql=False)
     frontmatter = _frontmatter(PLAYER_SIGNAL)
-    frontmatter["asset_paths"]["table"] = f"gold.{PLAYER_SIGNAL}"
+    frontmatter["asset_paths"]["table"] = f"fotmob_gold.{PLAYER_SIGNAL}"
     signal_project.add_signal(PLAYER_SIGNAL, frontmatter=frontmatter)
 
     violations = signal_project.violations()
@@ -237,17 +237,17 @@ def test_asset_paths_must_follow_convention_and_exist(tmp_path: Path) -> None:
         f"'clickhouse/gold/dml/signals/match/{MATCH_SIGNAL}.sql' does not exist"
     ) in violations
     assert (
-        f"catalogs/{PLAYER_SIGNAL}.md: asset_paths.table must be 'gold_signals.{PLAYER_SIGNAL}'"
+        f"catalogs/{PLAYER_SIGNAL}.md: asset_paths.table must be 'fotmob_gold_signals.{PLAYER_SIGNAL}'"
     ) in violations
 
 
 def test_signal_sql_must_insert_into_its_catalog_table(project: SignalProject) -> None:
     sql_path = project.root / f"clickhouse/gold/dml/signals/match/{MATCH_SIGNAL}.sql"
-    sql_path.write_text(f"INSERT INTO gold.{MATCH_SIGNAL} SELECT 1;\n")
+    sql_path.write_text(f"INSERT INTO fotmob_gold.{MATCH_SIGNAL} SELECT 1;\n")
 
     assert project.violations() == [
         f"catalogs/{MATCH_SIGNAL}.md: signal SQL must INSERT INTO "
-        f"gold_signals.{MATCH_SIGNAL}, not gold.{MATCH_SIGNAL}"
+        f"fotmob_gold_signals.{MATCH_SIGNAL}, not fotmob_gold.{MATCH_SIGNAL}"
     ]
 
 
@@ -257,7 +257,7 @@ def test_signal_sql_and_ddl_without_catalog_are_violations(project: SignalProjec
 
     assert project.violations() == [
         f"clickhouse/gold/dml/signals/team/{orphan}.sql: signal SQL has no catalog",
-        f"clickhouse/gold/ddl/signals/team/{orphan}.sql: gold_signals.{orphan} has no catalog",
+        f"clickhouse/gold/ddl/signals/team/{orphan}.sql: fotmob_gold_signals.{orphan} has no catalog",
     ]
 
 
@@ -266,7 +266,7 @@ def test_catalog_without_ddl_is_a_violation(tmp_path: Path) -> None:
     signal_project.add_signal(MATCH_SIGNAL, write_ddl=False)
 
     assert signal_project.violations() == [
-        f"catalogs/{MATCH_SIGNAL}.md: gold_signals.{MATCH_SIGNAL} has no DDL"
+        f"catalogs/{MATCH_SIGNAL}.md: fotmob_gold_signals.{MATCH_SIGNAL} has no DDL"
     ]
 
 

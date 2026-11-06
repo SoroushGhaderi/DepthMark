@@ -106,7 +106,7 @@ def assert_bronze_layer_contracts(
     client: ClickHouseClient,
     inserted_rows_by_table: dict[str, int],
     baseline_invalid_rows_by_table: dict[str, int] | None = None,
-    database: str = "bronze",
+    database: str = "fotmob_bronze",
     log=logger,
 ) -> None:
     """Run lightweight post-load bronze assertions on tables touched in this run."""
@@ -141,7 +141,7 @@ def assert_bronze_layer_contracts(
 def get_bronze_invalid_key_rows(
     client: ClickHouseClient,
     table_names: list[str],
-    database: str = "bronze",
+    database: str = "fotmob_bronze",
 ) -> dict[str, int]:
     """Return current invalid key row counts for bronze tables."""
     db = _safe_identifier(database)
@@ -162,7 +162,7 @@ def get_bronze_invalid_key_rows(
 
 def assert_silver_layer_contracts(
     client: ClickHouseClient,
-    database: str = "silver",
+    database: str = "fotmob_silver",
     log=logger,
 ) -> None:
     """Run lightweight post-load silver assertions."""
@@ -281,8 +281,8 @@ def _list_table_columns(client: ClickHouseClient, database: str, table: str) -> 
 
 def assert_gold_layer_contracts(
     client: ClickHouseClient,
-    scenario_database: str = "gold_scenarios",
-    signal_database: str = "gold_signals",
+    scenario_database: str = "fotmob_gold_scenarios",
+    signal_database: str = "fotmob_gold_signals",
     check_scenarios: bool = True,
     check_signals: bool = True,
     log=logger,
@@ -306,7 +306,7 @@ def assert_gold_layer_contracts(
 
 def assert_gold_activation_contracts(
     client: ClickHouseClient,
-    database: str = "gold",
+    database: str = "fotmob_gold",
     log=logger,
 ) -> None:
     """Run lightweight post-load assertions for the Gold activation serving table."""

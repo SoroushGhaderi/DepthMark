@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_efficiency_peak
+  table: fotmob_gold_signals.sig_team_shooting_goals_efficiency_peak
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_efficiency_peak.sql
 ---
 # sig_team_shooting_goals_efficiency_peak
@@ -25,7 +25,7 @@ Detect extreme team-level shot economy matches where a side reaches 4+ goals fro
 - Trigger condition:
   - `triggered_team_goals >= 4`
   - `triggered_team_total_shots < 8`
-- Trigger is evaluated side-by-side for home and away teams in finished matches using `silver.period_stat` at `period = 'All'`.
+- Trigger is evaluated side-by-side for home and away teams in finished matches using `fotmob_silver.period_stat` at `period = 'All'`.
 - Bilateral context is preserved through symmetric `triggered_team_*` and `opponent_*` metrics so analysts can compare volume, conversion, chance quality, and control profile.
 - Severity is surfaced with `goals_above_threshold` and `total_shots_below_exclusive_threshold`.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_ruthless_efficiency` and `sig_team_shooting_goals_xg_overperformance_team`; this signal coexists (Option 1) because it is total-shot-efficiency-first (`>= 4` goals from `< 8` total shots), not shots-on-target-threshold-first or xG-threshold-first.
@@ -33,13 +33,13 @@ Detect extreme team-level shot economy matches where a side reaches 4+ goals fro
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_efficiency_peak.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_efficiency_peak`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_efficiency_peak`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_efficiency_peak
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_efficiency_peak
 ```
 
 ## Output Schema

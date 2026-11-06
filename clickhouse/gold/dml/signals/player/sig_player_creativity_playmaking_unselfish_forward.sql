@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_creativity_playmaking_unselfish_forward (
+INSERT INTO fotmob_gold_signals.sig_player_creativity_playmaking_unselfish_forward (
     match_id,
     match_date,
     home_team_id,
@@ -65,7 +65,7 @@ WITH player_positions AS (
         argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
         argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
             AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.role IN ('starter', 'substitute')
     GROUP BY
         mp.match_id,
@@ -75,7 +75,7 @@ WITH player_positions AS (
         p.match_id,
         p.team_id,
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.team_id IS NOT NULL
     GROUP BY
         p.match_id,
@@ -298,8 +298,8 @@ SELECT
         0.0
     )) AS player_share_of_team_opposition_box_touches_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN player_positions AS pp
     ON pp.match_id = p.match_id
@@ -310,7 +310,7 @@ LEFT JOIN team_key_passes AS tkt
 LEFT JOIN team_key_passes AS tko
     ON tko.match_id = p.match_id
    AND tko.team_id = if(p.team_id = m.home_team_id, m.away_team_id, m.home_team_id)
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

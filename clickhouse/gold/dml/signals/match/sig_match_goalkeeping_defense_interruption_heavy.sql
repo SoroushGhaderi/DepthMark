@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_goalkeeping_defense_interruption_heavy (
+INSERT INTO fotmob_gold_signals.sig_match_goalkeeping_defense_interruption_heavy (
     match_id,
     match_date,
     home_team_id,
@@ -111,8 +111,8 @@ WITH base_stats AS (
         coalesce(ps.fouls_home, 0) + coalesce(ps.fouls_away, 0)
             + coalesce(ps.offsides_home, 0) + coalesce(ps.offsides_away, 0)
             AS match_total_fouls_and_offsides
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

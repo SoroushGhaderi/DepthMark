@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_woodwork_frustration_team
+  table: fotmob_gold_signals.sig_team_shooting_goals_woodwork_frustration_team
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_woodwork_frustration_team.sql
 ---
 # sig_team_shooting_goals_woodwork_frustration_team
@@ -24,20 +24,20 @@ Detect team matches where one side repeatedly hits the post/crossbar (`>= 3` woo
 
 - Trigger condition:
   - `triggered_team_shots_woodwork >= 3`
-- Trigger is evaluated on finished matches only using full-match aggregates from `silver.period_stat` (`period = 'All'`).
+- Trigger is evaluated on finished matches only using full-match aggregates from `fotmob_silver.period_stat` (`period = 'All'`).
 - Signal keeps bilateral context with symmetric `triggered_team_*` and `opponent_*` metrics for woodwork burden, shot quality, conversion, possession, circulation, and pressure context.
 - Similarity gate note: closest active signals are `sig_match_shooting_goals_unlucky_game`, `sig_team_shooting_goals_wasteful_box_presence`, and `sig_team_shooting_goals_conversion_collapse`; this signal intentionally coexists because it is team-side trigger-first on own woodwork volume (`>= 3`) rather than combined match woodwork, box-touch-plus-zero-goal criteria, or high on-target/low-goal conversion collapse.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_woodwork_frustration_team.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_woodwork_frustration_team`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_woodwork_frustration_team`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_woodwork_frustration_team
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_woodwork_frustration_team
 ```
 
 ## Output Schema

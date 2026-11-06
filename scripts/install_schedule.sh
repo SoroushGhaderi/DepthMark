@@ -6,7 +6,7 @@
 #
 # The block is keyed by this checkout's path and replaced on every run, so
 # rerunning never duplicates jobs. Each job runs
-# scripts/orchestration/run_scheduled_job.py inside the scraper container,
+# scripts/orchestration/run_scheduled_job.py inside its source's scraper container,
 # which computes its own date and takes its own overlap lock. Times use the
 # host's local clock.
 
@@ -47,9 +47,9 @@ fi
 DOCKER="$(command -v docker)" || die "Docker is required to install the schedule."
 mkdir -p "$ROOT/logs/scheduler"
 
-job_line() { # MINUTE HOUR JOB
-  printf "%s %s * * * cd '%s' && '%s' compose exec -T depthmark-scraper python3 scripts/orchestration/run_scheduled_job.py %s >> '%s/logs/scheduler/%s.log' 2>&1" \
-    "$1" "$2" "$ROOT" "$DOCKER" "$3" "$ROOT" "$3"
+job_line() { # MINUTE HOUR SERVICE JOB
+  printf "%s %s * * * cd '%s' && '%s' compose exec -T %s python3 scripts/orchestration/run_scheduled_job.py %s >> '%s/logs/scheduler/%s.log' 2>&1" \
+    "$1" "$2" "$ROOT" "$DOCKER" "$3" "$4" "$ROOT" "$4"
 }
 
 {
@@ -58,9 +58,9 @@ job_line() { # MINUTE HOUR JOB
   fi
   printf '%s\n' "$BEGIN_MARK"
   printf '%s\n' "# FotMob: yesterday through Bronze, Silver, and Gold."
-  job_line 0 3 fotmob-daily
+  job_line 0 3 depthmark-fotmob-scraper fotmob-daily
   printf '\n%s\n' "# Oddspedia: two days ago, after its FotMob Silver window is complete."
-  job_line 0 5 oddspedia-daily
+  job_line 0 5 depthmark-oddspedia-scraper oddspedia-daily
   printf '\n%s\n' "$END_MARK"
 } | crontab -
 

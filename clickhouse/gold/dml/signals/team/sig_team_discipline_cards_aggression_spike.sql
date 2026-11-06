@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_aggression_spike (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_aggression_spike (
     match_id,
     match_date,
     home_team_id,
@@ -56,7 +56,7 @@ WITH half_foul_stats AS (
         maxIf(coalesce(ps.fouls_home, 0), ps.period = 'SecondHalf') AS home_fouls_second_half,
         maxIf(coalesce(ps.fouls_away, 0), ps.period = 'FirstHalf') AS away_fouls_first_half,
         maxIf(coalesce(ps.fouls_away, 0), ps.period = 'SecondHalf') AS away_fouls_second_half
-    FROM silver.period_stat AS ps
+    FROM fotmob_silver.period_stat AS ps
     WHERE ps.period IN ('FirstHalf', 'SecondHalf')
     GROUP BY ps.match_id
 )
@@ -157,8 +157,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0) - coalesce(ps.ball_possession_away, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN half_foul_stats AS hfs
@@ -263,8 +263,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0) - coalesce(ps.ball_possession_home, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN half_foul_stats AS hfs

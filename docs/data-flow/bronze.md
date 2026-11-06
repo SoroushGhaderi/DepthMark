@@ -9,12 +9,12 @@ separate.
 
 | Source | Filesystem artifacts | Raw ClickHouse facts | Next stage |
 | --- | --- | --- | --- |
-| FotMob | `data/fotmob/{historical,live}/` | `bronze.*` | FotMob Silver in `silver.*` |
+| FotMob | `data/fotmob/{historical,live}/` | `fotmob_bronze.*` | FotMob Silver in `fotmob_silver.*` |
 | Oddspedia | `data/oddspedia/{historical,live}/` | `oddspedia_bronze.*` | Oddspedia Silver and the explicit resolution edge |
 
 The Oddspedia workflow is documented in
 [`oddspedia.md`](oddspedia.md). Its Bronze facts are not inserted into FotMob
-`bronze.*` tables.
+`fotmob_bronze.*` tables.
 
 ## Overview
 
@@ -22,12 +22,12 @@ The Oddspedia workflow is documented in
 FotMob API
   → data/fotmob/historical/      completed-date JSON/GZIP/TAR and listings
   → data/fotmob/live/            refreshable, uncompressed current-date data
-  → bronze.*                 15 ClickHouse tables
+  → fotmob_bronze.*                 15 ClickHouse tables
 ```
 
 ## Data Flow
 
-### 1. Scraping (`scripts/bronze/scrape_fotmob.py`)
+### 1. Scraping (`scripts/fotmob/scrape_fotmob.py`)
 
 The scraper fetches match data from the FotMob API:
 
@@ -41,7 +41,7 @@ The scraper fetches match data from the FotMob API:
 4. **Compression** — after a date is complete, the orchestrator compresses its
    match JSON files into `matches/{YYYYMM}/{YYYYMMDD}/{YYYYMMDD}_matches.tar`. Partial
    dates remain uncompressed so they can be resumed safely.
-5. **Turnstile refresh** — `scripts/refresh_turnstile.py` handles token/cookie
+5. **Turnstile refresh** — `scripts/fotmob/refresh_fotmob_turnstile.py` handles token/cookie
    rotation when needed.
 
 Scraping compresses completed local dates but never uploads them. S3
@@ -89,13 +89,13 @@ FotMob key classes:
 
 CLI arguments:
 ```bash
-python3 scripts/bronze/scrape_fotmob.py 20251208           # single date
-python3 scripts/bronze/scrape_fotmob.py --single-date 20251208  # single date (named)
-python3 scripts/bronze/scrape_fotmob.py --month 202512     # full month
-python3 scripts/bronze/scrape_fotmob.py 20251201 20251207  # date range
-python3 scripts/bronze/scrape_fotmob.py 20251208 --force   # re-scrape
-python3 scripts/bronze/scrape_fotmob.py --yesterday        # previous completed date
-python3 scripts/bronze/scrape_fotmob.py --today            # refresh Live data
+python3 scripts/fotmob/scrape_fotmob.py 20251208           # single date
+python3 scripts/fotmob/scrape_fotmob.py --single-date 20251208  # single date (named)
+python3 scripts/fotmob/scrape_fotmob.py --month 202512     # full month
+python3 scripts/fotmob/scrape_fotmob.py 20251201 20251207  # date range
+python3 scripts/fotmob/scrape_fotmob.py 20251208 --force   # re-scrape
+python3 scripts/fotmob/scrape_fotmob.py --yesterday        # previous completed date
+python3 scripts/fotmob/scrape_fotmob.py --today            # refresh Live data
 ```
 
 Historical selectors accept only completed machine-local dates. For the current
@@ -103,15 +103,15 @@ month, `--month` stops at yesterday. `--today` refreshes the listing and every
 listed match under `data/fotmob/live/`, overwrites the latest snapshots
 atomically, and skips compression. Live data does not feed other layers.
 
-### 2. S3 Sync (`scripts/bronze/sync_s3.py`)
+### 2. S3 Sync (`scripts/fotmob/sync_fotmob_s3.py`)
 
 S3 upload and download are standalone, operator-invoked workflows:
 
 ```bash
-python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python3 scripts/bronze/sync_s3.py upload --month 202512
-python3 scripts/bronze/sync_s3.py download --start-date 20251201 --end-date 20251207
-python3 scripts/bronze/sync_s3.py download --all
+python3 scripts/fotmob/sync_fotmob_s3.py upload --date 20251208 --dry-run
+python3 scripts/fotmob/sync_fotmob_s3.py upload --month 202512
+python3 scripts/fotmob/sync_fotmob_s3.py download --start-date 20251201 --end-date 20251207
+python3 scripts/fotmob/sync_fotmob_s3.py download --all
 ```
 
 Each new archive contains `matches/{YYYYMM}/{YYYYMMDD}` and
@@ -135,27 +135,27 @@ Both directions support `--date`/`--single-date`,
 `--start-date`/`--end-date`, `--month`, `--all`, and `--dry-run`. Multi-date
 runs continue after independent failures and exit non-zero if any date fails.
 
-### 3. ClickHouse Loading (`scripts/bronze/load_fotmob_bronze.py`)
+### 3. ClickHouse Loading (`scripts/fotmob/load_fotmob_bronze.py`)
 
 Raw JSON is parsed and loaded into 15 Bronze ClickHouse tables:
 
 | Table | Source | Content |
 | --- | --- | --- |
-| `bronze.general` | `general` | Match metadata, league, season |
-| `bronze.timeline` | `timeline` | Event timeline |
-| `bronze.venue` | `venue` | Stadium information |
-| `bronze.player` | `player` | Player profiles |
-| `bronze.shotmap` | `shotmap` | Shot locations and details |
-| `bronze.goal` | `goal` | Goal events |
-| `bronze.cards` | `cards` | Card events |
-| `bronze.red_card` | `redCard` | Red card details |
-| `bronze.period` | `period` | Period-level stats |
-| `bronze.momentum` | `momentum` | Momentum tracking |
-| `bronze.starters` | `starters` | Starting lineups |
-| `bronze.substitutes` | `substitutes` | Substitutions |
-| `bronze.coaches` | `coaches` | Manager information |
-| `bronze.team_form` | `teamForm` | Team form data |
-| `bronze.match_reference` | derived | Match reference lookup |
+| `fotmob_bronze.general` | `general` | Match metadata, league, season |
+| `fotmob_bronze.timeline` | `timeline` | Event timeline |
+| `fotmob_bronze.venue` | `venue` | Stadium information |
+| `fotmob_bronze.player` | `player` | Player profiles |
+| `fotmob_bronze.shotmap` | `shotmap` | Shot locations and details |
+| `fotmob_bronze.goal` | `goal` | Goal events |
+| `fotmob_bronze.cards` | `cards` | Card events |
+| `fotmob_bronze.red_card` | `redCard` | Red card details |
+| `fotmob_bronze.period` | `period` | Period-level stats |
+| `fotmob_bronze.momentum` | `momentum` | Momentum tracking |
+| `fotmob_bronze.starters` | `starters` | Starting lineups |
+| `fotmob_bronze.substitutes` | `substitutes` | Substitutions |
+| `fotmob_bronze.coaches` | `coaches` | Manager information |
+| `fotmob_bronze.team_form` | `teamForm` | Team form data |
+| `fotmob_bronze.match_reference` | derived | Match reference lookup |
 
 Processing chain (ADR 0031). Every FotMob Bronze command is scoped by Source
 Date: the Historical folder `matches/YYYYMM/YYYYMMDD/`, never a date read from
@@ -217,18 +217,18 @@ reloading Bronze.
 
 CLI arguments:
 ```bash
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208
-python3 scripts/bronze/load_fotmob_bronze.py --single-date 20251208
-python3 scripts/bronze/load_fotmob_bronze.py --start-date 20251201 --end-date 20251207
-python3 scripts/bronze/load_fotmob_bronze.py --month 202512
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --replace
-python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild
-python3 scripts/bronze/load_fotmob_bronze.py --stats
-python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run
-python3 scripts/bronze/remove_fotmob_bronze.py --month 202512
-python3 scripts/bronze/remove_fotmob_bronze.py --full-history
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208
+python3 scripts/fotmob/load_fotmob_bronze.py --single-date 20251208
+python3 scripts/fotmob/load_fotmob_bronze.py --start-date 20251201 --end-date 20251207
+python3 scripts/fotmob/load_fotmob_bronze.py --month 202512
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208 --replace
+python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild
+python3 scripts/fotmob/load_fotmob_bronze.py --stats
+python3 scripts/fotmob/remove_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/fotmob/remove_fotmob_bronze.py --month 202512
+python3 scripts/fotmob/remove_fotmob_bronze.py --full-history
 ```
 
 ### 4. Table Storage Hygiene
@@ -308,6 +308,6 @@ at info level with the match and the values involved:
 | Another Bronze writer is running | Run-Level Failure naming the holder of `data/locks/fotmob_bronze.lock`; rerun when it finishes |
 | `--rebuild` fails at any point | Bronze is unchanged; the staging copies are dropped. Fix the cause and rerun the rebuild |
 | ClickHouse connection | Run-Level Failure; rerun `load_fotmob_bronze.py` |
-| Token expiry | `refresh_turnstile.py` rotates credentials |
+| Token expiry | `scripts/fotmob/refresh_fotmob_turnstile.py` rotates credentials |
 | Disk full | `health_check.py --disk-path data` detects threshold |
-| S3 transfer failure | Re-run `sync_s3.py` for the affected dates; scraping and warehouse loading are unaffected |
+| S3 transfer failure | Re-run `scripts/fotmob/sync_fotmob_s3.py` for the affected dates; scraping and warehouse loading are unaffected |

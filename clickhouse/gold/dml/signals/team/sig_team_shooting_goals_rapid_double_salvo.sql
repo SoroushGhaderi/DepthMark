@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_rapid_double_salvo (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_rapid_double_salvo (
     match_id,
     match_date,
     home_team_id,
@@ -74,7 +74,7 @@ WITH goal_events AS (
             coalesce(s.goal_time, s.minute, 0) + coalesce(s.goal_overload_time, s.minute_added, 0)
         ) AS goal_effective_minute,
         toInt64(coalesce(s.shot_id, 0)) AS shot_id
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.is_goal, 0) = 1
       AND coalesce(s.is_own_goal, 0) = 0
@@ -442,9 +442,9 @@ SELECT
     )) AS opponent_corners
 
 FROM rapid_double_salvo_rollup AS salvo_rollup
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = salvo_rollup.match_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_the_cross_heavy_match.sql
 ---
 # sig_match_creativity_playmaking_the_cross_heavy_match
@@ -29,11 +29,11 @@ then preserve bilateral crossing quality and creation context at match-team grai
 - Match scope:
   - `match_finished = 1`, `period = 'All'`, `match_id > 0`.
 - Crossing metrics source:
-  - `silver.period_stat.accurate_crosses_{home|away}` for successful crosses.
-  - `silver.period_stat.cross_attempts_{home|away}` for crossing volume and accuracy denominator.
+  - `fotmob_silver.period_stat.accurate_crosses_{home|away}` for successful crosses.
+  - `fotmob_silver.period_stat.cross_attempts_{home|away}` for crossing volume and accuracy denominator.
 - Creativity context source:
   - Team key passes (`chances_created`) and expected assists are aggregated from
-    `silver.player_match_stat` by `match_id + team_id`.
+    `fotmob_silver.player_match_stat` by `match_id + team_id`.
 - Output shape:
   - Emits two rows per triggered match (`triggered_side = home|away`) for canonical
     `match_team` grain with symmetric triggered/opponent fields.
@@ -45,13 +45,13 @@ then preserve bilateral crossing quality and creation context at match-team grai
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_the_cross_heavy_match.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_the_cross_heavy_match`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_the_cross_heavy_match
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_the_cross_heavy_match
 ```
 
 ## Output Schema

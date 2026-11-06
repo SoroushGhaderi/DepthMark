@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_the_brace_battle
+  table: fotmob_gold_signals.sig_match_shooting_goals_the_brace_battle
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_the_brace_battle.sql
 ---
 # sig_match_shooting_goals_the_brace_battle
@@ -26,7 +26,7 @@ Detect finished matches where each team has a different brace scorer, then emit 
   - home side has at least one player with `>= 2` non-own goals
   - away side has at least one player with `>= 2` non-own goals
   - top brace-scorer player IDs differ across teams (different players)
-- Brace scorers are derived from `silver.shot` goal events (`is_goal = 1`, `is_own_goal = 0`) grouped by `match_id`, `team_id`, and `player_id`.
+- Brace scorers are derived from `fotmob_silver.shot` goal events (`is_goal = 1`, `is_own_goal = 0`) grouped by `match_id`, `team_id`, and `player_id`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Enrichment combines brace-scorer decomposition (counts, goals, top scorer identities) with bilateral shooting, xG, chance, possession, and passing context.
 - Similarity gate note: nearest active signals are `sig_match_shooting_goals_substituted_scoring_fest`, `sig_match_shooting_goals_clinical_sub_impact`, and `sig_player_shooting_goals_clinical_brace`; this signal intentionally coexists because it is match-scoped and requires bilateral brace symmetry (one brace scorer per team), not substitute-specific scoring or single-player overperformance.
@@ -34,13 +34,13 @@ Detect finished matches where each team has a different brace scorer, then emit 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_the_brace_battle.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_the_brace_battle`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_the_brace_battle`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_the_brace_battle
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_the_brace_battle
 ```
 
 ## Output Schema

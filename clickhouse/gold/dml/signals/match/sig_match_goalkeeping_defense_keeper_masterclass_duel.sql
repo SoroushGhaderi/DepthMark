@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel (
+INSERT INTO fotmob_gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel (
     match_id,
     match_date,
     home_team_id,
@@ -108,8 +108,8 @@ WITH base_stats AS (
             coalesce(ps.expected_goals_on_target_home, 0) - toFloat64(coalesce(m.home_score, 0)),
             3
         )) AS away_goalkeeper_goals_prevented
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

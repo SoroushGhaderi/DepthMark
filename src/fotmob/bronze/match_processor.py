@@ -49,7 +49,7 @@ PERIOD_STAT_KEY_MAPPING: dict[str, tuple[str, str]] = {
     "fouls": ("fouls_home", "fouls_away"),
     "corners": ("corners_home", "corners_away"),
     # API sometimes emits "shots" as an alias of total shots.
-    # Map directly to total_shots_* to align with bronze.period schema.
+    # Map directly to total_shots_* to align with fotmob_bronze.period schema.
     "shots": ("total_shots_home", "total_shots_away"),
     "ShotsOffTarget": ("shots_off_target_home", "shots_off_target_away"),
     "blocked_shots": ("blocked_shots_home", "blocked_shots_away"),
@@ -910,7 +910,7 @@ class FotMobBronzeMatchProcessor:
     def process_card_events(
         self, response_data: dict[str, Any], rejections: list[RowRejection] | None = None
     ) -> list[dict[str, Any]]:
-        """Process card events from the match facts timeline into ``bronze.cards`` rows.
+        """Process card events from the match facts timeline into ``fotmob_bronze.cards`` rows.
 
         Goals and substitutions in the same timeline are not Bronze tables: goals come
         from the header (``process_goal_events_from_header``) and substitutions from

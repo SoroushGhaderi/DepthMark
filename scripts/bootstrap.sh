@@ -132,7 +132,10 @@ wait_healthy() {
   done
 }
 
-run_in_scraper() { docker compose exec -T depthmark-scraper "$@"; }
+# Each scraping service has its own container (same image); shared steps use FotMob's.
+FOTMOB_SERVICE=depthmark-fotmob-scraper
+ODDSPEDIA_SERVICE=depthmark-oddspedia-scraper
+run_in() { local service="$1"; shift; docker compose exec -T "$service" "$@"; }
 
 # Compose bind-mounts these paths. A missing source would be created by Docker as
 # a root-owned directory (credentials.json is a file), so create them first.
@@ -146,7 +149,7 @@ prepare_local_files() {
   fi
   if [ ! -e credentials.json ]; then
     printf '{"cookies": {}}\n' > credentials.json
-    echo "Created an empty credentials.json (scripts/refresh_turnstile.py fills it)"
+    echo "Created an empty credentials.json (scripts/fotmob/refresh_fotmob_turnstile.py fills it)"
   fi
   chmod 600 credentials.json
   if [ "$(id -u)" = "0" ]; then
@@ -170,26 +173,27 @@ step "Building the DepthMark image"
 docker compose build
 
 step "Starting the stack"
-docker compose up -d
+docker compose up -d --remove-orphans
 
 step "Waiting for ClickHouse and MongoDB"
 wait_healthy depthmark-clickhouse
 wait_healthy depthmark-mongodb
 
 step "Setting up the FotMob warehouse"
-run_in_scraper python3 scripts/orchestration/setup_fotmob_warehouse.py
+run_in "$FOTMOB_SERVICE" python3 scripts/fotmob/setup_fotmob_warehouse.py
 
 step "Setting up the Oddspedia warehouse"
-run_in_scraper python3 scripts/oddspedia/setup_oddspedia_warehouse.py
+run_in "$ODDSPEDIA_SERVICE" python3 scripts/oddspedia/setup_oddspedia_warehouse.py
 
 step "Creating MongoDB indexes"
-run_in_scraper python3 scripts/mongodb/init_indexes.py
+run_in "$FOTMOB_SERVICE" python3 scripts/mongodb/init_indexes.py
 
 step "Syncing signal catalogs to MongoDB"
-run_in_scraper python3 scripts/mongodb/sync_signal_catalogs.py
+run_in "$FOTMOB_SERVICE" python3 scripts/mongodb/sync_signal_catalogs.py
 
 step "Running the health check"
-run_in_scraper python3 scripts/health_check.py
+run_in "$FOTMOB_SERVICE" python3 scripts/health_check.py
+run_in "$ODDSPEDIA_SERVICE" python3 scripts/health_check.py
 
 if [ "$INSTALL_SCHEDULE" = 1 ]; then
   step "Installing the host schedule"
@@ -198,4 +202,5 @@ fi
 
 step "DepthMark is ready ($MODE mode)"
 echo "Stack: docker compose ps"
-echo "Run a pipeline: docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --date YYYYMMDD"
+echo "Run FotMob: docker compose exec depthmark-fotmob-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --date YYYYMMDD"
+echo "Run Oddspedia: docker compose exec depthmark-oddspedia-scraper python3 scripts/oddspedia/run_oddspedia_pipeline.py --date YYYYMMDD --silver-reference-window-ready"

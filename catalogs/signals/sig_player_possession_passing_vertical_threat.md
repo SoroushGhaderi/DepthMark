@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_vertical_threat
+  table: fotmob_gold_signals.sig_player_possession_passing_vertical_threat
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_vertical_threat.sql
 ---
 # sig_player_possession_passing_vertical_threat
@@ -28,20 +28,20 @@ Triggers when more than 50% of a player's successful passes are directed forward
 - Because current player schema does not provide direct forward-pass direction counts, the signal uses:
   - `triggered_player_forward_successful_passes_proxy = min(max(passes_final_third, 0), accurate_passes)`
   - `triggered_player_forward_successful_pass_share_pct = proxy / accurate_passes * 100`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent passing, possession, and opposition-half pass context from `silver.period_stat` (`period = 'All'`) to distinguish individual verticality from team-wide territorial dominance.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent passing, possession, and opposition-half pass context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish individual verticality from team-wide territorial dominance.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_vertical_threat.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_vertical_threat`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_vertical_threat`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_vertical_threat
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_vertical_threat
 ```
 
 ## Output Schema

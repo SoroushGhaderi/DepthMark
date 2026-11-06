@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_clean_sheet_contributor.sql
 ---
 # sig_player_goalkeeping_defense_clean_sheet_contributor
@@ -36,9 +36,9 @@ capturing clean-sheet contribution through direct defensive contests.
   - `triggered_player_total_duels_won = ground_duels_won + aerial_duels_won`
   - `triggered_player_total_duel_attempts = ground_duel_attempts + aerial_duel_attempts`
   - `triggered_player_total_duel_success_pct = 100 * total_duels_won / total_duel_attempts`
-- Defender scope is resolved from `silver.match_personnel` with starter-priority role resolution at
+- Defender scope is resolved from `fotmob_silver.match_personnel` with starter-priority role resolution at
   `(match_id, person_id)` grain.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric
   `triggered_team_*` and `opponent_*` defensive/control fields.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_no_fouls_defending`: same defender-family context, but that signal
@@ -52,13 +52,13 @@ capturing clean-sheet contribution through direct defensive contests.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_clean_sheet_contributor.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_clean_sheet_contributor`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_clean_sheet_contributor
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_clean_sheet_contributor
 ```
 
 ## Output Schema

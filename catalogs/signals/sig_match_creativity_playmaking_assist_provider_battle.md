@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_assist_provider_battle
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_assist_provider_battle
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_assist_provider_battle.sql
 ---
 # sig_match_creativity_playmaking_assist_provider_battle
@@ -25,11 +25,11 @@ requiring at least two distinct players across the match to each record `2+` ass
 
 - Trigger condition:
   - `match_players_with_two_plus_assists >= 2`
-  - where player-level assists are aggregated from `silver.player_match_stat` at
+  - where player-level assists are aggregated from `fotmob_silver.player_match_stat` at
     `match_id + team_id + player_id` grain.
 - Match scope:
-  - `silver.match.match_finished = 1`
-  - `silver.period_stat.period = 'All'`
+  - `fotmob_silver.match.match_finished = 1`
+  - `fotmob_silver.period_stat.period = 'All'`
   - `match_id > 0`
 - Distinct-player requirement:
   - only valid player IDs (`player_id > 0`) are counted,
@@ -45,13 +45,13 @@ requiring at least two distinct players across the match to each record `2+` ass
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_assist_provider_battle.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_assist_provider_battle`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_assist_provider_battle`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_assist_provider_battle
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_assist_provider_battle
 ```
 
 ## Output Schema

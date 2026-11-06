@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_super_sub_goal
+  table: fotmob_gold_signals.sig_player_shooting_goals_super_sub_goal
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_super_sub_goal.sql
 ---
 # sig_player_shooting_goals_super_sub_goal
@@ -24,24 +24,24 @@ Detects immediate substitute scoring impact by flagging players who score a non-
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Substitute player (`silver.match_personnel.role = 'substitute'`) with `substitution_time > 0`.
-  - Non-own goal event from `silver.shot` where `is_goal = 1`, `is_own_goal = 0`.
+  - Substitute player (`fotmob_silver.match_personnel.role = 'substitute'`) with `substitution_time > 0`.
+  - Non-own goal event from `fotmob_silver.shot` where `is_goal = 1`, `is_own_goal = 0`.
   - Goal effective minute (`goal_time + goal_overload_time`) is within 5 minutes of substitution time.
 - One row is emitted per `match_id + triggered_player_id + triggered_team_id`.
 - Trigger timing diagnostics preserve first qualifying goal minute, added time, effective minute, and score state before/after that goal.
-- Bilateral team/opponent context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields.
+- Bilateral team/opponent context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields.
 - Similarity gate note: closest active signal is `sig_player_shooting_goals_clutch_equalizer`; overlap exists on shot-level goal timing, but this signal is substitution-timing driven rather than late equalizer game-state driven, so they coexist.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_super_sub_goal.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_super_sub_goal`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_super_sub_goal`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_super_sub_goal
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_super_sub_goal
 ```
 
 ## Output Schema

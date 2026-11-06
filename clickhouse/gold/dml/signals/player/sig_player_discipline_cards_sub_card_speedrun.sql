@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_sub_card_speedrun (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_sub_card_speedrun (
     match_id,
     match_date,
     home_team_id,
@@ -51,7 +51,7 @@ WITH substitute_entries AS (
         mp.match_id,
         toInt32(assumeNotNull(mp.person_id)) AS triggered_player_id,
         toInt32(coalesce(max(mp.substitution_time), 0)) AS triggered_player_substitution_time
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id IS NOT NULL
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
@@ -91,7 +91,7 @@ card_events AS (
                 AND positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
             )
         ) AS is_second_yellow_dismissal
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND toInt32(coalesce(c.card_minute, 0)) > 0
@@ -273,15 +273,15 @@ SELECT
     ), 0.0)) AS opponent_pass_accuracy_pct
 
 FROM triggered_substitute_cards AS tsc
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = tsc.match_id
    AND p.player_id = tsc.triggered_player_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = tsc.match_id
 LEFT JOIN player_card_counts AS pcc
     ON pcc.match_id = tsc.match_id
    AND pcc.triggered_player_id = tsc.triggered_player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tsc.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

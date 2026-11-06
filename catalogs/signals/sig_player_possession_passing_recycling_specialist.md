@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_recycling_specialist
+  table: fotmob_gold_signals.sig_player_possession_passing_recycling_specialist
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_recycling_specialist.sql
 ---
 # sig_player_possession_passing_recycling_specialist
@@ -30,20 +30,20 @@ Triggers when a midfielder records elite pass retention from deep circulation zo
 - Current player schema does not expose direct own-half pass counts/accuracy by player, so this signal uses:
   - `triggered_player_non_final_third_passes_proxy = max(total_passes - passes_final_third, 0)`
   - `triggered_player_non_final_third_pass_share_pct = proxy / total_passes * 100`
-- Midfielder role context comes from `silver.match_personnel` and is preserved via both `triggered_player_position_id` and `triggered_player_usual_playing_position_id`.
-- Signal includes bilateral passing, possession, and team own-half pass context from `silver.period_stat` (`period = 'All'`) to separate individual deep recycling from team-wide style.
+- Midfielder role context comes from `fotmob_silver.match_personnel` and is preserved via both `triggered_player_position_id` and `triggered_player_usual_playing_position_id`.
+- Signal includes bilateral passing, possession, and team own-half pass context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual deep recycling from team-wide style.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_recycling_specialist.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_recycling_specialist`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_recycling_specialist`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_recycling_specialist
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_recycling_specialist
 ```
 
 ## Output Schema

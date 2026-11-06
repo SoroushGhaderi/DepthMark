@@ -13,7 +13,7 @@ from src.warehouse.quality import DataQualitySummary
 from src.warehouse.scope import WarehouseExecutionScope
 from src.warehouse.scoped_replace import ScopedReplacementBatch, ScopedSqlJob
 
-LOG = PublicationLog("silver.scope_publication", "silver")
+LOG = PublicationLog("fotmob_silver.scope_publication", "silver")
 
 
 class RecordingLogger:
@@ -43,7 +43,7 @@ class PublicationClient:
             raise RuntimeError("injected failure")
         if query.startswith("EXISTS TABLE"):
             return SimpleNamespace(result_rows=[(1 if self.table_exists else 0,)])
-        if query.startswith("INSERT INTO silver.scope_publication"):
+        if query.startswith("INSERT INTO fotmob_silver.scope_publication"):
             self.status_writes.append(parameters)
             return SimpleNamespace(result_rows=[])
         if "GROUP BY batch, partition_id" in query:
@@ -75,43 +75,43 @@ def _batch(client, scope=None):
 def test_successful_batch_records_committing_then_published():
     client = PublicationClient()
 
-    _batch(client).run([_job("silver.match"), _job("silver.shot")])
+    _batch(client).run([_job("fotmob_silver.match"), _job("fotmob_silver.shot")])
 
     assert [write["status"] for write in client.status_writes] == ["committing", "published"]
     published = client.status_writes[-1]
     assert published["partition_id"] == 202512
-    assert published["committed_tables"] == ["silver.match", "silver.shot"]
+    assert published["committed_tables"] == ["fotmob_silver.match", "fotmob_silver.shot"]
     assert published["batch"] == "silver"
 
 
 def test_full_history_batch_records_partition_zero():
     client = PublicationClient()
 
-    _batch(client, WarehouseExecutionScope.full_history()).run([_job("silver.match")])
+    _batch(client, WarehouseExecutionScope.full_history()).run([_job("fotmob_silver.match")])
 
     assert {write["partition_id"] for write in client.status_writes} == {0}
 
 
 def test_partial_commit_records_failed_with_committed_tables():
     client = PublicationClient(
-        fail_on="REPLACE PARTITION 202512 FROM warehouse_stage._depthmark_run1_silver__shot"
+        fail_on="REPLACE PARTITION 202512 FROM warehouse_stage._depthmark_run1_fotmob_silver__shot"
     )
 
     with pytest.raises(RuntimeError, match="injected failure"):
-        _batch(client).run([_job("silver.match"), _job("silver.shot")])
+        _batch(client).run([_job("fotmob_silver.match"), _job("fotmob_silver.shot")])
 
     failed = client.status_writes[-1]
     assert failed["status"] == "failed"
-    assert failed["committed_tables"] == ["silver.match"]
-    assert failed["tables"] == ["silver.match", "silver.shot"]
+    assert failed["committed_tables"] == ["fotmob_silver.match"]
+    assert failed["tables"] == ["fotmob_silver.match", "fotmob_silver.shot"]
     assert "injected failure" in failed["error"]
 
 
 def test_staging_failure_records_no_status():
-    client = PublicationClient(fail_on="warehouse_stage._depthmark_run1_silver__shot_calc")
+    client = PublicationClient(fail_on="warehouse_stage._depthmark_run1_fotmob_silver__shot_calc")
 
     with pytest.raises(RuntimeError):
-        _batch(client).run([_job("silver.match"), _job("silver.shot")])
+        _batch(client).run([_job("fotmob_silver.match"), _job("fotmob_silver.shot")])
 
     assert client.status_writes == []
 
@@ -120,7 +120,7 @@ def test_missing_publication_table_fails_before_staging():
     client = PublicationClient(table_exists=False)
 
     with pytest.raises(RuntimeError, match="setup_fotmob_warehouse.py"):
-        _batch(client).run([_job("silver.match")])
+        _batch(client).run([_job("fotmob_silver.match")])
 
     assert not any(query.startswith("CREATE TABLE") for query in client.queries)
 
@@ -132,7 +132,7 @@ def _row(partition_id, status, minute, run_id="r"):
         status,
         run_id,
         str(partition_id),
-        ["silver.match"],
+        ["fotmob_silver.match"],
         datetime(2026, 10, 10, 12, minute),
     )
 
@@ -147,7 +147,7 @@ def test_unpublished_partitions_respect_later_full_history_runs():
         ]
     )
 
-    unpublished = find_unpublished_partitions(client, "silver.scope_publication", "silver")
+    unpublished = find_unpublished_partitions(client, "fotmob_silver.scope_publication", "silver")
 
     assert [(item.partition_id, item.status) for item in unpublished] == [(202512, "committing")]
 
@@ -155,7 +155,7 @@ def test_unpublished_partitions_respect_later_full_history_runs():
 def test_failed_full_history_run_is_always_reported():
     client = PublicationClient(status_rows=[_row(0, "failed", 3), _row(202512, "published", 5)])
 
-    unpublished = find_unpublished_partitions(client, "silver.scope_publication")
+    unpublished = find_unpublished_partitions(client, "fotmob_silver.scope_publication")
 
     assert [item.partition_label for item in unpublished] == ["all partitions (full-history)"]
 
@@ -170,7 +170,7 @@ def test_upstream_guard_names_unpublished_partitions():
 def test_gold_load_is_blocked_by_unpublished_silver():
     client = PublicationClient(status_rows=[_row(202512, "failed", 1)])
 
-    result = GoldService(client=client, metadata_db="gold").run(
+    result = GoldService(client=client, metadata_db="fotmob_gold").run(
         scope=WarehouseExecutionScope.for_date("20251208")
     )
 
@@ -181,7 +181,9 @@ def test_gold_load_is_blocked_by_unpublished_silver():
 def test_unpublished_partitions_fail_the_quality_summary():
     client = PublicationClient(status_rows=[_row(202512, "failed", 1)])
     summary = DataQualitySummary(
-        unpublished_partitions=find_unpublished_partitions(client, "silver.scope_publication")
+        unpublished_partitions=find_unpublished_partitions(
+            client, "fotmob_silver.scope_publication"
+        )
     )
 
     assert summary.has_failures

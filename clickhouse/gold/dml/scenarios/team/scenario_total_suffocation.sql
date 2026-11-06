@@ -1,5 +1,5 @@
 -- scenario_total_suffocation: extreme territorial control with complete opponent chance suppression
-INSERT INTO gold_scenarios.scenario_total_suffocation
+INSERT INTO fotmob_gold_scenarios.scenario_total_suffocation
 (
     match_id,
     home_team_id,
@@ -53,9 +53,9 @@ SELECT
     coalesce(p.passes_away, 0) AS passes_away,
     coalesce(p.corners_home, 0) AS corners_home,
     coalesce(p.corners_away, 0) AS corners_away
-FROM silver.period_stat AS p
+FROM fotmob_silver.period_stat AS p
 FINAL
-INNER JOIN silver.match AS g
+INNER JOIN fotmob_silver.match AS g
     FINAL ON p.match_id = g.match_id
 WHERE
     g.match_finished = 1

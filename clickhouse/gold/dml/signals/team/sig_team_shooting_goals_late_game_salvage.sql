@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_late_game_salvage (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_late_game_salvage (
     match_id,
     match_date,
     home_team_id,
@@ -97,8 +97,8 @@ WITH late_salvage_goal_events AS (
             'winning'
         ) AS late_salvage_goal_type,
         toInt64(coalesce(s.shot_id, 0)) AS shot_id
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND m.match_id > 0
@@ -461,9 +461,9 @@ SELECT
     )) AS opponent_corners
 
 FROM late_salvage_rollup AS lsr
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = lsr.match_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

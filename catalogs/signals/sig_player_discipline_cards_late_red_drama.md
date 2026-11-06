@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_late_red_drama
+  table: fotmob_gold_signals.sig_player_discipline_cards_late_red_drama
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_late_red_drama.sql
 ---
 # sig_player_discipline_cards_late_red_drama
@@ -25,21 +25,21 @@ Flags players sent off after the 85th minute, preserving endgame dismissal timin
 
 - Trigger condition:
   - `triggered_player_red_card_minute > 85`
-- Red-card events come from `silver.card` rows where `card_type` contains `"red"`.
+- Red-card events come from `fotmob_silver.card` rows where `card_type` contains `"red"`.
 - The signal emits one row per triggered player per match using the first qualifying late red-card event.
 - Output stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for player-grain traceability.
-- Bilateral team context (cards, fouls, possession, passing) is attached from `silver.period_stat` (`period = 'All'`) to support interpretation of late-match game-state disruption.
+- Bilateral team context (cards, fouls, possession, passing) is attached from `fotmob_silver.period_stat` (`period = 'All'`) to support interpretation of late-match game-state disruption.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_late_red_drama.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_late_red_drama`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_late_red_drama`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_late_red_drama
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_late_red_drama
 ```
 
 ## Output Schema

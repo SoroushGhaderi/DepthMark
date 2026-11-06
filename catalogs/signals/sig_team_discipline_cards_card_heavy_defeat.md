@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_card_heavy_defeat
+  table: fotmob_gold_signals.sig_team_discipline_cards_card_heavy_defeat
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_card_heavy_defeat.sql
 ---
 # sig_team_discipline_cards_card_heavy_defeat
@@ -31,13 +31,13 @@ Flags team-match performances where a side receives a red card and still loses b
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_card_heavy_defeat.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_card_heavy_defeat`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_card_heavy_defeat`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_card_heavy_defeat
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_card_heavy_defeat
 ```
 
 ## Output Schema

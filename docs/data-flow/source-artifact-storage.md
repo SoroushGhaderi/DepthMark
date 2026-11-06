@@ -49,11 +49,11 @@ Historical collection.
 
 ```bash
 # Live/current-date discovery snapshots
-python3 scripts/bronze/scrape_fotmob.py --today
+python3 scripts/fotmob/scrape_fotmob.py --today
 python3 scripts/oddspedia/discover_oddspedia_events.py
 
 # Historical/completed-date priority-selected artifacts
-python3 scripts/bronze/scrape_fotmob.py --single-date 20260710
+python3 scripts/fotmob/scrape_fotmob.py --single-date 20260710
 python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260710 --silver-reference-window-ready
 python3 scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260701 --end-date 20260710 --silver-reference-window-ready
 ```

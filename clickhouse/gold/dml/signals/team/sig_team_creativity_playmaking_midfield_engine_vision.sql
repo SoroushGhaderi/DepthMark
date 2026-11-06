@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_midfield_engine_vision (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_midfield_engine_vision (
     match_id,
     match_date,
     home_team_id,
@@ -71,7 +71,7 @@ WITH player_roles AS (
         toInt32(mp.person_id) AS player_id,
         argMax(coalesce(mp.usual_playing_position_id, 0), if(mp.role = 'starter', 2, 1))
             AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.primary_team_id > 0
       AND mp.person_id > 0
@@ -88,7 +88,7 @@ player_playmaking AS (
         toInt32(p.player_id) AS player_id,
         toInt32(max(coalesce(p.chances_created, 0))) AS player_key_passes,
         toFloat32(max(coalesce(p.expected_assists, 0.0))) AS player_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
       AND p.team_id > 0
       AND p.player_id > 0
@@ -267,8 +267,8 @@ SELECT
     toFloat32(round(coalesce(ps.ball_possession_home, 0.0) - coalesce(ps.ball_possession_away, 0.0), 1))
         AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -428,8 +428,8 @@ SELECT
     toFloat32(round(coalesce(ps.ball_possession_away, 0.0) - coalesce(ps.ball_possession_home, 0.0), 1))
         AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

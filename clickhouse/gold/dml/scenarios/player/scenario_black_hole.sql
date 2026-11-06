@@ -1,5 +1,5 @@
 -- scenario_black_hole: high-volume, low-quality shooters who dominate team shot share without scoring
-INSERT INTO gold_scenarios.scenario_black_hole
+INSERT INTO fotmob_gold_scenarios.scenario_black_hole
 (
     match_id,
     player_id,
@@ -28,7 +28,7 @@ WITH team_shots_cte AS (
         match_id,
         team_id,
         sum(coalesce(total_shots, 0)) AS team_total_shots
-    FROM silver.player_match_stat
+    FROM fotmob_silver.player_match_stat
     FINAL
     WHERE is_goalkeeper = 0
     GROUP BY
@@ -63,9 +63,9 @@ SELECT
     g.away_team_name,
     g.home_score,
     g.away_score
-FROM silver.player_match_stat AS p
+FROM fotmob_silver.player_match_stat AS p
 FINAL
-INNER JOIN silver.match AS g
+INNER JOIN fotmob_silver.match AS g
     FINAL ON p.match_id = g.match_id
 INNER JOIN team_shots_cte AS ts
     ON p.match_id = ts.match_id

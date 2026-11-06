@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_shot_creation_peak
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_shot_creation_peak
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_shot_creation_peak.sql
 ---
 # sig_match_creativity_playmaking_shot_creation_peak
@@ -27,10 +27,10 @@ then preserve bilateral playmaking and execution context per side.
   - `match_total_shots >= 30` over a 90-minute reference window.
   - Equivalent expression: `match_minutes_per_shot <= 3.0`.
 - Trigger source:
-  - Shot volume and match execution context come from `silver.period_stat` (`period = 'All'`).
-  - Team key passes and expected assists are aggregated from `silver.player_match_stat`.
+  - Shot volume and match execution context come from `fotmob_silver.period_stat` (`period = 'All'`).
+  - Team key passes and expected assists are aggregated from `fotmob_silver.player_match_stat`.
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - Emits one row for `home` and one row for `away` (`match_team` grain).
@@ -42,13 +42,13 @@ then preserve bilateral playmaking and execution context per side.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_shot_creation_peak.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_shot_creation_peak`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_shot_creation_peak`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_shot_creation_peak
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_shot_creation_peak
 ```
 
 ## Output Schema

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_late_game_salvage
+  table: fotmob_gold_signals.sig_team_shooting_goals_late_game_salvage
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_late_game_salvage.sql
 ---
 # sig_team_shooting_goals_late_game_salvage
@@ -32,7 +32,7 @@ Detect team-level late-game salvage moments where a side scores a tying or winni
   - Emits side-oriented rows (`triggered_side`) at `match_team` grain, allowing bilateral triggering when both teams satisfy the rule in the same match.
   - Preserves first qualifying late-salvage timing and before/after score-state evidence for auditability.
 - Match context enrichment:
-  - Adds bilateral shooting, xG, big-chance, possession, passing, and corner diagnostics from `silver.period_stat` (`period = 'All'`).
+  - Adds bilateral shooting, xG, big-chance, possession, passing, and corner diagnostics from `fotmob_silver.period_stat` (`period = 'All'`).
 - Similarity gate note:
   - Closest active signals are `sig_team_shooting_goals_late_surge_goals`, `sig_team_shooting_goals_rapid_response_goal`, and `sig_player_shooting_goals_late_winner_clutch`.
   - This signal intentionally coexists because it is team-triggered and score-state specific (tying/winning salvage after 90), not burst-count or immediate-response focused.
@@ -40,13 +40,13 @@ Detect team-level late-game salvage moments where a side scores a tying or winni
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_late_game_salvage.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_late_game_salvage`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_late_game_salvage`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_late_game_salvage
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_late_game_salvage
 ```
 
 ## Output Schema

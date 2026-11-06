@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_card_frenzy
+  table: fotmob_gold_signals.sig_match_discipline_cards_card_frenzy
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_card_frenzy.sql
 ---
 # sig_match_discipline_cards_card_frenzy
@@ -23,20 +23,20 @@ Flags matches with extreme disciplinary volume (10+ combined cards), capturing c
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - `(yellow_cards_home + yellow_cards_away + red_cards_home + red_cards_away) >= 10` from `silver.period_stat` at `period = 'All'`.
+  - `(yellow_cards_home + yellow_cards_away + red_cards_home + red_cards_away) >= 10` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) for stable team-grain downstream consumption.
 - Output keeps bilateral card composition, share, and conversion-to-fouls context, plus defensive action and possession context for tactical interpretation.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_card_frenzy.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_card_frenzy`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_card_frenzy`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_card_frenzy
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_card_frenzy
 ```
 
 ## Output Schema

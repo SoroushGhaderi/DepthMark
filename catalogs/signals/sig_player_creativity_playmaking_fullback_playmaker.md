@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_fullback_playmaker
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_fullback_playmaker
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_fullback_playmaker.sql
 ---
 # sig_player_creativity_playmaking_fullback_playmaker
@@ -29,16 +29,16 @@ into advanced box-access zones during finished matches.
   - `triggered_player_usual_playing_position_id = 1` (defender role gate)
   - `triggered_player_position_id IN (2, 5)` (fullback proxy)
 - Source limitation note:
-  - `silver.player_match_stat` does not expose direct `passes_into_penalty_area`.
+  - `fotmob_silver.player_match_stat` does not expose direct `passes_into_penalty_area`.
   - This signal uses `passes_final_third` as explicit proxy
     (`triggered_player_successful_box_passes_proxy_source = 'passes_final_third_proxy'`).
-- Position scope is resolved from `silver.match_personnel` with starter-priority role resolution
+- Position scope is resolved from `fotmob_silver.match_personnel` with starter-priority role resolution
   per `(match_id, person_id)`.
 - Finished-match scope and valid side mapping are enforced:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
   - player team must map to home/away side.
-- Bilateral passing, territorial, and control context is retained from `silver.period_stat`
+- Bilateral passing, territorial, and control context is retained from `fotmob_silver.period_stat`
   (`period = 'All'`).
 - Similarity gate note:
   - `sig_player_creativity_playmaking_box_penetrator` is the closest metric overlap (same `>= 5`
@@ -51,13 +51,13 @@ into advanced box-access zones during finished matches.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_fullback_playmaker.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_fullback_playmaker`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_fullback_playmaker`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_fullback_playmaker
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_fullback_playmaker
 ```
 
 ## Output Schema

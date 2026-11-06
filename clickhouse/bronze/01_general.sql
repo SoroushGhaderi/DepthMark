@@ -1,5 +1,5 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.general
+CREATE TABLE IF NOT EXISTS fotmob_bronze.general
 (
     match_id                        Int32,
     match_round                     Nullable(String),

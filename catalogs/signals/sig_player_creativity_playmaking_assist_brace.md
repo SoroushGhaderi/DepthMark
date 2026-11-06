@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_assist_brace
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_assist_brace
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_assist_brace.sql
 ---
 # sig_player_creativity_playmaking_assist_brace
@@ -26,8 +26,8 @@ Detect player-level playmaking performances where a single player records an ass
 - Trigger conditions:
   - `triggered_player_assists >= 2`
   - `match_finished = 1`
-- Trigger source is `silver.player_match_stat.assists` at `match_player` grain.
-- Output preserves bilateral team context from `silver.period_stat` (`period = 'All'`) for passing quality, possession control, and territorial pressure interpretation.
+- Trigger source is `fotmob_silver.player_match_stat.assists` at `match_player` grain.
+- Output preserves bilateral team context from `fotmob_silver.period_stat` (`period = 'All'`) for passing quality, possession control, and territorial pressure interpretation.
 - Severity and diagnostic context are retained through:
   - `triggered_player_assists_above_threshold`
   - `triggered_player_assist_minus_expected_assists`
@@ -41,13 +41,13 @@ Detect player-level playmaking performances where a single player records an ass
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_assist_brace.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_assist_brace`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_assist_brace`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_assist_brace
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_assist_brace
 ```
 
 ## Output Schema

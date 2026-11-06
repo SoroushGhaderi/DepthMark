@@ -1,5 +1,5 @@
 -- scenario_wildcard: substitutes with immediate attacking impact
-INSERT INTO gold_scenarios.scenario_wildcard
+INSERT INTO fotmob_gold_scenarios.scenario_wildcard
 (
     match_id,
     home_team_id,
@@ -49,10 +49,10 @@ SELECT
         ELSE 'Draw'
     END AS match_result,
     toString(g.match_date)
-FROM silver.match_personnel AS sub
-INNER JOIN silver.match AS g
+FROM fotmob_silver.match_personnel AS sub
+INNER JOIN fotmob_silver.match AS g
     ON sub.match_id = g.match_id
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON sub.match_id = p.match_id
     AND sub.person_id = p.player_id
 WHERE

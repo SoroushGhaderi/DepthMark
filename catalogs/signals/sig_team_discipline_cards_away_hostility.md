@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_away_hostility
+  table: fotmob_gold_signals.sig_team_discipline_cards_away_hostility
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_away_hostility.sql
 ---
 # sig_team_discipline_cards_away_hostility
@@ -24,20 +24,20 @@ Flags matches where the away side's discipline burden is materially heavier than
 
 - Trigger condition:
   - `away_total_cards - home_total_cards >= 4`
-- Total cards are computed as yellow plus red cards from `silver.period_stat` (`period = 'All'`).
+- Total cards are computed as yellow plus red cards from `fotmob_silver.period_stat` (`period = 'All'`).
 - The triggered entity is fixed to the away side (`triggered_side = 'away'`) by design.
 - Output preserves bilateral card composition, foul load, and defensive/control context for interpretation.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_away_hostility.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_away_hostility`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_away_hostility`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_away_hostility
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_away_hostility
 ```
 
 ## Output Schema

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_zero_shot_half
+  table: fotmob_gold_signals.sig_team_shooting_goals_zero_shot_half
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_zero_shot_half.sql
 ---
 # sig_team_shooting_goals_zero_shot_half
@@ -24,7 +24,7 @@ Detect team-level attacking blackouts where a side produces no shots at all in a
 
 - Trigger condition:
   - `triggered_team_shots_first_half = 0` OR `triggered_team_shots_second_half = 0`.
-  - Shots use `total_shots_*` from `silver.period_stat` and therefore include off-target attempts.
+  - Shots use `total_shots_*` from `fotmob_silver.period_stat` and therefore include off-target attempts.
 - Full-half coverage constraint:
   - Signal only evaluates matches with both half period rows present:
     - `has_first_half_period_row_flag = 1`
@@ -45,13 +45,13 @@ Detect team-level attacking blackouts where a side produces no shots at all in a
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_zero_shot_half.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_zero_shot_half`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_zero_shot_half`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_zero_shot_half
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_zero_shot_half
 ```
 
 ## Output Schema

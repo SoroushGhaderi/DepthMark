@@ -1,6 +1,6 @@
 -- Signal tables for entity=team, family=discipline, subfamily=cards
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_collective_aggression (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_collective_aggression (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_collective_agg
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_aggression_spike (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_aggression_spike (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_aggression_spi
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_aggression_drop_off (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_aggression_drop_off (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_aggression_dro
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_systematic_fouling (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_systematic_fouling (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_systematic_fou
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_midfield_enforcement (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_midfield_enforcement (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -273,7 +273,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_midfield_enfor
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_half_time_talk_fail (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_half_time_talk_fail (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -327,7 +327,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_half_time_talk
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_early_warning (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_early_warning (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -382,7 +382,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_early_warning 
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_first_half_frenzy (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_first_half_frenzy (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -455,7 +455,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_first_half_fre
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_the_triple_booking (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_the_triple_booking (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -515,7 +515,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_the_triple_boo
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_man_down_resilience (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_man_down_resilience (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -569,7 +569,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_man_down_resil
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_red_card_neutralizer (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_red_card_neutralizer (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -639,7 +639,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_red_card_neutr
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_man_advantage_collapse (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_man_advantage_collapse (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -691,7 +691,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_man_advantage_
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_card_heavy_defeat (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_card_heavy_defeat (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -746,7 +746,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_card_heavy_def
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_penalty_prone (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_penalty_prone (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -798,7 +798,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_penalty_prone 
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_clean_discipline (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_clean_discipline (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -844,7 +844,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_clean_discipli
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_clean_sheet_aggression (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_clean_sheet_aggression (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -896,7 +896,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_clean_sheet_ag
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_foul_efficiency (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_foul_efficiency (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -945,7 +945,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_foul_efficienc
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_physical_superiority (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_physical_superiority (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -999,7 +999,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_physical_super
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_zero_card_miracle (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_zero_card_miracle (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1050,7 +1050,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_zero_card_mira
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_discipline_meltdown (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_discipline_meltdown (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1095,7 +1095,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_discipline_mel
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_total_implosion (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_total_implosion (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1154,7 +1154,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_total_implosio
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_frustration_peak (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_frustration_peak (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1213,7 +1213,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_frustration_pe
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_away_hostility (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_away_hostility (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1262,7 +1262,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_away_hostility
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_discipline_cards_hostile_territory (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_discipline_cards_hostile_territory (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),

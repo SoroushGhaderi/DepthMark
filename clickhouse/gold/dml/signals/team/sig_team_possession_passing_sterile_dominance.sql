@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_sterile_dominance (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_sterile_dominance (
     match_id,
     match_date,
     home_team_id,
@@ -111,8 +111,8 @@ SELECT
     coalesce(ps.opposition_half_passes_away, 0) AS opponent_opposition_half_passes
 
 -- Join full-match period stats to finished matches.
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -190,8 +190,8 @@ SELECT
     coalesce(ps.opposition_half_passes_home, 0) AS opponent_opposition_half_passes
 
 -- Join full-match period stats to finished matches.
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_chance_barrage
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_chance_barrage
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_chance_barrage.sql
 ---
 # sig_team_creativity_playmaking_chance_barrage
@@ -26,8 +26,8 @@ Detects team-level playmaking barrages where a side creates at least 15 key pass
   - `triggered_team_key_passes >= 15`
   - `match_finished = 1`
   - Match-team rows are emitted per triggered side (`home`, `away`), so both teams can trigger in one match.
-- Key-pass and xA volume are aggregated from `silver.player_match_stat` per `match_id + team_id`.
-- Bilateral team context is retained from `silver.period_stat` (`period = 'All'`) and `silver.match` to evaluate whether creative overload translated into goals, shot volume, and territorial control.
+- Key-pass and xA volume are aggregated from `fotmob_silver.player_match_stat` per `match_id + team_id`.
+- Bilateral team context is retained from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match` to evaluate whether creative overload translated into goals, shot volume, and territorial control.
 - Similarity gate note:
   - `sig_team_possession_passing_death_by_passes`: team territorial-dominance signal; this one is explicitly key-pass-volume driven.
   - `sig_team_possession_passing_final_third_efficiency`: team attacking-efficiency signal; this one focuses on raw chance-creation barrage volume.
@@ -36,13 +36,13 @@ Detects team-level playmaking barrages where a side creates at least 15 key pass
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_chance_barrage.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_chance_barrage`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_chance_barrage`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_chance_barrage
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_chance_barrage
 ```
 
 ## Output Schema

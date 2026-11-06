@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_clean_sheet_aggression
+  table: fotmob_gold_signals.sig_team_discipline_cards_clean_sheet_aggression
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_clean_sheet_aggression.sql
 ---
 # sig_team_discipline_cards_clean_sheet_aggression
@@ -26,19 +26,19 @@ Flags team-match performances where a side wins to nil while accumulating a heav
   - `triggered_team_yellow_cards >= 5`
   - `opponent_goals = 0` (clean sheet)
   - `triggered_team_goals > opponent_goals` (match win)
-- Trigger is evaluated symmetrically for home and away teams using `silver.match` and `silver.period_stat` (`period = 'All'`).
+- Trigger is evaluated symmetrically for home and away teams using `fotmob_silver.match` and `fotmob_silver.period_stat` (`period = 'All'`).
 - Output keeps bilateral card, foul, defensive-action, and possession context to separate productive aggression from chaotic card-heavy performances.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_clean_sheet_aggression.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_clean_sheet_aggression`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_clean_sheet_aggression`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_clean_sheet_aggression
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_clean_sheet_aggression
 ```
 
 ## Output Schema

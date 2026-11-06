@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_referee_showdown
+  table: fotmob_gold_signals.sig_match_discipline_cards_referee_showdown
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_referee_showdown.sql
 ---
 # sig_match_discipline_cards_referee_showdown
@@ -24,20 +24,20 @@ Flags matches where both captains are carded, surfacing leadership-level discipl
 
 - Trigger condition:
   - both the home and away captains receive at least one yellow/red card event in the same match.
-- Captains are sourced from `silver.match_personnel` (`role = 'starter'`, `is_captain = 1`) by `match_id` and `team_side`.
-- Captain card events are sourced from `silver.card` using yellow/red semantics in `card_type`/`description`, then rolled up per captain.
+- Captains are sourced from `fotmob_silver.match_personnel` (`role = 'starter'`, `is_captain = 1`) by `match_id` and `team_side`.
+- Captain card events are sourced from `fotmob_silver.card` using yellow/red semantics in `card_type`/`description`, then rolled up per captain.
 - Triggered matches emit two rows (`home` and `away`) at `match_team` grain so downstream models can consume symmetric side-oriented context.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_referee_showdown.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_referee_showdown`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_referee_showdown`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_referee_showdown
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_referee_showdown
 ```
 
 ## Output Schema

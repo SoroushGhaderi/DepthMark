@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_the_tap_in_merchant
+  table: fotmob_gold_signals.sig_player_shooting_goals_the_tap_in_merchant
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_the_tap_in_merchant.sql
 ---
 # sig_player_shooting_goals_the_tap_in_merchant
@@ -26,21 +26,21 @@ Flags multi-goal player outputs (`goals >= 2`) built on high individual chance q
 - Trigger condition:
   - `triggered_player_goals >= 2`
   - `triggered_player_expected_goals > 1.50`
-- Triggered player identity and finishing metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
+- Triggered player identity and finishing metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`goals_above_threshold`, `expected_goals_above_threshold`, and `triggered_player_goal_minus_expected_goals`) to rank how strongly each row clears trigger baselines.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_clinical_brace` and `sig_player_shooting_goals_wasteful_finisher`; this signal intentionally coexists by capturing the opposite end of chance-quality profile (high-xG multi-goal finishing).
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_the_tap_in_merchant.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_the_tap_in_merchant`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_the_tap_in_merchant`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_the_tap_in_merchant
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_the_tap_in_merchant
 ```
 
 ## Output Schema

@@ -27,7 +27,7 @@ from src.warehouse.scoped_replace import ScopedReplacementBatch
 logger = get_logger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SCRIPTS_DIR = PROJECT_ROOT / "scripts" / "gold"
+SCRIPTS_DIR = PROJECT_ROOT / "scripts" / "fotmob"
 SIGNAL_ACTIVATION_SCRIPT = SCRIPTS_DIR / "build_fotmob_signal_activations.py"
 
 
@@ -196,7 +196,7 @@ class GoldService:
         for script_path in activation_scripts:
             if dry_run:
                 logger.info(
-                    "[dry-run] Activation plan | scope=%s target=gold.signal_activations "
+                    "[dry-run] Activation plan | scope=%s target=fotmob_gold.signal_activations "
                     "input=all selected signal history output=%s operations=stage; validate; "
                     "scoped partition replacement or full-history exchange; script=%s",
                     scope.label,

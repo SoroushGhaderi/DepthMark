@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_xg_overperformance_team
+  table: fotmob_gold_signals.sig_team_shooting_goals_xg_overperformance_team
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_xg_overperformance_team.sql
 ---
 # sig_team_shooting_goals_xg_overperformance_team
@@ -25,7 +25,7 @@ Detect rare team matches where very high scoring output (4+ goals) is produced f
 - Trigger condition:
   - `triggered_team_goals >= 4`
   - `triggered_team_xg < 1.5`
-- Trigger is evaluated on finished matches only using full-match aggregates from `silver.period_stat` (`period = 'All'`).
+- Trigger is evaluated on finished matches only using full-match aggregates from `fotmob_silver.period_stat` (`period = 'All'`).
 - Output remains bilateral with symmetric `triggered_team_*` and `opponent_*` features for shot volume, conversion, chance quality, possession, circulation, and territory.
 - Signal severity is ranked with `goals_above_threshold`, `expected_goals_below_threshold`, and `triggered_team_goals_minus_xg`.
 - Similarity gate note: closest active signal is `sig_team_shooting_goals_ruthless_efficiency`; this signal coexists because it is xG-overperformance-first (`>= 4` goals from `< 1.5` xG) rather than shots-on-target-efficiency-first (`>= 3` goals from `<= 5` shots on target).
@@ -33,13 +33,13 @@ Detect rare team matches where very high scoring output (4+ goals) is produced f
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_xg_overperformance_team.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_xg_overperformance_team`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_xg_overperformance_team`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_xg_overperformance_team
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_xg_overperformance_team
 ```
 
 ## Output Schema

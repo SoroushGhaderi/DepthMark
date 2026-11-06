@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_goalkeeping_defense_goalless_siege_match (
+INSERT INTO fotmob_gold_signals.sig_match_goalkeeping_defense_goalless_siege_match (
     match_id,
     match_date,
     home_team_id,
@@ -131,8 +131,8 @@ WITH base_stats AS (
         toInt8(if(coalesce(ps.expected_goals_away, 0.0) > 2.5, 1, 0)) AS away_meets_xg_threshold,
         toInt8(if(coalesce(m.away_score, 0) = 0, 1, 0)) AS home_clean_sheet_flag,
         toInt8(if(coalesce(m.home_score, 0) = 0, 1, 0)) AS away_clean_sheet_flag
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

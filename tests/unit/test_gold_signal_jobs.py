@@ -37,7 +37,7 @@ def _invalid_catalog(*_args, **_kwargs):
 
 def test_signal_jobs_are_the_active_catalog_signals(catalog_with_deprecated_signal) -> None:
     jobs = discover_gold_sql_jobs(
-        "signal", target_db="gold_signals", signal_catalog=catalog_with_deprecated_signal
+        "signal", target_db="fotmob_gold_signals", signal_catalog=catalog_with_deprecated_signal
     )
 
     job_ids = [job.job_id for job in jobs]
@@ -85,7 +85,7 @@ def test_gold_load_fails_on_invalid_catalog_before_any_job(monkeypatch) -> None:
 
     monkeypatch.setattr(GoldService, "run_selected_jobs", unexpected_jobs)
 
-    result = GoldService(client=None, metadata_db="gold").run(
+    result = GoldService(client=None, metadata_db="fotmob_gold").run(
         scope=WarehouseExecutionScope.for_date("20251208"), part="signals", dry_run=True
     )
 
@@ -95,7 +95,7 @@ def test_gold_load_fails_on_invalid_catalog_before_any_job(monkeypatch) -> None:
 def test_gold_scenarios_do_not_need_the_signal_catalog(monkeypatch) -> None:
     monkeypatch.setattr(gold_service, "load_signal_catalog", _invalid_catalog)
 
-    result = GoldService(client=None, metadata_db="gold").run(
+    result = GoldService(client=None, metadata_db="fotmob_gold").run(
         scope=WarehouseExecutionScope.for_date("20251208"), part="scenarios", dry_run=True
     )
 

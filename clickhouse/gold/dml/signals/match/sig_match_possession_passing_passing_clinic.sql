@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_passing_clinic (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_passing_clinic (
     match_id,
     match_date,
     home_team_id,
@@ -63,7 +63,7 @@ WITH
             coalesce(ps.total_shots_away, 0) AS total_shots_away,
             toFloat32(coalesce(ps.expected_goals_home, 0)) AS expected_goals_home,
             toFloat32(coalesce(ps.expected_goals_away, 0)) AS expected_goals_away
-        FROM silver.period_stat AS ps FINAL
+        FROM fotmob_silver.period_stat AS ps FINAL
         WHERE ps.period = 'All'
     ),
     half_stats AS (
@@ -77,7 +77,7 @@ WITH
             maxIf(coalesce(ps.accurate_passes_home, 0), ps.period = 'SecondHalf') AS accurate_passes_home_second_half,
             maxIf(coalesce(ps.accurate_passes_away, 0), ps.period = 'FirstHalf') AS accurate_passes_away_first_half,
             maxIf(coalesce(ps.accurate_passes_away, 0), ps.period = 'SecondHalf') AS accurate_passes_away_second_half
-        FROM silver.period_stat AS ps FINAL
+        FROM fotmob_silver.period_stat AS ps FINAL
         WHERE ps.period IN ('FirstHalf', 'SecondHalf')
         GROUP BY ps.match_id
     ),
@@ -111,7 +111,7 @@ WITH
             toFloat32(round(100.0 * h.accurate_passes_home_second_half / nullIf(toFloat64(h.pass_attempts_home_second_half), 0), 1)) AS pass_accuracy_home_second_half_pct,
             toFloat32(round(100.0 * h.accurate_passes_away_first_half / nullIf(toFloat64(h.pass_attempts_away_first_half), 0), 1)) AS pass_accuracy_away_first_half_pct,
             toFloat32(round(100.0 * h.accurate_passes_away_second_half / nullIf(toFloat64(h.pass_attempts_away_second_half), 0), 1)) AS pass_accuracy_away_second_half_pct
-        FROM silver.match AS m FINAL
+        FROM fotmob_silver.match AS m FINAL
         INNER JOIN all_stats AS a
             ON a.match_id = m.match_id
         INNER JOIN half_stats AS h

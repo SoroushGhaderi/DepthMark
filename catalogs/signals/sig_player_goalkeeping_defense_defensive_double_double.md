@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_defensive_double_double
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_defensive_double_double
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_defensive_double_double.sql
 ---
 # sig_player_goalkeeping_defense_defensive_double_double
@@ -28,9 +28,9 @@ Flags outfield players who deliver a dual defensive peak in both tackling and in
   - `triggered_player_interceptions >= 5`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Player position metadata is resolved from `silver.match_personnel` (starter-priority role resolution) to retain interpretable role context (`defender`, `midfielder`, `forward`, `other`) without restricting trigger scope.
-- Player diagnostics are sourced from `silver.player_match_stat`, combining tackle/interception core trigger metrics with defensive actions, duels, recoveries, and passing context.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields plus explicit delta columns.
+- Player position metadata is resolved from `fotmob_silver.match_personnel` (starter-priority role resolution) to retain interpretable role context (`defender`, `midfielder`, `forward`, `other`) without restricting trigger scope.
+- Player diagnostics are sourced from `fotmob_silver.player_match_stat`, combining tackle/interception core trigger metrics with defensive actions, duels, recoveries, and passing context.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields plus explicit delta columns.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_tackle_master`: overlaps on tackle volume but requires perfect tackle efficiency and defender-only scope; this signal uses dual-threshold volume logic and no role restriction beyond non-goalkeeper.
   - `sig_player_goalkeeping_defense_interception_king`: overlaps on interceptions but uses a higher single-metric threshold (`>= 7`) and defender-only scope; this signal requires both tackles and interceptions together.
@@ -39,13 +39,13 @@ Flags outfield players who deliver a dual defensive peak in both tackling and in
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_defensive_double_double.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_defensive_double_double`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_defensive_double_double`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_defensive_double_double
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_defensive_double_double
 ```
 
 ## Output Schema

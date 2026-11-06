@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_rapid_response_goal
+  table: fotmob_gold_signals.sig_team_shooting_goals_rapid_response_goal
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_rapid_response_goal.sql
 ---
 # sig_team_shooting_goals_rapid_response_goal
@@ -23,7 +23,7 @@ Detect team-level bounce-back scoring where a side responds immediately after co
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Non-own goal events from `silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
+  - Non-own goal events from `fotmob_silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
   - A team scores on the next match goal event after conceding, with effective-minute gap `<= 2`.
 - Effective-minute uses `goal_time + goal_overload_time` (fallback `minute + minute_added`) to keep timing deterministic across stoppage-time records.
 - Trigger is evaluated bilaterally at `match_team` grain (`triggered_side`), allowing both sides to trigger in one match.
@@ -33,13 +33,13 @@ Detect team-level bounce-back scoring where a side responds immediately after co
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_rapid_response_goal.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_rapid_response_goal`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_rapid_response_goal`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_rapid_response_goal
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_rapid_response_goal
 ```
 
 ## Output Schema

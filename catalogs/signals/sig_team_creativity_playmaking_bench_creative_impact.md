@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_bench_creative_impact
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_bench_creative_impact
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_bench_creative_impact.sql
 ---
 # sig_team_creativity_playmaking_bench_creative_impact
@@ -26,21 +26,21 @@ Detect team matches where substitute players jointly deliver meaningful creative
   - `triggered_team_substitute_key_passes >= 2`
   - `triggered_team_substitute_assists >= 1`
   - `match_finished = 1`
-- Substitute identity is sourced from `silver.match_personnel` (`role = 'substitute'`, `substitution_time > 0`) and joined to `silver.player_match_stat` to aggregate substitute playmaking outputs.
+- Substitute identity is sourced from `fotmob_silver.match_personnel` (`role = 'substitute'`, `substitution_time > 0`) and joined to `fotmob_silver.player_match_stat` to aggregate substitute playmaking outputs.
 - Trigger is evaluated independently for home and away sides, so both sides can trigger in the same match.
-- Bilateral context includes substitute and full-team key-pass/assist volume, substitute-share rates, plus passing, territory, and shooting context from `silver.period_stat` (`period = 'All'`).
+- Bilateral context includes substitute and full-team key-pass/assist volume, substitute-share rates, plus passing, territory, and shooting context from `fotmob_silver.period_stat` (`period = 'All'`).
 - Similarity gate note: closest active team-creativity signals are `sig_team_creativity_playmaking_chance_barrage` and `sig_team_creativity_playmaking_total_fluidity`. This signal coexists as the substitute-specific variant: it requires bench-originated key-passing plus direct assisted-goal output, while the existing signals capture overall team chance-creation volume and creator spread regardless of starter/substitute split.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_bench_creative_impact.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_bench_creative_impact`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_bench_creative_impact`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_bench_creative_impact
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_bench_creative_impact
 ```
 
 ## Output Schema

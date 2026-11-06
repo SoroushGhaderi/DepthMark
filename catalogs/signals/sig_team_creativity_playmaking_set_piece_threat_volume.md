@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_set_piece_threat_volume.sql
 ---
 # sig_team_creativity_playmaking_set_piece_threat_volume
@@ -27,14 +27,14 @@ set-piece chances in a finished match.
   - `triggered_team_dead_ball_chances >= 8`
   - `match_finished = 1`
   - Match-team rows are emitted per triggered side (`home`, `away`), so both teams can trigger in one match.
-- Dead-ball chances are derived from `silver.shot` rows with dead-ball situations:
+- Dead-ball chances are derived from `fotmob_silver.shot` rows with dead-ball situations:
   - `situation IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')`
 - The signal pairs dead-ball volume with outcome/quality diagnostics:
   - dead-ball xG (`triggered_team_dead_ball_expected_goals`)
   - dead-ball on-target accuracy (`triggered_team_dead_ball_shot_accuracy_pct`)
   - dead-ball conversion (`triggered_team_dead_ball_chance_conversion_pct`)
 - Team creativity context is retained with `triggered_team_key_passes` and
-  `triggered_team_expected_assists`, plus bilateral match control context from `silver.period_stat`.
+  `triggered_team_expected_assists`, plus bilateral match control context from `fotmob_silver.period_stat`.
 - Similarity gate note:
   - `sig_team_possession_passing_set_piece_focus` is the closest dead-ball-volume sibling, but its trigger is corner count (`>= 15`) and it is possession/passing scoped.
   - `sig_team_creativity_playmaking_chance_barrage` is the closest creativity/playmaking team-volume sibling, but it triggers on overall key-pass volume (`>= 15`) rather than dead-ball chance volume.
@@ -43,13 +43,13 @@ set-piece chances in a finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_set_piece_threat_volume.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_set_piece_threat_volume
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_set_piece_threat_volume
 ```
 
 ## Output Schema

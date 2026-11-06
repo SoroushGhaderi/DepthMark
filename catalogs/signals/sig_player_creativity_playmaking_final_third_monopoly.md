@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_final_third_monopoly
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_final_third_monopoly
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_final_third_monopoly.sql
 ---
 # sig_player_creativity_playmaking_final_third_monopoly
@@ -27,12 +27,12 @@ volume (`>= 30`) in a single finished match.
 - Trigger condition:
   - `triggered_player_successful_final_third_passes >= 30`
 - Trigger source:
-  - `silver.player_match_stat.passes_final_third` (interpreted as successful final-third passes)
+  - `fotmob_silver.player_match_stat.passes_final_third` (interpreted as successful final-third passes)
 - Finished-match scope and valid side mapping are enforced:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
   - player team must map to home/away side.
-- Bilateral passing, territorial, and control context is retained from `silver.period_stat`
+- Bilateral passing, territorial, and control context is retained from `fotmob_silver.period_stat`
   (`period = 'All'`) for tactical interpretation.
 - Similarity gate note:
   - `sig_player_creativity_playmaking_line_breaker` is the closest active creativity/playmaking
@@ -46,13 +46,13 @@ volume (`>= 30`) in a single finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_final_third_monopoly.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_final_third_monopoly`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_final_third_monopoly`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_final_third_monopoly
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_final_third_monopoly
 ```
 
 ## Output Schema

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure (
     match_id,
     match_date,
     home_team_id,
@@ -80,8 +80,8 @@ WITH shot_events AS (
         toInt32(
             coalesce(s.goal_time, s.minute, 0) + coalesce(s.goal_overload_time, s.minute_added, 0)
         ) AS shot_effective_minute
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND m.match_finished = 1
@@ -168,7 +168,7 @@ team_playmaking_totals AS (
         toInt32(p.team_id) AS team_id,
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
       AND p.team_id > 0
     GROUP BY
@@ -190,7 +190,7 @@ team_rows AS (
         m.home_team_name AS triggered_team_name,
         m.away_team_id AS opponent_team_id,
         m.away_team_name AS opponent_team_name
-    FROM silver.match AS m
+    FROM fotmob_silver.match AS m
     WHERE m.match_finished = 1
       AND m.match_id > 0
 
@@ -210,7 +210,7 @@ team_rows AS (
         m.away_team_name AS triggered_team_name,
         m.home_team_id AS opponent_team_id,
         m.home_team_name AS opponent_team_name
-    FROM silver.match AS m
+    FROM fotmob_silver.match AS m
     WHERE m.match_finished = 1
       AND m.match_id > 0
 )
@@ -490,7 +490,7 @@ SELECT
         1
     )) AS possession_delta_pct
 FROM team_rows AS tr
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tr.match_id
    AND ps.match_date = tr.match_date
    AND ps.period = 'All'

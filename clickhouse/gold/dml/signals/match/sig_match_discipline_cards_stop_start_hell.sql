@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_discipline_cards_stop_start_hell (
+INSERT INTO fotmob_gold_signals.sig_match_discipline_cards_stop_start_hell (
     match_id,
     match_date,
     home_team_id,
@@ -109,8 +109,8 @@ WITH base_stats AS (
         coalesce(ps.yellow_cards_home, 0) + coalesce(ps.yellow_cards_away, 0) AS match_total_yellow_cards,
         coalesce(ps.red_cards_home, 0) + coalesce(ps.red_cards_away, 0) AS match_total_red_cards,
         coalesce(ps.offsides_home, 0) + coalesce(ps.offsides_away, 0) AS match_total_offsides
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     WHERE m.match_finished = 1

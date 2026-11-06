@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_midfield_enforcement
+  table: fotmob_gold_signals.sig_team_discipline_cards_midfield_enforcement
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_midfield_enforcement.sql
 ---
 # sig_team_discipline_cards_midfield_enforcement
@@ -24,20 +24,20 @@ Flags match-team cases where the central-midfield unit drives a high share of th
 
 - Trigger condition:
   - `triggered_team_central_midfielder_fouls_committed >= 10`
-- Central midfielders are identified via `silver.match_personnel` where `usual_playing_position_id = 2`.
-- Midfielder foul contribution is sourced from `silver.player_match_stat.fouls_committed` and aggregated by side.
+- Central midfielders are identified via `fotmob_silver.match_personnel` where `usual_playing_position_id = 2`.
+- Midfielder foul contribution is sourced from `fotmob_silver.player_match_stat.fouls_committed` and aggregated by side.
 - Trigger is evaluated symmetrically for `home` and `away`, then enriched with bilateral card, foul, defensive-action, and possession context.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_midfield_enforcement.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_midfield_enforcement`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_midfield_enforcement`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_midfield_enforcement
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_midfield_enforcement
 ```
 
 ## Output Schema

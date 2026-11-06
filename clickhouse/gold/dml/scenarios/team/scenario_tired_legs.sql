@@ -1,5 +1,5 @@
 -- scenario_tired_legs: late-match chaos signatures driven by fatigue, shot surges, and substitution swings
-INSERT INTO gold_scenarios.scenario_tired_legs
+INSERT INTO fotmob_gold_scenarios.scenario_tired_legs
 (
     -- 1. Match Identity
     match_id,
@@ -49,7 +49,7 @@ WITH late_goals AS (
         countIf(is_goal = 1 AND goal_time >= 75 AND is_home_goal = 1) AS late_goals_home,
         countIf(is_goal = 1 AND goal_time >= 75 AND is_home_goal = 0) AS late_goals_away,
         countIf(is_goal = 1) AS total_goals
-    FROM silver.shot
+    FROM fotmob_silver.shot
     GROUP BY match_id
 ),
 shot_volumes AS (
@@ -59,7 +59,7 @@ shot_volumes AS (
         countIf(minute >= 75 AND is_on_target = 1) AS late_shots_on_target,
         count() AS total_shots,
         round(countIf(minute >= 75) / nullIf(count(), 0) * 100, 2) AS late_shot_pct
-    FROM silver.shot
+    FROM fotmob_silver.shot
     GROUP BY match_id
 ),
 late_xg AS (
@@ -67,7 +67,7 @@ late_xg AS (
         match_id,
         round(sumIf(expected_goals, minute >= 75), 3) AS late_xg_total,
         round(sum(expected_goals), 3) AS total_xg
-    FROM silver.shot
+    FROM fotmob_silver.shot
     WHERE expected_goals IS NOT NULL
     GROUP BY match_id
 ),
@@ -78,7 +78,7 @@ attacking_subs AS (
         countIf(substitution_time >= 60 AND substitution_time <= 75) AS attacking_subs_60_75,
         countIf(substitution_time >= 75) AS subs_after_75,
         count() AS total_subs
-FROM silver.match_personnel
+FROM fotmob_silver.match_personnel
 WHERE substitution_time IS NOT NULL
   AND role = 'substitute'
 GROUP BY match_id, team_side
@@ -160,7 +160,7 @@ SELECT
         WHEN g.away_score > g.home_score THEN 'away'
         ELSE 'draw'
     END AS winning_side
-FROM silver.match AS g
+FROM fotmob_silver.match AS g
 INNER JOIN late_goals AS lg
     ON g.match_id = lg.match_id
 INNER JOIN shot_volumes AS sv

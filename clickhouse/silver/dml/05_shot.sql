@@ -1,4 +1,4 @@
-INSERT INTO silver.shot
+INSERT INTO fotmob_silver.shot
 SELECT
     s.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -26,6 +26,6 @@ SELECT
     gl.assist_player_id,
     gl.assist_player_name,
     now() AS _loaded_at
-FROM bronze.shotmap AS s FINAL
-LEFT JOIN bronze.goal AS gl FINAL ON s.match_id = gl.match_id AND s.shot_id = gl.shot_event_id
-LEFT JOIN bronze.general AS g FINAL ON s.match_id = g.match_id;
+FROM fotmob_bronze.shotmap AS s FINAL
+LEFT JOIN fotmob_bronze.goal AS gl FINAL ON s.match_id = gl.match_id AND s.shot_id = gl.shot_event_id
+LEFT JOIN fotmob_bronze.general AS g FINAL ON s.match_id = g.match_id;

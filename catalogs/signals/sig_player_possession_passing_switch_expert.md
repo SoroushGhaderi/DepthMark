@@ -6,40 +6,40 @@ family: possession
 subfamily: passing
 grain: match_player
 headline: "Switch Expert"
-trigger: "player completes > 5 successful switches of play, proxied by accurate_long_balls from silver.player_match_stat"
+trigger: "player completes > 5 successful switches of play, proxied by accurate_long_balls from fotmob_silver.player_match_stat"
 row_identity:
   - match_id
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_switch_expert
+  table: fotmob_gold_signals.sig_player_possession_passing_switch_expert
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_switch_expert.sql
 ---
 # sig_player_possession_passing_switch_expert
 
 ## Purpose
 
-Triggers when a player completes more than 5 successful switches of play, using `accurate_long_balls` from `silver.player_match_stat` as the diagonal long-ball proxy.
+Triggers when a player completes more than 5 successful switches of play, using `accurate_long_balls` from `fotmob_silver.player_match_stat` as the diagonal long-ball proxy.
 
 ## Tactical And Statistical Logic
 
 - Trigger condition:
   - `triggered_player_successful_switches_proxy > 5`
-- Trigger is computed from player-level full-match passing totals in `silver.player_match_stat`.
+- Trigger is computed from player-level full-match passing totals in `fotmob_silver.player_match_stat`.
 - Because explicit switch-of-play events are not available, `accurate_long_balls` is used as a diagonal switch proxy.
-- Signal includes bilateral team/opponent long-ball and pass-quality context from `silver.period_stat` (`period = 'All'`) to distinguish isolated player switching behavior from broader team directness.
+- Signal includes bilateral team/opponent long-ball and pass-quality context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish isolated player switching behavior from broader team directness.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_switch_expert.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_switch_expert`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_switch_expert`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_switch_expert
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_switch_expert
 ```
 
 ## Output Schema

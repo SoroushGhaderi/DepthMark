@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_asymmetric_fouls
+  table: fotmob_gold_signals.sig_match_discipline_cards_asymmetric_fouls
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_asymmetric_fouls.sql
 ---
 # sig_match_discipline_cards_asymmetric_fouls
@@ -24,20 +24,20 @@ Flags matches where foul burden is highly concentrated on one side (at least 70%
 
 - Trigger condition:
   - `triggered_team_fouls_share_pct >= 70`
-- Foul counts are sourced from `silver.period_stat` at `period = 'All'`.
+- Foul counts are sourced from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger orientation (`triggered_side`) is assigned to the side with higher foul count, then filtered by the 70% threshold.
 - Output keeps bilateral discipline, card-conversion, defensive workload, passing quality, and possession context for interpretation.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_asymmetric_fouls.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_asymmetric_fouls`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_asymmetric_fouls`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_asymmetric_fouls
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_asymmetric_fouls
 ```
 
 ## Output Schema

@@ -16,7 +16,7 @@ The rules:
   ``subfamily`` equal their id segments.
 - ``status`` is ``active`` or ``deprecated``; ``grain`` is ``match_player`` for
   player signals and ``match_team`` otherwise.
-- ``asset_paths.table`` is ``gold_signals.<signal_id>`` and
+- ``asset_paths.table`` is ``fotmob_gold_signals.<signal_id>`` and
   ``asset_paths.sql`` is ``clickhouse/gold/dml/signals/<entity>/<signal_id>.sql``,
   which must exist and insert into ``asset_paths.table``. Every signal DML
   file and DDL table has a catalog.
@@ -52,7 +52,7 @@ SIGNAL_CATALOG_RELATIVE_DIR = Path("catalogs") / "signals"
 SIGNAL_CATALOG_DIR = PROJECT_ROOT / SIGNAL_CATALOG_RELATIVE_DIR
 SIGNAL_DDL_RELATIVE_DIR = Path("clickhouse") / "gold" / "ddl" / "signals"
 SIGNAL_DML_RELATIVE_DIR = Path("clickhouse") / "gold" / "dml" / "signals"
-SIGNAL_TABLE_DATABASE = "gold_signals"
+SIGNAL_TABLE_DATABASE = "fotmob_gold_signals"
 SIGNAL_IDENTITY_SCHEME_VERSION = "v1"
 SIGNAL_INSTANCE_ID_COLUMN = "signal_instance_id"
 INDEX_FILE_NAME = "README.md"

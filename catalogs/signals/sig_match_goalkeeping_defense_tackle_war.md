@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_tackle_war
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_tackle_war
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_tackle_war.sql
 ---
 # sig_match_goalkeeping_defense_tackle_war
@@ -22,8 +22,8 @@ Detects finished matches with extreme combined successful tackle volume and emit
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(tackles_succeeded_home + tackles_succeeded_away) > 40` from `silver.period_stat` at `period = 'All'`.
-- Only finished matches are included via `silver.match.match_finished = 1` with valid `match_id > 0`.
+- Trigger condition: `(tackles_succeeded_home + tackles_succeeded_away) > 40` from `fotmob_silver.period_stat` at `period = 'All'`.
+- Only finished matches are included via `fotmob_silver.match.match_finished = 1` with valid `match_id > 0`.
 - Trigger is match-level; output grain is `match_team` using two rows per match (`triggered_side = 'home'` and `triggered_side = 'away'`).
 - Severity is exposed via `match_total_tackles_won_above_threshold = match_total_tackles_won - 40`.
 - Symmetric enrichment includes interceptions, clearances, duels, aerials, shots faced, keeper saves, fouls, possession, pass accuracy, and scoreline context.
@@ -34,13 +34,13 @@ Detects finished matches with extreme combined successful tackle volume and emit
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_tackle_war.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_tackle_war`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_tackle_war`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_tackle_war
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_tackle_war
 ```
 
 ## Output Schema

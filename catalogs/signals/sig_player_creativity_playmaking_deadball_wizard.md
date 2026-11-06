@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_deadball_wizard
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_deadball_wizard
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_deadball_wizard.sql
 ---
 # sig_player_creativity_playmaking_deadball_wizard
@@ -27,7 +27,7 @@ two goals from corner deliveries in a single finished match.
 - Trigger conditions:
   - `triggered_player_corner_assists >= 2`
   - `match_finished = 1`
-- Corner assists are computed from `silver.shot` rows where:
+- Corner assists are computed from `fotmob_silver.shot` rows where:
   - `situation = 'FromCorner'`
   - `assist_player_id = triggered_player_id`
   - `is_goal = 1`
@@ -36,8 +36,8 @@ two goals from corner deliveries in a single finished match.
   - `triggered_player_corner_chances_created`
   - `triggered_player_corner_assisted_shots_on_target`
   - `triggered_player_corner_assisted_shot_expected_goals`
-- Bilateral team/opponent context uses `silver.period_stat` (`period = 'All'`) plus corner shot/goal
-  aggregation from `silver.shot`.
+- Bilateral team/opponent context uses `fotmob_silver.period_stat` (`period = 'All'`) plus corner shot/goal
+  aggregation from `fotmob_silver.shot`.
 - Similarity gate note:
   - `sig_player_creativity_playmaking_assist_brace`: same assist floor (`>= 2`) but not
     corner-specific.
@@ -51,13 +51,13 @@ two goals from corner deliveries in a single finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_deadball_wizard.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_deadball_wizard`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_deadball_wizard`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_deadball_wizard
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_deadball_wizard
 ```
 
 ## Output Schema

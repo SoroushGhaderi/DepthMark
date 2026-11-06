@@ -17,23 +17,23 @@ explicit integration relationship between source-specific Silver outputs.
 
 - FotMob Bronze: completed-date payloads under `data/fotmob/historical/`,
   current-date snapshots under `data/fotmob/live/`, and raw ClickHouse tables
-  in `bronze.*` sourced only from Historical storage.
-- FotMob Silver and Gold: cleaned analytical tables in `silver.*`, plus
-  scenarios/signals in `gold_scenarios.*`, `gold_signals.*`, and shared metadata
-  in `gold.*`.
+  in `fotmob_bronze.*` sourced only from Historical storage.
+- FotMob Silver and Gold: cleaned analytical tables in `fotmob_silver.*`, plus
+  scenarios/signals in `fotmob_gold_scenarios.*`, `fotmob_gold_signals.*`, and shared metadata
+  in `fotmob_gold.*`.
 - Oddspedia Bronze: artifacts under `data/oddspedia/` and source facts in
   `oddspedia_bronze.*`.
 - Oddspedia Silver and Gold: source-specific conformed odds/event entities and
-  odds-derived product outputs. Existing `silver.oddspedia_match_resolution`
+  odds-derived product outputs. Existing `oddspedia_silver.match_resolution`
   is the current cross-source relationship table, not the whole Oddspedia
   medallion path.
 - MongoDB stores content/catalog metadata, including signal catalog entries authored from markdown frontmatter.
 - Oddspedia artifacts live under `data/oddspedia/historical/`, structured source
-  facts live in `oddspedia_bronze.*`, and `silver.oddspedia_match_resolution`
+  facts live in `oddspedia_bronze.*`, and `oddspedia_silver.match_resolution`
   links an Oddspedia event to at most one canonical FotMob fixture.
 
 Do not introduce a generic provider framework. FotMob and Oddspedia remain
-explicit source domains with isolated raw contracts; `silver.match` remains the
+explicit source domains with isolated raw contracts; `fotmob_silver.match` remains the
 canonical FotMob fixture reference used by the cross-source resolution edge.
 
 ## Important References
@@ -53,7 +53,9 @@ If these files conflict with code, resolve the mismatch intentionally and mentio
 
 - Never commit `.env`, credentials, tokens, generated data, logs, or local warehouse artifacts.
 - Use `.env.example` for documenting required configuration.
-- Required local services come from the root `docker-compose.yml`.
+- Required local services come from the root `docker-compose.yml`. Run FotMob
+  and shared commands in `depthmark-fotmob-scraper` and Oddspedia commands in
+  `depthmark-oddspedia-scraper`.
 - `scripts/bootstrap.sh` initializes a server end to end (generated `.env`
   secrets, stack, setup, MongoDB, schedule); use `scripts/bootstrap.sh --local`
   for local development. Never hard-code secrets or require hand-edited
@@ -67,27 +69,27 @@ Run commands from the `depthmark` directory.
 scripts/bootstrap.sh --local
 scripts/install_schedule.sh
 python scripts/orchestration/run_scheduled_job.py fotmob-daily --dry-run
-python scripts/orchestration/setup_fotmob_warehouse.py
+python scripts/fotmob/setup_fotmob_warehouse.py
 python scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python scripts/mongodb/init_indexes.py
 python scripts/quality/check_signal_catalogs.py
 python scripts/quality/check_signal_catalogs.py --write-index
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
-python scripts/bronze/scrape_fotmob.py 20251208
+python scripts/fotmob/scrape_fotmob.py 20251208
 python scripts/report_scraping.py --date 20251208
-python scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python scripts/bronze/load_fotmob_bronze.py --date 20251208
-python scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
-python scripts/silver/load_fotmob_silver.py --month 202512 --dry-run
-python scripts/silver/load_fotmob_silver.py --full-history --dry-run
-python scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
-python scripts/gold/load_fotmob_gold.py --month 202512 --dry-run
-python scripts/gold/load_fotmob_gold.py --full-history --dry-run
-python scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
+python scripts/fotmob/sync_fotmob_s3.py upload --date 20251208 --dry-run
+python scripts/fotmob/load_fotmob_bronze.py --date 20251208
+python scripts/fotmob/load_fotmob_silver.py --date 20251208 --dry-run
+python scripts/fotmob/load_fotmob_silver.py --month 202512 --dry-run
+python scripts/fotmob/load_fotmob_silver.py --full-history --dry-run
+python scripts/fotmob/load_fotmob_gold.py --date 20251208 --dry-run
+python scripts/fotmob/load_fotmob_gold.py --month 202512 --dry-run
+python scripts/fotmob/load_fotmob_gold.py --full-history --dry-run
+python scripts/fotmob/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
 python scripts/quality/check_data_quality.py --full-history --strict
 python scripts/quality/check_logging_style.py
-python scripts/orchestration/run_fotmob_pipeline.py 20251208
-python scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
+python scripts/fotmob/run_fotmob_pipeline.py 20251208
+python scripts/fotmob/run_fotmob_pipeline.py --single-date 20251208
 python scripts/oddspedia/discover_oddspedia_events.py --date 20260301
 python scripts/oddspedia/prioritize_oddspedia_events.py --date 20260301 --silver-reference-window-ready
 python scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --priority-tier lower
@@ -109,13 +111,19 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 - Keep cross-source joins explicit and read-only; they must not merge raw source contracts.
 - SQL should hold transformation and business logic. Python should orchestrate, execute, validate, and report.
 - Stable source-owned or warehouse workflow modules may sit behind script entry points to coordinate reusable workflows, but they must not own Silver or Gold analytical logic.
-- Use schema-qualified ClickHouse table names: `bronze.*`, `oddspedia_bronze.*`, `silver.*`,
-  `gold_scenarios.*`, `gold_signals.*`, and Gold metadata tables in `gold.*`.
+- Name every surface after the source that owns it (ADR 0034): script folders
+  `scripts/fotmob/` and `scripts/oddspedia/`, containers
+  `depthmark-fotmob-scraper` and `depthmark-oddspedia-scraper`, and databases
+  `fotmob_*` and `oddspedia_*`. Only `warehouse_stage` and the shared script
+  folders are source-neutral.
+- Use schema-qualified ClickHouse table names: `fotmob_bronze.*`, `oddspedia_bronze.*`, `fotmob_silver.*`,
+  `fotmob_gold_scenarios.*`, `fotmob_gold_signals.*`, Gold metadata tables in `fotmob_gold.*`,
+  and `oddspedia_silver.*`.
 - Keep SQL deterministic and rerunnable.
 - Preserve script entry points and CLI behavior unless the task explicitly asks for a breaking change.
-- Name canonical source workflow scripts
-  `<verb>_<source>[_<layer-or-entity>].py`; old names may remain only as
-  warning-emitting compatibility adapters.
+- Name source workflow scripts `<verb>_<source>[_<layer-or-entity>].py` and
+  keep them in their source's folder. Do not add compatibility adapters for
+  renamed scripts or commands; update every caller instead.
 - Use `scripts/report_scraping.py` as the only canonical scraping-report entry
   point. It selects `fotmob`, `oddspedia`, or `all` through `--source`; source
   adapters remain explicit and read-only.
@@ -153,7 +161,7 @@ For files under `scripts/`, script-oriented helpers under `src/`, and source or 
 - Keep script entry points thin and backward-compatible when extracting reusable workflow coordination into `src/`.
 - `--dry-run` must not mutate state.
 - Exit code `0` means success; non-zero means failure.
-- Root-level utility scripts are allowed; source-specific Oddspedia commands live under `scripts/oddspedia`, while existing layer scripts live under `scripts/bronze`, `scripts/silver`, `scripts/gold`, `scripts/orchestration`, `scripts/quality`, or `scripts/mongodb`.
+- Root-level utility scripts are allowed. Source commands live in one folder per source, `scripts/fotmob` and `scripts/oddspedia`; source-neutral commands live under `scripts/orchestration`, `scripts/maintenance`, `scripts/quality`, or `scripts/mongodb`.
 - Load `.env` from the project root and parent root with `override=False` where scripts require local configuration.
 
 ## SQL And Catalog Work
@@ -165,8 +173,8 @@ For files under `scripts/`, script-oriented helpers under `src/`, and source or 
 - Silver SQL lives under `clickhouse/silver/ddl` and `clickhouse/silver/dml`.
 - Gold scenario/signal SQL lives under `clickhouse/gold/dml/`; Gold DDL under `clickhouse/gold/ddl/`.
 - New or changed scenario work should update SQL, runner code, DDL/contracts, and the relevant catalog docs.
-- Scenario SQL targets `gold_scenarios.scenario_*`; do not add legacy
-  `gold.scenario_*` targets.
+- Scenario SQL targets `fotmob_gold_scenarios.scenario_*`; do not add legacy
+  `fotmob_gold.scenario_*` targets.
 - Signal metadata source of truth is markdown frontmatter under `catalogs/signals/*.md`.
   Read it only through `load_signal_catalog()` in `src/fotmob/gold/signal_catalog.py`
   (ADR 0033); never parse catalog frontmatter elsewhere.
@@ -185,8 +193,8 @@ pytest
 python scripts/quality/check_logging_style.py
 python scripts/quality/check_signal_catalogs.py
 python scripts/mongodb/sync_signal_catalogs.py --dry-run
-python scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
-python scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
+python scripts/fotmob/load_fotmob_silver.py --date 20251208 --dry-run
+python scripts/fotmob/load_fotmob_gold.py --date 20251208 --dry-run
 python scripts/quality/check_bronze_to_silver_reconciliation.py --strict
 ```
 

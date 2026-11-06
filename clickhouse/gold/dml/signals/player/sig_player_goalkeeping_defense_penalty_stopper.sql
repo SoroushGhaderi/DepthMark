@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_goalkeeping_defense_penalty_stopper (
+INSERT INTO fotmob_gold_signals.sig_player_goalkeeping_defense_penalty_stopper (
     match_id,
     match_date,
     home_team_id,
@@ -63,8 +63,8 @@ WITH penalty_attempts_all AS (
         s.keeper_id,
         toFloat32(coalesce(s.expected_goals_on_target, s.expected_goals, 0.0))
             AS penalty_expected_goals_on_target
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE m.match_finished = 1
       AND s.match_id > 0
@@ -287,17 +287,17 @@ SELECT
         0
     )) AS opponent_possession_pct
 FROM player_penalty_save_rollup AS pps
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = pps.match_id
    AND p.player_id = pps.triggered_player_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = pps.match_id
 LEFT JOIN keeper_penalty_faced_rollup AS kpf
     ON kpf.match_id = pps.match_id
    AND kpf.triggered_player_id = pps.triggered_player_id
 LEFT JOIN match_penalty_totals AS mpt
     ON mpt.match_id = pps.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = pps.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

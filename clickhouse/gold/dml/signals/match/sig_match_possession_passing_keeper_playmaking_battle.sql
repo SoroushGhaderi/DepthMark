@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_keeper_playmaking_battle (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_keeper_playmaking_battle (
     match_id,
     match_date,
     home_team_id,
@@ -55,7 +55,7 @@ WITH
             argMax(p.player_name, coalesce(p.total_passes, 0)) AS goalkeeper_player_name,
             max(coalesce(p.total_passes, 0)) AS goalkeeper_pass_attempts,
             argMax(coalesce(p.accurate_passes, 0), coalesce(p.total_passes, 0)) AS goalkeeper_accurate_passes
-        FROM silver.player_match_stat AS p
+        FROM fotmob_silver.player_match_stat AS p
         WHERE p.is_goalkeeper = 1
         GROUP BY
             p.match_id,
@@ -96,8 +96,8 @@ WITH
                 / nullIf(toFloat64(hgk.goalkeeper_pass_attempts + agk.goalkeeper_pass_attempts), 0),
                 1
             )) AS match_goalkeeper_pass_accuracy_pct
-        FROM silver.match AS m FINAL
-        INNER JOIN silver.period_stat AS ps FINAL
+        FROM fotmob_silver.match AS m FINAL
+        INNER JOIN fotmob_silver.period_stat AS ps FINAL
             ON  ps.match_id = m.match_id
             AND ps.period = 'All'
         INNER JOIN goalkeeper_team_stats AS hgk

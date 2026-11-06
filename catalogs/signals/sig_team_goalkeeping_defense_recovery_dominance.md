@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_recovery_dominance
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_recovery_dominance
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_recovery_dominance.sql
 ---
 # sig_team_goalkeeping_defense_recovery_dominance
@@ -23,10 +23,10 @@ Detect team-level defensive control performances where a side records extreme ba
 ## Tactical And Statistical Logic
 
 - Trigger condition: `triggered_team_recoveries >= 60` at `match_team` grain for finished matches.
-- Team recoveries are sourced by aggregating player-level `silver.player_match_stat.recoveries` per match/team, then mapped to home/away sides.
+- Team recoveries are sourced by aggregating player-level `fotmob_silver.player_match_stat.recoveries` per match/team, then mapped to home/away sides.
 - Rows are side-symmetric (`triggered_side`), so both teams can independently trigger in one match.
 - `triggered_team_recoveries_above_threshold` surfaces trigger severity beyond activation.
-- Bilateral context is preserved via `silver.period_stat` defensive workload (interceptions, clearances, shot blocks, tackles, duels, aerials), pressure faced (shots, shots on target, saves), and control/outcome fields.
+- Bilateral context is preserved via `fotmob_silver.period_stat` defensive workload (interceptions, clearances, shot blocks, tackles, duels, aerials), pressure faced (shots, shots on target, saves), and control/outcome fields.
 - Similarity gate note:
   - `sig_team_goalkeeping_defense_shot_blocking_unit`: same team/family/subfamily and defending lens, but that trigger is shot-block volume (`>= 10`) rather than ball-recovery volume.
   - `sig_team_goalkeeping_defense_tackle_volume_surge`: same team/family/subfamily but trigger centers on tackles won (`>= 35`) rather than recoveries.
@@ -35,13 +35,13 @@ Detect team-level defensive control performances where a side records extreme ba
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_recovery_dominance.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_recovery_dominance`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_recovery_dominance`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_recovery_dominance
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_recovery_dominance
 ```
 
 ## Output Schema

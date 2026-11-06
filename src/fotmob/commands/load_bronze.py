@@ -5,25 +5,25 @@ PURPOSE: Transform raw bronze files (JSON/JSON.gz/TAR) into ClickHouse bronze ta
 
 Usage:
     # Load FotMob data for a date
-    python3 scripts/bronze/load_fotmob_bronze.py --date 20251113
+    python3 scripts/fotmob/load_fotmob_bronze.py --date 20251113
 
     # Load date range
-    python3 scripts/bronze/load_fotmob_bronze.py --start-date 20251101 --end-date 20251107
+    python3 scripts/fotmob/load_fotmob_bronze.py --start-date 20251101 --end-date 20251107
 
     # Load entire month
-    python3 scripts/bronze/load_fotmob_bronze.py --month 202511
+    python3 scripts/fotmob/load_fotmob_bronze.py --month 202511
 
     # Load every completed date found in Historical storage
-    python3 scripts/bronze/load_fotmob_bronze.py --full-history
+    python3 scripts/fotmob/load_fotmob_bronze.py --full-history
 
     # Show table statistics
-    python3 scripts/bronze/load_fotmob_bronze.py --stats
+    python3 scripts/fotmob/load_fotmob_bronze.py --stats
 
     # Replace one date: admit it, remove its matches, then insert (ADR 0032)
-    python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --replace
+    python3 scripts/fotmob/load_fotmob_bronze.py --date 20251113 --replace
 
     # Rebuild all history into staging and swap it in (maintenance identity)
-    python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run
+    python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild --dry-run
 
     Note:
     ClickHouse background merges handle routine ReplacingMergeTree storage cleanup.
@@ -61,29 +61,29 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         epilog="""
 Examples:
   # Load FotMob data for a date
-  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113
+  python3 scripts/fotmob/load_fotmob_bronze.py --date 20251113
 
   # Load date range
-  python3 scripts/bronze/load_fotmob_bronze.py --start-date 20251101 --end-date 20251107
+  python3 scripts/fotmob/load_fotmob_bronze.py --start-date 20251101 --end-date 20251107
 
   # Load entire month
-  python3 scripts/bronze/load_fotmob_bronze.py --month 202511
+  python3 scripts/fotmob/load_fotmob_bronze.py --month 202511
 
   # Load every locally available Historical date
-  python3 scripts/bronze/load_fotmob_bronze.py --full-history
+  python3 scripts/fotmob/load_fotmob_bronze.py --full-history
 
   # Show table statistics
-  python3 scripts/bronze/load_fotmob_bronze.py --stats
+  python3 scripts/fotmob/load_fotmob_bronze.py --stats
 
   # Replace one date or a month (admit, remove its matches, insert)
-  python3 scripts/bronze/load_fotmob_bronze.py --date 20251113 --replace
-  python3 scripts/bronze/load_fotmob_bronze.py --month 202511 --replace
+  python3 scripts/fotmob/load_fotmob_bronze.py --date 20251113 --replace
+  python3 scripts/fotmob/load_fotmob_bronze.py --month 202511 --replace
 
   # Rebuild all history without an empty window (maintenance identity)
-  python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run
-  python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild
+  python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild --dry-run
+  python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild
 
-  # Clear data without reloading: see scripts/bronze/remove_fotmob_bronze.py
+  # Clear data without reloading: see scripts/fotmob/remove_fotmob_bronze.py
         """,
     )
 
@@ -200,11 +200,11 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
     log.info("=" * 80)
 
     for physical_table in FOTMOB_TABLES:
-        stats = client.get_table_stats(physical_table, database="bronze")
+        stats = client.get_table_stats(physical_table, database="fotmob_bronze")
         if "error" not in stats:
             log.info(
                 "Table statistics",
-                database="bronze",
+                database="fotmob_bronze",
                 table_name=physical_table,
                 row_count=stats.get("row_count", 0),
                 size=stats.get("size", "0 B"),
@@ -212,7 +212,7 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
         else:
             log.warning(
                 "Failed to read table statistics",
-                database="bronze",
+                database="fotmob_bronze",
                 table_name=physical_table,
                 error=stats.get("error", "Unknown error"),
             )
@@ -260,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
         client = stack.enter_context(
             warehouse_session(
                 identity,
-                "bronze",
+                "fotmob_bronze",
                 host=args.host,
                 port=args.port,
                 username=args.username,
@@ -278,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
                 message="Failed to connect to ClickHouse.",
                 context={
                     "scraper": "fotmob",
-                    "database": "bronze",
+                    "database": "fotmob_bronze",
                     "step": "ClickHouse Loading — fotmob",
                     "error": "Connection failed",
                 },
@@ -328,7 +328,7 @@ def main(argv: list[str] | None = None) -> int:
                 context={
                     "date": date_range,
                     "scraper": "fotmob",
-                    "database": "bronze",
+                    "database": "fotmob_bronze",
                     "step": "ClickHouse Loading — fotmob",
                     "total_rows": str(result.total_rows),
                     "tables_loaded": str(result.tables_loaded),

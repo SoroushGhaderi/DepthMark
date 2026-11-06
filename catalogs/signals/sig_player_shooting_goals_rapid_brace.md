@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_rapid_brace
+  table: fotmob_gold_signals.sig_player_shooting_goals_rapid_brace
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_rapid_brace.sql
 ---
 # sig_player_shooting_goals_rapid_brace
@@ -24,23 +24,23 @@ Flags players who produce a rapid brace by scoring two non-own goals within ten 
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Non-own goal events from `silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
+  - Non-own goal events from `fotmob_silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
   - Same player, same team, same match has an ordered goal pair where effective-minute gap is `<= 10`.
 - Effective-minute definition is `goal_time + goal_overload_time` (fallback `minute + minute_added`), matching existing timing-based shooting signals.
 - Deterministic pair selection chooses the earliest qualifying second goal (then earliest first-goal tie-break), producing stable first/second rapid-goal diagnostics.
-- Bilateral team/opponent context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
+- Bilateral team/opponent context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
 - Similarity gate note: closest active signal is `sig_player_shooting_goals_clinical_brace`; this signal is intentionally complementary because trigger logic is time-window burst finishing rather than low-xG overperformance filtering.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_rapid_brace.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_rapid_brace`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_rapid_brace`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_rapid_brace
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_rapid_brace
 ```
 
 ## Output Schema

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_goalkeeping_defense_defensive_discipline (
+INSERT INTO fotmob_gold_signals.sig_team_goalkeeping_defense_defensive_discipline (
     match_id,
     match_date,
     home_team_id,
@@ -169,8 +169,8 @@ SELECT
         ), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -287,8 +287,8 @@ SELECT
         ), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

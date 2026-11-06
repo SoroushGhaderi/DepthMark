@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_final_third_siege
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_final_third_siege
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_final_third_siege.sql
 ---
 # sig_team_creativity_playmaking_final_third_siege
@@ -26,10 +26,10 @@ final third in a single finished match.
 - Trigger condition:
   - `triggered_team_successful_final_third_passes >= 150`
 - Trigger source:
-  - Team aggregate of `silver.player_match_stat.passes_final_third` (sum across players by
+  - Team aggregate of `fotmob_silver.player_match_stat.passes_final_third` (sum across players by
     `match_id, team_id`).
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - one row per triggered side (`home` / `away`), with explicit opponent mapping.
@@ -46,13 +46,13 @@ final third in a single finished match.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_final_third_siege.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_final_third_siege`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_final_third_siege`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_final_third_siege
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_final_third_siege
 ```
 
 ## Output Schema

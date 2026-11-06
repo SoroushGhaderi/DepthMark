@@ -329,9 +329,9 @@ class Settings(BaseSettings):
     clickhouse_maintenance_password: str = ""
     clickhouse_database: str = "default"
     clickhouse_db_fotmob: str = "fotmob"
-    clickhouse_db_gold: str = "gold"
-    clickhouse_db_gold_scenarios: str = "gold_scenarios"
-    clickhouse_db_gold_signals: str = "gold_signals"
+    clickhouse_db_fotmob_gold: str = "fotmob_gold"
+    clickhouse_db_fotmob_gold_scenarios: str = "fotmob_gold_scenarios"
+    clickhouse_db_fotmob_gold_signals: str = "fotmob_gold_signals"
     # Redirect Gold job output to another database (testing and backfills).
     clickhouse_gold_target_db: str | None = None
 

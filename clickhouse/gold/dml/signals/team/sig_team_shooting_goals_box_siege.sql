@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_box_siege (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_box_siege (
     match_id,
     match_date,
     home_team_id,
@@ -60,7 +60,7 @@ WITH inside_box_team_stats AS (
         toInt32(sum(if(coalesce(s.is_goal, 0) = 1 AND coalesce(s.is_own_goal, 0) = 0, 1, 0)))
             AS team_inside_box_goals,
         toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS team_inside_box_xg
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_from_inside_box, 0) = 1
       AND coalesce(s.is_own_goal, 0) = 0
@@ -194,8 +194,8 @@ SELECT
     toInt32(coalesce(ps.corners_home, 0)) AS triggered_team_corners,
     toInt32(coalesce(ps.corners_away, 0)) AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 LEFT JOIN inside_box_team_stats AS home_ib
@@ -335,8 +335,8 @@ SELECT
     toInt32(coalesce(ps.corners_away, 0)) AS triggered_team_corners,
     toInt32(coalesce(ps.corners_home, 0)) AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 LEFT JOIN inside_box_team_stats AS home_ib

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_sub_defensive_stability
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_sub_defensive_stability
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_sub_defensive_stability.sql
 ---
 # sig_player_goalkeeping_defense_sub_defensive_stability
@@ -25,7 +25,7 @@ stability through both clearance volume (`>= 3`) and tackle-winning output (`>= 
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - substitute scope: `role = 'substitute'` from `silver.match_personnel`
+  - substitute scope: `role = 'substitute'` from `fotmob_silver.match_personnel`
   - defender gate: `triggered_player_usual_playing_position_id = 1`
   - `triggered_player_minutes_played > 0`
   - `triggered_player_minutes_played < 15`
@@ -35,7 +35,7 @@ stability through both clearance volume (`>= 3`) and tackle-winning output (`>= 
   - `match_finished = 1`
 - Substitute-defender scope is resolved through a dedicated personnel CTE keyed on `(match_id, person_id)`, preserving substitution timing in output.
 - Player diagnostics retain tackle, interception, duel, recovery, and passing context to distinguish stable cameo defending from noisy late-match events.
-- Bilateral team context comes from `silver.period_stat` (`period = 'All'`) as symmetric `triggered_team_*` and `opponent_*` features with explicit deltas.
+- Bilateral team context comes from `fotmob_silver.period_stat` (`period = 'All'`) as symmetric `triggered_team_*` and `opponent_*` features with explicit deltas.
 - Similarity gate note:
   - `sig_player_possession_passing_impact_sub_passing`: both are substitute cameo signals, but this signal is defender-only and defensive-output driven (clearances+tackles), not passing-volume driven.
   - `sig_player_goalkeeping_defense_clearance_machine`: both include clearance emphasis, but this signal focuses on short-minute substitutes with a lower threshold and additional tackle requirement.
@@ -44,13 +44,13 @@ stability through both clearance volume (`>= 3`) and tackle-winning output (`>= 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_sub_defensive_stability.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_sub_defensive_stability`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_sub_defensive_stability`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_sub_defensive_stability
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_sub_defensive_stability
 ```
 
 ## Output Schema

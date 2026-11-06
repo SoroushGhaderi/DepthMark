@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_save_paralyzer
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_save_paralyzer
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_save_paralyzer.sql
 ---
 # sig_player_goalkeeping_defense_save_paralyzer
@@ -30,19 +30,19 @@ Identify late-match, high-leverage goalkeeper interventions where a keeper denie
   - finished match and goalkeeper player context
 - Trigger aggregation is at `(match_id, triggered_player_id)` with one row per qualifying goalkeeper.
 - Save-event rollups retain temporal pressure context through first/last late big-chance save minute and score margin at first qualifying save.
-- Bilateral context uses `silver.period_stat` (`period = 'All'`) plus side-level trigger counts to compare late big-chance denial against overall match pressure.
+- Bilateral context uses `fotmob_silver.period_stat` (`period = 'All'`) plus side-level trigger counts to compare late big-chance denial against overall match pressure.
 - Similarity gate note: closest active signals are `sig_player_goalkeeping_defense_brick_wall` and `sig_player_goalkeeping_defense_penalty_stopper`; this signal is distinct because it is event-timed (final 10 minutes) and quality-gated (`xG > 0.4`) rather than volume-based total saves or penalty-specific events.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_save_paralyzer.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_save_paralyzer`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_save_paralyzer`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_save_paralyzer
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_save_paralyzer
 ```
 
 ## Output Schema

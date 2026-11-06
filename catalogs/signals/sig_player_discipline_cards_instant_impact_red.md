@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_instant_impact_red
+  table: fotmob_gold_signals.sig_player_discipline_cards_instant_impact_red
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_instant_impact_red.sql
 ---
 # sig_player_discipline_cards_instant_impact_red
@@ -25,22 +25,22 @@ Flags substitute players dismissed within 10 minutes of entering, surfacing imme
 
 - Trigger condition:
   - `minutes_from_substitution_to_dismissal <= 10`
-- Substitute entry time is sourced from `silver.match_personnel` rows where `role = 'substitute'`.
-- Dismissal events are sourced from `silver.card`; qualifying events are straight red cards or second-yellow dismissals.
+- Substitute entry time is sourced from `fotmob_silver.match_personnel` rows where `role = 'substitute'`.
+- Dismissal events are sourced from `fotmob_silver.card`; qualifying events are straight red cards or second-yellow dismissals.
 - The signal emits one row per triggered substitute player per match using the earliest qualifying dismissal event after substitution.
 - Output preserves full player identity (`triggered_player_*`) and team identity (`triggered_team_*`) at player grain.
-- Bilateral team context (cards, fouls, possession, passing) is attached from `silver.period_stat` (`period = 'All'`) to support tactical interpretation and QA.
+- Bilateral team context (cards, fouls, possession, passing) is attached from `fotmob_silver.period_stat` (`period = 'All'`) to support tactical interpretation and QA.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_instant_impact_red.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_instant_impact_red`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_instant_impact_red`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_instant_impact_red
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_instant_impact_red
 ```
 
 ## Output Schema

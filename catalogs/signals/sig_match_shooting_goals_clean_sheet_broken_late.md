@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_clean_sheet_broken_late
+  table: fotmob_gold_signals.sig_match_shooting_goals_clean_sheet_broken_late
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_clean_sheet_broken_late.sql
 ---
 # sig_match_shooting_goals_clean_sheet_broken_late
@@ -24,7 +24,7 @@ Detect finished matches where the first non-own goal arrives only after the 88th
 
 - Trigger condition: first goal event in the match satisfies `first_goal_effective_minute >= 89`, `home_score_before_first_goal = 0`, and `away_score_before_first_goal = 0`.
 - Goal timing uses `goal_effective_minute = coalesce(goal_time, minute, 0) + coalesce(goal_overload_time, minute_added, 0)`.
-- Goal events come from `silver.shot` where `is_goal = 1` and `is_own_goal = 0`.
+- Goal events come from `fotmob_silver.shot` where `is_goal = 1` and `is_own_goal = 0`.
 - First-goal selection is deterministic using `row_number()` ordered by `(goal_effective_minute, goal_minute, goal_added_time, shot_id)`.
 - Triggered matches emit two rows (`triggered_side = 'home'` and `'away'`) for canonical `match_team` grain.
 - Similarity gate note: closest active signals are `sig_match_shooting_goals_early_goal_late_goal`, `sig_match_shooting_goals_high_pressure_finish`, and `sig_player_shooting_goals_late_winner_clutch`; this signal is distinct because it is explicitly first-goal timing + pre-goal score-state driven.
@@ -32,13 +32,13 @@ Detect finished matches where the first non-own goal arrives only after the 88th
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_clean_sheet_broken_late.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_clean_sheet_broken_late`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_clean_sheet_broken_late`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_clean_sheet_broken_late
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_clean_sheet_broken_late
 ```
 
 ## Output Schema

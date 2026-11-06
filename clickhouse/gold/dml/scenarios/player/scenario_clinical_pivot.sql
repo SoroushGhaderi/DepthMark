@@ -1,5 +1,5 @@
 -- scenario_clinical_pivot: deep distributors with elite passing volume/precision and controlled final-third progression
-INSERT INTO gold_scenarios.scenario_clinical_pivot
+INSERT INTO fotmob_gold_scenarios.scenario_clinical_pivot
 (
     match_id,
     home_team_id,
@@ -61,9 +61,9 @@ SELECT
     p.recoveries,
     p.defensive_actions,
     p.xg_plus_xa
-FROM silver.player_match_stat AS p
+FROM fotmob_silver.player_match_stat AS p
 FINAL
-INNER JOIN silver.match AS g
+INNER JOIN fotmob_silver.match AS g
     FINAL ON p.match_id = g.match_id
 WHERE
     g.match_finished = 1

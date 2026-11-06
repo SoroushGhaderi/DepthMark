@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_penalty_decided_match
+  table: fotmob_gold_signals.sig_match_shooting_goals_penalty_decided_match
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_penalty_decided_match.sql
 ---
 # sig_match_shooting_goals_penalty_decided_match
@@ -23,7 +23,7 @@ Detect tight finished matches that are decided entirely by penalties (1-0, 0-1, 
 ## Tactical And Statistical Logic
 
 - Trigger condition: `match_finished = 1`, scoreline in `{1-0, 0-1, 1-1}`, and `match_total_penalty_goals = match_total_goals` with `match_total_non_penalty_goals = 0`.
-- Penalty goals are identified from `silver.shot` goal events where `situation` or `shot_type` contains `"penalty"` (case-insensitive).
+- Penalty goals are identified from `fotmob_silver.shot` goal events where `situation` or `shot_type` contains `"penalty"` (case-insensitive).
 - Emits two rows per triggered match (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Enrichment includes penalty/non-penalty goal decomposition plus bilateral shot quality, conversion, non-penalty xG context, and possession/passing balance.
 - Similarity gate note: closest active signals are `sig_match_shooting_goals_high_xg_low_score` and `sig_team_discipline_cards_penalty_prone`; this signal remains distinct because it is explicitly match-scoreline-bound and requires *all* goals to be penalties, rather than general low-scoring inefficiency or team-level penalty-concession volume.
@@ -31,13 +31,13 @@ Detect tight finished matches that are decided entirely by penalties (1-0, 0-1, 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_penalty_decided_match.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_penalty_decided_match`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_penalty_decided_match`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_penalty_decided_match
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_penalty_decided_match
 ```
 
 ## Output Schema

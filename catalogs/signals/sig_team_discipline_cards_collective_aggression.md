@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_collective_aggression
+  table: fotmob_gold_signals.sig_team_discipline_cards_collective_aggression
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_collective_aggression.sql
 ---
 # sig_team_discipline_cards_collective_aggression
@@ -24,19 +24,19 @@ Flags team-match performances with very high foul volume (20 or more fouls), sur
 
 - Trigger condition:
   - `triggered_team_fouls_committed >= 20`
-- Trigger is evaluated symmetrically for home and away teams from `silver.period_stat` with `period = 'All'`.
+- Trigger is evaluated symmetrically for home and away teams from `fotmob_silver.period_stat` with `period = 'All'`.
 - The signal keeps bilateral context for foul share, card load, defensive duel profile, and possession balance to separate pure foul volume from broader match-state behavior.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_collective_aggression.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_collective_aggression`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_collective_aggression`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_collective_aggression
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_collective_aggression
 ```
 
 ## Output Schema

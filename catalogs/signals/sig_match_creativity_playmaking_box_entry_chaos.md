@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_box_entry_chaos
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_box_entry_chaos
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_box_entry_chaos.sql
 ---
 # sig_match_creativity_playmaking_box_entry_chaos
@@ -28,7 +28,7 @@ repeatedly move possession into advanced threat zones.
   - with `period = 'All'`, `match_finished = 1`, and valid `match_id`.
 - Source limitation and proxy contract:
   - Direct `successful_passes_into_box` is not available in current Silver tables.
-  - Signal uses `silver.player_match_stat.passes_final_third` as explicit proxy:
+  - Signal uses `fotmob_silver.player_match_stat.passes_final_third` as explicit proxy:
     - `trigger_successful_box_passes_proxy_source = 'passes_final_third_proxy'`.
 - Emits one row per side (`home`, `away`) for canonical `match_team` grain and symmetric
   downstream usage.
@@ -42,13 +42,13 @@ repeatedly move possession into advanced threat zones.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_box_entry_chaos.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_box_entry_chaos`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_box_entry_chaos`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_box_entry_chaos
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_box_entry_chaos
 ```
 
 ## Output Schema

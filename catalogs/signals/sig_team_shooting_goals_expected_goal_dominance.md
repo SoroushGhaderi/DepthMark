@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_expected_goal_dominance
+  table: fotmob_gold_signals.sig_team_shooting_goals_expected_goal_dominance
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_expected_goal_dominance.sql
 ---
 # sig_team_shooting_goals_expected_goal_dominance
@@ -25,7 +25,7 @@ Detect rare team-level matches with extreme bilateral xG imbalance, where one si
 - Trigger condition:
   - `triggered_team_xg > 3.0`
   - `opponent_xg < 0.3`
-- Trigger is evaluated on finished matches only using full-match aggregates from `silver.period_stat` (`period = 'All'`).
+- Trigger is evaluated on finished matches only using full-match aggregates from `fotmob_silver.period_stat` (`period = 'All'`).
 - Output is side-oriented (`triggered_side`) with symmetric `triggered_team_*` and `opponent_*` context for shots, xG efficiency, finishing, possession, circulation, and territory.
 - Severity beyond the binary trigger is captured with `triggered_team_xg_above_threshold`, `opponent_xg_below_threshold`, and `trigger_clearance_xg`.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_offensive_masterclass`, `sig_team_shooting_goals_no_shots_allowed`, and `sig_team_shooting_goals_shot_on_target_monopoly`; this signal intentionally coexists because it is bilateral xG-extremes-first (high own xG plus very low opponent xG), not only average shot quality or shots-on-target suppression.
@@ -33,13 +33,13 @@ Detect rare team-level matches with extreme bilateral xG imbalance, where one si
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_expected_goal_dominance.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_expected_goal_dominance`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_expected_goal_dominance`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_expected_goal_dominance
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_expected_goal_dominance
 ```
 
 ## Output Schema

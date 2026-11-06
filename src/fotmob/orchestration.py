@@ -74,7 +74,7 @@ class FotMobOrchestrator:
         self.logger.info("FotMob Orchestrator initialized", bronze_only=bronze_only)
         if bronze_only:
             self.logger.info(
-                "Note: Use scripts/bronze/load_fotmob_bronze.py to load Bronze into ClickHouse"
+                "Note: Use scripts/fotmob/load_fotmob_bronze.py to load Bronze into ClickHouse"
             )
 
     def scrape_date(

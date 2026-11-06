@@ -2,7 +2,7 @@
 -- One row per status change; the latest row per (batch, partition_id) wins.
 -- partition_id is the replaced YYYYMM partition, or 0 for a full-history batch.
 -- Readers must not consume a partition whose latest status is not 'published'.
-CREATE TABLE IF NOT EXISTS gold.scope_publication
+CREATE TABLE IF NOT EXISTS fotmob_gold.scope_publication
 (
     batch LowCardinality(String),
     partition_id UInt32,

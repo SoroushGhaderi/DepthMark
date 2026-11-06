@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_big_chance_efficiency
+  table: fotmob_gold_signals.sig_team_shooting_goals_big_chance_efficiency
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_big_chance_efficiency.sql
 ---
 # sig_team_shooting_goals_big_chance_efficiency
@@ -26,7 +26,7 @@ Detect team matches where all created big chances are converted (no big-chance m
   - `triggered_team_big_chances >= 1`
   - `triggered_team_big_chances_missed = 0`
   - `triggered_team_big_chance_conversion_pct = 100%`
-- Big-chance conversion uses Opta big-chance aggregates from `silver.period_stat` at full-match scope (`period = 'All'`).
+- Big-chance conversion uses Opta big-chance aggregates from `fotmob_silver.period_stat` at full-match scope (`period = 'All'`).
 - Trigger is evaluated only for finished matches.
 - Output keeps bilateral symmetric context across big-chance profile, shot execution, xG, territorial control, and circulation.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_clinical_finishing_streak`, `sig_team_shooting_goals_ruthless_efficiency`, and `sig_team_shooting_goals_conversion_collapse`; this signal intentionally coexists because it is chance-type-specific (big chances only) and requires zero big-chance misses, not all-on-target conversion or goals-vs-on-target thresholds.
@@ -34,13 +34,13 @@ Detect team matches where all created big chances are converted (no big-chance m
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_big_chance_efficiency.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_big_chance_efficiency`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_big_chance_efficiency`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_big_chance_efficiency
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_big_chance_efficiency
 ```
 
 ## Output Schema

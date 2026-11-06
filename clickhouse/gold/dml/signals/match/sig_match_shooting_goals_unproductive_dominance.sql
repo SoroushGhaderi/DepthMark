@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_unproductive_dominance (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_unproductive_dominance (
     match_id,
     match_date,
     home_team_id,
@@ -118,8 +118,8 @@ WITH base_stats AS (
                 0
             )
         ) AS away_triggered
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

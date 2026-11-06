@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_end_to_end_drama (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_end_to_end_drama (
     match_id,
     match_date,
     home_team_id,
@@ -81,7 +81,7 @@ WITH goals_by_half AS (
             AND coalesce(s.period, '') = 'SecondHalf'
             AND coalesce(s.is_home_goal, 0) = 0
         )) AS away_second_half_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.is_goal, 0) = 1
       AND coalesce(s.period, '') IN ('FirstHalf', 'SecondHalf')
@@ -177,10 +177,10 @@ SELECT
         - coalesce(round(100.0 * coalesce(ps.accurate_passes_away, 0) / nullIf(toFloat64(coalesce(ps.pass_attempts_away, 0)), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 INNER JOIN goals_by_half AS g
     ON g.match_id = m.match_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -282,10 +282,10 @@ SELECT
         - coalesce(round(100.0 * coalesce(ps.accurate_passes_home, 0) / nullIf(toFloat64(coalesce(ps.pass_attempts_home, 0)), 0), 1), 0.0),
         1
     )) AS pass_accuracy_delta_pct
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 INNER JOIN goals_by_half AS g
     ON g.match_id = m.match_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

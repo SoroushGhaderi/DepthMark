@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_deadball_creator
+  table: fotmob_gold_signals.sig_player_possession_passing_deadball_creator
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_deadball_creator.sql
 ---
 # sig_player_possession_passing_deadball_creator
@@ -25,21 +25,21 @@ Triggers when a player creates at least 1 big chance from indirect free kicks in
 
 - Trigger condition:
   - `triggered_player_indirect_free_kick_big_chances_created > 0`
-- Indirect free-kick creation is modeled from `silver.shot` rows where `situation IN ('FreeKick', 'SetPiece')` and the player is recorded as `assist_player_id`.
-- Big chances are proxied at shot level by `expected_goals >= 0.30` because a direct per-shot big-chance flag is not available in `silver.shot`.
-- Signal keeps bilateral team/opponent context via `silver.period_stat` (`period = 'All'`) and adds set-piece shot context from `silver.shot`.
+- Indirect free-kick creation is modeled from `fotmob_silver.shot` rows where `situation IN ('FreeKick', 'SetPiece')` and the player is recorded as `assist_player_id`.
+- Big chances are proxied at shot level by `expected_goals >= 0.30` because a direct per-shot big-chance flag is not available in `fotmob_silver.shot`.
+- Signal keeps bilateral team/opponent context via `fotmob_silver.period_stat` (`period = 'All'`) and adds set-piece shot context from `fotmob_silver.shot`.
 - Output stores both player identity (`triggered_player_*`) and team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_deadball_creator.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_deadball_creator`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_deadball_creator`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_deadball_creator
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_deadball_creator
 ```
 
 ## Output Schema

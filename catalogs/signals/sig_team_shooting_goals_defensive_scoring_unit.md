@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_defensive_scoring_unit
+  table: fotmob_gold_signals.sig_team_shooting_goals_defensive_scoring_unit
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_defensive_scoring_unit.sql
 ---
 # sig_team_shooting_goals_defensive_scoring_unit
@@ -24,21 +24,21 @@ Detect team-level matches where defensive players provide distributed scoring ou
 
 - Trigger condition:
   - `triggered_team_distinct_defender_goal_scorers >= 2`
-- Defender identity is derived from `silver.match_personnel` via `usual_playing_position_id = 1` with starter-preferred role precedence.
-- Scoring events are non-own goals from `silver.shot`; trigger is evaluated separately for home and away sides in finished matches.
+- Defender identity is derived from `fotmob_silver.match_personnel` via `usual_playing_position_id = 1` with starter-preferred role precedence.
+- Scoring events are non-own goals from `fotmob_silver.shot`; trigger is evaluated separately for home and away sides in finished matches.
 - Bilateral output pairs defender-scoring metrics and broader shooting context as `triggered_team_*` versus `opponent_*` columns.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_shared_scoring` and `sig_player_shooting_goals_defensive_scorer`; this signal is intentionally distinct because it is team-triggered and requires multi-defender scorer diversity (`>= 2`) rather than all-player spread or single-player defensive scoring.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_defensive_scoring_unit.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_defensive_scoring_unit`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_defensive_scoring_unit`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_defensive_scoring_unit
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_defensive_scoring_unit
 ```
 
 ## Output Schema

@@ -8,7 +8,7 @@ PATH = Path("example.py")
 
 
 def test_constant_message_with_arguments_passes() -> None:
-    source = 'logger.info("Loaded %s rows", count, table="bronze.match")\n'
+    source = 'logger.info("Loaded %s rows", count, table="fotmob_bronze.match")\n'
 
     assert structured_call_violations(PATH, source) == []
 

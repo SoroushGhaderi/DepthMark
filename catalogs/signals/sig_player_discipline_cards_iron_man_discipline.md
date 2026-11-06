@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_iron_man_discipline
+  table: fotmob_gold_signals.sig_player_discipline_cards_iron_man_discipline
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_iron_man_discipline.sql
 ---
 # sig_player_discipline_cards_iron_man_discipline
@@ -28,21 +28,21 @@ Flags defensive players who complete the full 90 with high tackle output but zer
   - `triggered_player_fouls_committed = 0`
   - `triggered_player_tackles_won >= 5`
   - `triggered_player_usual_playing_position_id IN (1, 2)` (defender + defensive-midfielder proxy scope)
-- Player tackle/foul/minutes metrics are sourced from `silver.player_match_stat`.
-- Player card counts are sourced from `silver.card` at `match_id + player_id` grain for discipline context.
-- Player role scope comes from `silver.match_personnel` via `triggered_player_position_id` and `triggered_player_usual_playing_position_id`.
-- Team/opponent bilateral foul, card, tackle, and possession context is sourced from `silver.period_stat` (`period = 'All'`).
+- Player tackle/foul/minutes metrics are sourced from `fotmob_silver.player_match_stat`.
+- Player card counts are sourced from `fotmob_silver.card` at `match_id + player_id` grain for discipline context.
+- Player role scope comes from `fotmob_silver.match_personnel` via `triggered_player_position_id` and `triggered_player_usual_playing_position_id`.
+- Team/opponent bilateral foul, card, tackle, and possession context is sourced from `fotmob_silver.period_stat` (`period = 'All'`).
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_iron_man_discipline.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_iron_man_discipline`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_iron_man_discipline`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_iron_man_discipline
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_iron_man_discipline
 ```
 
 ## Output Schema

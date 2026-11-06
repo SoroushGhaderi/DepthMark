@@ -15,14 +15,17 @@ stability rules in DepthMark. The canonical command list lives in
 
 ## Command Surface Rules
 
-1. Layer and source entry points live under `scripts/bronze`, `scripts/silver`,
-   `scripts/gold`, `scripts/oddspedia`, `scripts/orchestration`,
-   `scripts/quality`, or `scripts/mongodb`.
-2. Root-level layer scripts are not part of the command surface.
+1. Source entry points live in one folder per source: `scripts/fotmob/` and
+   `scripts/oddspedia/`. Every file there is named
+   `<verb>_<source>[_<layer-or-entity>].py`, so the folder and the filename
+   both name the owning service.
+2. Source-neutral entry points live under `scripts/orchestration`
+   (`run_scheduled_job.py`), `scripts/maintenance`, `scripts/quality`, or
+   `scripts/mongodb`.
 3. Root-level utility scripts are allowed for project-wide operations such as
-   `ensure_directories.py`, `health_check.py`, and `refresh_turnstile.py`.
-4. Do not add new root-level layer scripts.
-5. Any command-surface change must update `src/cli.py`, its registry contract
+   `ensure_directories.py`, `health_check.py`, and `report_scraping.py`. Do not
+   add new root-level source or layer scripts.
+4. Any command-surface change must update `src/cli.py`, its registry contract
    tests, `DEVELOPMENT_ARCHITECTURE.md`, and `../scripts/README.md` when those
    surfaces are affected.
 
@@ -90,12 +93,9 @@ stability rules in DepthMark. The canonical command list lives in
 6. The package CLI uses the same grammar with hyphens, for example
    `load-fotmob-bronze` and `resolve-oddspedia-events`. `src/cli.py` is the
    authoritative package command registry.
-7. A replaced filename may remain as a compatibility adapter. It must delegate
-   to the same implementation, preserve arguments and exit codes, print a
-   deprecation warning to stderr, and name the canonical replacement.
-8. New documentation, orchestration, generated operator guidance, and tests
-   must use canonical names. Compatibility names are documented only in a
-   migration section or historical context.
+7. A renamed script or package command is not kept as a compatibility
+   adapter. Update `src/cli.py`, documentation, orchestration, generated
+   operator guidance, and tests to the new name in the same change.
 
 ### Scraping Reporting Interface
 
@@ -115,9 +115,6 @@ stability rules in DepthMark. The canonical command list lives in
    generation exits `0` when it successfully observes an incomplete run;
    `--fail-on-attention` opts automation into exit `1` for incomplete, error,
    or not-started states.
-5. The former Oddspedia status/report scripts and package commands are
-   compatibility adapters to this interface. They must not retain independent
-   reporting logic or appear in current runbooks.
 
 ## Function Design
 
@@ -193,7 +190,7 @@ stability rules in DepthMark. The canonical command list lives in
 
 ### FotMob Gold SQL Jobs And Signal Catalogs
 
-1. `scripts/gold/run_fotmob_gold_jobs.py` is the only selected-job runner for
+1. `scripts/fotmob/run_fotmob_gold_jobs.py` is the only selected-job runner for
    Gold scenario and signal SQL (ADR 0001, ADR 0009, ADR 0033). It loads SQL
    from `.sql` files, builds a `ScopedSqlJob` per selected job, stages every job
    through `ScopedReplacementBatch` before committing any, and exits non-zero on
@@ -202,9 +199,9 @@ stability rules in DepthMark. The canonical command list lives in
 2. One signal runs with `--id <signal_id>`; batches use `--kind`, or the
    separate `--entity` or `--family` (`family` or `family_subfamily`)
    selectors. Selecting a deprecated or uncatalogued signal exits `2`.
-3. `scripts/gold/load_fotmob_gold.py` is the bulk orchestrator. It runs the
+3. `scripts/fotmob/load_fotmob_gold.py` is the bulk orchestrator. It runs the
    selected scenario and signal jobs in id order, then
-   `scripts/gold/build_fotmob_signal_activations.py` with the same scope, then
+   `scripts/fotmob/build_fotmob_signal_activations.py` with the same scope, then
    `assert_gold_layer_contracts`. It never runs DDL; setup is separate
    (ADR 0026). It supports a `--dry-run` plan.
 4. Signal catalog frontmatter is read only through `load_signal_catalog()` in

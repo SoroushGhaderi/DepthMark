@@ -101,7 +101,7 @@ integration testing, the mypy baseline, and query-cost and retention decisions.
 
 ### Deliberately open (scope, not defects)
 
-- Oddspedia Silver entities beyond `silver.oddspedia_match_resolution`, and all
+- Oddspedia Silver entities beyond `oddspedia_silver.match_resolution`, and all
   Oddspedia Gold outputs, are follow-up work under ADR 0023.
 - Commits to Silver/Gold remain table by table; ADR 0028 makes the mixed window
   durable and visible rather than eliminating it.

@@ -16,11 +16,11 @@ tables into the other source's pipeline.
 FotMob API
   -> data/fotmob/historical/  completed-date Bronze files
   -> data/fotmob/live/        current-date Live snapshots
-  -> bronze.*              raw warehouse tables
-  -> silver.*              cleaned analytical tables
-  -> gold_scenarios.*      scenario outputs
-  -> gold_signals.*        signal outputs
-  -> gold.*                shared Gold metadata and activation tables
+  -> fotmob_bronze.*              raw warehouse tables
+  -> fotmob_silver.*              cleaned analytical tables
+  -> fotmob_gold_scenarios.*      scenario outputs
+  -> fotmob_gold_signals.*        signal outputs
+  -> fotmob_gold.*                shared Gold metadata and activation tables
 
 Oddspedia
   -> data/oddspedia/{historical,live}/  daily listings, payloads, and manifests
@@ -38,8 +38,8 @@ S3 transfer is an independent operator workflow; scraping and the warehouse
 pipeline never upload automatically. Preview or run a date-scoped transfer with:
 
 ```bash
-python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python3 scripts/bronze/sync_s3.py download --date 20251208
+python3 scripts/fotmob/sync_fotmob_s3.py upload --date 20251208 --dry-run
+python3 scripts/fotmob/sync_fotmob_s3.py download --date 20251208
 ```
 
 FotMob Bronze loading is fail-closed: every value is checked against its
@@ -49,9 +49,9 @@ commands are scoped by Source Date, the Historical folder name. Reload a scope,
 clear it, or rebuild all history without an empty window (ADR 0032):
 
 ```bash
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --replace
-python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208 --replace
+python3 scripts/fotmob/remove_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild
 ```
 
 See [`docs/data-flow/bronze.md`](docs/data-flow/bronze.md) for the admission
@@ -120,7 +120,7 @@ DepthMark/
 
 FotMob remains the canonical fixture-reference source for cross-source match
 resolution. Oddspedia remains the canonical source for its event and odds
-records; it does not modify FotMob Bronze or `silver.match`.
+records; it does not modify FotMob Bronze or `fotmob_silver.match`.
 
 Both source domains use `historical/` for completed dates and `live/` for the
 machine-local current date. See
@@ -131,7 +131,7 @@ for the artifact hierarchy and collection commands.
 
 Oddspedia is operated independently of the FotMob orchestration pipeline. Its
 event intake discovers links, validates and prioritizes them against the
-completed three-day `silver.match` reference window, then scrapes the selected
+completed three-day `fotmob_silver.match` reference window, then scrapes the selected
 payloads. Load the resulting Historical artifacts into `oddspedia_bronze.*`
 before resolving each event to the read-only FotMob reference.
 Football matchup links are pinned with Oddspedia's internal `?m=<event_id>`
@@ -174,8 +174,6 @@ the source-owned warehouse commands shown above. Scraping observation is a
 project-wide responsibility: use `scripts/report_scraping.py` for FotMob,
 Oddspedia, or a combined report. It reconciles source artifacts without
 acquiring a date lock, writing run logs, or mutating scraper/warehouse state.
-Earlier status/report filenames remain warning-emitting compatibility adapters;
-do not use them in new automation.
 
 Common reporting examples:
 

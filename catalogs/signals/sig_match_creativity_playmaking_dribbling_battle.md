@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_dribbling_battle
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_dribbling_battle
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_dribbling_battle.sql
 ---
 # sig_match_creativity_playmaking_dribbling_battle
@@ -28,10 +28,10 @@ high-tempo bilateral dribbling contests and preserving playmaking and execution 
   - `match_combined_successful_dribbles = coalesce(dribbles_succeeded_home, 0) + coalesce(dribbles_succeeded_away, 0)`.
 - Trigger source:
   - Dribble, shot, passing, possession, and territorial match context metrics are sourced from
-    `silver.period_stat` at `period = 'All'`.
-  - Team key passes and expected assists are aggregated from `silver.player_match_stat`.
+    `fotmob_silver.period_stat` at `period = 'All'`.
+  - Team key passes and expected assists are aggregated from `fotmob_silver.player_match_stat`.
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - Emits one row per side (`triggered_side = 'home'` and `'away'`) with bilateral context.
@@ -46,13 +46,13 @@ high-tempo bilateral dribbling contests and preserving playmaking and execution 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_dribbling_battle.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_dribbling_battle`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_dribbling_battle`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_dribbling_battle
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_dribbling_battle
 ```
 
 ## Output Schema

@@ -1,5 +1,5 @@
 -- scenario_chaos_engine: disruptor profiles with defensive aggression, attacking-zone presence, and team shot context
-INSERT INTO gold_scenarios.scenario_chaos_engine
+INSERT INTO fotmob_gold_scenarios.scenario_chaos_engine
 (
     match_id,
     home_team_id,
@@ -40,7 +40,7 @@ WITH team_shots AS (
         count()                                             AS team_total_shots,
         countIf(is_on_target = 1)                          AS team_shots_on_target,
         round(sum(expected_goals), 3)                      AS team_xg
-    FROM silver.shot
+    FROM fotmob_silver.shot
     WHERE
         is_own_goal != 1
         AND expected_goals IS NOT NULL
@@ -81,7 +81,7 @@ player_disruption AS (
         p.fotmob_rating,
         p.minutes_played,
         p.passes_final_third
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE
         p.minutes_played >= 45
         AND (
@@ -134,7 +134,7 @@ SELECT
     END AS match_result,
     toString(g.match_date)
 
-FROM silver.match AS g
+FROM fotmob_silver.match AS g
 INNER JOIN player_disruption AS pd
     ON g.match_id = pd.match_id
 INNER JOIN team_shots AS ts

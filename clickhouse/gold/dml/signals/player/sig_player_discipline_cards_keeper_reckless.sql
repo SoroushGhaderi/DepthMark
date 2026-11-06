@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_keeper_reckless (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_keeper_reckless (
     match_id,
     match_date,
     home_team_id,
@@ -60,7 +60,7 @@ WITH card_events AS (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
         ) AS is_red_card
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -209,12 +209,12 @@ SELECT
     )) AS opponent_possession_pct
 
 FROM keeper_card_rollup AS kcr
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = kcr.match_id
    AND p.player_id = kcr.triggered_player_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = kcr.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = kcr.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

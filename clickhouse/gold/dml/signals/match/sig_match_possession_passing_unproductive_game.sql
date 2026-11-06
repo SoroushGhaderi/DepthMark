@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_unproductive_game (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_unproductive_game (
     match_id,
     match_date,
     home_team_id,
@@ -67,8 +67,8 @@ WITH base_stats AS (
         toFloat32(coalesce(ps.expected_goals_away, 0)) AS expected_goals_away,
         coalesce(ps.pass_attempts_home, 0) + coalesce(ps.pass_attempts_away, 0) AS match_total_pass_attempts,
         coalesce(ps.total_shots_home, 0) + coalesce(ps.total_shots_away, 0) AS match_total_shots
-    FROM silver.match AS m FINAL
-    INNER JOIN silver.period_stat AS ps FINAL
+    FROM fotmob_silver.match AS m FINAL
+    INNER JOIN fotmob_silver.period_stat AS ps FINAL
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     WHERE m.match_finished = 1

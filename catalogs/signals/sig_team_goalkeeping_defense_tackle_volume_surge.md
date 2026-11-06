@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_tackle_volume_surge.sql
 ---
 # sig_team_goalkeeping_defense_tackle_volume_surge
@@ -22,7 +22,7 @@ Detects team-level defensive intensity matches where a side produces extreme suc
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `triggered_team_tackles_won >= 25` from `silver.period_stat` at full-match scope (`period = 'All'`) with `match_finished = 1`.
+- Trigger condition: `triggered_team_tackles_won >= 25` from `fotmob_silver.period_stat` at full-match scope (`period = 'All'`) with `match_finished = 1`.
 - Rows are emitted at `match_team` grain using canonical `triggered_side`, so both teams can trigger in the same match if both exceed the threshold.
 - `triggered_team_tackles_won` maps to successful tackles (`tackles_succeeded_home/away`) and severity is captured by `triggered_team_tackles_won_above_threshold`.
 - Output includes bilateral deltas for tackles, interceptions, clearances, blocks, duels, aerials, shots faced, keeper saves, and fouls to frame defensive trade-offs.
@@ -33,13 +33,13 @@ Detects team-level defensive intensity matches where a side produces extreme suc
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_tackle_volume_surge.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_tackle_volume_surge`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_tackle_volume_surge
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_tackle_volume_surge
 ```
 
 ## Output Schema

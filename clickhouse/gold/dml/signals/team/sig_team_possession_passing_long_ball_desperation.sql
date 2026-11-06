@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_long_ball_desperation (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_long_ball_desperation (
     match_id,
     match_date,
     home_team_id,
@@ -298,9 +298,9 @@ SELECT
         coalesce(ps.clearances_away, 0)
     )                                                                                           AS opponent_clearances_conceded
 
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 -- Full-match aggregated stats only
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON  ps.match_id = m.match_id
     AND ps.period   = 'All'
 

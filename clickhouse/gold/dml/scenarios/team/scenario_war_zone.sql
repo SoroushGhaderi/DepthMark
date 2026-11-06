@@ -1,5 +1,5 @@
 -- scenario_war_zone: high-discipline-intensity matches
-INSERT INTO gold_scenarios.scenario_war_zone
+INSERT INTO fotmob_gold_scenarios.scenario_war_zone
 (
     match_id,
     home_team_id,
@@ -43,8 +43,8 @@ SELECT
         ELSE 'Draw'
     END AS match_result,
     toString(g.match_date)
-FROM silver.match AS g
-INNER JOIN silver.period_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.period_stat AS p
     ON g.match_id = p.match_id
     AND p.period = 'All'
 WHERE

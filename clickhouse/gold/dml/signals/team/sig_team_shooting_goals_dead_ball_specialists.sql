@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_dead_ball_specialists (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_dead_ball_specialists (
     match_id,
     match_date,
     home_team_id,
@@ -109,7 +109,7 @@ WITH dead_ball_team_stats AS (
             coalesce(s.expected_goals, 0.0),
             0.0
         )), 3)) AS team_dead_ball_xg
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.team_id, 0) > 0
     GROUP BY
         s.match_id,
@@ -263,8 +263,8 @@ SELECT
         1
     )) AS pass_accuracy_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -427,8 +427,8 @@ SELECT
         1
     )) AS pass_accuracy_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

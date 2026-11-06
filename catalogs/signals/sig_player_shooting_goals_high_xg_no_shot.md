@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_high_xg_no_shot
+  table: fotmob_gold_signals.sig_player_shooting_goals_high_xg_no_shot
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_xg_no_shot.sql
 ---
 # sig_player_shooting_goals_high_xg_no_shot
@@ -26,21 +26,21 @@ Flags rare player events where penalty-area occupation is high (`>= 10` oppositi
 - Trigger condition:
   - `triggered_player_touches_opposition_box >= 10`
   - `triggered_player_total_shots = 0`
-- Triggered player identity and primary metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields for shots, xG, big chances, possession, and box touches.
+- Triggered player identity and primary metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields for shots, xG, big chances, possession, and box touches.
 - Signal adds severity and interpretability diagnostics (`box_touches_above_threshold`, `player_share_of_team_touches_opposition_box_pct`, and `triggered_player_goal_minus_expected_goals`) so analysts can rank how extreme each shotless-box-presence event is.
 - Similarity gate note: the closest active signal is `sig_player_possession_passing_box_penetrator` (`touches_opp_box > 10`). Owner decision for this addition was explicit coexistence, with this signal kept distinct by the mandatory `total_shots = 0` predicate and shooting-oriented context.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_xg_no_shot.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_high_xg_no_shot`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_high_xg_no_shot`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_high_xg_no_shot
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_high_xg_no_shot
 ```
 
 ## Output Schema

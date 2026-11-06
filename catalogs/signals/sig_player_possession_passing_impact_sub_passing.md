@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_impact_sub_passing
+  table: fotmob_gold_signals.sig_player_possession_passing_impact_sub_passing
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_impact_sub_passing.sql
 ---
 # sig_player_possession_passing_impact_sub_passing
@@ -26,7 +26,7 @@ Identifies substitute appearances where a player contributes unusually high comp
 - Trigger condition:
   - `triggered_player_accurate_passes > 15`
   - `triggered_player_minutes_played < 20`
-- Substituted-player scope is enforced by joining `silver.match_personnel` with:
+- Substituted-player scope is enforced by joining `fotmob_silver.match_personnel` with:
   - `role = 'substitute'`
 - Reliability guard:
   - `triggered_player_minutes_played > 0`
@@ -35,13 +35,13 @@ Identifies substitute appearances where a player contributes unusually high comp
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_impact_sub_passing.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_impact_sub_passing`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_impact_sub_passing`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_impact_sub_passing
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_impact_sub_passing
 ```
 
 ## Output Schema

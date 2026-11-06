@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_one_man_army
+  table: fotmob_gold_signals.sig_player_shooting_goals_one_man_army
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_one_man_army.sql
 ---
 # sig_player_shooting_goals_one_man_army
@@ -31,8 +31,8 @@ Detects player-level 1-0 match winners where one player scores the only non-own 
   - Goal events are grouped at `match_id + team_id + player_id` grain.
   - Signal emits one row per qualifying player and preserves first-goal timing plus score-state transition fields.
 - Match-context enrichment:
-  - Player finishing context comes from `silver.player_match_stat`.
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player finishing context comes from `fotmob_silver.player_match_stat`.
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity note:
   - Closest active signal is `sig_player_shooting_goals_winning_impact`.
   - Coexistence decision: keep both active. `winning_impact` covers one-goal wins broadly, while `one_man_army` is a stricter 1-0 single-scorer subset.
@@ -40,13 +40,13 @@ Detects player-level 1-0 match winners where one player scores the only non-own 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_one_man_army.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_one_man_army`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_one_man_army`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_one_man_army
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_one_man_army
 ```
 
 ## Output Schema

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_long_range_specialist
+  table: fotmob_gold_signals.sig_player_shooting_goals_long_range_specialist
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_long_range_specialist.sql
 ---
 # sig_player_shooting_goals_long_range_specialist
@@ -24,29 +24,29 @@ Detects match-player events where a player converts at least one outside-box sho
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Outside-box scope is defined with `is_from_inside_box = 0` in `silver.shot`.
+  - Outside-box scope is defined with `is_from_inside_box = 0` in `fotmob_silver.shot`.
   - Goal events use `is_goal = 1` and exclude own goals (`is_own_goal = 0`).
   - Signal fires when `triggered_player_outside_box_goals >= 1` in the same finished match.
 - Identity and orientation:
   - Player identity is preserved via `triggered_player_*`.
   - Team/opponent identity is preserved via `triggered_team_*`, `opponent_team_*`, and `triggered_side`.
 - Match-context enrichment:
-  - Shot-location trigger evidence is aggregated from `silver.shot` at `match_id + player_id + team_id` grain.
-  - Player total shooting context comes from `silver.player_match_stat`.
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Shot-location trigger evidence is aggregated from `fotmob_silver.shot` at `match_id + player_id + team_id` grain.
+  - Player total shooting context comes from `fotmob_silver.player_match_stat`.
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity note:
   - Closest active shooting-goals signals are `sig_player_shooting_goals_hat_trick_hero` and `sig_player_shooting_goals_sniper_accuracy`; this signal is distinct because it is explicitly location-based (outside-box goal conversion) rather than goal-count bursts or all-shot precision triggers.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_long_range_specialist.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_long_range_specialist`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_long_range_specialist`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_long_range_specialist
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_long_range_specialist
 ```
 
 ## Output Schema

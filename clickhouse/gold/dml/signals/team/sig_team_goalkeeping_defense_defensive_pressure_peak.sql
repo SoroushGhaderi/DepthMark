@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak (
+INSERT INTO fotmob_gold_signals.sig_team_goalkeeping_defense_defensive_pressure_peak (
     match_id,
     match_date,
     home_team_id,
@@ -104,7 +104,7 @@ WITH half_turnover_stats AS (
 
         toInt8(maxIf(1, ps.period = 'FirstHalf')) AS has_first_half_period_row_flag,
         toInt8(maxIf(1, ps.period = 'SecondHalf')) AS has_second_half_period_row_flag
-    FROM silver.period_stat AS ps
+    FROM fotmob_silver.period_stat AS ps
     WHERE ps.period IN ('FirstHalf', 'SecondHalf')
     GROUP BY ps.match_id
 )
@@ -289,8 +289,8 @@ SELECT
     toInt32(coalesce(m.away_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.home_score, 0) - coalesce(m.away_score, 0)) AS goal_delta,
     toInt8(if(coalesce(m.away_score, 0) = 0, 1, 0)) AS triggered_team_clean_sheet_flag
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -483,8 +483,8 @@ SELECT
     toInt32(coalesce(m.home_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.away_score, 0) - coalesce(m.home_score, 0)) AS goal_delta,
     toInt8(if(coalesce(m.home_score, 0) = 0, 1, 0)) AS triggered_team_clean_sheet_flag
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

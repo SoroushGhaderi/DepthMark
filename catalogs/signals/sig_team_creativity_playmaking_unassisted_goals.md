@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_unassisted_goals
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_unassisted_goals
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unassisted_goals.sql
 ---
 # sig_team_creativity_playmaking_unassisted_goals
@@ -25,12 +25,12 @@ Detect team-level matches where finishing comes from self-created solo actions r
 - Trigger condition:
   - `triggered_team_unassisted_solo_goals >= 2`
 - Solo-effort definition:
-  - Goal event from `silver.shot` with `is_goal = 1`, `is_own_goal = 0`, `assist_player_id = 0/NULL`.
+  - Goal event from `fotmob_silver.shot` with `is_goal = 1`, `is_own_goal = 0`, `assist_player_id = 0/NULL`.
   - Event is treated as solo effort when:
     - dribble-attributed text proxy is present (`shot_type` / `situation` / `goal_description` contains dribble/solo/individual), or
     - long-range proxy is present (`is_from_inside_box = 0` or long-distance text proxy).
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - Emits one row per triggered side (`home` / `away`) with bilateral `triggered_team_*` and `opponent_*` context.
@@ -42,13 +42,13 @@ Detect team-level matches where finishing comes from self-created solo actions r
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unassisted_goals.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_unassisted_goals`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_unassisted_goals`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_unassisted_goals
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_unassisted_goals
 ```
 
 ## Output Schema

@@ -1,5 +1,5 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.venue
+CREATE TABLE IF NOT EXISTS fotmob_bronze.venue
 (
     match_id                        Int32,
     -- Stadium

@@ -1,5 +1,5 @@
 -- scenario_low_block_heist: low-possession winner takes the match
-INSERT INTO gold_scenarios.scenario_low_block_heist
+INSERT INTO fotmob_gold_scenarios.scenario_low_block_heist
 (
     -- 1. Match Identity
     match_id,
@@ -54,8 +54,8 @@ SELECT
         WHEN g.away_score > g.home_score THEN p.ball_possession_away
     END AS winner_possession,
     toString(g.match_date)
-FROM silver.match AS g
-INNER JOIN silver.period_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.period_stat AS p
     ON g.match_id = p.match_id
     AND p.period = 'All'
 WHERE

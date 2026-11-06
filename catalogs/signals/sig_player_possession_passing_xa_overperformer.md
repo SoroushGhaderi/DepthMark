@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_xa_overperformer
+  table: fotmob_gold_signals.sig_player_possession_passing_xa_overperformer
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_xa_overperformer.sql
 ---
 # sig_player_possession_passing_xa_overperformer
@@ -26,21 +26,21 @@ Triggers when a player records at least 2 assists with less than 0.5 expected as
 - Trigger conditions:
   - `triggered_player_expected_assists < 0.5`
   - `triggered_player_assists >= 2`
-- Trigger is computed from player-level full-match attacking and passing totals in `silver.player_match_stat`.
+- Trigger is computed from player-level full-match attacking and passing totals in `fotmob_silver.player_match_stat`.
 - The signal separates chance quality from outcome credit, making it useful for finding unlucky or under-rewarded providers.
-- Signal includes bilateral team/opponent pass-quality and box-touch context from `silver.period_stat` (`period = 'All'`) to distinguish individual high-value delivery from broader territorial dominance.
+- Signal includes bilateral team/opponent pass-quality and box-touch context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish individual high-value delivery from broader territorial dominance.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_xa_overperformer.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_xa_overperformer`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_xa_overperformer`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_xa_overperformer
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_xa_overperformer
 ```
 
 ## Output Schema

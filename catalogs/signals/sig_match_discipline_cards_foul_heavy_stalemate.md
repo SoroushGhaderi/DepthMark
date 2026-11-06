@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_foul_heavy_stalemate
+  table: fotmob_gold_signals.sig_match_discipline_cards_foul_heavy_stalemate
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_foul_heavy_stalemate.sql
 ---
 # sig_match_discipline_cards_foul_heavy_stalemate
@@ -25,20 +25,20 @@ Flags goalless draws that were still physically intense, surfacing 0-0 matches w
 - Trigger conditions:
   - `home_score = 0`
   - `away_score = 0`
-  - `fouls_home + fouls_away >= 30` from `silver.period_stat` at `period = 'All'`.
+  - `fouls_home + fouls_away >= 30` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Emits one row per side (`triggered_side in {'home','away'}`) so downstream team-oriented models can consume bilateral context.
 - Enrichment keeps foul allocation, cards-per-foul conversion, defensive action load, and possession balance to separate mutual trench warfare from one-sided aggression inside scoreless matches.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_foul_heavy_stalemate.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_foul_heavy_stalemate`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_foul_heavy_stalemate`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_foul_heavy_stalemate
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_foul_heavy_stalemate
 ```
 
 ## Output Schema

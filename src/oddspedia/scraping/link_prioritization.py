@@ -197,7 +197,7 @@ class LinkPriorityService:
         query = """
             SELECT match_id, match_date, match_time_utc, home_team_name,
                    away_team_name, coverage_level, league_name
-            FROM silver.match FINAL
+            FROM fotmob_silver.match FINAL
             WHERE match_date >= {start_date:Date} AND match_date <= {end_date:Date}
         """
         rows = self.client.execute(

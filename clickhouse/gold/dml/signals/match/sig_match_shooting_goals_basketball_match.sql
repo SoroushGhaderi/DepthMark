@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_basketball_match (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_basketball_match (
     match_id,
     match_date,
     home_team_id,
@@ -85,8 +85,8 @@ WITH base_stats AS (
         coalesce(ps.pass_attempts_away, 0) AS pass_attempts_away,
         coalesce(ps.touches_opp_box_home, 0) AS touches_opposition_box_home,
         coalesce(ps.touches_opp_box_away, 0) AS touches_opposition_box_away
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

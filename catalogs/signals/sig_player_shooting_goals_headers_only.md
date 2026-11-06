@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_headers_only
+  table: fotmob_gold_signals.sig_player_shooting_goals_headers_only
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_headers_only.sql
 ---
 # sig_player_shooting_goals_headers_only
@@ -27,20 +27,20 @@ Flags players who score two or more goals in a match where every scored goal is 
   - `triggered_player_goals >= 2`
   - `triggered_player_header_goals = triggered_player_goals`
   - `triggered_player_non_header_goals = 0`
-- Header-goal attribution is sourced from `silver.shot` using `is_goal = 1` and `shot_type` text matching `header` (case-insensitive), excluding own goals.
-- Player shooting totals and bilateral match context come from `silver.player_match_stat`, `silver.match`, and `silver.period_stat` (`period = 'All'`).
+- Header-goal attribution is sourced from `fotmob_silver.shot` using `is_goal = 1` and `shot_type` text matching `header` (case-insensitive), excluding own goals.
+- Player shooting totals and bilateral match context come from `fotmob_silver.player_match_stat`, `fotmob_silver.match`, and `fotmob_silver.period_stat` (`period = 'All'`).
 - Team and opponent aerial context (`*_header_goals`, `*_header_shots`, `*_header_expected_goals`) is derived symmetrically from shot-level data.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_headers_only.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_headers_only`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_headers_only`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_headers_only
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_headers_only
 ```
 
 ## Output Schema

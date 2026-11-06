@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_set_piece_creative_duel.sql
 ---
 # sig_match_creativity_playmaking_set_piece_creative_duel
@@ -26,16 +26,16 @@ Detect finished matches where both teams convert set-piece delivery into direct 
 - Trigger condition:
   - `home_set_piece_assists >= 1`
   - `away_set_piece_assists >= 1`
-- Set-piece scope for assisted shots/goals uses `silver.shot.situation IN`
+- Set-piece scope for assisted shots/goals uses `fotmob_silver.shot.situation IN`
   `('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')`.
 - A set-piece assist is counted when:
   - `assist_player_id > 0`
   - `is_goal = 1`
   - `is_own_goal = 0`
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
-  - `silver.period_stat.period = 'All'`
+  - `fotmob_silver.period_stat.period = 'All'`
 - Side orientation:
   - Emits one row for `home` and one for `away` (`match_team` grain symmetry).
 - Similarity gate note:
@@ -46,13 +46,13 @@ Detect finished matches where both teams convert set-piece delivery into direct 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_set_piece_creative_duel.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_set_piece_creative_duel
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_set_piece_creative_duel
 ```
 
 ## Output Schema

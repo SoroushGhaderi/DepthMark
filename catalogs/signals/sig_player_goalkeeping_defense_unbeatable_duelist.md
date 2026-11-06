@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_unbeatable_duelist.sql
 ---
 # sig_player_goalkeeping_defense_unbeatable_duelist
@@ -30,9 +30,9 @@ Flags defender performances with high-volume and high-efficiency combined duel o
   - `triggered_player_usual_playing_position_id = 1` (defender scope)
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Defender scope is resolved from `silver.match_personnel` with starter-priority position selection per `(match_id, player_id)`.
+- Defender scope is resolved from `fotmob_silver.match_personnel` with starter-priority position selection per `(match_id, player_id)`.
 - Player diagnostics preserve duel splits (ground vs aerial), tackling, interceptions, clearances, defensive actions, recoveries, and passing context.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_aerial_stronghold`: close overlap in defender duel profile, but that signal triggers on aerial wins only (`>= 10`) and not combined duel efficiency.
   - `sig_player_goalkeeping_defense_unbeaten_in_air`: close aerial-efficiency overlap, but it requires perfect aerial record (`100%`, aerial-only) rather than total duel profile (`ground + aerial`, `> 80%`).
@@ -41,13 +41,13 @@ Flags defender performances with high-volume and high-efficiency combined duel o
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_unbeatable_duelist.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_unbeatable_duelist`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_unbeatable_duelist
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_unbeatable_duelist
 ```
 
 ## Output Schema

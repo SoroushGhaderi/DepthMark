@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_penalty_prone (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_penalty_prone (
     match_id,
     match_date,
     home_team_id,
@@ -52,8 +52,8 @@ WITH penalty_shots AS (
         toUInt8(
             positionCaseInsensitiveUTF8(coalesce(s.event_type, ''), 'goal') > 0
         ) AS penalty_scored
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND (s.team_id = m.home_team_id OR s.team_id = m.away_team_id)
@@ -133,8 +133,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0) - coalesce(ps.ball_possession_away, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN match_penalty_totals AS mpt
@@ -199,8 +199,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0) - coalesce(ps.ball_possession_home, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN match_penalty_totals AS mpt

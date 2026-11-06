@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_wasteful_finisher
+  table: fotmob_gold_signals.sig_player_shooting_goals_wasteful_finisher
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_wasteful_finisher.sql
 ---
 # sig_player_shooting_goals_wasteful_finisher
@@ -26,21 +26,21 @@ Flags high-chance non-scoring player performances (`xG > 1.20`, `goals = 0`) to 
 - Trigger condition:
   - `triggered_player_expected_goals > 1.20`
   - `triggered_player_goals = 0`
-- Triggered player identity and shooting metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
+- Triggered player identity and shooting metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`expected_goals_above_threshold`, `expected_goals_wasted`, and `triggered_player_goal_minus_expected_goals`) to rank how extreme each wasteful finishing event is.
 - Similarity gate note: closest active shooting-goals signal is `sig_player_shooting_goals_clinical_brace`; this signal is intentionally complementary (finishing underperformance vs overperformance), so both can coexist as directional counterparts.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_wasteful_finisher.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_wasteful_finisher`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_wasteful_finisher`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_wasteful_finisher
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_wasteful_finisher
 ```
 
 ## Output Schema

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_interception_king
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_interception_king
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_interception_king.sql
 ---
 # sig_player_goalkeeping_defense_interception_king
@@ -29,10 +29,10 @@ and control context for anticipation-driven defensive profiling.
   - `triggered_player_usual_playing_position_id = 1` (defender role gate)
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Player interception and defensive-action metrics are sourced from `silver.player_match_stat`.
-- Defender scope is resolved from `silver.match_personnel` (`usual_playing_position_id = 1`) and joined at
+- Player interception and defensive-action metrics are sourced from `fotmob_silver.player_match_stat`.
+- Defender scope is resolved from `fotmob_silver.match_personnel` (`usual_playing_position_id = 1`) and joined at
   `(match_id, player_id)` grain.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric
   `triggered_team_*` and `opponent_*` fields for interceptions, tackles, clearances, shot blocks,
   duels, fouls, possession, and pass quality.
 - Similarity gate note:
@@ -44,13 +44,13 @@ and control context for anticipation-driven defensive profiling.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_interception_king.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_interception_king`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_interception_king`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_interception_king
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_interception_king
 ```
 
 ## Output Schema

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_set_piece_masterclass (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_set_piece_masterclass (
     match_id,
     match_date,
     home_team_id,
@@ -90,7 +90,7 @@ WITH shot_classified AS (
             positionCaseInsensitiveUTF8(coalesce(s.situation, ''), 'penalty') > 0
             OR positionCaseInsensitiveUTF8(coalesce(s.shot_type, ''), 'penalty') > 0
         ) AS is_penalty_situation
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.team_id, 0) > 0
 ),
@@ -335,8 +335,8 @@ SELECT
         1
     )) AS pass_accuracy_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -544,8 +544,8 @@ SELECT
         1
     )) AS pass_accuracy_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

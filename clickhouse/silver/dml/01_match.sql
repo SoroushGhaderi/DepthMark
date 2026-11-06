@@ -1,4 +1,4 @@
-INSERT INTO silver.match
+INSERT INTO fotmob_silver.match
 SELECT
     g.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -48,6 +48,6 @@ SELECT
     v.referee_name,
     v.referee_country,
     now() AS _loaded_at
-FROM bronze.general AS g FINAL
-LEFT JOIN bronze.timeline AS t FINAL ON g.match_id = t.match_id
-LEFT JOIN bronze.venue AS v FINAL ON g.match_id = v.match_id;
+FROM fotmob_bronze.general AS g FINAL
+LEFT JOIN fotmob_bronze.timeline AS t FINAL ON g.match_id = t.match_id
+LEFT JOIN fotmob_bronze.venue AS v FINAL ON g.match_id = v.match_id;

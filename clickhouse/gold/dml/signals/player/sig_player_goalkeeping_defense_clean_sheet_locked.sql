@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked (
+INSERT INTO fotmob_gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked (
     match_id,
     match_date,
     home_team_id,
@@ -70,7 +70,7 @@ WITH keeper_on_target_shot_events AS (
             coalesce(s.is_on_target, 0) = 1
             AND coalesce(s.is_saved_off_line, 0) = 0
         ), 3)) AS triggered_player_expected_goals_on_target_faced
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND s.keeper_id IS NOT NULL
       AND coalesce(s.keeper_id, 0) > 0
@@ -276,12 +276,12 @@ SELECT
         0.0
     ) AS player_share_of_team_keeper_saves_pct
 FROM keeper_on_target_shot_events AS kse
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = kse.match_id
    AND p.player_id = kse.triggered_player_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = kse.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = kse.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

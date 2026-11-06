@@ -1,5 +1,5 @@
 -- scenario_young_gun: high-impact young starters with above-average ratings
-INSERT INTO gold_scenarios.scenario_young_gun
+INSERT INTO fotmob_gold_scenarios.scenario_young_gun
 (
     match_id,
     home_team_id,
@@ -28,7 +28,7 @@ INSERT INTO gold_scenarios.scenario_young_gun
 )
 WITH avg_rating AS (
     SELECT avg(fotmob_rating) AS overall_avg_rating
-    FROM silver.player_match_stat
+    FROM fotmob_silver.player_match_stat
     WHERE fotmob_rating IS NOT NULL
 )
 SELECT
@@ -64,10 +64,10 @@ SELECT
         ELSE 'Draw'
     END AS match_result,
     toString(g.match_date)
-FROM silver.match_personnel AS st
-INNER JOIN silver.match AS g
+FROM fotmob_silver.match_personnel AS st
+INNER JOIN fotmob_silver.match AS g
     ON st.match_id = g.match_id
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON st.match_id = p.match_id
     AND st.person_id = p.player_id
 CROSS JOIN avg_rating AS ar

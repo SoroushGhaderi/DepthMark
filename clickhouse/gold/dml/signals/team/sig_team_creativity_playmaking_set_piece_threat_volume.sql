@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_set_piece_threat_volume (
     match_id,
     match_date,
     home_team_id,
@@ -70,7 +70,7 @@ WITH dead_ball_shot_stats AS (
             AND coalesce(s.is_own_goal, 0) = 0
         )) AS team_dead_ball_goals,
         toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS team_dead_ball_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.team_id IS NOT NULL
       AND coalesce(s.situation, '') IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')
     GROUP BY
@@ -83,7 +83,7 @@ team_creation_stats AS (
         p.team_id,
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.team_id IS NOT NULL
     GROUP BY
         p.match_id,
@@ -266,8 +266,8 @@ SELECT
         1
     )) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -461,8 +461,8 @@ SELECT
         1
     )) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

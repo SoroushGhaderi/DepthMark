@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_shot_blocker_elite
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_shot_blocker_elite
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_shot_blocker_elite.sql
 ---
 # sig_player_goalkeeping_defense_shot_blocker_elite
@@ -27,9 +27,9 @@ Flags defenders with elite match-level shot-block volume (`>= 4`), capturing fro
   - `triggered_player_usual_playing_position_id = 1` (defender role gate)
   - `triggered_player_shot_blocks >= 4`
   - `match_finished = 1`
-- Defender scope is resolved from `silver.match_personnel` and joined to `silver.player_match_stat`.
+- Defender scope is resolved from `fotmob_silver.match_personnel` and joined to `fotmob_silver.player_match_stat`.
 - Player diagnostics retain clearances, interceptions, tackles, duel profiles, recoveries, defensive actions, and passing context to distinguish pure shot-block volume from broader defensive quality.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` defensive and control metrics.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` defensive and control metrics.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_clearance_machine`: closest defensive-family overlap; this signal remains distinct because it triggers on blocked shots (`>= 4`) rather than clearances (`>= 15`).
   - `sig_player_shooting_goals_blocked_shot_frustration`: shares blocked-shot vocabulary but models attacker shot suppression (shots blocked against a shooter), while this signal models defender shot-block production.
@@ -38,13 +38,13 @@ Flags defenders with elite match-level shot-block volume (`>= 4`), capturing fro
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_shot_blocker_elite.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_shot_blocker_elite`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_shot_blocker_elite`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_shot_blocker_elite
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_shot_blocker_elite
 ```
 
 ## Output Schema

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_clean_sheet_locked.sql
 ---
 # sig_player_goalkeeping_defense_clean_sheet_locked
@@ -29,13 +29,13 @@ Flags goalkeepers who keep a clean sheet despite facing high expected-goals-on-t
   - `triggered_team_clean_sheet_flag = 1`
   - `is_goalkeeper = 1`
   - `match_finished = 1`
-- Goalkeeper pressure events are derived from `silver.shot` at `(match_id, keeper_id)` grain:
+- Goalkeeper pressure events are derived from `fotmob_silver.shot` at `(match_id, keeper_id)` grain:
   - shots-on-target faced: `is_on_target = 1` and not `is_saved_off_line`
   - saves: on-target, not goal, not `is_saved_off_line`
   - goals conceded: on-target goals, not `is_saved_off_line`
   - expected-goals-on-target faced: sum of `expected_goals_on_target` (fallback `expected_goals`) on eligible on-target events
 - Clean-sheet enforcement uses final match score orientation by triggered side.
-- Bilateral context from `silver.period_stat` (`period = 'All'`) keeps symmetric team/opponent xGOT faced,
+- Bilateral context from `fotmob_silver.period_stat` (`period = 'All'`) keeps symmetric team/opponent xGOT faced,
   shots faced, saves, possession, and pass-quality fields.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_brick_wall`: overlap on goalkeeper-shot-stopping intent, but this signal is quality-thresholded (`xGOT`) with mandatory clean sheet instead of raw save-volume trigger.
@@ -44,13 +44,13 @@ Flags goalkeepers who keep a clean sheet despite facing high expected-goals-on-t
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_clean_sheet_locked.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_clean_sheet_locked`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_clean_sheet_locked
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_clean_sheet_locked
 ```
 
 ## Output Schema

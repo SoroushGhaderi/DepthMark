@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_systematic_fouling
+  table: fotmob_gold_signals.sig_team_discipline_cards_systematic_fouling
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_systematic_fouling.sql
 ---
 # sig_team_discipline_cards_systematic_fouling
@@ -25,20 +25,20 @@ Flags match-team cases where caution pressure is spread across the entire starti
 - Trigger condition:
   - `triggered_team_starting_midfielders_booked = triggered_team_starting_midfielders`
   - `triggered_team_starting_midfielders >= 1`
-- Starter midfielders are sourced from `silver.match_personnel` with `role = 'starter'` and `usual_playing_position_id = 2`.
-- Yellow bookings are sourced from `silver.card` where card metadata indicates yellow/booked events.
+- Starter midfielders are sourced from `fotmob_silver.match_personnel` with `role = 'starter'` and `usual_playing_position_id = 2`.
+- Yellow bookings are sourced from `fotmob_silver.card` where card metadata indicates yellow/booked events.
 - Trigger is evaluated symmetrically for `home` and `away`, then enriched with bilateral discipline, foul volume, defensive actions, and possession context.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_systematic_fouling.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_systematic_fouling`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_systematic_fouling`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_systematic_fouling
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_systematic_fouling
 ```
 
 ## Output Schema

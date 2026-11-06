@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_own_goal_drama
+  table: fotmob_gold_signals.sig_match_shooting_goals_own_goal_drama
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_own_goal_drama.sql
 ---
 # sig_match_shooting_goals_own_goal_drama
@@ -22,7 +22,7 @@ Detect finished matches with at least one own goal and expose side-oriented scor
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `match_total_own_goals >= 1`, derived from `silver.shot` events where `is_goal = 1`, `is_own_goal = 1`, and `is_home_goal` is available.
+- Trigger condition: `match_total_own_goals >= 1`, derived from `fotmob_silver.shot` events where `is_goal = 1`, `is_own_goal = 1`, and `is_home_goal` is available.
 - Emits two rows per triggered match (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Own-goal attribution keeps both beneficiary and conceding views: a home-beneficiary own goal implies an away side own-goal concession, and vice versa.
 - Enrichment includes own-goal share/dependence metrics, non-own-goal decomposition, shot quality/volume (`shots_on_target`, `xg`), and control context (`possession_pct`, `pass_accuracy_pct`).
@@ -31,13 +31,13 @@ Detect finished matches with at least one own goal and expose side-oriented scor
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_own_goal_drama.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_own_goal_drama`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_own_goal_drama`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_own_goal_drama
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_own_goal_drama
 ```
 
 ## Output Schema

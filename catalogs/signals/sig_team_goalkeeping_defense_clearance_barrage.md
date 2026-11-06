@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_clearance_barrage
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_clearance_barrage
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_clearance_barrage.sql
 ---
 # sig_team_goalkeeping_defense_clearance_barrage
@@ -22,7 +22,7 @@ Detect team-level defensive overload matches where a side produces extreme clear
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `triggered_team_clearances >= 40` from `silver.period_stat` at full-match scope (`period = 'All'`) with `match_finished = 1`.
+- Trigger condition: `triggered_team_clearances >= 40` from `fotmob_silver.period_stat` at full-match scope (`period = 'All'`) with `match_finished = 1`.
 - Output grain is `match_team` with canonical `triggered_side`, so both teams can emit rows in the same match when both satisfy the threshold.
 - Severity is exposed via `triggered_team_clearances_above_threshold` and bilateral deltas for clearances, interceptions, shot blocks, tackles, duels, and aerial wins.
 - Pressure environment is contextualized with shots faced, possession, pass accuracy, and scoreline/clean-sheet outputs.
@@ -33,13 +33,13 @@ Detect team-level defensive overload matches where a side produces extreme clear
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_clearance_barrage.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_clearance_barrage`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_clearance_barrage`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_clearance_barrage
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_goalkeeping_defense_clearance_barrage
 ```
 
 ## Output Schema

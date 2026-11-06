@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_keeper_distributor (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_keeper_distributor (
     match_id,
     match_date,
     home_team_id,
@@ -204,10 +204,10 @@ SELECT
         0.0
     ) AS triggered_player_short_pass_share_of_accurate_passes_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

@@ -1,5 +1,5 @@
 -- scenario_russian_roulette: matches with heavy penalty-event volatility
-INSERT INTO gold_scenarios.scenario_russian_roulette
+INSERT INTO fotmob_gold_scenarios.scenario_russian_roulette
 (
     match_id,
     home_team_id,
@@ -60,8 +60,8 @@ SELECT
         ELSE 'Draw'
     END AS match_result,
     toString(g.match_date)
-FROM silver.shot AS s
-INNER JOIN silver.match AS g
+FROM fotmob_silver.shot AS s
+INNER JOIN fotmob_silver.match AS g
     ON s.match_id = g.match_id
 WHERE
     g.match_finished = 1

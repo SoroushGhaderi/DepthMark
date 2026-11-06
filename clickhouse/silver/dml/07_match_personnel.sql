@@ -1,4 +1,4 @@
-INSERT INTO silver.match_personnel
+INSERT INTO fotmob_silver.match_personnel
 SELECT
     s.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -13,13 +13,13 @@ SELECT
     s.substitution_time, s.substitution_type, s.substitution_reason,
     NULL AS primary_team_id, NULL AS primary_team_name,
     now() AS _loaded_at
-FROM bronze.starters AS s FINAL
-LEFT JOIN bronze.general AS g FINAL ON s.match_id = g.match_id
+FROM fotmob_bronze.starters AS s FINAL
+LEFT JOIN fotmob_bronze.general AS g FINAL ON s.match_id = g.match_id
 WHERE s.match_id > 0
   AND s.player_id > 0
   AND length(trim(BOTH ' ' FROM s.team_side)) > 0;
 
-INSERT INTO silver.match_personnel
+INSERT INTO fotmob_silver.match_personnel
 SELECT
     s.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -36,13 +36,13 @@ SELECT
     s.substitution_time, s.substitution_type, s.substitution_reason,
     NULL AS primary_team_id, NULL AS primary_team_name,
     now() AS _loaded_at
-FROM bronze.substitutes AS s FINAL
-LEFT JOIN bronze.general AS g FINAL ON s.match_id = g.match_id
+FROM fotmob_bronze.substitutes AS s FINAL
+LEFT JOIN fotmob_bronze.general AS g FINAL ON s.match_id = g.match_id
 WHERE s.match_id > 0
   AND s.player_id > 0
   AND length(trim(BOTH ' ' FROM s.team_side)) > 0;
 
-INSERT INTO silver.match_personnel
+INSERT INTO fotmob_silver.match_personnel
 SELECT
     c.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -61,8 +61,8 @@ SELECT
     NULL AS substitution_reason,
     c.primary_team_id, c.primary_team_name,
     now() AS _loaded_at
-FROM bronze.coaches AS c FINAL
-LEFT JOIN bronze.general AS g FINAL ON c.match_id = g.match_id
+FROM fotmob_bronze.coaches AS c FINAL
+LEFT JOIN fotmob_bronze.general AS g FINAL ON c.match_id = g.match_id
 WHERE c.match_id > 0
   AND c.coach_id > 0
   AND length(trim(BOTH ' ' FROM c.team_side)) > 0;

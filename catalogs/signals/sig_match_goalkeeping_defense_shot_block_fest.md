@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_shot_block_fest
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_shot_block_fest
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_shot_block_fest.sql
 ---
 # sig_match_goalkeeping_defense_shot_block_fest
@@ -22,7 +22,7 @@ Detects finished matches with extreme combined shot-block volume and emits bilat
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(coalesce(shot_blocks_home, 0) + coalesce(shot_blocks_away, 0)) > 15` from `silver.period_stat` at `period = 'All'`.
+- Trigger condition: `(coalesce(shot_blocks_home, 0) + coalesce(shot_blocks_away, 0)) > 15` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger is match-level and emits two rows (`triggered_side = 'home'` and `triggered_side = 'away'`) at canonical `match_team` grain.
 - Severity is represented by `match_combined_shot_blocks_above_threshold = match_combined_shot_blocks - 15`.
 - Enrichment keeps bilateral context symmetric for shot blocks, shots faced, save performance, defensive actions, physical contests, discipline, possession, passing quality, and scoreline.
@@ -33,13 +33,13 @@ Detects finished matches with extreme combined shot-block volume and emits bilat
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_shot_block_fest.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_shot_block_fest`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_shot_block_fest`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_shot_block_fest
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_shot_block_fest
 ```
 
 ## Output Schema

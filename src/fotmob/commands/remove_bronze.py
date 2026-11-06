@@ -7,15 +7,15 @@ the Silver and Gold commands for the Match Dates it made stale.
 
 Usage:
     # Preview what one date's removal would delete
-    python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run
+    python3 scripts/fotmob/remove_fotmob_bronze.py --date 20251208 --dry-run
 
     # Remove one date, a range, or a month
-    python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208
-    python3 scripts/bronze/remove_fotmob_bronze.py --start-date 20251201 --end-date 20251207
-    python3 scripts/bronze/remove_fotmob_bronze.py --month 202512
+    python3 scripts/fotmob/remove_fotmob_bronze.py --date 20251208
+    python3 scripts/fotmob/remove_fotmob_bronze.py --start-date 20251201 --end-date 20251207
+    python3 scripts/fotmob/remove_fotmob_bronze.py --month 202512
 
     # Remove every date (truncate; maintenance identity)
-    python3 scripts/bronze/remove_fotmob_bronze.py --full-history
+    python3 scripts/fotmob/remove_fotmob_bronze.py --full-history
 
 To reload a scope instead of only clearing it, use
 ``load_fotmob_bronze.py --replace``.

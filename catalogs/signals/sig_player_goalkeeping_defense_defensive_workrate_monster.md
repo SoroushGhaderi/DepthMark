@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_defensive_workrate_monster
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_defensive_workrate_monster
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_defensive_workrate_monster.sql
 ---
 # sig_player_goalkeeping_defense_defensive_workrate_monster
@@ -29,9 +29,9 @@ tackles won, interceptions, clearances, and shot blocks.
   - `triggered_player_total_defensive_actions_ticb = tackles_won + interceptions + clearances + shot_blocks`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Player-level metrics are sourced from `silver.player_match_stat`.
-- Position metadata is sourced from `silver.match_personnel` (starter-priority role resolution) for interpretable role grouping.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields plus explicit delta metrics.
+- Player-level metrics are sourced from `fotmob_silver.player_match_stat`.
+- Position metadata is sourced from `fotmob_silver.match_personnel` (starter-priority role resolution) for interpretable role grouping.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields plus explicit delta metrics.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_defensive_double_double`: closest overlap on defensive volume, but trigger requires two separate minima (`tackles >= 5` and `interceptions >= 5`) instead of TICB aggregate workload.
   - `sig_player_goalkeeping_defense_shot_blocker_elite`: closest overlap on one TICB component, but trigger axis is shot blocks only.
@@ -40,13 +40,13 @@ tackles won, interceptions, clearances, and shot blocks.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_defensive_workrate_monster.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_defensive_workrate_monster`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_defensive_workrate_monster`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_defensive_workrate_monster
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_defensive_workrate_monster
 ```
 
 ## Output Schema

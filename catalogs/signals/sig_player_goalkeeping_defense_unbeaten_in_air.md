@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_unbeaten_in_air.sql
 ---
 # sig_player_goalkeeping_defense_unbeaten_in_air
@@ -31,11 +31,11 @@ duel, defensive-action, and control context.
   - `triggered_player_aerial_duels_won = triggered_player_aerial_duel_attempts`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Defender scope is sourced from `silver.match_personnel` (`usual_playing_position_id = 1`) and joined to
-  `silver.player_match_stat` at `(match_id, player_id)` grain.
+- Defender scope is sourced from `fotmob_silver.match_personnel` (`usual_playing_position_id = 1`) and joined to
+  `fotmob_silver.player_match_stat` at `(match_id, player_id)` grain.
 - Player diagnostics preserve aerial, ground-duel, tackle, interception, clearance, recovery, and passing
   context to separate true aerial perfection from narrow low-involvement cases.
-- Bilateral team/opponent context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric
+- Bilateral team/opponent context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric
   `triggered_team_*` and `opponent_*` aerial and defensive columns.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_aerial_stronghold`: same defensive role family, but trigger is
@@ -46,13 +46,13 @@ duel, defensive-action, and control context.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_unbeaten_in_air.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_unbeaten_in_air`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_unbeaten_in_air
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_unbeaten_in_air
 ```
 
 ## Output Schema

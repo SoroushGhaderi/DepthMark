@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_penalty_conceder
+  table: fotmob_gold_signals.sig_player_discipline_cards_penalty_conceder
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_penalty_conceder.sql
 ---
 # sig_player_discipline_cards_penalty_conceder
@@ -25,22 +25,22 @@ Flags players whose foul-related card events align with opponent penalty awards,
 
 - Trigger condition:
   - `triggered_player_penalties_conceded >= 1`
-- Penalty awards are sourced from `silver.shot` using penalty-tagged shots (`situation`/`shot_type` contains `"penalty"`).
-- Candidate conceders are taken from opposite-side `silver.card` events within a tight minute window around each penalty.
+- Penalty awards are sourced from `fotmob_silver.shot` using penalty-tagged shots (`situation`/`shot_type` contains `"penalty"`).
+- Candidate conceders are taken from opposite-side `fotmob_silver.card` events within a tight minute window around each penalty.
 - Candidate selection is deterministic: per penalty shot, the highest relevance event is selected using description-based penalty/foul cues and closest timing.
 - Output stores full player identity (`triggered_player_*`) plus team/opponent identity (`triggered_team_*`, `opponent_team_*`) for player-grain traceability.
-- Bilateral discipline and possession context is sourced from `silver.period_stat` (`period = 'All'`) and penalty-volume context is sourced from match-level penalty shot aggregates.
+- Bilateral discipline and possession context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) and penalty-volume context is sourced from match-level penalty shot aggregates.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_penalty_conceder.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_penalty_conceder`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_penalty_conceder`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_penalty_conceder
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_discipline_cards_penalty_conceder
 ```
 
 ## Output Schema

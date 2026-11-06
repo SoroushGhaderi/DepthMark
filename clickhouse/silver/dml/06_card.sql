@@ -1,4 +1,4 @@
-INSERT INTO silver.card
+INSERT INTO fotmob_silver.card
 SELECT
     c.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -21,5 +21,5 @@ SELECT
         )
     ) AS score_away_at_time,
     now() AS _loaded_at
-FROM bronze.cards AS c FINAL
-LEFT JOIN bronze.general AS g FINAL ON c.match_id = g.match_id;
+FROM fotmob_bronze.cards AS c FINAL
+LEFT JOIN fotmob_bronze.general AS g FINAL ON c.match_id = g.match_id;

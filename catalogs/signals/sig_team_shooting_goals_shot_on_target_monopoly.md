@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_shot_on_target_monopoly
+  table: fotmob_gold_signals.sig_team_shooting_goals_shot_on_target_monopoly
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shot_on_target_monopoly.sql
 ---
 # sig_team_shooting_goals_shot_on_target_monopoly
@@ -32,13 +32,13 @@ Detect team-level matches where one side completely monopolizes on-target shot e
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shot_on_target_monopoly.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_shot_on_target_monopoly`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_shot_on_target_monopoly`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_shot_on_target_monopoly
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_shot_on_target_monopoly
 ```
 
 ## Output Schema

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_aggression_drop_off
+  table: fotmob_gold_signals.sig_team_discipline_cards_aggression_drop_off
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_aggression_drop_off.sql
 ---
 # sig_team_discipline_cards_aggression_drop_off
@@ -25,19 +25,19 @@ Flags team-match performances where a side is highly foul-heavy before halftime 
 - Trigger condition:
   - `triggered_team_fouls_first_half >= 10`
   - `triggered_team_fouls_second_half <= 2`
-- Trigger is evaluated symmetrically for home and away from `silver.period_stat` half splits (`period IN ('FirstHalf', 'SecondHalf')`).
+- Trigger is evaluated symmetrically for home and away from `fotmob_silver.period_stat` half splits (`period IN ('FirstHalf', 'SecondHalf')`).
 - The signal preserves bilateral half-split foul dynamics plus full-match discipline and defensive context (`period = 'All'`) to separate genuine de-escalation from broadly low-contact games.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_aggression_drop_off.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_aggression_drop_off`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_aggression_drop_off`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_aggression_drop_off
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_aggression_drop_off
 ```
 
 ## Output Schema

@@ -51,7 +51,7 @@ def load_environment() -> None:
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build enriched signal activation rows into gold.signal_activations."
+        description="Build enriched signal activation rows into fotmob_gold.signal_activations."
     )
     add_warehouse_scope_arguments(parser)
     parser.add_argument(
@@ -297,9 +297,9 @@ def _activation_insert_sql(
         {_sql_array_literal(sorted(available_columns))} AS source_row_columns,
         now() AS inserted_at
     FROM {safe_source_database}.{safe_signal_table} AS {source_alias}
-    LEFT JOIN bronze.match_reference AS {match_reference_alias}
+    LEFT JOIN fotmob_bronze.match_reference AS {match_reference_alias}
         ON {match_reference_alias}.match_id = {source_alias}.match_id
-    LEFT JOIN bronze.venue AS {venue_alias}
+    LEFT JOIN fotmob_bronze.venue AS {venue_alias}
         ON {venue_alias}.match_id = {source_alias}.match_id
     WHERE {source_alias}.match_id > 0
       AND {match_date_expr} IS NOT NULL
@@ -363,7 +363,7 @@ def build_signal_activations(
 
     target_table = f"{target_database}.signal_activations"
     final_insert_sql = _final_activation_insert_sql().replace(
-        "gold.signal_activations",
+        "fotmob_gold.signal_activations",
         target_table,
         1,
     )

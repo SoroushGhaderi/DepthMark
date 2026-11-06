@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_unpunished_aggression
+  table: fotmob_gold_signals.sig_match_discipline_cards_unpunished_aggression
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_unpunished_aggression.sql
 ---
 # sig_match_discipline_cards_unpunished_aggression
@@ -25,20 +25,20 @@ Flags high-event matches where chance quality is strong and whistle volume is hi
 - Trigger condition:
   - `(expected_goals_home + expected_goals_away) >= 3.0`
   - `(fouls_home + fouls_away) >= 28`
-  - both measured from `silver.period_stat` at `period = 'All'`.
+  - both measured from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) for stable team-grain downstream use.
 - Output preserves bilateral xG, foul-pressure, sanction-conversion, shooting, defensive-workload, and possession context for tactical interpretation.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_unpunished_aggression.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_unpunished_aggression`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_unpunished_aggression`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_unpunished_aggression
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_unpunished_aggression
 ```
 
 ## Output Schema

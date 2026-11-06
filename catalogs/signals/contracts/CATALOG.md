@@ -21,7 +21,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_big_chance_fest
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_big_chance_fest
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_big_chance_fest.sql
 ---
 ```
@@ -54,11 +54,11 @@ asset_paths:
    - Changing `row_identity` of an existing signal changes its Signal
      Activation IDs and MUST be treated as an identity migration (ADR 0006).
 9. `asset_paths` MUST hold exactly `table` and `sql`. **[catalog]**
-   - `table` MUST be `gold_signals.<signal_id>`.
+   - `table` MUST be `fotmob_gold_signals.<signal_id>`.
    - `sql` MUST be `clickhouse/gold/dml/signals/<entity>/<signal_id>.sql`, and
      the file MUST exist.
    - There is no runner path: every signal runs through
-     `scripts/gold/run_fotmob_gold_jobs.py`.
+     `scripts/fotmob/run_fotmob_gold_jobs.py`.
 
 ## Body
 
@@ -70,7 +70,7 @@ The body follows the frontmatter, starts with `# <signal_id>`, and MUST contain:
    siblings (the similarity note from [`AUTHORING.md`](AUTHORING.md)).
 3. **Technical asset references**: the SQL path, target table, and runner.
 4. **Example execution command**, for example
-   `python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id <signal_id>`.
+   `python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id <signal_id>`.
 5. **Output schema** table with exactly the headers `Column Name`,
    `Description`, `Reason`, covering every output column.
 

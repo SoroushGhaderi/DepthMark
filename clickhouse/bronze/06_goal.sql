@@ -1,5 +1,5 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.goal
+CREATE TABLE IF NOT EXISTS fotmob_bronze.goal
 (
     match_id                        Int32,
     event_id                        Int64,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS bronze.goal
     -- Assist
     assist_player_id                Nullable(Int32),
     assist_player_name              Nullable(String),
-    -- Linked shot (joins to bronze.shotmap.shot_id)
+    -- Linked shot (joins to fotmob_bronze.shotmap.shot_id)
     shot_event_id                   Nullable(Int64),
     shot_x_loc                      Nullable(Float32),
     shot_y_loc                      Nullable(Float32),

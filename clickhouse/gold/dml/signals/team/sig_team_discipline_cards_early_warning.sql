@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_early_warning (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_early_warning (
     match_id,
     match_date,
     home_team_id,
@@ -57,7 +57,7 @@ WITH booking_events AS (
         lowerUTF8(coalesce(c.team_side, '')) AS card_team_side,
         toInt32(assumeNotNull(c.player_id)) AS player_id,
         toInt32OrZero(toString(c.card_minute)) AS card_minute
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -279,7 +279,7 @@ SELECT
     )) AS possession_delta_pct
 
 FROM team_booking_rollup AS tbr
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = tbr.match_id
 LEFT JOIN team_booking_rollup AS obr
     ON obr.match_id = tbr.match_id
@@ -290,7 +290,7 @@ LEFT JOIN early_booking_counts AS tebc
 LEFT JOIN early_booking_counts AS oebc
     ON oebc.match_id = tbr.match_id
    AND oebc.triggered_side = if(tbr.triggered_side = 'home', 'away', 'home')
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tbr.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

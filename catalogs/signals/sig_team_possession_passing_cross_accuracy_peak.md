@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_cross_accuracy_peak
+  table: fotmob_gold_signals.sig_team_possession_passing_cross_accuracy_peak
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_cross_accuracy_peak.sql
 ---
 # sig_team_possession_passing_cross_accuracy_peak
@@ -31,13 +31,13 @@ Detect teams that pair meaningful crossing volume with high delivery precision, 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_cross_accuracy_peak.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_cross_accuracy_peak`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_cross_accuracy_peak`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_cross_accuracy_peak
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_cross_accuracy_peak
 ```
 
 ## Output Schema

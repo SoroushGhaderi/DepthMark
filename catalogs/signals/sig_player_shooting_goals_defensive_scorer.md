@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_defensive_scorer
+  table: fotmob_gold_signals.sig_player_shooting_goals_defensive_scorer
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_defensive_scorer.sql
 ---
 # sig_player_shooting_goals_defensive_scorer
@@ -27,21 +27,21 @@ Flags center backs who score from dead-ball attacking phases (corner or set-piec
   - `triggered_player_usual_playing_position_id = 1`
   - `triggered_player_position_id IN (3, 4)`
   - `triggered_player_set_piece_goals >= 1`
-- Set-piece events are sourced from `silver.shot` where `situation IN ('FromCorner', 'SetPiece')` and own goals are excluded for goal attribution.
-- Center-back scope is derived from `silver.match_personnel` using match-specific role precedence (`starter` preferred over `substitute`).
-- Bilateral match context comes from `silver.match` and `silver.period_stat` (`period = 'All'`) with symmetric triggered-team/opponent metrics.
+- Set-piece events are sourced from `fotmob_silver.shot` where `situation IN ('FromCorner', 'SetPiece')` and own goals are excluded for goal attribution.
+- Center-back scope is derived from `fotmob_silver.match_personnel` using match-specific role precedence (`starter` preferred over `substitute`).
+- Bilateral match context comes from `fotmob_silver.match` and `fotmob_silver.period_stat` (`period = 'All'`) with symmetric triggered-team/opponent metrics.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_headers_only` and `sig_player_shooting_goals_freekick_master`; this signal is distinct because it enforces center-back identity and broader set-piece sequence scoring (not only headers or direct free-kicks).
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_defensive_scorer.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_defensive_scorer`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_defensive_scorer`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_defensive_scorer
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_shooting_goals_defensive_scorer
 ```
 
 ## Output Schema

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_cross_heavy
+  table: fotmob_gold_signals.sig_player_possession_passing_cross_heavy
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_cross_heavy.sql
 ---
 # sig_player_possession_passing_cross_heavy
@@ -25,20 +25,20 @@ Triggers when a player attempts more than 12 crosses in a single match, identify
 
 - Trigger condition:
   - `triggered_player_cross_attempts > 12`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent cross and pass context from `silver.period_stat` (`period = 'All'`) to separate individual crossing volume from team-wide match dynamics.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent cross and pass context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual crossing volume from team-wide match dynamics.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_cross_heavy.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_cross_heavy`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_cross_heavy`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_cross_heavy
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_cross_heavy
 ```
 
 ## Output Schema

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_high_turnover_affair
+  table: fotmob_gold_signals.sig_match_possession_passing_high_turnover_affair
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_high_turnover_affair.sql
 ---
 # sig_match_possession_passing_high_turnover_affair
@@ -30,13 +30,13 @@ Triggers for matches with very high combined dispossession/turnover volume, surf
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_high_turnover_affair.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_high_turnover_affair`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_high_turnover_affair`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_possession_passing_high_turnover_affair
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_possession_passing_high_turnover_affair
 ```
 
 ## Output Schema

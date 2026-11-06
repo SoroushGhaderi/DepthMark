@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_defensive_scorer (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_defensive_scorer (
     match_id,
     match_date,
     home_team_id,
@@ -101,7 +101,7 @@ WITH player_set_piece_stats AS (
             coalesce(s.expected_goals, 0.0),
             0.0
         )), 3)) AS triggered_player_set_piece_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.player_id, 0) > 0
       AND coalesce(s.team_id, 0) > 0
     GROUP BY
@@ -130,7 +130,7 @@ team_set_piece_stats AS (
             coalesce(s.expected_goals, 0.0),
             0.0
         )), 3)) AS team_set_piece_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.team_id, 0) > 0
     GROUP BY
         s.match_id,
@@ -142,7 +142,7 @@ player_role AS (
         person_id,
         argMax(position_id, if(role = 'starter', 2, 1)) AS position_id,
         argMax(usual_playing_position_id, if(role = 'starter', 2, 1)) AS usual_playing_position_id
-    FROM silver.match_personnel
+    FROM fotmob_silver.match_personnel
     WHERE role IN ('starter', 'substitute')
     GROUP BY
         match_id,
@@ -309,13 +309,13 @@ SELECT
         1
     ), 0.0)) AS player_share_of_team_set_piece_goals_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN player_role AS pr
     ON pr.match_id = p.match_id
    AND pr.person_id = p.player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN player_set_piece_stats AS psps

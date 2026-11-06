@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_wasteful_finisher (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_wasteful_finisher (
     match_id,
     match_date,
     home_team_id,
@@ -225,10 +225,10 @@ SELECT
         1
     ), 0.0)) AS player_share_of_team_shots_on_target_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

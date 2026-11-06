@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_unassisted_goals (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_unassisted_goals (
     match_id,
     match_date,
     home_team_id,
@@ -104,7 +104,7 @@ WITH team_goal_style_rollup AS (
                 OR positionCaseInsensitiveUTF8(coalesce(s.goal_description, ''), 'distance') > 0
             )
         )) AS team_unassisted_long_shot_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.team_id, 0) > 0
     GROUP BY
@@ -273,8 +273,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0.0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0.0) - coalesce(ps.ball_possession_away, 0.0), 1))
         AS possession_delta_pct
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -454,8 +454,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0.0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0.0) - coalesce(ps.ball_possession_home, 0.0), 1))
         AS possession_delta_pct
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

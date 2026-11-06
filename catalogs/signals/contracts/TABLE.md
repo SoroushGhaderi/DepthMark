@@ -7,7 +7,7 @@ Rules for signal DDL under `clickhouse/gold/ddl/signals/`. Tags are defined in
 
 1. Signal tables are grouped by entity, family, and subfamily in
    `clickhouse/gold/ddl/signals/<entity>/create_table_<entity>_<family>_<subfamily>.sql`.
-2. Each table is `gold_signals.<signal_id>`, and every table MUST have a
+2. Each table is `fotmob_gold_signals.<signal_id>`, and every table MUST have a
    catalog. **[catalog]**
 3. Setup DDL is create-only: `CREATE TABLE IF NOT EXISTS` and nothing else.
    **[setup]** (ADR 0026) To change an existing table's columns or sorting key,
@@ -26,7 +26,7 @@ the same order:
 ```text
 catalog row_identity            [match_id, triggered_player_id, triggered_team_id]
   → DDL signal_instance_id      SHA256('v1' | signal_id | match_id | triggered_player_id | triggered_team_id)
-  → Signal Activation ID        the same hash in gold.signal_activations
+  → Signal Activation ID        the same hash in fotmob_gold.signal_activations
 ```
 
 1. Every `row_identity` column MUST exist in the table. **[catalog]**

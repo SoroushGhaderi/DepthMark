@@ -236,7 +236,7 @@ def test_insert_failure_goes_to_dlq_and_fails_the_run(tmp_path, payload, specs, 
 
     assert result.exit_code == 1
     assert result.failed_dates == {}
-    assert "bronze.period" in result.run_error and "Type mismatch" in result.run_error
+    assert "fotmob_bronze.period" in result.run_error and "Type mismatch" in result.run_error
     assert "period" not in client.inserted
     assert len(client.inserted["general"]) == 1, "the run stops; 20251209 is never loaded"
     (dlq_file,) = dlq_dir.glob("period_*.jsonl")
@@ -288,7 +288,7 @@ def test_missing_live_table_fails_before_reading_any_date(tmp_path, payload, spe
 
     assert result.exit_code == 1
     assert result.failed_dates == {}
-    assert "bronze.cards" in result.run_error
+    assert "fotmob_bronze.cards" in result.run_error
     assert client.inserted == {}
 
 

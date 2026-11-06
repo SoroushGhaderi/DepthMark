@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_sustained_creative_pressure.sql
 ---
 # sig_team_creativity_playmaking_sustained_creative_pressure
@@ -31,9 +31,9 @@ Detect team-level sustained creative pressure where chance-generation cadence re
 - Segment grid is `00-09`, `10-19`, `20-29`, `30-39`, `40-49`, `50-59`, `60-69`, `70-79`, `80-90+`.
 - Operational key-pass proxy:
   - Current silver schema does not expose minute-level `chances_created`.
-  - This signal uses non-penalty, non-own-goal `silver.shot` events as a minute-level
+  - This signal uses non-penalty, non-own-goal `fotmob_silver.shot` events as a minute-level
     key-pass pressure proxy and measures segment coverage continuity from those events.
-- Team-level creativity context is retained from `silver.player_match_stat` (`chances_created`, `expected_assists`) and bilateral match context from `silver.period_stat` (`period = 'All'`).
+- Team-level creativity context is retained from `fotmob_silver.player_match_stat` (`chances_created`, `expected_assists`) and bilateral match context from `fotmob_silver.period_stat` (`period = 'All'`).
 - Similarity gate note:
   - `sig_team_creativity_playmaking_chance_barrage` is nearest on metric family (team key-pass volume), but it is aggregate-only (`>= 15`) and not cadence-segmented.
   - `sig_team_shooting_goals_sustained_barrage` is nearest on cadence shape (short-window pressure), but it is shooting-family and window-burst based (`10 shots in 15 minutes`) rather than full-match creativity continuity.
@@ -42,13 +42,13 @@ Detect team-level sustained creative pressure where chance-generation cadence re
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_sustained_creative_pressure.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_sustained_creative_pressure`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_sustained_creative_pressure
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_sustained_creative_pressure
 ```
 
 ## Output Schema

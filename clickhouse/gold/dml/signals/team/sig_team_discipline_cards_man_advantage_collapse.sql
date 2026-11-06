@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_man_advantage_collapse (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_man_advantage_collapse (
     match_id,
     match_date,
     home_team_id,
@@ -53,7 +53,7 @@ WITH red_events AS (
         c.event_id,
         toInt32(coalesce(c.score_home_at_time, 0)) AS score_home_at_red,
         toInt32(coalesce(c.score_away_at_time, 0)) AS score_away_at_red
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
       AND positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
@@ -151,8 +151,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0) - coalesce(ps.ball_possession_away, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 LEFT JOIN red_event_rollup AS away_rer
@@ -241,8 +241,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0) - coalesce(ps.ball_possession_home, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 LEFT JOIN red_event_rollup AS home_rer

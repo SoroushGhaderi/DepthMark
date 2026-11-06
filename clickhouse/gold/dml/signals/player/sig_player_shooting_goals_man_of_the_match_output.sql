@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_man_of_the_match_output (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_man_of_the_match_output (
     match_id,
     match_date,
     home_team_id,
@@ -67,7 +67,7 @@ WITH team_player_totals AS (
         toInt32(sum(coalesce(p.assists, 0))) AS team_assists,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists,
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_chances_created
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
       AND p.team_id > 0
       AND p.player_id > 0
@@ -277,10 +277,10 @@ SELECT
         1
     ), 0.0)) AS player_share_of_team_chances_created_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN team_player_totals AS tpt

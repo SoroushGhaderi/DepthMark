@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_dribble_heavy_attack
+  table: fotmob_gold_signals.sig_team_possession_passing_dribble_heavy_attack
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_dribble_heavy_attack.sql
 ---
 # sig_team_possession_passing_dribble_heavy_attack
@@ -29,13 +29,13 @@ Triggers when a team attempts at least 25 dribbles in a match, identifying aggre
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_dribble_heavy_attack.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_dribble_heavy_attack`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_dribble_heavy_attack`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_dribble_heavy_attack
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_dribble_heavy_attack
 ```
 
 ## Output Schema

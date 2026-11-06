@@ -1,5 +1,5 @@
 -- scenario_human_shield: outfield defenders absorbing heavy fire via blocks, clearances, and defensive volume
-INSERT INTO gold_scenarios.scenario_human_shield
+INSERT INTO fotmob_gold_scenarios.scenario_human_shield
 (
     match_id,
     home_team_id,
@@ -35,8 +35,8 @@ WITH team_shots_faced AS (
         g.match_id,
         countIf(s.team_id = g.home_team_id AND coalesce(s.is_own_goal, 0) != 1) AS home_team_shots,
         countIf(s.team_id = g.away_team_id AND coalesce(s.is_own_goal, 0) != 1) AS away_team_shots
-    FROM silver.match AS g
-    LEFT JOIN silver.shot AS s
+    FROM fotmob_silver.match AS g
+    LEFT JOIN fotmob_silver.shot AS s
         ON g.match_id = s.match_id
     GROUP BY g.match_id, g.home_team_id, g.away_team_id
 )
@@ -100,12 +100,12 @@ SELECT
     END AS match_result,
     toString(g.match_date)
 
-FROM silver.match AS g
-INNER JOIN silver.player_match_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON g.match_id = p.match_id
 INNER JOIN team_shots_faced AS tsf
     ON g.match_id = tsf.match_id
-INNER JOIN silver.period_stat AS p_period
+INNER JOIN fotmob_silver.period_stat AS p_period
     ON g.match_id = p_period.match_id
     AND p_period.period = 'All'
 WHERE

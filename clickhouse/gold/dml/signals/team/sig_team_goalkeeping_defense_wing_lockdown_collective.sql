@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective (
+INSERT INTO fotmob_gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective (
     match_id,
     match_date,
     home_team_id,
@@ -87,7 +87,7 @@ WITH player_role AS (
         argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
         argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
             AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND coalesce(mp.person_id, 0) > 0
       AND mp.role IN ('starter', 'substitute')
@@ -116,7 +116,7 @@ fullback_and_winger_tackles AS (
             1,
             0
         )) AS is_winger_proxy
-    FROM silver.player_match_stat AS pms
+    FROM fotmob_silver.player_match_stat AS pms
     INNER JOIN player_role AS pr
         ON pr.match_id = pms.match_id
        AND pr.player_id = pms.player_id
@@ -581,9 +581,9 @@ SELECT
         0
     )) AS triggered_team_clean_sheet_flag
 FROM team_role_tackle_rollup AS ttr
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = ttr.match_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

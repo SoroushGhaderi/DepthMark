@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_volume_over_quality (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_volume_over_quality (
     match_id,
     match_date,
     home_team_id,
@@ -63,7 +63,7 @@ WITH player_shot_quality_stats AS (
         toFloat32(round(max(coalesce(s.expected_goals, 0.0)), 3)) AS triggered_player_max_shot_expected_goals,
         toInt32(countIf(coalesce(s.expected_goals, 0.0) >= 0.10))
             AS triggered_player_high_expected_goals_shots
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.player_id, 0) > 0
       AND coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_own_goal, 0) = 0
@@ -267,14 +267,14 @@ SELECT
         1
     ), 0.0)) AS player_share_of_team_shots_on_target_pct
 
-FROM silver.player_match_stat AS p
+FROM fotmob_silver.player_match_stat AS p
 INNER JOIN player_shot_quality_stats AS c
     ON c.match_id = p.match_id
    AND c.triggered_player_id = p.player_id
    AND c.triggered_team_id = p.team_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

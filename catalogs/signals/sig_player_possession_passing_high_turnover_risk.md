@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_high_turnover_risk
+  table: fotmob_gold_signals.sig_player_possession_passing_high_turnover_risk
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_high_turnover_risk.sql
 ---
 # sig_player_possession_passing_high_turnover_risk
@@ -29,20 +29,20 @@ Triggers when a player loses possession more than 25 times in a single match, fl
   - `failed_passes + failed_dribbles + duels_lost`
   - where `failed_passes = max(total_passes - accurate_passes, 0)`
   - and `failed_dribbles = max(dribble_attempts - successful_dribbles, 0)`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent passing, dribbling, and possession context from `silver.period_stat` (`period = 'All'`) to distinguish individual ball-security risk from overall match dynamics.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent passing, dribbling, and possession context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish individual ball-security risk from overall match dynamics.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_high_turnover_risk.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_high_turnover_risk`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_high_turnover_risk`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_high_turnover_risk
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_high_turnover_risk
 ```
 
 ## Output Schema

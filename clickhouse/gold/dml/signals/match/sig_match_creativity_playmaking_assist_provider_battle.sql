@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_creativity_playmaking_assist_provider_battle (
+INSERT INTO fotmob_gold_signals.sig_match_creativity_playmaking_assist_provider_battle (
     match_id,
     match_date,
     home_team_id,
@@ -83,7 +83,7 @@ WITH player_creation_stats AS (
         toInt32(sum(coalesce(p.chances_created, 0))) AS player_key_passes,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS player_expected_assists,
         toInt32(sum(coalesce(p.assists, 0))) AS player_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
       AND coalesce(p.team_id, 0) > 0
       AND coalesce(p.player_id, 0) > 0
@@ -217,8 +217,8 @@ base_stats AS (
         toInt32(coalesce(home_create.team_assists, 0) + coalesce(away_create.team_assists, 0))
             AS match_total_assists
 
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_keeper_involved (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_keeper_involved (
     match_id,
     match_date,
     home_team_id,
@@ -213,7 +213,7 @@ SELECT
     ) AS pass_attempt_delta
 
 -- Base match context for triggered rows.
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 
 -- Join one goalkeeper trigger per team-match (highest GK touches, then threshold > 50).
 INNER JOIN (
@@ -223,7 +223,7 @@ INNER JOIN (
         argMax(pms.player_id, coalesce(pms.touches, 0)) AS triggered_goalkeeper_player_id,
         argMax(pms.player_name, coalesce(pms.touches, 0)) AS triggered_goalkeeper_player_name,
         max(coalesce(pms.touches, 0)) AS gk_touches
-    FROM silver.player_match_stat AS pms
+    FROM fotmob_silver.player_match_stat AS pms
     WHERE pms.is_goalkeeper = 1
       AND pms.team_id IS NOT NULL
     GROUP BY
@@ -234,7 +234,7 @@ INNER JOIN (
     ON gk.match_id = m.match_id
 
 -- Join full-match period stats for tactical enrichment.
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

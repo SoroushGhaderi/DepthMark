@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_no_striker_needed (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_no_striker_needed (
     match_id,
     match_date,
     home_team_id,
@@ -67,7 +67,7 @@ WITH player_role AS (
         toInt32(mp.person_id) AS player_id,
         argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
         argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1)) AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.role IN ('starter', 'substitute')
       AND coalesce(mp.person_id, 0) > 0
     GROUP BY
@@ -86,7 +86,7 @@ goal_events AS (
             concat('fallback_shot:', toString(toInt64(coalesce(s.shot_id, 0))))
         ) AS scorer_key,
         toInt32(coalesce(pr.usual_playing_position_id, 0)) AS usual_playing_position_id
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     LEFT JOIN player_role AS pr
         ON pr.match_id = s.match_id
        AND pr.player_id = toInt32(s.player_id)
@@ -248,8 +248,8 @@ SELECT
         1
     )) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -397,8 +397,8 @@ SELECT
         1
     )) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

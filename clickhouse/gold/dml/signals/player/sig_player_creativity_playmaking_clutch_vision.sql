@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_creativity_playmaking_clutch_vision (
+INSERT INTO fotmob_gold_signals.sig_player_creativity_playmaking_clutch_vision (
     match_id,
     match_date,
     home_team_id,
@@ -99,8 +99,8 @@ WITH late_lead_assist_candidates AS (
             coalesce(m.away_score, 0) - coalesce(m.home_score, 0)
         )) AS final_goal_margin,
         toString(coalesce(s.shot_id, '')) AS shot_id_key
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND m.match_id > 0
@@ -145,7 +145,7 @@ late_winning_assist_events AS (
         c.final_goal_margin,
         c.shot_id_key
     FROM late_lead_assist_candidates AS c
-    LEFT JOIN silver.shot AS s2
+    LEFT JOIN fotmob_silver.shot AS s2
         ON s2.match_id = c.match_id
        AND coalesce(s2.is_goal, 0) = 1
        AND coalesce(s2.is_own_goal, 0) = 0
@@ -222,7 +222,7 @@ team_chances_created AS (
         p.match_id,
         p.team_id,
         toInt32(sum(coalesce(p.chances_created, 0))) AS triggered_team_total_chances_created
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.team_id IS NOT NULL
     GROUP BY
         p.match_id,
@@ -441,16 +441,16 @@ SELECT
     ), 0.0)) AS player_share_of_team_passes_pct
 
 FROM player_late_winning_assists AS plwa
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = plwa.match_id
    AND p.team_id = plwa.team_id
    AND p.player_id = plwa.assist_player_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = plwa.match_id
 LEFT JOIN team_chances_created AS tc
     ON tc.match_id = p.match_id
    AND tc.team_id = p.team_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = plwa.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

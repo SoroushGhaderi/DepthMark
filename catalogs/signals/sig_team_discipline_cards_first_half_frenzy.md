@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_first_half_frenzy
+  table: fotmob_gold_signals.sig_team_discipline_cards_first_half_frenzy
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_first_half_frenzy.sql
 ---
 # sig_team_discipline_cards_first_half_frenzy
@@ -25,21 +25,21 @@ Flags team-match performances where a side accumulates four or more yellow/red c
 - Trigger condition:
   - `triggered_team_cards_first_half >= 4`
 - Window definition:
-  - card events in match minutes `1` to `45` inclusive from `silver.card`; minute `45` events retain `added_time` so first-half stoppage cards are ranked correctly.
+  - card events in match minutes `1` to `45` inclusive from `fotmob_silver.card`; minute `45` events retain `added_time` so first-half stoppage cards are ranked correctly.
 - Card classification counts yellow/booked events and red-card events once per source event. Second-yellow dismissal style records are treated as red-card events for composition while still counting once toward the first-half total.
-- Trigger is evaluated symmetrically for home and away teams, then enriched with full-match bilateral discipline, fouling, defensive-action, and possession context from `silver.period_stat` at `period = 'All'`.
+- Trigger is evaluated symmetrically for home and away teams, then enriched with full-match bilateral discipline, fouling, defensive-action, and possession context from `fotmob_silver.period_stat` at `period = 'All'`.
 - The signal preserves timing and score state at the triggered side's fourth first-half card to separate tactical fouling, pressure response, and genuine loss-of-control patterns.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_first_half_frenzy.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_first_half_frenzy`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_first_half_frenzy`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_first_half_frenzy
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_discipline_cards_first_half_frenzy
 ```
 
 ## Output Schema

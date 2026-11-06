@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_goalkeeping_defense_reflex_save_streak (
+INSERT INTO fotmob_gold_signals.sig_player_goalkeeping_defense_reflex_save_streak (
     match_id,
     match_date,
     home_team_id,
@@ -73,8 +73,8 @@ WITH keeper_shot_events AS (
             s.team_id = m.away_team_id, 'home',
             'unknown'
         ) AS keeper_side
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND s.keeper_id IS NOT NULL
@@ -371,9 +371,9 @@ SELECT
     ), 0.0)) AS opponent_pass_accuracy_pct
 
 FROM best_keeper_window AS bkw
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = bkw.match_id
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = bkw.match_id
    AND p.player_id = bkw.keeper_id
 LEFT JOIN keeper_match_totals AS kmt
@@ -388,7 +388,7 @@ LEFT JOIN window_bilateral_context AS wbc
    AND wbc.keeper_side = bkw.keeper_side
    AND wbc.trigger_window_start_effective_minute = bkw.trigger_window_start_effective_minute
    AND wbc.trigger_window_end_effective_minute = bkw.trigger_window_end_effective_minute
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = bkw.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

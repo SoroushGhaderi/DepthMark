@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_box_penetrator
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_box_penetrator
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_box_penetrator.sql
 ---
 # sig_player_creativity_playmaking_box_penetrator
@@ -26,13 +26,13 @@ Detect player-level playmakers who repeatedly penetrate advanced attacking zones
 - Trigger condition:
   - `triggered_player_penalty_area_passes_proxy >= 5`
 - Source limitation note:
-  - `silver.player_match_stat` does not expose a direct `passes_into_penalty_area` field.
+  - `fotmob_silver.player_match_stat` does not expose a direct `passes_into_penalty_area` field.
   - This signal therefore uses `passes_final_third` as the explicit proxy (`triggered_player_penalty_area_passes_proxy_source = 'passes_final_third_proxy'`).
 - Finished-match scope and valid side mapping are enforced:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
   - player team must map to home/away side.
-- Bilateral passing, territorial, and control context is retained from `silver.period_stat` (`period = 'All'`).
+- Bilateral passing, territorial, and control context is retained from `fotmob_silver.period_stat` (`period = 'All'`).
 - Similarity gate note:
   - `sig_player_possession_passing_box_penetrator`: closest naming overlap, but that signal is possession/passing family and triggers on `touches_opp_box > 10`, not pass progression threshold.
   - `sig_player_creativity_playmaking_line_breaker`: same creativity/playmaking family and includes `passes_final_third` proxy, but it uses directional composite trigger (`>= 10` or team long-ball proxy) rather than this explicit `>= 5` box-penetration proxy target.
@@ -40,13 +40,13 @@ Detect player-level playmakers who repeatedly penetrate advanced attacking zones
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_box_penetrator.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_box_penetrator`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_box_penetrator`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_box_penetrator
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_box_penetrator
 ```
 
 ## Output Schema

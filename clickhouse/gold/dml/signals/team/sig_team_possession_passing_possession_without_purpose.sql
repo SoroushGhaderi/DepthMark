@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_possession_without_purpose (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_possession_without_purpose (
     match_id,
     match_date,
     home_team_id,
@@ -146,8 +146,8 @@ SELECT
     coalesce(ps.corners_home, 0)                  AS triggered_team_corners,
     coalesce(ps.corners_away, 0)                  AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON  ps.match_id = m.match_id
     AND ps.period   = 'All'
 WHERE m.match_finished = 1
@@ -230,8 +230,8 @@ SELECT
     coalesce(ps.corners_away, 0)                  AS triggered_team_corners,
     coalesce(ps.corners_home, 0)                  AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON  ps.match_id = m.match_id
     AND ps.period   = 'All'
 WHERE m.match_finished = 1

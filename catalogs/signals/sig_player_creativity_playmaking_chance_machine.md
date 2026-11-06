@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_chance_machine
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_chance_machine
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_chance_machine.sql
 ---
 # sig_player_creativity_playmaking_chance_machine
@@ -25,29 +25,29 @@ Detects player performances with repeated high-value chance creation, flagging m
 
 - Trigger condition:
   - `triggered_player_big_chances_created >= 3`
-- Big-chance creation is resolved from `silver.shot` where:
+- Big-chance creation is resolved from `fotmob_silver.shot` where:
   - `assist_player_id = triggered_player_id`
   - and assisted shot matches Opta-style big-chance proxy: `situation` contains `big chance` or `expected_goals >= 0.30`.
 - Finished-match scope and valid fixture mapping are enforced:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
   - player team must match home/away side.
-- Team control and territorial context are sourced from `silver.period_stat` (`period = 'All'`) so creation output can be interpreted against possession and circulation state.
+- Team control and territorial context are sourced from `fotmob_silver.period_stat` (`period = 'All'`) so creation output can be interpreted against possession and circulation state.
 - Similarity gate note:
-  - `sig_player_possession_passing_high_risk_passer`: closest overlap on big-chance creation counting from `silver.shot`, but that signal also requires low pass accuracy and sits under possession taxonomy.
+  - `sig_player_possession_passing_high_risk_passer`: closest overlap on big-chance creation counting from `fotmob_silver.shot`, but that signal also requires low pass accuracy and sits under possession taxonomy.
   - `sig_player_creativity_playmaking_maestro_output`: same creativity/playmaking family but key-pass trigger (`chances_created >= 5`) rather than big-chance creation.
   - `sig_player_possession_passing_deadball_creator`: overlaps on big-chance creation logic, but is limited to indirect free-kick situations.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_chance_machine.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_chance_machine`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_chance_machine`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_chance_machine
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_creativity_playmaking_chance_machine
 ```
 
 ## Output Schema

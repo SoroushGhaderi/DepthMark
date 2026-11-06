@@ -56,7 +56,7 @@ def build_run_report(
             },
             "storage": _storage_summary(matches_dir, set(), set()),
             "findings": ["No FotMob daily listing exists for this date."],
-            "next_steps": [f"python3 scripts/bronze/scrape_fotmob.py {date_id}"],
+            "next_steps": [f"python3 scripts/fotmob/scrape_fotmob.py {date_id}"],
             "evidence": evidence,
         }
 
@@ -142,10 +142,10 @@ def build_run_report(
 
     next_steps: list[str] = []
     if missing_ids or has_contract_issue:
-        next_steps.append(f"python3 scripts/bronze/scrape_fotmob.py {date_id}")
+        next_steps.append(f"python3 scripts/fotmob/scrape_fotmob.py {date_id}")
     if bronze_ready:
         next_steps.append(
-            f"python3 scripts/bronze/load_fotmob_bronze.py --date {date_id} --dry-run"
+            f"python3 scripts/fotmob/load_fotmob_bronze.py --date {date_id} --dry-run"
         )
     elif aspect == "live" and not missing_ids:
         next_steps.append("Re-run the report after the date moves to Historical storage.")

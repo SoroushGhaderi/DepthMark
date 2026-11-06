@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_unproductive_flair
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_unproductive_flair
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unproductive_flair.sql
 ---
 # sig_team_creativity_playmaking_unproductive_flair
@@ -28,12 +28,12 @@ completes at least 25 successful dribbles while finishing with zero goals.
   - `triggered_team_goals = 0`
   - `match_finished = 1`
 - Trigger source:
-  - `silver.period_stat.dribbles_succeeded_home` / `silver.period_stat.dribbles_succeeded_away`
+  - `fotmob_silver.period_stat.dribbles_succeeded_home` / `fotmob_silver.period_stat.dribbles_succeeded_away`
     for `period = 'All'`.
 - Side orientation:
   - one row per triggered side (`home` / `away`), with explicit opponent mapping.
 - Creativity context:
-  - key passes and expected assists are enriched via team aggregates from `silver.player_match_stat`
+  - key passes and expected assists are enriched via team aggregates from `fotmob_silver.player_match_stat`
     (`sum(chances_created)`, `sum(expected_assists)`).
 - Similarity gate note:
   - `sig_team_creativity_playmaking_dribbling_exhibition` is the closest overlap (successful-dribble
@@ -47,13 +47,13 @@ completes at least 25 successful dribbles while finishing with zero goals.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unproductive_flair.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_unproductive_flair`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_unproductive_flair`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_unproductive_flair
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_unproductive_flair
 ```
 
 ## Output Schema

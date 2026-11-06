@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_game_of_two_halves
+  table: fotmob_gold_signals.sig_match_shooting_goals_game_of_two_halves
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_game_of_two_halves.sql
 ---
 # sig_match_shooting_goals_game_of_two_halves
@@ -25,7 +25,7 @@ Flag matches that are scoreless before halftime but turn into high-scoring secon
 - Trigger condition:
   - `match_total_first_half_goals = 0`
   - `match_total_second_half_goals >= 4`
-- Half-goal counts come from `silver.shot` goal events with `period in {'FirstHalf', 'SecondHalf'}` and home/away attribution via `is_home_goal`.
+- Half-goal counts come from `fotmob_silver.shot` goal events with `period in {'FirstHalf', 'SecondHalf'}` and home/away attribution via `is_home_goal`.
 - Triggered matches emit two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Enrichment combines half-level scoring decomposition (`second_half_goals_above_threshold`, second-half side shares) with bilateral shooting and possession context for explainability.
 - Similarity gate note: closest active signals are `sig_match_shooting_goals_end_to_end_drama` and `sig_match_shooting_goals_goal_fest`; this signal is distinct because it requires a strict half-split structure (goalless first half plus second-half surge), not bilateral scoring in each half or only high aggregate goals.
@@ -33,13 +33,13 @@ Flag matches that are scoreless before halftime but turn into high-scoring secon
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_game_of_two_halves.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_game_of_two_halves`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_game_of_two_halves`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_game_of_two_halves
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_game_of_two_halves
 ```
 
 ## Output Schema

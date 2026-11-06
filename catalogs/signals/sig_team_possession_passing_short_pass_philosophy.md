@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_short_pass_philosophy
+  table: fotmob_gold_signals.sig_team_possession_passing_short_pass_philosophy
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_short_pass_philosophy.sql
 ---
 # sig_team_possession_passing_short_pass_philosophy
@@ -29,13 +29,13 @@ Triggers when a team keeps long-ball usage at `<= 5%` of pass attempts, indicati
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_short_pass_philosophy.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_short_pass_philosophy`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_short_pass_philosophy`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_short_pass_philosophy
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_possession_passing_short_pass_philosophy
 ```
 
 ## Output Schema

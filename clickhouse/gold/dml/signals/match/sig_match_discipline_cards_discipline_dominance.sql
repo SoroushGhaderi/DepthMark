@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_discipline_cards_discipline_dominance (
+INSERT INTO fotmob_gold_signals.sig_match_discipline_cards_discipline_dominance (
     match_id,
     match_date,
     home_team_id,
@@ -96,8 +96,8 @@ WITH base_stats AS (
         toFloat32(coalesce(ps.ball_possession_away, 0)) AS possession_away_pct,
         coalesce(ps.fouls_home, 0) + coalesce(ps.fouls_away, 0) AS match_total_fouls_committed,
         coalesce(ps.duels_won_home, 0) + coalesce(ps.duels_won_away, 0) AS match_total_duels_won
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     WHERE m.match_finished = 1

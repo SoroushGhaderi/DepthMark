@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_the_creativity_clash
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_the_creativity_clash
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_the_creativity_clash.sql
 ---
 # sig_match_creativity_playmaking_the_creativity_clash
@@ -27,7 +27,7 @@ capturing bilateral playmaking clashes rather than one-sided chance creation.
   - `home_expected_assists >= 1.5`
   - `away_expected_assists >= 1.5`
   - with `period = 'All'`, `match_finished = 1`, and valid `match_id`.
-- Team creative aggregates are sourced from `silver.player_match_stat`:
+- Team creative aggregates are sourced from `fotmob_silver.player_match_stat`:
   - `team_expected_assists = sum(expected_assists)`
   - `team_key_passes = sum(chances_created)`
 - Emits one row per side (`triggered_side = 'home'` and `'away'`) to preserve canonical
@@ -45,13 +45,13 @@ capturing bilateral playmaking clashes rather than one-sided chance creation.
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_the_creativity_clash.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_the_creativity_clash`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_the_creativity_clash`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_the_creativity_clash
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_creativity_playmaking_the_creativity_clash
 ```
 
 ## Output Schema

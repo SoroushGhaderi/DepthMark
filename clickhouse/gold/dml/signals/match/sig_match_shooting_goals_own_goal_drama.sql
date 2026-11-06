@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_own_goal_drama (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_own_goal_drama (
     match_id,
     match_date,
     home_team_id,
@@ -67,7 +67,7 @@ INSERT INTO gold_signals.sig_match_shooting_goals_own_goal_drama (
 -- Signal: sig_match_shooting_goals_own_goal_drama
 -- Intent: detect finished matches with at least one own goal and expose bilateral scoring,
 --         finishing, and control context at canonical match-team grain.
--- Trigger: match_total_own_goals >= 1 from silver.shot own-goal events.
+-- Trigger: match_total_own_goals >= 1 from fotmob_silver.shot own-goal events.
 WITH match_ext AS (
     SELECT
         m.match_id,
@@ -95,8 +95,8 @@ WITH match_ext AS (
         ps.accurate_passes_away,
         ps.pass_attempts_home,
         ps.pass_attempts_away
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'
@@ -105,7 +105,7 @@ own_goal_events AS (
     SELECT
         s.match_id,
         toUInt8(coalesce(s.is_home_goal, 0)) AS is_home_goal_flag
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.is_goal, 0) = 1
       AND coalesce(s.is_own_goal, 0) = 1

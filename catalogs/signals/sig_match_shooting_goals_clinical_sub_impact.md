@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_clinical_sub_impact
+  table: fotmob_gold_signals.sig_match_shooting_goals_clinical_sub_impact
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_clinical_sub_impact.sql
 ---
 # sig_match_shooting_goals_clinical_sub_impact
@@ -23,8 +23,8 @@ Detect matches where substitutes score at least three non-own goals in aggregate
 ## Tactical And Statistical Logic
 
 - Trigger condition: `match_substitute_non_own_goals >= 3` in finished matches.
-- Substitute scorers are derived from `silver.match_personnel` where `role = 'substitute'` and `substitution_time > 0`.
-- A substitute goal event is counted only when a non-own goal in `silver.shot` occurs at or after that player's substitution minute.
+- Substitute scorers are derived from `fotmob_silver.match_personnel` where `role = 'substitute'` and `substitution_time > 0`.
+- A substitute goal event is counted only when a non-own goal in `fotmob_silver.shot` occurs at or after that player's substitution minute.
 - Match-level trigger is represented at canonical `match_team` grain by emitting two rows (`triggered_side = 'home'` and `'away'`).
 - Output blends match-level substitute-goal concentration with side-oriented shooting, chance-quality, possession, and passing context.
 - Similarity gate note: nearest active signals are `sig_team_shooting_goals_bench_goals_impact` and `sig_player_shooting_goals_super_sub_goal`; this signal is distinct because the trigger is match-level aggregate substitute scoring (`>= 3`) rather than team-only (`>= 2`) or player-specific immediate impact.
@@ -32,13 +32,13 @@ Detect matches where substitutes score at least three non-own goals in aggregate
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_clinical_sub_impact.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_clinical_sub_impact`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_clinical_sub_impact`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_clinical_sub_impact
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_shooting_goals_clinical_sub_impact
 ```
 
 ## Output Schema

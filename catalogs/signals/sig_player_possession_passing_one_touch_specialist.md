@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_one_touch_specialist
+  table: fotmob_gold_signals.sig_player_possession_passing_one_touch_specialist
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_one_touch_specialist.sql
 ---
 # sig_player_possession_passing_one_touch_specialist
@@ -27,19 +27,19 @@ Triggers when a player records high passing volume with very low touches-per-pas
   - `triggered_player_total_passes >= 50`
   - `triggered_player_touches_per_pass < 1.2`
 - Touches-per-pass is computed as `triggered_player_total_touches / triggered_player_total_passes` and evaluated only where the pass-volume gate is met.
-- Uses player-level full-match totals from `silver.player_match_stat` and bilateral team/opponent passing-possession context from `silver.period_stat` (`period = 'All'`).
+- Uses player-level full-match totals from `fotmob_silver.player_match_stat` and bilateral team/opponent passing-possession context from `fotmob_silver.period_stat` (`period = 'All'`).
 - Persists both player identity and team identity fields for contract-compliant downstream joins.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_one_touch_specialist.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_one_touch_specialist`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_one_touch_specialist`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_one_touch_specialist
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_one_touch_specialist
 ```
 
 ## Output Schema

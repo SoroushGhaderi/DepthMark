@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_set_piece_dominance (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_set_piece_dominance (
     match_id,
     match_date,
     home_team_id,
@@ -48,7 +48,7 @@ INSERT INTO gold_signals.sig_match_possession_passing_set_piece_dominance (
 -- Trigger: match_dead_ball_restart_pass_share_pct > 15 (proxy-calibrated).
 -- Notes: Dead-ball restart pass volume is proxied with
 --        (player_throws + corners) because explicit free-kick pass counts
---        are not available in silver.period_stat. A 15% proxy threshold is
+--        are not available in fotmob_silver.period_stat. A 15% proxy threshold is
 --        used as practical calibration for the intended 20% true restart share.
 -- ============================================================
 
@@ -58,7 +58,7 @@ WITH
             s.match_id,
             assumeNotNull(s.team_id) AS team_id,
             count() AS team_set_piece_shots
-        FROM silver.shot AS s
+        FROM fotmob_silver.shot AS s
         WHERE s.team_id IS NOT NULL
           AND s.situation IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')
         GROUP BY
@@ -112,8 +112,8 @@ WITH
                 ),
                 1
             )) AS match_dead_ball_restart_pass_share_pct
-        FROM silver.match AS m FINAL
-        INNER JOIN silver.period_stat AS ps FINAL
+        FROM fotmob_silver.match AS m FINAL
+        INNER JOIN fotmob_silver.period_stat AS ps FINAL
             ON  ps.match_id = m.match_id
             AND ps.period   = 'All'
         LEFT JOIN set_piece_team_shots AS hs
