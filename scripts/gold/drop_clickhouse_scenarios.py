@@ -1,6 +1,7 @@
-"""Drop FotMob gold scenario and/or signal tables in ClickHouse."""
+"""Deprecated alias of scripts/fotmob/drop_fotmob_gold.py."""
 
+from src.common.deprecation import run_deprecated_script
 from src.warehouse.commands.drop_gold import main
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run_deprecated_script(__file__, "scripts/fotmob/drop_fotmob_gold.py", main))

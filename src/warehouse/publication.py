@@ -54,7 +54,7 @@ class PublicationLog:
         if not rows or not int(rows[0][0]):
             raise RuntimeError(
                 f"Publication table {self.table} does not exist; run "
-                "python scripts/orchestration/setup_fotmob_warehouse.py to create it"
+                "python scripts/fotmob/setup_fotmob_warehouse.py to create it"
             )
 
     def record(

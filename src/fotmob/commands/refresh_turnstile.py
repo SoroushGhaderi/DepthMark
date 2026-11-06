@@ -2,7 +2,7 @@
 """Refresh the turnstile_verified cookie in credentials.json.
 
 Run this whenever the scraper reports TURNSTILE_REQUIRED:
-    python3 scripts/refresh_turnstile.py
+    python3 scripts/fotmob/refresh_fotmob_turnstile.py
 
 Requirements: Chrome must be open and you must have visited fotmob.com recently.
 The scraper hot-reloads credentials.json on every request — no restart needed.
@@ -169,7 +169,7 @@ def refresh_if_needed(max_age_seconds: int = 1800) -> tuple[bool, str | None]:
             # The existing token may still be usable — report its actual validity.
             return (
                 False,
-                f"Token stale (age={age_seconds}s>={max_age_seconds}s, {status}), auto-refresh unavailable (run refresh_turnstile.py manually)",
+                f"Token stale (age={age_seconds}s>={max_age_seconds}s, {status}), auto-refresh unavailable (run scripts/fotmob/refresh_fotmob_turnstile.py manually)",
             )
 
         return False, f"Token valid (age={age_seconds}s<{max_age_seconds}s), {status}"

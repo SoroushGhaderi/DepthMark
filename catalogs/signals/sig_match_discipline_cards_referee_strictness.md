@@ -30,13 +30,13 @@ Flags matches where a yellow card arrives very early, a practical proxy for stri
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_referee_strictness.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_discipline_cards_referee_strictness`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_referee_strictness
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_referee_strictness
 ```
 
 ## Output Schema

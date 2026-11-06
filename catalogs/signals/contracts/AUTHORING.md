@@ -16,7 +16,7 @@ A signal is three authored files plus one generated index row:
 | Index row | generated in `catalogs/signals/README.md` |
 
 A package is complete only when all parts agree. **[catalog]** Every signal is
-executed by the generic runner, `scripts/gold/run_fotmob_gold_jobs.py`; never
+executed by the generic runner, `scripts/fotmob/run_fotmob_gold_jobs.py`; never
 add a per-signal Python runner (ADR 0001, ADR 0009).
 
 ## Similarity Gate
@@ -57,15 +57,15 @@ The resulting note belongs in the new catalog's logic section.
    ```bash
    python3 scripts/quality/check_signal_catalogs.py --write-index
    pytest tests/unit/test_signal_catalog.py tests/unit/test_data_quality.py
-   python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id <signal_id> --dry-run
+   python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id <signal_id> --dry-run
    ```
 
-5. Create the table (`python3 scripts/orchestration/setup_fotmob_warehouse.py`)
+5. Create the table (`python3 scripts/fotmob/setup_fotmob_warehouse.py`)
    and run the signal for a real scope before release:
 
    ```bash
-   python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id <signal_id>
-   python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals --dry-run
+   python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id <signal_id>
+   python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --part signals --dry-run
    ```
 
 6. Sync MongoDB: `python3 scripts/mongodb/sync_signal_catalogs.py`.

@@ -32,13 +32,13 @@ Flags matches with sustained physical contest volume and elevated whistle pressu
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_blood_and_thunder.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_discipline_cards_blood_and_thunder`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_blood_and_thunder
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_discipline_cards_blood_and_thunder
 ```
 
 ## Output Schema

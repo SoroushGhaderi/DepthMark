@@ -35,9 +35,9 @@ logger = get_logger(__name__)
 ODDSPEDIA_LAYER = "oddspedia_bronze"
 LAYER_CHOICES = (*LAYER_ORDER, ODDSPEDIA_LAYER)
 RELOAD_HINTS = {
-    "bronze": "python scripts/bronze/load_fotmob_bronze.py --full-history",
-    "silver": "python scripts/silver/load_fotmob_silver.py --full-history",
-    "gold": "python scripts/gold/load_fotmob_gold.py --full-history",
+    "bronze": "python scripts/fotmob/load_fotmob_bronze.py --full-history",
+    "silver": "python scripts/fotmob/load_fotmob_silver.py --full-history",
+    "gold": "python scripts/fotmob/load_fotmob_gold.py --full-history",
     ODDSPEDIA_LAYER: (
         "python scripts/oddspedia/load_oddspedia_bronze.py --start-date YYYYMMDD --end-date YYYYMMDD"
     ),

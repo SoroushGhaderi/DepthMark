@@ -56,7 +56,7 @@ def _utc_two_days_ago() -> date:
 
 JOBS = {
     "fotmob-daily": ScheduledJob(
-        script="scripts/orchestration/run_fotmob_pipeline.py",
+        script="scripts/fotmob/run_fotmob_pipeline.py",
         target_date=lambda: _local_yesterday(),
         arguments=lambda day: [day],
     ),

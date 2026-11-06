@@ -146,7 +146,7 @@ prepare_local_files() {
   fi
   if [ ! -e credentials.json ]; then
     printf '{"cookies": {}}\n' > credentials.json
-    echo "Created an empty credentials.json (scripts/refresh_turnstile.py fills it)"
+    echo "Created an empty credentials.json (scripts/fotmob/refresh_fotmob_turnstile.py fills it)"
   fi
   chmod 600 credentials.json
   if [ "$(id -u)" = "0" ]; then
@@ -177,7 +177,7 @@ wait_healthy depthmark-clickhouse
 wait_healthy depthmark-mongodb
 
 step "Setting up the FotMob warehouse"
-run_in_scraper python3 scripts/orchestration/setup_fotmob_warehouse.py
+run_in_scraper python3 scripts/fotmob/setup_fotmob_warehouse.py
 
 step "Setting up the Oddspedia warehouse"
 run_in_scraper python3 scripts/oddspedia/setup_oddspedia_warehouse.py
@@ -198,4 +198,4 @@ fi
 
 step "DepthMark is ready ($MODE mode)"
 echo "Stack: docker compose ps"
-echo "Run a pipeline: docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --date YYYYMMDD"
+echo "Run a pipeline: docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --date YYYYMMDD"

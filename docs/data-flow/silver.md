@@ -62,22 +62,22 @@ Silver SQL lives under `clickhouse/silver/`:
 
 ## Data Flow
 
-### 1. DDL Setup (`scripts/silver/setup_clickhouse.py`)
+### 1. DDL Setup (`scripts/fotmob/setup_fotmob_silver.py`)
 
 Creates the `silver` database and all 8 tables:
 ```bash
-python3 scripts/silver/setup_clickhouse.py
+python3 scripts/fotmob/setup_fotmob_silver.py
 ```
 
-### 2. DML Execution (`scripts/silver/load_fotmob_silver.py`)
+### 2. DML Execution (`scripts/fotmob/load_fotmob_silver.py`)
 
 Requires one explicit scope and executes all DML scripts in order:
 ```bash
-python3 scripts/silver/load_fotmob_silver.py --date 20251208
-python3 scripts/silver/load_fotmob_silver.py --single-date 20251208
-python3 scripts/silver/load_fotmob_silver.py --month 202512
-python3 scripts/silver/load_fotmob_silver.py --full-history
-python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_silver.py --date 20251208
+python3 scripts/fotmob/load_fotmob_silver.py --single-date 20251208
+python3 scripts/fotmob/load_fotmob_silver.py --month 202512
+python3 scripts/fotmob/load_fotmob_silver.py --full-history
+python3 scripts/fotmob/load_fotmob_silver.py --date 20251208 --dry-run
 ```
 
 `--single-date` remains a backward-compatible alias for `--date`.

@@ -38,8 +38,8 @@ S3 transfer is an independent operator workflow; scraping and the warehouse
 pipeline never upload automatically. Preview or run a date-scoped transfer with:
 
 ```bash
-python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python3 scripts/bronze/sync_s3.py download --date 20251208
+python3 scripts/fotmob/sync_fotmob_s3.py upload --date 20251208 --dry-run
+python3 scripts/fotmob/sync_fotmob_s3.py download --date 20251208
 ```
 
 FotMob Bronze loading is fail-closed: every value is checked against its
@@ -49,9 +49,9 @@ commands are scoped by Source Date, the Historical folder name. Reload a scope,
 clear it, or rebuild all history without an empty window (ADR 0032):
 
 ```bash
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --replace
-python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208 --replace
+python3 scripts/fotmob/remove_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild
 ```
 
 See [`docs/data-flow/bronze.md`](docs/data-flow/bronze.md) for the admission

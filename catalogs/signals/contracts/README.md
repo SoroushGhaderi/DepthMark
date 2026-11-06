@@ -46,5 +46,5 @@ Every rule is one of two kinds.
 python3 scripts/quality/check_signal_catalogs.py               # every [catalog] rule, no services
 python3 scripts/quality/check_signal_catalogs.py --write-index # also regenerate the index table
 pytest tests/unit/test_signal_catalog.py tests/unit/test_data_quality.py
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id <signal_id> --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id <signal_id> --dry-run
 ```

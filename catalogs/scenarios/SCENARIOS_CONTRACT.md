@@ -7,9 +7,9 @@ This document defines the stable contract for Gold scenario jobs in DepthMark.
 This contract applies to:
 
 - `clickhouse/gold/dml/scenarios/{team,player}/scenario_*.sql`
-- `scripts/gold/run_fotmob_gold_jobs.py`
+- `scripts/fotmob/run_fotmob_gold_jobs.py`
 - `src/fotmob/gold/dml_runner.py`
-- `scripts/gold/load_fotmob_gold.py`
+- `scripts/fotmob/load_fotmob_gold.py`
 - `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 ## Scenario Unit Contract
@@ -53,13 +53,13 @@ All three parts are required for a production-ready scenario.
    - return non-zero on failure
 2. Runner should not embed business SQL in Python strings.
 3. Individual scenario execution must remain available through
-   `scripts/gold/run_fotmob_gold_jobs.py --date <YYYYMMDD> --kind scenario --id <scenario_id>`.
+   `scripts/fotmob/run_fotmob_gold_jobs.py --date <YYYYMMDD> --kind scenario --id <scenario_id>`.
 4. Scenario-kind execution must remain available through
-   `scripts/gold/run_fotmob_gold_jobs.py --date <YYYYMMDD> --kind scenario`.
+   `scripts/fotmob/run_fotmob_gold_jobs.py --date <YYYYMMDD> --kind scenario`.
 
 ## Bulk Execution Contract
 
-`scripts/gold/load_fotmob_gold.py` is the canonical layer runner.
+`scripts/fotmob/load_fotmob_gold.py` is the canonical layer runner.
 
 1. Executes base gold DDL files from `clickhouse/gold/ddl/`.
 2. Scenario bulk execution is enabled through `--part scenarios` or `--part all`.
@@ -83,10 +83,10 @@ Each scenario entry in `SCENARIOS_CATALOG.md` must include:
 
 Minimum operational checks:
 
-1. `python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run`
-2. `python3 scripts/gold/load_fotmob_gold.py --date 20251208`
-3. `python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id <scenario_id> --dry-run`
-4. `python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --dry-run`
+1. `python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --dry-run`
+2. `python3 scripts/fotmob/load_fotmob_gold.py --date 20251208`
+3. `python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id <scenario_id> --dry-run`
+4. `python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --dry-run`
 5. Verify no gold contract failures (`invalid match_id`, missing scenario tables).
 
 ## Change Management Rules

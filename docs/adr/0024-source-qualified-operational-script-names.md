@@ -38,12 +38,12 @@ The primary command surface is:
 
 | Workflow | Canonical script | Package command |
 | --- | --- | --- |
-| FotMob scrape | `scripts/bronze/scrape_fotmob.py` | `scrape-fotmob` |
-| FotMob Bronze load | `scripts/bronze/load_fotmob_bronze.py` | `load-fotmob-bronze` |
-| FotMob Silver load | `scripts/silver/load_fotmob_silver.py` | `load-fotmob-silver` |
-| FotMob Gold load | `scripts/gold/load_fotmob_gold.py` | `load-fotmob-gold` |
-| FotMob pipeline | `scripts/orchestration/run_fotmob_pipeline.py` | `run-fotmob-pipeline` |
-| FotMob warehouse setup | `scripts/orchestration/setup_fotmob_warehouse.py` | `setup-fotmob-warehouse` |
+| FotMob scrape | `scripts/fotmob/scrape_fotmob.py` | `scrape-fotmob` |
+| FotMob Bronze load | `scripts/fotmob/load_fotmob_bronze.py` | `load-fotmob-bronze` |
+| FotMob Silver load | `scripts/fotmob/load_fotmob_silver.py` | `load-fotmob-silver` |
+| FotMob Gold load | `scripts/fotmob/load_fotmob_gold.py` | `load-fotmob-gold` |
+| FotMob pipeline | `scripts/fotmob/run_fotmob_pipeline.py` | `run-fotmob-pipeline` |
+| FotMob warehouse setup | `scripts/fotmob/setup_fotmob_warehouse.py` | `setup-fotmob-warehouse` |
 | Oddspedia discovery | `scripts/oddspedia/discover_oddspedia_events.py` | `discover-oddspedia-events` |
 | Oddspedia priority | `scripts/oddspedia/prioritize_oddspedia_events.py` | `prioritize-oddspedia-events` |
 | Oddspedia scrape | `scripts/oddspedia/scrape_oddspedia_matches.py` | `scrape-oddspedia-matches` |

@@ -3,7 +3,7 @@
 Signals are tactical/statistical triggers with focused single-condition logic.
 
 - `clickhouse/gold/dml/signals/{match,team,player}/sig_*.sql`: signal SQL definitions executed through
-  `scripts/gold/run_fotmob_gold_jobs.py`
+  `scripts/fotmob/run_fotmob_gold_jobs.py`
 - `catalogs/signals/sig_*.md`: markdown catalogs with frontmatter
   metadata and output schema documentation
 

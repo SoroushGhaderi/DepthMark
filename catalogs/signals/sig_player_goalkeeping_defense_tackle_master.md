@@ -39,13 +39,13 @@ Flags defender performances with high-volume perfect tackling (`>= 6` wins and `
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_tackle_master.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_goalkeeping_defense_tackle_master`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_tackle_master
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_goalkeeping_defense_tackle_master
 ```
 
 ## Output Schema

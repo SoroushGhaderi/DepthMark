@@ -42,8 +42,8 @@ credentials stable.
 Run pipelines inside the scraper container:
 
 ```bash
-docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
-docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
+docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
+docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
 ```
 
 Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
@@ -86,8 +86,8 @@ Run pipeline commands inside the scraper service (see
 command surface):
 
 ```bash
-docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
-docker compose exec depthmark-scraper python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
+docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
+docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --single-date 20251208
 ```
 
 ## TouchDesk Integration
@@ -234,7 +234,7 @@ Windows; an unsupported architecture must provide an explicit executable.
 ## ClickHouse Setup
 
 ```bash
-python3 scripts/orchestration/setup_fotmob_warehouse.py
+python3 scripts/fotmob/setup_fotmob_warehouse.py
 ```
 
 Runs DDL in layer order:
@@ -388,7 +388,7 @@ data/dlq/                           dead letter queue files
 Historical loaders and S3 sync use only the `historical/` aspect.
 
 S3-compatible storage is not part of the scrape or pipeline lifecycle. The
-operator runs `scripts/bronze/sync_s3.py` explicitly. Uploads create temporary
+operator runs `scripts/fotmob/sync_fotmob_s3.py` explicitly. Uploads create temporary
 `tar.gz` transfer archives containing both canonical date directories and store
 them at `bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`; the sync command does not modify
 the scraper's local compression state or delete canonical local artifacts.

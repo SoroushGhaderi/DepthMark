@@ -629,7 +629,7 @@ Related terms: Script Entry Point, Layer.
 ### Gold Scenario Bulk Loading
 
 The execution of all scenario SQL jobs through the bulk Gold loader
-(`scripts/gold/load_fotmob_gold.py`). Scenarios follow the same failure
+(`scripts/fotmob/load_fotmob_gold.py`). Scenarios follow the same failure
 pattern as signals: a scenario failure blocks signal activation builders and
 produces a non-zero exit code. The `--part` flag accepts `scenarios` as an
 explicit selector, and every run also requires a Warehouse Execution Scope.
@@ -694,7 +694,7 @@ Related terms: Telegram Client, Telegram Message Template.
 
 A Telegram message family (currently missing) that reports per-step status,
 duration, and success/failure for the full pipeline run. Emitted by
-`scripts/orchestration/run_fotmob_pipeline.py` after all steps complete.
+`scripts/fotmob/run_fotmob_pipeline.py` after all steps complete.
 
 Avoid saying: pipeline completion alert, pipeline final message.
 Related terms: Telegram Message Template, Layer Alert.

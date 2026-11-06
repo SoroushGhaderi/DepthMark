@@ -51,7 +51,7 @@ def test_scheduled_jobs_compute_their_own_dates(monkeypatch):
     fotmob = run_scheduled_job.build_command("fotmob-daily")
     oddspedia = run_scheduled_job.build_command("oddspedia-daily")
 
-    assert fotmob[1].endswith("scripts/orchestration/run_fotmob_pipeline.py")
+    assert fotmob[1].endswith("scripts/fotmob/run_fotmob_pipeline.py")
     assert fotmob[2:] == ["20261009"]
     assert oddspedia[2:] == ["--date", "20260102", "--silver-reference-window-ready"]
     for command in (fotmob, oddspedia):

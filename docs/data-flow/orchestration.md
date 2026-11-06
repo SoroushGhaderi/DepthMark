@@ -4,7 +4,7 @@ Orchestration coordinates the full pipeline: scraping, Bronze loading, Silver
 processing, Gold materialization, and activation rebuilds.
 
 Bronze S3 sync is deliberately outside this orchestration boundary. Run
-`scripts/bronze/sync_s3.py` independently when local/remote transfer is needed;
+`scripts/fotmob/sync_fotmob_s3.py` independently when local/remote transfer is needed;
 pipeline success never depends on S3 availability.
 
 ## Pipeline Flow
@@ -21,40 +21,40 @@ run_fotmob_pipeline.py [date]
   └── Exit code: 0 = success, non-zero = failure
 ```
 
-## Pipeline Script (`scripts/orchestration/run_fotmob_pipeline.py`)
+## Pipeline Script (`scripts/fotmob/run_fotmob_pipeline.py`)
 
 ### CLI Interface
 
 ```bash
 # Single date
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
-python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208
-python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py --date 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py --single-date 20251208
 
 # Date range
-python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/fotmob/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207
 
 # Full month
-python3 scripts/orchestration/run_fotmob_pipeline.py --month 202512
+python3 scripts/fotmob/run_fotmob_pipeline.py --month 202512
 
 # Full history (scraping is intentionally skipped)
-python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
+python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
 
 # Partial runs
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --bronze-only
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --silver-only
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --gold-only
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --bronze-only
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --silver-only
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --gold-only
 
 # Skip stages
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-bronze
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-silver
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-gold
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-clickhouse
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --skip-bronze
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --skip-silver
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --skip-gold
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --skip-clickhouse
 
 # Options
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --force
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --debug
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --stage-timeout-minutes 120
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --force
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --debug
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --stage-timeout-minutes 120
 ```
 
 ### Execution Model
@@ -108,8 +108,8 @@ Before running the full pipeline:
 python3 scripts/health_check.py --json
 
 # Preview Silver and Gold
-python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
-python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --dry-run
 
 # Read-only duplicate checks plus Bronze-to-Silver reconciliation
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
@@ -194,7 +194,7 @@ forwards its compatible options to the unified workflow.
 scripts/bootstrap.sh
 
 # 2. Pipeline
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
 
 # 3. Catalog sync
 python3 scripts/mongodb/init_indexes.py

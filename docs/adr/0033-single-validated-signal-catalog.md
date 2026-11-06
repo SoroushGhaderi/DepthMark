@@ -93,9 +93,9 @@ without indicating a defect, because `ORDER BY` is a physical sort key.
     and bulk-execution rules belong to `docs/SCRIPTS_CONTRACT.md` and the Gold
     data-flow docs.
 11. **Source-owned Gold scripts follow ADR 0024.** The activation builder is
-    `scripts/gold/build_fotmob_signal_activations.py`
+    `scripts/fotmob/build_fotmob_signal_activations.py`
     (`build-fotmob-signal-activations`) and the generic runner is
-    `scripts/gold/run_fotmob_gold_jobs.py` (`run-fotmob-gold-jobs`). The old
+    `scripts/fotmob/run_fotmob_gold_jobs.py` (`run-fotmob-gold-jobs`). The old
     paths remain warning-emitting compatibility adapters. Catalog and quality
     utilities keep responsibility-based names: `sync_signal_catalogs.py` and
     `check_signal_catalogs.py` (`check-signal-catalogs`).

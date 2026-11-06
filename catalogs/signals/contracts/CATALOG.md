@@ -58,7 +58,7 @@ asset_paths:
    - `sql` MUST be `clickhouse/gold/dml/signals/<entity>/<signal_id>.sql`, and
      the file MUST exist.
    - There is no runner path: every signal runs through
-     `scripts/gold/run_fotmob_gold_jobs.py`.
+     `scripts/fotmob/run_fotmob_gold_jobs.py`.
 
 ## Body
 
@@ -70,7 +70,7 @@ The body follows the frontmatter, starts with `# <signal_id>`, and MUST contain:
    siblings (the similarity note from [`AUTHORING.md`](AUTHORING.md)).
 3. **Technical asset references**: the SQL path, target table, and runner.
 4. **Example execution command**, for example
-   `python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id <signal_id>`.
+   `python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id <signal_id>`.
 5. **Output schema** table with exactly the headers `Column Name`,
    `Description`, `Reason`, covering every output column.
 

@@ -39,7 +39,7 @@ layer and keep the source name visible in table, script, and catalog contracts.
 ## Event intake and Bronze
 
 Oddspedia collection is independent of
-`scripts/orchestration/run_fotmob_pipeline.py`. The intake flow is:
+`scripts/fotmob/run_fotmob_pipeline.py`. The intake flow is:
 
 ```text
 discover → prioritize → scrape → load Oddspedia Bronze

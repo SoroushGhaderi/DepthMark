@@ -27,7 +27,7 @@ from src.warehouse.scoped_replace import ScopedReplacementBatch
 logger = get_logger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-SCRIPTS_DIR = PROJECT_ROOT / "scripts" / "gold"
+SCRIPTS_DIR = PROJECT_ROOT / "scripts" / "fotmob"
 SIGNAL_ACTIVATION_SCRIPT = SCRIPTS_DIR / "build_fotmob_signal_activations.py"
 
 

@@ -100,7 +100,7 @@ boundaries:
   `gold.signal_activations`.
 
 Scenario SQL targets `gold_scenarios.scenario_*`. Scenario bulk execution is
-enabled in `scripts/gold/load_fotmob_gold.py` and can be run with
+enabled in `scripts/fotmob/load_fotmob_gold.py` and can be run with
 `--part all` or `--part scenarios`. See
 `docs/adr/0004-keep-gold-scenario-bulk-disabled-until-validated.md`.
 
@@ -211,12 +211,12 @@ delegate here with deprecation warnings.
 see `docs/data-flow/infrastructure.md`. The individual setup commands are:
 
 ```bash
-python3 scripts/orchestration/setup_fotmob_warehouse.py
-python3 scripts/bronze/setup_clickhouse.py
-python3 scripts/silver/setup_clickhouse.py
-python3 scripts/gold/setup_clickhouse_gold.py
-python3 scripts/gold/setup_clickhouse_gold.py --part scenarios
-python3 scripts/gold/setup_clickhouse_gold.py --part signals
+python3 scripts/fotmob/setup_fotmob_warehouse.py
+python3 scripts/fotmob/setup_fotmob_bronze.py
+python3 scripts/fotmob/setup_fotmob_silver.py
+python3 scripts/fotmob/setup_fotmob_gold.py
+python3 scripts/fotmob/setup_fotmob_gold.py --part scenarios
+python3 scripts/fotmob/setup_fotmob_gold.py --part signals
 ```
 
 Setup only creates missing databases and tables. It never drops or alters a
@@ -226,20 +226,20 @@ has schema drift (see [Explicit Table Recreation](#explicit-table-recreation)).
 ### Bronze
 
 ```bash
-python3 scripts/bronze/scrape_fotmob.py 20251208
-python3 scripts/bronze/scrape_fotmob.py --single-date 20251208
-python3 scripts/bronze/scrape_fotmob.py --today
-python3 scripts/bronze/scrape_fotmob.py --yesterday
-python3 scripts/bronze/sync_s3.py upload --date 20251208 --dry-run
-python3 scripts/bronze/sync_s3.py download --date 20251208 --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --date 20251208 --replace --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --full-history --rebuild --dry-run
-python3 scripts/bronze/remove_fotmob_bronze.py --date 20251208 --dry-run
-python3 scripts/bronze/load_fotmob_bronze.py --single-date 20251208
-python3 scripts/bronze/load_fotmob_bronze.py --full-history
-python3 scripts/bronze/drop_clickhouse.py --dry-run
+python3 scripts/fotmob/scrape_fotmob.py 20251208
+python3 scripts/fotmob/scrape_fotmob.py --single-date 20251208
+python3 scripts/fotmob/scrape_fotmob.py --today
+python3 scripts/fotmob/scrape_fotmob.py --yesterday
+python3 scripts/fotmob/sync_fotmob_s3.py upload --date 20251208 --dry-run
+python3 scripts/fotmob/sync_fotmob_s3.py download --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --date 20251208 --replace --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --full-history --rebuild --dry-run
+python3 scripts/fotmob/remove_fotmob_bronze.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_bronze.py --single-date 20251208
+python3 scripts/fotmob/load_fotmob_bronze.py --full-history
+python3 scripts/fotmob/drop_fotmob_bronze.py --dry-run
 ```
 
 ### Oddspedia Pipeline
@@ -259,7 +259,7 @@ python3 scripts/oddspedia/resolve_oddspedia_events.py --start-date 20260301 --en
 ```
 
 Oddspedia is an independent source pipeline, not a stage in
-`scripts/orchestration/run_fotmob_pipeline.py`. Its setup script creates the
+`scripts/fotmob/run_fotmob_pipeline.py`. Its setup script creates the
 three source fact tables plus `oddspedia_bronze.load_status` and the Silver
 resolution table. The load and resolve scripts also accept `--month YYYYMM`.
 All date-oriented Oddspedia phases, reporting, loading, and resolution accept
@@ -305,38 +305,38 @@ compatibility adapters.
 ### FotMob Silver
 
 ```bash
-python3 scripts/silver/load_fotmob_silver.py --date 20251208
-python3 scripts/silver/load_fotmob_silver.py --month 202512 --dry-run
-python3 scripts/silver/load_fotmob_silver.py --full-history --dry-run
-python3 scripts/silver/drop_clickhouse.py --dry-run
+python3 scripts/fotmob/load_fotmob_silver.py --date 20251208
+python3 scripts/fotmob/load_fotmob_silver.py --month 202512 --dry-run
+python3 scripts/fotmob/load_fotmob_silver.py --full-history --dry-run
+python3 scripts/fotmob/drop_fotmob_silver.py --dry-run
 ```
 
 ### FotMob Gold
 
 ```bash
-python3 scripts/gold/load_fotmob_gold.py --date 20251208
-python3 scripts/gold/load_fotmob_gold.py --month 202512 --dry-run
-python3 scripts/gold/load_fotmob_gold.py --full-history --dry-run
-python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals --dry-run
-python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
-python3 scripts/gold/build_fotmob_signal_activations.py --full-history
-python3 scripts/gold/build_fotmob_signal_activations.py --date 20251208 --dry-run
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --dry-run
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --dry-run
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
-python3 scripts/gold/run_fotmob_gold_jobs.py --month 202512 --kind signal --entity player --dry-run
-python3 scripts/gold/run_fotmob_gold_jobs.py --full-history --kind signal --family shooting_goals --dry-run
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run
-python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208
+python3 scripts/fotmob/load_fotmob_gold.py --month 202512 --dry-run
+python3 scripts/fotmob/load_fotmob_gold.py --full-history --dry-run
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --part signals --dry-run
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
+python3 scripts/fotmob/build_fotmob_signal_activations.py --full-history
+python3 scripts/fotmob/build_fotmob_signal_activations.py --date 20251208 --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind signal --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --month 202512 --kind signal --entity player --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --full-history --kind signal --family shooting_goals --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance --dry-run
+python3 scripts/fotmob/drop_fotmob_gold.py --dry-run
 ```
 
 ### Orchestration, Quality, and Ops
 
 ```bash
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
-python3 scripts/orchestration/run_fotmob_pipeline.py --date 20251208
-python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
-python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py --date 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py --single-date 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_data_quality.py --month 202512 --strict
 python3 scripts/quality/check_data_quality.py --full-history --strict
@@ -349,7 +349,7 @@ python3 scripts/maintenance/optimize_clickhouse.py --layer gold --database gold_
 python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python3 scripts/health_check.py --json
 python3 scripts/ensure_directories.py
-python3 scripts/refresh_turnstile.py
+python3 scripts/fotmob/refresh_fotmob_turnstile.py
 python3 scripts/mongodb/init_indexes.py
 python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
 ```
@@ -359,28 +359,28 @@ python3 scripts/mongodb/sync_signal_catalogs.py --dry-run
 ### Standard Runs
 
 ```bash
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208
-python3 scripts/orchestration/run_fotmob_pipeline.py --single-date 20251208
-python3 scripts/orchestration/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207
-python3 scripts/orchestration/run_fotmob_pipeline.py --month 202512
-python3 scripts/orchestration/run_fotmob_pipeline.py --full-history
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py --single-date 20251208
+python3 scripts/fotmob/run_fotmob_pipeline.py --start-date 20251201 --end-date 20251207
+python3 scripts/fotmob/run_fotmob_pipeline.py --month 202512
+python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
 ```
 
 ### Partial Runs
 
 ```bash
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --bronze-only
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --silver-only
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --gold-only
-python3 scripts/orchestration/run_fotmob_pipeline.py 20251208 --skip-bronze
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --bronze-only
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --silver-only
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --gold-only
+python3 scripts/fotmob/run_fotmob_pipeline.py 20251208 --skip-bronze
 ```
 
 ### Recommended Preflight and Validation
 
 ```bash
 python3 scripts/health_check.py --json
-python3 scripts/silver/load_fotmob_silver.py --date 20251208 --dry-run
-python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_silver.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --dry-run
 python3 scripts/quality/check_data_quality.py --date 20251208 --strict
 python3 scripts/quality/check_logging_style.py
 ```
@@ -427,9 +427,9 @@ python3 scripts/quality/check_bronze_to_silver_reconciliation.py --strict  # com
 Use drop scripts with `--dry-run` before destructive schema work:
 
 ```bash
-python3 scripts/bronze/drop_clickhouse.py --dry-run
-python3 scripts/silver/drop_clickhouse.py --dry-run
-python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
+python3 scripts/fotmob/drop_fotmob_bronze.py --dry-run
+python3 scripts/fotmob/drop_fotmob_silver.py --dry-run
+python3 scripts/fotmob/drop_fotmob_gold.py --dry-run
 ```
 
 ### Explicit ClickHouse Optimization
@@ -468,7 +468,7 @@ selection, then reload the affected scope with the normal layer loader:
 python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute
 python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold_signals --table sig_team_shooting_goals_efficiency_peak
-python3 scripts/gold/load_fotmob_gold.py --full-history
+python3 scripts/fotmob/load_fotmob_gold.py --full-history
 ```
 
 Omitting `--execute` logs the selected tables with their current row counts
@@ -524,7 +524,7 @@ Current Gold inventory:
 - 1 shared activation serving table in `gold.signal_activations`
 
 Gold SQL jobs are executed through the generic runner in
-`scripts/gold/run_fotmob_gold_jobs.py` and shared helpers in
+`scripts/fotmob/run_fotmob_gold_jobs.py` and shared helpers in
 `src/fotmob/gold/dml_runner.py`. Do not add handwritten per-signal or
 per-scenario runner files. Omit `--kind` to run all scenario and signal SQL jobs
 through the generic runner, or use `--kind scenario` / `--kind signal` to select
@@ -663,7 +663,7 @@ Creation flow:
    explicit Table Recreation of the affected `gold_signals.sig_*` tables and
    reload them; do not use `ALTER TABLE` to patch the `signal_instance_id`
    column in place.
-3. `scripts/gold/build_fotmob_signal_activations.py` loads the active signals
+3. `scripts/fotmob/build_fotmob_signal_activations.py` loads the active signals
    through `load_signal_catalog()` and uses each signal's identity fields.
 4. The builder stages one row per signal output in ephemeral
    `warehouse_stage.signal_activations_stage` (DDL:
@@ -685,7 +685,7 @@ Creation flow:
    `activated_signal_ids`, `activated_signal_entities`,
    `activated_signal_tags`, `activated_signal_names`, `total_signal_rows`, and
    `unique_signal_count`.
-7. `scripts/gold/load_fotmob_gold.py` runs the activation builder after
+7. `scripts/fotmob/load_fotmob_gold.py` runs the activation builder after
    successful signal execution (`--part signals` or `--part all`). Signal SQL
    failures skip activation rebuild until signals succeed or the builder is
    rerun manually.
@@ -695,7 +695,7 @@ To recreate `gold.signal_activations` empty from its DDL and repopulate it:
 ```bash
 python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold --table signal_activations
 python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold --table signal_activations --execute
-python3 scripts/gold/build_fotmob_signal_activations.py --full-history
+python3 scripts/fotmob/build_fotmob_signal_activations.py --full-history
 ```
 
 The builder requires `--date`, `--month`, or `--full-history`. Date and month
@@ -726,14 +726,14 @@ one activation row.
 5. Standardized layer completion alerts are sent through
    `send_layer_completion_alert`.
 6. Bronze runtime supports turnstile refresh automation through
-   `scripts/refresh_turnstile.py`.
+   `scripts/fotmob/refresh_fotmob_turnstile.py`.
 7. Layer setup is schema-only and non-destructive. It only creates missing
    databases and tables, fails closed on schema drift, and never drops,
    alters, optimizes, or compacts tables; containers do not run setup on
    start. Physical `ReplacingMergeTree` versions are reported by warehouse
    quality checks as diagnostics.
 8. Bronze S3 upload/download is operator-invoked through
-   `scripts/bronze/sync_s3.py`; neither scraping nor the pipeline invokes it.
+   `scripts/fotmob/sync_fotmob_s3.py`; neither scraping nor the pipeline invokes it.
 9. Historical scraping writes beneath `data/fotmob/historical/` and compresses
    each complete local date into
    `historical/matches/YYYYMM/YYYYMMDD/YYYYMMDD_matches.tar`; incomplete dates remain
@@ -766,7 +766,7 @@ one activation row.
 2. Re-run only the affected layer or date range when possible.
 3. Run reconciliation and contract checks.
 4. Inspect `data/dlq/` when insertion failures occur.
-5. Use `scripts/refresh_turnstile.py` for token/cookie failures.
+5. Use `scripts/fotmob/refresh_fotmob_turnstile.py` for token/cookie failures.
 
 ## Documentation Ownership
 

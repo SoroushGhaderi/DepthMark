@@ -34,13 +34,13 @@ Detects finished matches with extreme combined successful tackle volume and emit
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_tackle_war.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_match_goalkeeping_defense_tackle_war`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_tackle_war
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_match_goalkeeping_defense_tackle_war
 ```
 
 ## Output Schema

@@ -1,6 +1,9 @@
-"""Create the FotMob bronze, silver, and gold ClickHouse layers."""
+"""Deprecated alias of scripts/fotmob/setup_fotmob_warehouse.py."""
 
+from src.common.deprecation import run_deprecated_script
 from src.fotmob.commands.setup_warehouse import main
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(
+        run_deprecated_script(__file__, "scripts/fotmob/setup_fotmob_warehouse.py", main)
+    )

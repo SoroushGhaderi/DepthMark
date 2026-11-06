@@ -34,13 +34,13 @@ Triggers when a player records more than 100 touches in the middle third, identi
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_midfield_general.sql`
-- Runner: `scripts/gold/run_fotmob_gold_jobs.py`
+- Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
 - Target table: `gold_signals.sig_player_possession_passing_midfield_general`
 
 ## Example Execution
 
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_midfield_general
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_player_possession_passing_midfield_general
 ```
 
 ## Output Schema

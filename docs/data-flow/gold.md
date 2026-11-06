@@ -86,25 +86,25 @@ Catalog: `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
 ## Data Flow
 
-### 1. DDL Setup (`scripts/gold/setup_clickhouse_gold.py`)
+### 1. DDL Setup (`scripts/fotmob/setup_fotmob_gold.py`)
 
 Creates all Gold databases and tables:
 ```bash
-python3 scripts/gold/setup_clickhouse_gold.py              # all
-python3 scripts/gold/setup_clickhouse_gold.py --part scenarios
-python3 scripts/gold/setup_clickhouse_gold.py --part signals
+python3 scripts/fotmob/setup_fotmob_gold.py              # all
+python3 scripts/fotmob/setup_fotmob_gold.py --part scenarios
+python3 scripts/fotmob/setup_fotmob_gold.py --part signals
 ```
 
-### 2. SQL Job Execution (`scripts/gold/run_fotmob_gold_jobs.py`)
+### 2. SQL Job Execution (`scripts/fotmob/run_fotmob_gold_jobs.py`)
 
 The generic runner discovers and executes Gold SQL jobs:
 ```bash
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --dry-run
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
-python3 scripts/gold/run_fotmob_gold_jobs.py --month 202512 --kind signal --entity player
-python3 scripts/gold/run_fotmob_gold_jobs.py --full-history --kind signal --family shooting_goals
-python3 scripts/gold/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --dry-run
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind signal
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind signal --id sig_player_shooting_goals_shot_conversion_peak
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --month 202512 --kind signal --entity player
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --full-history --kind signal --family shooting_goals
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date 20251208 --kind scenario --id scenario_hollow_dominance
 ```
 
 Job discovery uses `GoldSqlJob` in `src/fotmob/gold/dml_runner.py`:
@@ -117,18 +117,18 @@ Job discovery uses `GoldSqlJob` in `src/fotmob/gold/dml_runner.py`:
 
 The old path `scripts/gold/run_gold_sql_jobs.py` remains a compatibility adapter.
 
-### 3. Bulk Loading (`scripts/gold/load_fotmob_gold.py`)
+### 3. Bulk Loading (`scripts/fotmob/load_fotmob_gold.py`)
 
 Runs all Gold SQL jobs and scoped activation replacement. One explicit scope is
 required:
 ```bash
-python3 scripts/gold/load_fotmob_gold.py --date 20251208
-python3 scripts/gold/load_fotmob_gold.py --single-date 20251208
-python3 scripts/gold/load_fotmob_gold.py --month 202512
-python3 scripts/gold/load_fotmob_gold.py --full-history
-python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part signals
-python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios
-python3 scripts/gold/load_fotmob_gold.py --date 20251208 --dry-run
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208
+python3 scripts/fotmob/load_fotmob_gold.py --single-date 20251208
+python3 scripts/fotmob/load_fotmob_gold.py --month 202512
+python3 scripts/fotmob/load_fotmob_gold.py --full-history
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --part signals
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --part scenarios
+python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --dry-run
 ```
 
 Execution order:
@@ -142,7 +142,7 @@ Execution order:
 5. Activation replacement runs with the same scope after every selected signal
    table commits successfully.
 
-### 4. Activation Rebuild (`scripts/gold/build_fotmob_signal_activations.py`)
+### 4. Activation Rebuild (`scripts/fotmob/build_fotmob_signal_activations.py`)
 
 Builds `gold.signal_activations` from all active signal catalogs, then replaces
 only the requested output scope:
@@ -174,10 +174,10 @@ The final insert adds match-level summary fields on every activation row
 and related arrays).
 
 ```bash
-python3 scripts/gold/build_fotmob_signal_activations.py --date 20251208
-python3 scripts/gold/build_fotmob_signal_activations.py --month 202512
-python3 scripts/gold/build_fotmob_signal_activations.py --full-history
-python3 scripts/gold/build_fotmob_signal_activations.py --date 20251208 --dry-run
+python3 scripts/fotmob/build_fotmob_signal_activations.py --date 20251208
+python3 scripts/fotmob/build_fotmob_signal_activations.py --month 202512
+python3 scripts/fotmob/build_fotmob_signal_activations.py --full-history
+python3 scripts/fotmob/build_fotmob_signal_activations.py --date 20251208 --dry-run
 ```
 
 Serving-table DDL: `clickhouse/gold/ddl/create_table_signal_activations.sql`
@@ -199,10 +199,10 @@ Key fields in `gold.signal_activations`:
 ### 5. Drop Scripts
 
 ```bash
-python3 scripts/gold/drop_clickhouse_scenarios.py --dry-run
-python3 scripts/gold/drop_clickhouse_scenarios.py --part scenarios
-python3 scripts/gold/drop_clickhouse_scenarios.py --part signals
-python3 scripts/gold/drop_clickhouse_scenarios.py --part all
+python3 scripts/fotmob/drop_fotmob_gold.py --dry-run
+python3 scripts/fotmob/drop_fotmob_gold.py --part scenarios
+python3 scripts/fotmob/drop_fotmob_gold.py --part signals
+python3 scripts/fotmob/drop_fotmob_gold.py --part all
 ```
 
 ## Key Design Decisions

@@ -213,7 +213,7 @@ def assert_live_bronze_tables_match(
     if missing:
         raise BronzeSchemaError(
             f"Bronze tables do not exist: {', '.join(missing)}. "
-            "Run scripts/orchestration/setup_fotmob_warehouse.py to create them."
+            "Run scripts/fotmob/setup_fotmob_warehouse.py to create them."
         )
     drifted = []
     for spec in selected:

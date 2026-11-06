@@ -36,34 +36,34 @@ CANONICAL_COMMANDS: dict[str, CommandSpec] = {
     "report-scraping": CommandSpec(
         "src.operations.commands.report_scraping:main", "report_scraping.py"
     ),
-    "scrape-fotmob": CommandSpec("src.fotmob.commands.scrape:main", "bronze/scrape_fotmob.py"),
+    "scrape-fotmob": CommandSpec("src.fotmob.commands.scrape:main", "fotmob/scrape_fotmob.py"),
     "load-fotmob-bronze": CommandSpec(
-        "src.fotmob.commands.load_bronze:main", "bronze/load_fotmob_bronze.py"
+        "src.fotmob.commands.load_bronze:main", "fotmob/load_fotmob_bronze.py"
     ),
     "remove-fotmob-bronze": CommandSpec(
-        "src.fotmob.commands.remove_bronze:main", "bronze/remove_fotmob_bronze.py"
+        "src.fotmob.commands.remove_bronze:main", "fotmob/remove_fotmob_bronze.py"
     ),
     "load-fotmob-silver": CommandSpec(
-        "src.fotmob.commands.load_silver:main", "silver/load_fotmob_silver.py"
+        "src.fotmob.commands.load_silver:main", "fotmob/load_fotmob_silver.py"
     ),
     "load-fotmob-gold": CommandSpec(
-        "src.fotmob.commands.load_gold:main", "gold/load_fotmob_gold.py"
+        "src.fotmob.commands.load_gold:main", "fotmob/load_fotmob_gold.py"
     ),
     "run-fotmob-gold-jobs": CommandSpec(
-        "src.fotmob.commands.run_gold_jobs:main", "gold/run_fotmob_gold_jobs.py"
+        "src.fotmob.commands.run_gold_jobs:main", "fotmob/run_fotmob_gold_jobs.py"
     ),
     "build-fotmob-signal-activations": CommandSpec(
         "src.fotmob.commands.build_signal_activations:main",
-        "gold/build_fotmob_signal_activations.py",
+        "fotmob/build_fotmob_signal_activations.py",
     ),
     "check-signal-catalogs": CommandSpec(
         "src.fotmob.commands.check_signal_catalogs:main", "quality/check_signal_catalogs.py"
     ),
     "run-fotmob-pipeline": CommandSpec(
-        "src.fotmob.commands.run_pipeline:main", "orchestration/run_fotmob_pipeline.py"
+        "src.fotmob.commands.run_pipeline:main", "fotmob/run_fotmob_pipeline.py"
     ),
     "setup-fotmob-warehouse": CommandSpec(
-        "src.fotmob.commands.setup_warehouse:main", "orchestration/setup_fotmob_warehouse.py"
+        "src.fotmob.commands.setup_warehouse:main", "fotmob/setup_fotmob_warehouse.py"
     ),
     "discover-oddspedia-events": CommandSpec(
         "src.oddspedia.scraping.entrypoints:discover_main",

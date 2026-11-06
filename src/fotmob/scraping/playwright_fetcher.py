@@ -438,7 +438,7 @@ class PlaywrightFetcher:
                 base["turnstile_verified"] = newest
             self.logger.warning(
                 "No valid turnstile_verified found in Chrome or stored credentials. "
-                "Visit fotmob.com in Chrome to refresh it, then run refresh_turnstile.py."
+                "Visit fotmob.com in Chrome to refresh it, then run scripts/fotmob/refresh_fotmob_turnstile.py."
             )
 
         return base
