@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_the_triple_booking (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_the_triple_booking (
     match_id,
     match_date,
     home_team_id,
@@ -64,7 +64,7 @@ WITH yellow_card_events AS (
         coalesce(c.player_name, 'Unknown') AS triggered_player_name,
         toInt32(c.card_minute) AS card_minute,
         c.event_id
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -430,9 +430,9 @@ SELECT
     )) AS possession_delta_pct
 
 FROM best_team_window AS btw
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = btw.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = btw.match_id
    AND ps.period = 'All'
 LEFT JOIN team_window_max AS otwm

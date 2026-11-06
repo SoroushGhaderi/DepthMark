@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_conversion_collapse
+  table: fotmob_gold_signals.sig_team_shooting_goals_conversion_collapse
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_conversion_collapse.sql
 ---
 # sig_team_shooting_goals_conversion_collapse
@@ -33,7 +33,7 @@ Flag team matches with extreme on-target volume but only one goal, surfacing sev
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_conversion_collapse.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_conversion_collapse`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_conversion_collapse`
 
 ## Example Execution
 

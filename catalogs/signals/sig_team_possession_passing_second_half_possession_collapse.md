@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_second_half_possession_collapse
+  table: fotmob_gold_signals.sig_team_possession_passing_second_half_possession_collapse
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_second_half_possession_collapse.sql
 ---
 # sig_team_possession_passing_second_half_possession_collapse
@@ -30,7 +30,7 @@ Triggers when a team’s possession drops by more than 20 percentage points from
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_second_half_possession_collapse.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_second_half_possession_collapse`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_second_half_possession_collapse`
 
 ## Example Execution
 

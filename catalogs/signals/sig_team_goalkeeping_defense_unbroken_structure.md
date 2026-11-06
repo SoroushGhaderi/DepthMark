@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_unbroken_structure
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_unbroken_structure
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_unbroken_structure.sql
 ---
 # sig_team_goalkeeping_defense_unbroken_structure
@@ -27,7 +27,7 @@ scoreline context.
 - Trigger condition:
   - `triggered_team_shots_inside_box_allowed <= 3`
   - finished-match scope (`match_finished = 1`) with full-match context (`period = 'All'`)
-  - inside-box scope is computed from `silver.shot` using `is_from_inside_box = 1` and `is_own_goal = 0`
+  - inside-box scope is computed from `fotmob_silver.shot` using `is_from_inside_box = 1` and `is_own_goal = 0`
 - Side interpretation note:
   - this is a defense-oriented signal; “shots allowed” for the triggered side are sourced from the
     opponent's inside-box shot output.
@@ -48,7 +48,7 @@ scoreline context.
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_unbroken_structure.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_unbroken_structure`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_unbroken_structure`
 
 ## Example Execution
 

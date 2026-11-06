@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_passing_fatigue_index
+  table: fotmob_gold_signals.sig_team_possession_passing_passing_fatigue_index
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_passing_fatigue_index.sql
 ---
 # sig_team_possession_passing_passing_fatigue_index
@@ -30,7 +30,7 @@ Triggers when a team's second-half pass volume is at least 30% lower than its fi
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_passing_fatigue_index.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_passing_fatigue_index`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_passing_fatigue_index`
 
 ## Example Execution
 

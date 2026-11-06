@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_keeper_involved
+  table: fotmob_gold_signals.sig_team_possession_passing_keeper_involved
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_keeper_involved.sql
 ---
 # sig_team_possession_passing_keeper_involved
@@ -30,7 +30,7 @@ Detect matches where a team goalkeeper records very high involvement in circulat
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_keeper_involved.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_keeper_involved`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_keeper_involved`
 
 ## Example Execution
 

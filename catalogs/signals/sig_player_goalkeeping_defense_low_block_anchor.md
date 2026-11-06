@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_low_block_anchor
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_low_block_anchor
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_low_block_anchor.sql
 ---
 # sig_player_goalkeeping_defense_low_block_anchor
@@ -31,9 +31,9 @@ individual discipline (`0` fouls) while their team plays under low-possession st
   - `triggered_team_possession_pct < 35.0`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Defender scope is resolved from `silver.match_personnel` with starter-priority role resolution, then joined to
-  `silver.player_match_stat`.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric
+- Defender scope is resolved from `fotmob_silver.match_personnel` with starter-priority role resolution, then joined to
+  `fotmob_silver.player_match_stat`.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric
   `triggered_team_*` and `opponent_*` defensive/control fields with explicit deltas.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_clearance_machine`: both are clearance-led defender signals, but this signal
@@ -47,7 +47,7 @@ individual discipline (`0` fouls) while their team plays under low-possession st
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_low_block_anchor.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_low_block_anchor`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_low_block_anchor`
 
 ## Example Execution
 

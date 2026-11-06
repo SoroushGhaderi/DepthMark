@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_midfield_general
+  table: fotmob_gold_signals.sig_player_possession_passing_midfield_general
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_midfield_general.sql
 ---
 # sig_player_possession_passing_midfield_general
@@ -27,15 +27,15 @@ Triggers when a player records more than 100 touches in the middle third, identi
   - `triggered_player_middle_third_touches_proxy > 100`
 - Because current player schema does not provide a direct `middle_third_touches` field, the signal uses:
   - `triggered_player_middle_third_touches_proxy = max(touches - touches_opp_box, 0)`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent passing and possession context from `silver.period_stat` (`period = 'All'`) to separate individual central involvement from match-state effects.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent passing and possession context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual central involvement from match-state effects.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_midfield_general.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_midfield_general`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_midfield_general`
 
 ## Example Execution
 

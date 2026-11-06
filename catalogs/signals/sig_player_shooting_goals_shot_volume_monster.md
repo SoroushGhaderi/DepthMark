@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_shot_volume_monster
+  table: fotmob_gold_signals.sig_player_shooting_goals_shot_volume_monster
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_shot_volume_monster.sql
 ---
 # sig_player_shooting_goals_shot_volume_monster
@@ -25,8 +25,8 @@ Flags extreme single-match shot-volume outputs (`>= 8` shots) at player grain to
 
 - Trigger condition:
   - `triggered_player_total_shots >= 8`
-- Triggered player identity and shooting metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
+- Triggered player identity and shooting metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`shots_above_threshold`, `triggered_player_shot_conversion_pct`, and `triggered_player_goal_minus_expected_goals`) so high-volume events can be ranked by both volume and finishing quality.
 - Similarity gate note: closest active shooting-goals signals are `sig_player_shooting_goals_hat_trick_hero` and `sig_player_shooting_goals_wasteful_finisher`; this signal is intentionally volume-first and can coexist with both outcome-first signals.
 
@@ -34,7 +34,7 @@ Flags extreme single-match shot-volume outputs (`>= 8` shots) at player grain to
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_shot_volume_monster.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_shot_volume_monster`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_shot_volume_monster`
 
 ## Example Execution
 

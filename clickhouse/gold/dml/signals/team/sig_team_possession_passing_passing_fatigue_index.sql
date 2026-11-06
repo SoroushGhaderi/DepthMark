@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_passing_fatigue_index (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_passing_fatigue_index (
     match_id,
     match_date,
     home_team_id,
@@ -72,7 +72,7 @@ WITH half_stats AS (
         sumIf(coalesce(yellow_cards_away, 0), period IN ('FirstHalf', 'SecondHalf')) AS total_yellow_cards_away,
         sumIf(coalesce(red_cards_home, 0), period IN ('FirstHalf', 'SecondHalf')) AS total_red_cards_home,
         sumIf(coalesce(red_cards_away, 0), period IN ('FirstHalf', 'SecondHalf')) AS total_red_cards_away
-    FROM silver.period_stat
+    FROM fotmob_silver.period_stat
     WHERE period IN ('FirstHalf', 'SecondHalf')
     GROUP BY match_id
 )
@@ -119,7 +119,7 @@ SELECT
     h.fh_xg_away AS opponent_xg_first_half,
     h.sh_xg_away AS opponent_xg_second_half,
     (h.sh_xg_home - h.sh_xg_away) - (h.fh_xg_home - h.fh_xg_away) AS xg_swing_delta
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 INNER JOIN half_stats AS h
     ON h.match_id = m.match_id
 WHERE m.match_finished = 1
@@ -172,7 +172,7 @@ SELECT
     h.fh_xg_home AS opponent_xg_first_half,
     h.sh_xg_home AS opponent_xg_second_half,
     (h.sh_xg_away - h.sh_xg_home) - (h.fh_xg_away - h.fh_xg_home) AS xg_swing_delta
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 INNER JOIN half_stats AS h
     ON h.match_id = m.match_id
 WHERE m.match_finished = 1

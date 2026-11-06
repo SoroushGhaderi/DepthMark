@@ -1,5 +1,5 @@
 -- scenario_underdog_heist: low-xG winner pulls off a win
-INSERT INTO gold_scenarios.scenario_underdog_heist
+INSERT INTO fotmob_gold_scenarios.scenario_underdog_heist
 (
     -- 1. Match Identity
     match_id,
@@ -56,8 +56,8 @@ SELECT
         WHEN g.away_score > g.home_score THEN p.expected_goals_away
     END AS winner_xg,
     toString(g.match_date)
-FROM silver.match AS g
-INNER JOIN silver.period_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.period_stat AS p
     ON g.match_id = p.match_id
     AND p.period = 'All'
 WHERE

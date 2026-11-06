@@ -1,5 +1,5 @@
--- silver.team_form
-CREATE TABLE IF NOT EXISTS silver.team_form
+-- fotmob_silver.team_form
+CREATE TABLE IF NOT EXISTS fotmob_silver.team_form
 (
     match_id            Int32,
     match_date          Date,

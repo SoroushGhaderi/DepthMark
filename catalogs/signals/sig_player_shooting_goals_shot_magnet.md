@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_shot_magnet
+  table: fotmob_gold_signals.sig_player_shooting_goals_shot_magnet
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_shot_magnet.sql
 ---
 # sig_player_shooting_goals_shot_magnet
@@ -26,8 +26,8 @@ Flags extreme shot-concentration events where one player takes more than 60% of 
 - Trigger conditions:
   - `triggered_team_total_shots > 0`
   - `player_share_of_team_total_shots_pct > 60.0`
-- Triggered player identity and shot outcomes come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields for shots, chance quality, possession, and box touches.
+- Triggered player identity and shot outcomes come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields for shots, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`player_shot_share_above_threshold_pct`, `triggered_player_total_shots`, and `triggered_player_goal_minus_expected_goals`) so concentrated shot-load events can be ranked by both concentration and finishing impact.
 - Similarity gate note: the closest active shooting-goals signal is `sig_player_shooting_goals_shot_volume_monster`; this signal is concentration-first (`share > 60%`) rather than absolute-volume-first (`total_shots >= 8`), so both can coexist.
 
@@ -35,7 +35,7 @@ Flags extreme shot-concentration events where one player takes more than 60% of 
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_shot_magnet.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_shot_magnet`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_shot_magnet`
 
 ## Example Execution
 

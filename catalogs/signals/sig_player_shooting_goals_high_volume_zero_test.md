@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_high_volume_zero_test
+  table: fotmob_gold_signals.sig_player_shooting_goals_high_volume_zero_test
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_volume_zero_test.sql
 ---
 # sig_player_shooting_goals_high_volume_zero_test
@@ -28,8 +28,8 @@ Flags high-volume, completely off-frame shooting matches (`total_shots >= 5`, `s
   - `triggered_player_shots_on_target = 0`
   - `triggered_player_blocked_shots = 0`
   - `triggered_player_shots_off_target = triggered_player_total_shots`
-- Triggered player identity and shooting metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` features for shots, off-target profile, chance quality, possession, and box touches.
+- Triggered player identity and shooting metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` features for shots, off-target profile, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`shots_above_threshold`, `triggered_player_shots_off_target_pct`, `expected_goals_wasted`) to rank how extreme each all-off-target output is.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_shot_volume_monster`, `sig_player_shooting_goals_impact_accumulator`, and `sig_player_shooting_goals_wasteful_finisher`. This signal coexists by requiring a strict off-target-only shot profile, which those signals do not enforce.
 
@@ -37,7 +37,7 @@ Flags high-volume, completely off-frame shooting matches (`total_shots >= 5`, `s
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_volume_zero_test.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_high_volume_zero_test`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_high_volume_zero_test`
 
 ## Example Execution
 

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_substituted_scoring_fest (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_substituted_scoring_fest (
     match_id,
     match_date,
     home_team_id,
@@ -88,8 +88,8 @@ WITH match_ext AS (
         ps.accurate_passes_away,
         ps.pass_attempts_home,
         ps.pass_attempts_away
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'
@@ -99,7 +99,7 @@ substitute_entries AS (
         mp.match_id,
         toInt32(assumeNotNull(mp.person_id)) AS player_id,
         toInt32(max(toInt32(coalesce(mp.substitution_time, 0)))) AS substitution_time
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id IS NOT NULL
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
@@ -116,7 +116,7 @@ substitute_goal_events AS (
         toInt32(
             coalesce(s.goal_time, s.minute, 0) + coalesce(s.goal_overload_time, s.minute_added, 0)
         ) AS goal_effective_minute
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     INNER JOIN substitute_entries AS se
         ON se.match_id = s.match_id
        AND se.player_id = toInt32(s.player_id)
@@ -169,7 +169,7 @@ team_non_own_goal_rollup AS (
         s.match_id AS nog_match_id,
         toInt32(s.team_id) AS team_id,
         toInt32(count()) AS team_non_own_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_goal, 0) = 1

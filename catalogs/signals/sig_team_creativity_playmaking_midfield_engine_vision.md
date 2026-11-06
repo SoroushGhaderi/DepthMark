@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_midfield_engine_vision
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_midfield_engine_vision
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_midfield_engine_vision.sql
 ---
 # sig_team_creativity_playmaking_midfield_engine_vision
@@ -27,11 +27,11 @@ then preserve bilateral context for chance quality, passing execution, and attac
   - `triggered_team_midfielder_expected_assists >= 1.5`
   - `trigger_threshold_required_usual_playing_position_id = 2` (midfielder)
   - `match_finished = 1`
-- Midfielder eligibility comes from `silver.match_personnel` using `usual_playing_position_id = 2`
+- Midfielder eligibility comes from `fotmob_silver.match_personnel` using `usual_playing_position_id = 2`
   with starter-priority role selection.
-- Midfielder and team playmaking totals are aggregated from `silver.player_match_stat`
+- Midfielder and team playmaking totals are aggregated from `fotmob_silver.player_match_stat`
   (`expected_assists`, `chances_created`) at `match_id + team_id` grain.
-- Bilateral context is sourced from `silver.period_stat` (`period = 'All'`) and `silver.match` for
+- Bilateral context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match` for
   passing quality, shot pressure, xG, scoreline, and territory.
 - Similarity gate note:
   - Closest active overlap is `sig_team_creativity_playmaking_chance_barrage`, which is team
@@ -45,7 +45,7 @@ then preserve bilateral context for chance quality, passing execution, and attac
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_midfield_engine_vision.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_midfield_engine_vision`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_midfield_engine_vision`
 
 ## Example Execution
 

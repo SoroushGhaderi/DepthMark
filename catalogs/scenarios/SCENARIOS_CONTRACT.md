@@ -19,7 +19,7 @@ Each scenario is a 3-part unit:
 1. SQL transformation file  
    `clickhouse/gold/dml/scenarios/{team,player}/scenario_<name>.sql`
 2. Target table  
-   `gold_scenarios.scenario_<name>`
+   `fotmob_gold_scenarios.scenario_<name>`
 3. Catalog entry in  
    `catalogs/scenarios/SCENARIOS_CATALOG.md`
 
@@ -29,14 +29,14 @@ All three parts are required for a production-ready scenario.
 
 1. Scenario ID format: `scenario_<name>` (snake_case).
 2. SQL filename and target table suffix must match exactly by `<name>`.
-3. Target table must be `gold_scenarios.scenario_<name>`.
+3. Target table must be `fotmob_gold_scenarios.scenario_<name>`.
 4. Generic SQL job resolution must map `scenario_<name>` to `scenario_<name>.sql`.
 
 ## SQL Contract
 
-1. Scenario SQL must be `INSERT INTO gold_scenarios.scenario_<name> ... SELECT ...`.
+1. Scenario SQL must be `INSERT INTO fotmob_gold_scenarios.scenario_<name> ... SELECT ...`.
 2. Scenario SQL must not include DDL (`CREATE`, `ALTER`, `DROP`).
-3. Source tables must be schema-qualified (`bronze.*`, `silver.*`, `gold.*`).
+3. Source tables must be schema-qualified (`fotmob_bronze.*`, `fotmob_silver.*`, `fotmob_gold.*`).
 4. `match_id` must be produced and valid (`> 0`, non-null in final rows).
    This is required by `assert_gold_layer_contracts`.
 5. SQL must be re-runnable safely (ReplacingMergeTree + dedup model).

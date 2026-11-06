@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_box_penetrator
+  table: fotmob_gold_signals.sig_player_possession_passing_box_penetrator
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_box_penetrator.sql
 ---
 # sig_player_possession_passing_box_penetrator
@@ -25,15 +25,15 @@ Triggers when a player records more than 10 touches inside the opposition penalt
 
 - Trigger condition:
   - `triggered_player_touches_opposition_box > 10`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent box-touch, possession, and passing context from `silver.period_stat` (`period = 'All'`) to separate individual penalty-area presence from overall match-state effects.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent box-touch, possession, and passing context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual penalty-area presence from overall match-state effects.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_box_penetrator.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_box_penetrator`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_box_penetrator`
 
 ## Example Execution
 

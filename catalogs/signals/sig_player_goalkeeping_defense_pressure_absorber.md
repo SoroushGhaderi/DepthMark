@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_pressure_absorber
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_pressure_absorber
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_pressure_absorber.sql
 ---
 # sig_player_goalkeeping_defense_pressure_absorber
@@ -35,9 +35,9 @@ on the ball (`touches > 50`), and avoids possession losses via a conservative tu
   - `failed_passes = max(total_passes - accurate_passes, 0)`
   - `failed_dribbles = max(dribble_attempts - successful_dribbles, 0)`
   - `turnovers_proxy = failed_passes + failed_dribbles`
-- Player data is sourced from `silver.player_match_stat`; defender role gating is sourced from
-  `silver.match_personnel` with starter-priority role resolution.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric
+- Player data is sourced from `fotmob_silver.player_match_stat`; defender role gating is sourced from
+  `fotmob_silver.match_personnel` with starter-priority role resolution.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric
   `triggered_team_*` and `opponent_*` turnover proxies, possession, passing, and defensive outputs.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_no_fouls_defending`: both profile clean defending, but this signal is
@@ -49,7 +49,7 @@ on the ball (`touches > 50`), and avoids possession losses via a conservative tu
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_pressure_absorber.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_pressure_absorber`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_pressure_absorber`
 
 ## Example Execution
 

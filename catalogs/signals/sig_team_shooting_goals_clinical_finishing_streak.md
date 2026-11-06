@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_clinical_finishing_streak
+  table: fotmob_gold_signals.sig_team_shooting_goals_clinical_finishing_streak
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_clinical_finishing_streak.sql
 ---
 # sig_team_shooting_goals_clinical_finishing_streak
@@ -33,7 +33,7 @@ Detect team matches with a perfect on-target finishing streak at meaningful volu
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_clinical_finishing_streak.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_clinical_finishing_streak`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_clinical_finishing_streak`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_target_man_aerials
+  table: fotmob_gold_signals.sig_player_possession_passing_target_man_aerials
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_target_man_aerials.sql
 ---
 # sig_player_possession_passing_target_man_aerials
@@ -26,16 +26,16 @@ Triggers when a forward wins at least 10 aerial duels, flagging target-man behav
 - Trigger condition:
   - `triggered_player_usual_playing_position_id = 3`
   - `triggered_player_aerial_duels_won >= 10`
-- Forward classification uses `silver.match_personnel.usual_playing_position_id = 3`, with match-specific `position_id` preserved for role diagnostics.
-- Trigger uses player-level duel totals from `silver.player_match_stat`, with success rate and attempts retained to separate pure volume from efficiency.
-- Signal includes bilateral team/opponent aerial, long-ball, passing, and possession context from `silver.period_stat` (`period = 'All'`) to explain whether the trigger reflects a broader direct-play plan.
+- Forward classification uses `fotmob_silver.match_personnel.usual_playing_position_id = 3`, with match-specific `position_id` preserved for role diagnostics.
+- Trigger uses player-level duel totals from `fotmob_silver.player_match_stat`, with success rate and attempts retained to separate pure volume from efficiency.
+- Signal includes bilateral team/opponent aerial, long-ball, passing, and possession context from `fotmob_silver.period_stat` (`period = 'All'`) to explain whether the trigger reflects a broader direct-play plan.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_target_man_aerials.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_target_man_aerials`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_target_man_aerials`
 
 ## Example Execution
 

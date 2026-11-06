@@ -14,7 +14,7 @@ from src.warehouse.setup import LAYER_ORDER, get_layer_sql_files
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 SIGNAL_DDL = """
-CREATE TABLE IF NOT EXISTS gold_signals.sig_example (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_example (
     match_id Int32,
     player_id Nullable(Int32),
     kicked_at Nullable(DateTime64(3, 'UTC')),
@@ -68,13 +68,13 @@ def _live_example(columns=None, sorting_key=None):
         ("inserted_at", "DateTime"),
     ]
     sorting_key = sorting_key or "match_id, ifNull(player_id, -1), signal_instance_id"
-    return {("gold_signals", "sig_example"): (columns, sorting_key)}
+    return {("fotmob_gold_signals", "sig_example"): (columns, sorting_key)}
 
 
 def test_parse_create_table_reads_columns_and_sorting_key(tmp_path: Path):
     table = parse_expected_tables([_write_ddl(tmp_path)])[0]
 
-    assert table.qualified_name == "gold_signals.sig_example"
+    assert table.qualified_name == "fotmob_gold_signals.sig_example"
     assert table.columns == (
         ("match_id", "Int32"),
         ("player_id", "Nullable(Int32)"),
@@ -91,7 +91,7 @@ def test_parse_create_table_reads_columns_and_sorting_key(tmp_path: Path):
 
 def test_parse_create_table_reads_materialized_and_alias_columns(tmp_path: Path):
     ddl = """
-    CREATE TABLE IF NOT EXISTS bronze.example (
+    CREATE TABLE IF NOT EXISTS fotmob_bronze.example (
         match_id Int32,
         label String DEFAULT 'x y',
         match_month UInt32 MATERIALIZED toYYYYMM(now()),
@@ -152,10 +152,10 @@ def test_drift_reports_column_type_and_sorting_key_changes(tmp_path: Path):
 @pytest.mark.parametrize(
     "statement",
     [
-        "DROP TABLE IF EXISTS gold_signals.sig_example;",
-        "TRUNCATE TABLE gold_signals.sig_example;",
-        "CREATE TABLE gold.stage (id Int32) ENGINE = Memory;",
-        "ALTER TABLE gold_signals.sig_example DROP COLUMN player_id;",
+        "DROP TABLE IF EXISTS fotmob_gold_signals.sig_example;",
+        "TRUNCATE TABLE fotmob_gold_signals.sig_example;",
+        "CREATE TABLE fotmob_gold.stage (id Int32) ENGINE = Memory;",
+        "ALTER TABLE fotmob_gold_signals.sig_example DROP COLUMN player_id;",
     ],
 )
 def test_guard_rejects_anything_but_create_if_not_exists(tmp_path: Path, statement: str):
@@ -168,11 +168,12 @@ def test_guard_rejects_anything_but_create_if_not_exists(tmp_path: Path, stateme
 def test_repository_setup_sql_is_create_only_and_fully_parsed():
     sql_files = [path for layer in LAYER_ORDER for path in get_layer_sql_files(layer)]
     sql_files += sorted((PROJECT_ROOT / "clickhouse" / "oddspedia_bronze" / "ddl").glob("*.sql"))
+    sql_files += sorted((PROJECT_ROOT / "clickhouse" / "oddspedia_silver" / "ddl").glob("*.sql"))
 
     assert find_disallowed_setup_statements(sql_files) == []
     tables = parse_expected_tables(sql_files)
     assert len(tables) > 400
     assert all(table.columns and table.sorting_key for table in tables)
-    assert {"gold.signal_activations", "silver.match", "oddspedia_bronze.event"} <= {
+    assert {"fotmob_gold.signal_activations", "fotmob_silver.match", "oddspedia_bronze.event"} <= {
         table.qualified_name for table in tables
     }

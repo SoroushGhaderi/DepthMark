@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_switch_expert (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_switch_expert (
     match_id,
     match_date,
     home_team_id,
@@ -36,7 +36,7 @@ INSERT INTO gold_signals.sig_player_possession_passing_switch_expert (
     player_share_of_team_passes_pct
 )
 -- Signal: sig_player_possession_passing_switch_expert
--- Trigger: player completes > 5 successful switches of play, proxied by accurate_long_balls from silver.player_match_stat.
+-- Trigger: player completes > 5 successful switches of play, proxied by accurate_long_balls from fotmob_silver.player_match_stat.
 -- Intent: identify players repeatedly changing the point of attack with accurate diagonal long-ball distribution while preserving bilateral passing context.
 
 SELECT
@@ -219,10 +219,10 @@ SELECT
         0.0
     ) AS player_share_of_team_passes_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_unproductive_attack
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_unproductive_attack
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_unproductive_attack.sql
 ---
 # sig_match_goalkeeping_defense_unproductive_attack
@@ -38,7 +38,7 @@ Detect defensive wins where one side absorbs very high shot volume, blocks an ex
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_unproductive_attack.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_unproductive_attack`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_unproductive_attack`
 
 ## Example Execution
 

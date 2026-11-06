@@ -159,11 +159,11 @@ classes of read-only SQL validation:
 | Silver `match_personnel`; `team_form` | `match_id, team_side, role, person_id`; `match_id, team_id, form_position` |
 | Gold scenarios | Columns declared by each table's DDL `ORDER BY` grain |
 | Gold signals | Each catalog's ordered `row_identity` columns |
-| `gold.signal_activations` | `signal_instance_id` |
+| `fotmob_gold.signal_activations` | `signal_instance_id` |
 
 Staging tables, including the ephemeral activation rebuild table, live in the
 `warehouse_stage` database (ADR 0029), which quality checks do not scan. The
-`silver.scope_publication` and `gold.scope_publication` logs are checked for
+`fotmob_silver.scope_publication` and `fotmob_gold.scope_publication` logs are checked for
 unpublished partitions instead of duplicates.
 
 Gold is not reconciled to either upstream layer. Gold outputs apply separate

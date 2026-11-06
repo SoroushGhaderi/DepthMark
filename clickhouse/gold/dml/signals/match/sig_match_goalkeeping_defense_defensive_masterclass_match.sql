@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match (
+INSERT INTO fotmob_gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match (
     match_id,
     match_date,
     home_team_id,
@@ -102,8 +102,8 @@ WITH base_stats AS (
         ), 0.0)) AS pass_accuracy_away_pct,
         coalesce(ps.interceptions_home, 0) + coalesce(ps.interceptions_away, 0)
             AS match_total_interceptions
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

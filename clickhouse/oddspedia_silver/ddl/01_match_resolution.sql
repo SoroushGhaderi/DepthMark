@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS silver.oddspedia_match_resolution
+CREATE TABLE IF NOT EXISTS oddspedia_silver.match_resolution
 (
     oddspedia_match_id String,
     oddspedia_discovery_date Date,

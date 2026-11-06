@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_man_of_the_match_output
+  table: fotmob_gold_signals.sig_player_shooting_goals_man_of_the_match_output
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_man_of_the_match_output.sql
 ---
 # sig_player_shooting_goals_man_of_the_match_output
@@ -26,8 +26,8 @@ Flags elite single-match attacking outputs where a player simultaneously clears 
 - Trigger condition:
   - `triggered_player_expected_goals >= 1.50`
   - `triggered_player_expected_assists >= 1.00`
-- Triggered player finishing and creation metrics are sourced from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
+- Triggered player finishing and creation metrics are sourced from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
 - Team-level creation denominators for assist/chance-creation concentration are derived from player-level team rollups at `match_id + team_id` grain.
 - Similarity gate note:
   - Closest active signals are `sig_player_shooting_goals_the_tap_in_merchant` and `sig_player_shooting_goals_xg_accumulator_midfielder`.
@@ -37,7 +37,7 @@ Flags elite single-match attacking outputs where a player simultaneously clears 
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_man_of_the_match_output.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_man_of_the_match_output`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_man_of_the_match_output`
 
 ## Example Execution
 

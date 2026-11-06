@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_defensive_masterclass_match.sql
 ---
 # sig_match_goalkeeping_defense_defensive_masterclass_match
@@ -24,7 +24,7 @@ symmetrically.
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(coalesce(interceptions_home, 0) + coalesce(interceptions_away, 0)) > 35` from `silver.period_stat` at `period = 'All'`.
+- Trigger condition: `(coalesce(interceptions_home, 0) + coalesce(interceptions_away, 0)) > 35` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `triggered_side = 'away'`) to preserve canonical `match_team` orientation.
 - Severity is exposed as `match_total_interceptions_above_threshold = match_total_interceptions - 35`.
 - Interception context is bilateral through raw counts, share percentages, and deltas, then enriched with clearances, tackles, duels, aerials, shot pressure faced, goalkeeper workload, discipline, possession, passing quality, and scoreline translation.
@@ -37,7 +37,7 @@ symmetrically.
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_defensive_masterclass_match.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_defensive_masterclass_match`
 
 ## Example Execution
 

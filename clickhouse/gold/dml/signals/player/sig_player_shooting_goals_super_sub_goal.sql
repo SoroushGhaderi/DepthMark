@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_super_sub_goal (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_super_sub_goal (
     match_id,
     match_date,
     home_team_id,
@@ -63,7 +63,7 @@ WITH substitute_entries AS (
         mp.match_id,
         toInt32(assumeNotNull(mp.person_id)) AS triggered_player_id,
         toInt32(max(coalesce(mp.substitution_time, 0))) AS triggered_player_substitution_time
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id IS NOT NULL
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
@@ -105,7 +105,7 @@ super_sub_goal_events AS (
             coalesce(s.home_score_after, 0)
         )) AS opponent_score_after,
         s.shot_id
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     INNER JOIN substitute_entries AS se
         ON se.match_id = s.match_id
        AND se.triggered_player_id = toInt32(s.player_id)
@@ -344,13 +344,13 @@ SELECT
     ), 0.0)) AS player_share_of_team_total_shots_pct
 
 FROM player_super_sub_goals AS psg
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = psg.match_id
    AND p.player_id = psg.player_id
    AND p.team_id = psg.team_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = psg.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = psg.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

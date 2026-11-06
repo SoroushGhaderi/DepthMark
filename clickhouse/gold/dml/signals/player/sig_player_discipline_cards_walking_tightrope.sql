@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_walking_tightrope (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_walking_tightrope (
     match_id,
     match_date,
     home_team_id,
@@ -60,7 +60,7 @@ WITH early_yellow AS (
             coalesce(c.score_away_at_time, 0),
             tuple(c.card_minute, c.event_id)
         ) AS score_away_at_first_yellow
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -77,7 +77,7 @@ player_cards AS (
         toInt32(assumeNotNull(c.player_id)) AS player_id,
         countIf(positionCaseInsensitive(coalesce(c.card_type, ''), 'yellow') > 0) AS triggered_player_yellow_cards_total,
         countIf(positionCaseInsensitive(coalesce(c.card_type, ''), 'red') > 0) AS triggered_player_red_cards_total
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
     GROUP BY
@@ -189,15 +189,15 @@ SELECT
         0
     )) AS opponent_possession_pct
 FROM early_yellow AS ey
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = ey.match_id
-LEFT JOIN silver.player_match_stat AS p
+LEFT JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = ey.match_id
    AND p.player_id = ey.triggered_player_id
 LEFT JOIN player_cards AS pc
     ON pc.match_id = ey.match_id
    AND pc.player_id = ey.triggered_player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = ey.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

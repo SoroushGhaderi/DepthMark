@@ -1,5 +1,5 @@
 -- scenario_one_man_army: high individual output in finished matches
-INSERT INTO gold_scenarios.scenario_one_man_army
+INSERT INTO fotmob_gold_scenarios.scenario_one_man_army
 (
     -- 1. Match Identity
     match_id,
@@ -56,8 +56,8 @@ SELECT
         ELSE 'Draw'
     END AS LowCardinality(String)) AS match_result,
     toString(g.match_date)
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS g
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS g
     ON p.match_id = g.match_id
 WHERE
     -- Finished matches with high direct goal involvement by one player.

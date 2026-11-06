@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_foul_magnet
+  table: fotmob_gold_signals.sig_player_discipline_cards_foul_magnet
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_foul_magnet.sql
 ---
 # sig_player_discipline_cards_foul_magnet
@@ -25,16 +25,16 @@ Flags players who are fouled six or more times in a match, surfacing high-contac
 
 - Trigger condition:
   - `triggered_player_was_fouled >= 6`
-- Player foul-drawn volume is sourced from `silver.player_match_stat.was_fouled`.
-- Player card counts are sourced from `silver.card` at `match_id + player_id` grain to contextualize whether repeated contact also led to retaliation or bookings.
-- Team and opponent discipline context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields for fouls and cards.
+- Player foul-drawn volume is sourced from `fotmob_silver.player_match_stat.was_fouled`.
+- Player card counts are sourced from `fotmob_silver.card` at `match_id + player_id` grain to contextualize whether repeated contact also led to retaliation or bookings.
+- Team and opponent discipline context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields for fouls and cards.
 - Possession context helps distinguish foul-drawing in proactive possession phases from transition or low-possession defensive match states.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_foul_magnet.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_foul_magnet`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_foul_magnet`
 
 ## Example Execution
 

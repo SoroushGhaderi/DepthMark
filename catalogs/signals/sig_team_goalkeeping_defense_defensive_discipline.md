@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_defensive_discipline
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_defensive_discipline
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_defensive_discipline.sql
 ---
 # sig_team_goalkeeping_defense_defensive_discipline
@@ -27,7 +27,7 @@ Detect clean-sheet performances delivered with strong defensive discipline, wher
   - `triggered_team_fouls <= 5`
   - `triggered_team_clean_sheet_flag = 1` (opponent goals equals zero)
 - Output grain is `match_team` with canonical `triggered_side`, so both teams may emit in the same match (for example a disciplined 0-0).
-- Core trigger metrics are enriched with bilateral defensive workload and pressure context from `silver.period_stat` (`period = 'All'`), including shots faced, keeper saves, xG against, and defending actions.
+- Core trigger metrics are enriched with bilateral defensive workload and pressure context from `fotmob_silver.period_stat` (`period = 'All'`), including shots faced, keeper saves, xG against, and defending actions.
 - Similarity gate note:
   - `sig_team_goalkeeping_defense_parking_the_bus`: same entity/family/subfamily, but trigger is low-possession winning defense (`<30% possession` and `>=30 clearances`), not foul-discipline clean sheets.
   - `sig_team_goalkeeping_defense_clearance_barrage`: same entity/family/subfamily, but trigger is extreme clearance volume (`>=40`) regardless of fouls/clean sheet.
@@ -37,7 +37,7 @@ Detect clean-sheet performances delivered with strong defensive discipline, wher
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_defensive_discipline.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_defensive_discipline`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_defensive_discipline`
 
 ## Example Execution
 

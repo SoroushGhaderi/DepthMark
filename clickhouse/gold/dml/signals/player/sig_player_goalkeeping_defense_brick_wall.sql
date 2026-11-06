@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_goalkeeping_defense_brick_wall (
+INSERT INTO fotmob_gold_signals.sig_player_goalkeeping_defense_brick_wall (
     match_id,
     match_date,
     home_team_id,
@@ -49,7 +49,7 @@ WITH keeper_shot_events AS (
         countIf(coalesce(s.is_on_target, 0) = 1 AND coalesce(s.is_goal, 0) = 0) AS triggered_player_saves,
         countIf(coalesce(s.is_on_target, 0) = 1) AS triggered_player_shots_on_target_faced,
         countIf(coalesce(s.is_on_target, 0) = 1 AND coalesce(s.is_goal, 0) = 1) AS triggered_player_goals_conceded
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND s.keeper_id IS NOT NULL
     GROUP BY
@@ -216,12 +216,12 @@ SELECT
     ) AS save_volume_delta_vs_opponent_keeper
 
 FROM keeper_shot_events AS kse
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = kse.match_id
    AND p.player_id = kse.triggered_player_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = kse.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = kse.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

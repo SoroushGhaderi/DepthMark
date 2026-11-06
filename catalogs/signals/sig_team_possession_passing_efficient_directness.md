@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_efficient_directness
+  table: fotmob_gold_signals.sig_team_possession_passing_efficient_directness
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_efficient_directness.sql
 ---
 # sig_team_possession_passing_efficient_directness
@@ -30,7 +30,7 @@ Triggers when a team generates high shot volume with low possession, indicating 
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_efficient_directness.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_efficient_directness`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_efficient_directness`
 
 ## Example Execution
 

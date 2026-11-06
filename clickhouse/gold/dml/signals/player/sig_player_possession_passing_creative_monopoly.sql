@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_creative_monopoly (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_creative_monopoly (
     match_id,
     match_date,
     home_team_id,
@@ -195,22 +195,22 @@ SELECT
         0.0
     ) AS player_share_of_team_opposition_box_touches_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN (
     SELECT
         match_id,
         team_id,
         sum(coalesce(chances_created, 0)) AS triggered_team_total_chances_created
-    FROM silver.player_match_stat
+    FROM fotmob_silver.player_match_stat
     GROUP BY
         match_id,
         team_id
 ) AS team_chances
     ON team_chances.match_id = p.match_id
    AND team_chances.team_id = p.team_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

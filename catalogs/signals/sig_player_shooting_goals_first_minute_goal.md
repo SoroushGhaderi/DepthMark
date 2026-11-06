@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_first_minute_goal
+  table: fotmob_gold_signals.sig_player_shooting_goals_first_minute_goal
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_first_minute_goal.sql
 ---
 # sig_player_shooting_goals_first_minute_goal
@@ -25,15 +25,15 @@ instant attacking impact and changes game state in the opening minute.
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Non-own goal events from `silver.shot` where `is_goal = 1`, `is_own_goal = 0`, `period = 'FirstHalf'`.
+  - Non-own goal events from `fotmob_silver.shot` where `is_goal = 1`, `is_own_goal = 0`, `period = 'FirstHalf'`.
   - First-minute proxy uses minute-granularity timing: `goal_minute <= 1` and `goal_added_time = 0`.
   - Player has `triggered_player_first_minute_goals >= 1` in the same finished match.
 - Timing logic:
   - Effective minute uses `goal_time + goal_overload_time` (fallback `minute + minute_added`) for deterministic ordering.
   - First and last qualifying first-minute goal timings are retained for chronology and QA.
 - Match-context enrichment:
-  - Player shooting context comes from `silver.player_match_stat`.
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and final score from `silver.match`.
+  - Player shooting context comes from `fotmob_silver.player_match_stat`.
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and final score from `fotmob_silver.match`.
   - Symmetric first-minute team-goal context is added via triggered-side/opponent first-minute non-own goal aggregates.
 - Similarity note:
   - Closest active signals are `sig_player_shooting_goals_first_half_dominator` and `sig_player_shooting_goals_rapid_brace`.
@@ -43,7 +43,7 @@ instant attacking impact and changes game state in the opening minute.
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_first_minute_goal.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_first_minute_goal`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_first_minute_goal`
 
 ## Example Execution
 

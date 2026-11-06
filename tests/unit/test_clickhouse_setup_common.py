@@ -12,10 +12,10 @@ def test_layer_setup_excludes_optimization_sql(tmp_path: Path):
     create_database = bronze_dir / "00_create_database.sql"
     create_table = bronze_dir / "01_general.sql"
     optimize_tables = bronze_dir / "99_optimize_tables.sql"
-    create_database.write_text("CREATE DATABASE IF NOT EXISTS bronze;\n", encoding="utf-8")
-    create_table.write_text("CREATE TABLE IF NOT EXISTS bronze.general;\n", encoding="utf-8")
+    create_database.write_text("CREATE DATABASE IF NOT EXISTS fotmob_bronze;\n", encoding="utf-8")
+    create_table.write_text("CREATE TABLE IF NOT EXISTS fotmob_bronze.general;\n", encoding="utf-8")
     optimize_tables.write_text(
-        "OPTIMIZE TABLE bronze.general FINAL DEDUPLICATE;\n", encoding="utf-8"
+        "OPTIMIZE TABLE fotmob_bronze.general FINAL DEDUPLICATE;\n", encoding="utf-8"
     )
 
     sql_files = get_layer_sql_files("bronze", clickhouse_root=clickhouse_root)
@@ -91,14 +91,14 @@ def _bronze_root(tmp_path: Path, table_sql: str) -> Path:
     bronze_dir = tmp_path / "clickhouse" / "bronze"
     bronze_dir.mkdir(parents=True)
     (bronze_dir / "00_create_database.sql").write_text(
-        "CREATE DATABASE IF NOT EXISTS bronze;\n", encoding="utf-8"
+        "CREATE DATABASE IF NOT EXISTS fotmob_bronze;\n", encoding="utf-8"
     )
     (bronze_dir / "01_general.sql").write_text(table_sql, encoding="utf-8")
     return tmp_path / "clickhouse"
 
 
 GENERAL_DDL = (
-    "CREATE TABLE IF NOT EXISTS bronze.general (\n"
+    "CREATE TABLE IF NOT EXISTS fotmob_bronze.general (\n"
     "    match_id Int32,\n"
     "    inserted_at DateTime DEFAULT now()\n"
     ") ENGINE = ReplacingMergeTree(inserted_at)\n"
@@ -120,7 +120,8 @@ def test_setup_creates_missing_tables_when_no_drift(monkeypatch, tmp_path: Path)
 
     assert clickhouse_setup_common.run_clickhouse_layer_setup("bronze", client=client) == 0
     assert any(
-        query.startswith("CREATE TABLE IF NOT EXISTS bronze.general") for query in client.executed
+        query.startswith("CREATE TABLE IF NOT EXISTS fotmob_bronze.general")
+        for query in client.executed
     )
 
 
@@ -128,7 +129,12 @@ def test_setup_fails_closed_on_drift_before_executing_any_ddl(monkeypatch, tmp_p
     root = _bronze_root(tmp_path, GENERAL_DDL)
     monkeypatch.setattr(clickhouse_setup_common, "resolve_clickhouse_root", lambda: root)
     client = _SetupClient(
-        {("bronze", "general"): ([("match_id", "Int64"), ("inserted_at", "DateTime")], "match_id")}
+        {
+            ("fotmob_bronze", "general"): (
+                [("match_id", "Int64"), ("inserted_at", "DateTime")],
+                "match_id",
+            )
+        }
     )
 
     assert clickhouse_setup_common.run_clickhouse_layer_setup("bronze", client=client) == 1
@@ -136,7 +142,7 @@ def test_setup_fails_closed_on_drift_before_executing_any_ddl(monkeypatch, tmp_p
 
 
 def test_setup_refuses_destructive_sql_before_executing_any_ddl(monkeypatch, tmp_path: Path):
-    root = _bronze_root(tmp_path, "DROP TABLE IF EXISTS bronze.general;\n" + GENERAL_DDL)
+    root = _bronze_root(tmp_path, "DROP TABLE IF EXISTS fotmob_bronze.general;\n" + GENERAL_DDL)
     monkeypatch.setattr(clickhouse_setup_common, "resolve_clickhouse_root", lambda: root)
     client = _SetupClient()
 

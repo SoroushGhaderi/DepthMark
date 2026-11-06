@@ -45,7 +45,7 @@ from src.warehouse.schema_drift import (
     read_live_schemas,
 )
 
-BRONZE_DATABASE = "bronze"
+BRONZE_DATABASE = "fotmob_bronze"
 BRONZE_DDL_DIR = Path(__file__).resolve().parents[3] / "clickhouse" / "bronze"
 MAX_EXAMPLES_PER_VIOLATION = 3
 

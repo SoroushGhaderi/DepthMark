@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_discipline_cards_boiling_over (
+INSERT INTO fotmob_gold_signals.sig_match_discipline_cards_boiling_over (
     match_id, match_date, home_team_id, home_team_name, away_team_id, away_team_name,
     home_score, away_score, triggered_side, triggered_team_id, triggered_team_name,
     opponent_team_id, opponent_team_name, trigger_threshold_min_late_window_cards,
@@ -74,8 +74,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home,0)) AS triggered_team_possession_pct,
     toFloat32(coalesce(ps.ball_possession_away,0)) AS opponent_possession_pct,
     toFloat32(round(toFloat32(coalesce(ps.ball_possession_home,0)) - toFloat32(coalesce(ps.ball_possession_away,0)), 1)) AS possession_delta_pct
-FROM silver.match m
-INNER JOIN silver.period_stat ps ON ps.match_id = m.match_id AND ps.period = 'All'
+FROM fotmob_silver.match m
+INNER JOIN fotmob_silver.period_stat ps ON ps.match_id = m.match_id AND ps.period = 'All'
 INNER JOIN (
     SELECT
         z.match_id,
@@ -84,7 +84,7 @@ INNER JOIN (
         toInt32(sum(if(z.card_team_side IN ('home','away') AND z.card_minute>80,1,0))) AS match_late_window_cards
     FROM (
         SELECT c.match_id, lowerUTF8(coalesce(c.team_side,'')) AS card_team_side, toInt32(coalesce(c.card_minute,0)) AS card_minute
-        FROM silver.card c
+        FROM fotmob_silver.card c
         WHERE c.match_id > 0
           AND lowerUTF8(coalesce(c.team_side,'')) IN ('home','away')
           AND toInt32(coalesce(c.card_minute,0)) > 0

@@ -1,5 +1,5 @@
 -- scenario_demolition: finished matches with a 3+ goal winning margin
-INSERT INTO gold_scenarios.scenario_demolition
+INSERT INTO fotmob_gold_scenarios.scenario_demolition
 (
     -- 1. Match Identity
     match_id,
@@ -39,7 +39,7 @@ SELECT
         ELSE 'draw'
     END AS winning_side,
     toString(match_date) AS match_time_utc_date
-FROM silver.match FINAL
+FROM fotmob_silver.match FINAL
 WHERE
     -- Finished matches with a 3+ goal winning margin.
     match_finished = 1

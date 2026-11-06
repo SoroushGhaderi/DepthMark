@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_cross_perfection
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_cross_perfection
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_cross_perfection.sql
 ---
 # sig_player_creativity_playmaking_cross_perfection
@@ -27,12 +27,12 @@ least five accurate crosses with no failed crosses.
 - Trigger condition:
   - `triggered_player_accurate_crosses >= 5`
   - `triggered_player_cross_attempts = triggered_player_accurate_crosses` (100% cross accuracy)
-- Trigger uses player full-match crossing totals from `silver.player_match_stat`.
+- Trigger uses player full-match crossing totals from `fotmob_silver.player_match_stat`.
 - Signal retains playmaking context (`chances_created`, `expected_assists`, `passes_final_third`,
   `touches_opposition_box`) so crossing perfection can be interpreted as chance-creation behavior
   rather than isolated delivery volume.
 - Bilateral team/opponent crossing, passing, possession, and box-touch context is sourced from
-  `silver.period_stat` (`period = 'All'`) for tactical comparability.
+  `fotmob_silver.period_stat` (`period = 'All'`) for tactical comparability.
 - Similarity gate note:
   - `sig_player_possession_passing_volume_crosser`: overlap in cross-volume framing, but that
     signal triggers on very high attempt volume (`>= 15`) and does not require perfection.
@@ -47,7 +47,7 @@ least five accurate crosses with no failed crosses.
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_cross_perfection.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_cross_perfection`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_cross_perfection`
 
 ## Example Execution
 

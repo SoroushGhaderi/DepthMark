@@ -1,5 +1,5 @@
 -- scenario_ghost_poacher: low-touch starters with extreme box-touch concentration and high scoring threat
-INSERT INTO gold_scenarios.scenario_ghost_poacher
+INSERT INTO fotmob_gold_scenarios.scenario_ghost_poacher
 (
     match_id,
     home_team_id,
@@ -34,7 +34,7 @@ WITH starters_cte AS (
     SELECT DISTINCT
         match_id,
         person_id
-    FROM silver.match_personnel
+    FROM fotmob_silver.match_personnel
     FINAL
     WHERE role = 'starter'
 )
@@ -67,9 +67,9 @@ SELECT
     p.expected_assists,
     p.chances_created,
     p.xg_plus_xa
-FROM silver.player_match_stat AS p
+FROM fotmob_silver.player_match_stat AS p
 FINAL
-INNER JOIN silver.match AS g
+INNER JOIN fotmob_silver.match AS g
     FINAL ON p.match_id = g.match_id
 INNER JOIN starters_cte AS s
     ON p.match_id = s.match_id

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_wide_play_monopoly (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_wide_play_monopoly (
     match_id,
     match_date,
     home_team_id,
@@ -67,7 +67,7 @@ WITH team_creation_stats AS (
         toInt32(sum(coalesce(p.accurate_crosses, 0))) AS team_accurate_crosses,
         toInt32(sum(coalesce(p.cross_attempts, 0))) AS team_cross_attempts,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.team_id IS NOT NULL
     GROUP BY
         p.match_id,
@@ -239,8 +239,8 @@ SELECT
     toInt32(coalesce(m.away_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.home_score, 0) - coalesce(m.away_score, 0)) AS goal_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -422,8 +422,8 @@ SELECT
     toInt32(coalesce(m.home_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.away_score, 0) - coalesce(m.home_score, 0)) AS goal_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

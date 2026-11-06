@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_coordinated_trap_match
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_coordinated_trap_match
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_coordinated_trap_match.sql
 ---
 # sig_match_goalkeeping_defense_coordinated_trap_match
@@ -23,7 +23,7 @@ offside burden, defensive workload, control context, and outcomes remain symmetr
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(coalesce(offsides_home, 0) + coalesce(offsides_away, 0)) >= 12` from `silver.period_stat` at `period = 'All'`.
+- Trigger condition: `(coalesce(offsides_home, 0) + coalesce(offsides_away, 0)) >= 12` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `triggered_side = 'away'`) to preserve canonical `match_team` orientation.
 - Severity is exposed via `match_total_offsides_above_threshold = match_total_offsides - 12`, and side balance is exposed via `match_offside_balance_abs`.
 - Offside context is bilateral using both committed and caught perspectives (`triggered_team_offsides_committed` and `triggered_team_offsides_caught`) plus share/delta fields.
@@ -36,7 +36,7 @@ offside burden, defensive workload, control context, and outcomes remain symmetr
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_coordinated_trap_match.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_coordinated_trap_match`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_coordinated_trap_match`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_volume_over_quality
+  table: fotmob_gold_signals.sig_player_shooting_goals_volume_over_quality
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_volume_over_quality.sql
 ---
 # sig_player_shooting_goals_volume_over_quality
@@ -26,16 +26,16 @@ Flags high-volume but consistently low-per-shot-quality shooting performances (`
 - Trigger condition:
   - `triggered_player_total_shots >= 6`
   - `triggered_player_max_shot_expected_goals < 0.10`
-- Trigger quality is enforced at shot level from `silver.shot` (grouped by `match_id`, `player_id`, `team_id`) so every individual attempt must satisfy the xG cap.
-- Triggered player finishing context comes from `silver.player_match_stat` (goals, xG, shots on target, minutes played).
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` metrics for shots, chance quality, possession, and box touches.
+- Trigger quality is enforced at shot level from `fotmob_silver.shot` (grouped by `match_id`, `player_id`, `team_id`) so every individual attempt must satisfy the xG cap.
+- Triggered player finishing context comes from `fotmob_silver.player_match_stat` (goals, xG, shots on target, minutes played).
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` metrics for shots, chance quality, possession, and box touches.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_shot_volume_monster` (shot volume only) and `sig_player_shooting_goals_sniper_accuracy` (volume + perfect on-target precision). Owner decision on 2026-05-16: keep coexistence and add this signal as a separate low-shot-quality profile.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_volume_over_quality.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_volume_over_quality`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_volume_over_quality`
 
 ## Example Execution
 

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_high_press_victim (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_high_press_victim (
     match_id,
     match_date,
     home_team_id,
@@ -112,8 +112,8 @@ FROM (
         round(coalesce(ps.own_half_passes_home, 0) / nullIf(coalesce(ps.pass_attempts_home, 0), 0) * 100, 1) AS own_half_pass_share_home_pct,
         round(coalesce(ps.own_half_passes_away, 0) / nullIf(coalesce(ps.pass_attempts_away, 0), 0) * 100, 1) AS own_half_pass_share_away_pct
 
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON m.match_id = ps.match_id
     WHERE m.match_finished = 1
   AND m.match_id > 0                                                                              -- completed matches only

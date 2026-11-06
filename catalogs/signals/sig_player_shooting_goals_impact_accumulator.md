@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_impact_accumulator
+  table: fotmob_gold_signals.sig_player_shooting_goals_impact_accumulator
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impact_accumulator.sql
 ---
 # sig_player_shooting_goals_impact_accumulator
@@ -26,8 +26,8 @@ Flags high on-target shot volume with zero goals (`shots_on_target >= 5`, `goals
 - Trigger condition:
   - `triggered_player_shots_on_target >= 5`
   - `triggered_player_goals = 0`
-- Triggered player identity and shooting metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
+- Triggered player identity and shooting metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`shots_on_target_above_threshold`, `expected_goals_wasted`, and `triggered_player_goal_minus_expected_goals`) so analysts can rank how extreme each high-impact goalless performance is.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_wasteful_finisher` and `sig_player_shooting_goals_shot_volume_monster`. This signal coexists by anchoring strictly on on-target accumulation (`>= 5`) plus zero-goal outcome, rather than xG-floor or all-shot-volume logic.
 
@@ -35,7 +35,7 @@ Flags high on-target shot volume with zero goals (`shots_on_target >= 5`, `goals
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impact_accumulator.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_impact_accumulator`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_impact_accumulator`
 
 ## Example Execution
 

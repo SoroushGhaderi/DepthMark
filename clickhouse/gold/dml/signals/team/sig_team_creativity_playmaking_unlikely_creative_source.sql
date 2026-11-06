@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_unlikely_creative_source (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_unlikely_creative_source (
     match_id,
     match_date,
     home_team_id,
@@ -82,7 +82,7 @@ WITH player_roles AS (
         argMax(coalesce(mp.position_id, 0), if(mp.role = 'starter', 2, 1)) AS position_id,
         argMax(coalesce(mp.usual_playing_position_id, 0), if(mp.role = 'starter', 2, 1))
             AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND coalesce(mp.primary_team_id, 0) > 0
       AND coalesce(mp.person_id, 0) > 0
@@ -102,7 +102,7 @@ center_back_playmaking AS (
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_center_back_key_passes,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_center_back_expected_assists,
         toInt32(max(coalesce(p.assists, 0))) AS team_top_center_back_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     INNER JOIN player_roles AS pr
         ON pr.match_id = p.match_id
        AND pr.team_id = toInt32(p.team_id)
@@ -122,7 +122,7 @@ team_total_playmaking AS (
         toInt32(sum(coalesce(p.assists, 0))) AS team_total_assists,
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_total_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
       AND coalesce(p.team_id, 0) > 0
     GROUP BY
@@ -315,8 +315,8 @@ SELECT
         1
     )) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -519,8 +519,8 @@ SELECT
         1
     )) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_half_time_talk_fail (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_half_time_talk_fail (
     match_id,
     match_date,
     home_team_id,
@@ -55,7 +55,7 @@ WITH yellow_card_events AS (
         c.event_id,
         toInt32OrZero(toString(c.score_home_at_time)) AS score_home_at_card,
         toInt32OrZero(toString(c.score_away_at_time)) AS score_away_at_card
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
       AND toInt32OrZero(toString(c.card_minute)) BETWEEN 46 AND 60
@@ -160,8 +160,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0) - coalesce(ps.ball_possession_away, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN yellow_window_rollup AS home_yellow_window_rollup
@@ -234,8 +234,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0) - coalesce(ps.ball_possession_home, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN yellow_window_rollup AS away_yellow_window_rollup

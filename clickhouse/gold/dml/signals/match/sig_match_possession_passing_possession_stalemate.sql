@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_possession_stalemate (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_possession_stalemate (
     match_id,
     match_date,
     home_team_id,
@@ -73,8 +73,8 @@ SELECT
     toFloat32(coalesce(ps.expected_goals_home, 0)) AS triggered_team_xg,
     toFloat32(coalesce(ps.expected_goals_away, 0)) AS opponent_xg,
     toFloat32(round(coalesce(ps.expected_goals_home, 0) - coalesce(ps.expected_goals_away, 0), 3)) AS xg_gap
-FROM silver.match AS m FINAL
-INNER JOIN silver.period_stat AS ps FINAL
+FROM fotmob_silver.match AS m FINAL
+INNER JOIN fotmob_silver.period_stat AS ps FINAL
     ON  ps.match_id = m.match_id
     AND ps.period   = 'All'
 WHERE m.match_finished = 1
@@ -122,8 +122,8 @@ SELECT
     toFloat32(coalesce(ps.expected_goals_away, 0)) AS triggered_team_xg,
     toFloat32(coalesce(ps.expected_goals_home, 0)) AS opponent_xg,
     toFloat32(round(coalesce(ps.expected_goals_away, 0) - coalesce(ps.expected_goals_home, 0), 3)) AS xg_gap
-FROM silver.match AS m FINAL
-INNER JOIN silver.period_stat AS ps FINAL
+FROM fotmob_silver.match AS m FINAL
+INNER JOIN fotmob_silver.period_stat AS ps FINAL
     ON  ps.match_id = m.match_id
     AND ps.period   = 'All'
 WHERE m.match_finished = 1

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_goalkeeping_defense_interception_marathon (
+INSERT INTO fotmob_gold_signals.sig_player_goalkeeping_defense_interception_marathon (
     match_id,
     match_date,
     home_team_id,
@@ -66,7 +66,7 @@ WITH player_positions AS (
         argMax(mp.position_id, if(mp.role = 'starter', 2, 1)) AS position_id,
         argMax(mp.usual_playing_position_id, if(mp.role = 'starter', 2, 1))
             AS usual_playing_position_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.role IN ('starter', 'substitute')
     GROUP BY
         mp.match_id,
@@ -98,7 +98,7 @@ period_stats AS (
         maxIf(coalesce(ps.pass_attempts_home, 0), ps.period = 'All') AS pass_attempts_home_all,
         maxIf(coalesce(ps.pass_attempts_away, 0), ps.period = 'All') AS pass_attempts_away_all,
         toInt8(maxIf(1, ps.period = 'FirstHalf')) AS has_first_half_period_row_flag
-    FROM silver.period_stat AS ps
+    FROM fotmob_silver.period_stat AS ps
     WHERE ps.period IN ('All', 'FirstHalf')
     GROUP BY
         ps.match_id
@@ -311,8 +311,8 @@ enriched AS (
             )), 0.0),
             1
         ), 0.0)) AS opponent_pass_accuracy_pct
-    FROM silver.player_match_stat AS p
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.player_match_stat AS p
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = p.match_id
     INNER JOIN player_positions AS pp
         ON pp.match_id = p.match_id

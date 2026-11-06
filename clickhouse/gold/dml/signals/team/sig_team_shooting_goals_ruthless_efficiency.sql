@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_ruthless_efficiency (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_ruthless_efficiency (
     match_id,
     match_date,
     home_team_id,
@@ -141,8 +141,8 @@ SELECT
     toInt32(coalesce(ps.touches_opp_box_home, 0)) AS triggered_team_touches_opposition_box,
     toInt32(coalesce(ps.touches_opp_box_away, 0)) AS opponent_touches_opposition_box
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1
@@ -248,8 +248,8 @@ SELECT
     toInt32(coalesce(ps.touches_opp_box_away, 0)) AS triggered_team_touches_opposition_box,
     toInt32(coalesce(ps.touches_opp_box_home, 0)) AS opponent_touches_opposition_box
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

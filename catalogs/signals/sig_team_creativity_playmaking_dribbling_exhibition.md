@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_dribbling_exhibition
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_dribbling_exhibition
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_dribbling_exhibition.sql
 ---
 # sig_team_creativity_playmaking_dribbling_exhibition
@@ -26,15 +26,15 @@ a finished match.
 - Trigger condition:
   - `triggered_team_successful_dribbles >= 20`
 - Trigger source:
-  - `silver.period_stat.dribbles_succeeded_home` / `silver.period_stat.dribbles_succeeded_away`
+  - `fotmob_silver.period_stat.dribbles_succeeded_home` / `fotmob_silver.period_stat.dribbles_succeeded_away`
     for `period = 'All'`.
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - one row per triggered side (`home` / `away`), with explicit opponent mapping.
 - Creativity context:
-  - key passes and expected assists are enriched via team aggregates from `silver.player_match_stat`
+  - key passes and expected assists are enriched via team aggregates from `fotmob_silver.player_match_stat`
     (`sum(chances_created)`, `sum(expected_assists)`).
 - Similarity gate note:
   - `sig_team_possession_passing_dribble_heavy_attack` overlaps on dribbling profile but triggers
@@ -50,7 +50,7 @@ a finished match.
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_dribbling_exhibition.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_dribbling_exhibition`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_dribbling_exhibition`
 
 ## Example Execution
 

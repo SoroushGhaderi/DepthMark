@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_captain_reprimand (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_captain_reprimand (
     match_id,
     match_date,
     home_team_id,
@@ -56,7 +56,7 @@ WITH captain_roster AS (
             coalesce(mp.name, 'Unknown'),
             coalesce(mp._loaded_at, toDateTime('1970-01-01 00:00:00'))
         ) AS triggered_player_name
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id > 0
       AND mp.role = 'starter'
@@ -94,7 +94,7 @@ card_events AS (
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'argument') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'protest') > 0
         ) AS is_dissent_context
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -267,15 +267,15 @@ SELECT
         1
     ), 0.0)) AS opponent_pass_accuracy_pct
 FROM captain_dissent_cards AS cdc
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = cdc.match_id
-LEFT JOIN silver.player_match_stat AS p
+LEFT JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = cdc.match_id
    AND p.player_id = cdc.triggered_player_id
 LEFT JOIN player_card_rollup AS pcr
     ON pcr.match_id = cdc.match_id
    AND pcr.triggered_player_id = cdc.triggered_player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = cdc.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

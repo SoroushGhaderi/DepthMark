@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_clutch_brace_winning
+  table: fotmob_gold_signals.sig_player_shooting_goals_clutch_brace_winning
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_clutch_brace_winning.sql
 ---
 # sig_player_shooting_goals_clutch_brace_winning
@@ -32,8 +32,8 @@ Detects high-leverage player brace patterns where the same player first restores
   - Rows are emitted at `match_id + team_id + player_id` for players satisfying both events in the same match.
   - First equalizer and first decisive-winner timing/score-state snapshots are preserved for sequence reconstruction.
 - Match-context enrichment:
-  - Player finishing metrics come from `silver.player_match_stat`.
-  - Bilateral team/opponent context comes from `silver.match` and `silver.period_stat` (`period = 'All'`).
+  - Player finishing metrics come from `fotmob_silver.player_match_stat`.
+  - Bilateral team/opponent context comes from `fotmob_silver.match` and `fotmob_silver.period_stat` (`period = 'All'`).
 - Similarity gate note:
   - Closest active signals are `sig_player_shooting_goals_clutch_equalizer`, `sig_player_shooting_goals_late_winner_clutch`, and `sig_player_shooting_goals_rapid_brace`.
   - This signal is distinct because it requires both a score-restoring equalizer and a later decisive winner by the same player in the same match (not just one of those behaviors in isolation, and without a 90+ timing dependency).
@@ -42,7 +42,7 @@ Detects high-leverage player brace patterns where the same player first restores
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_clutch_brace_winning.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_clutch_brace_winning`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_clutch_brace_winning`
 
 ## Example Execution
 

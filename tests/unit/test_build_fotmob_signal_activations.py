@@ -30,7 +30,7 @@ def _columns(definition, *, with_instance_id=True):
 def test_activation_metadata_comes_from_the_catalog(catalog) -> None:
     definition = catalog.get(MATCH_SIGNAL)
 
-    sql = builder._activation_insert_sql("gold_signals", definition, _columns(definition))
+    sql = builder._activation_insert_sql("fotmob_gold_signals", definition, _columns(definition))
 
     assert "'match' AS signal_entity" in sql
     assert "'shooting' AS signal_family" in sql
@@ -45,7 +45,7 @@ def test_activation_hashes_identity_when_table_lacks_instance_id(catalog) -> Non
     definition = catalog.get(PLAYER_SIGNAL)
 
     sql = builder._activation_insert_sql(
-        "gold_signals", definition, _columns(definition, with_instance_id=False)
+        "fotmob_gold_signals", definition, _columns(definition, with_instance_id=False)
     )
 
     assert f"{signal_instance_id_expression(definition, 'sig')} AS signal_instance_id" in sql
@@ -55,7 +55,9 @@ def test_activation_requires_identity_columns_in_the_source_table(catalog) -> No
     definition = catalog.get(PLAYER_SIGNAL)
 
     with pytest.raises(ValueError, match="missing required row_identity columns"):
-        builder._activation_insert_sql("gold_signals", definition, {"match_id", "match_date"})
+        builder._activation_insert_sql(
+            "fotmob_gold_signals", definition, {"match_id", "match_date"}
+        )
 
 
 def test_invalid_catalog_fails_before_connecting(monkeypatch) -> None:

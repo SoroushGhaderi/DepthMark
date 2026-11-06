@@ -1,5 +1,5 @@
 -- scenario_efficiency_machine: winners with low shot volume but high shot quality
-INSERT INTO gold_scenarios.scenario_efficiency_machine
+INSERT INTO fotmob_gold_scenarios.scenario_efficiency_machine
 (
     -- 1. Match Identity
     match_id,
@@ -65,8 +65,8 @@ SELECT
         WHEN g.away_score > g.home_score THEN round(avgIf(s.expected_goals, s.team_id = g.away_team_id), 3)
     END AS winner_avg_xg_per_shot,
     toString(g.match_date)
-FROM silver.shot AS s
-INNER JOIN silver.match AS g
+FROM fotmob_silver.shot AS s
+INNER JOIN fotmob_silver.match AS g
     ON s.match_id = g.match_id
 WHERE
     -- Finished non-draw matches with valid xG and shot data.

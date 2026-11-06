@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_xg_accumulator_midfielder
+  table: fotmob_gold_signals.sig_player_shooting_goals_xg_accumulator_midfielder
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_xg_accumulator_midfielder.sql
 ---
 # sig_player_shooting_goals_xg_accumulator_midfielder
@@ -27,16 +27,16 @@ Flags high-chance midfield shooting loads (`expected_goals > 0.80`) while exclud
   - `triggered_player_expected_goals > 0.80`
   - `triggered_player_usual_playing_position_id = 2` (midfielder)
   - `triggered_player_position_id != 3` at match classification stage (non-forward deployment)
-- Triggered player shooting metrics come from `silver.player_match_stat` in finished matches.
-- Position and role eligibility come from `silver.match_personnel` with starter-priority selection (`argMax` over `starter` then `substitute`).
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features.
+- Triggered player shooting metrics come from `fotmob_silver.player_match_stat` in finished matches.
+- Position and role eligibility come from `fotmob_silver.match_personnel` with starter-priority selection (`argMax` over `starter` then `substitute`).
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_wasteful_finisher` and `sig_player_shooting_goals_impact_accumulator`. This signal coexists because it is role-constrained to midfielders and does not require a zero-goal outcome.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_xg_accumulator_midfielder.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_xg_accumulator_midfielder`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_xg_accumulator_midfielder`
 
 ## Example Execution
 

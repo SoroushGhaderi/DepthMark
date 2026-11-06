@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_total_fluidity
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_total_fluidity
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_total_fluidity.sql
 ---
 # sig_team_creativity_playmaking_total_fluidity
@@ -25,7 +25,7 @@ Detect team-level distributed playmaking performances where chance creation is s
 - Trigger condition:
   - `triggered_team_distinct_key_pass_players >= 6`
 - Key-pass proxy:
-  - `silver.player_match_stat.chances_created >= 1` at player-match grain.
+  - `fotmob_silver.player_match_stat.chances_created >= 1` at player-match grain.
 - Team rollup:
   - Distinct creators are counted per `match_id, team_id`, then matched to home/away sides.
   - Trigger is evaluated independently for home and away, so both teams can trigger in the same fixture.
@@ -40,7 +40,7 @@ Detect team-level distributed playmaking performances where chance creation is s
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_total_fluidity.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_total_fluidity`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_total_fluidity`
 
 ## Example Execution
 

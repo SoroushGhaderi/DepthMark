@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_dribble_threat
+  table: fotmob_gold_signals.sig_player_possession_passing_dribble_threat
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_dribble_threat.sql
 ---
 # sig_player_possession_passing_dribble_threat
@@ -25,16 +25,16 @@ Triggers when a player completes more than 5 successful dribbles in a single mat
 
 - Trigger condition:
   - `triggered_player_successful_dribbles > 5`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
 - Signal includes player dribble attempts, failed dribbles, success rate, touches, box involvement, creation, shooting, and passing context to separate pure carrying threat from sterile volume.
-- Signal includes bilateral team/opponent dribbling, passing, possession, and opposition-box context from `silver.period_stat` (`period = 'All'`) to distinguish individual superiority from team-wide carrying dominance.
+- Signal includes bilateral team/opponent dribbling, passing, possession, and opposition-box context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish individual superiority from team-wide carrying dominance.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_dribble_threat.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_dribble_threat`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_dribble_threat`
 
 ## Example Execution
 

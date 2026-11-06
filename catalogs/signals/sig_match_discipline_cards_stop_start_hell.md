@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_stop_start_hell
+  table: fotmob_gold_signals.sig_match_discipline_cards_stop_start_hell
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_stop_start_hell.sql
 ---
 # sig_match_discipline_cards_stop_start_hell
@@ -23,7 +23,7 @@ Flags matches with relentless interruption tempo, where whistle proxy events (fo
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - `fouls_home + fouls_away + yellow_cards_home + yellow_cards_away + red_cards_home + red_cards_away + offsides_home + offsides_away >= 60` from `silver.period_stat` at `period = 'All'`.
+  - `fouls_home + fouls_away + yellow_cards_home + yellow_cards_away + red_cards_home + red_cards_away + offsides_home + offsides_away >= 60` from `fotmob_silver.period_stat` at `period = 'All'`.
   - Threshold maps directly from the trigger phrase under a 90-minute baseline: `5400 / 90 = 60`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) so downstream team pipelines consume symmetric `match_team` grain output.
 - Output keeps whistle intensity, side contribution splits, foul/card/offside composition, and bilateral defensive/possession context for tactical interpretation.
@@ -32,7 +32,7 @@ Flags matches with relentless interruption tempo, where whistle proxy events (fo
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_stop_start_hell.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_stop_start_hell`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_stop_start_hell`
 
 ## Example Execution
 

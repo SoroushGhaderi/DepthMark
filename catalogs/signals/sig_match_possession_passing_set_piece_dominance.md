@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_set_piece_dominance
+  table: fotmob_gold_signals.sig_match_possession_passing_set_piece_dominance
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_set_piece_dominance.sql
 ---
 # sig_match_possession_passing_set_piece_dominance
@@ -24,7 +24,7 @@ Triggers when restart-led passing volume dominates the match, flagging games whe
 
 - Trigger condition: `match_dead_ball_restart_pass_share_pct > 15` (proxy-calibrated threshold).
 - The restart pass metric is modeled as `player_throws + corners` at team level, summed to match level.
-- Because explicit free-kick pass counts are not available in `silver.period_stat`, this is a conservative proxy for dead-ball restart passing.
+- Because explicit free-kick pass counts are not available in `fotmob_silver.period_stat`, this is a conservative proxy for dead-ball restart passing.
 - The original intended tactical trigger is “>20% of match passes from dead-ball restarts”; in current data, this proxy peaks below 20%, so 15% is used as the closest operational threshold.
 - Emits one row per side (`triggered_side in {'home','away'}`) so downstream users can analyze match-level trigger with side-oriented context.
 - Adds bilateral context for pass quality, set-piece shot volume, set-play xG, possession, and shot output.
@@ -33,7 +33,7 @@ Triggers when restart-led passing volume dominates the match, flagging games whe
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_set_piece_dominance.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_set_piece_dominance`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_set_piece_dominance`
 
 ## Example Execution
 

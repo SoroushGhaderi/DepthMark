@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_clean_sheet_aggression (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_clean_sheet_aggression (
     match_id,
     match_date,
     home_team_id,
@@ -110,8 +110,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0) - coalesce(ps.ball_possession_away, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1
@@ -183,8 +183,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0) - coalesce(ps.ball_possession_home, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

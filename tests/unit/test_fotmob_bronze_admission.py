@@ -24,7 +24,7 @@ def specs():
 def _spec(*columns, identity=("match_id",)):
     column_specs = tuple(BronzeColumnSpec(*column) for column in columns)
     expected = ExpectedTable(
-        database="bronze",
+        database="fotmob_bronze",
         table="example",
         columns=tuple((column.name, column.clickhouse_type) for column in column_specs),
         sorting_key=identity,
@@ -262,12 +262,12 @@ class FakeSystemTablesClient:
     def execute(self, query, *args, **kwargs):
         if "FROM system.columns" in query:
             rows = [
-                ("bronze", table, name, column_type)
+                ("fotmob_bronze", table, name, column_type)
                 for table, (columns, _) in self.tables.items()
                 for name, column_type in columns
             ]
         else:
-            rows = [("bronze", table, key) for table, (_, key) in self.tables.items()]
+            rows = [("fotmob_bronze", table, key) for table, (_, key) in self.tables.items()]
         return type("Result", (), {"result_rows": rows})()
 
 
@@ -292,7 +292,7 @@ def test_live_tables_matching_ddl_pass(specs):
 def test_missing_live_table_fails_with_setup_remediation(specs):
     client = FakeSystemTablesClient(_live_tables(specs, drop=("cards",)))
 
-    with pytest.raises(BronzeSchemaError, match="bronze.cards.*setup_fotmob_warehouse"):
+    with pytest.raises(BronzeSchemaError, match="fotmob_bronze.cards.*setup_fotmob_warehouse"):
         assert_live_bronze_tables_match(client, specs)
 
 

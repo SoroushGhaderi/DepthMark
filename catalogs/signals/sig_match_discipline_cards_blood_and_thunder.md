@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_blood_and_thunder
+  table: fotmob_gold_signals.sig_match_discipline_cards_blood_and_thunder
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_blood_and_thunder.sql
 ---
 # sig_match_discipline_cards_blood_and_thunder
@@ -25,7 +25,7 @@ Flags matches with sustained physical contest volume and elevated whistle pressu
 - Trigger condition:
   - `(duels_won_home + duels_won_away) >= 50`
   - `(fouls_home + fouls_away) >= 25`
-  - both from `silver.period_stat` at `period = 'All'`.
+  - both from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) so downstream team pipelines can consume bilateral context consistently.
 - Signal output keeps duel/foul share structure, card burden, sanctions-per-foul conversion, defensive action profile, and possession context for interpretability.
 
@@ -33,7 +33,7 @@ Flags matches with sustained physical contest volume and elevated whistle pressu
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_blood_and_thunder.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_blood_and_thunder`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_blood_and_thunder`
 
 ## Example Execution
 

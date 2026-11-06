@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_discipline_cards_card_heavy_substitutions (
+INSERT INTO fotmob_gold_signals.sig_match_discipline_cards_card_heavy_substitutions (
     match_id,
     match_date,
     home_team_id,
@@ -59,7 +59,7 @@ WITH yellow_card_events AS (
         lowerUTF8(coalesce(c.team_side, '')) AS card_side,
         toInt32(assumeNotNull(c.player_id)) AS player_id,
         toInt32(coalesce(c.card_minute, 0)) AS card_minute
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -74,7 +74,7 @@ substitute_personnel AS (
         mp.match_id,
         lowerUTF8(coalesce(mp.team_side, '')) AS substitute_side,
         toInt32(mp.person_id) AS player_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id > 0
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
@@ -171,8 +171,8 @@ base_stats AS (
         em.away_substitute_yellow_card_events AS away_substitute_yellow_card_events,
         em.home_first_substitute_yellow_card_minute AS home_first_substitute_yellow_card_minute,
         em.away_first_substitute_yellow_card_minute AS away_first_substitute_yellow_card_minute
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     INNER JOIN eligible_matches AS em

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_clean_sheet_broken_late (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_clean_sheet_broken_late (
     match_id,
     match_date,
     home_team_id,
@@ -81,7 +81,7 @@ WITH goal_events AS (
         toInt32(coalesce(s.home_score_after, 0)) AS home_score_after_goal,
         toInt32(coalesce(s.away_score_after, 0)) AS away_score_after_goal,
         toInt64(coalesce(s.shot_id, 0)) AS shot_id
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.is_goal, 0) = 1
       AND coalesce(s.is_own_goal, 0) = 0
@@ -174,10 +174,10 @@ base_stats AS (
         coalesce(ps.pass_attempts_home, 0) AS pass_attempts_home,
         coalesce(ps.pass_attempts_away, 0) AS pass_attempts_away,
         coalesce(m.home_score, 0) + coalesce(m.away_score, 0) AS match_total_goals
-    FROM silver.match AS m
+    FROM fotmob_silver.match AS m
     INNER JOIN first_goal_events AS fge
         ON fge.match_id = m.match_id
-    INNER JOIN silver.period_stat AS ps
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'
@@ -251,9 +251,9 @@ SELECT
     toFloat32(0) AS triggered_team_pass_accuracy_pct,
     toFloat32(0) AS opponent_pass_accuracy_pct,
     toFloat32(0) AS pass_accuracy_delta_pct
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 INNER JOIN first_goal_events AS fge ON fge.match_id=m.match_id
-INNER JOIN silver.period_stat AS ps ON ps.match_id=m.match_id AND ps.match_date=m.match_date AND ps.period='All'
+INNER JOIN fotmob_silver.period_stat AS ps ON ps.match_id=m.match_id AND ps.match_date=m.match_date AND ps.period='All'
 WHERE m.match_finished=1 AND m.match_id>0
 UNION ALL
 SELECT
@@ -293,7 +293,7 @@ SELECT
     coalesce(ps.touches_opp_box_away,0),coalesce(ps.touches_opp_box_home,0),coalesce(ps.touches_opp_box_away,0)-coalesce(ps.touches_opp_box_home,0),
     toFloat32(coalesce(ps.ball_possession_away,0.0)),toFloat32(coalesce(ps.ball_possession_home,0.0)),toFloat32(round(coalesce(ps.ball_possession_away,0.0)-coalesce(ps.ball_possession_home,0.0),1)),
     toFloat32(0),toFloat32(0),toFloat32(0)
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 INNER JOIN first_goal_events AS fge ON fge.match_id=m.match_id
-INNER JOIN silver.period_stat AS ps ON ps.match_id=m.match_id AND ps.match_date=m.match_date AND ps.period='All'
+INNER JOIN fotmob_silver.period_stat AS ps ON ps.match_id=m.match_id AND ps.match_date=m.match_date AND ps.period='All'
 WHERE m.match_finished=1 AND m.match_id>0

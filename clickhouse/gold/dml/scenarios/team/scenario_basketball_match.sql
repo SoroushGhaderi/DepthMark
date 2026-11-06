@@ -1,5 +1,5 @@
 -- scenario_basketball_match: high-volume shootouts ranked by composite chaos intensity
-INSERT INTO gold_scenarios.scenario_basketball_match
+INSERT INTO fotmob_gold_scenarios.scenario_basketball_match
 (
     match_id,
     home_team_id,
@@ -92,8 +92,8 @@ SELECT
     END AS match_result,
     toString(g.match_date)
 
-FROM silver.match AS g
-INNER JOIN silver.period_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.period_stat AS p
     ON g.match_id = p.match_id
     AND p.period = 'All'
 WHERE

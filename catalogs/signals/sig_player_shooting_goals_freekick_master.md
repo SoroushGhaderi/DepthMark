@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_freekick_master
+  table: fotmob_gold_signals.sig_player_shooting_goals_freekick_master
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_freekick_master.sql
 ---
 # sig_player_shooting_goals_freekick_master
@@ -24,15 +24,15 @@ Detects match-player performances where a player scores directly from a free kic
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Direct free-kick events are modeled from `silver.shot` with `situation = 'FreeKick'`, `is_own_goal = 0`, and no assister (`assist_player_id` is null/0) as a direct-delivery proxy.
+  - Direct free-kick events are modeled from `fotmob_silver.shot` with `situation = 'FreeKick'`, `is_own_goal = 0`, and no assister (`assist_player_id` is null/0) as a direct-delivery proxy.
   - Signal fires when `triggered_player_direct_free_kick_goals >= 1` in a finished match.
 - Identity and orientation:
   - Player identity is preserved via `triggered_player_*`.
   - Team/opponent identity is preserved via `triggered_team_*`, `opponent_team_*`, and `triggered_side`.
 - Match-context enrichment:
-  - Player direct free-kick evidence is aggregated from `silver.shot` at `match_id + player_id + team_id` grain.
-  - Player total shooting context comes from `silver.player_match_stat`.
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player direct free-kick evidence is aggregated from `fotmob_silver.shot` at `match_id + player_id + team_id` grain.
+  - Player total shooting context comes from `fotmob_silver.player_match_stat`.
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity note:
   - Closest active signals are `sig_player_shooting_goals_long_range_specialist` (location-driven outside-box scoring) and `sig_player_possession_passing_deadball_creator` (indirect free-kick chance creation). This signal is distinct because it isolates direct free-kick goal conversion by the shooter.
 
@@ -40,7 +40,7 @@ Detects match-player performances where a player scores directly from a free kic
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_freekick_master.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_freekick_master`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_freekick_master`
 
 ## Example Execution
 

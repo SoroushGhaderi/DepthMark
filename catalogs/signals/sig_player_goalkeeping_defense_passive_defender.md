@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_passive_defender
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_passive_defender
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_passive_defender.sql
 ---
 # sig_player_goalkeeping_defense_passive_defender
@@ -31,9 +31,9 @@ Flags full-match defender appearances with no tackles won and no interceptions u
   - `triggered_player_usual_playing_position_id = 1` (defender scope)
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Defender scope comes from `silver.match_personnel` with starter-priority position resolution per `(match_id, person_id)`.
-- Player-level outputs come from `silver.player_match_stat`, retaining defensive workload diagnostics (clearances, blocks, duels, recoveries) so zero tackles/interceptions can be interpreted in context.
-- Bilateral team context comes from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` metrics with explicit deltas.
+- Defender scope comes from `fotmob_silver.match_personnel` with starter-priority position resolution per `(match_id, person_id)`.
+- Player-level outputs come from `fotmob_silver.player_match_stat`, retaining defensive workload diagnostics (clearances, blocks, duels, recoveries) so zero tackles/interceptions can be interpreted in context.
+- Bilateral team context comes from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` metrics with explicit deltas.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_tackle_master`: same defender scope but opposite trigger intent (elite tackle output vs. zero tackles/interceptions under low possession).
   - `sig_player_goalkeeping_defense_interception_king`: same family/subfamily with interceptions focus, but this signal captures zero-interception outcomes instead of high-interception peaks.
@@ -43,7 +43,7 @@ Flags full-match defender appearances with no tackles won and no interceptions u
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_passive_defender.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_passive_defender`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_passive_defender`
 
 ## Example Execution
 

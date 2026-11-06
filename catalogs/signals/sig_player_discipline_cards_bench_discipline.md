@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_bench_discipline
+  table: fotmob_gold_signals.sig_player_discipline_cards_bench_discipline
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_bench_discipline.sql
 ---
 # sig_player_discipline_cards_bench_discipline
@@ -23,20 +23,20 @@ Flags disciplinary incidents involving non-playing bench personnel (unused subst
 
 ## Tactical And Statistical Logic
 
-- Trigger scope includes only `silver.match_personnel` roles:
+- Trigger scope includes only `fotmob_silver.match_personnel` roles:
   - `role = 'coach'` (manager)
   - `role = 'substitute'` with `substitution_time <= 0` (non-playing substitute)
-- Card events are sourced from `silver.card` and linked by `match_id`, `player_id/person_id`, and `team_side`.
+- Card events are sourced from `fotmob_silver.card` and linked by `match_id`, `player_id/person_id`, and `team_side`.
 - Trigger card types include yellow/red (including second-yellow dismissals classified as dismissal type).
 - One row is emitted per triggered personnel entry per match using the earliest qualifying card event.
-- Bilateral team context (fouls, cards, possession, and passing quality) is attached from `silver.period_stat` (`period = 'All'`).
-- Player-stat fields remain included for schema compatibility; manager and non-playing bench rows naturally resolve these player metrics to `0` when no `silver.player_match_stat` row exists.
+- Bilateral team context (fouls, cards, possession, and passing quality) is attached from `fotmob_silver.period_stat` (`period = 'All'`).
+- Player-stat fields remain included for schema compatibility; manager and non-playing bench rows naturally resolve these player metrics to `0` when no `fotmob_silver.player_match_stat` row exists.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_bench_discipline.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_bench_discipline`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_bench_discipline`
 
 ## Example Execution
 

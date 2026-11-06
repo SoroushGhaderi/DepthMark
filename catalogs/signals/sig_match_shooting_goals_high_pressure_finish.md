@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_high_pressure_finish
+  table: fotmob_gold_signals.sig_match_shooting_goals_high_pressure_finish
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_pressure_finish.sql
 ---
 # sig_match_shooting_goals_high_pressure_finish
@@ -23,16 +23,16 @@ Detect matches that turn into late two-sided shot pressure (10+ combined attempt
 ## Tactical And Statistical Logic
 
 - Trigger condition: combined late shots where `effective_shot_minute = coalesce(goal_time, minute, 0) + coalesce(goal_overload_time, minute_added, 0)` and `effective_shot_minute > 85` is at least `10`.
-- Late-shot rollups are computed from `silver.shot`, mapped to home/away by `team_id` against `silver.match` team IDs, then filtered to known sides only.
+- Late-shot rollups are computed from `fotmob_silver.shot`, mapped to home/away by `team_id` against `fotmob_silver.match` team IDs, then filtered to known sides only.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain for downstream joins.
-- Enrichment combines late-shot pressure metrics (volume, on-target load, late accuracy) with full-match shooting, xG, scoreline, chance quality, possession, and pass-execution context from `silver.period_stat` (`period = 'All'`).
+- Enrichment combines late-shot pressure metrics (volume, on-target load, late accuracy) with full-match shooting, xG, scoreline, chance quality, possession, and pass-execution context from `fotmob_silver.period_stat` (`period = 'All'`).
 - Similarity gate note: closest active signals are `sig_match_shooting_goals_high_volume_low_target` and `sig_match_shooting_goals_end_to_end_drama`; this signal is distinct because it is strictly late-window shot-volume driven (`85'+`), independent of full-match shot totals, target caps, or half-goal split rules.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_pressure_finish.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_high_pressure_finish`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_high_pressure_finish`
 
 ## Example Execution
 

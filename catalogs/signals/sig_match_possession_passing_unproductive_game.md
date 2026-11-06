@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_unproductive_game
+  table: fotmob_gold_signals.sig_match_possession_passing_unproductive_game
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_unproductive_game.sql
 ---
 # sig_match_possession_passing_unproductive_game
@@ -30,7 +30,7 @@ Triggers for matches with very high passing volume but very low total shot volum
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_unproductive_game.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_unproductive_game`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_unproductive_game`
 
 ## Example Execution
 

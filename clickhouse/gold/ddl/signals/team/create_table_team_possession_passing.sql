@@ -1,6 +1,6 @@
 -- Signal tables for entity=team, family=possession, subfamily=passing
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_high_press_victim (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_high_press_victim (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_high_press_v
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_possession_without_purpose (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_possession_without_purpose (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_possession_w
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_possession_efficiency (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_possession_efficiency (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_possession_e
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_shot_per_possession (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_shot_per_possession (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_shot_per_pos
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_siege_mode (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_siege_mode (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -241,7 +241,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_siege_mode (
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_pass_marathon (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_pass_marathon (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -288,7 +288,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_pass_maratho
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_passing_fatigue_index (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_passing_fatigue_index (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -336,7 +336,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_passing_fati
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_efficient_directness (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_efficient_directness (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -403,7 +403,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_efficient_di
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_low_block_frustration (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_low_block_frustration (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -478,7 +478,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_low_block_fr
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_second_half_possession_collapse (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_second_half_possession_collapse (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -523,7 +523,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_second_half_
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_dribble_heavy_attack (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_dribble_heavy_attack (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -568,7 +568,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_dribble_heav
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_death_by_passes (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_death_by_passes (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -617,7 +617,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_death_by_pas
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_long_ball_desperation (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_long_ball_desperation (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -662,7 +662,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_long_ball_de
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_vertical_imbalance (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_vertical_imbalance (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -710,7 +710,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_vertical_imb
 ORDER BY (match_id, ifNull(triggered_team_id, -1), signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_keeper_involved (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_keeper_involved (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -747,7 +747,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_keeper_invol
 ORDER BY (match_id, triggered_side, ifNull(triggered_team_id, -1), ifNull(triggered_goalkeeper_player_id, -1), signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_failed_penetration (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_failed_penetration (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -798,7 +798,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_failed_penet
 ORDER BY (match_id, triggered_side, ifNull(triggered_team_id, -1), signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_high_tempo_passing (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_high_tempo_passing (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -841,7 +841,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_high_tempo_p
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_sterile_dominance (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_sterile_dominance (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -890,7 +890,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_sterile_domi
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_final_third_efficiency (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_final_third_efficiency (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -939,7 +939,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_final_third_
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_aerial_reliance (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_aerial_reliance (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -982,7 +982,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_aerial_relia
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_short_pass_philosophy (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_short_pass_philosophy (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1033,7 +1033,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_short_pass_p
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_cross_spam (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_cross_spam (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1082,7 +1082,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_cross_spam (
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_cross_accuracy_peak (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_cross_accuracy_peak (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1132,7 +1132,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_cross_accura
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_set_piece_focus (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_set_piece_focus (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1185,7 +1185,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_set_piece_fo
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_accurate_unit (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_accurate_unit (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1231,7 +1231,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_accurate_uni
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_press_resistance (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_press_resistance (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1274,7 +1274,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_press_resist
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_territorial_dominance (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_territorial_dominance (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),
@@ -1330,7 +1330,7 @@ CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_territorial_
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
-CREATE TABLE IF NOT EXISTS gold_signals.sig_team_possession_passing_one_sided_passing (
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_possession_passing_one_sided_passing (
     match_id Int32,
     match_date Date,
     home_team_id Nullable(Int32),

@@ -22,32 +22,38 @@ class FakeClickHouseClient:
 
 
 def test_selected_databases_resolves_layers():
-    assert selected_databases("bronze", None) == ("bronze",)
-    assert selected_databases("gold", None) == ("gold_scenarios", "gold_signals", "gold")
-    assert selected_databases("all", "silver") == ("silver",)
+    assert selected_databases("bronze", None) == ("fotmob_bronze",)
+    assert selected_databases("gold", None) == (
+        "fotmob_gold_scenarios",
+        "fotmob_gold_signals",
+        "fotmob_gold",
+    )
+    assert selected_databases("all", "fotmob_silver") == ("fotmob_silver",)
 
 
 def test_selected_databases_rejects_database_outside_layer():
     with pytest.raises(ValueError, match="not part of layer"):
-        selected_databases("bronze", "silver")
+        selected_databases("bronze", "fotmob_silver")
 
 
 def test_discover_targets_reads_merge_tree_tables():
-    client = FakeClickHouseClient([["bronze", "general"], ["bronze", "match_reference"]])
+    client = FakeClickHouseClient(
+        [["fotmob_bronze", "general"], ["fotmob_bronze", "match_reference"]]
+    )
 
-    targets = discover_targets(client, ("bronze",), None)
+    targets = discover_targets(client, ("fotmob_bronze",), None)
 
     assert targets == [
-        OptimizeTarget("bronze", "general"),
-        OptimizeTarget("bronze", "match_reference"),
+        OptimizeTarget("fotmob_bronze", "general"),
+        OptimizeTarget("fotmob_bronze", "match_reference"),
     ]
     assert "engine LIKE '%MergeTree%'" in client.queries[0]
 
 
 def test_optimize_statement_uses_final_deduplicate():
-    statement = optimize_statement(OptimizeTarget("silver", "match"))
+    statement = optimize_statement(OptimizeTarget("fotmob_silver", "match"))
 
-    assert statement == "OPTIMIZE TABLE silver.match FINAL DEDUPLICATE"
+    assert statement == "OPTIMIZE TABLE fotmob_silver.match FINAL DEDUPLICATE"
 
 
 def test_execute_requires_explicit_scope():

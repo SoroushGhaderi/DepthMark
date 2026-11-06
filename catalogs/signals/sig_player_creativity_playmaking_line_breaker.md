@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_line_breaker
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_line_breaker
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_line_breaker.sql
 ---
 # sig_player_creativity_playmaking_line_breaker
@@ -27,14 +27,14 @@ Detect player-level line-breaking playmaking performances using directional prog
   - `triggered_player_passes_final_third_directional_proxy >= 10`
   - OR `triggered_team_long_ball_attempts_directional_proxy >= 10`
 - Directional proxy sources:
-  - player proxy: `silver.player_match_stat.passes_final_third`
-  - team proxy: `silver.period_stat.long_ball_attempts_{home|away}` with `period = 'All'`
+  - player proxy: `fotmob_silver.player_match_stat.passes_final_third`
+  - team proxy: `fotmob_silver.period_stat.long_ball_attempts_{home|away}` with `period = 'All'`
 - Trigger provenance is explicit per row through:
   - `triggered_player_directional_proxy_source`
   - `triggered_player_directional_proxy_value`
   - `triggered_player_directional_proxy_above_threshold`
 - Finished-match scope and valid side mapping are enforced:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
   - player team must map to home/away side.
 - Similarity gate note:
@@ -47,7 +47,7 @@ Detect player-level line-breaking playmaking performances using directional prog
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_line_breaker.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_line_breaker`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_line_breaker`
 
 ## Example Execution
 

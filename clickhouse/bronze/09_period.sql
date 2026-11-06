@@ -1,5 +1,5 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.period
+CREATE TABLE IF NOT EXISTS fotmob_bronze.period
 (
     match_id                            Int32,
     period                              String,             -- 'FirstHalf'|'SecondHalf'|'FullMatch'

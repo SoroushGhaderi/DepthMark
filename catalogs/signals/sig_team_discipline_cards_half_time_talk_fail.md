@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_half_time_talk_fail
+  table: fotmob_gold_signals.sig_team_discipline_cards_half_time_talk_fail
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql
 ---
 # sig_team_discipline_cards_half_time_talk_fail
@@ -26,14 +26,14 @@ Flags team-match performances where a team collects three or more yellow cards i
   - `triggered_team_yellow_cards_window >= 3`
 - Window definition:
   - yellow-card events in match minutes `46` to `60` inclusive (`15` minutes from second-half restart).
-- Trigger is evaluated symmetrically for home and away teams from `silver.card` events, then enriched with full-match bilateral context from `silver.period_stat`.
+- Trigger is evaluated symmetrically for home and away teams from `fotmob_silver.card` events, then enriched with full-match bilateral context from `fotmob_silver.period_stat`.
 - The signal preserves in-window booking pace and score state at the third yellow card to differentiate panic, tactical fouling, and loss-of-control patterns.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_half_time_talk_fail.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_half_time_talk_fail`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_half_time_talk_fail`
 
 ## Example Execution
 

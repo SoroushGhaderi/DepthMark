@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_unnecessary_card
+  table: fotmob_gold_signals.sig_player_discipline_cards_unnecessary_card
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_unnecessary_card.sql
 ---
 # sig_player_discipline_cards_unnecessary_card
@@ -32,14 +32,14 @@ Flags players who are booked despite holding a comfortable lead, surfacing avoid
   - Player identity is preserved via `triggered_player_*`.
   - Team/opponent identity is preserved via `triggered_team_*` and `opponent_team_*`, with canonical `triggered_side`.
 - Context enrichment:
-  - Player context from `silver.player_match_stat` (fouls, was fouled, minutes).
-  - Bilateral team context from `silver.period_stat` (`period = 'All'`) for fouls, cards, and possession.
+  - Player context from `fotmob_silver.player_match_stat` (fouls, was fouled, minutes).
+  - Bilateral team context from `fotmob_silver.period_stat` (`period = 'All'`) for fouls, cards, and possession.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_unnecessary_card.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_unnecessary_card`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_unnecessary_card`
 
 ## Example Execution
 

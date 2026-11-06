@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_big_chance_fest
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_big_chance_fest
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_big_chance_fest.sql
 ---
 # sig_match_creativity_playmaking_big_chance_fest
@@ -27,10 +27,10 @@ playmaking-heavy games where both sides repeatedly generate high-value opportuni
   - `match_total_big_chances > 8`, where
   - `match_total_big_chances = coalesce(big_chances_home, 0) + coalesce(big_chances_away, 0)`.
 - Trigger source:
-  - Big-chance and match context metrics are sourced from `silver.period_stat` at `period = 'All'`.
-  - Team key passes and expected assists are aggregated from `silver.player_match_stat`.
+  - Big-chance and match context metrics are sourced from `fotmob_silver.period_stat` at `period = 'All'`.
+  - Team key passes and expected assists are aggregated from `fotmob_silver.player_match_stat`.
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - Emits one row per side (`triggered_side = 'home'` and `'away'`) with bilateral context.
@@ -43,7 +43,7 @@ playmaking-heavy games where both sides repeatedly generate high-value opportuni
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_big_chance_fest.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_big_chance_fest`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_big_chance_fest`
 
 ## Example Execution
 

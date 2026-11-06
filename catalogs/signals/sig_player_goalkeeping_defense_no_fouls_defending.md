@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_no_fouls_defending
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_no_fouls_defending
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_no_fouls_defending.sql
 ---
 # sig_player_goalkeeping_defense_no_fouls_defending
@@ -30,10 +30,10 @@ while foul count remains zero, capturing clean defensive aggression.
   - `triggered_player_fouls_committed = 0`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Player-level defensive metrics are sourced from `silver.player_match_stat`.
-- Defender scope is resolved from `silver.match_personnel` with starter-priority role resolution at
+- Player-level defensive metrics are sourced from `fotmob_silver.player_match_stat`.
+- Defender scope is resolved from `fotmob_silver.match_personnel` with starter-priority role resolution at
   `(match_id, person_id)` grain.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric
   `triggered_team_*` and `opponent_*` fields plus selected deltas for comparison.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_tackle_master`: close defender/tackle family overlap, but this signal does
@@ -45,7 +45,7 @@ while foul count remains zero, capturing clean defensive aggression.
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_no_fouls_defending.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_no_fouls_defending`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_no_fouls_defending`
 
 ## Example Execution
 

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_perfect_dribbler (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_perfect_dribbler (
     match_id,
     match_date,
     home_team_id,
@@ -282,10 +282,10 @@ SELECT
         0.0
     ) AS player_share_of_team_opposition_box_touches_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

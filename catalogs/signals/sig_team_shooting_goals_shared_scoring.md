@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_shared_scoring
+  table: fotmob_gold_signals.sig_team_shooting_goals_shared_scoring
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shared_scoring.sql
 ---
 # sig_team_shooting_goals_shared_scoring
@@ -24,7 +24,7 @@ Detect team scoring performances where goals are distributed across at least fou
 
 - Trigger condition:
   - `triggered_team_distinct_goal_scorers >= 4`
-- Scorer diversity is computed from non-own goals in `silver.shot` at match-team grain.
+- Scorer diversity is computed from non-own goals in `fotmob_silver.shot` at match-team grain.
 - Trigger is evaluated separately for home and away sides in finished matches (`period = 'All'`).
 - Bilateral output keeps scorer-diversity and shooting-control context as `triggered_team_*` vs `opponent_*` metrics.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_early_blitz` and `sig_player_shooting_goals_one_man_army`; this signal is distinct because it is team-level scorer-diversity driven (`>= 4` distinct scorers) rather than timing bursts or single-player goal concentration.
@@ -33,7 +33,7 @@ Detect team scoring performances where goals are distributed across at least fou
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shared_scoring.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_shared_scoring`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_shared_scoring`
 
 ## Example Execution
 

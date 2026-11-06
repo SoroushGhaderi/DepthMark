@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_penalty_stopper
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_penalty_stopper
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_penalty_stopper.sql
 ---
 # sig_player_goalkeeping_defense_penalty_stopper
@@ -26,7 +26,7 @@ Flags goalkeepers who save at least one penalty in a finished match, then enrich
 - Trigger condition:
   - `triggered_player_penalties_saved >= 1`
   - `is_goalkeeper = 1`
-- Penalty attempts are identified from `silver.shot` when `situation` or `shot_type` contains `"penalty"` (case-insensitive).
+- Penalty attempts are identified from `fotmob_silver.shot` when `situation` or `shot_type` contains `"penalty"` (case-insensitive).
 - A penalty save is defined as:
   - penalty attempt has a goalkeeper identifier,
   - shot is on target,
@@ -37,14 +37,14 @@ Flags goalkeepers who save at least one penalty in a finished match, then enrich
   - total penalty shots faced,
   - penalty goals conceded,
   - and saved expected-goals-on-target totals/averages.
-- Bilateral context is sourced from `silver.period_stat` (`period = 'All'`) plus match-level penalty shot aggregates to preserve symmetric triggered-team/opponent interpretation.
+- Bilateral context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) plus match-level penalty shot aggregates to preserve symmetric triggered-team/opponent interpretation.
 - Similarity gate note: closest active player signals are `sig_player_discipline_cards_penalty_conceder` and `sig_player_discipline_cards_keeper_reckless`; this signal remains distinct because it is goalkeeper-shot-stopping specific and trigger logic is based on saved penalty shots, not card events.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_penalty_stopper.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_penalty_stopper`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_penalty_stopper`
 
 ## Example Execution
 

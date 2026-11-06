@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_heavy_rotation (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_heavy_rotation (
     match_id,
     match_date,
     home_team_id,
@@ -62,7 +62,7 @@ WITH
             p.player_id,
             argMax(p.player_name, coalesce(p.touches, 0)) AS player_name,
             max(coalesce(p.touches, 0)) AS player_touches
-        FROM silver.player_match_stat AS p
+        FROM fotmob_silver.player_match_stat AS p
         GROUP BY
             p.match_id,
             p.team_id,
@@ -116,8 +116,8 @@ WITH
                 pt.team_id = m.away_team_id
             ) AS away_team_top_touch_player_name,
             toInt32(maxIf(pt.player_touches, pt.team_id = m.away_team_id)) AS away_team_top_touch_player_touches
-        FROM silver.match AS m FINAL
-        INNER JOIN silver.period_stat AS ps FINAL
+        FROM fotmob_silver.match AS m FINAL
+        INNER JOIN fotmob_silver.period_stat AS ps FINAL
             ON  ps.match_id = m.match_id
             AND ps.period = 'All'
         LEFT JOIN player_touches AS pt

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_dribble_heavy_attack (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_dribble_heavy_attack (
     match_id,
     match_date,
     home_team_id,
@@ -71,8 +71,8 @@ WITH base_stats AS (
         coalesce(ps.total_shots_away, 0) AS total_shots_away,
         toFloat32(coalesce(ps.expected_goals_home, 0)) AS expected_goals_home,
         toFloat32(coalesce(ps.expected_goals_away, 0)) AS expected_goals_away
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     WHERE m.match_finished = 1

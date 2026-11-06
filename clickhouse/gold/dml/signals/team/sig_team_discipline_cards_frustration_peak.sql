@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_frustration_peak (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_frustration_peak (
     match_id,
     match_date,
     home_team_id,
@@ -71,7 +71,7 @@ WITH card_events AS (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
         ) AS is_red_card
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
 ),
@@ -346,12 +346,12 @@ SELECT
     )) AS possession_delta_pct
 
 FROM late_trailing_card_rollup AS ltr
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = ltr.match_id
 LEFT JOIN late_trailing_card_rollup AS ltr_opp
     ON ltr_opp.match_id = ltr.match_id
    AND ltr_opp.card_team_side = if(ltr.card_team_side = 'home', 'away', 'home')
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = ltr.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

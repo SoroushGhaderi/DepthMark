@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_asymmetric_aggression
+  table: fotmob_gold_signals.sig_match_discipline_cards_asymmetric_aggression
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_asymmetric_aggression.sql
 ---
 # sig_match_discipline_cards_asymmetric_aggression
@@ -26,7 +26,7 @@ Flags matches where physical contact burden is heavily one-sided, but disciplina
   - `triggered_team_fouls_committed >= 3 * opponent_fouls_committed`
   - `triggered_team_total_cards < opponent_total_cards`
   - `opponent_fouls_committed > 0`
-- Foul and card counts are sourced from `silver.period_stat` at `period = 'All'`.
+- Foul and card counts are sourced from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger orientation (`triggered_side`) is assigned to the side with higher foul count, then filtered by the aggression-plus-fewer-cards predicate.
 - Output preserves bilateral discipline, card-conversion, defensive workload, passing quality, and possession context for interpretation.
 
@@ -34,7 +34,7 @@ Flags matches where physical contact burden is heavily one-sided, but disciplina
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_asymmetric_aggression.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_asymmetric_aggression`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_asymmetric_aggression`
 
 ## Example Execution
 

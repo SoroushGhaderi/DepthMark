@@ -1,5 +1,5 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.cards
+CREATE TABLE IF NOT EXISTS fotmob_bronze.cards
 (
     match_id                        Int32,
     event_id                        Int64,

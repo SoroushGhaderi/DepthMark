@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_set_piece_masterclass
+  table: fotmob_gold_signals.sig_team_shooting_goals_set_piece_masterclass
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_set_piece_masterclass.sql
 ---
 # sig_team_shooting_goals_set_piece_masterclass
@@ -29,7 +29,7 @@ Detect teams that complete a three-channel set-piece scoring profile in one matc
     - `triggered_team_free_kick_goals >= 1`
     - `triggered_team_penalty_goals >= 1`
 - Event taxonomy:
-  - Corner goals: `silver.shot.situation = 'FromCorner'`.
+  - Corner goals: `fotmob_silver.shot.situation = 'FromCorner'`.
   - Free-kick goals: `situation = 'FreeKick'` or free-kick markers in `shot_type`.
   - Penalty goals: case-insensitive penalty markers in `situation` or `shot_type`.
   - Own goals are excluded from set-piece category metrics.
@@ -43,7 +43,7 @@ Detect teams that complete a three-channel set-piece scoring profile in one matc
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_set_piece_masterclass.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_set_piece_masterclass`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_set_piece_masterclass`
 
 ## Example Execution
 

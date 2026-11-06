@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_early_bath
+  table: fotmob_gold_signals.sig_player_discipline_cards_early_bath
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_early_bath.sql
 ---
 # sig_player_discipline_cards_early_bath
@@ -25,16 +25,16 @@ Triggers when a player is sent off in the opening 20 minutes, flagging severe ea
 
 - Trigger condition:
   - `triggered_player_red_card_minute <= 20`
-- Red-card events come from `silver.card` rows where `card_type` contains `"red"`.
+- Red-card events come from `fotmob_silver.card` rows where `card_type` contains `"red"`.
 - The signal emits one row per triggered player per match using the first qualifying early red-card event.
 - Output stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for player-grain traceability.
-- Bilateral team context (cards, fouls, possession, passing) is attached from `silver.period_stat` (`period = 'All'`) to support interpretation of downstream tactical impact.
+- Bilateral team context (cards, fouls, possession, passing) is attached from `fotmob_silver.period_stat` (`period = 'All'`) to support interpretation of downstream tactical impact.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_early_bath.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_early_bath`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_early_bath`
 
 ## Example Execution
 

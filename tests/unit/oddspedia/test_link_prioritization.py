@@ -31,7 +31,7 @@ class _FakeClient:
 
     def execute(self, query, parameters):
         self.queries.append((query, parameters))
-        if "FROM bronze.match_reference" in query:
+        if "FROM fotmob_bronze.match_reference" in query:
             candidate_rows = [(row[0], row[1]) for row in self.rows]
             return _QueryResult(
                 [
@@ -212,7 +212,7 @@ def test_priority_rejects_an_operator_assertion_when_silver_is_not_reconciled(
 ):
     class IncompleteReferenceClient:
         def execute(self, query, parameters):
-            if "FROM bronze.match_reference" in query:
+            if "FROM fotmob_bronze.match_reference" in query:
                 return _QueryResult(
                     [
                         (1, date(2026, 2, 28)),

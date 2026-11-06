@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_man_advantage_collapse
+  table: fotmob_gold_signals.sig_team_discipline_cards_man_advantage_collapse
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_man_advantage_collapse.sql
 ---
 # sig_team_discipline_cards_man_advantage_collapse
@@ -32,7 +32,7 @@ Flags team-match performances where a side loses even though the opponent is sen
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_man_advantage_collapse.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_man_advantage_collapse`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_man_advantage_collapse`
 
 ## Example Execution
 

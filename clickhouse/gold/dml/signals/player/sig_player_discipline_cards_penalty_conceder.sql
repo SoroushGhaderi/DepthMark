@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_penalty_conceder (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_penalty_conceder (
     match_id,
     match_date,
     home_team_id,
@@ -56,7 +56,7 @@ WITH player_cards AS (
             positionCaseInsensitiveUTF8(coalesce(c.card_type, ''), 'red') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
         ) AS triggered_player_red_cards
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
     GROUP BY
@@ -73,8 +73,8 @@ penalty_shots AS (
         toUInt8(
             positionCaseInsensitiveUTF8(coalesce(s.event_type, ''), 'goal') > 0
         ) AS penalty_scored
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND (s.team_id = m.home_team_id OR s.team_id = m.away_team_id)
@@ -105,7 +105,7 @@ penalty_card_candidates AS (
         ) AS penalty_relevance_score,
         c.event_id
     FROM penalty_shots AS ps
-    INNER JOIN silver.card AS c
+    INNER JOIN fotmob_silver.card AS c
         ON c.match_id = ps.match_id
        AND c.player_id IS NOT NULL
        AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -275,9 +275,9 @@ SELECT
         0
     )) AS opponent_possession_pct
 FROM player_penalty_concessions AS ppc
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = ppc.match_id
-LEFT JOIN silver.player_match_stat AS p
+LEFT JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = ppc.match_id
    AND p.player_id = ppc.triggered_player_id
 LEFT JOIN player_cards AS pc
@@ -285,7 +285,7 @@ LEFT JOIN player_cards AS pc
    AND pc.player_id = ppc.triggered_player_id
 LEFT JOIN match_penalty_totals AS mpt
     ON mpt.match_id = ppc.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = ppc.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

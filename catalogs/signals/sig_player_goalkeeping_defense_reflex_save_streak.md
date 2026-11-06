@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_reflex_save_streak
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_reflex_save_streak
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_reflex_save_streak.sql
 ---
 # sig_player_goalkeeping_defense_reflex_save_streak
@@ -25,7 +25,7 @@ five-minute rolling window, surfacing reflex-heavy defensive moments rather than
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Save event is counted from `silver.shot` with:
+  - Save event is counted from `fotmob_silver.shot` with:
     - `keeper_id = triggered_player_id`
     - `is_on_target = 1`
     - `is_goal = 0`
@@ -33,14 +33,14 @@ five-minute rolling window, surfacing reflex-heavy defensive moments rather than
 - Window timing uses event effective minute (`minute + minute_added`, fallback `goal_time + goal_overload_time`) to keep deterministic chronology through stoppage time.
 - If multiple windows qualify for a keeper in one match, SQL keeps the strongest window (`max saves`), then earliest start minute as deterministic tie-break.
 - Match-level keeper totals and player-match context (`minutes`, `touches`, `passing`) are retained for severity interpretation and downstream modeling.
-- Bilateral pressure/control context is included via `silver.period_stat` plus same-window opponent keeper pressure counts.
+- Bilateral pressure/control context is included via `fotmob_silver.period_stat` plus same-window opponent keeper pressure counts.
 - Similarity gate note: closest active signal is `sig_player_goalkeeping_defense_brick_wall`; this signal intentionally coexists because `brick_wall` is full-match volume (`>=8` saves) while this signal is short-window reflex density (`>=3` saves in 5 minutes).
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_reflex_save_streak.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_reflex_save_streak`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_reflex_save_streak`
 
 ## Example Execution
 

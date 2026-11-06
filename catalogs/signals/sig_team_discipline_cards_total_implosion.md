@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_total_implosion
+  table: fotmob_gold_signals.sig_team_discipline_cards_total_implosion
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_total_implosion.sql
 ---
 # sig_team_discipline_cards_total_implosion
@@ -27,13 +27,13 @@ Flags team-match rows where dismissal concentration reaches two or more red card
 - Trigger-half resolution:
   - `triggered_half = first_half` when first-half red cards are greater than or equal to second-half red cards.
   - `triggered_half = second_half` otherwise.
-- Trigger is evaluated symmetrically for home and away teams from `silver.period_stat` half splits, then enriched with bilateral full-match context from `silver.period_stat` at `period = 'All'`.
+- Trigger is evaluated symmetrically for home and away teams from `fotmob_silver.period_stat` half splits, then enriched with bilateral full-match context from `fotmob_silver.period_stat` at `period = 'All'`.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_total_implosion.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_total_implosion`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_total_implosion`
 
 ## Example Execution
 

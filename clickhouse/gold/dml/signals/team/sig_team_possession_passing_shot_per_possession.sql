@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_shot_per_possession (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_shot_per_possession (
     match_id,
     match_date,
     home_team_id,
@@ -130,8 +130,8 @@ SELECT
     coalesce(ps.accurate_long_balls_home, 0) AS triggered_team_accurate_long_balls,
     coalesce(ps.accurate_long_balls_away, 0) AS opponent_accurate_long_balls
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -222,8 +222,8 @@ SELECT
     coalesce(ps.accurate_long_balls_away, 0) AS triggered_team_accurate_long_balls,
     coalesce(ps.accurate_long_balls_home, 0) AS opponent_accurate_long_balls
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

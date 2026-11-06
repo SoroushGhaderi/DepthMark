@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_heavy_hitter
+  table: fotmob_gold_signals.sig_player_discipline_cards_heavy_hitter
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_heavy_hitter.sql
 ---
 # sig_player_discipline_cards_heavy_hitter
@@ -27,15 +27,15 @@ Flags players who combine low tackle efficiency with high foul volume, surfacing
   - `triggered_player_tackle_success_pct <= 20`
   - `triggered_player_fouls_committed >= 4`
   - `triggered_player_tackle_attempts > 0`
-- Player tackle and foul metrics are sourced from `silver.player_match_stat`.
-- Player card context is sourced from `silver.card` at `match_id + player_id` grain.
-- Bilateral team context (fouls, cards, tackles won, duels won, possession) is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields.
+- Player tackle and foul metrics are sourced from `fotmob_silver.player_match_stat`.
+- Player card context is sourced from `fotmob_silver.card` at `match_id + player_id` grain.
+- Bilateral team context (fouls, cards, tackles won, duels won, possession) is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_heavy_hitter.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_heavy_hitter`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_heavy_hitter`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_double_yellow_dismissal
+  table: fotmob_gold_signals.sig_player_discipline_cards_double_yellow_dismissal
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_double_yellow_dismissal.sql
 ---
 # sig_player_discipline_cards_double_yellow_dismissal
@@ -25,17 +25,17 @@ Flags players dismissed via second-yellow dynamics, preserving trigger timing an
 
 - Trigger condition:
   - `triggered_player_yellow_cards_match >= 2`
-  - a second-yellow dismissal event is detected in `silver.card` (`card_type`/`description` patterns such as "second yellow", "yellowred", or yellow+red compound labels).
+  - a second-yellow dismissal event is detected in `fotmob_silver.card` (`card_type`/`description` patterns such as "second yellow", "yellowred", or yellow+red compound labels).
 - The signal emits one row per triggered player per match.
 - Trigger timing keeps both the first yellow minute and second-yellow dismissal minute.
 - Output stores full player identity (`triggered_player_*`) and team identity (`triggered_team_*`) at player grain.
-- Bilateral team context (fouls, cards, possession, and passing) is added from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
+- Bilateral team context (fouls, cards, possession, and passing) is added from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` fields.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_double_yellow_dismissal.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_double_yellow_dismissal`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_double_yellow_dismissal`
 
 ## Example Execution
 

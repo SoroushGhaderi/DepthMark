@@ -20,8 +20,8 @@ from typing import Any
 from src.warehouse.scope import WarehouseExecutionScope
 
 FULL_HISTORY_PARTITION = 0
-SILVER_PUBLICATION_TABLE = "silver.scope_publication"
-GOLD_PUBLICATION_TABLE = "gold.scope_publication"
+SILVER_PUBLICATION_TABLE = "fotmob_silver.scope_publication"
+GOLD_PUBLICATION_TABLE = "fotmob_gold.scope_publication"
 SILVER_BATCH = "silver"
 GOLD_OUTPUTS_BATCH = "gold_outputs"
 GOLD_ACTIVATIONS_BATCH = "gold_activations"

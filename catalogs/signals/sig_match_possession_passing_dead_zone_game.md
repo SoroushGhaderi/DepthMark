@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_dead_zone_game
+  table: fotmob_gold_signals.sig_match_possession_passing_dead_zone_game
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_dead_zone_game.sql
 ---
 # sig_match_possession_passing_dead_zone_game
@@ -23,7 +23,7 @@ Triggers matches where both teams fail to generate any opposition-box touches, s
 ## Tactical And Statistical Logic
 
 - Trigger condition: `touches_opp_box_home = 0` and `touches_opp_box_away = 0` at full-match period stats.
-- Because no dedicated 6-yard touch metric exists in `silver.period_stat`, this signal uses opposition-box touches as the closest available proxy for the requested dead-zone condition.
+- Because no dedicated 6-yard touch metric exists in `fotmob_silver.period_stat`, this signal uses opposition-box touches as the closest available proxy for the requested dead-zone condition.
 - Emits one row per side (`home` and `away`) so downstream team pipelines can consume a side-oriented record for the same match-level trigger.
 - Enriches the trigger with pass volume, pass accuracy, possession share, territorial pass context, and xG context.
 
@@ -31,7 +31,7 @@ Triggers matches where both teams fail to generate any opposition-box touches, s
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_dead_zone_game.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_dead_zone_game`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_dead_zone_game`
 
 ## Example Execution
 

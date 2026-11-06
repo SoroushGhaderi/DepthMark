@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_sustained_second_half_siege
+  table: fotmob_gold_signals.sig_team_shooting_goals_sustained_second_half_siege
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_sustained_second_half_siege.sql
 ---
 # sig_team_shooting_goals_sustained_second_half_siege
@@ -24,7 +24,7 @@ Detect team matches where post-halftime pressure escalates into extreme second-h
 
 - Trigger condition:
   - `triggered_team_shots_second_half >= 15`.
-  - Shot volume comes from `silver.period_stat` at `period = 'SecondHalf'`.
+  - Shot volume comes from `fotmob_silver.period_stat` at `period = 'SecondHalf'`.
 - Coverage guard:
   - Require both half rows to exist before evaluation:
     - `has_first_half_period_row_flag = 1`
@@ -47,7 +47,7 @@ Detect team matches where post-halftime pressure escalates into extreme second-h
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_sustained_second_half_siege.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_sustained_second_half_siege`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_sustained_second_half_siege`
 
 ## Example Execution
 

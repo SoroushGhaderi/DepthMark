@@ -18,11 +18,11 @@ integration edge, not a replacement for Oddspedia Silver or Gold.
 FotMob API
   -> data/fotmob/historical/  completed-date Bronze files
   -> data/fotmob/live/        current-date Live snapshots
-  -> bronze.*              raw warehouse tables
-  -> silver.*              cleaned analytical tables
-  -> gold_scenarios.*      scenario outputs
-  -> gold_signals.*        signal outputs
-  -> gold.*                shared Gold metadata and activation tables
+  -> fotmob_bronze.*              raw warehouse tables
+  -> fotmob_silver.*              cleaned analytical tables
+  -> fotmob_gold_scenarios.*      scenario outputs
+  -> fotmob_gold_signals.*        signal outputs
+  -> fotmob_gold.*                shared Gold metadata and activation tables
 
 Oddspedia
   -> data/oddspedia/{historical,live}/  daily listings, payloads, and manifests
@@ -36,7 +36,7 @@ FotMob Silver  <---- audited match relationship ---->  Oddspedia Silver
 The exact ClickHouse names for existing and future Oddspedia Silver/Gold
 outputs are source-qualified in their contracts. The current implementation
 already has Oddspedia Bronze facts and the audited
-`silver.oddspedia_match_resolution` relationship; additional Oddspedia Silver
+`oddspedia_silver.match_resolution` relationship; additional Oddspedia Silver
 and Gold outputs follow the same source-owned boundaries.
 
 ## Layer Boundaries
@@ -50,9 +50,9 @@ and Gold outputs follow the same source-owned boundaries.
    outputs.
 6. Cross-source joins are explicit integration work and must not mix raw source
    contracts or rewrite either source's canonical records.
-7. Warehouse tables must be schema-qualified as `bronze.*`,
-   `oddspedia_bronze.*`, `silver.*`, `gold_scenarios.*`, `gold_signals.*`, or
-   shared Gold metadata tables in `gold.*`.
+7. Warehouse tables must be schema-qualified as `fotmob_bronze.*`,
+   `oddspedia_bronze.*`, `fotmob_silver.*`, `fotmob_gold_scenarios.*`, `fotmob_gold_signals.*`, or
+   shared Gold metadata tables in `fotmob_gold.*`.
 
 ## Source Module Ownership
 
@@ -94,12 +94,12 @@ legacy Oddspedia layout note, see
 DepthMark uses separate Gold ClickHouse databases for separate ownership
 boundaries:
 
-- `gold_scenarios.*`: scenario output tables.
-- `gold_signals.*`: signal output tables.
-- `gold.*`: shared Gold metadata and serving tables such as
-  `gold.signal_activations`.
+- `fotmob_gold_scenarios.*`: scenario output tables.
+- `fotmob_gold_signals.*`: signal output tables.
+- `fotmob_gold.*`: shared Gold metadata and serving tables such as
+  `fotmob_gold.signal_activations`.
 
-Scenario SQL targets `gold_scenarios.scenario_*`. Scenario bulk execution is
+Scenario SQL targets `fotmob_gold_scenarios.scenario_*`. Scenario bulk execution is
 enabled in `scripts/fotmob/load_fotmob_gold.py` and can be run with
 `--part all` or `--part scenarios`. See
 `docs/adr/0004-keep-gold-scenario-bulk-disabled-until-validated.md`.
@@ -153,10 +153,8 @@ hyphenated form. The grammar makes ownership visible without forcing both
 sources to have the same phases. `src/cli.py` is the package-command registry,
 and its contract tests require every canonical target to exist.
 
-Replaced paths remain executable compatibility adapters and print a deprecation
-warning naming the replacement. Internal orchestration, generated guidance,
-runbooks, and new automation use only canonical names. See ADR 0024 and
-`SCRIPTS_CONTRACT.md` for the migration contract. ADR 0025 defines the one
+Renamed paths are not kept as compatibility adapters (ADR 0034); every caller
+uses the canonical name. ADR 0025 defines the one
 source-neutral exception: scraping observation is exposed through a shared
 reporting command with explicit FotMob and Oddspedia adapters.
 
@@ -268,7 +266,7 @@ inclusive `--start-date/--end-date` ranges. A current month stops at today;
 explicit future scopes remain invalid.
 The canonical Event Intake flow is `discover -> prioritize -> scrape`;
 `prioritize` and `run` require `--silver-reference-window-ready`, then
-machine-verify the prior/current/following `silver.match` fixture-ID window
+machine-verify the prior/current/following `fotmob_silver.match` fixture-ID window
 before selecting source pages. All mutating date commands use a cross-process
 `data/oddspedia/locks/<sport>_<YYYYMMDD>.lock` date lock; dry runs do not
 acquire or create that lock. Discovery accepts only complete target-date
@@ -296,12 +294,11 @@ Only a row with status `published` is consumable by
 `resolve_oddspedia_events.py`; failed or partially replaced batches remain
 non-admitted.
 
-`resolve_oddspedia_events.py` searches FotMob `silver.match` for the prior,
+`resolve_oddspedia_events.py` searches FotMob `fotmob_silver.match` for the prior,
 current, and following calendar dates. It writes `not_covered` only when the
 operator asserts a complete reference window with
 `--silver-reference-window-ready`; otherwise an unmatched event remains
-`unresolved`. Earlier phase-only, umbrella, and ClickHouse-named paths remain
-compatibility adapters.
+`unresolved`.
 
 ### FotMob Silver
 
@@ -392,10 +389,10 @@ python3 scripts/quality/check_logging_style.py
 point. Python discovers contracts, applies scope, executes SQL, and reports;
 ClickHouse SQL performs duplicate grouping and identity-set reconciliation.
 
-- Duplicate checks cover all existing `bronze.*` and `silver.*` tables using
+- Duplicate checks cover all existing `fotmob_bronze.*` and `fotmob_silver.*` tables using
   `BRONZE_REQUIRED_KEYS` and `SILVER_TABLE_KEYS`, all scenario tables using
   their DDL `ORDER BY` identity, all signal tables using catalog
-  `row_identity`, and `gold.signal_activations` using `signal_instance_id`.
+  `row_identity`, and `fotmob_gold.signal_activations` using `signal_instance_id`.
 - Logical duplicates are calculated from `FINAL` and are strict failures.
   Multiple raw physical versions are reported separately as non-failing
   `ReplacingMergeTree` merge/storage diagnostics.
@@ -522,7 +519,7 @@ Current Gold inventory:
 - 344 signal SQL transforms in `clickhouse/gold/dml/signals/{match,team,player}/`
 - 344 signal catalog markdown files in `catalogs/signals/`, read only through
   `load_signal_catalog()` in `src/fotmob/gold/signal_catalog.py` (ADR 0033)
-- 1 shared activation serving table in `gold.signal_activations`
+- 1 shared activation serving table in `fotmob_gold.signal_activations`
 
 Gold SQL jobs are executed through the generic runner in
 `scripts/fotmob/run_fotmob_gold_jobs.py` and shared helpers in
@@ -583,7 +580,7 @@ Scoped derived loads share this function flow:
 5. `_commit()` uses `REPLACE PARTITION` for date/month scopes or
    `EXCHANGE TABLES` for full history.
 6. The batch records its publication status (ADR 0028) in
-   `silver.scope_publication` or `gold.scope_publication`: `committing` before
+   `fotmob_silver.scope_publication` or `fotmob_gold.scope_publication`: `committing` before
    the first commit, then `published` or `failed` with the committed tables.
 
 Date scopes reconstruct the containing month by copying unaffected target rows
@@ -602,7 +599,7 @@ External readers such as TouchDesk can apply the same rule:
 
 ```sql
 SELECT batch, partition_id, argMax(status, updated_at) AS status
-FROM gold.scope_publication
+FROM fotmob_gold.scope_publication
 GROUP BY batch, partition_id
 HAVING status != 'published'
 ```
@@ -649,19 +646,19 @@ is used to build deterministic activation IDs; the full identity chain is in
 ## Signal Activation IDs
 
 DepthMark materializes deterministic signal activation IDs into each
-`gold_signals.sig_*` source table and into the serving table
-`gold.signal_activations`.
+`fotmob_gold_signals.sig_*` source table and into the serving table
+`fotmob_gold.signal_activations`.
 
 Creation flow:
 
 1. DDL creates the activation serving table from
    `clickhouse/gold/ddl/create_table_signal_activations.sql`.
-2. Gold signal SQL jobs populate `gold_signals.sig_*` tables. Signal table DDL
+2. Gold signal SQL jobs populate `fotmob_gold_signals.sig_*` tables. Signal table DDL
    defines `signal_instance_id` with a deterministic `DEFAULT` expression based
    on the catalog `row_identity`, so existing signal INSERT SQL keeps its stable
    column list. Setup only creates missing signal tables. To apply a changed
    `row_identity` or `signal_instance_id` contract to existing tables, use an
-   explicit Table Recreation of the affected `gold_signals.sig_*` tables and
+   explicit Table Recreation of the affected `fotmob_gold_signals.sig_*` tables and
    reload them; do not use `ALTER TABLE` to patch the `signal_instance_id`
    column in place.
 3. `scripts/fotmob/build_fotmob_signal_activations.py` loads the active signals
@@ -680,8 +677,8 @@ Creation flow:
      `signal_family`, `signal_subfamily`, `signal_name`, `signal_tags`)
    - common fixture, league, venue, team, and player context when available
    - source signal row details in `source_row_json` and `source_row_columns`
-6. The same `gold.signal_activations` row also carries match-level summary
-   fields that previously lived in `gold.signal_activations_match`, including
+6. The same `fotmob_gold.signal_activations` row also carries match-level summary
+   fields that previously lived in `fotmob_gold.signal_activations_match`, including
    `match_activation_instance_id`, `activated_signal_instance_ids`,
    `activated_signal_ids`, `activated_signal_entities`,
    `activated_signal_tags`, `activated_signal_names`, `total_signal_rows`, and
@@ -691,7 +688,7 @@ Creation flow:
    failures skip activation rebuild until signals succeed or the builder is
    rerun manually.
 
-To recreate `gold.signal_activations` empty from its DDL and repopulate it:
+To recreate `fotmob_gold.signal_activations` empty from its DDL and repopulate it:
 
 ```bash
 python3 scripts/maintenance/recreate_clickhouse_tables.py --database gold --table signal_activations

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_box_dominator
+  table: fotmob_gold_signals.sig_player_shooting_goals_box_dominator
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_box_dominator.sql
 ---
 # sig_player_shooting_goals_box_dominator
@@ -26,8 +26,8 @@ Flags match-player events where a player combines elite penalty-area presence (`
 - Trigger conditions:
   - `triggered_player_touches_opposition_box >= 15`
   - `triggered_player_total_shots >= 5`
-- Triggered player identity and shooting outputs come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields for shots, chance quality, possession, and box pressure.
+- Triggered player identity and shooting outputs come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` fields for shots, chance quality, possession, and box pressure.
 - Signal adds severity diagnostics (`box_touches_above_threshold`, `shots_above_threshold`, and `box_touches_per_shot`) so dominant-box events can be ranked by both volume and territorial intensity.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_high_xg_no_shot` and `sig_player_shooting_goals_shot_volume_monster`; this signal intentionally coexists as a dual-threshold hybrid (high box touches plus high shots), requested explicitly by owner.
 
@@ -35,7 +35,7 @@ Flags match-player events where a player combines elite penalty-area presence (`
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_box_dominator.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_box_dominator`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_box_dominator`
 
 ## Example Execution
 

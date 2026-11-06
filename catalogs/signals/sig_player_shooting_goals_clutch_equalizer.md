@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_clutch_equalizer
+  table: fotmob_gold_signals.sig_player_shooting_goals_clutch_equalizer
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_clutch_equalizer.sql
 ---
 # sig_player_shooting_goals_clutch_equalizer
@@ -24,15 +24,15 @@ Detects player-level clutch scoring moments where a player restores parity late 
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Non-own goal (`is_goal = 1`, `is_own_goal = 0`) from `silver.shot`.
+  - Non-own goal (`is_goal = 1`, `is_own_goal = 0`) from `fotmob_silver.shot`.
   - Goal occurs after the 85th minute (`goal_time > 85`).
   - Goal is an equalizer (`home_score_after = away_score_after`).
 - Match/player grain:
   - Equalizer events are grouped to `match_id + team_id + player_id` to emit one row per triggered player per match.
   - First and last late-equalizer timing features are retained for sequence analysis in rare multi-event matches.
 - Match-context enrichment:
-  - Player finishing context comes from `silver.player_match_stat` (goals, xG, shot volume, shot accuracy proxy, minutes).
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player finishing context comes from `fotmob_silver.player_match_stat` (goals, xG, shot volume, shot accuracy proxy, minutes).
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity note:
   - Closest active signals are `sig_player_shooting_goals_hat_trick_hero` and `sig_player_shooting_goals_long_range_specialist`; this signal is distinct because it is specifically state-change and late-timing driven (equalizing after minute 85), not pure volume/location scoring output.
 
@@ -40,7 +40,7 @@ Detects player-level clutch scoring moments where a player restores parity late 
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_clutch_equalizer.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_clutch_equalizer`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_clutch_equalizer`
 
 ## Example Execution
 

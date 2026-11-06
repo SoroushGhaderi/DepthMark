@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_zero_flair_stalemate.sql
 ---
 # sig_match_creativity_playmaking_zero_flair_stalemate
@@ -45,7 +45,7 @@ extreme low-flair, low-separation creative stalemate.
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_zero_flair_stalemate.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_zero_flair_stalemate`
 
 ## Example Execution
 

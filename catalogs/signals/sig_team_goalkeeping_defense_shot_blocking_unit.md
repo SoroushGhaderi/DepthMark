@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_shot_blocking_unit.sql
 ---
 # sig_team_goalkeeping_defense_shot_blocking_unit
@@ -22,7 +22,7 @@ Detect team-level defensive units that post extreme shot-block volume (`>= 10`) 
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `triggered_team_shot_blocks >= 10` from `silver.period_stat` at full-match scope (`period = 'All'`) with `match_finished = 1`.
+- Trigger condition: `triggered_team_shot_blocks >= 10` from `fotmob_silver.period_stat` at full-match scope (`period = 'All'`) with `match_finished = 1`.
 - Rows are emitted at `match_team` grain with canonical `triggered_side`, so both teams can independently trigger in the same match.
 - `triggered_team_shot_blocks_above_threshold` quantifies trigger severity beyond binary activation.
 - Enrichment preserves symmetric defensive workload and pressure-context fields (interceptions, clearances, tackles, duels, aerials, shots faced, shots on target faced, keeper saves), alongside possession, pass quality, and scoreline context.
@@ -35,7 +35,7 @@ Detect team-level defensive units that post extreme shot-block volume (`>= 10`) 
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_shot_blocking_unit.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_shot_blocking_unit`
 
 ## Example Execution
 

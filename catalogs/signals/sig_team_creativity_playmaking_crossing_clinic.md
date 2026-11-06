@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_crossing_clinic
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_crossing_clinic
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_crossing_clinic.sql
 ---
 # sig_team_creativity_playmaking_crossing_clinic
@@ -26,7 +26,7 @@ Detect team-level crossing clinics where a side records at least 10 successful c
   - `triggered_team_successful_crosses >= 10`
   - `match_finished = 1`
   - Match-team rows are emitted by triggered side (`home`, `away`), so both teams can trigger in one match.
-- Successful crosses are sourced from `silver.period_stat` (`period = 'All'`) as `accurate_crosses_*`.
+- Successful crosses are sourced from `fotmob_silver.period_stat` (`period = 'All'`) as `accurate_crosses_*`.
 - Bilateral context pairs crossing execution with passing quality, territorial pressure, and chance production to distinguish sterile crossing volume from genuinely creative wing play.
 - Similarity gate note:
   - `sig_team_possession_passing_cross_accuracy_peak`: requires `>= 10` crosses and `> 40%` cross accuracy; this signal is broader and volume-first, requiring only successful-cross count.
@@ -36,7 +36,7 @@ Detect team-level crossing clinics where a side records at least 10 successful c
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_crossing_clinic.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_crossing_clinic`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_crossing_clinic`
 
 ## Example Execution
 

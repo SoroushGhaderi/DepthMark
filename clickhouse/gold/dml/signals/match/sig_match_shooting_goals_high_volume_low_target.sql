@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_high_volume_low_target (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_high_volume_low_target (
     match_id,
     match_date,
     home_team_id,
@@ -104,8 +104,8 @@ WITH base_stats AS (
             3
         )) AS match_total_xg,
         coalesce(m.home_score, 0) + coalesce(m.away_score, 0) AS match_total_goals
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

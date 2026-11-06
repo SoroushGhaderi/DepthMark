@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_double_red_drama
+  table: fotmob_gold_signals.sig_match_discipline_cards_double_red_drama
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_double_red_drama.sql
 ---
 # sig_match_discipline_cards_double_red_drama
@@ -23,7 +23,7 @@ Flags bilateral dismissal matches where both teams lose at least one player to a
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - `red_cards_home >= 1 AND red_cards_away >= 1` from `silver.period_stat` at `period = 'All'`.
+  - `red_cards_home >= 1 AND red_cards_away >= 1` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) for stable team-grain downstream usage.
 - Output preserves red-card symmetry plus card-to-foul conversion, defensive workload, and possession context to separate balanced chaos from one-sided indiscipline.
 
@@ -31,7 +31,7 @@ Flags bilateral dismissal matches where both teams lose at least one player to a
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_double_red_drama.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_double_red_drama`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_double_red_drama`
 
 ## Example Execution
 

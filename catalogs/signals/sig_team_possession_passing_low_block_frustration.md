@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_low_block_frustration
+  table: fotmob_gold_signals.sig_team_possession_passing_low_block_frustration
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_low_block_frustration.sql
 ---
 # sig_team_possession_passing_low_block_frustration
@@ -30,7 +30,7 @@ Triggers when a team records extreme cross volume in one match, indicating wide-
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_low_block_frustration.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_low_block_frustration`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_low_block_frustration`
 
 ## Example Execution
 

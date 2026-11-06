@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_keeper_reckless
+  table: fotmob_gold_signals.sig_player_discipline_cards_keeper_reckless
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_keeper_reckless.sql
 ---
 # sig_player_discipline_cards_keeper_reckless
@@ -26,16 +26,16 @@ Flags goalkeeper bookings (yellow/red) to surface discipline breakdowns in the l
 - Trigger condition:
   - `triggered_player_total_cards_match >= 1`
   - `is_goalkeeper = 1`
-- Card events are sourced from `silver.card` and classified into yellow/red markers using `card_type` and `description`.
+- Card events are sourced from `fotmob_silver.card` and classified into yellow/red markers using `card_type` and `description`.
 - The signal emits one row per goalkeeper per match and stores first-card timing/type plus total yellow/red card counts for severity profiling.
-- Bilateral match context from `silver.period_stat` (`period = 'All'`) includes fouls, cards, keeper saves, and possession for interpretation of game tone and pressure.
+- Bilateral match context from `fotmob_silver.period_stat` (`period = 'All'`) includes fouls, cards, keeper saves, and possession for interpretation of game tone and pressure.
 - Output keeps both player identity (`triggered_player_*`) and team identity (`triggered_team_*`) for contract-compliant player-grain traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_keeper_reckless.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_keeper_reckless`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_keeper_reckless`
 
 ## Example Execution
 

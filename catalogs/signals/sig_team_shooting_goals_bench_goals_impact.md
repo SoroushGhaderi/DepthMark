@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_bench_goals_impact
+  table: fotmob_gold_signals.sig_team_shooting_goals_bench_goals_impact
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_bench_goals_impact.sql
 ---
 # sig_team_shooting_goals_bench_goals_impact
@@ -24,9 +24,9 @@ Detect team scoring performances where the bench contributes at least two non-ow
 
 - Trigger condition:
   - `triggered_team_substitute_non_own_goals >= 2`
-- Substitute scorers are derived from `silver.match_personnel` (`role = 'substitute'`, `substitution_time > 0`) joined to non-own goals in `silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
+- Substitute scorers are derived from `fotmob_silver.match_personnel` (`role = 'substitute'`, `substitution_time > 0`) joined to non-own goals in `fotmob_silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
 - Goal events are counted only when the goal effective minute (`goal_time + goal_overload_time`) is at or after the recorded substitution time.
-- Trigger is evaluated separately for home and away teams in finished matches (`silver.match.match_finished = 1`).
+- Trigger is evaluated separately for home and away teams in finished matches (`fotmob_silver.match.match_finished = 1`).
 - Bilateral output includes substitute-goal volume, substitute-scorer spread, timing markers, and shooting/possession context as `triggered_team_*` vs `opponent_*` metrics.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_super_sub_goal` and `sig_team_shooting_goals_shared_scoring`; this signal is distinct because it is team-level and bench-contribution driven (`>= 2` substitute non-own goals), rather than player-level fast-impact scoring or broad scorer-diversity triggers.
 
@@ -34,7 +34,7 @@ Detect team scoring performances where the bench contributes at least two non-ow
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_bench_goals_impact.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_bench_goals_impact`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_bench_goals_impact`
 
 ## Example Execution
 

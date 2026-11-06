@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_discipline_cards_referee_showdown (
+INSERT INTO fotmob_gold_signals.sig_match_discipline_cards_referee_showdown (
     match_id,
     match_date,
     home_team_id,
@@ -83,7 +83,7 @@ WITH captain_roster AS (
             coalesce(mp.name, 'Unknown'),
             coalesce(mp._loaded_at, toDateTime('1970-01-01 00:00:00'))
         ) AS captain_player_name
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id > 0
       AND lowerUTF8(coalesce(mp.team_side, '')) IN ('home', 'away')
@@ -109,7 +109,7 @@ card_events AS (
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
             OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'sent off') > 0
         ) AS is_red_card
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -253,8 +253,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_away, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_home, 0) - coalesce(ps.ball_possession_away, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN dual_captain_matches AS dcm
@@ -356,8 +356,8 @@ SELECT
     toFloat32(coalesce(ps.ball_possession_home, 0)) AS opponent_possession_pct,
     toFloat32(round(coalesce(ps.ball_possession_away, 0) - coalesce(ps.ball_possession_home, 0), 1)) AS possession_delta_pct
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 INNER JOIN dual_captain_matches AS dcm

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_goalkeeping_defense_recovery_dominance (
+INSERT INTO fotmob_gold_signals.sig_team_goalkeeping_defense_recovery_dominance (
     match_id,
     match_date,
     home_team_id,
@@ -61,7 +61,7 @@ WITH team_recoveries AS (
         p.match_date AS match_date,
         p.team_id AS team_id,
         toInt32(sum(coalesce(p.recoveries, 0))) AS team_total_recoveries
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
     GROUP BY
         p.match_id,
@@ -74,7 +74,7 @@ match_recovery_pivot AS (
         m2.match_date AS match_date,
         toInt32(coalesce(home_recovery.team_total_recoveries, 0)) AS home_team_recoveries,
         toInt32(coalesce(away_recovery.team_total_recoveries, 0)) AS away_team_recoveries
-    FROM silver.match AS m2
+    FROM fotmob_silver.match AS m2
     LEFT JOIN team_recoveries AS home_recovery
         ON home_recovery.match_id = m2.match_id
        AND home_recovery.match_date = m2.match_date
@@ -185,8 +185,8 @@ SELECT
     toInt32(coalesce(m.away_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.home_score, 0) - coalesce(m.away_score, 0)) AS goal_delta,
     toInt8(if(coalesce(m.away_score, 0) = 0, 1, 0)) AS triggered_team_clean_sheet_flag
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -293,8 +293,8 @@ SELECT
     toInt32(coalesce(m.home_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.away_score, 0) - coalesce(m.home_score, 0)) AS goal_delta,
     toInt8(if(coalesce(m.home_score, 0) = 0, 1, 0)) AS triggered_team_clean_sheet_flag
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

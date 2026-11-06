@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_shooting_goals_sustained_barrage (
+INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_sustained_barrage (
     match_id,
     match_date,
     home_team_id,
@@ -65,8 +65,8 @@ WITH shot_events AS (
         ) AS shot_effective_minute,
         toInt32(coalesce(s.is_on_target, 0)) AS is_on_target,
         toFloat32(coalesce(s.expected_goals, 0)) AS shot_xg
-    FROM silver.shot AS s
-    INNER JOIN silver.match AS m
+    FROM fotmob_silver.shot AS s
+    INNER JOIN fotmob_silver.match AS m
         ON m.match_id = s.match_id
     WHERE s.match_id > 0
       AND m.match_finished = 1
@@ -292,8 +292,8 @@ SELECT
     toInt32(coalesce(ps.corners_home, 0)) AS triggered_team_corners,
     toInt32(coalesce(ps.corners_away, 0)) AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -434,8 +434,8 @@ SELECT
     toInt32(coalesce(ps.corners_away, 0)) AS triggered_team_corners,
     toInt32(coalesce(ps.corners_home, 0)) AS opponent_corners
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

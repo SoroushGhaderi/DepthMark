@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_keeper_save_efficiency
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_keeper_save_efficiency
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_keeper_save_efficiency.sql
 ---
 # sig_player_goalkeeping_defense_keeper_save_efficiency
@@ -28,12 +28,12 @@ while enforcing a minimum pressure floor (`>= 4` shots on target faced).
   - goalkeeper-only scope (`is_goalkeeper = 1`, finished matches)
   - `triggered_player_shots_on_target_faced >= 4`
   - `triggered_player_saves = triggered_player_shots_on_target_faced` (save rate `100%`)
-- On-target goalkeeper events are derived from `silver.shot` at `(match_id, keeper_id)` grain:
+- On-target goalkeeper events are derived from `fotmob_silver.shot` at `(match_id, keeper_id)` grain:
   - on-target faced: `is_on_target = 1` and `is_saved_off_line = 0`
   - save: `is_on_target = 1`, `is_goal = 0`, `is_saved_off_line = 0`
   - goal conceded: `is_on_target = 1`, `is_goal = 1`, `is_saved_off_line = 0`
 - Trigger rollup preserves both player identity context and bilateral team context from
-  `silver.period_stat` (`period = 'All'`) for workload, chance-quality, control, and passing comparison.
+  `fotmob_silver.period_stat` (`period = 'All'`) for workload, chance-quality, control, and passing comparison.
 - Similarity gate note: closest active signals are `sig_player_goalkeeping_defense_brick_wall` and
   `sig_player_goalkeeping_defense_clean_sheet_locked`; this signal intentionally coexists because it
   centers on perfect save efficiency (`100%`) with a moderate volume floor (`>=4` SOT faced), rather than
@@ -43,7 +43,7 @@ while enforcing a minimum pressure floor (`>= 4` shots on target faced).
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_keeper_save_efficiency.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_keeper_save_efficiency`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_keeper_save_efficiency`
 
 ## Example Execution
 

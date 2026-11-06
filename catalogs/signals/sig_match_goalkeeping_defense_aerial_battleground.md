@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_aerial_battleground
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_aerial_battleground
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_aerial_battleground.sql
 ---
 # sig_match_goalkeeping_defense_aerial_battleground
@@ -22,8 +22,8 @@ Detect finished matches where aerial contest intensity is extreme, then emit sid
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(coalesce(aerials_won_home, 0) + coalesce(aerials_won_away, 0)) > 60` from `silver.period_stat` at `period = 'All'`.
-- Only finished matches are included (`silver.match.match_finished = 1`) with valid `match_id > 0`.
+- Trigger condition: `(coalesce(aerials_won_home, 0) + coalesce(aerials_won_away, 0)) > 60` from `fotmob_silver.period_stat` at `period = 'All'`.
+- Only finished matches are included (`fotmob_silver.match.match_finished = 1`) with valid `match_id > 0`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Trigger severity is explicit via `match_total_aerials_won_above_threshold = match_total_aerials_won - 60` and balance is captured by `match_aerials_won_balance_abs`.
 - Symmetric enrichment preserves physical and defensive context using duels, tackles, interceptions, clearances, pressure faced, keeper saves, fouls, possession, pass accuracy, and scoreline metrics.
@@ -36,7 +36,7 @@ Detect finished matches where aerial contest intensity is extreme, then emit sid
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_aerial_battleground.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_aerial_battleground`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_aerial_battleground`
 
 ## Example Execution
 

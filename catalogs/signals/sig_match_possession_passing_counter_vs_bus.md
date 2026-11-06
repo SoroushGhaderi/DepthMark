@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_counter_vs_bus
+  table: fotmob_gold_signals.sig_match_possession_passing_counter_vs_bus
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_counter_vs_bus.sql
 ---
 # sig_match_possession_passing_counter_vs_bus
@@ -23,7 +23,7 @@ Triggers when a match shows an extreme territorial split: one side monopolizes p
 ## Tactical And Statistical Logic
 
 - Trigger condition: one side has `ball_possession > 70` and the opposing side has `counter_attacks_proxy > 5`.
-- Because `silver.period_stat` has no native counter-attack count, `counter_attacks_proxy` is computed from `silver.shot.situation` text patterns matching `counter|fast`.
+- Because `fotmob_silver.period_stat` has no native counter-attack count, `counter_attacks_proxy` is computed from `fotmob_silver.shot.situation` text patterns matching `counter|fast`.
 - Signal emits two rows per qualifying match (`triggered_side in {'home','away'}`) for bilateral side-oriented analysis.
 - Output preserves role identity (`possession_dominant_side`, `counter_attacking_side`) so downstream users can separate controller and transition side explicitly.
 - Adds passing quality, shot threat, box touches, clearances, and xG context to distinguish sterile dominance from dangerous transition games.
@@ -32,7 +32,7 @@ Triggers when a match shows an extreme territorial split: one side monopolizes p
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_counter_vs_bus.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_counter_vs_bus`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_counter_vs_bus`
 
 ## Example Execution
 

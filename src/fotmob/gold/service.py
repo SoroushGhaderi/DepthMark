@@ -196,7 +196,7 @@ class GoldService:
         for script_path in activation_scripts:
             if dry_run:
                 logger.info(
-                    "[dry-run] Activation plan | scope=%s target=gold.signal_activations "
+                    "[dry-run] Activation plan | scope=%s target=fotmob_gold.signal_activations "
                     "input=all selected signal history output=%s operations=stage; validate; "
                     "scoped partition replacement or full-history exchange; script=%s",
                     scope.label,

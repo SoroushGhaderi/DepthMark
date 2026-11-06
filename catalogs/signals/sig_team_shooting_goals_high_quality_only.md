@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_high_quality_only
+  table: fotmob_gold_signals.sig_team_shooting_goals_high_quality_only
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_high_quality_only.sql
 ---
 # sig_team_shooting_goals_high_quality_only
@@ -24,7 +24,7 @@ Detect team matches where average chance quality per shot is elite (`xG per shot
 
 - Trigger condition:
   - `triggered_team_xg_per_shot > 0.25`
-- Trigger is evaluated on finished matches only using full-match aggregates from `silver.period_stat` (`period = 'All'`).
+- Trigger is evaluated on finished matches only using full-match aggregates from `fotmob_silver.period_stat` (`period = 'All'`).
 - Signal keeps bilateral context with symmetric `triggered_team_*` and `opponent_*` metrics for chance quality, shot volume, execution, possession, circulation, and territory.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_offensive_masterclass`, `sig_team_shooting_goals_shooting_gallery`, and `sig_team_shooting_goals_xg_overperformance_team`; this signal intentionally coexists as a stricter quality variant (`xG per shot > 0.25`) versus `offensive_masterclass` (`> 0.20`) and still does not require extreme shot volume or extreme goal-vs-xG outperformance.
 
@@ -32,7 +32,7 @@ Detect team matches where average chance quality per shot is elite (`xG per shot
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_high_quality_only.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_high_quality_only`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_high_quality_only`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_cb_playmaker_defense
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_cb_playmaker_defense
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_cb_playmaker_defense.sql
 ---
 # sig_player_goalkeeping_defense_cb_playmaker_defense
@@ -30,9 +30,9 @@ Flag center-back performances that combine high anticipation output and high dis
   - `triggered_player_position_id IN (3, 4)` (center-back proxy)
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Position scope is resolved from `silver.match_personnel` with starter-priority role resolution per `(match_id, person_id)`.
-- Player defensive and passing diagnostics are sourced from `silver.player_match_stat`, including interceptions, tackles, clearances, duels, pass quality, and pass-territory proxy metrics.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` context plus explicit deltas.
+- Position scope is resolved from `fotmob_silver.match_personnel` with starter-priority role resolution per `(match_id, person_id)`.
+- Player defensive and passing diagnostics are sourced from `fotmob_silver.player_match_stat`, including interceptions, tackles, clearances, duels, pass quality, and pass-territory proxy metrics.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` context plus explicit deltas.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_interception_king`: close defensive anticipation overlap, but that trigger is single-metric interceptions (`>= 7`) and does not require heavy passing output.
   - `sig_player_possession_passing_deep_playmaker`: close center-back passing overlap, but that signal belongs to possession/passing and triggers only on accurate passes (`>= 80`) without defensive interception criteria.
@@ -42,7 +42,7 @@ Flag center-back performances that combine high anticipation output and high dis
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_cb_playmaker_defense.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_cb_playmaker_defense`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_cb_playmaker_defense`
 
 ## Example Execution
 

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_goalkeeping_defense_early_lockdown (
+INSERT INTO fotmob_gold_signals.sig_team_goalkeeping_defense_early_lockdown (
     match_id,
     match_date,
     home_team_id,
@@ -60,7 +60,7 @@ INSERT INTO gold_signals.sig_team_goalkeeping_defense_early_lockdown (
 -- Signal: sig_team_goalkeeping_defense_early_lockdown
 -- Intent: detect teams that suppress all opposition shots in the opening 20 minutes, then
 --         preserve bilateral first-window, defending, control, and result context.
--- Trigger: team allows 0 opposition shots in minutes 1-20 (`silver.shot.minute <= 20`).
+-- Trigger: team allows 0 opposition shots in minutes 1-20 (`fotmob_silver.shot.minute <= 20`).
 
 WITH first_20_shot_context AS (
     SELECT
@@ -94,8 +94,8 @@ WITH first_20_shot_context AS (
             ),
             0
         ) AS match_first_20_first_shot_minute
-    FROM silver.match AS m
-    LEFT JOIN silver.shot AS s
+    FROM fotmob_silver.match AS m
+    LEFT JOIN fotmob_silver.shot AS s
         ON s.match_id = m.match_id
        AND s.minute IS NOT NULL
        AND s.minute <= 20
@@ -141,8 +141,8 @@ base_stats AS (
         f.home_first_20_first_shot_minute AS home_first_20_first_shot_minute,
         f.away_first_20_first_shot_minute AS away_first_20_first_shot_minute,
         f.match_first_20_first_shot_minute AS match_first_20_first_shot_minute
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

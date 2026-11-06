@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_shot_accuracy_collapse
+  table: fotmob_gold_signals.sig_team_shooting_goals_shot_accuracy_collapse
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shot_accuracy_collapse.sql
 ---
 # sig_team_shooting_goals_shot_accuracy_collapse
@@ -36,7 +36,7 @@ Detect high-volume team shooting performances where execution collapses, measure
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_shot_accuracy_collapse.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_shot_accuracy_collapse`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_shot_accuracy_collapse`
 
 ## Example Execution
 

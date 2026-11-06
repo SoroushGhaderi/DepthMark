@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_discipline_dominance
+  table: fotmob_gold_signals.sig_match_discipline_cards_discipline_dominance
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_discipline_dominance.sql
 ---
 # sig_match_discipline_cards_discipline_dominance
@@ -35,7 +35,7 @@ Flags match-team rows where the winning side also leads the physical battle (fou
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_discipline_dominance.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_discipline_dominance`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_discipline_dominance`
 
 ## Example Execution
 

@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS gold.signal_activations (
+CREATE TABLE IF NOT EXISTS fotmob_gold.signal_activations (
     signal_instance_id String,
     signal_id LowCardinality(String),
     signal_id_version LowCardinality(String) DEFAULT 'v1',

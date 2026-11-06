@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_dead_ball_specialists
+  table: fotmob_gold_signals.sig_team_shooting_goals_dead_ball_specialists
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_dead_ball_specialists.sql
 ---
 # sig_team_shooting_goals_dead_ball_specialists
@@ -24,7 +24,7 @@ Detect teams that produce at least two goals from dead-ball shooting situations,
 
 - Trigger condition:
   - `triggered_team_dead_ball_goals >= 2`
-- Dead-ball goal taxonomy uses `silver.shot.situation IN ('FromCorner', 'FreeKick', 'SetPiece')` with own goals excluded (`is_own_goal = 0`).
+- Dead-ball goal taxonomy uses `fotmob_silver.shot.situation IN ('FromCorner', 'FreeKick', 'SetPiece')` with own goals excluded (`is_own_goal = 0`).
 - Trigger is evaluated independently for home and away teams in finished matches.
 - Bilateral output is preserved through `triggered_team_*` and `opponent_*` metrics for tactical comparison.
 - Similarity gate note: closest active signals are `sig_team_possession_passing_set_piece_focus` and `sig_match_possession_passing_set_piece_dominance`; this signal is distinct because it is finishing-outcome driven (`>= 2` dead-ball goals) rather than possession/restart-volume driven.
@@ -33,7 +33,7 @@ Detect teams that produce at least two goals from dead-ball shooting situations,
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_dead_ball_specialists.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_dead_ball_specialists`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_dead_ball_specialists`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_keeper_masterclass_duel.sql
 ---
 # sig_match_goalkeeping_defense_keeper_masterclass_duel
@@ -41,7 +41,7 @@ Detect finished matches where both goalkeepers overperform simultaneously by pre
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_keeper_masterclass_duel.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_keeper_masterclass_duel`
 
 ## Example Execution
 

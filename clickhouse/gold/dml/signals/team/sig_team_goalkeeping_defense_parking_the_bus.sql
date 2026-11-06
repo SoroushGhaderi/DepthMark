@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_goalkeeping_defense_parking_the_bus (
+INSERT INTO fotmob_gold_signals.sig_team_goalkeeping_defense_parking_the_bus (
     match_id,
     match_date,
     home_team_id,
@@ -163,8 +163,8 @@ SELECT
         1
     )) AS pass_accuracy_delta_pct,
     toInt8(if(coalesce(m.away_score, 0) = 0, 1, 0)) AS triggered_team_clean_sheet_flag
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -274,8 +274,8 @@ SELECT
         1
     )) AS pass_accuracy_delta_pct,
     toInt8(if(coalesce(m.home_score, 0) = 0, 1, 0)) AS triggered_team_clean_sheet_flag
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

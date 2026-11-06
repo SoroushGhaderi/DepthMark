@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_unlikely_creative_source
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_unlikely_creative_source
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unlikely_creative_source.sql
 ---
 # sig_team_creativity_playmaking_unlikely_creative_source
@@ -28,11 +28,11 @@ combining for at least two assists in a finished match.
   - `trigger_threshold_required_usual_playing_position_id = 1`
   - `trigger_center_back_position_ids = '3,4'`
   - `match_finished = 1`
-- Center-back role gate is resolved from `silver.match_personnel` with starter-priority position
+- Center-back role gate is resolved from `fotmob_silver.match_personnel` with starter-priority position
   resolution per player (`argMax(..., if(role='starter', 2, 1))`).
-- Center-back creative output is aggregated from `silver.player_match_stat` at team-match grain:
+- Center-back creative output is aggregated from `fotmob_silver.player_match_stat` at team-match grain:
   - assists, key passes (`chances_created`), expected assists, and creator concentration metrics.
-- Bilateral team context is retained from `silver.period_stat` (`period = 'All'`) and `silver.match`
+- Bilateral team context is retained from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`
   for passing control, shot output, xG, possession, and scoreline.
 - Similarity gate note:
   - Closest active team-playmaking overlap is `sig_team_creativity_playmaking_bench_creative_impact`, which is role-scoped and assist-aware, but it models substitute impact rather than defensive-line creators.
@@ -43,7 +43,7 @@ combining for at least two assists in a finished match.
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unlikely_creative_source.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_unlikely_creative_source`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_unlikely_creative_source`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_clearance_machine
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_clearance_machine
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_clearance_machine.sql
 ---
 # sig_player_goalkeeping_defense_clearance_machine
@@ -29,9 +29,9 @@ box-protection and pressure-release performances.
   - `triggered_player_usual_playing_position_id = 1` (defender gate)
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Defender scope is derived from `silver.match_personnel` using starter-priority role resolution, then joined to `silver.player_match_stat` for per-player defensive outputs.
+- Defender scope is derived from `fotmob_silver.match_personnel` using starter-priority role resolution, then joined to `fotmob_silver.player_match_stat` for per-player defensive outputs.
 - Player diagnostics retain clearances plus interception/tackle/duel/aerial/recovery and passing context to distinguish pure emergency defending from all-around defensive dominance.
-- Bilateral team/opponent context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric defensive, control, and circulation fields.
+- Bilateral team/opponent context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric defensive, control, and circulation fields.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_tackle_master`: same entity/family/subfamily and defender scope, but trigger logic is tackle-perfection (`>= 6` tackles, `100%` success), not clearance volume.
   - `sig_player_goalkeeping_defense_aerial_stronghold`: same entity/family/subfamily and defender scope, but trigger logic is aerial dominance (`>= 10` aerials won), not clearances.
@@ -40,7 +40,7 @@ box-protection and pressure-release performances.
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_clearance_machine.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_clearance_machine`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_clearance_machine`
 
 ## Example Execution
 

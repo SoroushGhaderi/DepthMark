@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_isolated_target
+  table: fotmob_gold_signals.sig_player_possession_passing_isolated_target
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_isolated_target.sql
 ---
 # sig_player_possession_passing_isolated_target
@@ -27,16 +27,16 @@ Triggers when a forward records fewer than 5 touches while playing more than 45 
   - `triggered_player_usual_playing_position_id = 3`
   - `triggered_player_minutes_played > 45`
   - `triggered_player_touches < 5`
-- Forward classification uses `silver.match_personnel.usual_playing_position_id = 3`, with the match-specific `position_id` also stored for formation diagnostics.
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent pass, possession, box-touch, xG, and shot context from `silver.period_stat` (`period = 'All'`) to distinguish tactical isolation from general team scarcity.
+- Forward classification uses `fotmob_silver.match_personnel.usual_playing_position_id = 3`, with the match-specific `position_id` also stored for formation diagnostics.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent pass, possession, box-touch, xG, and shot context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish tactical isolation from general team scarcity.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_isolated_target.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_isolated_target`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_isolated_target`
 
 ## Example Execution
 

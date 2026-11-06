@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_one_sided_vision
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_one_sided_vision
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_one_sided_vision.sql
 ---
 # sig_team_creativity_playmaking_one_sided_vision
@@ -27,10 +27,10 @@ producing at least 10 key passes while the opponent produces none.
   - `triggered_team_key_passes >= 10`
   - `opponent_key_passes = 0`
 - Trigger source:
-  - Team key passes and expected assists are aggregated from `silver.player_match_stat`
+  - Team key passes and expected assists are aggregated from `fotmob_silver.player_match_stat`
     (`sum(chances_created)`, `sum(expected_assists)`) by `match_id + team_id`.
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - Emits one row per triggered side (`home` / `away`) with bilateral context (`triggered_team_*`
@@ -47,7 +47,7 @@ producing at least 10 key passes while the opponent produces none.
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_one_sided_vision.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_one_sided_vision`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_one_sided_vision`
 
 ## Example Execution
 

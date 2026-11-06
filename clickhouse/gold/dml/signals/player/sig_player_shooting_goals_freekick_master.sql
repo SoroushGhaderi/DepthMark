@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_freekick_master (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_freekick_master (
     match_id,
     match_date,
     home_team_id,
@@ -68,7 +68,7 @@ WITH player_direct_free_kick_stats AS (
         toInt32(sum(if(coalesce(s.is_goal, 0) = 1, 1, 0))) AS triggered_player_direct_free_kick_goals,
         toInt32(sum(if(coalesce(s.is_on_target, 0) = 1, 1, 0))) AS triggered_player_direct_free_kick_shots_on_target,
         toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS triggered_player_direct_free_kick_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.player_id, 0) > 0
       AND coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_own_goal, 0) = 0
@@ -87,7 +87,7 @@ team_direct_free_kick_stats AS (
         toInt32(count()) AS team_direct_free_kick_shots,
         toInt32(sum(if(coalesce(s.is_goal, 0) = 1, 1, 0))) AS team_direct_free_kick_goals,
         toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS team_direct_free_kick_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_own_goal, 0) = 0
       AND s.situation = 'FreeKick'
@@ -289,14 +289,14 @@ SELECT
         1
     ), 0.0)) AS player_share_of_team_direct_free_kick_goals_pct
 
-FROM silver.player_match_stat AS p
+FROM fotmob_silver.player_match_stat AS p
 INNER JOIN player_direct_free_kick_stats AS dfk
     ON dfk.match_id = p.match_id
    AND dfk.player_id = p.player_id
    AND dfk.team_id = p.team_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN team_direct_free_kick_stats AS tdfs_triggered

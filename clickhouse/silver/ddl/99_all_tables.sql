@@ -1,10 +1,10 @@
 -- Consolidated Silver layer DDL
 -- Creates silver database and all silver tables.
 
-CREATE DATABASE IF NOT EXISTS silver;
+CREATE DATABASE IF NOT EXISTS fotmob_silver;
 
--- silver.match
-CREATE TABLE IF NOT EXISTS silver.match
+-- fotmob_silver.match
+CREATE TABLE IF NOT EXISTS fotmob_silver.match
 (
     match_id                        Int32,
     match_date                      Date,
@@ -59,8 +59,8 @@ ENGINE = ReplacingMergeTree(_loaded_at)
 PARTITION BY toYYYYMM(match_date)
 ORDER BY match_id;
 
--- silver.period_stat
-CREATE TABLE IF NOT EXISTS silver.period_stat
+-- fotmob_silver.period_stat
+CREATE TABLE IF NOT EXISTS fotmob_silver.period_stat
 (
     match_id                            Int32,
     match_date                          Date,
@@ -171,8 +171,8 @@ ENGINE = ReplacingMergeTree(_loaded_at)
 PARTITION BY toYYYYMM(match_date)
 ORDER BY (match_id, period);
 
--- silver.player_match_stat
-CREATE TABLE IF NOT EXISTS silver.player_match_stat
+-- fotmob_silver.player_match_stat
+CREATE TABLE IF NOT EXISTS fotmob_silver.player_match_stat
 (
     match_id                 Int32,
     match_date               Date,
@@ -237,8 +237,8 @@ ENGINE = ReplacingMergeTree(_loaded_at)
 PARTITION BY toYYYYMM(match_date)
 ORDER BY (match_id, player_id);
 
--- silver.momentum
-CREATE TABLE IF NOT EXISTS silver.momentum
+-- fotmob_silver.momentum
+CREATE TABLE IF NOT EXISTS fotmob_silver.momentum
 (
     match_id      Int32,
     match_date    Date,
@@ -251,8 +251,8 @@ ENGINE = ReplacingMergeTree(_loaded_at)
 PARTITION BY toYYYYMM(match_date)
 ORDER BY (match_id, minute);
 
--- silver.shot
-CREATE TABLE IF NOT EXISTS silver.shot
+-- fotmob_silver.shot
+CREATE TABLE IF NOT EXISTS fotmob_silver.shot
 (
     match_id                    Int32,
     match_date                  Date,
@@ -297,8 +297,8 @@ ENGINE = ReplacingMergeTree(_loaded_at)
 PARTITION BY toYYYYMM(match_date)
 ORDER BY (match_id, shot_id);
 
--- silver.card
-CREATE TABLE IF NOT EXISTS silver.card
+-- fotmob_silver.card
+CREATE TABLE IF NOT EXISTS fotmob_silver.card
 (
     match_id        Int32,
     match_date      Date,
@@ -318,8 +318,8 @@ ENGINE = ReplacingMergeTree(_loaded_at)
 PARTITION BY toYYYYMM(match_date)
 ORDER BY (match_id, event_id);
 
--- silver.match_personnel
-CREATE TABLE IF NOT EXISTS silver.match_personnel
+-- fotmob_silver.match_personnel
+CREATE TABLE IF NOT EXISTS fotmob_silver.match_personnel
 (
     match_id                  Int32,
     match_date                Date,
@@ -348,8 +348,8 @@ ENGINE = ReplacingMergeTree(_loaded_at)
 PARTITION BY toYYYYMM(match_date)
 ORDER BY (match_id, team_side, role, person_id);
 
--- silver.team_form
-CREATE TABLE IF NOT EXISTS silver.team_form
+-- fotmob_silver.team_form
+CREATE TABLE IF NOT EXISTS fotmob_silver.team_form
 (
     match_id            Int32,
     match_date          Date,

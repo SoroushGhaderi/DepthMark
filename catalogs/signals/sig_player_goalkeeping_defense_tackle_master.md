@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_tackle_master
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_tackle_master
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_tackle_master.sql
 ---
 # sig_player_goalkeeping_defense_tackle_master
@@ -28,9 +28,9 @@ Flags defender performances with high-volume perfect tackling (`>= 6` wins and `
   - `triggered_player_tackle_attempts = triggered_player_tackles_won` (perfect tackle success)
   - `triggered_player_usual_playing_position_id = 1` (defender scope)
   - `is_goalkeeper = 0`
-- Player tackle and defensive-action metrics are sourced from `silver.player_match_stat`.
-- Defender scope comes from `silver.match_personnel` (`usual_playing_position_id = 1`) using starter-priority resolution across personnel rows per match.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics for tackles, duels, interceptions, clearances, fouls, possession, and pass accuracy.
+- Player tackle and defensive-action metrics are sourced from `fotmob_silver.player_match_stat`.
+- Defender scope comes from `fotmob_silver.match_personnel` (`usual_playing_position_id = 1`) using starter-priority resolution across personnel rows per match.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics for tackles, duels, interceptions, clearances, fouls, possession, and pass accuracy.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_brick_wall`: same family/subfamily but goalkeeper save-volume logic; no overlap with defender tackle trigger.
   - `sig_player_goalkeeping_defense_reflex_save_streak`: same family/subfamily but rolling-window save burst logic; no overlap with tackle trigger.
@@ -40,7 +40,7 @@ Flags defender performances with high-volume perfect tackling (`>= 6` wins and `
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_tackle_master.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_tackle_master`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_tackle_master`
 
 ## Example Execution
 

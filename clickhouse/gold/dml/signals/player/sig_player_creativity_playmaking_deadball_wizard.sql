@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_creativity_playmaking_deadball_wizard (
+INSERT INTO fotmob_gold_signals.sig_player_creativity_playmaking_deadball_wizard (
     match_id,
     match_date,
     home_team_id,
@@ -77,7 +77,7 @@ WITH
             countIf(coalesce(s.is_on_target, 0) = 1) AS triggered_player_corner_assisted_shots_on_target,
             toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3))
                 AS triggered_player_corner_assisted_shot_expected_goals
-        FROM silver.shot AS s
+        FROM fotmob_silver.shot AS s
         WHERE s.situation = 'FromCorner'
           AND s.assist_player_id IS NOT NULL
           AND s.team_id IS NOT NULL
@@ -94,7 +94,7 @@ WITH
             countIf(coalesce(s.is_goal, 0) = 1 AND coalesce(s.is_own_goal, 0) = 0)
                 AS team_corner_goals,
             count() AS team_corner_shots
-        FROM silver.shot AS s
+        FROM fotmob_silver.shot AS s
         WHERE s.situation = 'FromCorner'
           AND s.team_id IS NOT NULL
         GROUP BY
@@ -353,14 +353,14 @@ SELECT
         0.0
     )) AS player_share_of_team_crosses_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN corner_player_assists AS cpa
     ON cpa.match_id = p.match_id
    AND cpa.triggered_player_id = p.player_id
    AND cpa.triggered_team_id = p.team_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN corner_team_output AS tco

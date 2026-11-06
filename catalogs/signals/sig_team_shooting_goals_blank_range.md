@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_blank_range
+  table: fotmob_gold_signals.sig_team_shooting_goals_blank_range
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_blank_range.sql
 ---
 # sig_team_shooting_goals_blank_range
@@ -33,7 +33,7 @@ Detect team-level finishing collapses where chance creation was strong (xG > 2.5
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_blank_range.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_blank_range`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_blank_range`
 
 ## Example Execution
 

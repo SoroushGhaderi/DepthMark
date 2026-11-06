@@ -1,5 +1,5 @@
 -- scenario_line_breaker: deep distributors breaking lines with high-volume accurate long passing
-INSERT INTO gold_scenarios.scenario_line_breaker
+INSERT INTO fotmob_gold_scenarios.scenario_line_breaker
 (
     -- 1. Match Identity & Result Context
     match_id,
@@ -66,8 +66,8 @@ SELECT
         WHEN g.away_score > g.home_score THEN 'away'
         ELSE 'draw'
     END AS winning_side
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS g
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS g
     ON p.match_id = g.match_id
 WHERE
     -- Outfield players with substantial minutes to represent true role profile.

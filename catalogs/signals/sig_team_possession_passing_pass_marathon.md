@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_pass_marathon
+  table: fotmob_gold_signals.sig_team_possession_passing_pass_marathon
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_pass_marathon.sql
 ---
 # sig_team_possession_passing_pass_marathon
@@ -22,7 +22,7 @@ Triggers when a team reaches extreme full-match passing volume (`>= 800` complet
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `triggered_team_total_passes >= 800` using `silver.period_stat` rows where `period = 'All'`.
+- Trigger condition: `triggered_team_total_passes >= 800` using `fotmob_silver.period_stat` rows where `period = 'All'`.
 - Signal is side-specific (`home` / `away`) and emits one row per triggered side, so both teams can independently trigger in the same match.
 - Enrichment preserves bilateral context for pass quality, possession split, territorial progression, and chance creation quality.
 
@@ -30,7 +30,7 @@ Triggers when a team reaches extreme full-match passing volume (`>= 800` complet
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_pass_marathon.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_pass_marathon`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_pass_marathon`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_physical_showdown
+  table: fotmob_gold_signals.sig_match_discipline_cards_physical_showdown
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_physical_showdown.sql
 ---
 # sig_match_discipline_cards_physical_showdown
@@ -25,15 +25,15 @@ Flags match-team cases where card pressure is fully distributed across a side's 
 - Trigger condition:
   - `triggered_team_starting_defenders_carded = triggered_team_starting_defenders`
   - `triggered_team_starting_defenders >= 3`
-- Starter defenders are sourced from `silver.match_personnel` with `role = 'starter'` and `usual_playing_position_id = 1`.
-- Card events are sourced from `silver.card` with yellow/red card metadata and mapped to starter defenders by `match_id`, `team_side`, and `player_id`.
+- Starter defenders are sourced from `fotmob_silver.match_personnel` with `role = 'starter'` and `usual_playing_position_id = 1`.
+- Card events are sourced from `fotmob_silver.card` with yellow/red card metadata and mapped to starter defenders by `match_id`, `team_side`, and `player_id`.
 - Trigger is evaluated symmetrically for `home` and `away`, then enriched with bilateral discipline, foul load, defensive actions, and possession context.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_physical_showdown.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_physical_showdown`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_physical_showdown`
 
 ## Example Execution
 

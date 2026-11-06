@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_one_sided_discipline
+  table: fotmob_gold_signals.sig_match_discipline_cards_one_sided_discipline
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_one_sided_discipline.sql
 ---
 # sig_match_discipline_cards_one_sided_discipline
@@ -25,7 +25,7 @@ Flags matches with extreme disciplinary asymmetry, where one side accumulates at
 - Trigger condition:
   - `triggered_team_total_cards >= 5`
   - `opponent_total_cards = 0`
-- Total cards are computed as `yellow_cards + red_cards` from `silver.period_stat` (`period = 'All'`).
+- Total cards are computed as `yellow_cards + red_cards` from `fotmob_silver.period_stat` (`period = 'All'`).
 - Trigger orientation (`triggered_side`) is selected dynamically as the side meeting the `>= 5` condition.
 - Output preserves bilateral card composition, fouls, defensive actions, passing quality, and possession context to explain whether the sanction asymmetry tracked tactical imbalance or match-state volatility.
 
@@ -33,7 +33,7 @@ Flags matches with extreme disciplinary asymmetry, where one side accumulates at
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_one_sided_discipline.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_one_sided_discipline`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_one_sided_discipline`
 
 ## Example Execution
 

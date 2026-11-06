@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_clinical_brace
+  table: fotmob_gold_signals.sig_player_shooting_goals_clinical_brace
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_clinical_brace.sql
 ---
 # sig_player_shooting_goals_clinical_brace
@@ -26,15 +26,15 @@ Flags players who score at least two goals from less than `0.60` expected goals,
 - Trigger condition:
   - `triggered_player_goals >= 2`
   - `triggered_player_expected_goals < 0.60`
-- Triggered player identity and finishing metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
+- Triggered player identity and finishing metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`goals_above_threshold`, `expected_goals_below_threshold`, and `triggered_player_goal_minus_expected_goals`) to rank how extreme each clinical brace is.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_clinical_brace.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_clinical_brace`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_clinical_brace`
 
 ## Example Execution
 

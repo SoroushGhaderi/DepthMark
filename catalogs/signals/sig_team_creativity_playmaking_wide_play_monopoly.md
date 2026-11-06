@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_wide_play_monopoly
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_wide_play_monopoly
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_wide_play_monopoly.sql
 ---
 # sig_team_creativity_playmaking_wide_play_monopoly
@@ -29,9 +29,9 @@ with at least 70% of created chances attributed to a cross-derived wide-play pro
   - `triggered_team_cross_derived_chances_proxy = least(team_accurate_crosses, team_key_passes)`
   - `triggered_team_wide_play_chance_share_pct = 100 * triggered_team_cross_derived_chances_proxy / team_key_passes`
 - Trigger source:
-  - Team `chances_created`, `accurate_crosses`, `cross_attempts`, and `expected_assists` are aggregated from `silver.player_match_stat` by `match_id + team_id`.
+  - Team `chances_created`, `accurate_crosses`, `cross_attempts`, and `expected_assists` are aggregated from `fotmob_silver.player_match_stat` by `match_id + team_id`.
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - Emits one row per triggered side (`home` / `away`) with bilateral context (`triggered_team_*` vs `opponent_*`).
@@ -44,7 +44,7 @@ with at least 70% of created chances attributed to a cross-derived wide-play pro
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_wide_play_monopoly.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_wide_play_monopoly`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_wide_play_monopoly`
 
 ## Example Execution
 

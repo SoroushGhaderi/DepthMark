@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_one_sided_passing
+  table: fotmob_gold_signals.sig_team_possession_passing_one_sided_passing
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_one_sided_passing.sql
 ---
 # sig_team_possession_passing_one_sided_passing
@@ -31,7 +31,7 @@ Flags matches where one team completes more than three times as many passes as t
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_one_sided_passing.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_one_sided_passing`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_one_sided_passing`
 
 ## Example Execution
 

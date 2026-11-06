@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_persistent_threat
+  table: fotmob_gold_signals.sig_player_shooting_goals_persistent_threat
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_persistent_threat.sql
 ---
 # sig_player_shooting_goals_persistent_threat
@@ -30,8 +30,8 @@ Flags players who sustain shooting presence across the full match by producing a
   - Segment assignment is derived from shot event timing using effective minute (`minute + minute_added`, with goal-time fallbacks where needed).
   - Stoppage-time events are retained in the boundary segments (`31-45+`, `76-90+`) to preserve continuity and avoid losing late-phase threat.
 - Match-context enrichment:
-  - Player finishing context is sourced from `silver.player_match_stat`.
-  - Bilateral team and opponent context is sourced from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player finishing context is sourced from `fotmob_silver.player_match_stat`.
+  - Bilateral team and opponent context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity gate note:
   - Closest active shooting-goals signals are `sig_player_shooting_goals_shot_volume_monster` and `sig_player_shooting_goals_shot_magnet`.
   - Coexistence rationale: this signal is cadence/coverage-first (segment persistence), while those signals are absolute volume and share-concentration focused.
@@ -40,7 +40,7 @@ Flags players who sustain shooting presence across the full match by producing a
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_persistent_threat.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_persistent_threat`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_persistent_threat`
 
 ## Example Execution
 

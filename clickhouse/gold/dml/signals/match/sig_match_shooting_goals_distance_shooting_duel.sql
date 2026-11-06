@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_distance_shooting_duel (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_distance_shooting_duel (
     match_id,
     match_date,
     home_team_id,
@@ -77,7 +77,7 @@ WITH outside_box_team_stats AS (
         toInt32(sum(if(coalesce(s.is_goal, 0) = 1 AND coalesce(s.is_own_goal, 0) = 0, 1, 0)))
             AS team_outside_box_goals,
         toFloat32(round(sum(coalesce(s.expected_goals, 0.0)), 3)) AS team_outside_box_xg
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE coalesce(s.team_id, 0) > 0
       AND coalesce(s.is_from_inside_box, 1) = 0
       AND coalesce(s.is_own_goal, 0) = 0
@@ -127,8 +127,8 @@ base_stats AS (
         )) AS match_total_outside_box_xg,
         coalesce(home_ob.team_outside_box_goals, 0) + coalesce(away_ob.team_outside_box_goals, 0)
             AS match_total_outside_box_goals
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

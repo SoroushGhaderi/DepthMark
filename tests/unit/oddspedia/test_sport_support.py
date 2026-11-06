@@ -85,30 +85,6 @@ class SportConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             normalize_sport("basketball")
 
-    def test_event_intake_exposes_the_compatibility_cli(self):
-        result = subprocess.run(
-            [sys.executable, os.path.join(ROOT, "scripts", "oddspedia", "events.py"), "--help"],
-            cwd=ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        for option in (
-            "discover",
-            "prioritize",
-            "scrape",
-            "run",
-            "status",
-            "--collect",
-            "--retry-failed",
-            "--retry-incomplete",
-            "--log-format",
-            "--month",
-            "--priority-tier",
-            "--silver-reference-window-ready",
-        ):
-            self.assertIn(option, result.stdout)
-
     def test_canonical_oddspedia_scripts_expose_phase_specific_help(self):
         scripts = (
             "discover_oddspedia_events.py",

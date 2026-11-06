@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_death_by_passes
+  table: fotmob_gold_signals.sig_team_possession_passing_death_by_passes
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_death_by_passes.sql
 ---
 # sig_team_possession_passing_death_by_passes
@@ -30,7 +30,7 @@ Triggers when a team records extreme opposition-box touch volume (`>50`) as a pr
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_death_by_passes.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_death_by_passes`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_death_by_passes`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_no_striker_needed
+  table: fotmob_gold_signals.sig_team_shooting_goals_no_striker_needed
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_no_striker_needed.sql
 ---
 # sig_team_shooting_goals_no_striker_needed
@@ -26,8 +26,8 @@ Detect team-level high-scoring outputs where forwards are not required for finis
   - `triggered_team_non_own_goals > 2`
   - `triggered_team_forward_non_own_goals = 0`
   - `triggered_team_non_own_goals = triggered_team_midfielder_defender_non_own_goals`
-- Goal events come from `silver.shot` with `is_goal = 1` and `is_own_goal = 0`.
-- Scorer role classification uses `silver.match_personnel` (`usual_playing_position_id`) with starter-priority resolution (`argMax` over `starter` then `substitute`).
+- Goal events come from `fotmob_silver.shot` with `is_goal = 1` and `is_own_goal = 0`.
+- Scorer role classification uses `fotmob_silver.match_personnel` (`usual_playing_position_id`) with starter-priority resolution (`argMax` over `starter` then `substitute`).
 - Trigger evaluation is side-specific (home and away independently) and limited to finished matches.
 - Bilateral context is preserved through symmetric `triggered_team_*` and `opponent_*` role-composition and shooting-context metrics.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_defensive_scoring_unit` and `sig_team_shooting_goals_shared_scoring`; this signal coexists because it is role-composition constrained (no forward scorers with >2 team non-own goals) rather than defender-scorer diversity or generic scorer distribution.
@@ -36,7 +36,7 @@ Detect team-level high-scoring outputs where forwards are not required for finis
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_no_striker_needed.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_no_striker_needed`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_no_striker_needed`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_the_triple_booking
+  table: fotmob_gold_signals.sig_team_discipline_cards_the_triple_booking
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_the_triple_booking.sql
 ---
 # sig_team_discipline_cards_the_triple_booking
@@ -25,7 +25,7 @@ Flags teams hit by a compact wave of cautions across multiple players, isolating
 - Trigger condition:
   - `triggered_team_distinct_yellow_carded_players_in_window >= 3`
   - the rolling window uses `card_minute <= window_start_minute + 5`
-- Yellow-card events are sourced from `silver.card` where `card_type` or `description` includes yellow-card or booked terminology.
+- Yellow-card events are sourced from `fotmob_silver.card` where `card_type` or `description` includes yellow-card or booked terminology.
 - The trigger is evaluated independently for home and away teams, then emits one row per triggered match-team.
 - If a team has multiple qualifying windows, the earliest window is selected using the earliest start minute, then earliest third distinct yellow-card minute.
 - Output preserves bilateral context: opponent maximum 5-minute booking window, full-match card and foul load, physical defensive actions, and possession balance.
@@ -34,7 +34,7 @@ Flags teams hit by a compact wave of cautions across multiple players, isolating
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_the_triple_booking.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_the_triple_booking`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_the_triple_booking`
 
 ## Example Execution
 
@@ -70,8 +70,8 @@ python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --i
 | `triggered_team_yellow_card_events_in_window` | Triggered-team yellow-card events in the selected window | Football developer: event-volume severity beyond distinct-player count |
 | `opponent_max_yellow_card_events_in_window` | Opponent maximum yellow-card events in any rolling 5-minute window | Football developer: bilateral event-volume comparator |
 | `yellow_card_events_in_window_delta` | Triggered selected-window events minus opponent max-window events | Football developer: net window intensity metric |
-| `triggered_team_match_yellow_card_events` | Triggered-team yellow-card events across the match from `silver.card` | Football developer: validates cluster against total event load |
-| `opponent_match_yellow_card_events` | Opponent yellow-card events across the match from `silver.card` | Football developer: bilateral event-load context |
+| `triggered_team_match_yellow_card_events` | Triggered-team yellow-card events across the match from `fotmob_silver.card` | Football developer: validates cluster against total event load |
+| `opponent_match_yellow_card_events` | Opponent yellow-card events across the match from `fotmob_silver.card` | Football developer: bilateral event-load context |
 | `match_yellow_card_events_delta` | Triggered minus opponent match yellow-card events | Football developer: net card-event imbalance |
 | `triggered_team_yellow_cards` | Triggered-side yellow cards from full-match period stats | Football developer: official aggregate caution load |
 | `opponent_yellow_cards` | Opponent yellow cards from full-match period stats | Football developer: bilateral aggregate caution comparator |

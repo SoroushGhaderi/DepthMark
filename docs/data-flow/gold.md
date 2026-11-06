@@ -10,10 +10,10 @@ business logic or raw contracts.
 ## Overview
 
 ```text
-FotMob silver.* (8 tables)
-  → gold_scenarios.*  (48 scenario tables)
-  → gold_signals.*    (344 signal tables)
-  → gold.*            (1 shared activation serving table)
+FotMob fotmob_silver.* (8 tables)
+  → fotmob_gold_scenarios.*  (48 scenario tables)
+  → fotmob_gold_signals.*    (344 signal tables)
+  → fotmob_gold.*            (1 shared activation serving table)
 
 Oddspedia Silver
   → Oddspedia Gold scenarios/signals/serving outputs
@@ -27,9 +27,9 @@ output may not be documented as a FotMob signal.
 
 | Database | Purpose | Table Pattern |
 | --- | --- | --- |
-| `gold_scenarios` | Scenario outputs at team/match or player grain | `scenario_*` |
-| `gold_signals` | Signal outputs at match, team, or player grain | `sig_*` |
-| `gold` | Shared activation serving metadata | `signal_activations` |
+| `fotmob_gold_scenarios` | Scenario outputs at team/match or player grain | `scenario_*` |
+| `fotmob_gold_signals` | Signal outputs at match, team, or player grain | `sig_*` |
+| `fotmob_gold` | Shared activation serving metadata | `signal_activations` |
 
 ## Signal System
 
@@ -115,8 +115,6 @@ Job discovery uses `GoldSqlJob` in `src/fotmob/gold/dml_runner.py`:
 - Selecting a deprecated or uncatalogued signal by `--id` is an error (exit 2);
   an invalid catalog stops the run (exit 1)
 
-The old path `scripts/gold/run_gold_sql_jobs.py` remains a compatibility adapter.
-
 ### 3. Bulk Loading (`scripts/fotmob/load_fotmob_gold.py`)
 
 Runs all Gold SQL jobs and scoped activation replacement. One explicit scope is
@@ -144,10 +142,10 @@ Execution order:
 
 ### 4. Activation Rebuild (`scripts/fotmob/build_fotmob_signal_activations.py`)
 
-Builds `gold.signal_activations` from all active signal catalogs, then replaces
+Builds `fotmob_gold.signal_activations` from all active signal catalogs, then replaces
 only the requested output scope:
 
-1. **Stage** — insert one enriched row per `gold_signals.sig_*` output into ephemeral
+1. **Stage** — insert one enriched row per `fotmob_gold_signals.sig_*` output into ephemeral
    `warehouse_stage.signal_activations_stage` (created from
    `clickhouse/gold/ddl/activations/create_table_signal_activations_stage.sql`).
 2. **Calculate** — run
@@ -162,7 +160,7 @@ Per-row enrichment in the stage pass:
 1. Loads the active signals through `load_signal_catalog()`; an invalid catalog
    stops the build before it connects.
 2. Uses each signal's identity fields (`row_identity`, led by `match_id`).
-3. For each signal output row in `gold_signals.sig_*`:
+3. For each signal output row in `fotmob_gold_signals.sig_*`:
    - Reads `signal_instance_id`, or computes it with the DDL's expression
      (`signal_instance_id_expression()`) for tables that predate the column
    - Takes entity, family, subfamily, name, and tags from the validated catalog
@@ -186,7 +184,7 @@ Serving-table DDL: `clickhouse/gold/ddl/create_table_signal_activations.sql`
 If any signal SQL job fails, activation rebuild is skipped until signals succeed
 or you rerun the builder manually.
 
-Key fields in `gold.signal_activations`:
+Key fields in `fotmob_gold.signal_activations`:
 - `signal_instance_id` — deterministic identity hash
 - `signal_id_version` — identity scheme version (`v1`)
 - `signal_id`, `signal_entity`, `signal_family`, `signal_subfamily`

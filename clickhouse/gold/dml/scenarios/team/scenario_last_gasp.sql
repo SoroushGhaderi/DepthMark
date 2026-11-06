@@ -1,5 +1,5 @@
 -- scenario_last_gasp: late winner after minute 85 from draw/losing state
-INSERT INTO gold_scenarios.scenario_last_gasp
+INSERT INTO fotmob_gold_scenarios.scenario_last_gasp
 (
     -- 1. Match Identity
     match_id,
@@ -35,7 +35,7 @@ WITH final_score_goals AS (
         player_id,
         player_name,
         row_number() OVER (PARTITION BY match_id ORDER BY goal_time DESC, goal_overload_time DESC) AS rn
-    FROM silver.shot
+    FROM fotmob_silver.shot
     WHERE is_goal = 1
 )
 SELECT
@@ -71,7 +71,7 @@ SELECT
         ELSE 'draw'
     END AS winning_side,
     toString(g.match_date)
-FROM silver.match AS g
+FROM fotmob_silver.match AS g
 INNER JOIN final_score_goals AS wg
     ON g.match_id = wg.match_id
     AND wg.rn = 1

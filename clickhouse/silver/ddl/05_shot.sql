@@ -1,5 +1,5 @@
--- silver.shot
-CREATE TABLE IF NOT EXISTS silver.shot
+-- fotmob_silver.shot
+CREATE TABLE IF NOT EXISTS fotmob_silver.shot
 (
     match_id                    Int32,
     match_date                  Date,

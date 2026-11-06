@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_early_tactical_lock
+  table: fotmob_gold_signals.sig_match_possession_passing_early_tactical_lock
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_early_tactical_lock.sql
 ---
 # sig_match_possession_passing_early_tactical_lock
@@ -23,7 +23,7 @@ Triggers matches where both teams fail to register a shot on target in the openi
 ## Tactical And Statistical Logic
 
 - Trigger condition: `home_first_30_shots_on_target = 0` and `away_first_30_shots_on_target = 0`.
-- Operational first-30 window: `silver.shot.minute <= 30`.
+- Operational first-30 window: `fotmob_silver.shot.minute <= 30`.
 - Emits one row per side (`triggered_side` = `home` and `away`) so team-centric consumers can evaluate the same locked opening phase from each tactical orientation.
 - Enriches the trigger with early shot activity, full-match shooting output, passing quality, possession share, territorial progression, and xG context.
 
@@ -31,7 +31,7 @@ Triggers matches where both teams fail to register a shot on target in the openi
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_early_tactical_lock.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_early_tactical_lock`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_early_tactical_lock`
 
 ## Example Execution
 

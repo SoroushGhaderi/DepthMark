@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_boiling_over
+  table: fotmob_gold_signals.sig_match_discipline_cards_boiling_over
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_boiling_over.sql
 ---
 # sig_match_discipline_cards_boiling_over
@@ -24,7 +24,7 @@ Flags matches where discipline breaks down late, with at least four cards issued
 
 - Trigger condition:
   - Combined yellow/red card events with `card_minute > 80` is `>= 4`.
-  - Card events are sourced from `silver.card` using yellow/red keywords in `card_type`/`description`.
+  - Card events are sourced from `fotmob_silver.card` using yellow/red keywords in `card_type`/`description`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) for stable `match_team` consumption.
 - Output keeps late-window bilateral split, late-window share, total-match discipline context, foul conversion context, and defensive/possession context for tactical interpretation.
 
@@ -32,7 +32,7 @@ Flags matches where discipline breaks down late, with at least four cards issued
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_boiling_over.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_boiling_over`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_boiling_over`
 
 ## Example Execution
 

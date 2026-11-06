@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_complete_dominance
+  table: fotmob_gold_signals.sig_match_shooting_goals_complete_dominance
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_complete_dominance.sql
 ---
 # sig_match_shooting_goals_complete_dominance
@@ -25,7 +25,7 @@ Detect extreme one-sided chance-quality control where one team generates at leas
 - Trigger condition:
   - `triggered_team_xg > 0`
   - `triggered_team_xg / opponent_xg >= 10.0`, or `opponent_xg = 0`
-- Trigger is evaluated on `silver.period_stat` with `period = 'All'` and finished matches only.
+- Trigger is evaluated on `fotmob_silver.period_stat` with `period = 'All'` and finished matches only.
 - This signal emits only the qualifying side row (`triggered_side`) per match because the trigger is intrinsically side-specific.
 - Enrichment keeps bilateral context with xG share, shot-volume/accuracy, conversion, big chances, box touches, possession, and pass-quality differentials.
 - Similarity gate note: closest active signals are `sig_team_shooting_goals_shot_on_target_monopoly` and `sig_match_shooting_goals_high_xg_low_score`; this signal is distinct because it is purely xG-ratio based (>= 10x side imbalance) and does not require a specific scoreline or shots-on-target threshold.
@@ -34,7 +34,7 @@ Detect extreme one-sided chance-quality control where one team generates at leas
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_complete_dominance.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_complete_dominance`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_complete_dominance`
 
 ## Example Execution
 

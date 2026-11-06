@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_penalty_prone
+  table: fotmob_gold_signals.sig_team_discipline_cards_penalty_prone
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_penalty_prone.sql
 ---
 # sig_team_discipline_cards_penalty_prone
@@ -24,7 +24,7 @@ Flags team-match performances where a team concedes at least two penalties, surf
 
 - Trigger condition:
   - `triggered_team_penalties_conceded >= 2`
-- Penalty awards are sourced from `silver.shot` using penalty-tagged shots (`situation`/`shot_type` contains `"penalty"`).
+- Penalty awards are sourced from `fotmob_silver.shot` using penalty-tagged shots (`situation`/`shot_type` contains `"penalty"`).
 - Trigger is evaluated symmetrically for home and away teams by mapping awarded penalties to the conceding side.
 - The signal preserves bilateral penalty outcomes (scored/missed), foul-card burden, defensive actions, and possession balance for tactical interpretation.
 
@@ -32,7 +32,7 @@ Flags team-match performances where a team concedes at least two penalties, surf
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_penalty_prone.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_penalty_prone`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_penalty_prone`
 
 ## Example Execution
 

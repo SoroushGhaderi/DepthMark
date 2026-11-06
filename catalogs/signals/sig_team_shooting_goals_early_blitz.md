@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_early_blitz
+  table: fotmob_gold_signals.sig_team_shooting_goals_early_blitz
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_early_blitz.sql
 ---
 # sig_team_shooting_goals_early_blitz
@@ -32,7 +32,7 @@ Detect team-level explosive starts where a side produces an early two-goal burst
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_early_blitz.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_early_blitz`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_early_blitz`
 
 ## Example Execution
 

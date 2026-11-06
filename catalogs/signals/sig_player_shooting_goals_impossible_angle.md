@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_impossible_angle
+  table: fotmob_gold_signals.sig_player_shooting_goals_impossible_angle
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impossible_angle.sql
 ---
 # sig_player_shooting_goals_impossible_angle
@@ -24,16 +24,16 @@ Detects match-player events where a player scores from an ultra-low-probability 
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Shot-level scope is `expected_goals < 0.02` in `silver.shot`.
+  - Shot-level scope is `expected_goals < 0.02` in `fotmob_silver.shot`.
   - Goal events require `is_goal = 1` and exclude own goals (`is_own_goal = 0`).
   - Signal fires when `triggered_player_low_expected_goals_goals >= 1` in the same finished match.
 - Identity and orientation:
   - Player identity is preserved via `triggered_player_*`.
   - Team/opponent context is preserved via `triggered_team_*`, `opponent_*`, and `triggered_side`.
 - Match-context enrichment:
-  - Trigger evidence is aggregated from `silver.shot` at `match_id + player_id + team_id` grain.
-  - Player shooting totals come from `silver.player_match_stat`.
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Trigger evidence is aggregated from `fotmob_silver.shot` at `match_id + player_id + team_id` grain.
+  - Player shooting totals come from `fotmob_silver.player_match_stat`.
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity gate note:
   - Closest active shooting-goals signals are `sig_player_shooting_goals_long_range_specialist` and `sig_player_shooting_goals_clutch_equalizer`; this signal is distinct because it is probability-threshold-based (`expected_goals < 0.02`) rather than location-only (outside box) or timing/state-change based (late equalizer).
 
@@ -41,7 +41,7 @@ Detects match-player events where a player scores from an ultra-low-probability 
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_impossible_angle.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_impossible_angle`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_impossible_angle`
 
 ## Example Execution
 

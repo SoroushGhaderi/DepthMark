@@ -22,12 +22,12 @@ defined in [`README.md`](README.md). SQL owns the analytical logic (ADR 0007).
    `test_signal_dml_insert_columns_match_ddl_and_catalog_identity`
 3. The insert column list MUST include every `row_identity` column. **[test]**
    same test.
-4. The DML MUST insert into `gold_signals.<signal_id>`, its catalog's
+4. The DML MUST insert into `fotmob_gold_signals.<signal_id>`, its catalog's
    `asset_paths.table`. **[catalog]**
 5. DML MUST NOT contain DDL (`CREATE`, `ALTER`, `DROP`, `TRUNCATE`).
-6. Source tables MUST be schema-qualified (`silver.*`, `bronze.*`).
+6. Source tables MUST be schema-qualified (`fotmob_silver.*`, `fotmob_bronze.*`).
 7. Final rows MUST have a valid `match_id` (`NOT NULL`, `> 0`). **[runtime]**
-8. Queries joining `silver.match` MUST filter `m.match_finished = 1`, unless the
+8. Queries joining `fotmob_silver.match` MUST filter `m.match_finished = 1`, unless the
    signal explicitly models unfinished matches.
 9. Null-sensitive arithmetic and aggregation SHOULD use `coalesce(col, 0)` or
    equivalent explicit handling. Nullable keys in `GROUP BY` or `ORDER BY`

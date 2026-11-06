@@ -42,7 +42,7 @@ class FakeClickHouse:
         return {int(value) for value in found.group(1).split(",")} if found else None
 
     def _table(self, query):
-        found = re.search(r"(?:FROM|TABLE) bronze\.(\w+)", query)
+        found = re.search(r"(?:FROM|TABLE) fotmob_bronze\.(\w+)", query)
         return found.group(1) if found else None
 
     def execute(self, query, *args, **kwargs):
@@ -52,13 +52,13 @@ class FakeClickHouse:
         table = self._table(query)
         if "FROM system.columns" in query:
             rows = [
-                ("bronze", name, column, kind)
+                ("fotmob_bronze", name, column, kind)
                 for name, spec in live.items()
                 for column, kind in spec.expected.columns
             ]
         elif "sorting_key" in query:
             rows = [
-                ("bronze", name, ", ".join(spec.expected.sorting_key))
+                ("fotmob_bronze", name, ", ".join(spec.expected.sorting_key))
                 for name, spec in live.items()
             ]
         elif "FROM system.tables" in query:
@@ -67,14 +67,14 @@ class FakeClickHouse:
             if not self.has_staging_database:
                 raise RuntimeError("Code: 81. Database warehouse_stage does not exist")
             stage, source = re.match(
-                r"CREATE TABLE warehouse_stage\.(\w+) AS bronze\.(\w+)", query
+                r"CREATE TABLE warehouse_stage\.(\w+) AS fotmob_bronze\.(\w+)", query
             ).groups()
             self.stage[stage] = []
             self.stage_source[stage] = source
             rows = []
         elif query.startswith("EXCHANGE TABLES"):
             table, stage = re.match(
-                r"EXCHANGE TABLES bronze\.(\w+) AND warehouse_stage\.(\w+)", query
+                r"EXCHANGE TABLES fotmob_bronze\.(\w+) AND warehouse_stage\.(\w+)", query
             ).groups()
             self.rows[table], self.stage[stage] = self.stage[stage], self.rows[table]
             rows = []

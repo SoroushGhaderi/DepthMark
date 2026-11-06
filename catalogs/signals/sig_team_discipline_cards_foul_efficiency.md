@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_foul_efficiency
+  table: fotmob_gold_signals.sig_team_discipline_cards_foul_efficiency
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_foul_efficiency.sql
 ---
 # sig_team_discipline_cards_foul_efficiency
@@ -25,14 +25,14 @@ Flags team-match performances where foul volume is high (15 or more fouls) but t
 - Trigger condition:
   - `triggered_team_fouls_committed >= 15`
   - `triggered_team_total_cards = 0` (`yellow_cards + red_cards`)
-- Trigger is evaluated symmetrically for home and away teams using `silver.period_stat` with `period = 'All'`.
+- Trigger is evaluated symmetrically for home and away teams using `fotmob_silver.period_stat` with `period = 'All'`.
 - The signal preserves bilateral foul load, card load, defensive intensity, and possession context so analysts can separate officiating/discipline asymmetry from simple match chaos.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_foul_efficiency.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_foul_efficiency`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_foul_efficiency`
 
 ## Example Execution
 

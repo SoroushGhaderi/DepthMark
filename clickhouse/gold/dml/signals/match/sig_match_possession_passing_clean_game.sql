@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_clean_game (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_clean_game (
     match_id,
     match_date,
     home_team_id,
@@ -75,8 +75,8 @@ WITH base_stats AS (
         greatest(coalesce(ps.pass_attempts_away, 0) - coalesce(ps.accurate_passes_away, 0), 0) AS failed_passes_away,
         greatest(coalesce(ps.dribble_attempts_home, 0) - coalesce(ps.dribbles_succeeded_home, 0), 0) AS failed_dribbles_home,
         greatest(coalesce(ps.dribble_attempts_away, 0) - coalesce(ps.dribbles_succeeded_away, 0), 0) AS failed_dribbles_away
-    FROM silver.match AS m FINAL
-    INNER JOIN silver.period_stat AS ps FINAL
+    FROM fotmob_silver.match AS m FINAL
+    INNER JOIN fotmob_silver.period_stat AS ps FINAL
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     WHERE m.match_finished = 1

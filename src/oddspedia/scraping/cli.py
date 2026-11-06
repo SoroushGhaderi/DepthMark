@@ -8,7 +8,6 @@ Usage:
     python scripts/oddspedia/prioritize_oddspedia_events.py --date 20260711 --silver-reference-window-ready
     python scripts/oddspedia/scrape_oddspedia_matches.py --date 20260711
     python scripts/oddspedia/run_oddspedia_pipeline.py --month 202607 --silver-reference-window-ready
-    python scripts/oddspedia/events.py --collect --month 202607      # Legacy alias for discover
 
 Alternatively (after ``pip install -e .``):
     oddspedia-scraper --help

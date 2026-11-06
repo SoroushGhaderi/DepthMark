@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_winning_impact
+  table: fotmob_gold_signals.sig_player_shooting_goals_winning_impact
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_winning_impact.sql
 ---
 # sig_player_shooting_goals_winning_impact
@@ -31,8 +31,8 @@ Detects player-level match-winning finishing events where the triggered player s
   - Candidate decisive events are grouped at `match_id + team_id + player_id` to emit one row per triggered player per match.
   - First decisive-goal timing and before/after score state are preserved for auditability and downstream sequence modeling.
 - Match-context enrichment:
-  - Player finishing context is sourced from `silver.player_match_stat` (goals, expected goals, shots, shots on target, shot accuracy proxy, minutes).
-  - Bilateral team/opponent context is sourced from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player finishing context is sourced from `fotmob_silver.player_match_stat` (goals, expected goals, shots, shots on target, shot accuracy proxy, minutes).
+  - Bilateral team/opponent context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity note:
   - Closest active signal is `sig_player_shooting_goals_clutch_equalizer`; this signal is distinct because it targets decisive winning contribution in one-goal victories, not late parity restoration.
 
@@ -40,7 +40,7 @@ Detects player-level match-winning finishing events where the triggered player s
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_winning_impact.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_winning_impact`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_winning_impact`
 
 ## Example Execution
 

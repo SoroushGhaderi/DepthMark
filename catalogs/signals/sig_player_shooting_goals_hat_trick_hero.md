@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_hat_trick_hero
+  table: fotmob_gold_signals.sig_player_shooting_goals_hat_trick_hero
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_hat_trick_hero.sql
 ---
 # sig_player_shooting_goals_hat_trick_hero
@@ -29,9 +29,9 @@ Detects player-level hat-trick performances (`>= 3` goals) and preserves bilater
   - Player identity is preserved via `triggered_player_*`.
   - Team/opponent identity is preserved via `triggered_team_*`, `opponent_team_*`, and canonical `triggered_side`.
 - Match-context enrichment:
-  - Player-level shooting context from `silver.player_match_stat` (xG, shots, shots on target, shot accuracy proxy, minutes).
-  - Bilateral team/opponent context from `silver.period_stat` (`period = 'All'`) for shots, shots on target, big chances, possession, box touches, and xG.
-  - Outcome context from `silver.match` (final scoreline and side-relative goal delta).
+  - Player-level shooting context from `fotmob_silver.player_match_stat` (xG, shots, shots on target, shot accuracy proxy, minutes).
+  - Bilateral team/opponent context from `fotmob_silver.period_stat` (`period = 'All'`) for shots, shots on target, big chances, possession, box touches, and xG.
+  - Outcome context from `fotmob_silver.match` (final scoreline and side-relative goal delta).
 - Similarity note:
   - This differs from `sig_player_shooting_goals_clinical_brace` by removing the low-xG constraint and raising goal threshold to `>= 3`, focusing on absolute scoring explosion rather than xG-overperformance filtering.
 
@@ -39,7 +39,7 @@ Detects player-level hat-trick performances (`>= 3` goals) and preserves bilater
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_hat_trick_hero.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_hat_trick_hero`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_hat_trick_hero`
 
 ## Example Execution
 

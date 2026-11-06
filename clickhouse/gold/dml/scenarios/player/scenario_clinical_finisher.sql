@@ -1,5 +1,5 @@
 -- scenario_clinical_finisher: multi-goal output from low shot/xG volume
-INSERT INTO gold_scenarios.scenario_clinical_finisher
+INSERT INTO fotmob_gold_scenarios.scenario_clinical_finisher
 (
     -- 1. Match Identity
     match_id,
@@ -48,8 +48,8 @@ SELECT
         ELSE 'Draw'
     END AS LowCardinality(String)) AS match_result,
     toString(g.match_date)
-FROM silver.shot AS s
-INNER JOIN silver.match AS g
+FROM fotmob_silver.shot AS s
+INNER JOIN fotmob_silver.match AS g
     ON s.match_id = g.match_id
 WHERE
     -- Finished matches only with valid non-own-goal shot quality data.

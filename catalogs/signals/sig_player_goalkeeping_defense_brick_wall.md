@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_brick_wall
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_brick_wall
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_brick_wall.sql
 ---
 # sig_player_goalkeeping_defense_brick_wall
@@ -28,13 +28,13 @@ control context so analysts can separate elite shot-stopping from low-quality-vo
   - `triggered_player_saves >= 8`
   - `is_goalkeeper = 1`
   - `match_finished = 1`
-- Player save volume is derived from `silver.shot` at `(match_id, keeper_id)` grain:
+- Player save volume is derived from `fotmob_silver.shot` at `(match_id, keeper_id)` grain:
   - save event: `is_on_target = 1` and `is_goal = 0`
   - shots on target faced: `is_on_target = 1`
   - goals conceded from on-target shots: `is_on_target = 1` and `is_goal = 1`
-- Triggered goalkeeper identity is joined to `silver.player_match_stat` to preserve player/team context fields
+- Triggered goalkeeper identity is joined to `fotmob_silver.player_match_stat` to preserve player/team context fields
   and enforce goalkeeper-only scope.
-- Bilateral match context from `silver.period_stat` (`period = 'All'`) adds team/opponent saves,
+- Bilateral match context from `fotmob_silver.period_stat` (`period = 'All'`) adds team/opponent saves,
   shots faced, expected goals faced, possession, and pass-accuracy context for pressure interpretation.
 - Output keeps both `triggered_player_*` and `triggered_team_*` fields for player-grain traceability
   and downstream feature compatibility.
@@ -43,7 +43,7 @@ control context so analysts can separate elite shot-stopping from low-quality-vo
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_brick_wall.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_brick_wall`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_brick_wall`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_wing_lockdown_collective.sql
 ---
 # sig_team_goalkeeping_defense_wing_lockdown_collective
@@ -28,7 +28,7 @@ Detect team-level wing-lane defensive intensity matches where fullback and winge
 - Role-gating implementation:
   - fullback proxy: `usual_playing_position_id = 1` and `position_id IN (2, 5)`
   - winger proxy: `usual_playing_position_id = 3` and `position_id IN (2, 4)`
-  - player stats from `silver.player_match_stat` and position metadata from `silver.match_personnel` with starter-priority resolution.
+  - player stats from `fotmob_silver.player_match_stat` and position metadata from `fotmob_silver.match_personnel` with starter-priority resolution.
 - Rows are emitted at `match_team` grain with canonical `triggered_side`, so either side can trigger.
 - Trigger severity is preserved with `triggered_team_fullbacks_and_wingers_tackles_won_above_threshold`.
 - Similarity gate note:
@@ -40,7 +40,7 @@ Detect team-level wing-lane defensive intensity matches where fullback and winge
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_wing_lockdown_collective.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_wing_lockdown_collective`
 
 ## Example Execution
 

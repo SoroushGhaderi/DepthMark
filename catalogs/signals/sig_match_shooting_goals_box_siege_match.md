@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_box_siege_match
+  table: fotmob_gold_signals.sig_match_shooting_goals_box_siege_match
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_box_siege_match.sql
 ---
 # sig_match_shooting_goals_box_siege_match
@@ -31,7 +31,7 @@ Detect finished matches with extreme combined penalty-area territorial pressure 
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_box_siege_match.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_box_siege_match`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_box_siege_match`
 
 ## Example Execution
 

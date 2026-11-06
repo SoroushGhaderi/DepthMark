@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_failed_penetration (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_failed_penetration (
     match_id,
     match_date,
     home_team_id,
@@ -84,7 +84,7 @@ WITH candidates AS (
         coalesce(ps.dribble_attempts_away,      0)                   AS opponent_dribble_attempts,
         coalesce(ps.opposition_half_passes_away,0)                   AS opponent_opposition_half_passes,
         coalesce(ps.corners_away,               0)                   AS opponent_corners
-    FROM silver.period_stat AS ps
+    FROM fotmob_silver.period_stat AS ps
     WHERE ps.period = 'All'
       AND coalesce(ps.touches_opp_box_home, 0) >= 30
       AND coalesce(ps.shots_inside_box_home, 0) < 10
@@ -119,7 +119,7 @@ WITH candidates AS (
         coalesce(ps.dribble_attempts_home,      0),
         coalesce(ps.opposition_half_passes_home,0),
         coalesce(ps.corners_home,               0)
-    FROM silver.period_stat AS ps
+    FROM fotmob_silver.period_stat AS ps
     WHERE ps.period = 'All'
       AND coalesce(ps.touches_opp_box_away, 0) >= 30
       AND coalesce(ps.shots_inside_box_away, 0) < 10
@@ -210,7 +210,7 @@ SELECT
     -- Positive = triggered team forced more corner situations
     (c.triggered_team_corners - c.opponent_corners)                               AS corners_delta
 
-FROM silver.match AS m
+FROM fotmob_silver.match AS m
 INNER JOIN candidates AS c
         ON c.match_id = m.match_id
 WHERE m.match_finished = 1

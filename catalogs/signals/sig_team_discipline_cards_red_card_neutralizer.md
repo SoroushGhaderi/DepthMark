@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_red_card_neutralizer
+  table: fotmob_gold_signals.sig_team_discipline_cards_red_card_neutralizer
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_red_card_neutralizer.sql
 ---
 # sig_team_discipline_cards_red_card_neutralizer
@@ -33,7 +33,7 @@ Flags team-match performances where a side scores within five effective minutes 
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_red_card_neutralizer.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_red_card_neutralizer`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_red_card_neutralizer`
 
 ## Example Execution
 

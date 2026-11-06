@@ -56,7 +56,7 @@ def test_rebuild_swaps_in_exactly_the_reloaded_history(tmp_path, specs, warehous
     assert result.dates_without_source == ["20251209"]
     assert warehouse.stage == {}, "staging clones are dropped after the swap"
     assert all(
-        statement.startswith("CREATE TABLE warehouse_stage.") and " AS bronze." in statement
+        statement.startswith("CREATE TABLE warehouse_stage.") and " AS fotmob_bronze." in statement
         for statement in warehouse.statements
         if statement.startswith("CREATE TABLE")
     )

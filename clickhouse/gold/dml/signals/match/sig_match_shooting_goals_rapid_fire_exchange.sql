@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_shooting_goals_rapid_fire_exchange (
+INSERT INTO fotmob_gold_signals.sig_match_shooting_goals_rapid_fire_exchange (
     match_id,
     match_date,
     home_team_id,
@@ -91,8 +91,8 @@ WITH match_ext AS (
         ps.accurate_passes_away,
         ps.pass_attempts_home,
         ps.pass_attempts_away
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'
@@ -107,7 +107,7 @@ goal_events AS (
             coalesce(s.goal_time, s.minute, 0) + coalesce(s.goal_overload_time, s.minute_added, 0)
         ) AS goal_effective_minute,
         toInt64(coalesce(s.shot_id, 0)) AS shot_id
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.is_goal, 0) = 1
       AND coalesce(s.is_own_goal, 0) = 0

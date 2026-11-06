@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_first_half_frenzy (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_first_half_frenzy (
     match_id,
     match_date,
     home_team_id,
@@ -93,7 +93,7 @@ WITH card_events AS (
                 OR positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
             )
         ) AS is_yellow_card
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
       AND toInt32OrZero(toString(c.card_minute)) BETWEEN 1 AND 45
@@ -283,9 +283,9 @@ SELECT
     )) AS possession_delta_pct
 
 FROM card_rollup AS tcr
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = tcr.match_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tcr.match_id
    AND ps.period = 'All'
 LEFT JOIN card_rollup AS ocr

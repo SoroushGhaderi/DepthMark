@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_half_time_talk_impact
+  table: fotmob_gold_signals.sig_team_shooting_goals_half_time_talk_impact
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_half_time_talk_impact.sql
 ---
 # sig_team_shooting_goals_half_time_talk_impact
@@ -32,7 +32,7 @@ Detect team-level post-halftime attacking bursts where a side scores at least tw
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_half_time_talk_impact.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_half_time_talk_impact`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_half_time_talk_impact`
 
 ## Example Execution
 

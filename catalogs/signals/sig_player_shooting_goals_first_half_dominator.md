@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_first_half_dominator
+  table: fotmob_gold_signals.sig_player_shooting_goals_first_half_dominator
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_first_half_dominator.sql
 ---
 # sig_player_shooting_goals_first_half_dominator
@@ -24,15 +24,15 @@ Flags players who score at least two non-own goals in the first half, isolating 
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Non-own goal events from `silver.shot` where `is_goal = 1`, `is_own_goal = 0`, and `period = 'FirstHalf'`.
+  - Non-own goal events from `fotmob_silver.shot` where `is_goal = 1`, `is_own_goal = 0`, and `period = 'FirstHalf'`.
   - Player has `triggered_player_first_half_goals >= 2` in the same finished match.
 - Timing logic:
   - Event timing uses `goal_time + goal_overload_time` (fallback `minute + minute_added`) to retain stoppage-time precision inside first-half boundaries.
   - Earliest and latest first-half goal timings are preserved for tempo and sequence analysis.
 - Match-context enrichment:
-  - Player finishing context comes from `silver.player_match_stat` (goals, xG, shots, shots on target, minutes).
-  - Bilateral team/opponent context comes from `silver.period_stat` (`period = 'All'`) and final score context from `silver.match`.
-  - Additional first-half team scoring context comes from first-half non-own `silver.shot` goal aggregates for triggered team and opponent.
+  - Player finishing context comes from `fotmob_silver.player_match_stat` (goals, xG, shots, shots on target, minutes).
+  - Bilateral team/opponent context comes from `fotmob_silver.period_stat` (`period = 'All'`) and final score context from `fotmob_silver.match`.
+  - Additional first-half team scoring context comes from first-half non-own `fotmob_silver.shot` goal aggregates for triggered team and opponent.
 - Similarity note:
   - Closest active signals are `sig_player_shooting_goals_hat_trick_hero` and `sig_player_shooting_goals_rapid_brace`.
   - This signal is intentionally distinct because it targets half-time timing dominance (`FirstHalf`, `>= 2` goals) rather than full-match high-volume output (`>= 3`) or short-window burst pacing (`<= 10` minutes).
@@ -41,7 +41,7 @@ Flags players who score at least two non-own goals in the first half, isolating 
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_first_half_dominator.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_first_half_dominator`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_first_half_dominator`
 
 ## Example Execution
 

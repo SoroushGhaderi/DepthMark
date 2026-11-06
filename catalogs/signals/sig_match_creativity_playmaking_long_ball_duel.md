@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_long_ball_duel
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_long_ball_duel
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_long_ball_duel.sql
 ---
 # sig_match_creativity_playmaking_long_ball_duel
@@ -27,11 +27,11 @@ then preserve side-by-side execution and chance-creation context.
   - `accurate_long_balls_home >= 15`
   - `accurate_long_balls_away >= 15`
   - with `match_finished = 1`, `period = 'All'`, and `match_id > 0`.
-- Long-ball completion metrics are sourced from `silver.period_stat`:
+- Long-ball completion metrics are sourced from `fotmob_silver.period_stat`:
   - `accurate_long_balls_{home|away}` (completed long balls)
   - `long_ball_attempts_{home|away}` (attempt volume)
 - Creative context is enriched with team key passes and expected assists aggregated from
-  `silver.player_match_stat`.
+  `fotmob_silver.player_match_stat`.
 - Output emits two rows per qualified match (`triggered_side = home|away`) for canonical
   `match_team` grain and symmetric bilateral modeling.
 - Similarity gate note:
@@ -47,7 +47,7 @@ then preserve side-by-side execution and chance-creation context.
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_long_ball_duel.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_long_ball_duel`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_long_ball_duel`
 
 ## Example Execution
 

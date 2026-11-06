@@ -164,7 +164,7 @@ def test_session_raises_instead_of_yielding_an_unconnected_client(monkeypatch):
 def test_scoped_batches_stage_only_in_the_staging_database():
     client = _RecordingClient()
     job = ScopedSqlJob(
-        "match", "silver.match", ("INSERT INTO silver.match SELECT 1",), "match_date"
+        "match", "fotmob_silver.match", ("INSERT INTO fotmob_silver.match SELECT 1",), "match_date"
     )
 
     ScopedReplacementBatch(

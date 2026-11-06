@@ -8,7 +8,7 @@ contracts. FotMob remains the canonical fixture-reference source for the
 cross-source match relationship; that relationship does not replace Oddspedia
 Silver or Gold.
 
-### FotMob Silver (`silver.*`)
+### FotMob Silver (`fotmob_silver.*`)
 
 Eight cleaned analytical tables with paired DDL and DML:
 
@@ -27,8 +27,8 @@ Runtime contracts are enforced through `assert_silver_layer_contracts` in
 ### Oddspedia Silver
 
 Oddspedia Silver owns cleaned event/odds entities and the auditable
-`silver.oddspedia_match_resolution` relationship. It may read the canonical
-FotMob `silver.match` reference for matching, but it does not rewrite FotMob
+`oddspedia_silver.match_resolution` relationship. It may read the canonical
+FotMob `fotmob_silver.match` reference for matching, but it does not rewrite FotMob
 rows. Additional Oddspedia Silver outputs remain source-specific as they are
 implemented.
 
@@ -39,9 +39,9 @@ ClickHouse namespaces:
 
 | Namespace | Purpose | Current inventory |
 | --- | --- | --- |
-| `gold_scenarios.*` | Scenario outputs at team/match or player grain | 48 tables (23 team, 25 player) |
-| `gold_signals.*` | Signal outputs at match, team, or player grain | 344 `sig_*` tables |
-| `gold.*` | Shared activation serving metadata | `signal_activations` |
+| `fotmob_gold_scenarios.*` | Scenario outputs at team/match or player grain | 48 tables (23 team, 25 player) |
+| `fotmob_gold_signals.*` | Signal outputs at match, team, or player grain | 344 `sig_*` tables |
+| `fotmob_gold.*` | Shared activation serving metadata | `signal_activations` |
 
 Gold setup DDL lives under `clickhouse/gold/ddl/`; transforms live under
 `clickhouse/gold/dml/`:
@@ -287,7 +287,7 @@ Related terms: Match Date, Historical Scrape, Warehouse Execution Scope.
 ### Match Date
 
 The UTC calendar date of a match's kickoff, read from the payload into
-`bronze.match_reference.match_date`. Silver and Gold scopes (Warehouse Execution
+`fotmob_bronze.match_reference.match_date`. Silver and Gold scopes (Warehouse Execution
 Scope) use the Match Date; Bronze commands use the Source Date.
 
 Avoid saying: source date, fixture day.
@@ -320,14 +320,14 @@ A Gold serving fact row that records one triggered signal output row for one
 match, team, or player occurrence. It includes stable activation identity,
 signal catalog metadata, common fixture, league, venue, team, and player
 context, match-level activation summary fields, and a JSON payload copied from the source
-`gold_signals.sig_*` row.
+`fotmob_gold_signals.sig_*` row.
 
 Related terms: Signal, Signal Catalog, Signal Activation ID.
 
 ### Gold Activation Rebuild
 
 The process that regenerates Gold activation metadata from active signal
-catalogs and `gold_signals.sig_*` output tables. The canonical rebuild strategy
+catalogs and `fotmob_gold_signals.sig_*` output tables. The canonical rebuild strategy
 matches the selected warehouse execution scope: replace activation rows only
 for the selected date or month during a scoped run, and rebuild the complete
 table only during an explicit full-history run. Scoped replacement reads all
@@ -432,7 +432,7 @@ Related terms: Signal Catalog.
 
 ### Canonical FotMob Fixture Reference
 
-The record in `silver.match` that is authoritative for FotMob match identity,
+The record in `fotmob_silver.match` that is authoritative for FotMob match identity,
 UTC kickoff, teams, league context, and FotMob coverage level. An Oddspedia
 event may be linked to this reference but cannot change it.
 
@@ -492,7 +492,7 @@ Related terms: Canonical FotMob Fixture Reference, Resolution Status.
 ### Link Validation
 
 The pre-scrape comparison of one discovered Oddspedia event link against
-canonical FotMob fixtures in `silver.match` within its three-day reference
+canonical FotMob fixtures in `fotmob_silver.match` within its three-day reference
 window (the discovery date, one day before, and one day after). It records a
 deterministic validation status and, only for a unique match, the canonical
 FotMob match ID and coverage level in a separate derived priority artifact.
@@ -551,7 +551,7 @@ Related terms: Link Validation, Coverage Category, Resolution Status.
 
 The explicit Oddspedia workflow that produces the Link Priority artifact for a
 date from an accepted source link inventory and the corresponding three-day
-`silver.match` reference window. The combined workflow runs discovery, then
+`fotmob_silver.match` reference window. The combined workflow runs discovery, then
 Priority Generation, then scraping. A priority-selected scrape requires a
 current Priority artifact whose source-inventory reference still matches the
 saved links.
@@ -597,7 +597,7 @@ indefinitely by default.
 Cleanup of raw match files, daily listings, and compressed archives is
 operator-initiated and manual only. No automated deletion scripts or TTL
 mechanisms apply to Bronze filesystem artifacts. Before deleting, the operator
-queries ClickHouse `bronze.*` tables directly to verify the data is loaded — no
+queries ClickHouse `fotmob_bronze.*` tables directly to verify the data is loaded — no
 filesystem-side load-confirmation marker is used because it would go stale on
 re-runs, truncates, or table drops.
 
@@ -642,7 +642,7 @@ Related terms: Gold Bulk Loading, Gold Service, Scenario SQL Job.
 DepthMark has two explicit source domains: FotMob and Oddspedia. Both own
 source-specific Bronze, Silver, and Gold stages. FotMob remains the canonical
 fixture reference for the explicit relationship from Oddspedia Silver to
-`silver.match`; it does not own Oddspedia's entire medallion path. There is no
+`fotmob_silver.match`; it does not own Oddspedia's entire medallion path. There is no
 generic provider abstraction boundary. Code that looks reusable, such as
 `BaseBronzeStorage`, remains a source implementation detail rather than an
 invitation to add a provider plugin framework.

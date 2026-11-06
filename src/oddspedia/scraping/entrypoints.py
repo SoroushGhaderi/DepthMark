@@ -40,9 +40,3 @@ def scrape_main(argv: Sequence[str] | None = None) -> int:
 def run_main(argv: Sequence[str] | None = None) -> int:
     """Run discovery, prioritization, and scraping in order."""
     return run_event_command("run", argv)
-
-
-def football_main(argv: Sequence[str] | None = None) -> int:
-    """Run the legacy umbrella intake command (all phases, chosen by flags)."""
-    main(argv, default_sport="football")
-    return 0

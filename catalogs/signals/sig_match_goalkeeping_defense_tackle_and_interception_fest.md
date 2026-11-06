@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_tackle_and_interception_fest
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_tackle_and_interception_fest
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_tackle_and_interception_fest.sql
 ---
 # sig_match_goalkeeping_defense_tackle_and_interception_fest
@@ -22,8 +22,8 @@ Detect finished matches with extreme combined tackle-plus-interception defensive
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(tackles_succeeded_home + tackles_succeeded_away + interceptions_home + interceptions_away) > 80` from `silver.period_stat` at `period = 'All'`.
-- Only finished matches are included via `silver.match.match_finished = 1` and `match_id > 0`.
+- Trigger condition: `(tackles_succeeded_home + tackles_succeeded_away + interceptions_home + interceptions_away) > 80` from `fotmob_silver.period_stat` at `period = 'All'`.
+- Only finished matches are included via `fotmob_silver.match.match_finished = 1` and `match_id > 0`.
 - Trigger is match-level; output grain remains `match_team`, producing two rows per triggered match (`triggered_side = 'home'` and `triggered_side = 'away'`).
 - The core intensity metric is `match_total_tackles_and_interceptions`; severity beyond threshold is surfaced as `match_total_tackles_and_interceptions_above_threshold`.
 - Side contribution metrics (`triggered_team_tackles_and_interceptions`, share pct, and deltas) expose whether the defensive load is balanced or asymmetric.
@@ -37,7 +37,7 @@ Detect finished matches with extreme combined tackle-plus-interception defensive
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_tackle_and_interception_fest.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_tackle_and_interception_fest`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_tackle_and_interception_fest`
 
 ## Example Execution
 

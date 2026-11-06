@@ -32,7 +32,6 @@ service, so a path alone tells you which source it touches:
 | `scripts/orchestration/` | shared | `run_scheduled_job.py`, the recurring job runner |
 | `scripts/maintenance/`, `scripts/quality/`, `scripts/mongodb/` | shared | warehouse maintenance, checks, and catalog sync |
 | `scripts/` root | shared | `bootstrap.sh`, `install_schedule.sh`, `report_scraping.py`, `health_check.py`, `ensure_directories.py` |
-| `scripts/bronze/`, `scripts/silver/`, `scripts/gold/` | none | compatibility adapters only (removed in 3.0.0) |
 
 ## Supported Entry Points
 
@@ -77,10 +76,6 @@ Shared:
 - `scripts/maintenance/optimize_clickhouse.py`
 - `scripts/maintenance/recreate_clickhouse_tables.py`
 
-Existing generic, layer-folder, or earlier phase filenames remain executable
-compatibility adapters and emit a replacement warning. Do not use
-compatibility paths in new automation.
-
 The installed package command exposes the same canonical surface, for example:
 
 ```bash
@@ -90,61 +85,6 @@ depthmark run-fotmob-pipeline --date 20251208
 depthmark run-oddspedia-pipeline --date 20260301 --silver-reference-window-ready
 depthmark report-scraping --date 20260301
 ```
-
-### Compatibility Migration
-
-The adapters below remain executable until DepthMark 3.0.0, when they are
-removed (ADR 0024); each prints that removal version. New callers must use the
-canonical path on the right.
-
-| Compatibility path | Canonical path |
-| --- | --- |
-| `scripts/bronze/load_clickhouse.py` | `scripts/fotmob/load_fotmob_bronze.py` |
-| `scripts/silver/load_clickhouse.py` | `scripts/fotmob/load_fotmob_silver.py` |
-| `scripts/gold/load_clickhouse_gold.py` | `scripts/fotmob/load_fotmob_gold.py` |
-| `scripts/gold/run_gold_sql_jobs.py` | `scripts/fotmob/run_fotmob_gold_jobs.py` |
-| `scripts/gold/activations/build_signal_activations.py` | `scripts/fotmob/build_fotmob_signal_activations.py` |
-| `scripts/orchestration/pipeline.py` | `scripts/fotmob/run_fotmob_pipeline.py` |
-| `scripts/orchestration/setup_clickhouse.py` | `scripts/fotmob/setup_fotmob_warehouse.py` |
-| `scripts/bronze/scrape_fotmob.py` | `scripts/fotmob/scrape_fotmob.py` |
-| `scripts/bronze/sync_s3.py` | `scripts/fotmob/sync_fotmob_s3.py` |
-| `scripts/bronze/load_fotmob_bronze.py` | `scripts/fotmob/load_fotmob_bronze.py` |
-| `scripts/bronze/remove_fotmob_bronze.py` | `scripts/fotmob/remove_fotmob_bronze.py` |
-| `scripts/bronze/setup_clickhouse.py` | `scripts/fotmob/setup_fotmob_bronze.py` |
-| `scripts/bronze/drop_clickhouse.py` | `scripts/fotmob/drop_fotmob_bronze.py` |
-| `scripts/silver/load_fotmob_silver.py` | `scripts/fotmob/load_fotmob_silver.py` |
-| `scripts/silver/setup_clickhouse.py` | `scripts/fotmob/setup_fotmob_silver.py` |
-| `scripts/silver/drop_clickhouse.py` | `scripts/fotmob/drop_fotmob_silver.py` |
-| `scripts/gold/load_fotmob_gold.py` | `scripts/fotmob/load_fotmob_gold.py` |
-| `scripts/gold/run_fotmob_gold_jobs.py` | `scripts/fotmob/run_fotmob_gold_jobs.py` |
-| `scripts/gold/build_fotmob_signal_activations.py` | `scripts/fotmob/build_fotmob_signal_activations.py` |
-| `scripts/gold/setup_clickhouse_gold.py` | `scripts/fotmob/setup_fotmob_gold.py` |
-| `scripts/gold/drop_clickhouse_scenarios.py` | `scripts/fotmob/drop_fotmob_gold.py` |
-| `scripts/orchestration/run_fotmob_pipeline.py` | `scripts/fotmob/run_fotmob_pipeline.py` |
-| `scripts/orchestration/setup_fotmob_warehouse.py` | `scripts/fotmob/setup_fotmob_warehouse.py` |
-| `scripts/refresh_turnstile.py` | `scripts/fotmob/refresh_fotmob_turnstile.py` |
-| `scripts/oddspedia/discover_events.py` | `scripts/oddspedia/discover_oddspedia_events.py` |
-| `scripts/oddspedia/prioritize_events.py` | `scripts/oddspedia/prioritize_oddspedia_events.py` |
-| `scripts/oddspedia/scrape_matches.py` | `scripts/oddspedia/scrape_oddspedia_matches.py` |
-| `scripts/oddspedia/run_pipeline.py` | `scripts/oddspedia/run_oddspedia_pipeline.py` |
-| `scripts/oddspedia/status_oddspedia.py` | `scripts/report_scraping.py --source oddspedia --format summary` |
-| `scripts/oddspedia/report_oddspedia.py` | `scripts/report_scraping.py --source oddspedia --format markdown` |
-| `scripts/oddspedia/status.py` | `scripts/report_scraping.py --source oddspedia --format summary` |
-| `scripts/oddspedia/report.py` | `scripts/report_scraping.py --source oddspedia --format markdown` |
-| `scripts/oddspedia/setup_warehouse.py` | `scripts/oddspedia/setup_oddspedia_warehouse.py` |
-| `scripts/oddspedia/load_bronze.py` | `scripts/oddspedia/load_oddspedia_bronze.py` |
-| `scripts/oddspedia/resolve_events.py` | `scripts/oddspedia/resolve_oddspedia_events.py` |
-
-The older Oddspedia umbrella paths (`events.py` and `football.py`) and
-ClickHouse-named paths (`setup_clickhouse.py`, `load_clickhouse.py`, and
-`resolve_matches.py`) are also adapters. Choose the corresponding canonical
-phase from the table above.
-
-Package aliases such as `depthmark scrape`, `depthmark load`,
-`depthmark pipeline`, `depthmark setup-clickhouse`, and the earlier
-`depthmark oddspedia-*` spellings remain available with warnings. Their
-canonical replacements use the command examples above and the complete
-registry in `src/cli.py`.
 
 ### Scraping Reports
 
@@ -224,7 +164,7 @@ Oddspedia commands are source-specific and do not run through
 discovery, links-layer priority generation, and priority-selected scraping, or
 `run` for all three phases. Load its Historical artifacts into
 `oddspedia_bronze.*`, then build Oddspedia Silver outputs, including the
-read-only relationship to the FotMob `silver.match` reference. Oddspedia Gold
+read-only relationship to the FotMob `fotmob_silver.match` reference. Oddspedia Gold
 will use its own source-qualified execution surface; the FotMob Gold commands
 below are not a substitute.
 
@@ -272,8 +212,7 @@ retains unknown compatible top-level fields.
 
 `report_scraping.py --source oddspedia` separates the full discovered inventory
 from the selected priority scope, summarizes payload-audit observations and
-operational metrics, and estimates Bronze admission readiness. The compatibility
-status/report scripts delegate to it and are not independent implementations.
+operational metrics, and estimates Bronze admission readiness. 
 
 `load_oddspedia_bronze.py` admits only an accepted discovery inventory with a
 matching checksum, terminal scrape state, and accepted payload audits. It
@@ -347,6 +286,7 @@ reload the affected scope with the normal layer loader afterward:
 python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted
 python3 scripts/maintenance/recreate_clickhouse_tables.py --drifted --execute
 ```
+
 - `scripts/fotmob/build_fotmob_signal_activations.py`
 
 ## Quality Check Scripts
@@ -402,7 +342,7 @@ handwritten per-signal runner files. Use `--id` for one exact signal; use
 `--entity player` or `--family shooting_goals`.
 Every execution also requires `--date`, `--month`, or `--full-history`.
 After successful signal SQL execution, the loader runs `scripts/fotmob/build_fotmob_signal_activations.py`
-to populate deterministic per-match activation IDs in `gold.signal_activations`.
+to populate deterministic per-match activation IDs in `fotmob_gold.signal_activations`.
 The builder stages rows in ephemeral `warehouse_stage.signal_activations_stage`, then runs
 `clickhouse/gold/dml/activations/signal_activation_final_insert.sql` into a
 calculation table and commits the same output scope as the signal run. Signal

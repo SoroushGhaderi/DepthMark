@@ -1,4 +1,4 @@
-INSERT INTO silver.team_form
+INSERT INTO fotmob_silver.team_form
 SELECT
     tf.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -14,5 +14,5 @@ SELECT
     tf.away_team_id, tf.away_team_name,
     toInt32OrNull(tf.away_score) AS away_score,
     now() AS _loaded_at
-FROM bronze.team_form AS tf FINAL
-LEFT JOIN bronze.general AS g FINAL ON tf.match_id = g.match_id;
+FROM fotmob_bronze.team_form AS tf FINAL
+LEFT JOIN fotmob_bronze.general AS g FINAL ON tf.match_id = g.match_id;

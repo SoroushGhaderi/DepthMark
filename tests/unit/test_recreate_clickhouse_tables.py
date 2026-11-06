@@ -34,16 +34,16 @@ class _RecreationClient:
 
 
 def _drifted_bronze_general():
-    """Live bronze.general with one column retyped; every other table is absent."""
+    """Live fotmob_bronze.general with one column retyped; every other table is absent."""
     inventory = recreate_clickhouse_tables.setup_inventory(
         recreate_clickhouse_tables.resolve_clickhouse_root()
     )
-    general = next(t.expected for t in inventory if t.qualified_name == "bronze.general")
+    general = next(t.expected for t in inventory if t.qualified_name == "fotmob_bronze.general")
     columns = [
         (name, "Int64" if name == "match_id" else column_type)
         for name, column_type in general.columns
     ]
-    return {("bronze", "general"): (columns, ", ".join(general.sorting_key))}
+    return {("fotmob_bronze", "general"): (columns, ", ".join(general.sorting_key))}
 
 
 def test_execute_without_scope_is_refused():
@@ -51,18 +51,18 @@ def test_execute_without_scope_is_refused():
 
 
 def test_dry_run_never_mutates():
-    client = _RecreationClient({}, {("bronze", "general"): 10})
+    client = _RecreationClient({}, {("fotmob_bronze", "general"): 10})
 
     assert run(["--layer", "bronze", "--table", "general"], client=client) == 0
     assert client.mutations == []
 
 
 def test_execute_drifted_recreates_only_drifted_tables():
-    client = _RecreationClient(_drifted_bronze_general(), {("bronze", "general"): 10})
+    client = _RecreationClient(_drifted_bronze_general(), {("fotmob_bronze", "general"): 10})
 
     assert run(["--drifted", "--execute"], client=client) == 0
-    assert client.mutations[0] == "DROP TABLE IF EXISTS bronze.general"
-    assert client.mutations[1].startswith("CREATE TABLE IF NOT EXISTS bronze.general")
+    assert client.mutations[0] == "DROP TABLE IF EXISTS fotmob_bronze.general"
+    assert client.mutations[1].startswith("CREATE TABLE IF NOT EXISTS fotmob_bronze.general")
     assert len(client.mutations) == 2
 
 

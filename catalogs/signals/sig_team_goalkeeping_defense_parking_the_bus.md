@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_parking_the_bus
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_parking_the_bus
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_parking_the_bus.sql
 ---
 # sig_team_goalkeeping_defense_parking_the_bus
@@ -28,7 +28,7 @@ Flags low-possession wins built on extreme clearance volume, surfacing compact, 
   - `triggered_team_clearances >= 30`
   - `match_finished = 1` and `period = 'All'`
 - Rows are emitted at `match_team` grain with `triggered_side` orientation, so either home or away team can trigger when conditions are met.
-- Core trigger metrics (possession, clearances, win state) are enriched with bilateral defensive and shot-quality context from `silver.period_stat`.
+- Core trigger metrics (possession, clearances, win state) are enriched with bilateral defensive and shot-quality context from `fotmob_silver.period_stat`.
 - Similarity gate note:
   - `sig_team_shooting_goals_no_shots_allowed`: overlap in defensive suppression framing, but that signal requires `opponent_shots_on_target = 0` and has no possession/clearance/win gate.
   - `sig_team_possession_passing_low_block_frustration`: adjacent low-block tactical framing, but trigger is crossing volume (`cross_attempts > 40`) rather than low-possession winning defense.
@@ -38,7 +38,7 @@ Flags low-possession wins built on extreme clearance volume, surfacing compact, 
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_parking_the_bus.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_parking_the_bus`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_parking_the_bus`
 
 ## Example Execution
 

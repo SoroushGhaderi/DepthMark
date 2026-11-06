@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_sniper_accuracy
+  table: fotmob_gold_signals.sig_player_shooting_goals_sniper_accuracy
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_sniper_accuracy.sql
 ---
 # sig_player_shooting_goals_sniper_accuracy
@@ -30,9 +30,9 @@ Flags high-volume precision shooting events where a player takes at least five s
   - Player identity is preserved via `triggered_player_*`.
   - Team/opponent identity is preserved via `triggered_team_*`, `opponent_team_*`, and canonical `triggered_side`.
 - Match-context enrichment:
-  - Player-level context from `silver.player_match_stat` (goals, xG, shots, on-target volume, minutes).
-  - Bilateral team context from `silver.period_stat` (`period = 'All'`) for shots, xG, big chances, possession, and box touches.
-  - Outcome context from `silver.match` (scoreline and side-relative goal delta).
+  - Player-level context from `fotmob_silver.player_match_stat` (goals, xG, shots, on-target volume, minutes).
+  - Bilateral team context from `fotmob_silver.period_stat` (`period = 'All'`) for shots, xG, big chances, possession, and box touches.
+  - Outcome context from `fotmob_silver.match` (scoreline and side-relative goal delta).
 - Similarity note:
   - Closest active shooting-goals signals are `sig_player_shooting_goals_clinical_brace` and `sig_player_shooting_goals_hat_trick_hero`; this signal is distinct because it is precision-volume triggered (`shots` + `on-target accuracy`) rather than pure goal-count or xG over/under-performance triggered.
 
@@ -40,7 +40,7 @@ Flags high-volume precision shooting events where a player takes at least five s
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_sniper_accuracy.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_sniper_accuracy`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_sniper_accuracy`
 
 ## Example Execution
 

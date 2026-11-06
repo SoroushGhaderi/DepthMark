@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_foul_parity
+  table: fotmob_gold_signals.sig_match_discipline_cards_foul_parity
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_foul_parity.sql
 ---
 # sig_match_discipline_cards_foul_parity
@@ -22,7 +22,7 @@ Flags finished matches where foul volume is perfectly balanced between sides, th
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `fouls_home = fouls_away` from `silver.period_stat` at `period = 'All'`.
+- Trigger condition: `fouls_home = fouls_away` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Emits one row for each side (`triggered_side in {'home','away'}`) so downstream team-oriented models can consume the parity event from either orientation.
 - Keeps symmetric context fields and delta fields to separate low-contact parity from high-contact parity and to reveal whether equal fouls still produced asymmetric discipline outcomes.
 
@@ -30,7 +30,7 @@ Flags finished matches where foul volume is perfectly balanced between sides, th
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_foul_parity.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_foul_parity`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_foul_parity`
 
 ## Example Execution
 

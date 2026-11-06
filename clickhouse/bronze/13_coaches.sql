@@ -1,5 +1,5 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.coaches
+CREATE TABLE IF NOT EXISTS fotmob_bronze.coaches
 (
     match_id                        Int32,
     team_side                       String,

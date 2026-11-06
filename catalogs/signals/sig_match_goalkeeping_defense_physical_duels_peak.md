@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_physical_duels_peak
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_physical_duels_peak
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_physical_duels_peak.sql
 ---
 # sig_match_goalkeeping_defense_physical_duels_peak
@@ -22,8 +22,8 @@ Detects finished matches where total physical duel volume is extreme and emits b
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(coalesce(duels_won_home, 0) + coalesce(duels_won_away, 0) + coalesce(aerials_won_home, 0) + coalesce(aerials_won_away, 0)) > 200` from `silver.period_stat` at `period = 'All'`.
-- Only finished matches are included (`silver.match.match_finished = 1`) with valid `match_id > 0`.
+- Trigger condition: `(coalesce(duels_won_home, 0) + coalesce(duels_won_away, 0) + coalesce(aerials_won_home, 0) + coalesce(aerials_won_away, 0)) > 200` from `fotmob_silver.period_stat` at `period = 'All'`.
+- Only finished matches are included (`fotmob_silver.match.match_finished = 1`) with valid `match_id > 0`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Trigger severity is exposed by `match_total_combined_duels_won_above_threshold`, with decomposition into `match_total_ground_duels_won` and `match_total_aerial_duels_won`.
 - Side asymmetry is measured via `match_physical_duels_balance_abs` and bilateral share/delta fields.
@@ -36,7 +36,7 @@ Detects finished matches where total physical duel volume is extreme and emits b
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_physical_duels_peak.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_physical_duels_peak`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_physical_duels_peak`
 
 ## Example Execution
 

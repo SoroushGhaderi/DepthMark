@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_box_to_box_playmaker.sql
 ---
 # sig_player_creativity_playmaking_box_to_box_playmaker
@@ -30,16 +30,16 @@ ball-winning in the same finished match.
   - `triggered_player_passes_final_third_directional_proxy >= 5`
     OR `triggered_team_long_ball_attempts_directional_proxy >= 5`
 - Directional progression proxy replacement (for unavailable explicit progressive-pass counts):
-  - Player proxy: `silver.player_match_stat.passes_final_third`
-  - Team proxy: `silver.period_stat.long_ball_attempts_{home|away}` (`period = 'All'`)
+  - Player proxy: `fotmob_silver.player_match_stat.passes_final_third`
+  - Team proxy: `fotmob_silver.period_stat.long_ball_attempts_{home|away}` (`period = 'All'`)
 - Trigger provenance is explicit per row via:
   - `triggered_player_directional_proxy_source`
   - `triggered_player_directional_proxy_value`
   - `triggered_player_directional_proxy_above_threshold`
   - `triggered_player_recoveries_above_threshold`
-- Midfielder role scope comes from `silver.match_personnel` and is preserved through
+- Midfielder role scope comes from `fotmob_silver.match_personnel` and is preserved through
   `triggered_player_position_id` and `triggered_player_usual_playing_position_id`.
-- Team recovery denominator is built from `silver.player_match_stat` aggregation at match/team
+- Team recovery denominator is built from `fotmob_silver.player_match_stat` aggregation at match/team
   grain to support `player_share_of_team_recoveries_pct`.
 - Similarity gate note:
   - `sig_player_creativity_playmaking_line_breaker`: same creativity/playmaking directional proxy,
@@ -55,7 +55,7 @@ ball-winning in the same finished match.
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_box_to_box_playmaker.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_box_to_box_playmaker`
 
 ## Example Execution
 

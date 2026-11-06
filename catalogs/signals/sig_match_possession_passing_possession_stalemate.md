@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_possession_stalemate
+  table: fotmob_gold_signals.sig_match_possession_passing_possession_stalemate
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_possession_stalemate.sql
 ---
 # sig_match_possession_passing_possession_stalemate
@@ -30,7 +30,7 @@ Triggers when both teams finish the match with exactly 50% possession, flagging 
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_possession_stalemate.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_possession_stalemate`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_possession_stalemate`
 
 ## Example Execution
 

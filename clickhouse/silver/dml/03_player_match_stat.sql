@@ -1,4 +1,4 @@
-INSERT INTO silver.player_match_stat
+INSERT INTO fotmob_silver.player_match_stat
 SELECT
     p.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -25,6 +25,6 @@ SELECT
     p.aerial_duels_won, p.aerial_duel_attempts, p.aerial_duel_success_rate,
     p.fouls_committed, p.was_fouled,
     now() AS _loaded_at
-FROM bronze.player AS p FINAL
-LEFT JOIN bronze.general AS g FINAL ON p.match_id = g.match_id
+FROM fotmob_bronze.player AS p FINAL
+LEFT JOIN fotmob_bronze.general AS g FINAL ON p.match_id = g.match_id
 WHERE p.team_id IS NOT NULL;

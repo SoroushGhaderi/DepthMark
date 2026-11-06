@@ -1,4 +1,4 @@
-INSERT INTO gold.signal_activations (
+INSERT INTO fotmob_gold.signal_activations (
     signal_instance_id,
     signal_id,
     signal_id_version,

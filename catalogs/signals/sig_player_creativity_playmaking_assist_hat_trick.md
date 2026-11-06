@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_assist_hat_trick
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_assist_hat_trick
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_assist_hat_trick.sql
 ---
 # sig_player_creativity_playmaking_assist_hat_trick
@@ -26,8 +26,8 @@ Detect player-level playmaking performances where a single player records an ass
 - Trigger conditions:
   - `triggered_player_assists >= 3`
   - `match_finished = 1`
-- Trigger source is `silver.player_match_stat.assists` at `match_player` grain.
-- Output preserves bilateral team context from `silver.period_stat` (`period = 'All'`) for passing quality, possession control, and territorial pressure interpretation.
+- Trigger source is `fotmob_silver.player_match_stat.assists` at `match_player` grain.
+- Output preserves bilateral team context from `fotmob_silver.period_stat` (`period = 'All'`) for passing quality, possession control, and territorial pressure interpretation.
 - Severity and diagnostic context are retained through:
   - `triggered_player_assists_above_threshold`
   - `triggered_player_assist_minus_expected_assists`
@@ -42,7 +42,7 @@ Detect player-level playmaking performances where a single player records an ass
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_assist_hat_trick.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_assist_hat_trick`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_assist_hat_trick`
 
 ## Example Execution
 

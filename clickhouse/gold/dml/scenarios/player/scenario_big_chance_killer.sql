@@ -1,5 +1,5 @@
 -- scenario_big_chance_killer: goalkeepers denying multiple big chances in finished matches
-INSERT INTO gold_scenarios.scenario_big_chance_killer
+INSERT INTO fotmob_gold_scenarios.scenario_big_chance_killer
 (
     match_id,
     home_team_id,
@@ -52,10 +52,10 @@ SELECT
         ELSE 'draw'
     END AS winning_side,
     toString(g.match_date)
-FROM silver.shot AS s
-INNER JOIN silver.match AS g
+FROM fotmob_silver.shot AS s
+INNER JOIN fotmob_silver.match AS g
     ON s.match_id = g.match_id
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON s.match_id = p.match_id
     AND s.keeper_id = p.player_id
 WHERE

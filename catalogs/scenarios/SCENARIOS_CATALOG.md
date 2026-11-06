@@ -27,7 +27,7 @@ Identifies finished matches decided by a dominant 3+ goal margin, capturing fixt
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_demolition.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_demolition`
+- **Target Table:** `fotmob_gold_scenarios.scenario_demolition`
 
 ### 🚀 Execution
 ```bash
@@ -52,7 +52,7 @@ Finds wins built on elite defensive suppression, where the winning side concedes
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_defensive_shutdown_win.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_defensive_shutdown_win`
+- **Target Table:** `fotmob_gold_scenarios.scenario_defensive_shutdown_win`
 
 ### 🚀 Execution
 ```bash
@@ -77,7 +77,7 @@ Captures wins where the victor generated little attacking volume and still took 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_underdog_heist.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_underdog_heist`
+- **Target Table:** `fotmob_gold_scenarios.scenario_underdog_heist`
 
 ### 🚀 Execution
 ```bash
@@ -102,7 +102,7 @@ Identifies winning teams whose victories were powered by set-piece execution —
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_dead_ball_dominance.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_dead_ball_dominance`
+- **Target Table:** `fotmob_gold_scenarios.scenario_dead_ball_dominance`
 
 ### 🚀 Execution
 ```bash
@@ -127,7 +127,7 @@ Finds wins achieved with very low possession share — capturing results where a
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_low_block_heist.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_low_block_heist`
+- **Target Table:** `fotmob_gold_scenarios.scenario_low_block_heist`
 
 ### 🚀 Execution
 ```bash
@@ -152,7 +152,7 @@ Highlights matches with minimal chance creation from both sides — contests def
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_tactical_stalemate.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_tactical_stalemate`
+- **Target Table:** `fotmob_gold_scenarios.scenario_tactical_stalemate`
 
 ### 🚀 Execution
 ```bash
@@ -177,7 +177,7 @@ Identifies full comebacks where the eventual match winner was actively losing at
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_great_escape.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_great_escape`
+- **Target Table:** `fotmob_gold_scenarios.scenario_great_escape`
 
 ### 🚀 Execution
 ```bash
@@ -202,7 +202,7 @@ Finds individual carrying performances where a single player delivered extreme d
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_one_man_army.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_one_man_army`
+- **Target Table:** `fotmob_gold_scenarios.scenario_one_man_army`
 
 ### 🚀 Execution
 ```bash
@@ -227,7 +227,7 @@ Detects wins decided by a late goal that fundamentally altered the match state �
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_last_gasp.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_last_gasp`
+- **Target Table:** `fotmob_gold_scenarios.scenario_last_gasp`
 
 ### 🚀 Execution
 ```bash
@@ -252,7 +252,7 @@ Surfaces goalkeepers who produced major shot-stopping value in finished matches 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_shot_stopper.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_shot_stopper`
+- **Target Table:** `fotmob_gold_scenarios.scenario_shot_stopper`
 
 ### 🚀 Execution
 ```bash
@@ -281,7 +281,7 @@ Flags finished matches with extreme physical or disciplinary intensity — conte
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_war_zone.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_war_zone`
+- **Target Table:** `fotmob_gold_scenarios.scenario_war_zone`
 
 ### 🚀 Execution
 ```bash
@@ -308,7 +308,7 @@ Finds elite finishing spikes where a player scored multiple goals from minimal s
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_clinical_finisher.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_clinical_finisher`
+- **Target Table:** `fotmob_gold_scenarios.scenario_clinical_finisher`
 
 ### 🚀 Execution
 ```bash
@@ -333,7 +333,7 @@ Tracks penalty-heavy matches with multiple high-variance pressure moments — co
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_russian_roulette.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_russian_roulette`
+- **Target Table:** `fotmob_gold_scenarios.scenario_russian_roulette`
 
 ### 🚀 Execution
 ```bash
@@ -358,7 +358,7 @@ Identifies winning teams who paired a very low shot volume with an exceptionally
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_efficiency_machine.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_efficiency_machine`
+- **Target Table:** `fotmob_gold_scenarios.scenario_efficiency_machine`
 
 ### 🚀 Execution
 ```bash
@@ -383,7 +383,7 @@ Highlights goalkeepers who repeatedly denied high-quality on-target chances with
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_big_chance_killer.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_big_chance_killer`
+- **Target Table:** `fotmob_gold_scenarios.scenario_big_chance_killer`
 
 ### 🚀 Execution
 ```bash
@@ -408,7 +408,7 @@ Finds teams that avoided defeat despite receiving a red card during the match �
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_ten_men_stand.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_ten_men_stand`
+- **Target Table:** `fotmob_gold_scenarios.scenario_ten_men_stand`
 
 ### 🚀 Execution
 ```bash
@@ -435,7 +435,7 @@ Identifies outfield players who combined safe ball circulation with meaningful f
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_progressive_powerhouse.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_progressive_powerhouse`
+- **Target Table:** `fotmob_gold_scenarios.scenario_progressive_powerhouse`
 
 ### 🚀 Execution
 ```bash
@@ -460,7 +460,7 @@ Finds matches where one side dominated control metrics — possession and passin
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_sterile_control.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_sterile_control`
+- **Target Table:** `fotmob_gold_scenarios.scenario_sterile_control`
 
 ### 🚀 Execution
 ```bash
@@ -487,7 +487,7 @@ Captures dominant individual defensive displays characterised by elite aerial do
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_defensive_masterclass.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_defensive_masterclass`
+- **Target Table:** `fotmob_gold_scenarios.scenario_defensive_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -512,7 +512,7 @@ Identifies tempo controllers who combined elite touch volume with passing precis
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_metronome.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_metronome`
+- **Target Table:** `fotmob_gold_scenarios.scenario_metronome`
 
 ### 🚀 Execution
 ```bash
@@ -541,7 +541,7 @@ Finds non-goalkeeper, non-center-back outfield players sustaining elite two-way 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_high_intensity_engine.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_high_intensity_engine`
+- **Target Table:** `fotmob_gold_scenarios.scenario_high_intensity_engine`
 
 ### 🚀 Execution
 ```bash
@@ -568,7 +568,7 @@ Surfaces balanced outfield performances where a single player contributed meanin
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_box_to_box_general.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_box_to_box_general`
+- **Target Table:** `fotmob_gold_scenarios.scenario_box_to_box_general`
 
 ### 🚀 Execution
 ```bash
@@ -593,7 +593,7 @@ Finds away wins defined by territorial and chance-quality superiority — captur
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_away_day_masterclass.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_away_day_masterclass`
+- **Target Table:** `fotmob_gold_scenarios.scenario_away_day_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -618,7 +618,7 @@ Identifies elite individual creators who combined high chance-creation volume wi
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_key_pass_king.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_key_pass_king`
+- **Target Table:** `fotmob_gold_scenarios.scenario_key_pass_king`
 
 ### 🚀 Execution
 ```bash
@@ -643,7 +643,7 @@ Finds substitutes who made immediate direct attacking impact after coming off th
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_wildcard.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_wildcard`
+- **Target Table:** `fotmob_gold_scenarios.scenario_wildcard`
 
 ### 🚀 Execution
 ```bash
@@ -661,14 +661,14 @@ Highlights captains on winning teams who delivered above-average individual impa
 
 - **Leadership Output Filter (Captain + Winning Team + Goal or Assist):** The conjunction of all three conditions is deliberate. A captain on a winning team who played well but scored or assisted nothing is a competent leader. A substitute who scores with no leadership responsibility is a different scenario entirely. Only captains who simultaneously led their team to victory and delivered a direct goal involvement qualify — output leadership, not just positional authority.
 
-- **Quality Relative to Baseline (Rating Above Global Average):** The player's FotMob rating must exceed the average rating across the entire `bronze.player` table. This ensures the captain's performance was objectively above baseline across all other metrics, not just the counting stats of goals and assists. A captain who scored an own goal and then added a lucky deflection but rated poorly does not meet the spirit of the scenario — quality must be confirmed globally.
+- **Quality Relative to Baseline (Rating Above Global Average):** The player's FotMob rating must exceed the average rating across the entire `fotmob_bronze.player` table. This ensures the captain's performance was objectively above baseline across all other metrics, not just the counting stats of goals and assists. A captain who scored an own goal and then added a lucky deflection but rated poorly does not meet the spirit of the scenario — quality must be confirmed globally.
 
 - **Why Win Required?:** Captains who deliver goals or assists in losing matches demonstrate individual quality but not the leadership dimension of carrying their team. The win condition links the captain's output to a team outcome, framing their contribution as consequential leadership rather than consolation impact.
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_lead_by_example.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_lead_by_example`
+- **Target Table:** `fotmob_gold_scenarios.scenario_lead_by_example`
 
 ### 🚀 Execution
 ```bash
@@ -690,12 +690,12 @@ Finds high-impact young starters who delivered outright attacking contributions 
 
 - **Positive Minutes (Minutes Played > 0):** A guard against edge cases where a player is listed in the lineup data but suffered an immediate injury or did not take the pitch. Only players who genuinely participated qualify.
 
-- **Above-Average Quality (Rating Above Overall Average):** The rating condition mirrors the Lead By Example scenario — the player must rate above the global average from `bronze.player`. This distinguishes a quality breakthrough from a young player who happened to score with their only meaningful touch while otherwise performing below par.
+- **Above-Average Quality (Rating Above Overall Average):** The rating condition mirrors the Lead By Example scenario — the player must rate above the global average from `fotmob_bronze.player`. This distinguishes a quality breakthrough from a young player who happened to score with their only meaningful touch while otherwise performing below par.
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_young_gun.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_young_gun`
+- **Target Table:** `fotmob_gold_scenarios.scenario_young_gun`
 
 ### 🚀 Execution
 ```bash
@@ -711,7 +711,7 @@ Detects teams that were trailing at half-time but recovered to avoid defeat — 
 
 ### 🧠 Tactical & Statistical Logic
 
-- **Halftime Deficit Reconstruction:** The scenario reconstructs first-half scorelines by summing all goals scored within the `FirstHalf` period from the `bronze.goal` table. This produces an accurate halftime score state without relying on any pre-computed or stored half-time data that may be incomplete in edge cases (e.g., halftime goals scored in added time).
+- **Halftime Deficit Reconstruction:** The scenario reconstructs first-half scorelines by summing all goals scored within the `FirstHalf` period from the `fotmob_bronze.goal` table. This produces an accurate halftime score state without relying on any pre-computed or stored half-time data that may be incomplete in edge cases (e.g., halftime goals scored in added time).
 
 - **Recovery Constraint (Trailing at HT, Level or Ahead at FT):** The trailing team at half-time must finish the match without losing — either drawing or winning. A team that concedes at half-time and then loses 3–1 having been 1–0 down at HT is not a second-half warrior. The scenario specifically requires that the deficit situation at 45 minutes was reversed or neutralised by full-time.
 
@@ -720,7 +720,7 @@ Detects teams that were trailing at half-time but recovered to avoid defeat — 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_second_half_warriors.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_second_half_warriors`
+- **Target Table:** `fotmob_gold_scenarios.scenario_second_half_warriors`
 
 ### 🚀 Execution
 ```bash
@@ -745,7 +745,7 @@ Find elite passing-control performances delivered under adverse possession conte
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_against_the_grain.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_against_the_grain`
+- **Target Table:** `fotmob_gold_scenarios.scenario_against_the_grain`
 
 ### 🚀 Execution
 ```bash
@@ -770,7 +770,7 @@ Flags matches with heavy combined foul counts but unusually light disciplinary p
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_unpunished_aggression.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_unpunished_aggression`
+- **Target Table:** `fotmob_gold_scenarios.scenario_unpunished_aggression`
 
 ### 🚀 Execution
 ```bash
@@ -795,7 +795,7 @@ Finds wins built on elite team-level ball-winning intensity — matches where th
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_pressing_masterclass.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_pressing_masterclass`
+- **Target Table:** `fotmob_gold_scenarios.scenario_pressing_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -815,12 +815,12 @@ Identifies primary goalkeepers who have delivered match-defining performances ch
 
 - **The High-Action Floor (≥ 7 Saves):** Many clean sheets are low-action outcomes where the keeper makes two or three routine interventions. A 7-save game means the goalkeeper was repeatedly tested — roughly one demanding action every 13 minutes. This floor isolates fixtures where the goalkeeper was actively and repeatedly decisive, not simply a passenger behind a solid defensive structure.
 
-- **Primary Goalkeeper Integrity:** The query restricts to keeper rows with `minutes_played >= 80` in `bronze.player` to identify the primary custodian. Save totals are pulled from `bronze.period` team-level fields (`keeper_saves_home` / `keeper_saves_away`) for the `period = 'All'` aggregate, ensuring full-match accuracy. This combination prevents partial-game keepers or backup appearances from distorting the match-level attribution.
+- **Primary Goalkeeper Integrity:** The query restricts to keeper rows with `minutes_played >= 80` in `fotmob_bronze.player` to identify the primary custodian. Save totals are pulled from `fotmob_bronze.period` team-level fields (`keeper_saves_home` / `keeper_saves_away`) for the `period = 'All'` aggregate, ensuring full-match accuracy. This combination prevents partial-game keepers or backup appearances from distorting the match-level attribution.
 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_elite_shot_stopper.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_elite_shot_stopper`
+- **Target Table:** `fotmob_gold_scenarios.scenario_elite_shot_stopper`
 
 ### 🚀 Execution
 ```bash
@@ -845,7 +845,7 @@ Find matches where one side lays siege with elite shot and xG volume, but still 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_hollow_dominance.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_hollow_dominance`
+- **Target Table:** `fotmob_gold_scenarios.scenario_hollow_dominance`
 
 ### 🚀 Execution
 ```bash
@@ -868,7 +868,7 @@ Find outfield isolation specialists who combine high dribble volume, efficient t
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_touchline_terror.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_touchline_terror`
+- **Target Table:** `fotmob_gold_scenarios.scenario_touchline_terror`
 
 ### 🚀 Execution
 ```bash
@@ -891,7 +891,7 @@ Find deep distributors who repeatedly break lines through accurate long progress
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_line_breaker.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_line_breaker`
+- **Target Table:** `fotmob_gold_scenarios.scenario_line_breaker`
 
 ### 🚀 Execution
 ```bash
@@ -916,7 +916,7 @@ Find end-to-end shootouts where both teams produce elite attacking volume, then 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_basketball_match.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_basketball_match`
+- **Target Table:** `fotmob_gold_scenarios.scenario_basketball_match`
 
 ### 🚀 Execution
 ```bash
@@ -939,7 +939,7 @@ Find attackers who repeatedly draw fouls while actively carrying the ball or rec
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_lightning_rod.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_lightning_rod`
+- **Target Table:** `fotmob_gold_scenarios.scenario_lightning_rod`
 
 ### 🚀 Execution
 ```bash
@@ -964,7 +964,7 @@ Find outfield defenders who protect their box under heavy shot pressure, combini
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_human_shield.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_human_shield`
+- **Target Table:** `fotmob_gold_scenarios.scenario_human_shield`
 
 ### 🚀 Execution
 ```bash
@@ -989,7 +989,7 @@ Find late substitutes who deliver direct scoreline impact on very low touch volu
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_golden_touch.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_golden_touch`
+- **Target Table:** `fotmob_gold_scenarios.scenario_golden_touch`
 
 ### 🚀 Execution
 ```bash
@@ -1014,7 +1014,7 @@ Find high-intensity disruptors who blend defensive action volume, tactical aggre
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_chaos_engine.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_chaos_engine`
+- **Target Table:** `fotmob_gold_scenarios.scenario_chaos_engine`
 
 ### 🚀 Execution
 ```bash
@@ -1037,7 +1037,7 @@ Find late-match collapses driven by goal surges, shot escalation, and aggressive
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_tired_legs.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_tired_legs`
+- **Target Table:** `fotmob_gold_scenarios.scenario_tired_legs`
 
 ### 🚀 Execution
 ```bash
@@ -1062,7 +1062,7 @@ Find high-volume shooters who absorb a very large share of their team's attempts
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_black_hole.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_black_hole`
+- **Target Table:** `fotmob_gold_scenarios.scenario_black_hole`
 
 ### 🚀 Execution
 ```bash
@@ -1087,7 +1087,7 @@ Find teams whose defensive line repeatedly catches opponents offside while still
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_high_line_trap.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_high_line_trap`
+- **Target Table:** `fotmob_gold_scenarios.scenario_high_line_trap`
 
 ### 🚀 Execution
 ```bash
@@ -1112,7 +1112,7 @@ Find starting attackers with very low overall involvement but extreme penalty-bo
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_ghost_poacher.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_ghost_poacher`
+- **Target Table:** `fotmob_gold_scenarios.scenario_ghost_poacher`
 
 ### 🚀 Execution
 ```bash
@@ -1137,7 +1137,7 @@ Find low-possession teams that leaned heavily on direct long-ball progression, s
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_route_one_masterclass.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_route_one_masterclass`
+- **Target Table:** `fotmob_gold_scenarios.scenario_route_one_masterclass`
 
 ### 🚀 Execution
 ```bash
@@ -1162,7 +1162,7 @@ Find matches where one side imposed extreme territorial control and almost compl
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_total_suffocation.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_total_suffocation`
+- **Target Table:** `fotmob_gold_scenarios.scenario_total_suffocation`
 
 ### 🚀 Execution
 ```bash
@@ -1187,7 +1187,7 @@ Find matches where one side weaponized possession to keep the opponent out of da
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/team/scenario_territorial_suffocation.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_territorial_suffocation`
+- **Target Table:** `fotmob_gold_scenarios.scenario_territorial_suffocation`
 
 ### 🚀 Execution
 ```bash
@@ -1212,7 +1212,7 @@ Find deep-lying distribution hubs who combine elite passing volume and accuracy 
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/player/scenario_clinical_pivot.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_clinical_pivot`
+- **Target Table:** `fotmob_gold_scenarios.scenario_clinical_pivot`
 
 ### 🚀 Execution
 ```bash
@@ -1240,7 +1240,7 @@ python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind scenario -
 ### 📂 Technical Assets
 - **SQL Transformation:** `clickhouse/gold/dml/scenarios/{team,player}/scenario_<name>.sql`
 - **Runner:** `scripts/fotmob/run_fotmob_gold_jobs.py`
-- **Target Table:** `gold_scenarios.scenario_<name>`
+- **Target Table:** `fotmob_gold_scenarios.scenario_<name>`
 
 ### 🚀 Execution
 \`\`\`bash

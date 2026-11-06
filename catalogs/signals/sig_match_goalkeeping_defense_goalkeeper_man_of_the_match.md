@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_goalkeeper_man_of_the_match.sql
 ---
 # sig_match_goalkeeping_defense_goalkeeper_man_of_the_match
@@ -27,8 +27,8 @@ then preserve bilateral side-oriented workload, control, and score context for i
   - match scoreline is in `{0-0, 1-0, 0-1}`
   - a side's top-rated goalkeeper rating equals the highest player rating in the same finished match
 - Match-level trigger emits one or two side-oriented rows (`triggered_side = 'home'` / `'away'`), allowing bilateral triggering when both goalkeepers tie at the top rating.
-- Goalkeeper identity and rating are resolved per match-side from `silver.player_match_stat` using goalkeeper-only rows (`is_goalkeeper = 1`) with deterministic tie-breakers (rating, minutes played, player ID).
-- Symmetric enrichment keeps defensive workload and control context from `silver.period_stat` (`period = 'All'`): saves, shots faced, interceptions, clearances, possession, pass accuracy, and result translation.
+- Goalkeeper identity and rating are resolved per match-side from `fotmob_silver.player_match_stat` using goalkeeper-only rows (`is_goalkeeper = 1`) with deterministic tie-breakers (rating, minutes played, player ID).
+- Symmetric enrichment keeps defensive workload and control context from `fotmob_silver.period_stat` (`period = 'All'`): saves, shots faced, interceptions, clearances, possession, pass accuracy, and result translation.
 - Similarity gate note:
   - `sig_match_goalkeeping_defense_save_fest`: same entity/family/subfamily and match-level defensive lens, but trigger is combined save volume, not player-rating leadership in low-scoring matches.
   - `sig_match_goalkeeping_defense_offside_frenzy`: same family and bilateral output style, but trigger axis is combined offsides, not goalkeeper top-rating.
@@ -38,7 +38,7 @@ then preserve bilateral side-oriented workload, control, and score context for i
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_goalkeeper_man_of_the_match.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match`
 
 ## Example Execution
 

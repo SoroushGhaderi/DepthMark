@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match (
+INSERT INTO fotmob_gold_signals.sig_match_goalkeeping_defense_goalkeeper_man_of_the_match (
     match_id,
     match_date,
     home_team_id,
@@ -72,7 +72,7 @@ WITH low_scoring_matches AS (
         toInt32(coalesce(m.home_score, 0)) AS home_goals,
         toInt32(coalesce(m.away_score, 0)) AS away_goals,
         toInt32(coalesce(m.home_score, 0) + coalesce(m.away_score, 0)) AS match_total_goals
-    FROM silver.match AS m
+    FROM fotmob_silver.match AS m
     WHERE m.match_finished = 1
       AND m.match_id > 0
       AND (
@@ -90,7 +90,7 @@ player_ratings AS (
         p.is_goalkeeper,
         toFloat32(coalesce(p.fotmob_rating, 0.0)) AS fotmob_rating,
         toInt32(coalesce(p.minutes_played, 0)) AS minutes_played
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
       AND p.player_id > 0
       AND p.team_id > 0
@@ -220,7 +220,7 @@ INNER JOIN team_goalkeeper_top_rating AS hgk
 INNER JOIN team_goalkeeper_top_rating AS agk
     ON agk.match_id = lm.match_id
    AND agk.team_id = lm.away_team_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = lm.match_id
    AND ps.match_date = lm.match_date
    AND ps.period = 'All'
@@ -322,7 +322,7 @@ INNER JOIN team_goalkeeper_top_rating AS hgk
 INNER JOIN team_goalkeeper_top_rating AS agk
     ON agk.match_id = lm.match_id
    AND agk.team_id = lm.away_team_id
-INNER JOIN silver.period_stat AS ps
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = lm.match_id
    AND ps.match_date = lm.match_date
    AND ps.period = 'All'

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_shooting_goals_first_minute_goal (
+INSERT INTO fotmob_gold_signals.sig_player_shooting_goals_first_minute_goal (
     match_id,
     match_date,
     home_team_id,
@@ -73,7 +73,7 @@ WITH first_minute_non_own_goal_events AS (
             coalesce(s.goal_time, s.minute, 0) + coalesce(s.goal_overload_time, s.minute_added, 0)
         ) AS goal_effective_minute,
         toInt64(coalesce(s.shot_id, 0)) AS shot_id
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.match_id > 0
       AND coalesce(s.player_id, 0) > 0
       AND coalesce(s.team_id, 0) > 0
@@ -324,13 +324,13 @@ SELECT
     ), 0.0)) AS player_share_of_team_total_shots_pct
 
 FROM player_first_minute_goals AS pfmg
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = pfmg.match_id
    AND p.player_id = pfmg.player_id
    AND p.team_id = pfmg.team_id
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN team_first_minute_non_own_goal_totals AS triggered_team_first_minute

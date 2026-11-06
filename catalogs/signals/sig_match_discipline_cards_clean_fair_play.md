@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_clean_fair_play
+  table: fotmob_gold_signals.sig_match_discipline_cards_clean_fair_play
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_clean_fair_play.sql
 ---
 # sig_match_discipline_cards_clean_fair_play
@@ -32,7 +32,7 @@ Flags low-contact matches with no cards at all, isolating clean fair-play profil
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_clean_fair_play.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_clean_fair_play`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_clean_fair_play`
 
 ## Example Execution
 

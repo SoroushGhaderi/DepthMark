@@ -1,4 +1,4 @@
-INSERT INTO silver.period_stat
+INSERT INTO fotmob_silver.period_stat
 SELECT
     p.match_id,
     ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc_date)), ifNull(toDate(parseDateTimeBestEffortOrNull(g.match_time_utc)), toDate('1970-01-01'))) AS match_date,
@@ -294,5 +294,5 @@ SELECT
     p.corners_home, p.corners_away,
     p.offsides_home, p.offsides_away,
     now() AS _loaded_at
-FROM bronze.period AS p FINAL
-LEFT JOIN bronze.general AS g FINAL ON p.match_id = g.match_id;
+FROM fotmob_bronze.period AS p FINAL
+LEFT JOIN fotmob_bronze.general AS g FINAL ON p.match_id = g.match_id;

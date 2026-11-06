@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_no_penetration_match
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_no_penetration_match
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_no_penetration_match.sql
 ---
 # sig_match_goalkeeping_defense_no_penetration_match
@@ -23,7 +23,7 @@ side-oriented rows to profile defensive denial, box protection workload, and mat
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(coalesce(touches_opp_box_home, 0) + coalesce(touches_opp_box_away, 0)) < 15` from `silver.period_stat` at `period = 'All'`.
+- Trigger condition: `(coalesce(touches_opp_box_home, 0) + coalesce(touches_opp_box_away, 0)) < 15` from `fotmob_silver.period_stat` at `period = 'All'`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `triggered_side = 'away'`) to preserve canonical `match_team` orientation.
 - Trigger severity is exposed by `match_total_touches_opposition_box_below_threshold = 15 - match_total_touches_opposition_box`.
 - Bilateral opposition-box context is preserved with raw counts, side share percentages, and deltas, then enriched with shot blocks, clearances, interceptions, tackles, duels, aerials, shot pressure faced, keeper output, possession, passing quality, and scoreline context.
@@ -36,7 +36,7 @@ side-oriented rows to profile defensive denial, box protection workload, and mat
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_no_penetration_match.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_no_penetration_match`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_no_penetration_match`
 
 ## Example Execution
 

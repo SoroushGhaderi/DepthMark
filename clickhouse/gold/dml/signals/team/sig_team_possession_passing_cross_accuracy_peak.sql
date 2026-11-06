@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_cross_accuracy_peak (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_cross_accuracy_peak (
     match_id,
     match_date,
     home_team_id,
@@ -146,8 +146,8 @@ SELECT
     toFloat32(coalesce(ps.expected_goals_away, 0)) AS opponent_xg,
     toFloat32(round(coalesce(ps.expected_goals_home, 0) - coalesce(ps.expected_goals_away, 0), 3)) AS xg_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -260,8 +260,8 @@ SELECT
     toFloat32(coalesce(ps.expected_goals_home, 0)) AS opponent_xg,
     toFloat32(round(coalesce(ps.expected_goals_away, 0) - coalesce(ps.expected_goals_home, 0), 3)) AS xg_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_hostile_territory
+  table: fotmob_gold_signals.sig_team_discipline_cards_hostile_territory
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_hostile_territory.sql
 ---
 # sig_team_discipline_cards_hostile_territory
@@ -25,7 +25,7 @@ Flags team-match performances where disciplinary events outnumber on-target shot
 - Trigger condition:
   - `triggered_team_total_cards > triggered_team_shots_on_target`
   - Equivalent threshold form: `triggered_team_cards_minus_shots_on_target >= 1`
-- Total cards are computed as yellow plus red cards from `silver.period_stat` (`period = 'All'`).
+- Total cards are computed as yellow plus red cards from `fotmob_silver.period_stat` (`period = 'All'`).
 - Trigger is evaluated symmetrically for home and away sides.
 - Output preserves bilateral card, shooting, fouling, defensive, and possession context for interpretation.
 
@@ -33,7 +33,7 @@ Flags team-match performances where disciplinary events outnumber on-target shot
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_hostile_territory.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_hostile_territory`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_hostile_territory`
 
 ## Example Execution
 

@@ -14,8 +14,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from src.common.deprecation import warn_deprecated
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts"
 CLICKHOUSE_SQL_DIR = PROJECT_ROOT / "clickhouse"
@@ -27,11 +25,9 @@ class CommandSpec:
 
     target: str
     script: str
-    replacement: str | None = None
-    arguments: tuple[str, ...] = ()
 
 
-CANONICAL_COMMANDS: dict[str, CommandSpec] = {
+COMMANDS: dict[str, CommandSpec] = {
     "health-check": CommandSpec("src.operations.commands.health_check:main", "health_check.py"),
     "report-scraping": CommandSpec(
         "src.operations.commands.report_scraping:main", "report_scraping.py"
@@ -91,75 +87,6 @@ CANONICAL_COMMANDS: dict[str, CommandSpec] = {
 }
 
 
-def _alias(canonical_command: str) -> CommandSpec:
-    """Build a compatibility command that targets a canonical command."""
-    canonical = CANONICAL_COMMANDS[canonical_command]
-    return CommandSpec(
-        target=canonical.target,
-        script=canonical.script,
-        replacement=canonical_command,
-        arguments=canonical.arguments,
-    )
-
-
-def _oddspedia_report_alias(output_format: str) -> CommandSpec:
-    """Build an old Oddspedia reporting command on the unified interface."""
-    report = CANONICAL_COMMANDS["report-scraping"]
-    return CommandSpec(
-        target=report.target,
-        script=report.script,
-        replacement="report-scraping",
-        arguments=("--source", "oddspedia", "--format", output_format),
-    )
-
-
-COMPATIBILITY_COMMANDS: dict[str, CommandSpec] = {
-    "scrape": _alias("scrape-fotmob"),
-    "load": _alias("load-fotmob-bronze"),
-    "pipeline": _alias("run-fotmob-pipeline"),
-    "setup-clickhouse": _alias("setup-fotmob-warehouse"),
-    "oddspedia-discover-events": _alias("discover-oddspedia-events"),
-    "oddspedia-prioritize-events": _alias("prioritize-oddspedia-events"),
-    "oddspedia-scrape-matches": _alias("scrape-oddspedia-matches"),
-    "oddspedia-run-pipeline": _alias("run-oddspedia-pipeline"),
-    "status-oddspedia": _oddspedia_report_alias("summary"),
-    "report-oddspedia": _oddspedia_report_alias("markdown"),
-    "oddspedia-status": _oddspedia_report_alias("summary"),
-    "oddspedia-report": _oddspedia_report_alias("markdown"),
-    "oddspedia-setup-warehouse": _alias("setup-oddspedia-warehouse"),
-    "oddspedia-load-bronze": _alias("load-oddspedia-bronze"),
-    "oddspedia-resolve-events": _alias("resolve-oddspedia-events"),
-    # Older umbrella and ClickHouse-named commands keep their argument behavior.
-    "oddspedia-events": CommandSpec(
-        "src.oddspedia.scraping.entrypoints:football_main",
-        "oddspedia/events.py",
-        "a phase-specific Oddspedia command",
-    ),
-    "oddspedia-football": CommandSpec(
-        "src.oddspedia.scraping.entrypoints:football_main",
-        "oddspedia/football.py",
-        "run-oddspedia-pipeline",
-    ),
-    "oddspedia-setup-clickhouse": CommandSpec(
-        "src.oddspedia.commands.setup_warehouse:main",
-        "oddspedia/setup_clickhouse.py",
-        "setup-oddspedia-warehouse",
-    ),
-    "oddspedia-load-clickhouse": CommandSpec(
-        "src.oddspedia.commands.load_bronze:main",
-        "oddspedia/load_clickhouse.py",
-        "load-oddspedia-bronze",
-    ),
-    "oddspedia-resolve-matches": CommandSpec(
-        "src.oddspedia.commands.resolve_events:main",
-        "oddspedia/resolve_matches.py",
-        "resolve-oddspedia-events",
-    ),
-}
-
-COMMANDS: dict[str, CommandSpec] = {**CANONICAL_COMMANDS, **COMPATIBILITY_COMMANDS}
-
-
 def resolve_target(target: str) -> Callable[[list[str]], int | None]:
     """Import and return the ``module:function`` a command runs."""
     module_name, function_name = target.split(":")
@@ -176,7 +103,7 @@ def run_command(spec: CommandSpec, command_args: list[str]) -> int:
             file=sys.stderr,
         )
         return 2
-    result = resolve_target(spec.target)([*spec.arguments, *command_args])
+    result = resolve_target(spec.target)(command_args)
     return 0 if result is None else int(result)
 
 
@@ -205,14 +132,6 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     command = COMMANDS[parsed.command]
-    if command.replacement:
-        replacement = (
-            f"'depthmark {command.replacement}'"
-            if command.replacement in CANONICAL_COMMANDS
-            else command.replacement
-        )
-        warn_deprecated(f"'depthmark {parsed.command}'", replacement)
-
     return run_command(command, parsed.args)
 
 

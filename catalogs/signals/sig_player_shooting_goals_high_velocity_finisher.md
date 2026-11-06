@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_high_velocity_finisher
+  table: fotmob_gold_signals.sig_player_shooting_goals_high_velocity_finisher
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_velocity_finisher.sql
 ---
 # sig_player_shooting_goals_high_velocity_finisher
@@ -26,8 +26,8 @@ Flags players who score at least two goals in fewer than 30 played minutes, isol
 - Trigger condition:
   - `triggered_player_goals >= 2`
   - `triggered_player_minutes_played < 30`
-- Triggered player identity and finishing metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
+- Triggered player identity and finishing metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features for shots, chance quality, possession, and box touches.
 - Signal adds severity diagnostics (`goals_above_threshold`, `minutes_below_threshold`, and `triggered_player_goals_per_90`) to rank how extreme each short-minutes scoring burst is.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_rapid_brace` and `sig_player_shooting_goals_super_sub_goal`; this signal coexists because its trigger is exposure-based (`minutes_played < 30`) rather than pair-window timing or immediate post-substitution timing.
 
@@ -35,7 +35,7 @@ Flags players who score at least two goals in fewer than 30 played minutes, isol
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_high_velocity_finisher.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_high_velocity_finisher`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_high_velocity_finisher`
 
 ## Example Execution
 

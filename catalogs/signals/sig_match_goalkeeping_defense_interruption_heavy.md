@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_interruption_heavy
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_interruption_heavy
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_interruption_heavy.sql
 ---
 # sig_match_goalkeeping_defense_interruption_heavy
@@ -22,8 +22,8 @@ Detect finished matches where whistle-driven fragmentation is extreme, using a j
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `(coalesce(fouls_home, 0) + coalesce(fouls_away, 0) + coalesce(offsides_home, 0) + coalesce(offsides_away, 0)) > 40` from `silver.period_stat` at `period = 'All'`.
-- Only finished matches are included (`silver.match.match_finished = 1`) with valid `match_id > 0`.
+- Trigger condition: `(coalesce(fouls_home, 0) + coalesce(fouls_away, 0) + coalesce(offsides_home, 0) + coalesce(offsides_away, 0)) > 40` from `fotmob_silver.period_stat` at `period = 'All'`.
+- Only finished matches are included (`fotmob_silver.match.match_finished = 1`) with valid `match_id > 0`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Trigger severity is exposed by `match_total_fouls_and_offsides_above_threshold = match_total_fouls_and_offsides - 40`, while side symmetry is captured by `match_interruption_balance_abs` and side share/delta metrics.
 - Enrichment preserves bilateral defensive and control interpretability with tackles, interceptions, clearances, duels, shots faced, goalkeeper saves, possession, pass accuracy, and scoreline context.
@@ -36,7 +36,7 @@ Detect finished matches where whistle-driven fragmentation is extreme, using a j
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_interruption_heavy.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_interruption_heavy`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_interruption_heavy`
 
 ## Example Execution
 

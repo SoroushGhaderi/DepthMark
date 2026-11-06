@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_big_chance_bottler
+  table: fotmob_gold_signals.sig_player_shooting_goals_big_chance_bottler
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_big_chance_bottler.sql
 ---
 # sig_player_shooting_goals_big_chance_bottler
@@ -25,18 +25,18 @@ Flags players who miss at least three big chances in one finished match, surfaci
 
 - Trigger condition:
   - `triggered_player_big_chances_missed >= 3`
-- Big-chance misses are computed from `silver.shot` as non-goal shots where either:
+- Big-chance misses are computed from `fotmob_silver.shot` as non-goal shots where either:
   - `situation` contains `big chance`, or
   - `expected_goals >= 0.30` (proxy fallback used elsewhere in the project).
-- Player identity and shooting context are sourced from `silver.player_match_stat`; match context comes from `silver.match` (`match_finished = 1`).
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics, including big-chance-missed totals.
+- Player identity and shooting context are sourced from `fotmob_silver.player_match_stat`; match context comes from `fotmob_silver.match` (`match_finished = 1`).
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics, including big-chance-missed totals.
 - Similarity gate note: closest active signal is `sig_player_shooting_goals_wasteful_finisher`; this signal is intentionally distinct because it is chance-event-count based (`>= 3` misses) rather than xG-with-zero-goals based (`xG > 1.20`, goals `= 0`), so both can coexist.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_big_chance_bottler.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_big_chance_bottler`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_big_chance_bottler`
 
 ## Example Execution
 

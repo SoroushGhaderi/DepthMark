@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_midfield_sniper
+  table: fotmob_gold_signals.sig_player_shooting_goals_midfield_sniper
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_midfield_sniper.sql
 ---
 # sig_player_shooting_goals_midfield_sniper
@@ -24,7 +24,7 @@ Detects rare match-player events where a central-midfielder proxy delivers a lon
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Outside-box goals are derived from `silver.shot` with `is_from_inside_box = 0`, `is_goal = 1`, and `is_own_goal = 0`.
+  - Outside-box goals are derived from `fotmob_silver.shot` with `is_from_inside_box = 0`, `is_goal = 1`, and `is_own_goal = 0`.
   - Signal fires at `triggered_player_outside_box_goals >= 2`.
   - Central-midfielder scope follows current project role taxonomy proxy:
     - `triggered_player_usual_playing_position_id = 2` (midfielder)
@@ -34,8 +34,8 @@ Detects rare match-player events where a central-midfielder proxy delivers a lon
   - Team/opponent identity is preserved via `triggered_team_*`, `opponent_team_*`, and `triggered_side`.
 - Match-context enrichment:
   - Trigger evidence comes from shot-level aggregates at `match_id + player_id + team_id`.
-  - Player totals come from `silver.player_match_stat`.
-  - Bilateral context is sourced from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player totals come from `fotmob_silver.player_match_stat`.
+  - Bilateral context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity gate note:
   - Closest active signals are `sig_player_shooting_goals_long_range_specialist` and `sig_player_shooting_goals_xg_accumulator_midfielder`; this signal is distinct because it jointly requires (1) a midfield role proxy and (2) a strict outside-box brace threshold (`>= 2` goals).
 
@@ -43,7 +43,7 @@ Detects rare match-player events where a central-midfielder proxy delivers a lon
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_midfield_sniper.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_midfield_sniper`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_midfield_sniper`
 
 ## Example Execution
 

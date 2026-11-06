@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_aggression_spike
+  table: fotmob_gold_signals.sig_team_discipline_cards_aggression_spike
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_aggression_spike.sql
 ---
 # sig_team_discipline_cards_aggression_spike
@@ -25,14 +25,14 @@ Flags team-match performances where a side's foul count jumps sharply after half
 - Trigger condition:
   - `triggered_team_fouls_first_half >= 1`
   - `triggered_team_fouls_second_half >= 2 * triggered_team_fouls_first_half`
-- Trigger is evaluated symmetrically for home and away from `silver.period_stat` half splits (`period IN ('FirstHalf', 'SecondHalf')`).
+- Trigger is evaluated symmetrically for home and away from `fotmob_silver.period_stat` half splits (`period IN ('FirstHalf', 'SecondHalf')`).
 - The signal preserves bilateral foul-escalation ratios plus full-match discipline and defensive context (`period = 'All'`) to separate genuine aggression spikes from balanced physical matches.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_aggression_spike.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_aggression_spike`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_aggression_spike`
 
 ## Example Execution
 

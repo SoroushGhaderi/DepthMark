@@ -33,7 +33,8 @@ project_root = PROJECT_ROOT
 logger = get_logger(__name__)
 
 ODDSPEDIA_LAYER = "oddspedia_bronze"
-LAYER_CHOICES = (*LAYER_ORDER, ODDSPEDIA_LAYER)
+ODDSPEDIA_SILVER_LAYER = "oddspedia_silver"
+LAYER_CHOICES = (*LAYER_ORDER, ODDSPEDIA_LAYER, ODDSPEDIA_SILVER_LAYER)
 RELOAD_HINTS = {
     "bronze": "python scripts/fotmob/load_fotmob_bronze.py --full-history",
     "silver": "python scripts/fotmob/load_fotmob_silver.py --full-history",
@@ -41,11 +42,10 @@ RELOAD_HINTS = {
     ODDSPEDIA_LAYER: (
         "python scripts/oddspedia/load_oddspedia_bronze.py --start-date YYYYMMDD --end-date YYYYMMDD"
     ),
+    ODDSPEDIA_SILVER_LAYER: (
+        "python scripts/oddspedia/resolve_oddspedia_events.py --start-date YYYYMMDD --end-date YYYYMMDD"
+    ),
 }
-ODDSPEDIA_RESOLUTION_TABLE = "silver.oddspedia_match_resolution"
-ODDSPEDIA_RESOLUTION_HINT = (
-    "python scripts/oddspedia/resolve_oddspedia_events.py --start-date YYYYMMDD --end-date YYYYMMDD"
-)
 
 
 @dataclass(frozen=True)
@@ -61,8 +61,6 @@ class RecreationTarget:
 
     @property
     def reload_hint(self) -> str:
-        if self.qualified_name == ODDSPEDIA_RESOLUTION_TABLE:
-            return ODDSPEDIA_RESOLUTION_HINT
         return RELOAD_HINTS[self.layer]
 
 
@@ -101,9 +99,10 @@ def setup_inventory(clickhouse_root: Path) -> list[RecreationTarget]:
     sql_files_by_layer = {
         layer: get_layer_sql_files(layer, clickhouse_root=clickhouse_root) for layer in LAYER_ORDER
     }
-    sql_files_by_layer[ODDSPEDIA_LAYER] = sorted(
-        (clickhouse_root / ODDSPEDIA_LAYER / "ddl").glob("*.sql")
-    )
+    for oddspedia_layer in (ODDSPEDIA_LAYER, ODDSPEDIA_SILVER_LAYER):
+        sql_files_by_layer[oddspedia_layer] = sorted(
+            (clickhouse_root / oddspedia_layer / "ddl").glob("*.sql")
+        )
     inventory: dict[str, RecreationTarget] = {}
     for layer, sql_files in sql_files_by_layer.items():
         for expected in parse_expected_tables(sql_files):

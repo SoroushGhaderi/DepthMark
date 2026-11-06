@@ -17,9 +17,9 @@ project_root = PROJECT_ROOT
 logger = get_logger(__name__)
 
 LAYER_DATABASES = {
-    "bronze": ("bronze",),
-    "silver": ("silver",),
-    "gold": ("gold_scenarios", "gold_signals", "gold"),
+    "bronze": ("fotmob_bronze",),
+    "silver": ("fotmob_silver",),
+    "gold": ("fotmob_gold_scenarios", "fotmob_gold_signals", "fotmob_gold"),
 }
 
 
@@ -51,7 +51,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--database",
-        choices=("bronze", "silver", "gold_scenarios", "gold_signals", "gold"),
+        choices=tuple(database for databases in LAYER_DATABASES.values() for database in databases),
         help="Optional exact ClickHouse database selector.",
     )
     parser.add_argument(

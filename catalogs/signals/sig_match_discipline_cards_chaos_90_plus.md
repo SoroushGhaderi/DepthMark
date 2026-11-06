@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_chaos_90_plus
+  table: fotmob_gold_signals.sig_match_discipline_cards_chaos_90_plus
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_chaos_90_plus.sql
 ---
 # sig_match_discipline_cards_chaos_90_plus
@@ -23,7 +23,7 @@ Flags match-team rows for fixtures where late-game control collapses into severe
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - red-card events from `silver.card` where `card_minute >= 90` and `added_time > 0`, with combined match count `>= 2`.
+  - red-card events from `fotmob_silver.card` where `card_minute >= 90` and `added_time > 0`, with combined match count `>= 2`.
 - Trigger is match-level and emits two side-oriented rows (`home` and `away`) for stable `match_team` downstream consumption.
 - Output preserves late-red timing, bilateral card pressure, and defensive/control context to separate balanced late chaos from one-sided meltdowns.
 
@@ -31,7 +31,7 @@ Flags match-team rows for fixtures where late-game control collapses into severe
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_chaos_90_plus.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_chaos_90_plus`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_chaos_90_plus`
 
 ## Example Execution
 

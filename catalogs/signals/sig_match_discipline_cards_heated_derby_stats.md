@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_heated_derby_stats
+  table: fotmob_gold_signals.sig_match_discipline_cards_heated_derby_stats
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_heated_derby_stats.sql
 ---
 # sig_match_discipline_cards_heated_derby_stats
@@ -25,7 +25,7 @@ Flags matches with jointly high sanction volume and contact pressure, capturing 
 - Trigger condition:
   - `(yellow_cards_home + yellow_cards_away + red_cards_home + red_cards_away) >= 5`
   - `(fouls_home + fouls_away) >= 30`
-  - both from `silver.period_stat` at `period = 'All'`.
+  - both from `fotmob_silver.period_stat` at `period = 'All'`.
 - Trigger is match-level and emitted as two side-oriented rows (`home` and `away`) for stable team-grain downstream consumption.
 - Output combines card composition, foul share, sanctions-per-foul conversion, defensive workload, and possession context for bilateral interpretation.
 
@@ -33,7 +33,7 @@ Flags matches with jointly high sanction volume and contact pressure, capturing 
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_heated_derby_stats.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_heated_derby_stats`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_heated_derby_stats`
 
 ## Example Execution
 

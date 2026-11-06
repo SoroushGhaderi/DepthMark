@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_shot_conversion_peak
+  table: fotmob_gold_signals.sig_player_shooting_goals_shot_conversion_peak
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_shot_conversion_peak.sql
 ---
 # sig_player_shooting_goals_shot_conversion_peak
@@ -26,15 +26,15 @@ Flags players who deliver a perfect two-from-two finishing match, isolating high
 - Trigger condition:
   - `triggered_player_goals = 2`
   - `triggered_player_total_shots = 2`
-- Triggered player identity and shooting metrics come from `silver.player_match_stat` in finished matches only.
-- Bilateral match context is sourced from `silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features.
+- Triggered player identity and shooting metrics come from `fotmob_silver.player_match_stat` in finished matches only.
+- Bilateral match context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) using symmetric `triggered_team_*` and `opponent_*` features.
 - Similarity gate note: closest active signals are `sig_player_shooting_goals_clinical_brace` and `sig_player_shooting_goals_rapid_brace`; this signal intentionally coexists because it is driven by exact conversion structure (2/2), not xG ceiling or timing-window burst logic.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_shot_conversion_peak.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_shot_conversion_peak`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_shot_conversion_peak`
 
 ## Example Execution
 

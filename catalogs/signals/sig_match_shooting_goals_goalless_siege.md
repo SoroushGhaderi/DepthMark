@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_goalless_siege
+  table: fotmob_gold_signals.sig_match_shooting_goals_goalless_siege
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_goalless_siege.sql
 ---
 # sig_match_shooting_goals_goalless_siege
@@ -31,7 +31,7 @@ Detect goalless matches where shot volume is extreme for at least one side, then
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_goalless_siege.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_goalless_siege`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_goalless_siege`
 
 ## Example Execution
 

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_discipline_cards_walking_tightrope
+  table: fotmob_gold_signals.sig_player_discipline_cards_walking_tightrope
   sql: clickhouse/gold/dml/signals/player/sig_player_discipline_cards_walking_tightrope.sql
 ---
 # sig_player_discipline_cards_walking_tightrope
@@ -26,19 +26,19 @@ Flags players who are booked early (before minute 20), indicating immediate disc
 - Trigger condition:
   - `triggered_player_first_yellow_card_minute < 20`
 - Trigger source:
-  - `silver.card` yellow-card events (`card_type` contains "yellow"), grouped by player and match, using earliest yellow minute as the trigger anchor.
+  - `fotmob_silver.card` yellow-card events (`card_type` contains "yellow"), grouped by player and match, using earliest yellow minute as the trigger anchor.
 - Identity and side logic:
   - Output keeps full player identity (`triggered_player_*`) and team/opponent identity (`triggered_team_*`, `opponent_team_*`) using canonical `triggered_side`.
 - Context enrichment:
-  - Player context from `silver.player_match_stat` (fouls, duels, tackles, interceptions, minutes).
-  - Bilateral team context from `silver.period_stat` (`period = 'All'`) for fouls, cards, duels, tackles, interceptions, and possession.
+  - Player context from `fotmob_silver.player_match_stat` (fouls, duels, tackles, interceptions, minutes).
+  - Bilateral team context from `fotmob_silver.period_stat` (`period = 'All'`) for fouls, cards, duels, tackles, interceptions, and possession.
   - Score-state context at the booking moment via `score_margin_at_first_yellow`.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_discipline_cards_walking_tightrope.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_discipline_cards_walking_tightrope`
+- Target table: `fotmob_gold_signals.sig_player_discipline_cards_walking_tightrope`
 
 ## Example Execution
 

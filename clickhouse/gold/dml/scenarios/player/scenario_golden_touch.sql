@@ -1,5 +1,5 @@
 -- scenario_golden_touch: late-substitute low-touch contributions ranked by impact efficiency
-INSERT INTO gold_scenarios.scenario_golden_touch
+INSERT INTO fotmob_gold_scenarios.scenario_golden_touch
 (
     match_id,
     home_team_id,
@@ -39,7 +39,7 @@ WITH late_subs AS (
         team_side,
         substitution_time,
         substitution_reason
-    FROM silver.match_personnel
+    FROM fotmob_silver.match_personnel
     WHERE
         role = 'substitute'
         AND
@@ -89,10 +89,10 @@ SELECT
     END AS match_result,
     toString(g.match_date)
 
-FROM silver.match AS g
+FROM fotmob_silver.match AS g
 INNER JOIN late_subs AS ls
     ON g.match_id = ls.match_id
-INNER JOIN silver.player_match_stat AS p
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON g.match_id = p.match_id
     AND ls.person_id = p.player_id
 WHERE

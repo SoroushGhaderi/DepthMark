@@ -72,7 +72,7 @@ class FotMobReferenceWindowVerifier:
             """
             /* oddspedia_reference_window:bronze */
             SELECT match_id, match_date
-            FROM bronze.match_reference FINAL
+            FROM fotmob_bronze.match_reference FINAL
             WHERE match_date BETWEEN {start:Date} AND {end:Date}
             """,
             parameters=parameters,
@@ -81,7 +81,7 @@ class FotMobReferenceWindowVerifier:
             """
             /* oddspedia_reference_window:silver */
             SELECT match_id, match_date
-            FROM silver.match FINAL
+            FROM fotmob_silver.match FINAL
             WHERE match_date BETWEEN {start:Date} AND {end:Date}
             """,
             parameters=parameters,
@@ -546,7 +546,7 @@ class OddspediaResolutionService:
         query = """
             SELECT match_id, match_date, match_time_utc, home_team_name,
                    away_team_name, coverage_level, league_name
-            FROM silver.match FINAL
+            FROM fotmob_silver.match FINAL
             WHERE match_date BETWEEN {start:Date} AND {end:Date}
         """
         rows = self.client.execute(query, parameters={"start": start, "end": end}).result_rows
@@ -569,9 +569,9 @@ class OddspediaResolutionService:
         import pandas as pd
 
         self.client.insert_dataframe(
-            "oddspedia_match_resolution",
+            "match_resolution",
             pd.DataFrame([result.as_row() for result in results]),
-            database="silver",
+            database="oddspedia_silver",
         )
 
 

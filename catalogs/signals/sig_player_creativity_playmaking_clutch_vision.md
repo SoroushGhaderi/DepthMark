@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_clutch_vision
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_clutch_vision
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_clutch_vision.sql
 ---
 # sig_player_creativity_playmaking_clutch_vision
@@ -32,8 +32,8 @@ Detects player-level clutch playmaking where a player supplies the assist for a 
   - Events are grouped at `match_id + team_id + assist_player_id` to emit one row per triggered playmaker per match.
   - First decisive assist timing and before/after score state are retained for auditability.
 - Match-context enrichment:
-  - Player passing/creation context comes from `silver.player_match_stat`.
-  - Bilateral opponent/team context comes from `silver.period_stat` (`period = 'All'`) and `silver.match`.
+  - Player passing/creation context comes from `fotmob_silver.player_match_stat`.
+  - Bilateral opponent/team context comes from `fotmob_silver.period_stat` (`period = 'All'`) and `fotmob_silver.match`.
 - Similarity gate note:
   - Closest active signals are `sig_player_shooting_goals_late_winner_clutch`, `sig_player_creativity_playmaking_assist_brace`, and `sig_player_shooting_goals_winning_impact`.
   - Coexistence rationale: this signal is intentionally assist-centric and late-decisive by event timing; it complements scorer-centric clutch signals and non-temporal assist-volume signals.
@@ -42,7 +42,7 @@ Detects player-level clutch playmaking where a player supplies the assist for a 
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_clutch_vision.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_clutch_vision`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_clutch_vision`
 
 ## Example Execution
 

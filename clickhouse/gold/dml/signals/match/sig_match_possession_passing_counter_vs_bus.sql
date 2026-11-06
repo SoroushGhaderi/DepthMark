@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_counter_vs_bus (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_counter_vs_bus (
     match_id,
     match_date,
     home_team_id,
@@ -46,9 +46,9 @@ INSERT INTO gold_signals.sig_match_possession_passing_counter_vs_bus (
 --         the other side generates frequent counter-attacking threat,
 --         then emit bilateral side-oriented context.
 -- Trigger: one team possession > 70 and opponent counter_attacks_proxy > 5.
--- Notes: counter_attacks_proxy is derived from silver.shot.situation
+-- Notes: counter_attacks_proxy is derived from fotmob_silver.shot.situation
 --        string patterns containing "counter" or "fast" because no
---        explicit counter-attack count exists in silver.period_stat.
+--        explicit counter-attack count exists in fotmob_silver.period_stat.
 -- ============================================================
 
 WITH
@@ -59,7 +59,7 @@ WITH
             countIf(
                 match(lowerUTF8(coalesce(s.situation, '')), 'counter|fast')
             ) AS counter_attacks_proxy
-        FROM silver.shot AS s
+        FROM fotmob_silver.shot AS s
         WHERE s.team_id IS NOT NULL
         GROUP BY
             s.match_id,
@@ -113,8 +113,8 @@ WITH
                     'none'
                 )
             ) AS counter_attacking_side
-        FROM silver.match AS m FINAL
-        INNER JOIN silver.period_stat AS ps FINAL
+        FROM fotmob_silver.match AS m FINAL
+        INNER JOIN fotmob_silver.period_stat AS ps FINAL
             ON  ps.match_id = m.match_id
             AND ps.period = 'All'
         LEFT JOIN counter_attack_team_shots AS ca_home

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_recycling_specialist (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_recycling_specialist (
     match_id,
     match_date,
     home_team_id,
@@ -226,8 +226,8 @@ SELECT
         0.0
     ) AS player_share_of_team_passes_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN (
     SELECT
@@ -235,7 +235,7 @@ INNER JOIN (
         person_id,
         argMax(position_id, if(role = 'starter', 2, 1)) AS position_id,
         argMax(usual_playing_position_id, if(role = 'starter', 2, 1)) AS usual_playing_position_id
-    FROM silver.match_personnel
+    FROM fotmob_silver.match_personnel
     WHERE role IN ('starter', 'substitute')
     GROUP BY
         match_id,
@@ -243,7 +243,7 @@ INNER JOIN (
 ) AS mp
     ON mp.match_id = p.match_id
    AND mp.person_id = p.player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

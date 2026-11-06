@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_goalkeeping_defense_box_siege_survival
+  table: fotmob_gold_signals.sig_match_goalkeeping_defense_box_siege_survival
   sql: clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_box_siege_survival.sql
 ---
 # sig_match_goalkeeping_defense_box_siege_survival
@@ -39,7 +39,7 @@ box) while keeping a clean sheet.
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_goalkeeping_defense_box_siege_survival.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_goalkeeping_defense_box_siege_survival`
+- Target table: `fotmob_gold_signals.sig_match_goalkeeping_defense_box_siege_survival`
 
 ## Example Execution
 

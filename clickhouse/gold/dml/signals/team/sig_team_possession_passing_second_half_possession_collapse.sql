@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_second_half_possession_collapse (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_second_half_possession_collapse (
     match_id,
     match_date,
     home_team_id,
@@ -74,7 +74,7 @@ WITH half_stats AS (
         maxIf(coalesce(opposition_half_passes_away, 0), period = 'FirstHalf')  AS fh_opp_half_passes_away,
         maxIf(coalesce(opposition_half_passes_home, 0), period = 'SecondHalf') AS sh_opp_half_passes_home,
         maxIf(coalesce(opposition_half_passes_away, 0), period = 'SecondHalf') AS sh_opp_half_passes_away
-    FROM silver.period_stat FINAL
+    FROM fotmob_silver.period_stat FINAL
     WHERE period IN ('FirstHalf', 'SecondHalf')
     GROUP BY match_id
 )
@@ -147,7 +147,7 @@ SELECT
     h.sh_xg_away                                                       AS opponent_xg_second_half,
     -- Net xG swing (bilateral)
     (h.sh_xg_home - h.sh_xg_away) - (h.fh_xg_home - h.fh_xg_away)    AS xg_swing_delta
-FROM silver.match AS m FINAL
+FROM fotmob_silver.match AS m FINAL
 JOIN half_stats h USING (match_id)
 WHERE m.match_finished = 1
   AND m.match_id > 0
@@ -209,7 +209,7 @@ SELECT
     h.fh_xg_home                                                       AS opponent_xg_first_half,
     h.sh_xg_home                                                       AS opponent_xg_second_half,
     (h.sh_xg_away - h.sh_xg_home) - (h.fh_xg_away - h.fh_xg_home)    AS xg_swing_delta
-FROM silver.match AS m FINAL
+FROM fotmob_silver.match AS m FINAL
 JOIN half_stats h USING (match_id)
 WHERE m.match_finished = 1
   AND m.match_id > 0

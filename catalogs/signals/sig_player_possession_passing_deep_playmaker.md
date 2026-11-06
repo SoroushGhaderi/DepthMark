@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_deep_playmaker
+  table: fotmob_gold_signals.sig_player_possession_passing_deep_playmaker
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_deep_playmaker.sql
 ---
 # sig_player_possession_passing_deep_playmaker
@@ -27,15 +27,15 @@ Triggers when a center back records at least 80 accurate passes, highlighting de
   - `triggered_player_usual_playing_position_id = 1` (defender scope)
   - `triggered_player_position_id IN (3, 4)` (center-back proxy in lineup positions)
   - `triggered_player_accurate_passes >= 80`
-- Uses `silver.player_match_stat` for player passing output and `silver.match_personnel` for positional gating.
-- Adds bilateral team/opponent passing context from `silver.period_stat` (`period = 'All'`) so high center-back distribution can be interpreted against possession load and build-up style.
+- Uses `fotmob_silver.player_match_stat` for player passing output and `fotmob_silver.match_personnel` for positional gating.
+- Adds bilateral team/opponent passing context from `fotmob_silver.period_stat` (`period = 'All'`) so high center-back distribution can be interpreted against possession load and build-up style.
 - Preserves player and team identity fields for contract-compliant downstream joins.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_deep_playmaker.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_deep_playmaker`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_deep_playmaker`
 
 ## Example Execution
 

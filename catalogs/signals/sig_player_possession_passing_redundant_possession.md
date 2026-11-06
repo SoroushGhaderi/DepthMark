@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_redundant_possession
+  table: fotmob_gold_signals.sig_player_possession_passing_redundant_possession
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_redundant_possession.sql
 ---
 # sig_player_possession_passing_redundant_possession
@@ -29,15 +29,15 @@ Triggers when a player has high passing volume but no final-third progression, i
 - Current player schema does not expose directional backward/sideways pass tags per match row, so the signal uses:
   - `triggered_player_non_final_third_passes_proxy = max(total_passes - passes_final_third, 0)`
   - `triggered_player_non_final_third_pass_share_pct = proxy / total_passes * 100`
-- Triggered player role context is preserved from `silver.match_personnel` via `triggered_player_position_id`, `triggered_player_usual_playing_position_id`, and a derived `triggered_player_role_group`.
-- Signal includes bilateral team passing, own-half, opposition-half, and possession context from `silver.period_stat` (`period = 'All'`) so analysts can distinguish individual redundancy from team-level tactical design.
+- Triggered player role context is preserved from `fotmob_silver.match_personnel` via `triggered_player_position_id`, `triggered_player_usual_playing_position_id`, and a derived `triggered_player_role_group`.
+- Signal includes bilateral team passing, own-half, opposition-half, and possession context from `fotmob_silver.period_stat` (`period = 'All'`) so analysts can distinguish individual redundancy from team-level tactical design.
 - Output stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_redundant_possession.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_redundant_possession`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_redundant_possession`
 
 ## Example Execution
 

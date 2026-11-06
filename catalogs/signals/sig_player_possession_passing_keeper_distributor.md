@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_keeper_distributor
+  table: fotmob_gold_signals.sig_player_possession_passing_keeper_distributor
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_keeper_distributor.sql
 ---
 # sig_player_possession_passing_keeper_distributor
@@ -24,17 +24,17 @@ Triggers when a goalkeeper records high short-distribution completion volume (`>
 ## Tactical And Statistical Logic
 
 - Trigger condition: `triggered_player_accurate_short_passes_proxy >= 25`.
-- Because `silver.player_match_stat` does not expose direct short-pass completion fields, short passes are proxied as:
+- Because `fotmob_silver.player_match_stat` does not expose direct short-pass completion fields, short passes are proxied as:
   - `triggered_player_accurate_short_passes_proxy = max(accurate_passes - accurate_long_balls, 0)`
   - `triggered_player_short_pass_attempts_proxy = max(total_passes - long_ball_attempts, 0)`
-- The signal restricts scope to goalkeepers only (`is_goalkeeper = 1`) and enriches each row with symmetric team/opponent pass volume, pass accuracy, own-half pass volume, and possession context from `silver.period_stat` (`period = 'All'`).
+- The signal restricts scope to goalkeepers only (`is_goalkeeper = 1`) and enriches each row with symmetric team/opponent pass volume, pass accuracy, own-half pass volume, and possession context from `fotmob_silver.period_stat` (`period = 'All'`).
 - Output stores both triggered player identity and triggered team identity for contract-compliant player-grain traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_keeper_distributor.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_keeper_distributor`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_keeper_distributor`
 
 ## Example Execution
 

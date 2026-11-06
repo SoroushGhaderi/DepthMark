@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_low_block_success
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_low_block_success
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_low_block_success.sql
 ---
 # sig_team_goalkeeping_defense_low_block_success
@@ -26,7 +26,7 @@ Detect team-level low-block success profiles via very high interception volume i
   - `match_finished = 1`
   - `triggered_team_interceptions_in_own_defensive_third_proxy >= 20`
 - Data-availability note:
-  - current `silver.period_stat` does not expose zone-split interceptions by defensive third
+  - current `fotmob_silver.period_stat` does not expose zone-split interceptions by defensive third
   - this signal therefore uses full-match team interceptions as the explicit `own_defensive_third_proxy`
 - Rows are emitted at `match_team` grain with canonical `triggered_side`, so both teams can trigger in one match when both satisfy the threshold.
 - Trigger intensity is captured by `triggered_team_interceptions_proxy_above_threshold` and enriched with bilateral deltas for shots faced, saves, xG against, clearances, tackles, blocks, duels, possession, passing, and scoreline outcomes.
@@ -39,7 +39,7 @@ Detect team-level low-block success profiles via very high interception volume i
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_low_block_success.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_low_block_success`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_low_block_success`
 
 ## Example Execution
 

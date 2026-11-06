@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_possession_passing_accurate_unit
+  table: fotmob_gold_signals.sig_team_possession_passing_accurate_unit
   sql: clickhouse/gold/dml/signals/team/sig_team_possession_passing_accurate_unit.sql
 ---
 # sig_team_possession_passing_accurate_unit
@@ -22,7 +22,7 @@ Triggers when a team records elite full-match pass accuracy above `92%`, flaggin
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: `triggered_team_pass_accuracy_pct > 92.0` from `silver.period_stat` rows where `period = 'All'`.
+- Trigger condition: `triggered_team_pass_accuracy_pct > 92.0` from `fotmob_silver.period_stat` rows where `period = 'All'`.
 - Signal emits side-oriented rows (`home` / `away`), so both teams can trigger in the same match.
 - Enrichment retains bilateral passing volume, field-territory distribution, possession share, and shot/xG context to distinguish sterile control from productive precision.
 
@@ -30,7 +30,7 @@ Triggers when a team records elite full-match pass accuracy above `92%`, flaggin
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_possession_passing_accurate_unit.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_possession_passing_accurate_unit`
+- Target table: `fotmob_gold_signals.sig_team_possession_passing_accurate_unit`
 
 ## Example Execution
 

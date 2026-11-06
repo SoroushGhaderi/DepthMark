@@ -1,5 +1,5 @@
--- silver.period_stat
-CREATE TABLE IF NOT EXISTS silver.period_stat
+-- fotmob_silver.period_stat
+CREATE TABLE IF NOT EXISTS fotmob_silver.period_stat
 (
     match_id                            Int32,
     match_date                          Date,

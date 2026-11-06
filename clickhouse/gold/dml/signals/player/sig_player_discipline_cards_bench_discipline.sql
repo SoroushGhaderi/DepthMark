@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_bench_discipline (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_bench_discipline (
     match_id,
     match_date,
     home_team_id,
@@ -58,7 +58,7 @@ WITH personnel_candidates AS (
             coalesce(mp._loaded_at, toDateTime('1970-01-01 00:00:00'))
         ) AS triggered_player_name,
         toInt32(coalesce(max(mp.substitution_time), 0)) AS triggered_personnel_substitution_time
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id > 0
       AND lowerUTF8(coalesce(mp.team_side, '')) IN ('home', 'away')
@@ -122,7 +122,7 @@ card_events AS (
                 AND positionCaseInsensitiveUTF8(coalesce(c.description, ''), 'red') > 0
             )
         ) AS is_second_yellow_dismissal
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -308,15 +308,15 @@ SELECT
     ), 0.0)) AS opponent_pass_accuracy_pct
 
 FROM triggered_cards AS tc
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = tc.match_id
-LEFT JOIN silver.player_match_stat AS p
+LEFT JOIN fotmob_silver.player_match_stat AS p
     ON p.match_id = tc.match_id
    AND p.player_id = tc.triggered_player_id
 LEFT JOIN player_card_rollup AS pcr
     ON pcr.match_id = tc.match_id
    AND pcr.triggered_player_id = tc.triggered_player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tc.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

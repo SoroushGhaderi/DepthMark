@@ -1,5 +1,5 @@
 -- scenario_unpunished_aggression: high-foul matches with unusually low yellow-card punishment
-INSERT INTO gold_scenarios.scenario_unpunished_aggression
+INSERT INTO fotmob_gold_scenarios.scenario_unpunished_aggression
 (
     -- 1. Match Identity
     match_id,
@@ -68,8 +68,8 @@ SELECT
         WHEN g.away_score > g.home_score THEN 'away'
         ELSE 'draw'
     END AS winning_side
-FROM silver.match AS g
-INNER JOIN silver.period_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.period_stat AS p
     ON g.match_id = p.match_id
 WHERE
     -- Full-match team aggregates only.

@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_midfield_workhorse
+  table: fotmob_gold_signals.sig_player_possession_passing_midfield_workhorse
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_midfield_workhorse.sql
 ---
 # sig_player_possession_passing_midfield_workhorse
@@ -27,16 +27,16 @@ Triggers when a midfielder combines high-volume on-ball involvement with strong 
   - `triggered_player_usual_playing_position_id = 2` (midfielder filter)
   - `triggered_player_total_touches >= 90`
   - `triggered_player_recoveries >= 10`
-- Midfielder role scope is sourced from `silver.match_personnel` and preserved via `triggered_player_position_id` and `triggered_player_usual_playing_position_id`.
-- Trigger uses full-match player totals from `silver.player_match_stat` for touches, recoveries, defensive actions, and passing output.
-- Signal includes bilateral passing, own-half circulation, and possession context from `silver.period_stat` (`period = 'All'`) to separate individual workhorse behavior from team style.
+- Midfielder role scope is sourced from `fotmob_silver.match_personnel` and preserved via `triggered_player_position_id` and `triggered_player_usual_playing_position_id`.
+- Trigger uses full-match player totals from `fotmob_silver.player_match_stat` for touches, recoveries, defensive actions, and passing output.
+- Signal includes bilateral passing, own-half circulation, and possession context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual workhorse behavior from team style.
 - Output stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_midfield_workhorse.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_midfield_workhorse`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_midfield_workhorse`
 
 ## Example Execution
 

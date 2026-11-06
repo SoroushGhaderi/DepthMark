@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_possession_passing_keeper_playmaking_battle
+  table: fotmob_gold_signals.sig_match_possession_passing_keeper_playmaking_battle
   sql: clickhouse/gold/dml/signals/match/sig_match_possession_passing_keeper_playmaking_battle.sql
 ---
 # sig_match_possession_passing_keeper_playmaking_battle
@@ -31,7 +31,7 @@ Triggers when both sides’ goalkeepers exceed high pass volume in the same matc
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_possession_passing_keeper_playmaking_battle.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_possession_passing_keeper_playmaking_battle`
+- Target table: `fotmob_gold_signals.sig_match_possession_passing_keeper_playmaking_battle`
 
 ## Example Execution
 

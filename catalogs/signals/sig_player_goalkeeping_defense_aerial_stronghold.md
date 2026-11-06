@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_aerial_stronghold
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_aerial_stronghold
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_aerial_stronghold.sql
 ---
 # sig_player_goalkeeping_defense_aerial_stronghold
@@ -28,16 +28,16 @@ back-line aerial control with bilateral defensive and possession context.
   - `triggered_player_usual_playing_position_id = 1` (defender role gate)
   - `triggered_player_aerial_duels_won >= 10`
   - `match_finished = 1`
-- Defender classification is sourced from `silver.match_personnel` (`usual_playing_position_id = 1`) and joined to `silver.player_match_stat` for player-level duel and defensive metrics.
+- Defender classification is sourced from `fotmob_silver.match_personnel` (`usual_playing_position_id = 1`) and joined to `fotmob_silver.player_match_stat` for player-level duel and defensive metrics.
 - Player diagnostics preserve aerial, ground-duel, tackle, clearance, interception, and recovery outputs to distinguish pure volume from defensive efficiency.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` aerial/defensive/control fields.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` aerial/defensive/control fields.
 - Similarity gate note: closest active signal is `sig_player_possession_passing_target_man_aerials`; this signal intentionally coexists because that signal targets forwards (`usual_playing_position_id = 3`) as long-ball outlets, while this one targets defenders (`usual_playing_position_id = 1`) for defensive aerial dominance.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_aerial_stronghold.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_aerial_stronghold`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_aerial_stronghold`
 
 ## Example Execution
 

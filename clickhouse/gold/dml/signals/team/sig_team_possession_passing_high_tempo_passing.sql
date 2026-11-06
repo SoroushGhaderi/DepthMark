@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_possession_passing_high_tempo_passing (
+INSERT INTO fotmob_gold_signals.sig_team_possession_passing_high_tempo_passing (
     match_id,
     match_date,
     home_team_id,
@@ -42,7 +42,7 @@ INSERT INTO gold_signals.sig_team_possession_passing_high_tempo_passing (
 -- =============================================================================
 -- Proxy  : (half passes ÷ 45) as passes-per-minute estimate; threshold ≥ 6.5
 --          (~293 passes/half); measured symmetrically for home and away
--- Sources: silver.match + silver.period_stat (FirstHalf / SecondHalf only)
+-- Sources: fotmob_silver.match + fotmob_silver.period_stat (FirstHalf / SecondHalf only)
 
 SELECT
     -- ── Identifiers ──────────────────────────────────────────────────────────
@@ -136,8 +136,8 @@ SELECT
         'away'
     ) AS triggered_side
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON  m.match_id   = ps.match_id
     AND ps.match_date = m.match_date     -- explicit partition pruning
 

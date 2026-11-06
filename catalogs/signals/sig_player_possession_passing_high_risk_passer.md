@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_high_risk_passer
+  table: fotmob_gold_signals.sig_player_possession_passing_high_risk_passer
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_high_risk_passer.sql
 ---
 # sig_player_possession_passing_high_risk_passer
@@ -26,19 +26,19 @@ Triggers when a player combines low passing efficiency with elite chance quality
 - Trigger conditions:
   - `triggered_player_pass_accuracy_pct < 70.0`
   - `triggered_player_big_chances_created >= 5`
-- Player big chances created are computed from assisted shots in `silver.shot`:
+- Player big chances created are computed from assisted shots in `fotmob_silver.shot`:
   - `assist_player_id = triggered_player_id`
   - `expected_goals >= 0.30`
-- Pass accuracy uses `silver.player_match_stat.pass_accuracy` when present, with fallback:
+- Pass accuracy uses `fotmob_silver.player_match_stat.pass_accuracy` when present, with fallback:
   - `100 * accurate_passes / total_passes`
-- Signal keeps bilateral team/opponent passing, possession, and territorial context from `silver.period_stat` (`period = 'All'`) to distinguish player risk profile from match-state effects.
+- Signal keeps bilateral team/opponent passing, possession, and territorial context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish player risk profile from match-state effects.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_high_risk_passer.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_high_risk_passer`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_high_risk_passer`
 
 ## Example Execution
 

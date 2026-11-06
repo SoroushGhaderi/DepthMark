@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_interception_marathon
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_interception_marathon
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_interception_marathon.sql
 ---
 # sig_player_goalkeeping_defense_interception_marathon
@@ -26,16 +26,16 @@ defensive context, while making source-grain proxy assumptions explicit for repr
 
 - Requested trigger target: defender records `>= 5` interceptions in first half.
 - Current warehouse limitation: player-level interceptions are available only at full-match grain in
-  `silver.player_match_stat`; no player-period interception split exists.
+  `fotmob_silver.player_match_stat`; no player-period interception split exists.
 - Implemented trigger proxy (explicit):
   - `triggered_player_first_half_interceptions_proxy = least(triggered_player_interceptions_full_match, triggered_team_interceptions_first_half)`
   - Signal fires when `triggered_player_first_half_interceptions_proxy >= 5`.
   - `has_first_half_period_row_flag = 1` is required for data-completeness on half-split team context.
 - Defender scope and role-gate:
-  - `triggered_player_usual_playing_position_id = 1` from `silver.match_personnel`
+  - `triggered_player_usual_playing_position_id = 1` from `fotmob_silver.match_personnel`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Team first-half and full-match context is sourced from `silver.period_stat` using `period IN ('FirstHalf', 'All')`.
+- Team first-half and full-match context is sourced from `fotmob_silver.period_stat` using `period IN ('FirstHalf', 'All')`.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_interception_king`: closest overlap (interception-heavy defender), but it triggers on full-match interceptions (`>= 7`) without first-half framing.
   - `sig_player_goalkeeping_defense_defensive_double_double`: related defensive-volume profile, but requires tackles + interceptions together.
@@ -45,7 +45,7 @@ defensive context, while making source-grain proxy assumptions explicit for repr
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_interception_marathon.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_interception_marathon`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_interception_marathon`
 
 ## Example Execution
 

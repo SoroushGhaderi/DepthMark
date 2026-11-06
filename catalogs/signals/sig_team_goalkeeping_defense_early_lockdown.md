@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_early_lockdown
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_early_lockdown
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_early_lockdown.sql
 ---
 # sig_team_goalkeeping_defense_early_lockdown
@@ -25,7 +25,7 @@ through minute 20, then preserve bilateral early-window, defending, control, and
 
 - Trigger condition:
   - `opponent_first_20_total_shots = 0`
-  - first-window scope uses `silver.shot.minute <= 20`
+  - first-window scope uses `fotmob_silver.shot.minute <= 20`
   - match eligibility requires `match_finished = 1` and `period = 'All'` for full-match context
 - Rows are emitted at `match_team` grain with canonical `triggered_side`, so both sides can emit
   rows when both teams keep the opponent shotless through the opening window.
@@ -44,7 +44,7 @@ through minute 20, then preserve bilateral early-window, defending, control, and
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_early_lockdown.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_early_lockdown`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_early_lockdown`
 
 ## Example Execution
 

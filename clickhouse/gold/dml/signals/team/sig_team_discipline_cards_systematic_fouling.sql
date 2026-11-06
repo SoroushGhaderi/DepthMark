@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_discipline_cards_systematic_fouling (
+INSERT INTO fotmob_gold_signals.sig_team_discipline_cards_systematic_fouling (
     match_id,
     match_date,
     home_team_id,
@@ -59,7 +59,7 @@ WITH starting_midfielders AS (
         mp.match_id,
         lowerUTF8(coalesce(mp.team_side, '')) AS triggered_side,
         toInt32(mp.person_id) AS triggered_player_id
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id > 0
       AND lowerUTF8(coalesce(mp.team_side, '')) IN ('home', 'away')
@@ -76,7 +76,7 @@ yellow_card_events AS (
         lowerUTF8(coalesce(c.team_side, '')) AS triggered_side,
         toInt32(assumeNotNull(c.player_id)) AS triggered_player_id,
         toInt32(coalesce(c.card_minute, 0)) AS card_minute
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id IS NOT NULL
       AND lowerUTF8(coalesce(c.team_side, '')) IN ('home', 'away')
@@ -318,12 +318,12 @@ SELECT
     )) AS possession_delta_pct
 
 FROM team_midfield_rollup AS tmr
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = tmr.match_id
 LEFT JOIN team_midfield_rollup AS omr
     ON omr.match_id = tmr.match_id
    AND omr.triggered_side = if(tmr.triggered_side = 'home', 'away', 'home')
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = tmr.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

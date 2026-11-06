@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_creativity_playmaking_big_chance_monopoly
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_big_chance_monopoly
   sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_big_chance_monopoly.sql
 ---
 # sig_team_creativity_playmaking_big_chance_monopoly
@@ -26,8 +26,8 @@ five big chances while allowing the opponent none.
 - Trigger condition:
   - `triggered_team_big_chances >= 5`
   - `opponent_big_chances = 0`
-- Trigger uses full-match aggregates from `silver.period_stat` with `period = 'All'` and
-  finished-match filtering from `silver.match`.
+- Trigger uses full-match aggregates from `fotmob_silver.period_stat` with `period = 'All'` and
+  finished-match filtering from `fotmob_silver.match`.
 - Output is side-oriented and bilateral (`triggered_team_*` vs `opponent_*`) to preserve tactical
   comparability and downstream modeling consistency.
 - Big-chance conversion context is retained from big-chances and big-chances-missed aggregates.
@@ -45,7 +45,7 @@ five big chances while allowing the opponent none.
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_big_chance_monopoly.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_creativity_playmaking_big_chance_monopoly`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_big_chance_monopoly`
 
 ## Example Execution
 

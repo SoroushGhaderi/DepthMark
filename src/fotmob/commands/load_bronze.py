@@ -200,11 +200,11 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
     log.info("=" * 80)
 
     for physical_table in FOTMOB_TABLES:
-        stats = client.get_table_stats(physical_table, database="bronze")
+        stats = client.get_table_stats(physical_table, database="fotmob_bronze")
         if "error" not in stats:
             log.info(
                 "Table statistics",
-                database="bronze",
+                database="fotmob_bronze",
                 table_name=physical_table,
                 row_count=stats.get("row_count", 0),
                 size=stats.get("size", "0 B"),
@@ -212,7 +212,7 @@ def show_statistics(client: ClickHouseClient, log: logging.Logger) -> None:
         else:
             log.warning(
                 "Failed to read table statistics",
-                database="bronze",
+                database="fotmob_bronze",
                 table_name=physical_table,
                 error=stats.get("error", "Unknown error"),
             )
@@ -260,7 +260,7 @@ def main(argv: list[str] | None = None) -> int:
         client = stack.enter_context(
             warehouse_session(
                 identity,
-                "bronze",
+                "fotmob_bronze",
                 host=args.host,
                 port=args.port,
                 username=args.username,
@@ -278,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
                 message="Failed to connect to ClickHouse.",
                 context={
                     "scraper": "fotmob",
-                    "database": "bronze",
+                    "database": "fotmob_bronze",
                     "step": "ClickHouse Loading — fotmob",
                     "error": "Connection failed",
                 },
@@ -328,7 +328,7 @@ def main(argv: list[str] | None = None) -> int:
                 context={
                     "date": date_range,
                     "scraper": "fotmob",
-                    "database": "bronze",
+                    "database": "fotmob_bronze",
                     "step": "ClickHouse Loading — fotmob",
                     "total_rows": str(result.total_rows),
                     "tables_loaded": str(result.tables_loaded),

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_high_risk_passer (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_high_risk_passer (
     match_id,
     match_date,
     home_team_id,
@@ -48,7 +48,7 @@ WITH player_big_chance_creation AS (
         s.match_id,
         assumeNotNull(s.assist_player_id) AS triggered_player_id,
         countIf(coalesce(s.expected_goals, 0.0) >= 0.30) AS triggered_player_big_chances_created
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.assist_player_id IS NOT NULL
     GROUP BY
         s.match_id,
@@ -211,13 +211,13 @@ SELECT
         0.0
     )) AS player_share_of_team_passes_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN player_big_chance_creation AS c
     ON c.match_id = p.match_id
    AND c.triggered_player_id = p.player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

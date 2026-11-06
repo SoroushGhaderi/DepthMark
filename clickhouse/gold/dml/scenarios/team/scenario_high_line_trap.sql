@@ -1,5 +1,5 @@
 -- scenario_high_line_trap: teams repeatedly catching opponents offside while suppressing threat and final-third access
-INSERT INTO gold_scenarios.scenario_high_line_trap
+INSERT INTO fotmob_gold_scenarios.scenario_high_line_trap
 (
     match_id,
     home_team_id,
@@ -44,7 +44,7 @@ WITH period_all_cte AS (
         coalesce(passes_away, 0) AS passes_away,
         coalesce(shots_on_target_home, 0) AS shots_on_target_home,
         coalesce(shots_on_target_away, 0) AS shots_on_target_away
-    FROM silver.period_stat
+    FROM fotmob_silver.period_stat
     FINAL
     WHERE period = 'All'
 ),
@@ -73,7 +73,7 @@ team_performances_cte AS (
         p.xg_home AS team_xg,
         p.total_shots_home AS team_total_shots
     FROM period_all_cte AS p
-    INNER JOIN silver.match AS g
+    INNER JOIN fotmob_silver.match AS g
         FINAL ON p.match_id = g.match_id
     WHERE g.match_finished = 1
 
@@ -103,7 +103,7 @@ team_performances_cte AS (
         p.xg_away AS team_xg,
         p.total_shots_away AS team_total_shots
     FROM period_all_cte AS p
-    INNER JOIN silver.match AS g
+    INNER JOIN fotmob_silver.match AS g
         FINAL ON p.match_id = g.match_id
     WHERE g.match_finished = 1
 )

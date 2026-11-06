@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_the_great_wall
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_the_great_wall
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_the_great_wall.sql
 ---
 # sig_team_goalkeeping_defense_the_great_wall
@@ -38,7 +38,7 @@ Detect matches where a team blocks at least half of opposition shot attempts, th
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_the_great_wall.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_the_great_wall`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_the_great_wall`
 
 ## Example Execution
 

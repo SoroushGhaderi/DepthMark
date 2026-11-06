@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_shot_efficiency_parity
+  table: fotmob_gold_signals.sig_match_shooting_goals_shot_efficiency_parity
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_shot_efficiency_parity.sql
 ---
 # sig_match_shooting_goals_shot_efficiency_parity
@@ -31,7 +31,7 @@ Detect finished matches where both teams end with identical shots on target and 
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_shot_efficiency_parity.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_shot_efficiency_parity`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_shot_efficiency_parity`
 
 ## Example Execution
 

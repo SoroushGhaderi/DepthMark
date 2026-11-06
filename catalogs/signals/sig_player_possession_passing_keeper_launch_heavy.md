@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_keeper_launch_heavy
+  table: fotmob_gold_signals.sig_player_possession_passing_keeper_launch_heavy
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_keeper_launch_heavy.sql
 ---
 # sig_player_possession_passing_keeper_launch_heavy
@@ -26,15 +26,15 @@ Triggers when a goalkeeper attempts at least 20 long balls, highlighting matches
 - Trigger condition:
   - `p.is_goalkeeper = 1`
   - `triggered_player_long_ball_attempts >= 20`
-- Trigger is computed from player-level full-match passing totals in `silver.player_match_stat`.
-- Signal includes bilateral team/opponent long-ball and pass-quality context from `silver.period_stat` (`period = 'All'`) to separate isolated goalkeeper behavior from wider team directness.
+- Trigger is computed from player-level full-match passing totals in `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent long-ball and pass-quality context from `fotmob_silver.period_stat` (`period = 'All'`) to separate isolated goalkeeper behavior from wider team directness.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_keeper_launch_heavy.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_keeper_launch_heavy`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_keeper_launch_heavy`
 
 ## Example Execution
 

@@ -106,10 +106,10 @@ database ports bind to `127.0.0.1` by default, so a TouchDesk on another host
 needs `DEPTHMARK_BIND_ADDRESS` set to a trusted private interface. See the
 TouchDesk README for remote-host options.
 
-DepthMark does not call TouchDesk. TouchDesk reads `gold.*` / `gold_signals.*`
+DepthMark does not call TouchDesk. TouchDesk reads `fotmob_gold.*` / `fotmob_gold_signals.*`
 from ClickHouse and the signal catalog from MongoDB. Before trusting a month
 partition, TouchDesk should check that its latest status in
-`gold.scope_publication` is `published` (ADR 0028).
+`fotmob_gold.scope_publication` is `published` (ADR 0028).
 
 ## Services
 
@@ -262,7 +262,7 @@ python3 scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
 
 It creates `oddspedia_bronze.event`, `oddspedia_bronze.match_payload`,
 `oddspedia_bronze.market`, `oddspedia_bronze.load_status`, and
-`silver.oddspedia_match_resolution`. The source loader publishes a date only
+`oddspedia_silver.match_resolution`. The source loader publishes a date only
 after all three Bronze fact tables are staged, validated, and replaced; the
 resolver refuses dates without the resulting `published` status.
 
@@ -322,7 +322,7 @@ Unified pydantic-settings based configuration — single source of truth for all
 
 **Infrastructure settings** (from `.env` / environment variables):
 - `clickhouse_host`, `clickhouse_port`, `clickhouse_user`, `clickhouse_password`
-- `clickhouse_db_fotmob`, `clickhouse_db_gold`, `clickhouse_db_gold_scenarios`, `clickhouse_db_gold_signals`
+- `clickhouse_db_fotmob`, `clickhouse_db_fotmob_gold`, `clickhouse_db_fotmob_gold_scenarios`, `clickhouse_db_fotmob_gold_signals`
 - `telegram_bot_token`, `telegram_chat_id`, `telegram_enabled`
 - `s3_endpoint`, `s3_access_key`, `s3_secret_key`, optional `s3_bucket` and
   `s3_region` (standalone Bronze S3 sync)

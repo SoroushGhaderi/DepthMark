@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_maestro_output
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_maestro_output
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_maestro_output.sql
 ---
 # sig_player_creativity_playmaking_maestro_output
@@ -25,9 +25,9 @@ Flags player performances with high-volume chance creation (`>= 5` key passes) t
 
 - Trigger condition:
   - `triggered_player_key_passes >= 5`
-- Trigger is sourced from `silver.player_match_stat.chances_created` (key-pass chance creation).
+- Trigger is sourced from `fotmob_silver.player_match_stat.chances_created` (key-pass chance creation).
 - Only finished matches are considered (`m.match_finished = 1`) and only players mapped to home/away teams are kept.
-- Bilateral passing and territorial context from `silver.period_stat` (`period = 'All'`) is retained to interpret whether the output came in high-control or transition-heavy match states.
+- Bilateral passing and territorial context from `fotmob_silver.period_stat` (`period = 'All'`) is retained to interpret whether the output came in high-control or transition-heavy match states.
 - Similarity gate note:
   - `sig_player_possession_passing_creative_hub` is the closest existing signal and uses almost the same metric but with `> 5`; this signal explicitly captures the inclusive threshold case (`>= 5`) under `creativity/playmaking` taxonomy.
   - `sig_player_possession_passing_creative_monopoly` overlaps in creator framing but focuses on share concentration, not absolute key-pass floor.
@@ -36,7 +36,7 @@ Flags player performances with high-volume chance creation (`>= 5` key passes) t
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_maestro_output.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_maestro_output`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_maestro_output`
 
 ## Example Execution
 

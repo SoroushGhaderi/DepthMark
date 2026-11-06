@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_distance_shooting_duel
+  table: fotmob_gold_signals.sig_match_shooting_goals_distance_shooting_duel
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_distance_shooting_duel.sql
 ---
 # sig_match_shooting_goals_distance_shooting_duel
@@ -25,7 +25,7 @@ Detect finished matches where both sides convert at least one outside-box goal, 
 - Trigger condition:
   - `home_outside_box_goals >= 1`
   - `away_outside_box_goals >= 1`
-- Outside-box goal counts are derived from `silver.shot` where `is_from_inside_box = 0`, `is_goal = 1`, and `is_own_goal = 0`.
+- Outside-box goal counts are derived from `fotmob_silver.shot` where `is_from_inside_box = 0`, `is_goal = 1`, and `is_own_goal = 0`.
 - Match-level trigger emits two rows (`triggered_side = 'home'` and `'away'`) to preserve canonical `match_team` grain.
 - Similarity gate note: closest active signals are `sig_match_shooting_goals_shot_efficiency_parity`, `sig_match_shooting_goals_rapid_fire_exchange`, and `sig_team_shooting_goals_long_range_barrage`; this signal intentionally coexists because it is match-level and specifically requires bilateral outside-box scoring conversion, not parity on generic shot outputs, time-window exchange behavior, or one-team outside-box shot-volume overload.
 
@@ -33,7 +33,7 @@ Detect finished matches where both sides convert at least one outside-box goal, 
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_distance_shooting_duel.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_distance_shooting_duel`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_distance_shooting_duel`
 
 ## Example Execution
 

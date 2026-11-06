@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_iron_man_discipline (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_iron_man_discipline (
     match_id,
     match_date,
     home_team_id,
@@ -55,7 +55,7 @@ WITH player_cards AS (
             positionCaseInsensitiveUTF8(coalesce(card_type, ''), 'red') > 0
             OR positionCaseInsensitiveUTF8(coalesce(description, ''), 'red') > 0
         ) AS triggered_player_red_cards
-    FROM silver.card
+    FROM fotmob_silver.card
     WHERE match_id > 0
       AND player_id IS NOT NULL
     GROUP BY
@@ -68,7 +68,7 @@ player_positions AS (
         person_id,
         argMax(position_id, if(role = 'starter', 2, 1)) AS position_id,
         argMax(usual_playing_position_id, if(role = 'starter', 2, 1)) AS usual_playing_position_id
-    FROM silver.match_personnel
+    FROM fotmob_silver.match_personnel
     WHERE role IN ('starter', 'substitute')
     GROUP BY
         match_id,
@@ -179,13 +179,13 @@ SELECT
         0
     )) AS opponent_possession_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN player_positions AS mp
     ON mp.match_id = p.match_id
    AND mp.person_id = p.player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 LEFT JOIN player_cards AS pc

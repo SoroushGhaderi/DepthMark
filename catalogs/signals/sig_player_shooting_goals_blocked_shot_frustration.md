@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_shooting_goals_blocked_shot_frustration
+  table: fotmob_gold_signals.sig_player_shooting_goals_blocked_shot_frustration
   sql: clickhouse/gold/dml/signals/player/sig_player_shooting_goals_blocked_shot_frustration.sql
 ---
 # sig_player_shooting_goals_blocked_shot_frustration
@@ -26,9 +26,9 @@ frustration patterns where finishing opportunities are neutralized before reachi
 
 - Trigger condition:
   - `triggered_player_blocked_shots >= 4`
-- Trigger logic is computed from `silver.shot` (`is_blocked = 1`, excluding own goals) so blocked attempts
+- Trigger logic is computed from `fotmob_silver.shot` (`is_blocked = 1`, excluding own goals) so blocked attempts
   are directly event-derived.
-- Triggered player outcomes and exposure context are enriched from `silver.player_match_stat`.
+- Triggered player outcomes and exposure context are enriched from `fotmob_silver.player_match_stat`.
 - Bilateral team context is preserved with symmetric triggered-side/opponent metrics for shots, xG,
   blocked shots, possession, big chances, and opposition-box touches.
 - Severity diagnostics include `blocked_shots_above_threshold`, `triggered_player_blocked_shot_ratio_pct`,
@@ -42,7 +42,7 @@ frustration patterns where finishing opportunities are neutralized before reachi
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_shooting_goals_blocked_shot_frustration.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_shooting_goals_blocked_shot_frustration`
+- Target table: `fotmob_gold_signals.sig_player_shooting_goals_blocked_shot_frustration`
 
 ## Example Execution
 

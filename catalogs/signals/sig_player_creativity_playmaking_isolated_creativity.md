@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_isolated_creativity
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_isolated_creativity
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_isolated_creativity.sql
 ---
 # sig_player_creativity_playmaking_isolated_creativity
@@ -26,9 +26,9 @@ Detect player performances where one creator carries at least half of a team's k
 - Trigger conditions:
   - `triggered_team_total_key_passes > 0`
   - `player_share_of_team_key_passes_pct >= 50.0`
-- Key passes are represented by `silver.player_match_stat.chances_created`.
+- Key passes are represented by `fotmob_silver.player_match_stat.chances_created`.
 - Team key-pass totals are computed per `(match_id, team_id)` from player-level rows.
-- Bilateral passing, possession, and opposition-box context from `silver.period_stat` (`period = 'All'`) is preserved to separate player concentration from overall team game state.
+- Bilateral passing, possession, and opposition-box context from `fotmob_silver.period_stat` (`period = 'All'`) is preserved to separate player concentration from overall team game state.
 - Similarity gate note:
   - `sig_player_possession_passing_creative_monopoly` is the closest existing signal and uses the same concentration trigger with possession/passing taxonomy.
   - `sig_player_creativity_playmaking_maestro_output` shares key-pass semantics but uses an absolute volume trigger (`>= 5`) rather than team-share concentration.
@@ -38,7 +38,7 @@ Detect player performances where one creator carries at least half of a team's k
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_isolated_creativity.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_isolated_creativity`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_isolated_creativity`
 
 ## Example Execution
 

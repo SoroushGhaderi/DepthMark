@@ -1,8 +1,8 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.timeline
+CREATE TABLE IF NOT EXISTS fotmob_bronze.timeline
 (
     match_id                        Int32,
-    match_time_utc                  Nullable(String),       -- [BUG 4 FIX] was Nullable(DateTime), now String like bronze.general
+    match_time_utc                  Nullable(String),       -- [BUG 4 FIX] was Nullable(DateTime), now String like fotmob_bronze.general
     -- Half timestamps — raw strings, silver converts to DateTime
     first_half_started              Nullable(String),
     first_half_ended                Nullable(String),

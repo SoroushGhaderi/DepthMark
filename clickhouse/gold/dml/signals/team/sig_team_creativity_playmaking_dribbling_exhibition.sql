@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_dribbling_exhibition (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_dribbling_exhibition (
     match_id,
     match_date,
     home_team_id,
@@ -59,7 +59,7 @@ WITH team_creation_stats AS (
         p.team_id,
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.team_id IS NOT NULL
     GROUP BY
         p.match_id,
@@ -194,8 +194,8 @@ SELECT
         3
     )) AS expected_goals_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 LEFT JOIN team_creation_stats AS hc
@@ -334,8 +334,8 @@ SELECT
         3
     )) AS expected_goals_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.period = 'All'
 LEFT JOIN team_creation_stats AS hc

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_playmaker_to_striker_connection.sql
 ---
 # sig_match_creativity_playmaking_playmaker_to_striker_connection
@@ -28,8 +28,8 @@ with repeated direct goal-link connection to a specific teammate.
 - Source limitation and proxy contract:
   - receiver-level key-pass destinations are not available in current Silver player stats,
   - so the signal uses a deterministic proxy:
-    - creator key-pass volume from `silver.player_match_stat.chances_created` (`>= 5`), plus
-    - creator -> finisher connection from `silver.shot` goal assist links
+    - creator key-pass volume from `fotmob_silver.player_match_stat.chances_created` (`>= 5`), plus
+    - creator -> finisher connection from `fotmob_silver.shot` goal assist links
       (`assist_player_id -> player_id`, with at least one linked goal).
 - Match scope:
   - `match_finished = 1`, `period = 'All'`, `match_id > 0`.
@@ -48,7 +48,7 @@ with repeated direct goal-link connection to a specific teammate.
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_playmaker_to_striker_connection.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_playmaker_to_striker_connection`
 
 ## Example Execution
 

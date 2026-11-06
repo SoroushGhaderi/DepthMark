@@ -9,7 +9,7 @@ Superseded by re-enablement (scenario bulk loading is now enabled)
 DepthMark has two Gold execution surfaces:
 
 1. narrow SQL job execution through `scripts/gold/run_gold_sql_jobs.py`;
-2. bulk Gold orchestration through `scripts/fotmob/load_fotmob_gold.py`.
+2. bulk Gold orchestration through `scripts/gold/load_fotmob_gold.py`.
 
 Scenario SQL has been migrated to the `gold_scenarios.*` namespace and can be
 resolved by the generic SQL job runner. The bulk Gold loader currently runs
@@ -25,7 +25,7 @@ becomes part of the default Gold run again.
 ## Decision
 
 DepthMark will keep scenario bulk execution disabled in
-`scripts/fotmob/load_fotmob_gold.py` until the generic scenario SQL path has
+`scripts/gold/load_fotmob_gold.py` until the generic scenario SQL path has
 been validated intentionally.
 
 Scenario development, debugging, and one-off validation should use the generic
@@ -84,6 +84,6 @@ Scenario bulk loading was re-enabled after validating:
 The `--part` flag now accepts `scenarios` as an explicit selector:
 
 ```bash
-python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
-python3 scripts/fotmob/load_fotmob_gold.py --date 20251208 --part all --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part scenarios --dry-run
+python3 scripts/gold/load_fotmob_gold.py --date 20251208 --part all --dry-run
 ```

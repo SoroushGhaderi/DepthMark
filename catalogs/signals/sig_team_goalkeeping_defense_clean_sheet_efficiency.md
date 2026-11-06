@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency
+  table: fotmob_gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency
   sql: clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql
 ---
 # sig_team_goalkeeping_defense_clean_sheet_efficiency
@@ -44,7 +44,7 @@ faced), then retain bilateral defensive workload and control context for interpr
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_goalkeeping_defense_clean_sheet_efficiency.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency`
+- Target table: `fotmob_gold_signals.sig_team_goalkeeping_defense_clean_sheet_efficiency`
 
 ## Example Execution
 

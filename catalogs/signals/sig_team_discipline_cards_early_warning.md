@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_early_warning
+  table: fotmob_gold_signals.sig_team_discipline_cards_early_warning
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_early_warning.sql
 ---
 # sig_team_discipline_cards_early_warning
@@ -25,7 +25,7 @@ Flags teams that spread early cautions across multiple players, a practical indi
 - Trigger condition:
   - `triggered_team_distinct_booked_players_early >= 3`
   - booking window uses `card_minute < 30`
-- Booking events are sourced from `silver.card` and include yellow-card style events (`card_type`/`description` contains yellow or booked terms).
+- Booking events are sourced from `fotmob_silver.card` and include yellow-card style events (`card_type`/`description` contains yellow or booked terms).
 - Trigger is evaluated for both sides (`home` and `away`) and emits one row per triggered match-team.
 - Output preserves bilateral context: early booking concentration, full-match card/foul load, defensive actions, and possession balance.
 
@@ -33,7 +33,7 @@ Flags teams that spread early cautions across multiple players, a practical indi
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_early_warning.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_early_warning`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_early_warning`
 
 ## Example Execution
 

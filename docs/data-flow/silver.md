@@ -15,27 +15,27 @@ Oddspedia Bronze    → Oddspedia Silver    → Oddspedia Gold
 
 The existing FotMob tables below describe the implemented FotMob Silver path.
 Oddspedia Silver owns cleaned event/odds entities and the auditable
-`silver.oddspedia_match_resolution` relationship; that relationship reads the
-canonical FotMob `silver.match` reference but does not replace the Oddspedia
+`oddspedia_silver.match_resolution` relationship; that relationship reads the
+canonical FotMob `fotmob_silver.match` reference but does not replace the Oddspedia
 Silver path.
 
 ## Overview
 
 ```text
-bronze.* (15 tables)
-  → silver.* (8 tables)
+fotmob_bronze.* (15 tables)
+  → fotmob_silver.* (8 tables)
 ```
 
 ## Oddspedia Silver resolution boundary
 
 The current Oddspedia Silver implementation is the explicit relationship
-`silver.oddspedia_match_resolution`. Before it reads Oddspedia facts,
+`oddspedia_silver.match_resolution`. Before it reads Oddspedia facts,
 `resolve_oddspedia_events.py` requires the date's latest
 `oddspedia_bronze.load_status` row to be `published`; `staging` and `failed`
 batches are not valid Silver input. When the operator supplies
 `--silver-reference-window-ready`, the resolver also machine-verifies exact
-FotMob fixture-ID set equality between `bronze.match_reference` and
-`silver.match` for the previous, current, and following UTC dates. The flag is
+FotMob fixture-ID set equality between `fotmob_bronze.match_reference` and
+`fotmob_silver.match` for the previous, current, and following UTC dates. The flag is
 an operator assertion that enables the check; it does not replace the check.
 
 ```bash
@@ -51,20 +51,20 @@ Silver SQL lives under `clickhouse/silver/`:
 
 | Table | Grain | Source Bronze Tables |
 | --- | --- | --- |
-| `silver.match` | one row per match | `bronze.general`, `bronze.venue`, `bronze.timeline` |
-| `silver.period_stat` | one row per match per period | `bronze.period` |
-| `silver.player_match_stat` | one row per player per match | `bronze.player`, `bronze.starters`, `bronze.substitutes` |
-| `silver.momentum` | one row per match timestamp | `bronze.momentum` |
-| `silver.shot` | one row per shot | `bronze.shotmap` |
-| `silver.card` | one row per card | `bronze.cards` |
-| `silver.match_personnel` | one row per coach/sub per match | `bronze.coaches`, `bronze.substitutes` |
-| `silver.team_form` | one row per team form entry | `bronze.team_form` |
+| `fotmob_silver.match` | one row per match | `fotmob_bronze.general`, `fotmob_bronze.venue`, `fotmob_bronze.timeline` |
+| `fotmob_silver.period_stat` | one row per match per period | `fotmob_bronze.period` |
+| `fotmob_silver.player_match_stat` | one row per player per match | `fotmob_bronze.player`, `fotmob_bronze.starters`, `fotmob_bronze.substitutes` |
+| `fotmob_silver.momentum` | one row per match timestamp | `fotmob_bronze.momentum` |
+| `fotmob_silver.shot` | one row per shot | `fotmob_bronze.shotmap` |
+| `fotmob_silver.card` | one row per card | `fotmob_bronze.cards` |
+| `fotmob_silver.match_personnel` | one row per coach/sub per match | `fotmob_bronze.coaches`, `fotmob_bronze.substitutes` |
+| `fotmob_silver.team_form` | one row per team form entry | `fotmob_bronze.team_form` |
 
 ## Data Flow
 
 ### 1. DDL Setup (`scripts/fotmob/setup_fotmob_silver.py`)
 
-Creates the `silver` database and all 8 tables:
+Creates the `fotmob_silver` database and all 8 tables:
 ```bash
 python3 scripts/fotmob/setup_fotmob_silver.py
 ```

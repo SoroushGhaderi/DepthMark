@@ -13,15 +13,15 @@ Oddspedia listing/page
       oddspedia_bronze.*
   → Oddspedia Silver
       cleaned event, odds, and source entities
-      silver.oddspedia_*
+      fotmob_silver.oddspedia_*
   → Oddspedia Gold
       odds-derived scenarios, signals, and serving outputs
 
-Oddspedia Silver ── audited match relationship ──> FotMob Silver (`silver.match`)
+Oddspedia Silver ── audited match relationship ──> FotMob Silver (`fotmob_silver.match`)
 ```
 
 The cross-source relationship is an integration edge. It is not a shared raw
-table, does not rewrite `silver.match`, and does not make Oddspedia Silver
+table, does not rewrite `fotmob_silver.match`, and does not make Oddspedia Silver
 depend on FotMob Gold.
 
 ## Layer ownership and implementation status
@@ -29,7 +29,7 @@ depend on FotMob Gold.
 | Layer | Oddspedia responsibility | Current repository status |
 | --- | --- | --- |
 | Bronze | Preserve discovered links, page payloads, manifests, and market facts without source mixing. | Implemented through `oddspedia_bronze.*`. |
-| Silver | Clean and conform Oddspedia events/odds, then persist auditable source identities and resolutions. | Resolution is implemented in `silver.oddspedia_match_resolution`; the source-specific conformed layer remains an expanding boundary. |
+| Silver | Clean and conform Oddspedia events/odds, then persist auditable source identities and resolutions. | Resolution is implemented in `oddspedia_silver.match_resolution`; the source-specific conformed layer remains an expanding boundary. |
 | Gold | Materialize Oddspedia-owned odds scenarios, signals, and product-serving outputs. | Architectural target; do not route Oddspedia analytics through FotMob Gold tables. |
 
 The status column describes implementation progress, not a different medallion
@@ -95,12 +95,11 @@ The canonical event-intake scripts are `discover_oddspedia_events.py`,
 is the read-only reporting interface. It combines inventory, priority,
 manifest, payload-audit, and run-log evidence into summary, Markdown, or JSON;
 it does not acquire the date lock, create a status run log, or write pipeline
-state. The former Oddspedia status/report paths are compatibility adapters to
-this one interface.
+state.
 `run_oddspedia_pipeline.py` performs discovery, priority generation, then
 priority-selected scraping. It requires `--silver-reference-window-ready`
 because priority generation reads the previous, current, and following
-`silver.match` dates. `football.py` and the former umbrella `events.py` remain
+`fotmob_silver.match` dates. `football.py` and the former umbrella `events.py` remain
 deprecated compatibility wrappers. The canonical selectors are
 `--retry-failed`, `--retry-incomplete`, and `--priority-tier`; their former
 spellings remain accepted as aliases.
@@ -199,10 +198,10 @@ provider metadata are not matching evidence. A unique exact/alias or
 high-similarity team-name pair is matched; competing candidates remain
 `ambiguous`.
 
-The persisted relationship is `silver.oddspedia_match_resolution`. It records
+The persisted relationship is `oddspedia_silver.match_resolution`. It records
 the auditable relationship from one Oddspedia Source Event to at most one
 canonical FotMob fixture. An Oddspedia Silver table is not the same thing as
-the shared FotMob `silver.match` table.
+the shared FotMob `fotmob_silver.match` table.
 
 ```bash
 python3 scripts/oddspedia/resolve_oddspedia_events.py --date 20260301 --dry-run
@@ -215,7 +214,7 @@ python3 scripts/oddspedia/resolve_oddspedia_events.py --start-date 20260301 --en
 Oddspedia Gold is the source-owned product layer for odds-derived analysis. It
 will contain Oddspedia scenarios, signals, and serving outputs derived from
 Oddspedia Silver. It must not be represented as a second input path into the
-current FotMob `gold_scenarios.*`, `gold_signals.*`, or `gold.*` activation
+current FotMob `fotmob_gold_scenarios.*`, `fotmob_gold_signals.*`, or `fotmob_gold.*` activation
 tables.
 
 When Oddspedia Gold execution is introduced, its DDL, SQL, catalogs, and CLI

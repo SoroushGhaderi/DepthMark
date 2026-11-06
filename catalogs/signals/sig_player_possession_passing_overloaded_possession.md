@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_overloaded_possession
+  table: fotmob_gold_signals.sig_player_possession_passing_overloaded_possession
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_overloaded_possession.sql
 ---
 # sig_player_possession_passing_overloaded_possession
@@ -25,15 +25,15 @@ Triggers when a player records more than 120 touches in a single match, identify
 
 - Trigger condition:
   - `triggered_player_total_touches > 120`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent passing, possession, and opposition-box-touch context from `silver.period_stat` (`period = 'All'`) to separate individual overload from broader team game state.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent passing, possession, and opposition-box-touch context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual overload from broader team game state.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_overloaded_possession.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_overloaded_possession`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_overloaded_possession`
 
 ## Example Execution
 

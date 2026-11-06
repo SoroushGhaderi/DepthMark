@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_shooting_goals_rapid_double_salvo
+  table: fotmob_gold_signals.sig_team_shooting_goals_rapid_double_salvo
   sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_rapid_double_salvo.sql
 ---
 # sig_team_shooting_goals_rapid_double_salvo
@@ -24,7 +24,7 @@ capturing momentum spikes and conversion surges.
 ## Tactical And Statistical Logic
 
 - Trigger condition:
-  - Non-own goals from `silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
+  - Non-own goals from `fotmob_silver.shot` (`is_goal = 1`, `is_own_goal = 0`).
   - For each side, adjacent goals in that side's own goal sequence have effective-minute gap `<= 2`.
   - At least one qualifying pair is required (`triggered_team_rapid_double_salvo_pairs >= 1`).
 - Timing logic:
@@ -32,7 +32,7 @@ capturing momentum spikes and conversion surges.
   - The requested 120-second window is implemented as a minute-granularity proxy (`<= 2` effective minutes).
   - First and last qualifying salvo timings plus gap summaries are retained for sequence diagnostics.
 - Match-context enrichment:
-  - Bilateral team metrics come from `silver.period_stat` (`period = 'All'`) and final score context from `silver.match`.
+  - Bilateral team metrics come from `fotmob_silver.period_stat` (`period = 'All'`) and final score context from `fotmob_silver.match`.
   - Output stays side-oriented at `match_team` grain and allows both sides to trigger in one match.
 - Similarity gate note:
   - Closest active signals are `sig_team_shooting_goals_rapid_response_goal` and `sig_team_shooting_goals_early_blitz`.
@@ -42,7 +42,7 @@ capturing momentum spikes and conversion surges.
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_rapid_double_salvo.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_shooting_goals_rapid_double_salvo`
+- Target table: `fotmob_gold_signals.sig_team_shooting_goals_rapid_double_salvo`
 
 ## Example Execution
 

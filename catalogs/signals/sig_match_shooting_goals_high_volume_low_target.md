@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_high_volume_low_target
+  table: fotmob_gold_signals.sig_match_shooting_goals_high_volume_low_target
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_volume_low_target.sql
 ---
 # sig_match_shooting_goals_high_volume_low_target
@@ -31,7 +31,7 @@ Identify chaotic, low-precision matches where total shooting volume is very high
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_high_volume_low_target.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_high_volume_low_target`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_high_volume_low_target`
 
 ## Example Execution
 

@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_discipline_cards_referee_strictness
+  table: fotmob_gold_signals.sig_match_discipline_cards_referee_strictness
   sql: clickhouse/gold/dml/signals/match/sig_match_discipline_cards_referee_strictness.sql
 ---
 # sig_match_discipline_cards_referee_strictness
@@ -22,7 +22,7 @@ Flags matches where a yellow card arrives very early, a practical proxy for stri
 
 ## Tactical And Statistical Logic
 
-- Trigger condition: minimum yellow-card minute in `silver.card` is between `1` and `5` (inclusive).
+- Trigger condition: minimum yellow-card minute in `fotmob_silver.card` is between `1` and `5` (inclusive).
 - Yellow-card detection accepts card events where `card_type` or `description` contains `yellow`/`booked`.
 - Trigger is match-level, then emitted as two side-oriented rows (`triggered_side = home` and `away`) for team-centric downstream use.
 - Output includes first-yellow attribution plus bilateral discipline and physical-intensity context from full-match period stats.
@@ -31,7 +31,7 @@ Flags matches where a yellow card arrives very early, a practical proxy for stri
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_discipline_cards_referee_strictness.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_discipline_cards_referee_strictness`
+- Target table: `fotmob_gold_signals.sig_match_discipline_cards_referee_strictness`
 
 ## Example Execution
 

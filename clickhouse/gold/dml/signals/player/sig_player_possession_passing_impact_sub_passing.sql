@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_possession_passing_impact_sub_passing (
+INSERT INTO fotmob_gold_signals.sig_player_possession_passing_impact_sub_passing (
     match_id,
     match_date,
     home_team_id,
@@ -245,15 +245,15 @@ SELECT
         1
     ) AS triggered_player_vs_team_pass_accuracy_delta_pct
 
-FROM silver.player_match_stat AS p
-INNER JOIN silver.match AS m
+FROM fotmob_silver.player_match_stat AS p
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = p.match_id
 INNER JOIN (
     SELECT
         match_id,
         person_id,
         max(substitution_time) AS substitution_time
-    FROM silver.match_personnel
+    FROM fotmob_silver.match_personnel
     WHERE role = 'substitute'
     GROUP BY
         match_id,
@@ -261,7 +261,7 @@ INNER JOIN (
 ) AS mp
     ON mp.match_id = p.match_id
    AND mp.person_id = p.player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = p.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

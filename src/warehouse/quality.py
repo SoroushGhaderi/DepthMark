@@ -25,10 +25,16 @@ from src.warehouse.publication import (
 )
 from src.warehouse.scope import WarehouseExecutionScope
 
-WAREHOUSE_DATABASES = ("bronze", "silver", "gold_scenarios", "gold_signals", "gold")
+WAREHOUSE_DATABASES = (
+    "fotmob_bronze",
+    "fotmob_silver",
+    "fotmob_gold_scenarios",
+    "fotmob_gold_signals",
+    "fotmob_gold",
+)
 _SAFE_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 _SCENARIO_TABLE = re.compile(
-    r"CREATE TABLE IF NOT EXISTS gold_scenarios\.(scenario_[a-zA-Z0-9_]+).*?"
+    r"CREATE TABLE IF NOT EXISTS fotmob_gold_scenarios\.(scenario_[a-zA-Z0-9_]+).*?"
     r"ORDER BY\s+(\([^;]+?\)|[a-zA-Z_][a-zA-Z0-9_]*)\s*(?:PARTITION BY|;)",
     re.DOTALL,
 )
@@ -173,7 +179,7 @@ def _scope_predicate(identity: TableIdentity, scope: WarehouseExecutionScope) ->
 
 
 def _bronze_scope_expression() -> str:
-    return "match_id IN (SELECT match_id FROM bronze.match_reference WHERE {predicate})"
+    return "match_id IN (SELECT match_id FROM fotmob_bronze.match_reference WHERE {predicate})"
 
 
 def _base_identity_contracts() -> dict[str, TableIdentity]:
@@ -181,8 +187,8 @@ def _base_identity_contracts() -> dict[str, TableIdentity]:
     for table, keys in BRONZE_REQUIRED_KEYS.items():
         scope_column = "match_date" if table == "match_reference" else None
         scope_expression = None if table == "match_reference" else "match_id"
-        contracts[f"bronze.{table}"] = TableIdentity(
-            database="bronze",
+        contracts[f"fotmob_bronze.{table}"] = TableIdentity(
+            database="fotmob_bronze",
             table=table,
             columns=tuple(keys),
             scope_column=scope_column,
@@ -190,15 +196,15 @@ def _base_identity_contracts() -> dict[str, TableIdentity]:
             source="BRONZE_REQUIRED_KEYS",
         )
     for table, keys in SILVER_TABLE_KEYS.items():
-        contracts[f"silver.{table}"] = TableIdentity(
-            database="silver",
+        contracts[f"fotmob_silver.{table}"] = TableIdentity(
+            database="fotmob_silver",
             table=table,
             columns=tuple(keys),
             scope_column="match_date",
             source="SILVER_TABLE_KEYS",
         )
-    contracts["gold.signal_activations"] = TableIdentity(
-        database="gold",
+    contracts["fotmob_gold.signal_activations"] = TableIdentity(
+        database="fotmob_gold",
         table="signal_activations",
         columns=("signal_instance_id",),
         scope_column="match_date",
@@ -218,8 +224,8 @@ def load_scenario_identity_contracts(ddl_path: Path) -> dict[str, TableIdentity]
             for value in identifiers
             if value not in _SQL_FUNCTIONS and value not in {"NULL"} and not value.isdigit()
         )
-        contracts[f"gold_scenarios.{table}"] = TableIdentity(
-            database="gold_scenarios",
+        contracts[f"fotmob_gold_scenarios.{table}"] = TableIdentity(
+            database="fotmob_gold_scenarios",
             table=table,
             columns=columns,
             scope_expression="parseDateTimeBestEffortOrNull(match_time_utc_date)",
@@ -266,11 +272,13 @@ def build_duplicate_queries(
     keys_csv = ", ".join(_validate_identifier(column) for column in identity.columns)
     predicate = _scope_predicate(identity, scope)
     if (
-        identity.database == "bronze"
+        identity.database == "fotmob_bronze"
         and scope.kind != "full-history"
         and identity.table != "match_reference"
     ):
-        reference_identity = TableIdentity("bronze", "match_reference", ("match_id",), "match_date")
+        reference_identity = TableIdentity(
+            "fotmob_bronze", "match_reference", ("match_id",), "match_date"
+        )
         reference_predicate = _scope_predicate(reference_identity, scope)
         predicate = _bronze_scope_expression().format(predicate=reference_predicate)
     where_clause = f"\nWHERE {predicate}" if predicate else ""
@@ -323,17 +331,22 @@ def build_duplicate_queries(
 
 def _reconciliation_definitions() -> dict[str, ReconciliationDefinition]:
     direct = {
-        "match": ("bronze.general", ("match_id",), "silver.match", ""),
-        "period": ("bronze.period", ("match_id", "period"), "silver.period_stat", ""),
+        "match": ("fotmob_bronze.general", ("match_id",), "fotmob_silver.match", ""),
+        "period": ("fotmob_bronze.period", ("match_id", "period"), "fotmob_silver.period_stat", ""),
         "player": (
-            "bronze.player",
+            "fotmob_bronze.player",
             ("match_id", "player_id"),
-            "silver.player_match_stat",
+            "fotmob_silver.player_match_stat",
             "team_id IS NOT NULL",
         ),
-        "momentum": ("bronze.momentum", ("match_id", "minute"), "silver.momentum", ""),
-        "shot": ("bronze.shotmap", ("match_id", "shot_id"), "silver.shot", ""),
-        "card": ("bronze.cards", ("match_id", "event_id"), "silver.card", ""),
+        "momentum": (
+            "fotmob_bronze.momentum",
+            ("match_id", "minute"),
+            "fotmob_silver.momentum",
+            "",
+        ),
+        "shot": ("fotmob_bronze.shotmap", ("match_id", "shot_id"), "fotmob_silver.shot", ""),
+        "card": ("fotmob_bronze.cards", ("match_id", "event_id"), "fotmob_silver.card", ""),
     }
     definitions: dict[str, ReconciliationDefinition] = {}
     for name, (bronze_table, keys, silver_table, eligibility) in direct.items():
@@ -349,24 +362,24 @@ def _reconciliation_definitions() -> dict[str, ReconciliationDefinition]:
         keys=("match_id", "team_side", "role", "person_id"),
         bronze_sql="""
 SELECT match_id, team_side, 'starter' AS role, player_id AS person_id
-FROM bronze.starters
+FROM fotmob_bronze.starters
 WHERE match_id > 0 AND player_id > 0 AND length(trim(BOTH ' ' FROM team_side)) > 0
 UNION ALL
 SELECT match_id, team_side, 'substitute' AS role, player_id AS person_id
-FROM bronze.substitutes
+FROM fotmob_bronze.substitutes
 WHERE match_id > 0 AND player_id > 0 AND length(trim(BOTH ' ' FROM team_side)) > 0
 UNION ALL
 SELECT match_id, team_side, 'coach' AS role, coach_id AS person_id
-FROM bronze.coaches
+FROM fotmob_bronze.coaches
 WHERE match_id > 0 AND coach_id > 0 AND length(trim(BOTH ' ' FROM team_side)) > 0
 """.strip(),
-        silver_table="silver.match_personnel",
+        silver_table="fotmob_silver.match_personnel",
     )
     definitions["team_form"] = ReconciliationDefinition(
         name="team_form",
         keys=("match_id", "team_id", "form_position"),
-        bronze_sql="SELECT match_id, team_id, form_position FROM bronze.team_form",
-        silver_table="silver.team_form",
+        bronze_sql="SELECT match_id, team_id, form_position FROM fotmob_bronze.team_form",
+        silver_table="fotmob_silver.team_form",
     )
     return definitions
 
@@ -383,10 +396,10 @@ def _apply_reconciliation_scope(
     if scope.kind == "full-history":
         return dataset_sql
     if layer == "bronze":
-        identity = TableIdentity("bronze", "match_reference", ("match_id",), "match_date")
+        identity = TableIdentity("fotmob_bronze", "match_reference", ("match_id",), "match_date")
         predicate = _scope_predicate(identity, scope)
-        return f"SELECT * FROM (\n{dataset_sql}\n) WHERE match_id IN (SELECT match_id FROM bronze.match_reference WHERE {predicate})"
-    identity = TableIdentity("silver", "match", ("match_id",), "match_date")
+        return f"SELECT * FROM (\n{dataset_sql}\n) WHERE match_id IN (SELECT match_id FROM fotmob_bronze.match_reference WHERE {predicate})"
+    identity = TableIdentity("fotmob_silver", "match", ("match_id",), "match_date")
     predicate = _scope_predicate(identity, scope)
     return f"SELECT * FROM (\n{dataset_sql}\n) WHERE {predicate}"
 
@@ -481,11 +494,11 @@ class DataQualityService:
             database
             for layer in layers
             for database in (
-                ("bronze",)
+                ("fotmob_bronze",)
                 if layer == "bronze"
-                else ("silver",)
+                else ("fotmob_silver",)
                 if layer == "silver"
-                else ("gold_scenarios", "gold_signals", "gold")
+                else ("fotmob_gold_scenarios", "fotmob_gold_signals", "fotmob_gold")
             )
         }
         for table in tables:

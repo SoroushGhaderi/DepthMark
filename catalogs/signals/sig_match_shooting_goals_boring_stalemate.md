@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_shooting_goals_boring_stalemate
+  table: fotmob_gold_signals.sig_match_shooting_goals_boring_stalemate
   sql: clickhouse/gold/dml/signals/match/sig_match_shooting_goals_boring_stalemate.sql
 ---
 # sig_match_shooting_goals_boring_stalemate
@@ -31,7 +31,7 @@ Detect goalless matches with extremely low combined chance quality and provide b
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_shooting_goals_boring_stalemate.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_shooting_goals_boring_stalemate`
+- Target table: `fotmob_gold_signals.sig_match_shooting_goals_boring_stalemate`
 
 ## Example Execution
 

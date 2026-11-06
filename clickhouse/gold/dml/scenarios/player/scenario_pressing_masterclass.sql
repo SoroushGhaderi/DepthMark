@@ -1,5 +1,5 @@
 -- scenario_pressing_masterclass: team-level pressing dominance converted into wins
-INSERT INTO gold_scenarios.scenario_pressing_masterclass
+INSERT INTO fotmob_gold_scenarios.scenario_pressing_masterclass
 (
     -- 1. Match Identity
     match_id,
@@ -58,8 +58,8 @@ SELECT
         WHEN g.away_score > g.home_score THEN 'away'
         ELSE 'draw'
     END AS winning_side
-FROM silver.match AS g
-INNER JOIN silver.player_match_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON g.match_id = p.match_id
 WHERE
     g.match_finished = 1

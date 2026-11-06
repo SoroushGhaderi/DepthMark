@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_unproductive_beauty
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_unproductive_beauty
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_unproductive_beauty.sql
 ---
 # sig_match_creativity_playmaking_unproductive_beauty
@@ -28,11 +28,11 @@ nil (0 total goals), surfacing aesthetically rich yet unproductive attacking con
   - `match_combined_key_passes >= 20`
   - `match_total_goals = 0`
 - Aggregate sources:
-  - Team key passes and expected assists come from `silver.player_match_stat`.
+  - Team key passes and expected assists come from `fotmob_silver.player_match_stat`.
   - Dribbles, shots, passing, possession, and territorial context come from
-    `silver.period_stat` where `period = 'All'`.
+    `fotmob_silver.period_stat` where `period = 'All'`.
 - Match scope:
-  - `silver.match.match_finished = 1`
+  - `fotmob_silver.match.match_finished = 1`
   - `match_id > 0`
 - Side orientation:
   - Emits one row for `home` and one row for `away` at `match_team` grain.
@@ -48,7 +48,7 @@ nil (0 total goals), surfacing aesthetically rich yet unproductive attacking con
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_unproductive_beauty.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_unproductive_beauty`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_unproductive_beauty`
 
 ## Example Execution
 

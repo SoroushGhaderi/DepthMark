@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_team_creativity_playmaking_bench_creative_impact (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_bench_creative_impact (
     match_id,
     match_date,
     home_team_id,
@@ -76,7 +76,7 @@ WITH substitute_entries AS (
         mp.match_id,
         toInt32(assumeNotNull(mp.person_id)) AS player_id,
         toInt32(max(coalesce(mp.substitution_time, 0))) AS substitution_time
-    FROM silver.match_personnel AS mp
+    FROM fotmob_silver.match_personnel AS mp
     WHERE mp.match_id > 0
       AND mp.person_id IS NOT NULL
       AND lowerUTF8(coalesce(mp.role, '')) = 'substitute'
@@ -93,7 +93,7 @@ substitute_playmaking_stats AS (
         toInt32(sum(coalesce(p.chances_created, 0))) AS substitute_key_passes,
         toInt32(sum(coalesce(p.assists, 0))) AS substitute_assists,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS substitute_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     INNER JOIN substitute_entries AS se
         ON se.match_id = p.match_id
        AND se.player_id = p.player_id
@@ -126,7 +126,7 @@ team_total_playmaking_rollup AS (
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_total_key_passes,
         toInt32(sum(coalesce(p.assists, 0))) AS team_total_assists,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_total_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.match_id > 0
       AND coalesce(p.team_id, 0) > 0
     GROUP BY
@@ -335,8 +335,8 @@ SELECT
     toInt32(coalesce(m.away_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.home_score, 0) - coalesce(m.away_score, 0)) AS goal_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'
@@ -556,8 +556,8 @@ SELECT
     toInt32(coalesce(m.home_score, 0)) AS opponent_goals,
     toInt32(coalesce(m.away_score, 0) - coalesce(m.home_score, 0)) AS goal_delta
 
-FROM silver.match AS m
-INNER JOIN silver.period_stat AS ps
+FROM fotmob_silver.match AS m
+INNER JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = m.match_id
    AND ps.match_date = m.match_date
    AND ps.period = 'All'

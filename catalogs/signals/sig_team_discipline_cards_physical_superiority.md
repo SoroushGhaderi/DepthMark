@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_team_discipline_cards_physical_superiority
+  table: fotmob_gold_signals.sig_team_discipline_cards_physical_superiority
   sql: clickhouse/gold/dml/signals/team/sig_team_discipline_cards_physical_superiority.sql
 ---
 # sig_team_discipline_cards_physical_superiority
@@ -25,14 +25,14 @@ Flags team-match cases where a side controls the duel battle (at least 65% duel-
 - Trigger condition:
   - `triggered_team_duel_wins_share_pct >= 65.0`
   - `triggered_team_fouls_committed >= 15`
-- Trigger is evaluated symmetrically for home and away teams using `silver.period_stat` with `period = 'All'`.
+- Trigger is evaluated symmetrically for home and away teams using `fotmob_silver.period_stat` with `period = 'All'`.
 - Duel share is computed as team duels won divided by total match duels won (`home + away`), preserving bilateral duel-share, foul-share, card, defensive-action, and possession context for interpretation.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/team/sig_team_discipline_cards_physical_superiority.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_team_discipline_cards_physical_superiority`
+- Target table: `fotmob_gold_signals.sig_team_discipline_cards_physical_superiority`
 
 ## Example Execution
 

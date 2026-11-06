@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_dribbled_past_heavy.sql
 ---
 # sig_player_goalkeeping_defense_dribbled_past_heavy
@@ -27,9 +27,9 @@ Flags players repeatedly bypassed in one-on-one actions (`dribbled past >= 5`) t
   - `triggered_player_dribbled_past >= 5`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Player role metadata is sourced from `silver.match_personnel` with starter-priority resolution, preserving role labels (`defender`, `midfielder`, `forward`, `other`) without restricting trigger scope.
-- Player outputs come from `silver.player_match_stat` and retain duel, tackle, interception, recovery, clearance, and passing diagnostics to contextualize bypass volume.
-- Bilateral team context is sourced from `silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics plus explicit deltas.
+- Player role metadata is sourced from `fotmob_silver.match_personnel` with starter-priority resolution, preserving role labels (`defender`, `midfielder`, `forward`, `other`) without restricting trigger scope.
+- Player outputs come from `fotmob_silver.player_match_stat` and retain duel, tackle, interception, recovery, clearance, and passing diagnostics to contextualize bypass volume.
+- Bilateral team context is sourced from `fotmob_silver.period_stat` (`period = 'All'`) with symmetric `triggered_team_*` and `opponent_*` metrics plus explicit deltas.
 - Similarity gate note:
   - `sig_player_goalkeeping_defense_passive_defender`: same family/subfamily and includes `dribbled_past`, but trigger is zero proactive actions under low possession (`90 minutes`, `0 tackles`, `0 interceptions`, possession `<= 45%`), not high bypass volume.
   - `sig_player_goalkeeping_defense_defensive_double_double`: opposite defensive profile (high tackles/interceptions) whereas this signal captures vulnerability via repeated bypass events.
@@ -39,7 +39,7 @@ Flags players repeatedly bypassed in one-on-one actions (`dribbled past >= 5`) t
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_dribbled_past_heavy.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_dribbled_past_heavy`
 
 ## Example Execution
 

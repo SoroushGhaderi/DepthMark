@@ -9,12 +9,12 @@ separate.
 
 | Source | Filesystem artifacts | Raw ClickHouse facts | Next stage |
 | --- | --- | --- | --- |
-| FotMob | `data/fotmob/{historical,live}/` | `bronze.*` | FotMob Silver in `silver.*` |
+| FotMob | `data/fotmob/{historical,live}/` | `fotmob_bronze.*` | FotMob Silver in `fotmob_silver.*` |
 | Oddspedia | `data/oddspedia/{historical,live}/` | `oddspedia_bronze.*` | Oddspedia Silver and the explicit resolution edge |
 
 The Oddspedia workflow is documented in
 [`oddspedia.md`](oddspedia.md). Its Bronze facts are not inserted into FotMob
-`bronze.*` tables.
+`fotmob_bronze.*` tables.
 
 ## Overview
 
@@ -22,7 +22,7 @@ The Oddspedia workflow is documented in
 FotMob API
   → data/fotmob/historical/      completed-date JSON/GZIP/TAR and listings
   → data/fotmob/live/            refreshable, uncompressed current-date data
-  → bronze.*                 15 ClickHouse tables
+  → fotmob_bronze.*                 15 ClickHouse tables
 ```
 
 ## Data Flow
@@ -141,21 +141,21 @@ Raw JSON is parsed and loaded into 15 Bronze ClickHouse tables:
 
 | Table | Source | Content |
 | --- | --- | --- |
-| `bronze.general` | `general` | Match metadata, league, season |
-| `bronze.timeline` | `timeline` | Event timeline |
-| `bronze.venue` | `venue` | Stadium information |
-| `bronze.player` | `player` | Player profiles |
-| `bronze.shotmap` | `shotmap` | Shot locations and details |
-| `bronze.goal` | `goal` | Goal events |
-| `bronze.cards` | `cards` | Card events |
-| `bronze.red_card` | `redCard` | Red card details |
-| `bronze.period` | `period` | Period-level stats |
-| `bronze.momentum` | `momentum` | Momentum tracking |
-| `bronze.starters` | `starters` | Starting lineups |
-| `bronze.substitutes` | `substitutes` | Substitutions |
-| `bronze.coaches` | `coaches` | Manager information |
-| `bronze.team_form` | `teamForm` | Team form data |
-| `bronze.match_reference` | derived | Match reference lookup |
+| `fotmob_bronze.general` | `general` | Match metadata, league, season |
+| `fotmob_bronze.timeline` | `timeline` | Event timeline |
+| `fotmob_bronze.venue` | `venue` | Stadium information |
+| `fotmob_bronze.player` | `player` | Player profiles |
+| `fotmob_bronze.shotmap` | `shotmap` | Shot locations and details |
+| `fotmob_bronze.goal` | `goal` | Goal events |
+| `fotmob_bronze.cards` | `cards` | Card events |
+| `fotmob_bronze.red_card` | `redCard` | Red card details |
+| `fotmob_bronze.period` | `period` | Period-level stats |
+| `fotmob_bronze.momentum` | `momentum` | Momentum tracking |
+| `fotmob_bronze.starters` | `starters` | Starting lineups |
+| `fotmob_bronze.substitutes` | `substitutes` | Substitutions |
+| `fotmob_bronze.coaches` | `coaches` | Manager information |
+| `fotmob_bronze.team_form` | `teamForm` | Team form data |
+| `fotmob_bronze.match_reference` | derived | Match reference lookup |
 
 Processing chain (ADR 0031). Every FotMob Bronze command is scoped by Source
 Date: the Historical folder `matches/YYYYMM/YYYYMMDD/`, never a date read from

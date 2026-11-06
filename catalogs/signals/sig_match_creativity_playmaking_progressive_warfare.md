@@ -11,7 +11,7 @@ row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: gold_signals.sig_match_creativity_playmaking_progressive_warfare
+  table: fotmob_gold_signals.sig_match_creativity_playmaking_progressive_warfare
   sql: clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_progressive_warfare.sql
 ---
 # sig_match_creativity_playmaking_progressive_warfare
@@ -28,8 +28,8 @@ proxy metrics when explicit progressive-pass counts are not available in current
   - OR `(long_ball_attempts_home + long_ball_attempts_away) > 80`
   - with `period = 'All'`, `match_finished = 1`, and valid `match_id`.
 - Proxy replacement contract:
-  - Player/team progression proxy: `silver.player_match_stat.passes_final_third` aggregated by team.
-  - Team directness proxy: `silver.period_stat.long_ball_attempts_{home|away}`.
+  - Player/team progression proxy: `fotmob_silver.player_match_stat.passes_final_third` aggregated by team.
+  - Team directness proxy: `fotmob_silver.period_stat.long_ball_attempts_{home|away}`.
 - Trigger-path audit fields preserve which proxy fired:
   - `match_combined_directional_proxy_source`
   - `match_combined_directional_proxy_value`
@@ -44,7 +44,7 @@ proxy metrics when explicit progressive-pass counts are not available in current
 
 - SQL: `clickhouse/gold/dml/signals/match/sig_match_creativity_playmaking_progressive_warfare.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_match_creativity_playmaking_progressive_warfare`
+- Target table: `fotmob_gold_signals.sig_match_creativity_playmaking_progressive_warfare`
 
 ## Example Execution
 

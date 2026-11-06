@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_safe_outlet
+  table: fotmob_gold_signals.sig_player_possession_passing_safe_outlet
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_safe_outlet.sql
 ---
 # sig_player_possession_passing_safe_outlet
@@ -26,15 +26,15 @@ Triggers when a player attempts more than 50 passes and completes all of them (1
 - Trigger condition:
   - `triggered_player_pass_attempts > 50`
   - `triggered_player_accurate_passes = triggered_player_pass_attempts`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`.
-- Signal includes bilateral team/opponent pass and possession context from `silver.period_stat` (`period = 'All'`) to distinguish controlled buildup from low-tempo circulation.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent pass and possession context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish controlled buildup from low-tempo circulation.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_safe_outlet.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_safe_outlet`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_safe_outlet`
 
 ## Example Execution
 

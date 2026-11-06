@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_creativity_playmaking_unselfish_forward
+  table: fotmob_gold_signals.sig_player_creativity_playmaking_unselfish_forward
   sql: clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_unselfish_forward.sql
 ---
 # sig_player_creativity_playmaking_unselfish_forward
@@ -28,9 +28,9 @@ Detects forward-led playmaking performances where a striker proxy creates at lea
   - `triggered_player_key_passes >= 3`.
   - `triggered_player_total_shots = 0`.
   - `match_finished = 1`.
-- Key passes are sourced from `silver.player_match_stat.chances_created`; shots are from `silver.player_match_stat.total_shots`.
-- Positional classification is sourced from `silver.match_personnel` using starter-priority `argMax` selection per match/player.
-- Team context retains bilateral key-pass volume, shot volume, xG, passing, possession, and territorial metrics from `silver.period_stat` (`period = 'All'`) and team key-pass aggregates.
+- Key passes are sourced from `fotmob_silver.player_match_stat.chances_created`; shots are from `fotmob_silver.player_match_stat.total_shots`.
+- Positional classification is sourced from `fotmob_silver.match_personnel` using starter-priority `argMax` selection per match/player.
+- Team context retains bilateral key-pass volume, shot volume, xG, passing, possession, and territorial metrics from `fotmob_silver.period_stat` (`period = 'All'`) and team key-pass aggregates.
 - Similarity gate note:
   - `sig_player_creativity_playmaking_maestro_output`: overlaps on key-pass creation but has no zero-shot or striker gate.
   - `sig_player_creativity_playmaking_high_value_turnover`: overlaps on key-pass framing but uses zero-assist guard, not zero-shot forward behavior.
@@ -40,7 +40,7 @@ Detects forward-led playmaking performances where a striker proxy creates at lea
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_creativity_playmaking_unselfish_forward.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_creativity_playmaking_unselfish_forward`
+- Target table: `fotmob_gold_signals.sig_player_creativity_playmaking_unselfish_forward`
 
 ## Example Execution
 

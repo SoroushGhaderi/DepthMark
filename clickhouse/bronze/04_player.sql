@@ -1,5 +1,5 @@
 -- Auto-extracted from /Users/soroush/Downloads/bronze_ddl.sql
-CREATE TABLE IF NOT EXISTS bronze.player
+CREATE TABLE IF NOT EXISTS fotmob_bronze.player
 (
     match_id                        Int32,
     -- [BUG 2 FIX] was Nullable(Int32) with assumeNotNull() in ORDER BY

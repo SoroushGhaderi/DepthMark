@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_long_ball_specialist
+  table: fotmob_gold_signals.sig_player_possession_passing_long_ball_specialist
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_long_ball_specialist.sql
 ---
 # sig_player_possession_passing_long_ball_specialist
@@ -26,15 +26,15 @@ Triggers when a player completes more than 8 accurate long balls with more than 
 - Trigger condition:
   - `triggered_player_accurate_long_balls > 8`
   - `triggered_player_long_ball_success_rate_pct > 80`
-- Trigger is computed from player-level full-match passing totals in `silver.player_match_stat`.
-- Signal includes bilateral team/opponent long-ball and pass-quality context from `silver.period_stat` (`period = 'All'`) to distinguish isolated player quality from broader team directness.
+- Trigger is computed from player-level full-match passing totals in `fotmob_silver.player_match_stat`.
+- Signal includes bilateral team/opponent long-ball and pass-quality context from `fotmob_silver.period_stat` (`period = 'All'`) to distinguish isolated player quality from broader team directness.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_long_ball_specialist.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_long_ball_specialist`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_long_ball_specialist`
 
 ## Example Execution
 

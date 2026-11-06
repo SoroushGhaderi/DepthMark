@@ -49,7 +49,7 @@ class RecordingClient:
         return SimpleNamespace(result_rows=[])
 
 
-def _job(table="silver.match"):
+def _job(table="fotmob_silver.match"):
     return ScopedSqlJob(
         job_id=table.rsplit(".", 1)[-1],
         target_table=table,
@@ -192,8 +192,8 @@ def test_removed_source_rows_drop_only_the_selected_month_partition():
     )
     batch.run([_job()])
     sql = "\n".join(client.queries)
-    assert "ALTER TABLE silver.match DROP PARTITION 202512" in sql
-    assert "DROP TABLE silver.match" not in sql
+    assert "ALTER TABLE fotmob_silver.match DROP PARTITION 202512" in sql
+    assert "DROP TABLE fotmob_silver.match" not in sql
 
 
 def test_full_history_uses_staged_exchange():
@@ -205,12 +205,14 @@ def test_full_history_uses_staged_exchange():
         run_id="test",
     )
     batch.run([_job()])
-    assert any(query.startswith("EXCHANGE TABLES silver.match") for query in client.queries)
+    assert any(query.startswith("EXCHANGE TABLES fotmob_silver.match") for query in client.queries)
     assert not any("TRUNCATE TABLE" in query for query in client.queries)
 
 
 def test_staging_failure_leaves_all_targets_uncommitted():
-    client = RecordingClient(fail_on="warehouse_stage._depthmark_test_silver__period_stat_calc")
+    client = RecordingClient(
+        fail_on="warehouse_stage._depthmark_test_fotmob_silver__period_stat_calc"
+    )
     batch = ScopedReplacementBatch(
         client,
         WarehouseExecutionScope.full_history(),
@@ -218,7 +220,7 @@ def test_staging_failure_leaves_all_targets_uncommitted():
         run_id="test",
     )
     with pytest.raises(RuntimeError, match="injected failure"):
-        batch.run([_job(), _job("silver.period_stat")])
+        batch.run([_job(), _job("fotmob_silver.period_stat")])
     assert not any(query.startswith("EXCHANGE TABLES") for query in client.queries)
     assert not any(" REPLACE PARTITION " in query for query in client.queries)
 
@@ -239,12 +241,12 @@ def test_dry_run_is_mutation_free_and_reports_full_history_context():
 
 
 def test_insert_rewrite_is_target_specific():
-    sql = "INSERT INTO silver.match SELECT * FROM bronze.general"
-    assert replace_insert_target(sql, "silver.match", "silver.stage") == (
-        "INSERT INTO silver.stage SELECT * FROM bronze.general"
+    sql = "INSERT INTO fotmob_silver.match SELECT * FROM fotmob_bronze.general"
+    assert replace_insert_target(sql, "fotmob_silver.match", "fotmob_silver.stage") == (
+        "INSERT INTO fotmob_silver.stage SELECT * FROM fotmob_bronze.general"
     )
     with pytest.raises(ValueError, match="expected target"):
-        replace_insert_target(sql, "silver.shot", "silver.stage")
+        replace_insert_target(sql, "fotmob_silver.shot", "fotmob_silver.stage")
 
 
 def test_month_scope_has_calendar_boundaries():

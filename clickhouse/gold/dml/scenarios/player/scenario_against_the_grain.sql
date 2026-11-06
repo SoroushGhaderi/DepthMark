@@ -1,5 +1,5 @@
 -- scenario_against_the_grain: high-control passing performances delivered under adverse possession contexts
-INSERT INTO gold_scenarios.scenario_against_the_grain
+INSERT INTO fotmob_gold_scenarios.scenario_against_the_grain
 (
     match_id,
     home_team_id,
@@ -45,7 +45,7 @@ WITH team_possession AS (
         match_id,
         ball_possession_home,
         ball_possession_away
-    FROM silver.period_stat
+    FROM fotmob_silver.period_stat
     WHERE period = 'All'
 )
 
@@ -137,8 +137,8 @@ SELECT
     END AS match_result,
     toString(g.match_date)
 
-FROM silver.match AS g
-INNER JOIN silver.player_match_stat AS p
+FROM fotmob_silver.match AS g
+INNER JOIN fotmob_silver.player_match_stat AS p
     ON g.match_id = p.match_id
 INNER JOIN team_possession AS tp
     ON g.match_id = tp.match_id

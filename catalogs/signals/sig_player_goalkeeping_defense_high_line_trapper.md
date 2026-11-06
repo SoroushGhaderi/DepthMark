@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_goalkeeping_defense_high_line_trapper
+  table: fotmob_gold_signals.sig_player_goalkeeping_defense_high_line_trapper
   sql: clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_high_line_trapper.sql
 ---
 # sig_player_goalkeeping_defense_high_line_trapper
@@ -29,13 +29,13 @@ Flags defenders in matches where their team's defensive line repeatedly catches 
   - `triggered_player_offsides_forced_proxy >= 3`
   - `is_goalkeeper = 0`
   - `match_finished = 1`
-- Offside forcing is derived from `silver.period_stat` at team level (`period = 'All'`):
+- Offside forcing is derived from `fotmob_silver.period_stat` at team level (`period = 'All'`):
   - for home defenders: `offsides_away`
   - for away defenders: `offsides_home`
 - Due current source-grain constraints, this signal uses a team-level proxy for per-defender offside forcing
   and emits one row per qualifying defender in the triggered team.
-- Defender scope is sourced from `silver.match_personnel` (`usual_playing_position_id = 1`) and joined at
-  `(match_id, player_id)` grain to `silver.player_match_stat`.
+- Defender scope is sourced from `fotmob_silver.match_personnel` (`usual_playing_position_id = 1`) and joined at
+  `(match_id, player_id)` grain to `fotmob_silver.player_match_stat`.
 - Similarity gate note:
   - `sig_match_discipline_cards_stop_start_hell`: contains offside volume but models match-level whistle chaos.
   - `scenario_high_line_trap`: close tactical family at team grain; this signal is defender-attributed/player grain.
@@ -44,7 +44,7 @@ Flags defenders in matches where their team's defensive line repeatedly catches 
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_goalkeeping_defense_high_line_trapper.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_goalkeeping_defense_high_line_trapper`
+- Target table: `fotmob_gold_signals.sig_player_goalkeeping_defense_high_line_trapper`
 
 ## Example Execution
 

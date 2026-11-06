@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel (
+INSERT INTO fotmob_gold_signals.sig_match_creativity_playmaking_set_piece_creative_duel (
     match_id,
     match_date,
     home_team_id,
@@ -87,7 +87,7 @@ WITH set_piece_assist_stats AS (
             coalesce(s.expected_goals, 0.0),
             coalesce(s.assist_player_id, 0) > 0
         ), 3)) AS team_set_piece_assisted_shot_expected_goals
-    FROM silver.shot AS s
+    FROM fotmob_silver.shot AS s
     WHERE s.team_id IS NOT NULL
       AND coalesce(s.situation, '') IN ('FromCorner', 'FreeKick', 'SetPiece', 'ThrowInSetPiece')
     GROUP BY
@@ -100,7 +100,7 @@ team_creation_stats AS (
         p.team_id,
         toInt32(sum(coalesce(p.chances_created, 0))) AS team_key_passes,
         toFloat32(round(sum(coalesce(p.expected_assists, 0.0)), 3)) AS team_expected_assists
-    FROM silver.player_match_stat AS p
+    FROM fotmob_silver.player_match_stat AS p
     WHERE p.team_id IS NOT NULL
     GROUP BY
         p.match_id,
@@ -158,8 +158,8 @@ base_stats AS (
             coalesce(hc.team_expected_assists, 0.0) + coalesce(ac.team_expected_assists, 0.0),
             3
         )) AS match_total_expected_assists
-    FROM silver.match AS m
-    INNER JOIN silver.period_stat AS ps
+    FROM fotmob_silver.match AS m
+    INNER JOIN fotmob_silver.period_stat AS ps
         ON ps.match_id = m.match_id
        AND ps.match_date = m.match_date
        AND ps.period = 'All'

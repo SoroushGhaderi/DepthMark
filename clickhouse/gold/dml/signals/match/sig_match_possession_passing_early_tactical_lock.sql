@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_match_possession_passing_early_tactical_lock (
+INSERT INTO fotmob_gold_signals.sig_match_possession_passing_early_tactical_lock (
     match_id,
     match_date,
     home_team_id,
@@ -45,7 +45,7 @@ INSERT INTO gold_signals.sig_match_possession_passing_early_tactical_lock (
 -- Intent: Detect matches where both teams are kept off-target in the
 --         opening tactical phase, then emit symmetric side-oriented rows.
 -- Trigger: No shots on target for either team in the first 30 minutes
---          of play (`silver.shot.minute <= 30`).
+--          of play (`fotmob_silver.shot.minute <= 30`).
 -- ============================================================
 
 WITH first_30_shot_context AS (
@@ -84,8 +84,8 @@ WITH first_30_shot_context AS (
             ),
             0
         ) AS match_first_30_first_shot_minute
-    FROM silver.match AS m FINAL
-    LEFT JOIN silver.shot AS s FINAL
+    FROM fotmob_silver.match AS m FINAL
+    LEFT JOIN fotmob_silver.shot AS s FINAL
         ON s.match_id = m.match_id
        AND s.minute IS NOT NULL
        AND s.minute <= 30
@@ -127,8 +127,8 @@ base_stats AS (
         f.home_first_30_first_shot_minute AS home_first_30_first_shot_minute,
         f.away_first_30_first_shot_minute AS away_first_30_first_shot_minute,
         f.match_first_30_first_shot_minute AS match_first_30_first_shot_minute
-    FROM silver.match AS m FINAL
-    INNER JOIN silver.period_stat AS ps FINAL
+    FROM fotmob_silver.match AS m FINAL
+    INNER JOIN fotmob_silver.period_stat AS ps FINAL
         ON ps.match_id = m.match_id
        AND ps.period = 'All'
     INNER JOIN first_30_shot_context AS f

@@ -1,4 +1,4 @@
-INSERT INTO gold_signals.sig_player_discipline_cards_late_red_drama (
+INSERT INTO fotmob_gold_signals.sig_player_discipline_cards_late_red_drama (
     match_id,
     match_date,
     home_team_id,
@@ -42,7 +42,7 @@ WITH player_red_card_counts AS (
         c.match_id,
         c.player_id,
         count() AS triggered_player_red_card_count_match
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id > 0
       AND positionCaseInsensitive(ifNull(c.card_type, ''), 'red') > 0
@@ -63,7 +63,7 @@ first_late_red AS (
             PARTITION BY c.match_id, c.player_id
             ORDER BY toInt32(coalesce(c.card_minute, 0)) ASC
         ) AS rn
-    FROM silver.card AS c
+    FROM fotmob_silver.card AS c
     WHERE c.match_id > 0
       AND c.player_id > 0
       AND c.team_side IN ('home', 'away')
@@ -213,12 +213,12 @@ SELECT
     ), 0.0)) AS opponent_pass_accuracy_pct
 
 FROM first_late_red AS lr
-INNER JOIN silver.match AS m
+INNER JOIN fotmob_silver.match AS m
     ON m.match_id = lr.match_id
 LEFT JOIN player_red_card_counts AS prc
     ON prc.match_id = lr.match_id
    AND prc.player_id = lr.triggered_player_id
-LEFT JOIN silver.period_stat AS ps
+LEFT JOIN fotmob_silver.period_stat AS ps
     ON ps.match_id = lr.match_id
    AND ps.period = 'All'
 WHERE m.match_finished = 1

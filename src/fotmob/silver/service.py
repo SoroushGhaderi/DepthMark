@@ -87,7 +87,7 @@ class SilverService:
                 logger.warning("Skipping silver load SQL with unexpected name: %s", sql_path.name)
                 continue
             table_name = stem_parts[1]
-            jobs.append((sql_path, f"silver.{table_name}"))
+            jobs.append((sql_path, f"fotmob_silver.{table_name}"))
         return jobs
 
     def build_scoped_jobs(self) -> list[ScopedSqlJob]:
@@ -147,7 +147,7 @@ class SilverService:
         )
         return 0, total_jobs, total_jobs
 
-    def assert_contracts(self, database: str = "silver") -> None:
+    def assert_contracts(self, database: str = "fotmob_silver") -> None:
         """Run silver layer contract assertions. Raises LayerContractError on failure."""
         if self.client is None:
             raise RuntimeError("ClickHouse client is required for contract checks")

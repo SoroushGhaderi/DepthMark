@@ -12,7 +12,7 @@ row_identity:
   - triggered_player_id
   - triggered_team_id
 asset_paths:
-  table: gold_signals.sig_player_possession_passing_creative_hub
+  table: fotmob_gold_signals.sig_player_possession_passing_creative_hub
   sql: clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_hub.sql
 ---
 # sig_player_possession_passing_creative_hub
@@ -25,15 +25,15 @@ Triggers when a player creates more than 5 chances (key passes) in a single matc
 
 - Trigger condition:
   - `triggered_player_chances_created > 5`
-- Trigger uses player-level full-match totals from `silver.player_match_stat`, where `chances_created` represents key-pass chance creation.
-- Signal includes bilateral team/opponent passing and territorial context from `silver.period_stat` (`period = 'All'`) to separate individual creativity from broader match-state effects.
+- Trigger uses player-level full-match totals from `fotmob_silver.player_match_stat`, where `chances_created` represents key-pass chance creation.
+- Signal includes bilateral team/opponent passing and territorial context from `fotmob_silver.period_stat` (`period = 'All'`) to separate individual creativity from broader match-state effects.
 - Output explicitly stores both player identity (`triggered_player_*`) and triggered-team identity (`triggered_team_*`) for contract-compliant player signal traceability.
 
 ## Technical Assets
 
 - SQL: `clickhouse/gold/dml/signals/player/sig_player_possession_passing_creative_hub.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `gold_signals.sig_player_possession_passing_creative_hub`
+- Target table: `fotmob_gold_signals.sig_player_possession_passing_creative_hub`
 
 ## Example Execution
 
