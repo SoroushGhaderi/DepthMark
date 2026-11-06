@@ -42,8 +42,8 @@ credentials stable.
 Run pipelines inside the scraper container:
 
 ```bash
-docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
-docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
+docker compose exec depthmark-fotmob-scraper python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
+docker compose exec depthmark-fotmob-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --full-history
 ```
 
 Prerequisites: Docker and Docker Compose, Python 3.11 when running scripts
@@ -86,8 +86,8 @@ Run pipeline commands inside the scraper service (see
 command surface):
 
 ```bash
-docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
-docker compose exec depthmark-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --single-date 20251208
+docker compose exec depthmark-fotmob-scraper python3 scripts/fotmob/run_fotmob_pipeline.py 20251208
+docker compose exec depthmark-fotmob-scraper python3 scripts/fotmob/run_fotmob_pipeline.py --single-date 20251208
 ```
 
 ## TouchDesk Integration
@@ -117,7 +117,8 @@ partition, TouchDesk should check that its latest status in
 | --- | --- | --- | --- |
 | depthmark-clickhouse | `clickhouse/clickhouse-server:24` | 127.0.0.1:8123 (HTTP), 127.0.0.1:9000 (native) | Data warehouse |
 | depthmark-mongodb | `mongo:8.0` | 127.0.0.1:27017 | Content catalog |
-| depthmark-scraper | Custom Python image | — | Runs pipeline scripts |
+| depthmark-fotmob-scraper | `depthmark-scraper:local` image | — | Runs FotMob scripts (`scripts/fotmob/`) and shared setup |
+| depthmark-oddspedia-scraper | `depthmark-scraper:local` image | — | Runs Oddspedia scripts (`scripts/oddspedia/`) |
 
 **Network:** creates Docker network `depthmark_network` (fixed name). TouchDesk
 can join it optionally via `docker-compose.override.yml`.
@@ -125,8 +126,12 @@ can join it optionally via `docker-compose.override.yml`.
 ## Docker Compose
 
 Local development uses the root `docker-compose.yml` for `depthmark-clickhouse`,
-`depthmark-mongodb`, and `depthmark-scraper`. Image build assets live under
-`docker/` (`Dockerfile`, `docker-entrypoint.sh`).
+`depthmark-mongodb`, and one scraper container per source:
+`depthmark-fotmob-scraper` and `depthmark-oddspedia-scraper`. Both run the same
+`depthmark-scraper:local` image and carry a `com.depthmark.source` label, so
+`docker ps --filter label=com.depthmark.source=oddspedia` finds a source's
+container. Image build assets live under `docker/` (`Dockerfile`,
+`docker-entrypoint.sh`).
 
 ## Scheduling
 
@@ -141,13 +146,13 @@ scripts/install_schedule.sh --remove   # remove
 
 The installer writes one marked block keyed by the checkout path and replaces
 it on every run, so jobs are never duplicated and other crontab entries are
-kept. Each job runs `scripts/orchestration/run_scheduled_job.py` inside the
-scraper container, which owns the job's date and overlap lock (ADR 0030):
+kept. Each job runs `scripts/orchestration/run_scheduled_job.py` inside its
+source's scraper container, which owns the job's date and overlap lock (ADR 0030):
 
-| Time (host clock) | Job | Runs |
+| Time (host clock) | Job (container) | Runs |
 | --- | --- | --- |
-| 03:00 | `fotmob-daily` | `run_fotmob_pipeline.py` for yesterday (completed dates only) |
-| 05:00 | `oddspedia-daily` | `run_oddspedia_pipeline.py --date <two days ago, UTC> --silver-reference-window-ready` |
+| 03:00 | `fotmob-daily` (`depthmark-fotmob-scraper`) | `run_fotmob_pipeline.py` for yesterday (completed dates only) |
+| 05:00 | `oddspedia-daily` (`depthmark-oddspedia-scraper`) | `run_oddspedia_pipeline.py --date <two days ago, UTC> --silver-reference-window-ready` |
 
 - A job whose previous run still holds its lock under
   `data/locks/scheduled/` is skipped with exit code 0. Oddspedia commands also
@@ -160,7 +165,7 @@ scraper container, which owns the job's date and overlap lock (ADR 0030):
   `--silver-reference-window-ready` asserts that ordering; the command still
   verifies the FotMob reference window and fails closed when it is incomplete.
 - Preview a job without running it:
-  `docker compose exec depthmark-scraper python3 scripts/orchestration/run_scheduled_job.py fotmob-daily --dry-run`.
+  `docker compose exec depthmark-fotmob-scraper python3 scripts/orchestration/run_scheduled_job.py fotmob-daily --dry-run`.
 
 ## Environment Configuration
 

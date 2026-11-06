@@ -160,6 +160,13 @@ def test_schedule_install_is_idempotent_and_removable(checkout, tmp_path):
     assert installed.count(">>> depthmark schedule") == 1
     assert installed.count("run_scheduled_job.py fotmob-daily") == 1
     assert installed.count("run_scheduled_job.py oddspedia-daily") == 1
+    assert "exec -T depthmark-fotmob-scraper python3 " in installed
+    assert "exec -T depthmark-oddspedia-scraper python3 " in installed
+    for line in installed.splitlines():
+        if "fotmob-daily" in line:
+            assert "depthmark-fotmob-scraper" in line
+        if "oddspedia-daily" in line:
+            assert "depthmark-oddspedia-scraper" in line
 
     subprocess.run([*installer, "--remove"], env=env, check=True, capture_output=True)
     assert crontab.read_text().strip() == "15 * * * * /usr/bin/true"

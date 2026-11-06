@@ -142,8 +142,9 @@ below this seam because `ClickHouseClient.health_check()` delegates to it.
 ## Canonical Command Surface
 
 Use these paths for documentation, automation, and daily operations. When using
-the local Docker stack, prefix commands with
-`docker compose exec depthmark-scraper` (see
+the local Docker stack, prefix FotMob and shared commands with
+`docker compose exec depthmark-fotmob-scraper` and Oddspedia commands with
+`docker compose exec depthmark-oddspedia-scraper` (see
 `docs/data-flow/infrastructure.md` for setup and lifecycle).
 
 Source-owned workflow scripts follow
