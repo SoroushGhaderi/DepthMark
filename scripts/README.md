@@ -250,12 +250,35 @@ compatibility aliases.
 
 ### Bronze S3 Sync
 
-`scripts/fotmob/sync_fotmob_s3.py` is the only supported S3 transfer entry point.
-Scraping and `scripts/fotmob/run_fotmob_pipeline.py` never invoke it.
+`scripts/fotmob/sync_fotmob_s3.py` is the only supported FotMob S3 transfer
+entry point. Scraping and `scripts/fotmob/run_fotmob_pipeline.py` never invoke it.
 Both `upload` and `download` require an explicit `--date`,
 `--start-date/--end-date`, `--month`, or `--all` scope. Existing destinations
 are protected unless `--force` is supplied; uploads reject incomplete dates
 unless `--allow-incomplete` is explicitly supplied.
+
+### Oddspedia S3 Upload
+
+`scripts/oddspedia/scrape_oddspedia_matches.py` and
+`scripts/oddspedia/run_oddspedia_pipeline.py` accept `--upload-s3` (off by
+default; ADR 0035). `discover` and `prioritize` reject it.
+
+- Without the flag, no `S3_*` setting is read and nothing is uploaded.
+- With the flag, missing or placeholder `S3_ENDPOINT`, `S3_ACCESS_KEY`,
+  `S3_SECRET_KEY`, or `S3_BUCKET` values stop the command with exit code 1
+  before any scraping starts.
+- After each date's scrape and compression, a Historical date whose manifest is
+  terminally complete is uploaded as one checksummed archive to
+  `{S3_BUCKET}/bronze/oddspedia/YYYYMM/YYYYMMDD.tar.gz`. Live and incomplete
+  dates are skipped and logged.
+- An existing object is skipped, never overwritten.
+- An upload failure is logged, the other dates still run, and the command exits
+  1. Local artifacts are never changed or deleted.
+
+```bash
+python3 scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --upload-s3
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --month 202603 --silver-reference-window-ready --upload-s3
+```
 
 ## Operational Utility Scripts
 

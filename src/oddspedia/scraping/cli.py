@@ -8,6 +8,7 @@ Usage:
     python scripts/oddspedia/prioritize_oddspedia_events.py --date 20260711 --silver-reference-window-ready
     python scripts/oddspedia/scrape_oddspedia_matches.py --date 20260711
     python scripts/oddspedia/run_oddspedia_pipeline.py --month 202607 --silver-reference-window-ready
+    python scripts/oddspedia/run_oddspedia_pipeline.py --date 20260711 --silver-reference-window-ready --upload-s3
 
 Alternatively (after ``pip install -e .``):
     oddspedia-scraper --help
@@ -37,6 +38,8 @@ from selenium.common.exceptions import (
 
 from src.common.dates import normalize_compact_date
 from src.common.run_scope import resolve_date_scope
+from src.integrations.s3 import S3ConfigurationError, create_s3_client
+from src.oddspedia.bronze.s3_sync import OddspediaBronzeS3Service
 from src.oddspedia.scraping.audit import (
     audit_date,
     audit_match_json,
@@ -87,6 +90,7 @@ from src.oddspedia.scraping.paths import (
     get_prioritized_match_links_file,
     get_run_logs_dir,
     get_storage_aspect,
+    historical_dir,
 )
 from src.oddspedia.scraping.progress import TerminalOutcomeCheckpoint
 from src.oddspedia.scraping.storage import (
@@ -822,19 +826,18 @@ def _compress_completed_date(manifest, date_str: str, sport: str = "football") -
     """Compress one complete historical Oddspedia date without remote storage."""
     if manifest is None or manifest.total <= 0:
         return
-    if manifest.failed_count or manifest.incomplete_count or manifest.in_progress:
-        logger.info(
-            "oddspedia_date_not_compressed",
-            sport=sport,
-            date=date_str,
-            total=manifest.total,
-            done=manifest.completed_count,
-            skipped=manifest.skipped_count,
-            failed=manifest.failed_count,
-            incomplete=manifest.incomplete_count,
-        )
-        return
-    if manifest.completed_count + manifest.skipped_count < manifest.total:
+    if not manifest.is_terminally_complete:
+        if manifest.failed_count or manifest.incomplete_count or manifest.in_progress:
+            logger.info(
+                "oddspedia_date_not_compressed",
+                sport=sport,
+                date=date_str,
+                total=manifest.total,
+                done=manifest.completed_count,
+                skipped=manifest.skipped_count,
+                failed=manifest.failed_count,
+                incomplete=manifest.incomplete_count,
+            )
         return
     if get_storage_aspect(date_str) != "historical":
         logger.info("oddspedia_live_date_not_compressed", sport=sport, date=date_str)
@@ -854,6 +857,56 @@ def _compress_completed_date(manifest, date_str: str, sport: str = "football") -
         compressed_files=result.get("compressed", 0),
         archive_file=result.get("archive_file"),
     )
+
+
+def _create_s3_uploader() -> OddspediaBronzeS3Service:
+    """Build the opt-in uploader; raises ``S3ConfigurationError`` when unconfigured."""
+    return OddspediaBronzeS3Service(Path(historical_dir()), create_s3_client())
+
+
+def _upload_completed_date(
+    uploader: OddspediaBronzeS3Service, manifest, date_str: str, sport: str = "football"
+) -> bool:
+    """Upload one completed Historical date; return ``False`` only on a failed upload.
+
+    Incomplete and Live dates are skipped, not failed. The upload reads local
+    artifacts only, so a failure never changes or removes scraped data.
+    """
+    if manifest is None or not manifest.is_terminally_complete:
+        logger.info("oddspedia_s3_upload_skipped_incomplete", sport=sport, date=date_str)
+        return True
+    if get_storage_aspect(date_str) != "historical":
+        logger.info("oddspedia_s3_upload_skipped_live", sport=sport, date=date_str)
+        return True
+    try:
+        result = uploader.upload_date(date_str)
+    except Exception as exc:  # noqa: BLE001 - logged here; the run exits non-zero at the end
+        logger.exception("oddspedia_s3_upload_failed", sport=sport, date=date_str, error=str(exc))
+        return False
+    logger.info(
+        "oddspedia_s3_upload_complete",
+        sport=sport,
+        date=date_str,
+        status=result.status,
+        key=result.key,
+        message=result.message,
+        size_bytes=result.size_bytes,
+        sha256=result.sha256,
+    )
+    return True
+
+
+def _report_upload_failures(upload_failed_dates: list[str], sport: str) -> bool:
+    """Log failed S3 uploads and return whether any date failed."""
+    if not upload_failed_dates:
+        return False
+    logger.error(
+        "s3_upload_dates_failed",
+        sport=sport,
+        dates=upload_failed_dates,
+        failed_count=len(upload_failed_dates),
+    )
+    return True
 
 
 @dataclass
@@ -1456,6 +1509,12 @@ def main(
         "Each worker gets its own browser instance and profile dir. "
         "Recommended: 3 workers with default per-worker delays.",
     )
+    parser.add_argument(
+        "--upload-s3",
+        action="store_true",
+        help="After a Historical date is complete, upload its artifacts to S3 "
+        "(scrape and run only; requires the S3_* settings; default: off)",
+    )
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     args = parser.parse_args(raw_argv)
     _warn_deprecated_options(raw_argv)
@@ -1476,6 +1535,8 @@ def main(
         parser.error("--retry-incomplete is only valid with 'discover'")
     if args.dry_run and command != "prioritize":
         parser.error("--dry-run is only valid with 'prioritize'")
+    if args.upload_s3 and command not in {"scrape", "run"}:
+        parser.error("--upload-s3 is only valid with 'scrape' or 'run'")
     if command in {"prioritize", "run"} and not args.depthmark_window_ready:
         parser.error("--silver-reference-window-ready is required for prioritize and run")
     sport = normalize_sport(default_sport)
@@ -1511,6 +1572,17 @@ def main(
     if workers < 1:
         logger.error("invalid_workers", workers=workers)
         sys.exit(1)
+
+    # Fail fast, before any browser or scrape work, when the opt-in upload
+    # cannot run. Without --upload-s3 no S3 setting is read.
+    s3_uploader = None
+    if args.upload_s3:
+        try:
+            s3_uploader = _create_s3_uploader()
+        except S3ConfigurationError as exc:
+            logger.error("s3_upload_configuration_invalid", error=str(exc))
+            sys.exit(1)
+    upload_failed_dates: list[str] = []
 
     reset_metrics()
     get_metrics().set_context(
@@ -1647,10 +1719,15 @@ def main(
                             load_resources=args.load_resources,
                         )
                         _compress_completed_date(manifest, date_str, sport=sport)
+                        if s3_uploader is not None and not _upload_completed_date(
+                            s3_uploader, manifest, date_str, sport=sport
+                        ):
+                            upload_failed_dates.append(date_str)
                     else:
                         logger.info("priority_selection_empty", sport=sport, date=date_str)
                     logger.info("scrape_json_complete", sport=sport, date=date_str)
                     scraped_any = True
+            upload_failed = _report_upload_failures(upload_failed_dates, sport)
             if failed_dates:
                 logger.error(
                     "scrape_dates_failed",
@@ -1661,6 +1738,8 @@ def main(
                 sys.exit(1)
             if not scraped_any:
                 logger.error("no_scope_links_found", dates=dates)
+                sys.exit(1)
+            if upload_failed:
                 sys.exit(1)
             return
 
@@ -1708,11 +1787,16 @@ def main(
                         )
                         _compress_completed_date(manifest, date_str, sport=sport)
                         logger.info("scrape_json_complete", sport=sport, date=date_str)
+                        if s3_uploader is not None and not _upload_completed_date(
+                            s3_uploader, manifest, date_str, sport=sport
+                        ):
+                            upload_failed_dates.append(date_str)
                     else:
                         logger.info("priority_selection_empty", sport=sport, date=date_str)
                 elif not _discovery_is_accepted(date_str, sport=sport):
                     failed_dates.append(date_str)
 
+        upload_failed = _report_upload_failures(upload_failed_dates, sport)
         if failed_dates:
             logger.error(
                 "pipeline_dates_failed",
@@ -1720,6 +1804,8 @@ def main(
                 dates=failed_dates,
                 failed_count=len(failed_dates),
             )
+            sys.exit(1)
+        if upload_failed:
             sys.exit(1)
 
     except KeyboardInterrupt:

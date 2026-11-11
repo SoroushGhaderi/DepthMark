@@ -392,11 +392,14 @@ data/dlq/                           dead letter queue files
 `FOTMOB_BRONZE_PATH` continues to configure the common `data/fotmob` root.
 Historical loaders and S3 sync use only the `historical/` aspect.
 
-S3-compatible storage is not part of the scrape or pipeline lifecycle. The
-operator runs `scripts/fotmob/sync_fotmob_s3.py` explicitly. Uploads create temporary
+S3-compatible storage is not part of the default scrape or pipeline lifecycle.
+The operator runs `scripts/fotmob/sync_fotmob_s3.py` explicitly. Uploads create temporary
 `tar.gz` transfer archives containing both canonical date directories and store
 them at `bronze/fotmob/YYYYMM/YYYYMMDD.tar.gz`; the sync command does not modify
 the scraper's local compression state or delete canonical local artifacts.
+Oddspedia `scrape`/`run` upload completed Historical dates to
+`bronze/oddspedia/YYYYMM/YYYYMMDD.tar.gz` only with the explicit `--upload-s3`
+flag, using the same `S3_*` settings (ADR 0035).
 
 ## Production Deployment
 

@@ -101,6 +101,21 @@ class ScrapeManifest:
             len(self.done) + len(self.failed) + len(self.skipped) >= self.total and self.total > 0
         )
 
+    @property
+    def is_terminally_complete(self) -> bool:
+        """Return whether every selected match succeeded or was skipped.
+
+        This is the completed-date rule shared by local compression and the
+        opt-in S3 upload: no failed, incomplete, or in-progress match remains.
+        """
+        return (
+            self.total > 0
+            and not self.failed
+            and not self.incomplete
+            and not self.in_progress
+            and len(self.done) + len(self.skipped) >= self.total
+        )
+
     def mark_done(self, match_id: str) -> None:
         match_id = str(match_id)
         if match_id not in self.done:

@@ -48,6 +48,8 @@ the detailed interfaces that govern execution.
 - `adr/0032-scoped-fotmob-bronze-removal-replace-and-rebuild.md`: Source Date
   scoped removal and replace, staged full-history rebuild, and the Bronze write
   lock; `--truncate` is deprecated.
+- `adr/0035-opt-in-oddspedia-s3-upload.md`: Oddspedia `scrape`/`run` may upload
+  completed Historical dates to S3 only with the explicit `--upload-s3` flag.
 
 Source-specific flows:
 
