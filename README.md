@@ -34,12 +34,22 @@ FotMob Silver  <---- audited cross-source match relationship ---->  Oddspedia Si
 Bronze is the only filesystem-backed data layer. Silver and Gold exist only in
 ClickHouse.
 
-S3 transfer is an independent operator workflow; scraping and the warehouse
-pipeline never upload automatically. Preview or run a date-scoped transfer with:
+S3 transfer is an independent operator workflow; default scraping and the
+warehouse pipeline never upload. Preview or run a date-scoped FotMob transfer
+with:
 
 ```bash
 python3 scripts/fotmob/sync_fotmob_s3.py upload --date 20251208 --dry-run
 python3 scripts/fotmob/sync_fotmob_s3.py download --date 20251208
+```
+
+Oddspedia scraping uploads only when asked. With the off-by-default
+`--upload-s3` flag, `scrape_oddspedia_matches.py` and
+`run_oddspedia_pipeline.py` upload each completed Historical date to
+`{S3_BUCKET}/bronze/oddspedia/YYYYMM/YYYYMMDD.tar.gz` (ADR 0035):
+
+```bash
+python3 scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready --upload-s3
 ```
 
 FotMob Bronze loading is fail-closed: every value is checked against its

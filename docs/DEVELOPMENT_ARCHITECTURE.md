@@ -732,6 +732,8 @@ one activation row.
    quality checks as diagnostics.
 8. Bronze S3 upload/download is operator-invoked through
    `scripts/fotmob/sync_fotmob_s3.py`; neither scraping nor the pipeline invokes it.
+   Oddspedia `scrape`/`run` upload completed Historical dates only with the
+   explicit, off-by-default `--upload-s3` flag (ADR 0035).
 9. Historical scraping writes beneath `data/fotmob/historical/` and compresses
    each complete local date into
    `historical/matches/YYYYMM/YYYYMMDD/YYYYMMDD_matches.tar`; incomplete dates remain

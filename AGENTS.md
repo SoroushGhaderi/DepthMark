@@ -95,6 +95,7 @@ python scripts/oddspedia/prioritize_oddspedia_events.py --date 20260301 --silver
 python scripts/oddspedia/scrape_oddspedia_matches.py --date 20260301 --priority-tier lower
 python scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready
 python scripts/oddspedia/run_oddspedia_pipeline.py --start-date 20260301 --end-date 20260307 --silver-reference-window-ready
+python scripts/oddspedia/run_oddspedia_pipeline.py --date 20260301 --silver-reference-window-ready --upload-s3
 python scripts/oddspedia/setup_oddspedia_warehouse.py --dry-run
 python scripts/oddspedia/load_oddspedia_bronze.py --date 20260301 --dry-run
 python scripts/oddspedia/load_oddspedia_bronze.py --start-date 20260301 --end-date 20260307 --dry-run
@@ -127,6 +128,12 @@ Use dry-run modes first for loaders, destructive operations, and catalog syncs w
 - Use `scripts/report_scraping.py` as the only canonical scraping-report entry
   point. It selects `fotmob`, `oddspedia`, or `all` through `--source`; source
   adapters remain explicit and read-only.
+- S3 transfer is never part of a default scrape, scheduled job, or pipeline.
+  FotMob transfer runs only through `scripts/fotmob/sync_fotmob_s3.py`.
+  Oddspedia `scrape`/`run` may upload completed Historical dates only with the
+  explicit, off-by-default `--upload-s3` flag (ADR 0035). Every upload path uses
+  the shared `src/integrations/s3.py` client, skips existing objects, and never
+  changes or deletes local data.
 
 ## Code Style
 

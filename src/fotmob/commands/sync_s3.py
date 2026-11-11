@@ -9,18 +9,15 @@ Examples:
 """
 
 import argparse
-from urllib.parse import urlparse, urlunparse
 
 from config.settings import get_settings
 from src.common.logging import configure_logging, get_logger
 from src.common.run_scope import RunScope, ScopeError
 from src.fotmob.bronze import BronzeS3Service, BronzeS3SyncError, BronzeS3SyncResult
 from src.fotmob.bronze.paths import get_fotmob_historical_path
-from src.integrations.s3 import S3Client, S3ConfigurationError
+from src.integrations.s3 import S3ConfigurationError, create_s3_client
 
 logger = get_logger(__name__)
-
-DEFAULT_S3_REGION = "ir-tbz-sh1"
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -82,67 +79,6 @@ def parse_arguments(argv: list[str] | None = None) -> argparse.Namespace:
     except ScopeError as error:
         parser.error(str(error))
     return args
-
-
-def create_s3_client() -> S3Client:
-    """Build a strict S3 client from environment configuration."""
-    settings = get_settings()
-    endpoint = (settings.s3_endpoint or "").strip()
-    access_key = (settings.s3_access_key or "").strip()
-    secret_key = (settings.s3_secret_key or "").strip()
-    region = (settings.s3_region or "").strip() or DEFAULT_S3_REGION
-    bucket_name = (settings.s3_bucket or "").strip() or _bucket_from_endpoint(endpoint)
-
-    missing = [
-        name
-        for name, value in (
-            ("S3_ENDPOINT", endpoint),
-            ("S3_ACCESS_KEY", access_key),
-            ("S3_SECRET_KEY", secret_key),
-            ("S3_BUCKET", bucket_name),
-        )
-        if not value
-    ]
-    placeholder_values = {
-        "your_s3_access_key_here",
-        "your_s3_secret_key_here",
-        "your_access_key_here",
-        "your_secret_key_here",
-    }
-    if missing or access_key in placeholder_values or secret_key in placeholder_values:
-        detail = f" Missing: {', '.join(missing)}." if missing else ""
-        raise S3ConfigurationError(
-            "Bronze S3 sync requires real endpoint, credentials, and a resolvable bucket." + detail
-        )
-
-    return S3Client(
-        _service_endpoint(endpoint, bucket_name), access_key, secret_key, bucket_name, region
-    )
-
-
-def _bucket_from_endpoint(endpoint: str) -> str:
-    host = urlparse(endpoint).netloc
-    return host.split(".s3.", 1)[0] if ".s3." in host else ""
-
-
-def _service_endpoint(endpoint: str, bucket_name: str) -> str:
-    """Convert a virtual-hosted bucket endpoint into its S3 service endpoint.
-
-    ``boto3`` uses path-style requests for custom endpoints by default. Leaving a
-    bucket name in a virtual-hosted endpoint therefore produces requests such as
-    ``https://bucket.s3.example/bucket/...``. Use the provider endpoint instead
-    and pass the bucket separately to keep the request target unambiguous.
-    """
-    parsed = urlparse(endpoint)
-    hostname = parsed.hostname or ""
-    virtual_host_prefix = f"{bucket_name}.s3."
-    if not hostname.startswith(virtual_host_prefix):
-        return endpoint
-
-    service_host = hostname[len(bucket_name) + 1 :]
-    if parsed.port:
-        service_host = f"{service_host}:{parsed.port}"
-    return urlunparse(parsed._replace(netloc=service_host))
 
 
 def resolve_dates(args: argparse.Namespace, service: BronzeS3Service) -> list[str]:

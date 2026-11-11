@@ -5,7 +5,8 @@ processing, Gold materialization, and activation rebuilds.
 
 Bronze S3 sync is deliberately outside this orchestration boundary. Run
 `scripts/fotmob/sync_fotmob_s3.py` independently when local/remote transfer is needed;
-pipeline success never depends on S3 availability.
+pipeline success never depends on S3 availability. Scheduled jobs never pass
+the opt-in Oddspedia `--upload-s3` flag (ADR 0035).
 
 ## Pipeline Flow
 

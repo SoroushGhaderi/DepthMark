@@ -117,6 +117,13 @@ files are removed. The archive is verified before replacement. If a later
 priority tier adds events, the next compression pass merges those new payloads
 with the existing archive. Current-date Live artifacts remain uncompressed.
 
+With the opt-in `--upload-s3` flag (off by default, ADR 0035), `scrape` and
+`run` then upload each terminally complete Historical date as one checksummed
+archive to `{S3_BUCKET}/bronze/oddspedia/YYYYMM/YYYYMMDD.tar.gz`. Missing
+`S3_*` settings stop the command before scraping. Existing objects are skipped,
+and an upload failure exits 1 without changing local artifacts. The layout is
+described in `bronze.md`.
+
 The Bronze loader and scrape-resume audit read both the date archive and any
 new plain JSON files, so compression does not change retry or loading behavior.
 Before a payload is accepted, its rendered event ID (when available), home and

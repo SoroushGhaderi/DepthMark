@@ -44,8 +44,10 @@ The scraper fetches match data from the FotMob API:
 5. **Turnstile refresh** — `scripts/fotmob/refresh_fotmob_turnstile.py` handles token/cookie
    rotation when needed.
 
-Scraping compresses completed local dates but never uploads them. S3
-availability has no effect on scrape success or pipeline success.
+FotMob scraping compresses completed local dates but never uploads them. S3
+availability has no effect on default scrape success or pipeline success. Only
+Oddspedia scraping can upload, and only with the explicit `--upload-s3` flag
+(see below).
 
 ### Oddspedia historical payload storage
 
@@ -57,6 +59,33 @@ artifacts remain as plain JSON so they can be resumed or refreshed. The
 Oddspedia audit and Bronze loader read both archive members and any new plain
 JSON files; a later priority expansion merges its newly scraped files into the
 existing date archive.
+
+### Oddspedia opt-in S3 upload
+
+`scrape_oddspedia_matches.py` and `run_oddspedia_pipeline.py` upload completed
+dates to S3 only with `--upload-s3` (ADR 0035). The flag is off by default, so
+default scraping reads no `S3_*` setting. With the flag, the command checks the
+`S3_*` settings before any scraping and exits 1 when they are missing.
+
+After a date's scrape and compression, the command uploads it only when it is
+Historical and its manifest is terminally complete: every selected match is
+done or skipped, and none is failed, incomplete, or in progress. This is the
+same rule that triggers local compression. The upload uses the shared
+`src/integrations/s3.py` client and mirrors the FotMob layout:
+
+```text
+{S3_BUCKET}/bronze/oddspedia/YYYYMM/YYYYMMDD.tar.gz   (bronze/oddspedia/... without a bucket)
+  daily_listings/YYYYMM/YYYYMMDD/
+  link_priorities/YYYYMM/YYYYMMDD/
+  manifests/YYYYMM/YYYYMMDD/
+  matches/YYYYMM/YYYYMMDD/
+```
+
+Each object stores its SHA-256 in the `sha256` metadata. An existing object
+under either key is skipped and never overwritten. The transfer archive is
+built in a temporary directory, so an upload failure never changes or removes
+local artifacts; the command logs it, continues with the other dates, and exits
+1. Locks and run logs are never uploaded.
 
 ### Oddspedia Bronze admission and publication
 
