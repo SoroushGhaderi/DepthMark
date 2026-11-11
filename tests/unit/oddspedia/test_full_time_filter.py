@@ -21,7 +21,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.a
 
 
 class _FakeDriver:
-    pass
+    """A driver whose listing page has already rendered."""
+
+    title = "Football"
+
+    def execute_script(self, script, *args):
+        return {"matchList": []}
 
 
 class FullTimeFilterTests(unittest.TestCase):
