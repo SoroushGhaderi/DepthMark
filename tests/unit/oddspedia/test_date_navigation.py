@@ -1,3 +1,4 @@
+import itertools
 import unittest
 from datetime import date
 from unittest.mock import patch
@@ -5,12 +6,30 @@ from unittest.mock import patch
 from src.oddspedia.scraping.match_collector import (
     _navigate_to_date,
     _read_displayed_date,
+    _wait_for_listing_ready,
     collect_match_links,
 )
 
+DATE_BUTTON_SELECTOR = ".period-navigation__current-period-button"
+REMOVED_DATE_BUTTON_SELECTOR = ".flex.align-items-center.p-0"
+
 
 class _FakeDriver:
-    pass
+    """A driver whose listing page has already rendered."""
+
+    title = "Football"
+
+    def execute_script(self, script, *args):
+        return {"matchList": []}
+
+
+class _UnrenderedDriver:
+    """A driver stuck on Cloudflare's shell page: no Sport component."""
+
+    title = "oddspedia.com"
+
+    def execute_script(self, script, *args):
+        return None
 
 
 class _NavigationDriver:
@@ -181,6 +200,58 @@ class CollectMatchLinksDateTests(unittest.TestCase):
             _read_displayed_date(driver, reference_date=date(2027, 1, 1)),
             date(2026, 12, 31),
         )
+
+    def test_displayed_date_reads_the_live_day_month_format(self):
+        # The football listing's date button reads "11 Nov" (2026-11-11).
+        driver = _DisplayedDateDriver("11 Nov")
+
+        self.assertEqual(
+            _read_displayed_date(driver, reference_date=date(2026, 11, 9)),
+            date(2026, 11, 11),
+        )
+
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    @patch(
+        "src.oddspedia.scraping.match_collector._read_displayed_date",
+        side_effect=[date(2026, 7, 5), date(2026, 7, 6)],
+    )
+    def test_date_navigation_targets_the_period_navigation_button(
+        self, _read_displayed_date, _sleep
+    ):
+        driver = _NavigationDriver()
+
+        self.assertTrue(_navigate_to_date(driver, "20260706"))
+        scripts = [script for script, _args in driver.execute_script_calls]
+        self.assertTrue(any(DATE_BUTTON_SELECTOR in script for script in scripts))
+        self.assertFalse(any(REMOVED_DATE_BUTTON_SELECTOR in script for script in scripts))
+
+
+class WaitForListingReadyTests(unittest.TestCase):
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    def test_ready_when_sport_component_exposes_match_list(self, _sleep):
+        self.assertTrue(_wait_for_listing_ready(_FakeDriver(), timeout=1))
+
+    @patch("src.oddspedia.scraping.match_collector.time.sleep", return_value=None)
+    @patch(
+        "src.oddspedia.scraping.match_collector.time.time",
+        side_effect=itertools.count(0, 0.6),
+    )
+    def test_not_ready_when_sport_component_never_mounts(self, _time, _sleep):
+        self.assertFalse(_wait_for_listing_ready(_UnrenderedDriver(), timeout=1))
+
+    @patch("src.oddspedia.scraping.match_collector._navigate_to_date")
+    @patch("src.oddspedia.scraping.match_collector._wait_for_listing_ready", return_value=False)
+    @patch("src.oddspedia.scraping.match_collector.safe_get", return_value=True)
+    def test_discovery_stops_before_date_navigation_when_listing_never_renders(
+        self, _safe_get, _wait, navigate_to_date
+    ):
+        discovery = collect_match_links(
+            _UnrenderedDriver(), target_date="20261109", sport="football", return_result=True
+        )
+
+        self.assertFalse(discovery.complete)
+        self.assertEqual(discovery.anomalies, ["listing_page_not_rendered"])
+        navigate_to_date.assert_not_called()
 
 
 if __name__ == "__main__":

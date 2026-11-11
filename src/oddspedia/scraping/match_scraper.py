@@ -16,6 +16,10 @@ from urllib.parse import urlparse
 from selenium.common.exceptions import StaleElementReferenceException, WebDriverException
 from selenium.webdriver.common.by import By
 
+from src.oddspedia.scraping.api_odds import (
+    EventIdentityMismatchError,
+    extract_api_odds,
+)
 from src.oddspedia.scraping.config import (
     FOOTBALL_ODDS_MAX_ATTEMPTS,
     base_url,
@@ -70,6 +74,65 @@ class MatchIdentityMismatchError(RuntimeError):
 
 
 _ODDS_NOT_YET_AVAILABLE_MESSAGE = "odds are not yet available from bookies"
+ODDS_SOURCE_DOM = "dom"
+
+
+def _football_api_odds(driver, match_id, home="", away=""):
+    """Return contract-normalized football odds read from the odds API, or None.
+
+    None means "use the DOM path": the API is switched off, the page store is
+    missing, a read failed or was refused, or the API priced no market that
+    fits the football contract. A store for a different event is never a
+    fallback case; it raises ``MatchIdentityMismatchError``.
+    """
+    if not get_settings().api_odds:
+        return None
+    try:
+        result = extract_api_odds(driver, match_id)
+    except EventIdentityMismatchError as exc:
+        raise MatchIdentityMismatchError(f"{exc} (match_id={match_id})") from exc
+    except WebDriverException as exc:
+        logger.warning(
+            "api_odds_dom_fallback", match_id=match_id, reason="webdriver_error", error=str(exc)
+        )
+        return None
+    if result is None:
+        logger.info("api_odds_dom_fallback", match_id=match_id, reason="page_store_missing")
+        return None
+    if not result.complete:
+        logger.warning(
+            "api_odds_dom_fallback",
+            match_id=match_id,
+            reason="api_read_failed",
+            failed_reads=list(result.failed_reads),
+            challenged=result.challenged,
+        )
+        return None
+    odds = normalize_football_odds(result.odds, home=home, away=away)
+    kept = {str(market.get("market", "")).strip().lower() for market in odds}
+    outside_contract = [
+        market["market"] for market in result.odds if market["market"].strip().lower() not in kept
+    ]
+    if outside_contract:
+        # The raw reads keep these markets; the football contract cannot hold them.
+        logger.warning(
+            "api_odds_markets_outside_contract",
+            match_id=match_id,
+            markets=outside_contract,
+        )
+    if not odds:
+        logger.info(
+            "api_odds_dom_fallback",
+            match_id=match_id,
+            reason="no_contract_markets",
+            source_unavailable=result.unavailable,
+        )
+        return None
+    return {
+        "odds": odds,
+        "market_names": [market["market"] for market in odds],
+        "raw": result.raw,
+    }
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

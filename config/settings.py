@@ -182,6 +182,9 @@ class OddspediaSettings(BaseModel):
     page_load_timeout: int = 60
     cloudflare_wait: int = 40
     data_dir: str = "data/oddspedia"
+    # Read football odds from Oddspedia's odds API by event id, with the DOM
+    # extraction as fallback (ADR 0035). False uses the DOM extraction only.
+    api_odds: bool = True
     # Explicit browser binaries; None means discover them on the host.
     chrome_binary: str | None = None
     chromedriver_path: str | None = None
@@ -241,6 +244,7 @@ NESTED_ENV_ALIASES: dict[str, tuple[str, ...]] = {
     "ODDSPEDIA_PAGE_LOAD_TIMEOUT": ("oddspedia", "page_load_timeout"),
     "ODDSPEDIA_CLOUDFLARE_WAIT": ("oddspedia", "cloudflare_wait"),
     "ODDSPEDIA_DATA_DIR": ("oddspedia", "data_dir"),
+    "ODDSPEDIA_API_ODDS": ("oddspedia", "api_odds"),
     # The first variable set wins, so the source-specific name beats the image default.
     "CHROME_BIN": ("oddspedia", "chrome_binary"),
     "ODDSPEDIA_CHROME_BIN": ("oddspedia", "chrome_binary"),

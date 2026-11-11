@@ -30,6 +30,8 @@ DATE_PICKER_RETRY_DELAY_SECONDS = 0.6
 DATE_ARROW_DELAY_SECONDS = 1.0
 DATE_ARROW_MAX_NO_PROGRESS = 2
 DATE_ARROW_MAX_UNREADABLE = 3
+LISTING_RENDER_WAIT_SECONDS = 30
+LISTING_RENDER_POLL_SECONDS = 0.5
 
 
 @dataclass
@@ -264,8 +266,8 @@ def _dismiss_cookie_popup(driver):
 
 
 _JS_DATE_NAV_DEBUG = """
-    var dateBtn = document.querySelector('.flex.align-items-center.p-0');
-    if (!dateBtn) return {found: false, error: 'no .flex.align-items-center.p-0 element'};
+    var dateBtn = document.querySelector('.period-navigation__current-period-button');
+    if (!dateBtn) return {found: false, error: 'no period-navigation date button'};
 
     function describeEl(el) {
         if (!el) return null;
@@ -356,7 +358,7 @@ _MONTH_ABBR = {
 def _read_displayed_date(driver, reference_date=None):
     """Return the date currently shown in the page's date picker, or None."""
     text = driver.execute_script("""
-        var el = document.querySelector('.flex.align-items-center.p-0');
+        var el = document.querySelector('.period-navigation__current-period-button');
         return el ? el.innerText.trim() : null;
     """)
     if not text:
@@ -411,7 +413,7 @@ def _navigate_to_date(driver, target_date_str):
         }
 
         function clickDateTrigger() {
-            var trigger = document.querySelector('.flex.align-items-center.p-0')
+            var trigger = document.querySelector('.period-navigation__current-period-button')
                 || document.querySelector('[class*=\"match-list-date-picker\"] button')
                 || document.querySelector('[class*=\"date-picker\"] button')
                 || document.querySelector('[class*=\"calendar\"] button');
@@ -642,7 +644,7 @@ def _navigate_to_date(driver, target_date_str):
             var dir = arguments[0];
 
             // Find the date display element
-            var dateBtn = document.querySelector('.flex.align-items-center.p-0');
+            var dateBtn = document.querySelector('.period-navigation__current-period-button');
             if (!dateBtn) return 'no-date-btn';
 
             // Walk up ancestors looking for the row that contains the arrow buttons
@@ -693,7 +695,8 @@ def _navigate_to_date(driver, target_date_str):
             // Click the first element for prev, last for next
             // Filter out the date display button itself
             var candidates = arrowEls.filter(function(el) {
-                return !(el.classList.contains('p-0') && el.classList.contains('flex'));
+                return el !== dateBtn
+                    && !el.classList.contains('period-navigation__current-period-button');
             });
             if (candidates.length < 2) candidates = arrowEls;
 
@@ -768,7 +771,7 @@ def _navigate_to_date(driver, target_date_str):
     target_day = str(target.day)
     for correction in range(3):
         displayed = driver.execute_script("""
-            var el = document.querySelector('.flex.align-items-center.p-0');
+            var el = document.querySelector('.period-navigation__current-period-button');
             return el ? el.innerText.trim() : null;
         """)
         current = _read_displayed_date(driver, reference_date=target)
@@ -797,7 +800,7 @@ def _navigate_to_date(driver, target_date_str):
         driver.execute_script(
             """
             var dir = arguments[0];
-            var dateBtn = document.querySelector('.flex.align-items-center.p-0');
+            var dateBtn = document.querySelector('.period-navigation__current-period-button');
             if (!dateBtn) return;
             var container = dateBtn.parentElement;
             for (var lvl = 0; lvl < 6 && container; lvl++) {
@@ -843,6 +846,43 @@ _JS_SPORT_STATE = """
         sampleMatches:     samples
     };
 """
+
+
+def _wait_for_listing_ready(driver, timeout=LISTING_RENDER_WAIT_SECONDS):
+    """Wait for the football Vue listing instead of a fixed sleep.
+
+    Cloudflare can show its shell page before the Nuxt ``Sport`` component
+    has mounted. Date navigation against that shell finds no date button and
+    fails with a misleading ``no-trigger`` result.
+    """
+    deadline = time.time() + timeout
+    last_error = None
+    while time.time() < deadline:
+        try:
+            state = driver.execute_script(_JS_SPORT_STATE)
+            if isinstance(state, dict) and "matchList" in state:
+                logger.info(
+                    "listing_page_ready",
+                    title=str(getattr(driver, "title", ""))[:80],
+                    matches=len(state.get("matchList") or []),
+                )
+                return True
+        except WebDriverException as exc:
+            last_error = exc
+        time.sleep(LISTING_RENDER_POLL_SECONDS)
+
+    try:
+        title = driver.title
+    except WebDriverException as exc:
+        title = ""
+        last_error = last_error or exc
+    logger.warning(
+        "listing_page_not_rendered",
+        title=str(title)[:80],
+        error=str(last_error) if last_error else None,
+        timeout_s=timeout,
+    )
+    return False
 
 
 def _fetch_all_matches(driver, sport="football", return_result=False):
@@ -1768,7 +1808,10 @@ def collect_match_links(
             metrics.record_scrape_error("initial_load_failed")
             result = DiscoveryResult(anomalies=["initial_page_load_failed"])
             return result if return_result else []
-        time.sleep(5)
+        if not _wait_for_listing_ready(driver):
+            metrics.record_scrape_error("listing_not_rendered")
+            result = DiscoveryResult(anomalies=["listing_page_not_rendered"])
+            return result if return_result else []
         _dismiss_cookie_popup(driver)
         time.sleep(3)
 
@@ -1782,7 +1825,10 @@ def collect_match_links(
             metrics.record_scrape_error("listing_reload_failed")
             result = DiscoveryResult(anomalies=["listing_reload_failed"])
             return result if return_result else []
-        time.sleep(5)
+        if not _wait_for_listing_ready(driver):
+            metrics.record_scrape_error("listing_not_rendered")
+            result = DiscoveryResult(anomalies=["listing_page_not_rendered"])
+            return result if return_result else []
         _dismiss_cookie_popup(driver)
         time.sleep(3)
         date_navigation_succeeded = _navigate_to_date(driver, target_date)

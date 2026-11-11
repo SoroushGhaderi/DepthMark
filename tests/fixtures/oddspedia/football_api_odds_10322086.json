@@ -1,0 +1,2438 @@
+{
+ "_source": "getOddsAvailableMarkets + getMatchOdds, All bookmakers, match 10322086 (Club Blooming v Oriente Petrolero, 20261109), captured 2026-11-11; trimmed to 4 bookmakers per line, 2 main and 4 alternative lines",
+ "state": {
+  "match_id": "10322086",
+  "has_odds": true,
+  "default_groups": [
+   1,
+   4,
+   3,
+   11
+  ],
+  "page_geo_code": "TR"
+ },
+ "fetched": {
+  "available": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "market_group_id": 7,
+      "market_name": "Double Chance"
+     },
+     {
+      "market_group_id": 5,
+      "market_name": "Draw No Bet"
+     },
+     {
+      "market_group_id": 12,
+      "market_name": "First Team to Score"
+     },
+     {
+      "market_group_id": 8,
+      "market_name": "Correct Score"
+     },
+     {
+      "market_group_id": 6,
+      "market_name": "European Handicap"
+     },
+     {
+      "market_group_id": 13,
+      "market_name": "Asian Handicap Corners"
+     },
+     {
+      "market_group_id": 9,
+      "market_name": "Half Time / Full Time"
+     },
+     {
+      "market_group_id": 10,
+      "market_name": "Odd or Even"
+     },
+     {
+      "market_group_id": 30,
+      "market_name": "Next Goal"
+     },
+     {
+      "market_group_id": 18,
+      "market_name": "Corners Odd or Even"
+     },
+     {
+      "market_group_id": 25,
+      "market_name": "To Win Both Halves"
+     },
+     {
+      "market_group_id": 27,
+      "market_name": "To Score in Both Halves"
+     },
+     {
+      "market_group_id": 63,
+      "market_name": "Total Corners"
+     }
+    ]
+   }
+  },
+  "groups": {
+   "1": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 1,
+        "name": "Full Time Result",
+        "waytype": 3,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Home",
+         "Draw",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": "o3",
+          "odds": [
+           {
+            "bid": 170,
+            "bookie_name": "Stake.com",
+            "o1": "2.5",
+            "o2": "3.3",
+            "o3": "2.55",
+            "status": 2
+           },
+           {
+            "bid": 60,
+            "bookie_name": "1xBet",
+            "o1": "2.58",
+            "o2": "3.144",
+            "o3": "2.58",
+            "status": 2
+           },
+           {
+            "bid": 122,
+            "bookie_name": "22Bet",
+            "o1": "2.58",
+            "o2": "3.144",
+            "o3": "2.58",
+            "status": 2
+           },
+           {
+            "bid": 56,
+            "bookie_name": "Bwin",
+            "o1": "2.45",
+            "o2": "3.25",
+            "o3": "2.45",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "1st Half",
+          "winning_odd": "o2",
+          "odds": [
+           {
+            "bid": 170,
+            "bookie_name": "Stake.com",
+            "o1": "2.95",
+            "o2": "2.23",
+            "o3": "3",
+            "status": 2
+           },
+           {
+            "bid": 56,
+            "bookie_name": "Bwin",
+            "o1": "2.87",
+            "o2": "2.3",
+            "o3": "2.9",
+            "status": 2
+           },
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "3.1",
+            "o2": "2.19",
+            "o3": "2.96",
+            "status": 2
+           },
+           {
+            "bid": 26,
+            "bookie_name": "Interwetten",
+            "o1": "2.95",
+            "o2": "2.25",
+            "o3": "3",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "2nd Half",
+          "winning_odd": "o3",
+          "odds": [
+           {
+            "bid": 56,
+            "bookie_name": "Bwin",
+            "o1": "2.7",
+            "o2": "2.6",
+            "o3": "2.7",
+            "status": 2
+           },
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "2.77",
+            "o2": "2.63",
+            "o3": "2.66",
+            "status": 2
+           },
+           {
+            "bid": 133,
+            "bookie_name": "BetMGM",
+            "o1": "2.7",
+            "o2": "2.6",
+            "o3": "2.7",
+            "status": 2
+           },
+           {
+            "bid": 108,
+            "bookie_name": "Mostbet",
+            "o1": "2.7",
+            "o2": "2.55",
+            "o3": "2.85",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "3": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 3,
+        "name": "Asian Handicap",
+        "waytype": 2,
+        "has_handicap": 1,
+        "oddsnames": [
+         "Home",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "odds": {
+           "main": [
+            {
+             "name": "0",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "1.85",
+               "o2": "1.85",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.95",
+               "o2": "1.75",
+               "status": 2
+              },
+              {
+               "bid": 122,
+               "bookie_name": "22Bet",
+               "o1": "1.85",
+               "o2": "1.85",
+               "status": 2
+              },
+              {
+               "bid": 124,
+               "bookie_name": "Megapari",
+               "o1": "1.85",
+               "o2": "1.85",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "-3.5/+3.5",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "9.5",
+               "o2": "1.01",
+               "status": 2
+              },
+              {
+               "bid": 122,
+               "bookie_name": "22Bet",
+               "o1": "9.5",
+               "o2": "1.01",
+               "status": 2
+              },
+              {
+               "bid": 124,
+               "bookie_name": "Megapari",
+               "o1": "9.5",
+               "o2": "1.01",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-3.25/+3.25",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "9",
+               "o2": "1.02",
+               "status": 2
+              },
+              {
+               "bid": 582,
+               "bookie_name": "N1Bet",
+               "o1": "9",
+               "o2": "1.02",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-3/+3",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "8.6",
+               "o2": "1.02",
+               "status": 2
+              },
+              {
+               "bid": 122,
+               "bookie_name": "22Bet",
+               "o1": "8.6",
+               "o2": "1.02",
+               "status": 2
+              },
+              {
+               "bid": 124,
+               "bookie_name": "Megapari",
+               "o1": "8.6",
+               "o2": "1.02",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-2.75/+2.75",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "7.3",
+               "o2": "1.032",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "9",
+               "o2": "1.02",
+               "status": 2
+              },
+              {
+               "bid": 122,
+               "bookie_name": "22Bet",
+               "o1": "7.3",
+               "o2": "1.032",
+               "status": 2
+              },
+              {
+               "bid": 124,
+               "bookie_name": "Megapari",
+               "o1": "7.3",
+               "o2": "1.032",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         },
+         {
+          "name": "1st Half",
+          "odds": {
+           "main": [
+            {
+             "name": "0",
+             "winning_odd": "void",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.97",
+               "o2": "1.73",
+               "status": 2
+              },
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "1.8",
+               "o2": "1.9",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "-1.75/+1.75",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "9",
+               "o2": "1.02",
+               "status": 2
+              },
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "9",
+               "o2": "1.02",
+               "status": 2
+              },
+              {
+               "bid": 582,
+               "bookie_name": "N1Bet",
+               "o1": "9",
+               "o2": "1.02",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-1.5/+1.5",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "7.7",
+               "o2": "1.04",
+               "status": 2
+              },
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "7.6",
+               "o2": "1.05",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-1.25/+1.25",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "7.1",
+               "o2": "1.05",
+               "status": 2
+              },
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "7.1",
+               "o2": "1.05",
+               "status": 2
+              },
+              {
+               "bid": 582,
+               "bookie_name": "N1Bet",
+               "o1": "7.1",
+               "o2": "1.05",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-1/+1",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "6.7",
+               "o2": "1.06",
+               "status": 2
+              },
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "6.5",
+               "o2": "1.07",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         },
+         {
+          "name": "2nd Half",
+          "odds": {
+           "main": [
+            {
+             "name": "0",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "1.8",
+               "o2": "1.9",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "-1.5/+1.5",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "5.9",
+               "o2": "1.08",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-1/+1",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "5",
+               "o2": "1.12",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "+1/-1",
+             "winning_odd": "void",
+             "odds": [
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "1.11",
+               "o2": "5.2",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "+1.5/-1.5",
+             "winning_odd": "o1",
+             "odds": [
+              {
+               "bid": 108,
+               "bookie_name": "Mostbet",
+               "o1": "1.07",
+               "o2": "6.1",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "4": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 4,
+        "name": "Total Goals",
+        "waytype": 2,
+        "has_handicap": 1,
+        "oddsnames": [
+         "Over",
+         "Under"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "odds": {
+           "main": [
+            {
+             "name": "2.75",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.68",
+               "o2": "1.96",
+               "status": 2
+              },
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "1.85",
+               "o2": "1.85",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.74",
+               "o2": "1.96",
+               "status": 2
+              },
+              {
+               "bid": 122,
+               "bookie_name": "22Bet",
+               "o1": "1.85",
+               "o2": "1.85",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "0.5",
+             "winning_odd": "o1",
+             "odds": [
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "1.02",
+               "o2": "13",
+               "status": 2
+              },
+              {
+               "bid": 47,
+               "bookie_name": "Coral",
+               "o1": "1.01",
+               "o2": "11",
+               "status": 2
+              },
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "1.019",
+               "o2": "12.2",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.02",
+               "o2": "9",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0.75",
+             "winning_odd": "o1,o1/2,-o2/2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.02",
+               "o2": "9",
+               "status": 2
+              },
+              {
+               "bid": 144,
+               "bookie_name": "TonyBet",
+               "o1": "1.03",
+               "o2": "7.6",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "1",
+             "winning_odd": "void",
+             "odds": [
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "1.02",
+               "o2": "9.2",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.03",
+               "o2": "8.3",
+               "status": 2
+              },
+              {
+               "bid": 122,
+               "bookie_name": "22Bet",
+               "o1": "1.02",
+               "o2": "9.2",
+               "status": 2
+              },
+              {
+               "bid": 124,
+               "bookie_name": "Megapari",
+               "o1": "1.02",
+               "o2": "9.2",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "1.25",
+             "winning_odd": "o2,-o1/2,o2/2",
+             "odds": [
+              {
+               "bid": 60,
+               "bookie_name": "1xBet",
+               "o1": "1.12",
+               "o2": "6.31",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.1",
+               "o2": "5.4",
+               "status": 2
+              },
+              {
+               "bid": 122,
+               "bookie_name": "22Bet",
+               "o1": "1.12",
+               "o2": "6.3",
+               "status": 2
+              },
+              {
+               "bid": 124,
+               "bookie_name": "Megapari",
+               "o1": "1.12",
+               "o2": "6.3",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         },
+         {
+          "name": "1st Half",
+          "odds": {
+           "main": [
+            {
+             "name": "1.25",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.94",
+               "o2": "1.76",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "0.5",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.25",
+               "o2": "3.3",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.29",
+               "o2": "3.25",
+               "status": 2
+              },
+              {
+               "bid": 181,
+               "bookie_name": "Jackbit",
+               "o1": "1.31",
+               "o2": "3.19",
+               "status": 2
+              },
+              {
+               "bid": 182,
+               "bookie_name": "Freshbet",
+               "o1": "1.31",
+               "o2": "3.19",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0.75",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.38",
+               "o2": "2.8",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "1",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.54",
+               "o2": "2.27",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.56",
+               "o2": "2.27",
+               "status": 2
+              },
+              {
+               "bid": 181,
+               "bookie_name": "Jackbit",
+               "o1": "1.63",
+               "o2": "2.15",
+               "status": 2
+              },
+              {
+               "bid": 182,
+               "bookie_name": "Freshbet",
+               "o1": "1.63",
+               "o2": "2.15",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "1.5",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "2.22",
+               "o2": "1.533",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "2.33",
+               "o2": "1.54",
+               "status": 2
+              },
+              {
+               "bid": 181,
+               "bookie_name": "Jackbit",
+               "o1": "2.4",
+               "o2": "1.51",
+               "status": 2
+              },
+              {
+               "bid": 182,
+               "bookie_name": "Freshbet",
+               "o1": "2.4",
+               "o2": "1.51",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         },
+         {
+          "name": "2nd Half",
+          "odds": {
+           "main": [
+            {
+             "name": "1.5",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.77",
+               "o2": "1.9",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.83",
+               "o2": "1.87",
+               "status": 2
+              },
+              {
+               "bid": 274,
+               "bookie_name": "10bet",
+               "o1": "1.8",
+               "o2": "1.909",
+               "status": 2
+              },
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "1.87",
+               "o2": "1.83",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "0.5",
+             "winning_odd": "o1",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.16",
+               "o2": "4.2",
+               "status": 2
+              },
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "1.16",
+               "o2": "4.2",
+               "status": 2
+              },
+              {
+               "bid": 582,
+               "bookie_name": "N1Bet",
+               "o1": "1.16",
+               "o2": "4.2",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "1",
+             "winning_odd": "void",
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.24",
+               "o2": "3.38",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.29",
+               "o2": "3.25",
+               "status": 2
+              },
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "1.31",
+               "o2": "3.15",
+               "status": 2
+              },
+              {
+               "bid": 582,
+               "bookie_name": "N1Bet",
+               "o1": "1.31",
+               "o2": "3.15",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "2",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "2.57",
+               "o2": "1.4",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "2.65",
+               "o2": "1.42",
+               "status": 2
+              },
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "2.8",
+               "o2": "1.38",
+               "status": 2
+              },
+              {
+               "bid": 582,
+               "bookie_name": "N1Bet",
+               "o1": "2.8",
+               "o2": "1.38",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "2.5",
+             "winning_odd": "o2",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "3.47",
+               "o2": "1.26",
+               "status": 2
+              },
+              {
+               "bid": 280,
+               "bookie_name": "Betibet",
+               "o1": "3.65",
+               "o2": "1.24",
+               "status": 2
+              },
+              {
+               "bid": 582,
+               "bookie_name": "N1Bet",
+               "o1": "3.65",
+               "o2": "1.24",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "5": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 5,
+        "name": "Draw No Bet",
+        "waytype": 2,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Home",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": "o2",
+          "odds": [
+           {
+            "bid": 170,
+            "bookie_name": "Stake.com",
+            "o1": "1.81",
+            "o2": "1.83",
+            "status": 2
+           },
+           {
+            "bid": 56,
+            "bookie_name": "Bwin",
+            "o1": "1.83",
+            "o2": "1.85",
+            "status": 2
+           },
+           {
+            "bid": 133,
+            "bookie_name": "BetMGM",
+            "o1": "1.83",
+            "o2": "1.85",
+            "status": 2
+           },
+           {
+            "bid": 3,
+            "bookie_name": "Betway",
+            "o1": "1.85",
+            "o2": "1.875",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "1st Half",
+          "winning_odd": "void",
+          "odds": [
+           {
+            "bid": 170,
+            "bookie_name": "Stake.com",
+            "o1": "1.79",
+            "o2": "1.81",
+            "status": 2
+           },
+           {
+            "bid": 3,
+            "bookie_name": "Betway",
+            "o1": "1.833",
+            "o2": "1.833",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "6": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 6,
+        "name": "European Handicap",
+        "waytype": 3,
+        "has_handicap": 1,
+        "oddsnames": [
+         "Home",
+         "Tie",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "odds": {
+           "main": [
+            {
+             "name": "-1/+1",
+             "winning_odd": "o3",
+             "odds": [
+              {
+               "bid": 274,
+               "bookie_name": "10bet",
+               "o1": "4.75",
+               "o2": "4.2",
+               "o3": "1.5",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "-2/+2",
+             "winning_odd": "o3",
+             "odds": [
+              {
+               "bid": 495,
+               "bookie_name": "FanDuel",
+               "o1": "11",
+               "o2": "7",
+               "o3": "1.13",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "+2/-2",
+             "winning_odd": "o1",
+             "odds": [
+              {
+               "bid": 495,
+               "bookie_name": "FanDuel",
+               "o1": "1.12",
+               "o2": "7.5",
+               "o3": "11",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "7": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 7,
+        "name": "Double Chance",
+        "waytype": 3,
+        "has_handicap": 0,
+        "oddsnames": [
+         "1X",
+         "12",
+         "X2"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": "o3,o2",
+          "odds": [
+           {
+            "bid": 170,
+            "bookie_name": "Stake.com",
+            "o1": "1.45",
+            "o2": "1.28",
+            "o3": "1.46",
+            "status": 2
+           },
+           {
+            "bid": 60,
+            "bookie_name": "1xBet",
+            "o1": "1.43",
+            "o2": "1.3",
+            "o3": "1.43",
+            "status": 2
+           },
+           {
+            "bid": 122,
+            "bookie_name": "22Bet",
+            "o1": "1.43",
+            "o2": "1.3",
+            "o3": "1.43",
+            "status": 2
+           },
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "1.43",
+            "o2": "1.22",
+            "o3": "1.4",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "1st Half",
+          "winning_odd": "o1,o3",
+          "odds": [
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "1.285",
+            "o2": "1.52",
+            "o3": "1.26",
+            "status": 2
+           },
+           {
+            "bid": 3,
+            "bookie_name": "Betway",
+            "o1": "1.35",
+            "o2": "1.6",
+            "o3": "1.3",
+            "status": 2
+           },
+           {
+            "bid": 70,
+            "bookie_name": "Vbet Sport",
+            "o1": "1.4",
+            "o2": "1.53",
+            "o3": "1.32",
+            "status": 2
+           },
+           {
+            "bid": 280,
+            "bookie_name": "Betibet",
+            "o1": "1.35",
+            "o2": "1.54",
+            "o3": "1.36",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "2nd Half",
+          "winning_odd": "o3,o2",
+          "odds": [
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "1.35",
+            "o2": "1.36",
+            "o3": "1.33",
+            "status": 2
+           },
+           {
+            "bid": 70,
+            "bookie_name": "Vbet Sport",
+            "o1": "1.44",
+            "o2": "1.42",
+            "o3": "1.38",
+            "status": 2
+           },
+           {
+            "bid": 280,
+            "bookie_name": "Betibet",
+            "o1": "1.38",
+            "o2": "1.43",
+            "o3": "1.42",
+            "status": 2
+           },
+           {
+            "bid": 582,
+            "bookie_name": "N1Bet",
+            "o1": "1.38",
+            "o2": "1.43",
+            "o3": "1.42",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "8": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 8,
+        "name": "Correct Score",
+        "waytype": 1,
+        "has_handicap": 1,
+        "oddsnames": [
+         null
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "odds": {
+           "main": [],
+           "alternative": [
+            {
+             "name": "0 : 0",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "12",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "15.75",
+               "status": 2
+              },
+              {
+               "bid": 144,
+               "bookie_name": "TonyBet",
+               "o1": "12",
+               "status": 2
+              },
+              {
+               "bid": 274,
+               "bookie_name": "10bet",
+               "o1": "12",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0 : 1",
+             "winning_odd": "o1",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "10",
+               "status": 2
+              },
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "10",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "10",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "8.2",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0 : 2",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "13",
+               "status": 2
+              },
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "15",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "13.5",
+               "status": 2
+              },
+              {
+               "bid": 144,
+               "bookie_name": "TonyBet",
+               "o1": "14",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0 : 3",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "21",
+               "status": 2
+              },
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "21",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "25",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "26",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         },
+         {
+          "name": "1st Half",
+          "odds": {
+           "main": [],
+           "alternative": [
+            {
+             "name": "0 : 0",
+             "winning_odd": "o1",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "3.1",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "3.32",
+               "status": 2
+              },
+              {
+               "bid": 274,
+               "bookie_name": "10bet",
+               "o1": "3.25",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0 : 1",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "4.2",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "4.3",
+               "status": 2
+              },
+              {
+               "bid": 274,
+               "bookie_name": "10bet",
+               "o1": "4.75",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0 : 2",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "11",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "14",
+               "status": 2
+              },
+              {
+               "bid": 274,
+               "bookie_name": "10bet",
+               "o1": "10",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0 : 3",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "29",
+               "status": 2
+              },
+              {
+               "bid": 274,
+               "bookie_name": "10bet",
+               "o1": "41",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         },
+         {
+          "name": "2nd Half",
+          "odds": {
+           "main": [],
+           "alternative": [
+            {
+             "name": "0 : 0",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "4.85",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0 : 2",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "12",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "1 : 0",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "5.1",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "1 : 1",
+             "winning_odd": "lost",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "5.8",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "9": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 9,
+        "name": "Half Time / Full Time",
+        "waytype": 1,
+        "has_handicap": 1,
+        "oddsnames": [
+         null
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "odds": {
+           "main": [],
+           "alternative": [
+            {
+             "name": "Home / Home",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "4",
+               "status": 2
+              },
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "3.9",
+               "status": 2
+              },
+              {
+               "bid": 47,
+               "bookie_name": "Coral",
+               "o1": "3.9",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "3.98",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "Draw / Draw",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "5.25",
+               "status": 2
+              },
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "6",
+               "status": 2
+              },
+              {
+               "bid": 47,
+               "bookie_name": "Coral",
+               "o1": "6",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "5.5",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "Draw / Away",
+             "winning_odd": "o1",
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "6",
+               "status": 2
+              },
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "6.5",
+               "status": 2
+              },
+              {
+               "bid": 47,
+               "bookie_name": "Coral",
+               "o1": "6.5",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "6.05",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "Draw / Home",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 3,
+               "bookie_name": "Betway",
+               "o1": "6",
+               "status": 2
+              },
+              {
+               "bid": 17,
+               "bookie_name": "Ladbrokes",
+               "o1": "6.5",
+               "status": 2
+              },
+              {
+               "bid": 47,
+               "bookie_name": "Coral",
+               "o1": "6.5",
+               "status": 2
+              },
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "6.25",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "10": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 10,
+        "name": "Odd or Even",
+        "waytype": 2,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Odd",
+         "Even"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": "o1",
+          "odds": [
+           {
+            "bid": 170,
+            "bookie_name": "Stake.com",
+            "o1": "1.91",
+            "o2": "1.76",
+            "status": 2
+           },
+           {
+            "bid": 60,
+            "bookie_name": "1xBet",
+            "o1": "2.02",
+            "o2": "1.74",
+            "status": 2
+           },
+           {
+            "bid": 122,
+            "bookie_name": "22Bet",
+            "o1": "2.02",
+            "o2": "1.74",
+            "status": 2
+           },
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "1.86",
+            "o2": "1.8",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "1st Half",
+          "winning_odd": "o2",
+          "odds": [
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "2",
+            "o2": "1.69",
+            "status": 2
+           },
+           {
+            "bid": 274,
+            "bookie_name": "10bet",
+            "o1": "2",
+            "o2": "1.727",
+            "status": 2
+           },
+           {
+            "bid": 17,
+            "bookie_name": "Ladbrokes",
+            "o1": "1.95",
+            "o2": "1.75",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "2nd Half",
+          "winning_odd": "o1",
+          "odds": [
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "1.88",
+            "o2": "1.78",
+            "status": 2
+           },
+           {
+            "bid": 274,
+            "bookie_name": "10bet",
+            "o1": "1.909",
+            "o2": "1.8",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "11": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 11,
+        "name": "Both Teams to Score",
+        "waytype": 2,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Yes",
+         "No"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": "o2",
+          "odds": [
+           {
+            "bid": 60,
+            "bookie_name": "1xBet",
+            "o1": "1.504",
+            "o2": "2.335",
+            "status": 2
+           },
+           {
+            "bid": 122,
+            "bookie_name": "22Bet",
+            "o1": "1.504",
+            "o2": "2.335",
+            "status": 2
+           },
+           {
+            "bid": 26,
+            "bookie_name": "Interwetten",
+            "o1": "1.5",
+            "o2": "2.3",
+            "status": 2
+           },
+           {
+            "bid": 146,
+            "bookie_name": "20Bet",
+            "o1": "1.46",
+            "o2": "2.38",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "1st Half",
+          "winning_odd": "o2",
+          "odds": [
+           {
+            "bid": 146,
+            "bookie_name": "20Bet",
+            "o1": "3.58",
+            "o2": "1.21",
+            "status": 2
+           },
+           {
+            "bid": 3,
+            "bookie_name": "Betway",
+            "o1": "3.2",
+            "o2": "1.286",
+            "status": 2
+           },
+           {
+            "bid": 144,
+            "bookie_name": "TonyBet",
+            "o1": "3.6",
+            "o2": "1.23",
+            "status": 2
+           },
+           {
+            "bid": 70,
+            "bookie_name": "Vbet Sport",
+            "o1": "3.57",
+            "o2": "1.25",
+            "status": 2
+           }
+          ]
+         },
+         {
+          "name": "2nd Half",
+          "winning_odd": "o2",
+          "odds": [
+           {
+            "bid": 146,
+            "bookie_name": "20Bet",
+            "o1": "2.55",
+            "o2": "1.4",
+            "status": 2
+           },
+           {
+            "bid": 144,
+            "bookie_name": "TonyBet",
+            "o1": "2.8",
+            "o2": "1.36",
+            "status": 2
+           },
+           {
+            "bid": 145,
+            "bookie_name": "Ivibet",
+            "o1": "2.55",
+            "o2": "1.4",
+            "status": 2
+           },
+           {
+            "bid": 17,
+            "bookie_name": "Ladbrokes",
+            "o1": "2.7",
+            "o2": "1.4",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "12": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 12,
+        "name": "First Team to Score",
+        "waytype": 3,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Home",
+         "No Goal",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": null,
+          "odds": [
+           {
+            "bid": 70,
+            "bookie_name": "Vbet Sport",
+            "o1": "1.94",
+            "o2": "17",
+            "o3": "1.83",
+            "status": 2
+           },
+           {
+            "bid": 17,
+            "bookie_name": "Ladbrokes",
+            "o1": "1.91",
+            "o2": "13",
+            "o3": "1.95",
+            "status": 2
+           },
+           {
+            "bid": 47,
+            "bookie_name": "Coral",
+            "o1": "1.91",
+            "o2": "13",
+            "o3": "1.95",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "13": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 13,
+        "name": "Asian Handicap Corners",
+        "waytype": 2,
+        "has_handicap": 1,
+        "oddsnames": [
+         "Home",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "odds": {
+           "main": [
+            {
+             "name": "-0.5/+0.5",
+             "winning_odd": "pending",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.75",
+               "o2": "1.85",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "-1.5/+1.5",
+             "winning_odd": "pending",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "2.22",
+               "o2": "1.5",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "-1/+1",
+             "winning_odd": "pending",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.95",
+               "o2": "1.65",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "0",
+             "winning_odd": "pending",
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.52",
+               "o2": "2.18",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "18": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 18,
+        "name": "Corners Odd or Even",
+        "waytype": 2,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Odd",
+         "Even"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": null,
+          "odds": [
+           {
+            "bid": 59,
+            "bookie_name": "Marathonbet",
+            "o1": "1.83",
+            "o2": "1.83",
+            "status": 2
+           },
+           {
+            "bid": 70,
+            "bookie_name": "Vbet Sport",
+            "o1": "1.8",
+            "o2": "1.8",
+            "status": 2
+           },
+           {
+            "bid": 17,
+            "bookie_name": "Ladbrokes",
+            "o1": "1.02",
+            "o2": "1.02",
+            "status": 2
+           },
+           {
+            "bid": 47,
+            "bookie_name": "Coral",
+            "o1": "1.02",
+            "o2": "1.02",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "25": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 25,
+        "name": "To Win Both Halves",
+        "waytype": 2,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Home",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": null,
+          "odds": [
+           {
+            "bid": 70,
+            "bookie_name": "Vbet Sport",
+            "o1": "7.3",
+            "o2": "6.3",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "27": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 27,
+        "name": "To Score in Both Halves",
+        "waytype": 2,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Home",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": null,
+          "odds": [
+           {
+            "bid": 70,
+            "bookie_name": "Vbet Sport",
+            "o1": "3.25",
+            "o2": "2.95",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "30": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 30,
+        "name": "Next Goal",
+        "waytype": 3,
+        "has_handicap": 0,
+        "oddsnames": [
+         "Home",
+         "No Goal",
+         "Away"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "winning_odd": null,
+          "odds": [
+           {
+            "bid": 3,
+            "bookie_name": "Betway",
+            "o1": "1.95",
+            "o2": "13",
+            "o3": "1.95",
+            "status": 2
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "63": {
+    "status": 200,
+    "body": {
+     "data": {
+      "prematch": [
+       {
+        "id": 63,
+        "name": "Total Corners",
+        "waytype": 2,
+        "has_handicap": 1,
+        "oddsnames": [
+         "Over",
+         "Under"
+        ],
+        "periods": [
+         {
+          "name": "Full Time",
+          "odds": {
+           "main": [
+            {
+             "name": "9.5",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.71",
+               "o2": "1.97",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.67",
+               "o2": "1.93",
+               "status": 2
+              },
+              {
+               "bid": 71,
+               "bookie_name": "Novibet",
+               "o1": "1.74",
+               "o2": "1.93",
+               "status": 2
+              }
+             ]
+            }
+           ],
+           "alternative": [
+            {
+             "name": "7.5",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.196",
+               "o2": "3.72",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "8.5",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "1.39",
+               "o2": "2.59",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "10",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "1.87",
+               "o2": "1.72",
+               "status": 2
+              }
+             ]
+            },
+            {
+             "name": "10.5",
+             "winning_odd": null,
+             "odds": [
+              {
+               "bid": 59,
+               "bookie_name": "Marathonbet",
+               "o1": "2.15",
+               "o2": "1.56",
+               "status": 2
+              },
+              {
+               "bid": 70,
+               "bookie_name": "Vbet Sport",
+               "o1": "2.12",
+               "o2": "1.55",
+               "status": 2
+              }
+             ]
+            }
+           ]
+          }
+         }
+        ]
+       }
+      ]
+     }
+    }
+   }
+  }
+ }
+}
