@@ -127,6 +127,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_streak_consistency_high_scoring_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_high_scoring_rivalry.md](sig_match_streak_consistency_high_scoring_rivalry.md) |
 | `sig_match_streak_consistency_low_scoring_history` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_low_scoring_history.md](sig_match_streak_consistency_low_scoring_history.md) |
 | `sig_match_streak_consistency_nil_nil_curse` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_nil_nil_curse.md](sig_match_streak_consistency_nil_nil_curse.md) |
+| `sig_match_streak_consistency_revolving_door` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_revolving_door.md](sig_match_streak_consistency_revolving_door.md) |
 | `sig_match_streak_consistency_stalemate_cycle` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_stalemate_cycle.md](sig_match_streak_consistency_stalemate_cycle.md) |
 | `sig_player_creativity_playmaking_assist_brace` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_assist_brace.md](sig_player_creativity_playmaking_assist_brace.md) |
 | `sig_player_creativity_playmaking_assist_hat_trick` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_assist_hat_trick.md](sig_player_creativity_playmaking_assist_hat_trick.md) |
