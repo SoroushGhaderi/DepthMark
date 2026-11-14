@@ -308,6 +308,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_tackle_wall` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_tackle_wall.md](sig_player_streak_consistency_tackle_wall.md) |
 | `sig_player_streak_consistency_the_iron_man` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_the_iron_man.md](sig_player_streak_consistency_the_iron_man.md) |
 | `sig_player_streak_consistency_the_traveler` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_the_traveler.md](sig_player_streak_consistency_the_traveler.md) |
+| `sig_player_streak_consistency_unbeaten_starter` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_unbeaten_starter.md](sig_player_streak_consistency_unbeaten_starter.md) |
 | `sig_team_creativity_playmaking_bench_creative_impact` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_bench_creative_impact.md](sig_team_creativity_playmaking_bench_creative_impact.md) |
 | `sig_team_creativity_playmaking_big_chance_monopoly` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_big_chance_monopoly.md](sig_team_creativity_playmaking_big_chance_monopoly.md) |
 | `sig_team_creativity_playmaking_chance_barrage` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_chance_barrage.md](sig_team_creativity_playmaking_chance_barrage.md) |
