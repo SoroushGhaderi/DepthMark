@@ -388,6 +388,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_woodwork_frustration_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_woodwork_frustration_team.md](sig_team_shooting_goals_woodwork_frustration_team.md) |
 | `sig_team_shooting_goals_xg_overperformance_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_overperformance_team.md](sig_team_shooting_goals_xg_overperformance_team.md) |
 | `sig_team_shooting_goals_zero_shot_half` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_zero_shot_half.md](sig_team_shooting_goals_zero_shot_half.md) |
+| `sig_team_streak_consistency_away_goal_drought` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_away_goal_drought.md](sig_team_streak_consistency_away_goal_drought.md) |
 | `sig_team_streak_consistency_away_winning_streak` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_away_winning_streak.md](sig_team_streak_consistency_away_winning_streak.md) |
 | `sig_team_streak_consistency_clean_sheet_wall` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_clean_sheet_wall.md](sig_team_streak_consistency_clean_sheet_wall.md) |
 | `sig_team_streak_consistency_draw_specialist` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_draw_specialist.md](sig_team_streak_consistency_draw_specialist.md) |
