@@ -626,4 +626,5 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_total_shot_dominance` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_total_shot_dominance.md](sig_team_streak_consistency_total_shot_dominance.md) |
 | `sig_team_streak_consistency_unanswered_goals_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_unanswered_goals_run.md](sig_team_streak_consistency_unanswered_goals_run.md) |
 | `sig_team_streak_consistency_winning_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_winning_machine.md](sig_team_streak_consistency_winning_machine.md) |
+| `sig_team_streak_consistency_woodwork_magnet_streak` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_woodwork_magnet_streak.md](sig_team_streak_consistency_woodwork_magnet_streak.md) |
 <!-- signal-index:end -->
