@@ -398,6 +398,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_clean_sheet_at_home` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_clean_sheet_at_home.md](sig_team_streak_consistency_clean_sheet_at_home.md) |
 | `sig_team_streak_consistency_clean_sheet_drought` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_clean_sheet_drought.md](sig_team_streak_consistency_clean_sheet_drought.md) |
 | `sig_team_streak_consistency_clean_sheet_wall` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_clean_sheet_wall.md](sig_team_streak_consistency_clean_sheet_wall.md) |
+| `sig_team_streak_consistency_corner_monopoly_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_corner_monopoly_run.md](sig_team_streak_consistency_corner_monopoly_run.md) |
 | `sig_team_streak_consistency_draw_specialist` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_draw_specialist.md](sig_team_streak_consistency_draw_specialist.md) |
 | `sig_team_streak_consistency_first_goal_winner` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_goal_winner.md](sig_team_streak_consistency_first_goal_winner.md) |
 | `sig_team_streak_consistency_goal_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_goal_machine.md](sig_team_streak_consistency_goal_machine.md) |
