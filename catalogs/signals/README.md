@@ -129,6 +129,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_box_siege_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_box_siege_match.md](sig_match_shooting_goals_box_siege_match.md) |
 | `sig_match_shooting_goals_box_siege_parity` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_box_siege_parity.md](sig_match_shooting_goals_box_siege_parity.md) |
 | `sig_match_shooting_goals_clean_sheet_broken_late` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clean_sheet_broken_late.md](sig_match_shooting_goals_clean_sheet_broken_late.md) |
+| `sig_match_shooting_goals_clinical_efficiency_tie` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_efficiency_tie.md](sig_match_shooting_goals_clinical_efficiency_tie.md) |
 | `sig_match_shooting_goals_clinical_showdown` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_showdown.md](sig_match_shooting_goals_clinical_showdown.md) |
 | `sig_match_shooting_goals_clinical_sub_impact` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_sub_impact.md](sig_match_shooting_goals_clinical_sub_impact.md) |
 | `sig_match_shooting_goals_complete_dominance` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_complete_dominance.md](sig_match_shooting_goals_complete_dominance.md) |
