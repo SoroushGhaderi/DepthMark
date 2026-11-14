@@ -107,6 +107,7 @@ runs AS (
         pr.team_seq - row_number() OVER (PARTITION BY pr.player_id, pr.team_id ORDER BY pr.team_seq) AS run_key
     FROM player_rows AS pr
     WHERE pr.assists >= 1
+      AND pr.minutes_played > 0
 ),
 streaks AS (
     SELECT
