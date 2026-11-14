@@ -34,7 +34,52 @@ INSERT INTO fotmob_gold_signals.sig_team_streak_consistency_invincible_run (
 -- Signal: sig_team_streak_consistency_invincible_run
 -- Intent: Detect teams on a long unbeaten run (wins and draws).
 -- Trigger: Team is unbeaten in >= 10 consecutive matches (this match included).
-WITH unbeaten_runs AS (
+WITH team_matches AS (
+    SELECT
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.home_team_id AS team_id,
+        m.away_team_id AS opponent_id,
+        'home' AS side,
+        toInt32(coalesce(m.home_score, 0)) AS goals_for,
+        toInt32(coalesce(m.away_score, 0)) AS goals_against
+    FROM fotmob_silver.match AS m
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
+      AND m.home_team_id IS NOT NULL
+      AND m.away_team_id IS NOT NULL
+      AND m.home_score IS NOT NULL
+      AND m.away_score IS NOT NULL
+    UNION ALL
+    SELECT
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.away_team_id AS team_id,
+        m.home_team_id AS opponent_id,
+        'away' AS side,
+        toInt32(coalesce(m.away_score, 0)) AS goals_for,
+        toInt32(coalesce(m.home_score, 0)) AS goals_against
+    FROM fotmob_silver.match AS m
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
+      AND m.home_team_id IS NOT NULL
+      AND m.away_team_id IS NOT NULL
+      AND m.home_score IS NOT NULL
+      AND m.away_score IS NOT NULL
+),
+team_results AS (
+    SELECT
+        tm.match_id AS match_id,
+        tm.match_date AS match_date,
+        tm.team_id AS team_id,
+        tm.opponent_id AS opponent_id,
+        tm.side AS side,
+        tm.goals_for AS goals_for,
+        tm.goals_against AS goals_against,
+        row_number() OVER (PARTITION BY tm.team_id ORDER BY tm.match_date, tm.match_id) AS team_seq
+    FROM team_matches AS tm
+),
+unbeaten_runs AS (
     SELECT
         tr.match_id AS match_id, tr.match_date AS match_date, tr.team_id AS team_id, tr.side AS side,
         tr.goals_for AS goals_for, tr.goals_against AS goals_against, tr.team_seq AS team_seq,
