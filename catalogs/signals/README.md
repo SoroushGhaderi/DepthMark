@@ -282,6 +282,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_creative_hub` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_creative_hub.md](sig_player_streak_consistency_creative_hub.md) |
 | `sig_player_streak_consistency_cross_volume_peak` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_cross_volume_peak.md](sig_player_streak_consistency_cross_volume_peak.md) |
 | `sig_player_streak_consistency_crossing_expert` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_crossing_expert.md](sig_player_streak_consistency_crossing_expert.md) |
+| `sig_player_streak_consistency_dribble_drought` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_dribble_drought.md](sig_player_streak_consistency_dribble_drought.md) |
 | `sig_player_streak_consistency_dribble_engine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_dribble_engine.md](sig_player_streak_consistency_dribble_engine.md) |
 | `sig_player_streak_consistency_duel_dominance` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_duel_dominance.md](sig_player_streak_consistency_duel_dominance.md) |
 | `sig_player_streak_consistency_expected_underperformer` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_expected_underperformer.md](sig_player_streak_consistency_expected_underperformer.md) |
