@@ -504,6 +504,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_shared_scoring` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shared_scoring.md](sig_team_shooting_goals_shared_scoring.md) |
 | `sig_team_shooting_goals_shooting_gallery` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shooting_gallery.md](sig_team_shooting_goals_shooting_gallery.md) |
 | `sig_team_shooting_goals_shot_accuracy_collapse` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shot_accuracy_collapse.md](sig_team_shooting_goals_shot_accuracy_collapse.md) |
+| `sig_team_shooting_goals_shot_accuracy_peak` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shot_accuracy_peak.md](sig_team_shooting_goals_shot_accuracy_peak.md) |
 | `sig_team_shooting_goals_shot_on_target_monopoly` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shot_on_target_monopoly.md](sig_team_shooting_goals_shot_on_target_monopoly.md) |
 | `sig_team_shooting_goals_shot_shy` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shot_shy.md](sig_team_shooting_goals_shot_shy.md) |
 | `sig_team_shooting_goals_sustained_barrage` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_sustained_barrage.md](sig_team_shooting_goals_sustained_barrage.md) |
