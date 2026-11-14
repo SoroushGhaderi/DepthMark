@@ -431,6 +431,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_counter_attack_lethality` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_counter_attack_lethality.md](sig_team_shooting_goals_counter_attack_lethality.md) |
 | `sig_team_shooting_goals_dead_ball_specialists` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_dead_ball_specialists.md](sig_team_shooting_goals_dead_ball_specialists.md) |
 | `sig_team_shooting_goals_defensive_scoring_unit` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_defensive_scoring_unit.md](sig_team_shooting_goals_defensive_scoring_unit.md) |
+| `sig_team_shooting_goals_direct_free_kick_threat` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_direct_free_kick_threat.md](sig_team_shooting_goals_direct_free_kick_threat.md) |
 | `sig_team_shooting_goals_early_blitz` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_early_blitz.md](sig_team_shooting_goals_early_blitz.md) |
 | `sig_team_shooting_goals_efficiency_peak` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_efficiency_peak.md](sig_team_shooting_goals_efficiency_peak.md) |
 | `sig_team_shooting_goals_expected_goal_dominance` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_expected_goal_dominance.md](sig_team_shooting_goals_expected_goal_dominance.md) |
