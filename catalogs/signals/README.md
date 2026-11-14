@@ -430,6 +430,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_penalty_luck` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_penalty_luck.md](sig_team_streak_consistency_penalty_luck.md) |
 | `sig_team_streak_consistency_possession_monopoly` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_possession_monopoly.md](sig_team_streak_consistency_possession_monopoly.md) |
 | `sig_team_streak_consistency_promotion_form` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_promotion_form.md](sig_team_streak_consistency_promotion_form.md) |
+| `sig_team_streak_consistency_relegation_threat` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_relegation_threat.md](sig_team_streak_consistency_relegation_threat.md) |
 | `sig_team_streak_consistency_scoring_drought` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_scoring_drought.md](sig_team_streak_consistency_scoring_drought.md) |
 | `sig_team_streak_consistency_scoring_marathon` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_scoring_marathon.md](sig_team_streak_consistency_scoring_marathon.md) |
 | `sig_team_streak_consistency_second_half_winner_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_second_half_winner_run.md](sig_team_streak_consistency_second_half_winner_run.md) |
