@@ -275,6 +275,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_man_of_the_match_output` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_man_of_the_match_output.md](sig_player_shooting_goals_man_of_the_match_output.md) |
 | `sig_player_shooting_goals_midfield_sniper` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_midfield_sniper.md](sig_player_shooting_goals_midfield_sniper.md) |
 | `sig_player_shooting_goals_one_man_army` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_one_man_army.md](sig_player_shooting_goals_one_man_army.md) |
+| `sig_player_shooting_goals_penalty_composure` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_penalty_composure.md](sig_player_shooting_goals_penalty_composure.md) |
 | `sig_player_shooting_goals_perfect_hat_trick` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_perfect_hat_trick.md](sig_player_shooting_goals_perfect_hat_trick.md) |
 | `sig_player_shooting_goals_persistent_threat` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_persistent_threat.md](sig_player_shooting_goals_persistent_threat.md) |
 | `sig_player_shooting_goals_rapid_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_rapid_brace.md](sig_player_shooting_goals_rapid_brace.md) |
