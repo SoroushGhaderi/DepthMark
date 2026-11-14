@@ -87,6 +87,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_goalkeeping_defense_tackle_and_interception_fest` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_tackle_and_interception_fest.md](sig_match_goalkeeping_defense_tackle_and_interception_fest.md) |
 | `sig_match_goalkeeping_defense_tackle_war` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_tackle_war.md](sig_match_goalkeeping_defense_tackle_war.md) |
 | `sig_match_goalkeeping_defense_unproductive_attack` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_unproductive_attack.md](sig_match_goalkeeping_defense_unproductive_attack.md) |
+| `sig_match_goalkeeping_defense_zero_threat_match` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_zero_threat_match.md](sig_match_goalkeeping_defense_zero_threat_match.md) |
 | `sig_match_possession_passing_clean_game` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_clean_game.md](sig_match_possession_passing_clean_game.md) |
 | `sig_match_possession_passing_clinical_match` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_clinical_match.md](sig_match_possession_passing_clinical_match.md) |
 | `sig_match_possession_passing_counter_vs_bus` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_counter_vs_bus.md](sig_match_possession_passing_counter_vs_bus.md) |
