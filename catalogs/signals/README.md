@@ -455,6 +455,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_discipline_cards_penalty_prone` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_penalty_prone.md](sig_team_discipline_cards_penalty_prone.md) |
 | `sig_team_discipline_cards_physical_superiority` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_physical_superiority.md](sig_team_discipline_cards_physical_superiority.md) |
 | `sig_team_discipline_cards_red_card_neutralizer` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_red_card_neutralizer.md](sig_team_discipline_cards_red_card_neutralizer.md) |
+| `sig_team_discipline_cards_stoppage_time_meltdown` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_stoppage_time_meltdown.md](sig_team_discipline_cards_stoppage_time_meltdown.md) |
 | `sig_team_discipline_cards_systematic_fouling` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_systematic_fouling.md](sig_team_discipline_cards_systematic_fouling.md) |
 | `sig_team_discipline_cards_tactical_fouling_unit` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_tactical_fouling_unit.md](sig_team_discipline_cards_tactical_fouling_unit.md) |
 | `sig_team_discipline_cards_the_triple_booking` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_the_triple_booking.md](sig_team_discipline_cards_the_triple_booking.md) |
