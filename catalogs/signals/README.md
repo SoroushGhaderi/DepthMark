@@ -121,6 +121,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_early_goal_late_goal` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_early_goal_late_goal.md](sig_match_shooting_goals_early_goal_late_goal.md) |
 | `sig_match_shooting_goals_end_to_end_drama` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_end_to_end_drama.md](sig_match_shooting_goals_end_to_end_drama.md) |
 | `sig_match_shooting_goals_game_of_two_halves` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_game_of_two_halves.md](sig_match_shooting_goals_game_of_two_halves.md) |
+| `sig_match_shooting_goals_gk_nightmare` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_gk_nightmare.md](sig_match_shooting_goals_gk_nightmare.md) |
 | `sig_match_shooting_goals_goal_fest` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goal_fest.md](sig_match_shooting_goals_goal_fest.md) |
 | `sig_match_shooting_goals_goalless_siege` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goalless_siege.md](sig_match_shooting_goals_goalless_siege.md) |
 | `sig_match_shooting_goals_high_pressure_finish` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_pressure_finish.md](sig_match_shooting_goals_high_pressure_finish.md) |
