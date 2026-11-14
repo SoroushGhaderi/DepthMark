@@ -323,6 +323,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_clinical_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clinical_brace.md](sig_player_shooting_goals_clinical_brace.md) |
 | `sig_player_shooting_goals_clutch_brace_winning` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clutch_brace_winning.md](sig_player_shooting_goals_clutch_brace_winning.md) |
 | `sig_player_shooting_goals_clutch_equalizer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clutch_equalizer.md](sig_player_shooting_goals_clutch_equalizer.md) |
+| `sig_player_shooting_goals_dead_ball_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_dead_ball_brace.md](sig_player_shooting_goals_dead_ball_brace.md) |
 | `sig_player_shooting_goals_defensive_scorer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_defensive_scorer.md](sig_player_shooting_goals_defensive_scorer.md) |
 | `sig_player_shooting_goals_distance_threat` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_distance_threat.md](sig_player_shooting_goals_distance_threat.md) |
 | `sig_player_shooting_goals_first_half_dominator` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_first_half_dominator.md](sig_player_shooting_goals_first_half_dominator.md) |
