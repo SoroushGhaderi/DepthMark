@@ -190,6 +190,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_discipline_cards_dirty_half_dozen` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_dirty_half_dozen.md](sig_player_discipline_cards_dirty_half_dozen.md) |
 | `sig_player_discipline_cards_double_yellow_dismissal` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_double_yellow_dismissal.md](sig_player_discipline_cards_double_yellow_dismissal.md) |
 | `sig_player_discipline_cards_early_bath` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_early_bath.md](sig_player_discipline_cards_early_bath.md) |
+| `sig_player_discipline_cards_fair_play_hero` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_fair_play_hero.md](sig_player_discipline_cards_fair_play_hero.md) |
 | `sig_player_discipline_cards_foul_magnet` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_foul_magnet.md](sig_player_discipline_cards_foul_magnet.md) |
 | `sig_player_discipline_cards_foul_to_shot_ratio` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_foul_to_shot_ratio.md](sig_player_discipline_cards_foul_to_shot_ratio.md) |
 | `sig_player_discipline_cards_heavy_hitter` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_heavy_hitter.md](sig_player_discipline_cards_heavy_hitter.md) |
