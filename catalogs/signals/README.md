@@ -139,6 +139,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_streak_consistency_interception_fest_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_interception_fest_rivalry.md](sig_match_streak_consistency_interception_fest_rivalry.md) |
 | `sig_match_streak_consistency_late_drama_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_late_drama_rivalry.md](sig_match_streak_consistency_late_drama_rivalry.md) |
 | `sig_match_streak_consistency_low_scoring_history` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_low_scoring_history.md](sig_match_streak_consistency_low_scoring_history.md) |
+| `sig_match_streak_consistency_manager_bogey` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_manager_bogey.md](sig_match_streak_consistency_manager_bogey.md) |
 | `sig_match_streak_consistency_manager_duel_streak` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_manager_duel_streak.md](sig_match_streak_consistency_manager_duel_streak.md) |
 | `sig_match_streak_consistency_nil_nil_curse` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_nil_nil_curse.md](sig_match_streak_consistency_nil_nil_curse.md) |
 | `sig_match_streak_consistency_one_sided_scoring` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_one_sided_scoring.md](sig_match_streak_consistency_one_sided_scoring.md) |
