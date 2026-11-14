@@ -353,6 +353,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_shot_volume_monster` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_shot_volume_monster.md](sig_player_shooting_goals_shot_volume_monster.md) |
 | `sig_player_shooting_goals_sniper_accuracy` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_sniper_accuracy.md](sig_player_shooting_goals_sniper_accuracy.md) |
 | `sig_player_shooting_goals_super_sub_goal` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_super_sub_goal.md](sig_player_shooting_goals_super_sub_goal.md) |
+| `sig_player_shooting_goals_the_ice_man` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_the_ice_man.md](sig_player_shooting_goals_the_ice_man.md) |
 | `sig_player_shooting_goals_the_tap_in_merchant` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_the_tap_in_merchant.md](sig_player_shooting_goals_the_tap_in_merchant.md) |
 | `sig_player_shooting_goals_total_xg_dominance` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_total_xg_dominance.md](sig_player_shooting_goals_total_xg_dominance.md) |
 | `sig_player_shooting_goals_unlikely_scorer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_unlikely_scorer.md](sig_player_shooting_goals_unlikely_scorer.md) |
