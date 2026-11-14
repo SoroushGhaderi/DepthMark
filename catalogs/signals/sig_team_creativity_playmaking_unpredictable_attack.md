@@ -1,41 +1,41 @@
 ---
-signal_id: sig_team_shooting_goals_big_chance_monopoly
+signal_id: sig_team_creativity_playmaking_unpredictable_attack
 status: active
 entity: team
-family: shooting
-subfamily: goals
+family: creativity
+subfamily: playmaking
 grain: match_team
-headline: "Big Chance Monopoly"
-trigger: "Team creates >= 5 big chances while the opponent creates none in a finished match."
+headline: "Unpredictable Attack"
+trigger: "Team records shots from >= 8 different players in a finished match."
 row_identity:
   - match_id
   - triggered_side
 asset_paths:
-  table: fotmob_gold_signals.sig_team_shooting_goals_big_chance_monopoly
-  sql: clickhouse/gold/dml/signals/team/sig_team_shooting_goals_big_chance_monopoly.sql
+  table: fotmob_gold_signals.sig_team_creativity_playmaking_unpredictable_attack
+  sql: clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unpredictable_attack.sql
 ---
-# sig_team_shooting_goals_big_chance_monopoly
+# sig_team_creativity_playmaking_unpredictable_attack
 
 ## Purpose
 
-Flags total big-chance control, a dominance and missed-opportunity marker.
+Flags a spread-out attack, a hard-to-mark and shared-threat marker.
 
 ## Tactical And Statistical Logic
 
-- Trigger: Team creates >= 5 big chances while the opponent creates none in a finished match.
-- Big chances come from `fotmob_silver.period_stat` (`period = 'All'`): the team has `big_chances >= 5` and the opponent has 0.
-- Similarity note: Closest: `sig_team_shooting_goals_big_chance_efficiency` (all big chances converted) and `sig_match_shooting_goals_unproductive_dominance` (>= 20 shots, 0 big chances). Different logic: five big chances to none. No overlap.
+- Trigger: Team records shots from >= 8 different players in a finished match.
+- The count of distinct `player_id` values among the team's shot rows in `fotmob_silver.shot` (own goals excluded). Stats come from `fotmob_silver.period_stat` (`period = 'All'`).
+- Similarity note: Closest: `sig_team_creativity_playmaking_total_fluidity` (>= 6 players with a key pass) and `sig_team_shooting_goals_shared_scoring` (>= 4 scorers). Related creativity signals: `sig_team_creativity_playmaking_chance_barrage`, `sig_team_creativity_playmaking_midfield_engine_vision` and `sig_match_creativity_playmaking_the_creativity_clash`. Different logic: shots by at least 8 different players. No overlap.
 
 ## Technical Assets
 
-- SQL: `clickhouse/gold/dml/signals/team/sig_team_shooting_goals_big_chance_monopoly.sql`
+- SQL: `clickhouse/gold/dml/signals/team/sig_team_creativity_playmaking_unpredictable_attack.sql`
 - Runner: `scripts/fotmob/run_fotmob_gold_jobs.py`
-- Target table: `fotmob_gold_signals.sig_team_shooting_goals_big_chance_monopoly`
+- Target table: `fotmob_gold_signals.sig_team_creativity_playmaking_unpredictable_attack`
 
 ## Example Execution
 
 ```bash
-python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_shooting_goals_big_chance_monopoly
+python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --id sig_team_creativity_playmaking_unpredictable_attack
 ```
 
 ## Output Schema
@@ -55,10 +55,9 @@ python3 scripts/fotmob/run_fotmob_gold_jobs.py --date YYYYMMDD --kind signal --i
 | `triggered_team_name` | Triggered-side team name | Readable triggered-side context. |
 | `opponent_team_id` | Opponent team identifier | Bilateral comparison key. |
 | `opponent_team_name` | Opponent team name | Readable bilateral context. |
-| `trigger_threshold_min_big_chances` | Configured trigger floor (`5` big chances for, 0 against) | Explicit trigger provenance for explainability and QA. |
-| `triggered_team_big_chances` | Big chances created | Core signal intensity variable. |
-| `triggered_team_big_chances_above_threshold` | Value minus the trigger floor | Trigger severity beyond binary activation. |
-| `opponent_big_chances` | Big chances created by the opponent | Bilateral comparator for the monopoly. |
+| `trigger_threshold_min_distinct_shooters` | Configured trigger floor (`8` different shooters) | Explicit trigger provenance for explainability and QA. |
+| `triggered_team_distinct_shooters` | Different players who shot | Core signal intensity variable. |
+| `triggered_team_distinct_shooters_above_threshold` | Value minus the trigger floor | Trigger severity beyond binary activation. |
 | `triggered_team_goals` | Triggered-side goals in the match | Result context for the streak match. |
 | `opponent_goals` | Opponent goals in the match | Bilateral result comparator. |
 | `triggered_team_xg` | Triggered-side expected goals (xG) | Chance-quality and control context behind the streak result. |

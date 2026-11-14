@@ -1,4 +1,4 @@
-INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_big_chance_monopoly (
+INSERT INTO fotmob_gold_signals.sig_team_creativity_playmaking_creative_patience_index (
     match_id,
     match_date,
     home_team_id,
@@ -12,10 +12,10 @@ INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_big_chance_monopoly (
     triggered_team_name,
     opponent_team_id,
     opponent_team_name,
-    trigger_threshold_min_big_chances,
-    triggered_team_big_chances,
-    triggered_team_big_chances_above_threshold,
-    opponent_big_chances,
+    trigger_threshold_min_passes_per_shot,
+    triggered_team_passes_per_shot,
+    triggered_team_passes_per_shot_above_threshold,
+    triggered_team_passes,
     triggered_team_goals,
     opponent_goals,
     triggered_team_xg,
@@ -27,9 +27,9 @@ INSERT INTO fotmob_gold_signals.sig_team_shooting_goals_big_chance_monopoly (
     triggered_team_possession_pct,
     opponent_possession_pct
 )
--- Signal: sig_team_shooting_goals_big_chance_monopoly
--- Intent: Find matches where one team owns all the clear-cut chances.
--- Trigger: Team creates >= 5 big chances while the opponent creates none in a finished match.
+-- Signal: sig_team_creativity_playmaking_creative_patience_index
+-- Intent: Find teams that pass a lot for every shot they take.
+-- Trigger: Team averages >= 20 passes per shot in a finished match.
 WITH team_matches AS (
     SELECT
         m.match_id AS match_id,
@@ -75,14 +75,49 @@ team_results AS (
         row_number() OVER (PARTITION BY tm.team_id ORDER BY tm.match_date, tm.match_id) AS team_seq
     FROM team_matches AS tm
 ),
+team_player_facts AS (
+    SELECT
+        p.match_id AS match_id,
+        toInt32(assumeNotNull(p.team_id)) AS fact_team_id,
+        toFloat64(sum(coalesce(p.expected_assists, 0))) AS xa_sum,
+        toFloat64(max(coalesce(p.expected_assists, 0))) AS xa_max,
+        toInt32(sum(coalesce(p.chances_created, 0))) AS key_passes,
+        toInt32(countIf(coalesce(p.expected_assists, 0) >= 0.5)) AS players_xa_half
+    FROM fotmob_silver.player_match_stat AS p
+    WHERE p.match_id > 0
+      AND p.team_id IS NOT NULL
+      AND coalesce(p.minutes_played, 0) > 0
+    GROUP BY p.match_id, fact_team_id
+),
+shooters AS (
+    SELECT
+        s.match_id AS match_id,
+        toInt32(assumeNotNull(s.team_id)) AS shooter_team_id,
+        toInt32(count(DISTINCT s.player_id)) AS distinct_shooters
+    FROM fotmob_silver.shot AS s
+    WHERE s.match_id > 0
+      AND s.team_id IS NOT NULL
+      AND s.player_id IS NOT NULL
+      AND coalesce(s.is_own_goal, 0) = 0
+    GROUP BY s.match_id, shooter_team_id
+),
 streaks AS (
     SELECT
-        tr.match_id AS match_id, tr.team_id AS team_id, tr.side AS side, toInt32(coalesce(if(tr.side = 'home', pst.big_chances_home, pst.big_chances_away), 0)) AS big_chances_for, toInt32(coalesce(if(tr.side = 'home', pst.big_chances_away, pst.big_chances_home), 0)) AS big_chances_against
+        tr.match_id AS match_id, tr.team_id AS team_id, tr.side AS side, toFloat64(round(toFloat64(toInt32(coalesce(if(tr.side = 'home', pst.passes_home, pst.passes_away), 0))) / greatest(toInt32(coalesce(if(tr.side = 'home', pst.total_shots_home, pst.total_shots_away), 0)), 1), 1)) AS passes_per_shot, toInt32(coalesce(if(tr.side = 'home', pst.passes_home, pst.passes_away), 0)) AS passes_for
     FROM team_results AS tr
+    LEFT JOIN team_player_facts AS f
+        ON f.match_id = tr.match_id
+       AND f.fact_team_id = tr.team_id
+    LEFT JOIN team_player_facts AS fo
+        ON fo.match_id = tr.match_id
+       AND fo.fact_team_id = tr.opponent_id
+    LEFT JOIN shooters AS sh
+        ON sh.match_id = tr.match_id
+       AND sh.shooter_team_id = tr.team_id
     INNER JOIN fotmob_silver.period_stat AS pst
         ON pst.match_id = tr.match_id
        AND pst.period = 'All'
-    WHERE coalesce(if(tr.side = 'home', pst.big_chances_home, pst.big_chances_away), 0) >= 5 AND coalesce(if(tr.side = 'home', pst.big_chances_away, pst.big_chances_home), 0) = 0
+    WHERE toInt32(coalesce(if(tr.side = 'home', pst.total_shots_home, pst.total_shots_away), 0)) >= 1 AND toFloat64(toInt32(coalesce(if(tr.side = 'home', pst.passes_home, pst.passes_away), 0))) / toInt32(coalesce(if(tr.side = 'home', pst.total_shots_home, pst.total_shots_away), 0)) >= 20
 )
 SELECT
     m.match_id AS match_id,
@@ -98,10 +133,10 @@ SELECT
     if(s.side = 'home', m.home_team_name, m.away_team_name) AS triggered_team_name,
     if(s.side = 'home', m.away_team_id, m.home_team_id) AS opponent_team_id,
     if(s.side = 'home', m.away_team_name, m.home_team_name) AS opponent_team_name,
-    toInt32(5) AS trigger_threshold_min_big_chances,
-    toInt32(s.big_chances_for) AS triggered_team_big_chances,
-    toInt32(toInt32(s.big_chances_for) - 5) AS triggered_team_big_chances_above_threshold,
-    toInt32(s.big_chances_against) AS opponent_big_chances,
+    toFloat64(20) AS trigger_threshold_min_passes_per_shot,
+    s.passes_per_shot AS triggered_team_passes_per_shot,
+    toFloat64(s.passes_per_shot - 20) AS triggered_team_passes_per_shot_above_threshold,
+    toInt32(s.passes_for) AS triggered_team_passes,
     toInt32(coalesce(if(s.side = 'home', m.home_score, m.away_score), 0)) AS triggered_team_goals,
     toInt32(coalesce(if(s.side = 'home', m.away_score, m.home_score), 0)) AS opponent_goals,
     toFloat32(coalesce(if(s.side = 'home', ps.expected_goals_home, ps.expected_goals_away), 0.0)) AS triggered_team_xg,
