@@ -373,7 +373,7 @@ SQL failures skip activation replacement until signals succeed or the builder
 is rerun with the same scope. The activation ID key uses each signal catalog
 `row_identity` definition.
 
-Current inventory: 486 matching SQL transforms and 486 matching markdown catalogs
+Current inventory: 487 matching SQL transforms and 487 matching markdown catalogs
 in `catalogs/signals/`. Authoring rules live in `catalogs/signals/contracts/`.
 
 - SQL files: `clickhouse/gold/dml/signals/*/sig_*.sql`
