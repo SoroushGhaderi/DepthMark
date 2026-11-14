@@ -48,6 +48,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_discipline_cards_battle_of_attrition` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_battle_of_attrition.md](sig_match_discipline_cards_battle_of_attrition.md) |
 | `sig_match_discipline_cards_blood_and_thunder` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_blood_and_thunder.md](sig_match_discipline_cards_blood_and_thunder.md) |
 | `sig_match_discipline_cards_boiling_over` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_boiling_over.md](sig_match_discipline_cards_boiling_over.md) |
+| `sig_match_discipline_cards_calm_before_the_storm` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_calm_before_the_storm.md](sig_match_discipline_cards_calm_before_the_storm.md) |
 | `sig_match_discipline_cards_card_frenzy` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_card_frenzy.md](sig_match_discipline_cards_card_frenzy.md) |
 | `sig_match_discipline_cards_card_heavy_substitutions` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_card_heavy_substitutions.md](sig_match_discipline_cards_card_heavy_substitutions.md) |
 | `sig_match_discipline_cards_chaos_90_plus` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_chaos_90_plus.md](sig_match_discipline_cards_chaos_90_plus.md) |
