@@ -510,6 +510,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_shot_shy` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shot_shy.md](sig_team_shooting_goals_shot_shy.md) |
 | `sig_team_shooting_goals_sustained_barrage` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_sustained_barrage.md](sig_team_shooting_goals_sustained_barrage.md) |
 | `sig_team_shooting_goals_sustained_second_half_siege` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_sustained_second_half_siege.md](sig_team_shooting_goals_sustained_second_half_siege.md) |
+| `sig_team_shooting_goals_total_shot_lockdown` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_total_shot_lockdown.md](sig_team_shooting_goals_total_shot_lockdown.md) |
 | `sig_team_shooting_goals_wasteful_box_presence` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_wasteful_box_presence.md](sig_team_shooting_goals_wasteful_box_presence.md) |
 | `sig_team_shooting_goals_woodwork_frustration_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_woodwork_frustration_team.md](sig_team_shooting_goals_woodwork_frustration_team.md) |
 | `sig_team_shooting_goals_xg_overperformance_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_overperformance_team.md](sig_team_shooting_goals_xg_overperformance_team.md) |
