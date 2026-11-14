@@ -124,6 +124,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_woodwork_record_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_woodwork_record_match.md](sig_match_shooting_goals_woodwork_record_match.md) |
 | `sig_match_streak_consistency_away_specialist` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_away_specialist.md](sig_match_streak_consistency_away_specialist.md) |
 | `sig_match_streak_consistency_bogey_team` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_bogey_team.md](sig_match_streak_consistency_bogey_team.md) |
+| `sig_match_streak_consistency_clean_sheet_head_to_head` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_clean_sheet_head_to_head.md](sig_match_streak_consistency_clean_sheet_head_to_head.md) |
 | `sig_match_streak_consistency_goal_fest_history` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_goal_fest_history.md](sig_match_streak_consistency_goal_fest_history.md) |
 | `sig_match_streak_consistency_high_scoring_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_high_scoring_rivalry.md](sig_match_streak_consistency_high_scoring_rivalry.md) |
 | `sig_match_streak_consistency_home_dominance` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_home_dominance.md](sig_match_streak_consistency_home_dominance.md) |
