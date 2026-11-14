@@ -39,7 +39,52 @@ INSERT INTO fotmob_gold_signals.sig_player_streak_consistency_creative_hub (
 -- Signal: sig_player_streak_consistency_creative_hub
 -- Intent: Detect players on an assisting run.
 -- Trigger: Player records >= 1 assist in >= 3 consecutive team matches (this match included).
-WITH player_rows AS (
+WITH team_matches AS (
+    SELECT
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.home_team_id AS team_id,
+        m.away_team_id AS opponent_id,
+        'home' AS side,
+        toInt32(coalesce(m.home_score, 0)) AS goals_for,
+        toInt32(coalesce(m.away_score, 0)) AS goals_against
+    FROM fotmob_silver.match AS m
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
+      AND m.home_team_id IS NOT NULL
+      AND m.away_team_id IS NOT NULL
+      AND m.home_score IS NOT NULL
+      AND m.away_score IS NOT NULL
+    UNION ALL
+    SELECT
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.away_team_id AS team_id,
+        m.home_team_id AS opponent_id,
+        'away' AS side,
+        toInt32(coalesce(m.away_score, 0)) AS goals_for,
+        toInt32(coalesce(m.home_score, 0)) AS goals_against
+    FROM fotmob_silver.match AS m
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
+      AND m.home_team_id IS NOT NULL
+      AND m.away_team_id IS NOT NULL
+      AND m.home_score IS NOT NULL
+      AND m.away_score IS NOT NULL
+),
+team_results AS (
+    SELECT
+        tm.match_id AS match_id,
+        tm.match_date AS match_date,
+        tm.team_id AS team_id,
+        tm.opponent_id AS opponent_id,
+        tm.side AS side,
+        tm.goals_for AS goals_for,
+        tm.goals_against AS goals_against,
+        row_number() OVER (PARTITION BY tm.team_id ORDER BY tm.match_date, tm.match_id) AS team_seq
+    FROM team_matches AS tm
+),
+player_rows AS (
     SELECT
         p.match_id AS match_id, p.match_date AS match_date, p.player_id AS player_id, p.player_name AS player_name,
         p.team_id AS team_id, tr.side AS side, tr.team_seq AS team_seq,
