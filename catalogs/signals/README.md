@@ -434,6 +434,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_clean_sheet_wall` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_clean_sheet_wall.md](sig_team_streak_consistency_clean_sheet_wall.md) |
 | `sig_team_streak_consistency_clinical_efficiency` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_clinical_efficiency.md](sig_team_streak_consistency_clinical_efficiency.md) |
 | `sig_team_streak_consistency_comeback_kings` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_comeback_kings.md](sig_team_streak_consistency_comeback_kings.md) |
+| `sig_team_streak_consistency_consistency_king` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_consistency_king.md](sig_team_streak_consistency_consistency_king.md) |
 | `sig_team_streak_consistency_corner_monopoly_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_corner_monopoly_run.md](sig_team_streak_consistency_corner_monopoly_run.md) |
 | `sig_team_streak_consistency_defensive_overperformance` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_defensive_overperformance.md](sig_team_streak_consistency_defensive_overperformance.md) |
 | `sig_team_streak_consistency_draw_specialist` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_draw_specialist.md](sig_team_streak_consistency_draw_specialist.md) |
