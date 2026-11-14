@@ -136,6 +136,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_streak_consistency_low_scoring_history` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_low_scoring_history.md](sig_match_streak_consistency_low_scoring_history.md) |
 | `sig_match_streak_consistency_nil_nil_curse` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_nil_nil_curse.md](sig_match_streak_consistency_nil_nil_curse.md) |
 | `sig_match_streak_consistency_one_sided_scoring` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_one_sided_scoring.md](sig_match_streak_consistency_one_sided_scoring.md) |
+| `sig_match_streak_consistency_penalty_fest_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_penalty_fest_rivalry.md](sig_match_streak_consistency_penalty_fest_rivalry.md) |
 | `sig_match_streak_consistency_red_card_tradition` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_red_card_tradition.md](sig_match_streak_consistency_red_card_tradition.md) |
 | `sig_match_streak_consistency_revolving_door` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_revolving_door.md](sig_match_streak_consistency_revolving_door.md) |
 | `sig_match_streak_consistency_shooting_gallery` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_shooting_gallery.md](sig_match_streak_consistency_shooting_gallery.md) |
