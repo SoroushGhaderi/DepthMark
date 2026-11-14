@@ -472,6 +472,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_invincible_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_invincible_run.md](sig_team_streak_consistency_invincible_run.md) |
 | `sig_team_streak_consistency_keeper_save_fest_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_keeper_save_fest_run.md](sig_team_streak_consistency_keeper_save_fest_run.md) |
 | `sig_team_streak_consistency_late_show` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_late_show.md](sig_team_streak_consistency_late_show.md) |
+| `sig_team_streak_consistency_midfield_stability_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_midfield_stability_run.md](sig_team_streak_consistency_midfield_stability_run.md) |
 | `sig_team_streak_consistency_nil_nil_specialists` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_nil_nil_specialists.md](sig_team_streak_consistency_nil_nil_specialists.md) |
 | `sig_team_streak_consistency_offside_trap_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_offside_trap_run.md](sig_team_streak_consistency_offside_trap_run.md) |
 | `sig_team_streak_consistency_one_nil_specialists` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_one_nil_specialists.md](sig_team_streak_consistency_one_nil_specialists.md) |
