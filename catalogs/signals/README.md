@@ -53,6 +53,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_discipline_cards_card_heavy_substitutions` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_card_heavy_substitutions.md](sig_match_discipline_cards_card_heavy_substitutions.md) |
 | `sig_match_discipline_cards_chaos_90_plus` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_chaos_90_plus.md](sig_match_discipline_cards_chaos_90_plus.md) |
 | `sig_match_discipline_cards_clean_fair_play` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_clean_fair_play.md](sig_match_discipline_cards_clean_fair_play.md) |
+| `sig_match_discipline_cards_disciplinary_equality` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_disciplinary_equality.md](sig_match_discipline_cards_disciplinary_equality.md) |
 | `sig_match_discipline_cards_discipline_dominance` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_discipline_dominance.md](sig_match_discipline_cards_discipline_dominance.md) |
 | `sig_match_discipline_cards_double_red_drama` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_double_red_drama.md](sig_match_discipline_cards_double_red_drama.md) |
 | `sig_match_discipline_cards_foul_heavy_stalemate` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_heavy_stalemate.md](sig_match_discipline_cards_foul_heavy_stalemate.md) |
