@@ -297,6 +297,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_dribble_engine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_dribble_engine.md](sig_player_streak_consistency_dribble_engine.md) |
 | `sig_player_streak_consistency_duel_dominance` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_duel_dominance.md](sig_player_streak_consistency_duel_dominance.md) |
 | `sig_player_streak_consistency_expected_underperformer` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_expected_underperformer.md](sig_player_streak_consistency_expected_underperformer.md) |
+| `sig_player_streak_consistency_fortress_keeper` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_fortress_keeper.md](sig_player_streak_consistency_fortress_keeper.md) |
 | `sig_player_streak_consistency_foul_frenzy` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_foul_frenzy.md](sig_player_streak_consistency_foul_frenzy.md) |
 | `sig_player_streak_consistency_foul_magnet_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_foul_magnet_run.md](sig_player_streak_consistency_foul_magnet_run.md) |
 | `sig_player_streak_consistency_impact_sub_success` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_impact_sub_success.md](sig_player_streak_consistency_impact_sub_success.md) |
