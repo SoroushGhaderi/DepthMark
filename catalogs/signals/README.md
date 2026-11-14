@@ -287,6 +287,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_volume_over_quality` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_volume_over_quality.md](sig_player_shooting_goals_volume_over_quality.md) |
 | `sig_player_shooting_goals_wasteful_finisher` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_wasteful_finisher.md](sig_player_shooting_goals_wasteful_finisher.md) |
 | `sig_player_shooting_goals_winning_impact` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_winning_impact.md](sig_player_shooting_goals_winning_impact.md) |
+| `sig_player_shooting_goals_woodwork_victim` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_woodwork_victim.md](sig_player_shooting_goals_woodwork_victim.md) |
 | `sig_player_shooting_goals_xg_accumulator_midfielder` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_xg_accumulator_midfielder.md](sig_player_shooting_goals_xg_accumulator_midfielder.md) |
 | `sig_player_streak_consistency_assist_overperformer` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_assist_overperformer.md](sig_player_streak_consistency_assist_overperformer.md) |
 | `sig_player_streak_consistency_box_presence_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_box_presence_run.md](sig_player_streak_consistency_box_presence_run.md) |
