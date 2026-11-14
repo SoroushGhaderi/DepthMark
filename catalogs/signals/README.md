@@ -511,6 +511,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_goalkeeping_defense_wing_lockdown_collective` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_wing_lockdown_collective.md](sig_team_goalkeeping_defense_wing_lockdown_collective.md) |
 | `sig_team_physical_workrate_duel_dominance_team` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_duel_dominance_team.md](sig_team_physical_workrate_duel_dominance_team.md) |
 | `sig_team_physical_workrate_ground_duel_dominance` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_ground_duel_dominance.md](sig_team_physical_workrate_ground_duel_dominance.md) |
+| `sig_team_physical_workrate_low_block_physicality` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_low_block_physicality.md](sig_team_physical_workrate_low_block_physicality.md) |
 | `sig_team_physical_workrate_recovery_marathon_team` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_recovery_marathon_team.md](sig_team_physical_workrate_recovery_marathon_team.md) |
 | `sig_team_possession_passing_accurate_unit` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_accurate_unit.md](sig_team_possession_passing_accurate_unit.md) |
 | `sig_team_possession_passing_aerial_reliance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_aerial_reliance.md](sig_team_possession_passing_aerial_reliance.md) |
