@@ -457,6 +457,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_wasteful_box_presence` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_wasteful_box_presence.md](sig_team_shooting_goals_wasteful_box_presence.md) |
 | `sig_team_shooting_goals_woodwork_frustration_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_woodwork_frustration_team.md](sig_team_shooting_goals_woodwork_frustration_team.md) |
 | `sig_team_shooting_goals_xg_overperformance_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_overperformance_team.md](sig_team_shooting_goals_xg_overperformance_team.md) |
+| `sig_team_shooting_goals_xg_underdog_win` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_underdog_win.md](sig_team_shooting_goals_xg_underdog_win.md) |
 | `sig_team_shooting_goals_zero_shot_half` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_zero_shot_half.md](sig_team_shooting_goals_zero_shot_half.md) |
 | `sig_team_streak_consistency_aerial_dominance_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_aerial_dominance_run.md](sig_team_streak_consistency_aerial_dominance_run.md) |
 | `sig_team_streak_consistency_away_goal_drought` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_away_goal_drought.md](sig_team_streak_consistency_away_goal_drought.md) |
