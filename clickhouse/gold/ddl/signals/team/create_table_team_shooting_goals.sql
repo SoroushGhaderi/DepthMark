@@ -2121,3 +2121,169 @@ CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_shooting_goals_expected_
 ) ENGINE = ReplacingMergeTree(inserted_at)
 ORDER BY (match_id, triggered_side, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
+
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_shooting_goals_counter_attack_lethality (
+    match_id Int32,
+    match_date Date,
+    home_team_id Nullable(Int32),
+    home_team_name Nullable(String),
+    away_team_id Nullable(Int32),
+    away_team_name Nullable(String),
+    home_score Nullable(Int32),
+    away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
+    triggered_team_id Nullable(Int32),
+    triggered_team_name Nullable(String),
+    opponent_team_id Nullable(Int32),
+    opponent_team_name Nullable(String),
+    trigger_threshold_min_fast_break_goals Int32,
+    triggered_team_fast_break_goals Int32,
+    triggered_team_fast_break_goals_above_threshold Int32,
+    triggered_team_goals Int32,
+    opponent_goals Int32,
+    triggered_team_xg Float32,
+    opponent_xg Float32,
+    triggered_team_total_shots Int32,
+    opponent_total_shots Int32,
+    triggered_team_shots_on_target Int32,
+    opponent_shots_on_target Int32,
+    triggered_team_possession_pct Float32,
+    opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_shooting_goals_counter_attack_lethality', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
+    inserted_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(inserted_at)
+ORDER BY (match_id, triggered_side, signal_instance_id)
+PARTITION BY toYYYYMM(match_date);
+
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_shooting_goals_aerial_assault (
+    match_id Int32,
+    match_date Date,
+    home_team_id Nullable(Int32),
+    home_team_name Nullable(String),
+    away_team_id Nullable(Int32),
+    away_team_name Nullable(String),
+    home_score Nullable(Int32),
+    away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
+    triggered_team_id Nullable(Int32),
+    triggered_team_name Nullable(String),
+    opponent_team_id Nullable(Int32),
+    opponent_team_name Nullable(String),
+    trigger_threshold_min_headed_goals Int32,
+    triggered_team_headed_goals Int32,
+    triggered_team_headed_goals_above_threshold Int32,
+    triggered_team_goals Int32,
+    opponent_goals Int32,
+    triggered_team_xg Float32,
+    opponent_xg Float32,
+    triggered_team_total_shots Int32,
+    opponent_total_shots Int32,
+    triggered_team_shots_on_target Int32,
+    opponent_shots_on_target Int32,
+    triggered_team_possession_pct Float32,
+    opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_shooting_goals_aerial_assault', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
+    inserted_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(inserted_at)
+ORDER BY (match_id, triggered_side, signal_instance_id)
+PARTITION BY toYYYYMM(match_date);
+
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_shooting_goals_direct_free_kick_threat (
+    match_id Int32,
+    match_date Date,
+    home_team_id Nullable(Int32),
+    home_team_name Nullable(String),
+    away_team_id Nullable(Int32),
+    away_team_name Nullable(String),
+    home_score Nullable(Int32),
+    away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
+    triggered_team_id Nullable(Int32),
+    triggered_team_name Nullable(String),
+    opponent_team_id Nullable(Int32),
+    opponent_team_name Nullable(String),
+    trigger_threshold_min_free_kick_shots_on_target Int32,
+    triggered_team_free_kick_shots_on_target Int32,
+    triggered_team_free_kick_shots_on_target_above_threshold Int32,
+    triggered_team_goals Int32,
+    opponent_goals Int32,
+    triggered_team_xg Float32,
+    opponent_xg Float32,
+    triggered_team_total_shots Int32,
+    opponent_total_shots Int32,
+    triggered_team_shots_on_target Int32,
+    opponent_shots_on_target Int32,
+    triggered_team_possession_pct Float32,
+    opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_shooting_goals_direct_free_kick_threat', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
+    inserted_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(inserted_at)
+ORDER BY (match_id, triggered_side, signal_instance_id)
+PARTITION BY toYYYYMM(match_date);
+
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_shooting_goals_xg_underdog_win (
+    match_id Int32,
+    match_date Date,
+    home_team_id Nullable(Int32),
+    home_team_name Nullable(String),
+    away_team_id Nullable(Int32),
+    away_team_name Nullable(String),
+    home_score Nullable(Int32),
+    away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
+    triggered_team_id Nullable(Int32),
+    triggered_team_name Nullable(String),
+    opponent_team_id Nullable(Int32),
+    opponent_team_name Nullable(String),
+    trigger_threshold_max_xg_share_pct Float64,
+    triggered_team_xg_share_of_opponent_pct Float64,
+    xg_share_below_threshold_pct Float64,
+    triggered_team_goals Int32,
+    opponent_goals Int32,
+    triggered_team_xg Float32,
+    opponent_xg Float32,
+    triggered_team_total_shots Int32,
+    opponent_total_shots Int32,
+    triggered_team_shots_on_target Int32,
+    opponent_shots_on_target Int32,
+    triggered_team_possession_pct Float32,
+    opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_shooting_goals_xg_underdog_win', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
+    inserted_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(inserted_at)
+ORDER BY (match_id, triggered_side, signal_instance_id)
+PARTITION BY toYYYYMM(match_date);
+
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_team_shooting_goals_big_chance_monopoly (
+    match_id Int32,
+    match_date Date,
+    home_team_id Nullable(Int32),
+    home_team_name Nullable(String),
+    away_team_id Nullable(Int32),
+    away_team_name Nullable(String),
+    home_score Nullable(Int32),
+    away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
+    triggered_team_id Nullable(Int32),
+    triggered_team_name Nullable(String),
+    opponent_team_id Nullable(Int32),
+    opponent_team_name Nullable(String),
+    trigger_threshold_min_big_chances Int32,
+    triggered_team_big_chances Int32,
+    triggered_team_big_chances_above_threshold Int32,
+    opponent_big_chances Int32,
+    triggered_team_goals Int32,
+    opponent_goals Int32,
+    triggered_team_xg Float32,
+    opponent_xg Float32,
+    triggered_team_total_shots Int32,
+    opponent_total_shots Int32,
+    triggered_team_shots_on_target Int32,
+    opponent_shots_on_target Int32,
+    triggered_team_possession_pct Float32,
+    opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_team_shooting_goals_big_chance_monopoly', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_side), ''))))),
+    inserted_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(inserted_at)
+ORDER BY (match_id, triggered_side, signal_instance_id)
+PARTITION BY toYYYYMM(match_date);
