@@ -260,6 +260,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_clinical_finisher` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clinical_finisher.md](sig_player_streak_consistency_clinical_finisher.md) |
 | `sig_player_streak_consistency_creative_hub` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_creative_hub.md](sig_player_streak_consistency_creative_hub.md) |
 | `sig_player_streak_consistency_dribble_engine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_dribble_engine.md](sig_player_streak_consistency_dribble_engine.md) |
+| `sig_player_streak_consistency_foul_frenzy` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_foul_frenzy.md](sig_player_streak_consistency_foul_frenzy.md) |
 | `sig_player_streak_consistency_foul_magnet_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_foul_magnet_run.md](sig_player_streak_consistency_foul_magnet_run.md) |
 | `sig_player_streak_consistency_key_pass_machine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_key_pass_machine.md](sig_player_streak_consistency_key_pass_machine.md) |
 | `sig_player_streak_consistency_shot_machine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_machine.md](sig_player_streak_consistency_shot_machine.md) |
