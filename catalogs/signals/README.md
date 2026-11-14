@@ -371,6 +371,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_discipline_cards_foul_efficiency` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_foul_efficiency.md](sig_team_discipline_cards_foul_efficiency.md) |
 | `sig_team_discipline_cards_foul_heavy_defeat` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_foul_heavy_defeat.md](sig_team_discipline_cards_foul_heavy_defeat.md) |
 | `sig_team_discipline_cards_frustration_peak` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_frustration_peak.md](sig_team_discipline_cards_frustration_peak.md) |
+| `sig_team_discipline_cards_gentle_giants` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_gentle_giants.md](sig_team_discipline_cards_gentle_giants.md) |
 | `sig_team_discipline_cards_half_time_talk_fail` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_half_time_talk_fail.md](sig_team_discipline_cards_half_time_talk_fail.md) |
 | `sig_team_discipline_cards_hostile_territory` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_hostile_territory.md](sig_team_discipline_cards_hostile_territory.md) |
 | `sig_team_discipline_cards_man_advantage_collapse` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_man_advantage_collapse.md](sig_team_discipline_cards_man_advantage_collapse.md) |
