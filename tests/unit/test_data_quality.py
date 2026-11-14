@@ -296,7 +296,7 @@ def test_repository_contracts_cover_all_declared_warehouse_outputs():
     assert len([name for name in contracts if name.startswith("fotmob_bronze.")]) == 15
     assert len([name for name in contracts if name.startswith("fotmob_silver.")]) == 8
     assert len([name for name in contracts if name.startswith("fotmob_gold_scenarios.")]) == 48
-    assert len([name for name in contracts if name.startswith("fotmob_gold_signals.")]) == 512
+    assert len([name for name in contracts if name.startswith("fotmob_gold_signals.")]) == 513
     assert contracts["fotmob_gold.signal_activations"].columns == ("signal_instance_id",)
 
 
@@ -304,7 +304,7 @@ def test_signal_dml_insert_columns_match_ddl_and_catalog_identity():
     project_root = Path.cwd()
     ddl_columns_by_signal = _signal_ddl_columns(project_root)
 
-    assert len(ddl_columns_by_signal) == 512
+    assert len(ddl_columns_by_signal) == 513
 
     for path in sorted((project_root / "clickhouse/gold/dml/signals").rglob("sig_*.sql")):
         signal_id, insert_columns = _signal_insert_columns(path.read_text(encoding="utf-8"))

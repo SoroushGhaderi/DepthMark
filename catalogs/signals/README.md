@@ -370,6 +370,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_creativity_playmaking_unlikely_creative_source` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_unlikely_creative_source.md](sig_team_creativity_playmaking_unlikely_creative_source.md) |
 | `sig_team_creativity_playmaking_unproductive_flair` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_unproductive_flair.md](sig_team_creativity_playmaking_unproductive_flair.md) |
 | `sig_team_creativity_playmaking_wide_play_monopoly` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_wide_play_monopoly.md](sig_team_creativity_playmaking_wide_play_monopoly.md) |
+| `sig_team_creativity_playmaking_xa_dominance` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_xa_dominance.md](sig_team_creativity_playmaking_xa_dominance.md) |
 | `sig_team_discipline_cards_aggression_drop_off` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_aggression_drop_off.md](sig_team_discipline_cards_aggression_drop_off.md) |
 | `sig_team_discipline_cards_aggression_spike` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_aggression_spike.md](sig_team_discipline_cards_aggression_spike.md) |
 | `sig_team_discipline_cards_away_hostility` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_away_hostility.md](sig_team_discipline_cards_away_hostility.md) |
