@@ -122,6 +122,8 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_unlucky_game` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unlucky_game.md](sig_match_shooting_goals_unlucky_game.md) |
 | `sig_match_shooting_goals_unproductive_dominance` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unproductive_dominance.md](sig_match_shooting_goals_unproductive_dominance.md) |
 | `sig_match_shooting_goals_woodwork_record_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_woodwork_record_match.md](sig_match_shooting_goals_woodwork_record_match.md) |
+| `sig_match_streak_consistency_bogey_team` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_bogey_team.md](sig_match_streak_consistency_bogey_team.md) |
+| `sig_match_streak_consistency_stalemate_cycle` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_stalemate_cycle.md](sig_match_streak_consistency_stalemate_cycle.md) |
 | `sig_player_creativity_playmaking_assist_brace` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_assist_brace.md](sig_player_creativity_playmaking_assist_brace.md) |
 | `sig_player_creativity_playmaking_assist_hat_trick` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_assist_hat_trick.md](sig_player_creativity_playmaking_assist_hat_trick.md) |
 | `sig_player_creativity_playmaking_box_penetrator` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_box_penetrator.md](sig_player_creativity_playmaking_box_penetrator.md) |
@@ -251,6 +253,10 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_wasteful_finisher` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_wasteful_finisher.md](sig_player_shooting_goals_wasteful_finisher.md) |
 | `sig_player_shooting_goals_winning_impact` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_winning_impact.md](sig_player_shooting_goals_winning_impact.md) |
 | `sig_player_shooting_goals_xg_accumulator_midfielder` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_xg_accumulator_midfielder.md](sig_player_shooting_goals_xg_accumulator_midfielder.md) |
+| `sig_player_streak_consistency_clean_sheet_century` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clean_sheet_century.md](sig_player_streak_consistency_clean_sheet_century.md) |
+| `sig_player_streak_consistency_clinical_finisher` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clinical_finisher.md](sig_player_streak_consistency_clinical_finisher.md) |
+| `sig_player_streak_consistency_creative_hub` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_creative_hub.md](sig_player_streak_consistency_creative_hub.md) |
+| `sig_player_streak_consistency_the_iron_man` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_the_iron_man.md](sig_player_streak_consistency_the_iron_man.md) |
 | `sig_team_creativity_playmaking_bench_creative_impact` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_bench_creative_impact.md](sig_team_creativity_playmaking_bench_creative_impact.md) |
 | `sig_team_creativity_playmaking_big_chance_monopoly` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_big_chance_monopoly.md](sig_team_creativity_playmaking_big_chance_monopoly.md) |
 | `sig_team_creativity_playmaking_chance_barrage` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_chance_barrage.md](sig_team_creativity_playmaking_chance_barrage.md) |
@@ -373,4 +379,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_woodwork_frustration_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_woodwork_frustration_team.md](sig_team_shooting_goals_woodwork_frustration_team.md) |
 | `sig_team_shooting_goals_xg_overperformance_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_overperformance_team.md](sig_team_shooting_goals_xg_overperformance_team.md) |
 | `sig_team_shooting_goals_zero_shot_half` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_zero_shot_half.md](sig_team_shooting_goals_zero_shot_half.md) |
+| `sig_team_streak_consistency_first_goal_winner` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_goal_winner.md](sig_team_streak_consistency_first_goal_winner.md) |
+| `sig_team_streak_consistency_invincible_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_invincible_run.md](sig_team_streak_consistency_invincible_run.md) |
+| `sig_team_streak_consistency_winning_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_winning_machine.md](sig_team_streak_consistency_winning_machine.md) |
 <!-- signal-index:end -->
