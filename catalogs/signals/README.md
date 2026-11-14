@@ -103,6 +103,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_clinical_showdown` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_showdown.md](sig_match_shooting_goals_clinical_showdown.md) |
 | `sig_match_shooting_goals_clinical_sub_impact` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_sub_impact.md](sig_match_shooting_goals_clinical_sub_impact.md) |
 | `sig_match_shooting_goals_complete_dominance` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_complete_dominance.md](sig_match_shooting_goals_complete_dominance.md) |
+| `sig_match_shooting_goals_deadlock_broken` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_deadlock_broken.md](sig_match_shooting_goals_deadlock_broken.md) |
 | `sig_match_shooting_goals_distance_shooting_duel` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_distance_shooting_duel.md](sig_match_shooting_goals_distance_shooting_duel.md) |
 | `sig_match_shooting_goals_early_goal_late_goal` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_early_goal_late_goal.md](sig_match_shooting_goals_early_goal_late_goal.md) |
 | `sig_match_shooting_goals_end_to_end_drama` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_end_to_end_drama.md](sig_match_shooting_goals_end_to_end_drama.md) |
