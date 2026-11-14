@@ -540,6 +540,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_no_shots_on_target_shame` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_no_shots_on_target_shame.md](sig_team_shooting_goals_no_shots_on_target_shame.md) |
 | `sig_team_shooting_goals_no_striker_needed` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_no_striker_needed.md](sig_team_shooting_goals_no_striker_needed.md) |
 | `sig_team_shooting_goals_offensive_masterclass` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_offensive_masterclass.md](sig_team_shooting_goals_offensive_masterclass.md) |
+| `sig_team_shooting_goals_one_sided_shot_rout` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_one_sided_shot_rout.md](sig_team_shooting_goals_one_sided_shot_rout.md) |
 | `sig_team_shooting_goals_rapid_double_salvo` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_rapid_double_salvo.md](sig_team_shooting_goals_rapid_double_salvo.md) |
 | `sig_team_shooting_goals_rapid_response_goal` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_rapid_response_goal.md](sig_team_shooting_goals_rapid_response_goal.md) |
 | `sig_team_shooting_goals_rout_win` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_rout_win.md](sig_team_shooting_goals_rout_win.md) |
