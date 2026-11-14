@@ -430,6 +430,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_fast_goal_concession` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_fast_goal_concession.md](sig_team_streak_consistency_fast_goal_concession.md) |
 | `sig_team_streak_consistency_fast_starters` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_fast_starters.md](sig_team_streak_consistency_fast_starters.md) |
 | `sig_team_streak_consistency_first_goal_winner` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_goal_winner.md](sig_team_streak_consistency_first_goal_winner.md) |
+| `sig_team_streak_consistency_first_half_blank_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_half_blank_run.md](sig_team_streak_consistency_first_half_blank_run.md) |
 | `sig_team_streak_consistency_first_half_dominance` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_half_dominance.md](sig_team_streak_consistency_first_half_dominance.md) |
 | `sig_team_streak_consistency_goal_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_goal_machine.md](sig_team_streak_consistency_goal_machine.md) |
 | `sig_team_streak_consistency_half_time_draw_win_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_half_time_draw_win_run.md](sig_team_streak_consistency_half_time_draw_win_run.md) |
