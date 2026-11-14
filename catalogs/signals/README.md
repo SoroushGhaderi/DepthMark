@@ -278,6 +278,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_key_pass_machine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_key_pass_machine.md](sig_player_streak_consistency_key_pass_machine.md) |
 | `sig_player_streak_consistency_man_of_the_match_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_man_of_the_match_run.md](sig_player_streak_consistency_man_of_the_match_run.md) |
 | `sig_player_streak_consistency_penalty_specialist` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_penalty_specialist.md](sig_player_streak_consistency_penalty_specialist.md) |
+| `sig_player_streak_consistency_second_half_hero` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_second_half_hero.md](sig_player_streak_consistency_second_half_hero.md) |
 | `sig_player_streak_consistency_shot_machine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_machine.md](sig_player_streak_consistency_shot_machine.md) |
 | `sig_player_streak_consistency_shot_on_target_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_on_target_run.md](sig_player_streak_consistency_shot_on_target_run.md) |
 | `sig_player_streak_consistency_tackle_wall` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_tackle_wall.md](sig_player_streak_consistency_tackle_wall.md) |
