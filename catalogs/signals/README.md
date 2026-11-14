@@ -197,6 +197,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_discipline_cards_late_red_drama` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_late_red_drama.md](sig_player_discipline_cards_late_red_drama.md) |
 | `sig_player_discipline_cards_penalty_conceder` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_penalty_conceder.md](sig_player_discipline_cards_penalty_conceder.md) |
 | `sig_player_discipline_cards_sub_card_speedrun` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_sub_card_speedrun.md](sig_player_discipline_cards_sub_card_speedrun.md) |
+| `sig_player_discipline_cards_the_instigator` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_the_instigator.md](sig_player_discipline_cards_the_instigator.md) |
 | `sig_player_discipline_cards_unnecessary_card` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_unnecessary_card.md](sig_player_discipline_cards_unnecessary_card.md) |
 | `sig_player_discipline_cards_walking_tightrope` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_walking_tightrope.md](sig_player_discipline_cards_walking_tightrope.md) |
 | `sig_player_goalkeeping_defense_aerial_stronghold` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_aerial_stronghold.md](sig_player_goalkeeping_defense_aerial_stronghold.md) |
