@@ -40,7 +40,7 @@ ClickHouse namespaces:
 | Namespace | Purpose | Current inventory |
 | --- | --- | --- |
 | `fotmob_gold_scenarios.*` | Scenario outputs at team/match or player grain | 48 tables (23 team, 25 player) |
-| `fotmob_gold_signals.*` | Signal outputs at match, team, or player grain | 374 `sig_*` tables |
+| `fotmob_gold_signals.*` | Signal outputs at match, team, or player grain | 375 `sig_*` tables |
 | `fotmob_gold.*` | Shared activation serving metadata | `signal_activations` |
 
 Gold setup DDL lives under `clickhouse/gold/ddl/`; transforms live under

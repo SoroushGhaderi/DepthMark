@@ -402,5 +402,6 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_one_nil_specialists` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_one_nil_specialists.md](sig_team_streak_consistency_one_nil_specialists.md) |
 | `sig_team_streak_consistency_over_25_goals_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_over_25_goals_run.md](sig_team_streak_consistency_over_25_goals_run.md) |
 | `sig_team_streak_consistency_scoring_drought` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_scoring_drought.md](sig_team_streak_consistency_scoring_drought.md) |
+| `sig_team_streak_consistency_scoring_marathon` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_scoring_marathon.md](sig_team_streak_consistency_scoring_marathon.md) |
 | `sig_team_streak_consistency_winning_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_winning_machine.md](sig_team_streak_consistency_winning_machine.md) |
 <!-- signal-index:end -->
