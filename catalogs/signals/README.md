@@ -517,6 +517,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_possession_passing_vertical_imbalance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_vertical_imbalance.md](sig_team_possession_passing_vertical_imbalance.md) |
 | `sig_team_shooting_goals_aerial_assault` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_aerial_assault.md](sig_team_shooting_goals_aerial_assault.md) |
 | `sig_team_shooting_goals_bench_goals_impact` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_bench_goals_impact.md](sig_team_shooting_goals_bench_goals_impact.md) |
+| `sig_team_shooting_goals_bench_winning_goal` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_bench_winning_goal.md](sig_team_shooting_goals_bench_winning_goal.md) |
 | `sig_team_shooting_goals_big_chance_efficiency` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_big_chance_efficiency.md](sig_team_shooting_goals_big_chance_efficiency.md) |
 | `sig_team_shooting_goals_blank_range` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_blank_range.md](sig_team_shooting_goals_blank_range.md) |
 | `sig_team_shooting_goals_box_siege` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_box_siege.md](sig_team_shooting_goals_box_siege.md) |
