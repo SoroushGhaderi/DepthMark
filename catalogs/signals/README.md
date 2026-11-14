@@ -253,6 +253,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_wasteful_finisher` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_wasteful_finisher.md](sig_player_shooting_goals_wasteful_finisher.md) |
 | `sig_player_shooting_goals_winning_impact` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_winning_impact.md](sig_player_shooting_goals_winning_impact.md) |
 | `sig_player_shooting_goals_xg_accumulator_midfielder` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_xg_accumulator_midfielder.md](sig_player_shooting_goals_xg_accumulator_midfielder.md) |
+| `sig_player_streak_consistency_brace_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_brace_run.md](sig_player_streak_consistency_brace_run.md) |
 | `sig_player_streak_consistency_card_free_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_card_free_run.md](sig_player_streak_consistency_card_free_run.md) |
 | `sig_player_streak_consistency_card_magnet` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_card_magnet.md](sig_player_streak_consistency_card_magnet.md) |
 | `sig_player_streak_consistency_clean_sheet_century` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clean_sheet_century.md](sig_player_streak_consistency_clean_sheet_century.md) |
