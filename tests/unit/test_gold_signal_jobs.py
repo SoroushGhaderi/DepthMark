@@ -41,7 +41,7 @@ def test_signal_jobs_are_the_active_catalog_signals(catalog_with_deprecated_sign
     )
 
     job_ids = [job.job_id for job in jobs]
-    assert len(job_ids) == 471
+    assert len(job_ids) == 472
     assert DEPRECATED_SIGNAL not in job_ids
     assert job_ids == sorted(job_ids)
     assert jobs[0].sql_file == catalog_with_deprecated_signal.get(job_ids[0]).sql_path

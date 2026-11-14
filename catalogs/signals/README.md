@@ -263,6 +263,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_first_minute_goal` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_first_minute_goal.md](sig_player_shooting_goals_first_minute_goal.md) |
 | `sig_player_shooting_goals_freekick_master` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_freekick_master.md](sig_player_shooting_goals_freekick_master.md) |
 | `sig_player_shooting_goals_hat_trick_hero` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_hat_trick_hero.md](sig_player_shooting_goals_hat_trick_hero.md) |
+| `sig_player_shooting_goals_headed_threat` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_headed_threat.md](sig_player_shooting_goals_headed_threat.md) |
 | `sig_player_shooting_goals_headers_only` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_headers_only.md](sig_player_shooting_goals_headers_only.md) |
 | `sig_player_shooting_goals_high_velocity_finisher` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_high_velocity_finisher.md](sig_player_shooting_goals_high_velocity_finisher.md) |
 | `sig_player_shooting_goals_high_volume_zero_test` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_high_volume_zero_test.md](sig_player_shooting_goals_high_volume_zero_test.md) |
