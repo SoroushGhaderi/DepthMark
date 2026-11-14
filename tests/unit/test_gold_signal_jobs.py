@@ -41,7 +41,7 @@ def test_signal_jobs_are_the_active_catalog_signals(catalog_with_deprecated_sign
     )
 
     job_ids = [job.job_id for job in jobs]
-    assert len(job_ids) == 562
+    assert len(job_ids) == 590
     assert DEPRECATED_SIGNAL not in job_ids
     assert job_ids == sorted(job_ids)
     assert jobs[0].sql_file == catalog_with_deprecated_signal.get(job_ids[0]).sql_path
@@ -56,7 +56,7 @@ def test_signal_jobs_filter_by_entity_and_family(catalog_with_deprecated_signal)
     )
 
     assert all(job.job_id.startswith("sig_match_") for job in match_jobs)
-    assert len(match_jobs) == 159
+    assert len(match_jobs) == 177
     assert all("_shooting_goals_" in job.job_id for job in family_jobs)
     assert DEPRECATED_SIGNAL not in [job.job_id for job in family_jobs]
 
