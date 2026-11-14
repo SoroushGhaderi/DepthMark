@@ -117,9 +117,12 @@ draw_streaks AS (
 ),
 streaks AS (
     SELECT ds.match_id AS match_id, ds.streak_length AS streak_length, ds.streak_start_date AS streak_start_date,
-           ds.streak_total_goals AS streak_total_goals, side
+           ds.streak_total_goals AS streak_total_goals, 'home' AS side
     FROM draw_streaks AS ds
-    ARRAY JOIN ['home', 'away'] AS side
+    UNION ALL
+    SELECT ds.match_id AS match_id, ds.streak_length AS streak_length, ds.streak_start_date AS streak_start_date,
+           ds.streak_total_goals AS streak_total_goals, 'away' AS side
+    FROM draw_streaks AS ds
 )
 SELECT
     m.match_id AS match_id,
