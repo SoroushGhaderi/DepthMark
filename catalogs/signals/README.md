@@ -62,6 +62,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_discipline_cards_heated_derby_stats` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_heated_derby_stats.md](sig_match_discipline_cards_heated_derby_stats.md) |
 | `sig_match_discipline_cards_high_tension_draw` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_high_tension_draw.md](sig_match_discipline_cards_high_tension_draw.md) |
 | `sig_match_discipline_cards_one_sided_discipline` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_one_sided_discipline.md](sig_match_discipline_cards_one_sided_discipline.md) |
+| `sig_match_discipline_cards_penalty_showdown` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_penalty_showdown.md](sig_match_discipline_cards_penalty_showdown.md) |
 | `sig_match_discipline_cards_physical_showdown` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_physical_showdown.md](sig_match_discipline_cards_physical_showdown.md) |
 | `sig_match_discipline_cards_referee_let_it_flow` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_let_it_flow.md](sig_match_discipline_cards_referee_let_it_flow.md) |
 | `sig_match_discipline_cards_referee_showdown` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_showdown.md](sig_match_discipline_cards_referee_showdown.md) |
