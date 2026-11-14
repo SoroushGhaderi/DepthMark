@@ -138,6 +138,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_rapid_fire_exchange` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_rapid_fire_exchange.md](sig_match_shooting_goals_rapid_fire_exchange.md) |
 | `sig_match_shooting_goals_set_piece_duel` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_set_piece_duel.md](sig_match_shooting_goals_set_piece_duel.md) |
 | `sig_match_shooting_goals_shot_efficiency_parity` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_shot_efficiency_parity.md](sig_match_shooting_goals_shot_efficiency_parity.md) |
+| `sig_match_shooting_goals_sub_striker_duel` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_sub_striker_duel.md](sig_match_shooting_goals_sub_striker_duel.md) |
 | `sig_match_shooting_goals_substituted_scoring_fest` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_substituted_scoring_fest.md](sig_match_shooting_goals_substituted_scoring_fest.md) |
 | `sig_match_shooting_goals_the_brace_battle` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_the_brace_battle.md](sig_match_shooting_goals_the_brace_battle.md) |
 | `sig_match_shooting_goals_unlucky_game` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unlucky_game.md](sig_match_shooting_goals_unlucky_game.md) |
