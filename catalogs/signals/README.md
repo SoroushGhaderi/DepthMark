@@ -59,6 +59,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_discipline_cards_disciplinary_equality` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_disciplinary_equality.md](sig_match_discipline_cards_disciplinary_equality.md) |
 | `sig_match_discipline_cards_discipline_dominance` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_discipline_dominance.md](sig_match_discipline_cards_discipline_dominance.md) |
 | `sig_match_discipline_cards_double_red_drama` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_double_red_drama.md](sig_match_discipline_cards_double_red_drama.md) |
+| `sig_match_discipline_cards_first_half_red` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_first_half_red.md](sig_match_discipline_cards_first_half_red.md) |
 | `sig_match_discipline_cards_foul_heavy_stalemate` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_heavy_stalemate.md](sig_match_discipline_cards_foul_heavy_stalemate.md) |
 | `sig_match_discipline_cards_foul_parity` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_foul_parity.md](sig_match_discipline_cards_foul_parity.md) |
 | `sig_match_discipline_cards_heated_derby_stats` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_heated_derby_stats.md](sig_match_discipline_cards_heated_derby_stats.md) |
