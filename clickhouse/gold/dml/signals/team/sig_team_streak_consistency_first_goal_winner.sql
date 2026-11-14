@@ -32,7 +32,52 @@ INSERT INTO fotmob_gold_signals.sig_team_streak_consistency_first_goal_winner (
 -- Signal: sig_team_streak_consistency_first_goal_winner
 -- Intent: Detect teams that always convert an opening goal into a win.
 -- Trigger: Team has won its last >= 10 matches in which it scored first (this match included).
-WITH first_goals AS (
+WITH team_matches AS (
+    SELECT
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.home_team_id AS team_id,
+        m.away_team_id AS opponent_id,
+        'home' AS side,
+        toInt32(coalesce(m.home_score, 0)) AS goals_for,
+        toInt32(coalesce(m.away_score, 0)) AS goals_against
+    FROM fotmob_silver.match AS m
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
+      AND m.home_team_id IS NOT NULL
+      AND m.away_team_id IS NOT NULL
+      AND m.home_score IS NOT NULL
+      AND m.away_score IS NOT NULL
+    UNION ALL
+    SELECT
+        m.match_id AS match_id,
+        m.match_date AS match_date,
+        m.away_team_id AS team_id,
+        m.home_team_id AS opponent_id,
+        'away' AS side,
+        toInt32(coalesce(m.away_score, 0)) AS goals_for,
+        toInt32(coalesce(m.home_score, 0)) AS goals_against
+    FROM fotmob_silver.match AS m
+    WHERE m.match_finished = 1
+      AND m.match_id > 0
+      AND m.home_team_id IS NOT NULL
+      AND m.away_team_id IS NOT NULL
+      AND m.home_score IS NOT NULL
+      AND m.away_score IS NOT NULL
+),
+team_results AS (
+    SELECT
+        tm.match_id AS match_id,
+        tm.match_date AS match_date,
+        tm.team_id AS team_id,
+        tm.opponent_id AS opponent_id,
+        tm.side AS side,
+        tm.goals_for AS goals_for,
+        tm.goals_against AS goals_against,
+        row_number() OVER (PARTITION BY tm.team_id ORDER BY tm.match_date, tm.match_id) AS team_seq
+    FROM team_matches AS tm
+),
+first_goals AS (
     SELECT
         sh.match_id AS match_id,
         any(if(coalesce(sh.home_score_after, 0) = 1, 'home', 'away')) AS first_scorer_side
