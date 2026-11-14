@@ -207,6 +207,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_creativity_playmaking_unselfish_forward` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_unselfish_forward.md](sig_player_creativity_playmaking_unselfish_forward.md) |
 | `sig_player_discipline_cards_bench_discipline` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_bench_discipline.md](sig_player_discipline_cards_bench_discipline.md) |
 | `sig_player_discipline_cards_captain_diplomacy` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_captain_diplomacy.md](sig_player_discipline_cards_captain_diplomacy.md) |
+| `sig_player_discipline_cards_captain_liability` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_captain_liability.md](sig_player_discipline_cards_captain_liability.md) |
 | `sig_player_discipline_cards_captain_reprimand` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_captain_reprimand.md](sig_player_discipline_cards_captain_reprimand.md) |
 | `sig_player_discipline_cards_dirty_half_dozen` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_dirty_half_dozen.md](sig_player_discipline_cards_dirty_half_dozen.md) |
 | `sig_player_discipline_cards_double_yellow_dismissal` | player | discipline | cards | `match_player` | active | [sig_player_discipline_cards_double_yellow_dismissal.md](sig_player_discipline_cards_double_yellow_dismissal.md) |
