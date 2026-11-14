@@ -157,6 +157,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_the_brace_battle` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_the_brace_battle.md](sig_match_shooting_goals_the_brace_battle.md) |
 | `sig_match_shooting_goals_the_set_piece_derby` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_the_set_piece_derby.md](sig_match_shooting_goals_the_set_piece_derby.md) |
 | `sig_match_shooting_goals_the_unlikely_draw` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_the_unlikely_draw.md](sig_match_shooting_goals_the_unlikely_draw.md) |
+| `sig_match_shooting_goals_the_woodwork_decision` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_the_woodwork_decision.md](sig_match_shooting_goals_the_woodwork_decision.md) |
 | `sig_match_shooting_goals_unassisted_goal_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unassisted_goal_match.md](sig_match_shooting_goals_unassisted_goal_match.md) |
 | `sig_match_shooting_goals_unlikely_scorer_duel` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unlikely_scorer_duel.md](sig_match_shooting_goals_unlikely_scorer_duel.md) |
 | `sig_match_shooting_goals_unlucky_game` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unlucky_game.md](sig_match_shooting_goals_unlucky_game.md) |
