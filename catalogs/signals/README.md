@@ -491,6 +491,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_expected_goal_dominance` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_expected_goal_dominance.md](sig_team_shooting_goals_expected_goal_dominance.md) |
 | `sig_team_shooting_goals_half_time_talk_impact` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_half_time_talk_impact.md](sig_team_shooting_goals_half_time_talk_impact.md) |
 | `sig_team_shooting_goals_high_quality_only` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_high_quality_only.md](sig_team_shooting_goals_high_quality_only.md) |
+| `sig_team_shooting_goals_keeper_wall_barrage` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_keeper_wall_barrage.md](sig_team_shooting_goals_keeper_wall_barrage.md) |
 | `sig_team_shooting_goals_late_game_salvage` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_late_game_salvage.md](sig_team_shooting_goals_late_game_salvage.md) |
 | `sig_team_shooting_goals_late_surge_goals` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_late_surge_goals.md](sig_team_shooting_goals_late_surge_goals.md) |
 | `sig_team_shooting_goals_long_range_barrage` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_long_range_barrage.md](sig_team_shooting_goals_long_range_barrage.md) |
