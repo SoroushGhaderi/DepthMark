@@ -286,6 +286,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_goalkeeping_defense_tackle_master` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_tackle_master.md](sig_player_goalkeeping_defense_tackle_master.md) |
 | `sig_player_goalkeeping_defense_unbeatable_duelist` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_unbeatable_duelist.md](sig_player_goalkeeping_defense_unbeatable_duelist.md) |
 | `sig_player_goalkeeping_defense_unbeaten_in_air` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_unbeaten_in_air.md](sig_player_goalkeeping_defense_unbeaten_in_air.md) |
+| `sig_player_physical_workrate_aerial_dominator` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_aerial_dominator.md](sig_player_physical_workrate_aerial_dominator.md) |
 | `sig_player_physical_workrate_duel_beast` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_duel_beast.md](sig_player_physical_workrate_duel_beast.md) |
 | `sig_player_physical_workrate_unshakable_strength` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_unshakable_strength.md](sig_player_physical_workrate_unshakable_strength.md) |
 | `sig_player_possession_passing_accurate_long_range` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_accurate_long_range.md](sig_player_possession_passing_accurate_long_range.md) |
