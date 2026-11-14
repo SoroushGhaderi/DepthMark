@@ -116,6 +116,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_possession_passing_set_piece_dominance` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_set_piece_dominance.md](sig_match_possession_passing_set_piece_dominance.md) |
 | `sig_match_possession_passing_unproductive_game` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_unproductive_game.md](sig_match_possession_passing_unproductive_game.md) |
 | `sig_match_possession_passing_wing_play_extravaganza` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_wing_play_extravaganza.md](sig_match_possession_passing_wing_play_extravaganza.md) |
+| `sig_match_shooting_goals_aerial_scoring_battle` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_aerial_scoring_battle.md](sig_match_shooting_goals_aerial_scoring_battle.md) |
 | `sig_match_shooting_goals_basketball_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_basketball_match.md](sig_match_shooting_goals_basketball_match.md) |
 | `sig_match_shooting_goals_boring_stalemate` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_boring_stalemate.md](sig_match_shooting_goals_boring_stalemate.md) |
 | `sig_match_shooting_goals_box_siege_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_box_siege_match.md](sig_match_shooting_goals_box_siege_match.md) |
