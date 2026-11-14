@@ -24,7 +24,7 @@ Flags matches where a team scores first, wins, and extends a run of at least ten
 
 - Trigger: Team has won its last >= 10 matches in which it scored first (this match included).
 - The first goal of each match is the goal whose running score (`home_score_after + away_score_after`) equals 1 in `fotmob_silver.shot`; this also covers own goals. For each team, only matches where it scored first are ordered by date. A win is `goals_for > goals_against`. The streak counts consecutive such wins and resets on the first match where the team scored first but did not win. Matches where the team did not score first are ignored, not counted as breaks. One row is emitted for each match where the run is >= 10.
-- Similarity note: Closest: `sig_team_shooting_goals_clean_sheet_broken_late` (first-goal timing, single match) and the streak siblings in this batch. Different grain and metric. No overlap.
+- Similarity note: No existing first-goal-and-win history signal. Closest: `sig_match_shooting_goals_clean_sheet_broken_late` (the first goal arriving late at 0-0, single match) and `sig_team_streak_consistency_winning_machine` (any wins). Different grain and metric. No overlap.
 
 ## Technical Assets
 
