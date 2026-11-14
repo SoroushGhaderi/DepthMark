@@ -280,6 +280,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_clinical_finisher` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clinical_finisher.md](sig_player_streak_consistency_clinical_finisher.md) |
 | `sig_player_streak_consistency_clutch_performer` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clutch_performer.md](sig_player_streak_consistency_clutch_performer.md) |
 | `sig_player_streak_consistency_creative_hub` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_creative_hub.md](sig_player_streak_consistency_creative_hub.md) |
+| `sig_player_streak_consistency_cross_volume_peak` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_cross_volume_peak.md](sig_player_streak_consistency_cross_volume_peak.md) |
 | `sig_player_streak_consistency_crossing_expert` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_crossing_expert.md](sig_player_streak_consistency_crossing_expert.md) |
 | `sig_player_streak_consistency_dribble_engine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_dribble_engine.md](sig_player_streak_consistency_dribble_engine.md) |
 | `sig_player_streak_consistency_duel_dominance` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_duel_dominance.md](sig_player_streak_consistency_duel_dominance.md) |
