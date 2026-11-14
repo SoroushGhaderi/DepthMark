@@ -136,6 +136,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_goalless_siege` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_goalless_siege.md](sig_match_shooting_goals_goalless_siege.md) |
 | `sig_match_shooting_goals_high_pressure_finish` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_pressure_finish.md](sig_match_shooting_goals_high_pressure_finish.md) |
 | `sig_match_shooting_goals_high_speed_scoring` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_speed_scoring.md](sig_match_shooting_goals_high_speed_scoring.md) |
+| `sig_match_shooting_goals_high_volume_low_quality` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_volume_low_quality.md](sig_match_shooting_goals_high_volume_low_quality.md) |
 | `sig_match_shooting_goals_high_volume_low_target` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_volume_low_target.md](sig_match_shooting_goals_high_volume_low_target.md) |
 | `sig_match_shooting_goals_high_xg_low_score` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_xg_low_score.md](sig_match_shooting_goals_high_xg_low_score.md) |
 | `sig_match_shooting_goals_late_drama_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_late_drama_match.md](sig_match_shooting_goals_late_drama_match.md) |
