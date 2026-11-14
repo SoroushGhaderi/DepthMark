@@ -464,6 +464,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_first_half_blank_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_half_blank_run.md](sig_team_streak_consistency_first_half_blank_run.md) |
 | `sig_team_streak_consistency_first_half_dominance` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_half_dominance.md](sig_team_streak_consistency_first_half_dominance.md) |
 | `sig_team_streak_consistency_goal_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_goal_machine.md](sig_team_streak_consistency_goal_machine.md) |
+| `sig_team_streak_consistency_goal_sharing` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_goal_sharing.md](sig_team_streak_consistency_goal_sharing.md) |
 | `sig_team_streak_consistency_half_time_draw_win_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_half_time_draw_win_run.md](sig_team_streak_consistency_half_time_draw_win_run.md) |
 | `sig_team_streak_consistency_high_xg_no_win` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_high_xg_no_win.md](sig_team_streak_consistency_high_xg_no_win.md) |
 | `sig_team_streak_consistency_home_fortress` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_home_fortress.md](sig_team_streak_consistency_home_fortress.md) |
