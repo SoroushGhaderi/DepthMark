@@ -452,7 +452,7 @@ def test_column_default_expression_reads_normalized_default(project: SignalProje
 def test_repository_signal_catalog_is_valid() -> None:
     catalog = load_signal_catalog()
 
-    assert len(catalog) == 568
+    assert len(catalog) == 569
     assert {definition.entity for definition in catalog} == {"match", "team", "player"}
     assert all(definition.signal_id.split("_")[1] == definition.entity for definition in catalog)
 
