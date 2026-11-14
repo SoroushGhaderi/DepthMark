@@ -301,6 +301,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_second_half_hero` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_second_half_hero.md](sig_player_streak_consistency_second_half_hero.md) |
 | `sig_player_streak_consistency_shot_machine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_machine.md](sig_player_streak_consistency_shot_machine.md) |
 | `sig_player_streak_consistency_shot_on_target_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_on_target_run.md](sig_player_streak_consistency_shot_on_target_run.md) |
+| `sig_player_streak_consistency_shot_volume_drought` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_volume_drought.md](sig_player_streak_consistency_shot_volume_drought.md) |
 | `sig_player_streak_consistency_tackle_wall` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_tackle_wall.md](sig_player_streak_consistency_tackle_wall.md) |
 | `sig_player_streak_consistency_the_iron_man` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_the_iron_man.md](sig_player_streak_consistency_the_iron_man.md) |
 | `sig_player_streak_consistency_the_traveler` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_the_traveler.md](sig_player_streak_consistency_the_traveler.md) |
