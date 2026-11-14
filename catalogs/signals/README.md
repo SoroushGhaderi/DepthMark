@@ -141,6 +141,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_high_xg_low_score` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_high_xg_low_score.md](sig_match_shooting_goals_high_xg_low_score.md) |
 | `sig_match_shooting_goals_late_drama_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_late_drama_match.md](sig_match_shooting_goals_late_drama_match.md) |
 | `sig_match_shooting_goals_lone_shot_robbery` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_lone_shot_robbery.md](sig_match_shooting_goals_lone_shot_robbery.md) |
+| `sig_match_shooting_goals_one_man_vs_team_shooting` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_man_vs_team_shooting.md](sig_match_shooting_goals_one_man_vs_team_shooting.md) |
 | `sig_match_shooting_goals_one_shot_decision` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_shot_decision.md](sig_match_shooting_goals_one_shot_decision.md) |
 | `sig_match_shooting_goals_one_sided_lethality` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_sided_lethality.md](sig_match_shooting_goals_one_sided_lethality.md) |
 | `sig_match_shooting_goals_one_sided_shooting` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_sided_shooting.md](sig_match_shooting_goals_one_sided_shooting.md) |
