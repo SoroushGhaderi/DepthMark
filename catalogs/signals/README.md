@@ -122,6 +122,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_unlucky_game` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unlucky_game.md](sig_match_shooting_goals_unlucky_game.md) |
 | `sig_match_shooting_goals_unproductive_dominance` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_unproductive_dominance.md](sig_match_shooting_goals_unproductive_dominance.md) |
 | `sig_match_shooting_goals_woodwork_record_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_woodwork_record_match.md](sig_match_shooting_goals_woodwork_record_match.md) |
+| `sig_match_shooting_goals_xg_warfare` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_xg_warfare.md](sig_match_shooting_goals_xg_warfare.md) |
 | `sig_match_streak_consistency_away_specialist` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_away_specialist.md](sig_match_streak_consistency_away_specialist.md) |
 | `sig_match_streak_consistency_bogey_team` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_bogey_team.md](sig_match_streak_consistency_bogey_team.md) |
 | `sig_match_streak_consistency_box_dominance_head_to_head` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_box_dominance_head_to_head.md](sig_match_streak_consistency_box_dominance_head_to_head.md) |
