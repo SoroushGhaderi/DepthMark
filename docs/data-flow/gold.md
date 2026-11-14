@@ -12,7 +12,7 @@ business logic or raw contracts.
 ```text
 FotMob fotmob_silver.* (8 tables)
   → fotmob_gold_scenarios.*  (48 scenario tables)
-  → fotmob_gold_signals.*    (504 signal tables)
+  → fotmob_gold_signals.*    (505 signal tables)
   → fotmob_gold.*            (1 shared activation serving table)
 
 Oddspedia Silver
