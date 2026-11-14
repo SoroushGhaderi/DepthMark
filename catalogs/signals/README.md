@@ -40,6 +40,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_creativity_playmaking_playmaker_to_striker_connection` | match | creativity | playmaking | `match_team` | active | [sig_match_creativity_playmaking_playmaker_to_striker_connection.md](sig_match_creativity_playmaking_playmaker_to_striker_connection.md) |
 | `sig_match_creativity_playmaking_progressive_warfare` | match | creativity | playmaking | `match_team` | active | [sig_match_creativity_playmaking_progressive_warfare.md](sig_match_creativity_playmaking_progressive_warfare.md) |
 | `sig_match_creativity_playmaking_set_piece_creative_duel` | match | creativity | playmaking | `match_team` | active | [sig_match_creativity_playmaking_set_piece_creative_duel.md](sig_match_creativity_playmaking_set_piece_creative_duel.md) |
+| `sig_match_creativity_playmaking_set_piece_creative_war` | match | creativity | playmaking | `match_team` | active | [sig_match_creativity_playmaking_set_piece_creative_war.md](sig_match_creativity_playmaking_set_piece_creative_war.md) |
 | `sig_match_creativity_playmaking_shot_creation_peak` | match | creativity | playmaking | `match_team` | active | [sig_match_creativity_playmaking_shot_creation_peak.md](sig_match_creativity_playmaking_shot_creation_peak.md) |
 | `sig_match_creativity_playmaking_sub_creative_war` | match | creativity | playmaking | `match_team` | active | [sig_match_creativity_playmaking_sub_creative_war.md](sig_match_creativity_playmaking_sub_creative_war.md) |
 | `sig_match_creativity_playmaking_the_creativity_clash` | match | creativity | playmaking | `match_team` | active | [sig_match_creativity_playmaking_the_creativity_clash.md](sig_match_creativity_playmaking_the_creativity_clash.md) |
@@ -69,12 +70,14 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_discipline_cards_one_sided_discipline` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_one_sided_discipline.md](sig_match_discipline_cards_one_sided_discipline.md) |
 | `sig_match_discipline_cards_penalty_miss_drama` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_penalty_miss_drama.md](sig_match_discipline_cards_penalty_miss_drama.md) |
 | `sig_match_discipline_cards_penalty_showdown` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_penalty_showdown.md](sig_match_discipline_cards_penalty_showdown.md) |
+| `sig_match_discipline_cards_physical_mismatch` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_physical_mismatch.md](sig_match_discipline_cards_physical_mismatch.md) |
 | `sig_match_discipline_cards_physical_showdown` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_physical_showdown.md](sig_match_discipline_cards_physical_showdown.md) |
 | `sig_match_discipline_cards_referee_let_it_flow` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_let_it_flow.md](sig_match_discipline_cards_referee_let_it_flow.md) |
 | `sig_match_discipline_cards_referee_showdown` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_showdown.md](sig_match_discipline_cards_referee_showdown.md) |
 | `sig_match_discipline_cards_referee_strictness` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_strictness.md](sig_match_discipline_cards_referee_strictness.md) |
 | `sig_match_discipline_cards_stop_start_hell` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_stop_start_hell.md](sig_match_discipline_cards_stop_start_hell.md) |
 | `sig_match_discipline_cards_the_disciplined_siege` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_the_disciplined_siege.md](sig_match_discipline_cards_the_disciplined_siege.md) |
+| `sig_match_discipline_cards_the_red_card_reset` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_the_red_card_reset.md](sig_match_discipline_cards_the_red_card_reset.md) |
 | `sig_match_discipline_cards_unpunished_aggression` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_unpunished_aggression.md](sig_match_discipline_cards_unpunished_aggression.md) |
 | `sig_match_goalkeeping_defense_aerial_battleground` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_aerial_battleground.md](sig_match_goalkeeping_defense_aerial_battleground.md) |
 | `sig_match_goalkeeping_defense_aerial_goal_denial` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_aerial_goal_denial.md](sig_match_goalkeeping_defense_aerial_goal_denial.md) |
@@ -108,6 +111,10 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_goalkeeping_defense_unproductive_attack` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_unproductive_attack.md](sig_match_goalkeeping_defense_unproductive_attack.md) |
 | `sig_match_goalkeeping_defense_unproductive_possession_match` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_unproductive_possession_match.md](sig_match_goalkeeping_defense_unproductive_possession_match.md) |
 | `sig_match_goalkeeping_defense_zero_threat_match` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_zero_threat_match.md](sig_match_goalkeeping_defense_zero_threat_match.md) |
+| `sig_match_physical_workrate_aerial_heavy_play` | match | physical | workrate | `match_team` | active | [sig_match_physical_workrate_aerial_heavy_play.md](sig_match_physical_workrate_aerial_heavy_play.md) |
+| `sig_match_physical_workrate_ground_duel_showdown` | match | physical | workrate | `match_team` | active | [sig_match_physical_workrate_ground_duel_showdown.md](sig_match_physical_workrate_ground_duel_showdown.md) |
+| `sig_match_physical_workrate_one_sided_aerials` | match | physical | workrate | `match_team` | active | [sig_match_physical_workrate_one_sided_aerials.md](sig_match_physical_workrate_one_sided_aerials.md) |
+| `sig_match_physical_workrate_recovery_heavy_match` | match | physical | workrate | `match_team` | active | [sig_match_physical_workrate_recovery_heavy_match.md](sig_match_physical_workrate_recovery_heavy_match.md) |
 | `sig_match_possession_passing_clean_game` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_clean_game.md](sig_match_possession_passing_clean_game.md) |
 | `sig_match_possession_passing_clinical_match` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_clinical_match.md](sig_match_possession_passing_clinical_match.md) |
 | `sig_match_possession_passing_counter_vs_bus` | match | possession | passing | `match_team` | active | [sig_match_possession_passing_counter_vs_bus.md](sig_match_possession_passing_counter_vs_bus.md) |
@@ -129,6 +136,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_box_siege_match` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_box_siege_match.md](sig_match_shooting_goals_box_siege_match.md) |
 | `sig_match_shooting_goals_box_siege_parity` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_box_siege_parity.md](sig_match_shooting_goals_box_siege_parity.md) |
 | `sig_match_shooting_goals_clean_sheet_broken_late` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clean_sheet_broken_late.md](sig_match_shooting_goals_clean_sheet_broken_late.md) |
+| `sig_match_shooting_goals_clinical_efficiency_tie` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_efficiency_tie.md](sig_match_shooting_goals_clinical_efficiency_tie.md) |
 | `sig_match_shooting_goals_clinical_showdown` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_showdown.md](sig_match_shooting_goals_clinical_showdown.md) |
 | `sig_match_shooting_goals_clinical_sub_impact` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_clinical_sub_impact.md](sig_match_shooting_goals_clinical_sub_impact.md) |
 | `sig_match_shooting_goals_complete_dominance` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_complete_dominance.md](sig_match_shooting_goals_complete_dominance.md) |
@@ -150,6 +158,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_shooting_goals_lone_shot_robbery` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_lone_shot_robbery.md](sig_match_shooting_goals_lone_shot_robbery.md) |
 | `sig_match_shooting_goals_one_man_vs_team_shooting` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_man_vs_team_shooting.md](sig_match_shooting_goals_one_man_vs_team_shooting.md) |
 | `sig_match_shooting_goals_one_shot_decision` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_shot_decision.md](sig_match_shooting_goals_one_shot_decision.md) |
+| `sig_match_shooting_goals_one_sided_accuracy` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_sided_accuracy.md](sig_match_shooting_goals_one_sided_accuracy.md) |
 | `sig_match_shooting_goals_one_sided_lethality` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_sided_lethality.md](sig_match_shooting_goals_one_sided_lethality.md) |
 | `sig_match_shooting_goals_one_sided_shooting` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_one_sided_shooting.md](sig_match_shooting_goals_one_sided_shooting.md) |
 | `sig_match_shooting_goals_own_goal_drama` | match | shooting | goals | `match_team` | active | [sig_match_shooting_goals_own_goal_drama.md](sig_match_shooting_goals_own_goal_drama.md) |
@@ -281,6 +290,14 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_goalkeeping_defense_tackle_master` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_tackle_master.md](sig_player_goalkeeping_defense_tackle_master.md) |
 | `sig_player_goalkeeping_defense_unbeatable_duelist` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_unbeatable_duelist.md](sig_player_goalkeeping_defense_unbeatable_duelist.md) |
 | `sig_player_goalkeeping_defense_unbeaten_in_air` | player | goalkeeping | defense | `match_player` | active | [sig_player_goalkeeping_defense_unbeaten_in_air.md](sig_player_goalkeeping_defense_unbeaten_in_air.md) |
+| `sig_player_physical_workrate_aerial_dominator` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_aerial_dominator.md](sig_player_physical_workrate_aerial_dominator.md) |
+| `sig_player_physical_workrate_aerial_workrate_volume` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_aerial_workrate_volume.md](sig_player_physical_workrate_aerial_workrate_volume.md) |
+| `sig_player_physical_workrate_duel_beast` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_duel_beast.md](sig_player_physical_workrate_duel_beast.md) |
+| `sig_player_physical_workrate_ground_duel_clean_sweep` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_ground_duel_clean_sweep.md](sig_player_physical_workrate_ground_duel_clean_sweep.md) |
+| `sig_player_physical_workrate_ground_duel_marathon` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_ground_duel_marathon.md](sig_player_physical_workrate_ground_duel_marathon.md) |
+| `sig_player_physical_workrate_midfield_enforcer_physicality` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_midfield_enforcer_physicality.md](sig_player_physical_workrate_midfield_enforcer_physicality.md) |
+| `sig_player_physical_workrate_unshakable_strength` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_unshakable_strength.md](sig_player_physical_workrate_unshakable_strength.md) |
+| `sig_player_physical_workrate_unstoppable_physical_force` | player | physical | workrate | `match_player` | active | [sig_player_physical_workrate_unstoppable_physical_force.md](sig_player_physical_workrate_unstoppable_physical_force.md) |
 | `sig_player_possession_passing_accurate_long_range` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_accurate_long_range.md](sig_player_possession_passing_accurate_long_range.md) |
 | `sig_player_possession_passing_back_pass_heavy` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_back_pass_heavy.md](sig_player_possession_passing_back_pass_heavy.md) |
 | `sig_player_possession_passing_box_penetrator` | player | possession | passing | `match_player` | active | [sig_player_possession_passing_box_penetrator.md](sig_player_possession_passing_box_penetrator.md) |
@@ -323,6 +340,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_clinical_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clinical_brace.md](sig_player_shooting_goals_clinical_brace.md) |
 | `sig_player_shooting_goals_clutch_brace_winning` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clutch_brace_winning.md](sig_player_shooting_goals_clutch_brace_winning.md) |
 | `sig_player_shooting_goals_clutch_equalizer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_clutch_equalizer.md](sig_player_shooting_goals_clutch_equalizer.md) |
+| `sig_player_shooting_goals_dead_ball_brace` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_dead_ball_brace.md](sig_player_shooting_goals_dead_ball_brace.md) |
 | `sig_player_shooting_goals_defensive_scorer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_defensive_scorer.md](sig_player_shooting_goals_defensive_scorer.md) |
 | `sig_player_shooting_goals_distance_threat` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_distance_threat.md](sig_player_shooting_goals_distance_threat.md) |
 | `sig_player_shooting_goals_first_half_dominator` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_first_half_dominator.md](sig_player_shooting_goals_first_half_dominator.md) |
@@ -352,6 +370,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_shooting_goals_shot_volume_monster` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_shot_volume_monster.md](sig_player_shooting_goals_shot_volume_monster.md) |
 | `sig_player_shooting_goals_sniper_accuracy` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_sniper_accuracy.md](sig_player_shooting_goals_sniper_accuracy.md) |
 | `sig_player_shooting_goals_super_sub_goal` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_super_sub_goal.md](sig_player_shooting_goals_super_sub_goal.md) |
+| `sig_player_shooting_goals_the_ice_man` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_the_ice_man.md](sig_player_shooting_goals_the_ice_man.md) |
 | `sig_player_shooting_goals_the_tap_in_merchant` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_the_tap_in_merchant.md](sig_player_shooting_goals_the_tap_in_merchant.md) |
 | `sig_player_shooting_goals_total_xg_dominance` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_total_xg_dominance.md](sig_player_shooting_goals_total_xg_dominance.md) |
 | `sig_player_shooting_goals_unlikely_scorer` | player | shooting | goals | `match_player` | active | [sig_player_shooting_goals_unlikely_scorer.md](sig_player_shooting_goals_unlikely_scorer.md) |
@@ -412,6 +431,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_creativity_playmaking_crossing_volume_efficiency` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_crossing_volume_efficiency.md](sig_team_creativity_playmaking_crossing_volume_efficiency.md) |
 | `sig_team_creativity_playmaking_dribbling_exhibition` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_dribbling_exhibition.md](sig_team_creativity_playmaking_dribbling_exhibition.md) |
 | `sig_team_creativity_playmaking_final_third_siege` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_final_third_siege.md](sig_team_creativity_playmaking_final_third_siege.md) |
+| `sig_team_creativity_playmaking_fluid_front_three` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_fluid_front_three.md](sig_team_creativity_playmaking_fluid_front_three.md) |
 | `sig_team_creativity_playmaking_long_ball_efficiency` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_long_ball_efficiency.md](sig_team_creativity_playmaking_long_ball_efficiency.md) |
 | `sig_team_creativity_playmaking_midfield_engine_vision` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_midfield_engine_vision.md](sig_team_creativity_playmaking_midfield_engine_vision.md) |
 | `sig_team_creativity_playmaking_no_dribble_logic` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_no_dribble_logic.md](sig_team_creativity_playmaking_no_dribble_logic.md) |
@@ -422,6 +442,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_creativity_playmaking_set_piece_threat_volume` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_set_piece_threat_volume.md](sig_team_creativity_playmaking_set_piece_threat_volume.md) |
 | `sig_team_creativity_playmaking_sustained_creative_pressure` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_sustained_creative_pressure.md](sig_team_creativity_playmaking_sustained_creative_pressure.md) |
 | `sig_team_creativity_playmaking_total_fluidity` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_total_fluidity.md](sig_team_creativity_playmaking_total_fluidity.md) |
+| `sig_team_creativity_playmaking_total_fluidity_unit` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_total_fluidity_unit.md](sig_team_creativity_playmaking_total_fluidity_unit.md) |
 | `sig_team_creativity_playmaking_total_possession_efficiency` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_total_possession_efficiency.md](sig_team_creativity_playmaking_total_possession_efficiency.md) |
 | `sig_team_creativity_playmaking_unassisted_goals` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_unassisted_goals.md](sig_team_creativity_playmaking_unassisted_goals.md) |
 | `sig_team_creativity_playmaking_unlikely_creative_source` | team | creativity | playmaking | `match_team` | active | [sig_team_creativity_playmaking_unlikely_creative_source.md](sig_team_creativity_playmaking_unlikely_creative_source.md) |
@@ -492,6 +513,11 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_goalkeeping_defense_unlikely_clean_sheet` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_unlikely_clean_sheet.md](sig_team_goalkeeping_defense_unlikely_clean_sheet.md) |
 | `sig_team_goalkeeping_defense_wide_blockade` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_wide_blockade.md](sig_team_goalkeeping_defense_wide_blockade.md) |
 | `sig_team_goalkeeping_defense_wing_lockdown_collective` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_wing_lockdown_collective.md](sig_team_goalkeeping_defense_wing_lockdown_collective.md) |
+| `sig_team_physical_workrate_duel_dominance_team` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_duel_dominance_team.md](sig_team_physical_workrate_duel_dominance_team.md) |
+| `sig_team_physical_workrate_ground_duel_dominance` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_ground_duel_dominance.md](sig_team_physical_workrate_ground_duel_dominance.md) |
+| `sig_team_physical_workrate_low_block_physicality` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_low_block_physicality.md](sig_team_physical_workrate_low_block_physicality.md) |
+| `sig_team_physical_workrate_midfield_battle_won` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_midfield_battle_won.md](sig_team_physical_workrate_midfield_battle_won.md) |
+| `sig_team_physical_workrate_recovery_marathon_team` | team | physical | workrate | `match_team` | active | [sig_team_physical_workrate_recovery_marathon_team.md](sig_team_physical_workrate_recovery_marathon_team.md) |
 | `sig_team_possession_passing_accurate_unit` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_accurate_unit.md](sig_team_possession_passing_accurate_unit.md) |
 | `sig_team_possession_passing_aerial_reliance` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_aerial_reliance.md](sig_team_possession_passing_aerial_reliance.md) |
 | `sig_team_possession_passing_cross_accuracy_peak` | team | possession | passing | `match_team` | active | [sig_team_possession_passing_cross_accuracy_peak.md](sig_team_possession_passing_cross_accuracy_peak.md) |
@@ -531,6 +557,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_conversion_collapse` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_conversion_collapse.md](sig_team_shooting_goals_conversion_collapse.md) |
 | `sig_team_shooting_goals_counter_attack_lethality` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_counter_attack_lethality.md](sig_team_shooting_goals_counter_attack_lethality.md) |
 | `sig_team_shooting_goals_dead_ball_specialists` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_dead_ball_specialists.md](sig_team_shooting_goals_dead_ball_specialists.md) |
+| `sig_team_shooting_goals_deadlock_breaking_unit` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_deadlock_breaking_unit.md](sig_team_shooting_goals_deadlock_breaking_unit.md) |
 | `sig_team_shooting_goals_defensive_scoring_unit` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_defensive_scoring_unit.md](sig_team_shooting_goals_defensive_scoring_unit.md) |
 | `sig_team_shooting_goals_direct_free_kick_threat` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_direct_free_kick_threat.md](sig_team_shooting_goals_direct_free_kick_threat.md) |
 | `sig_team_shooting_goals_early_blitz` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_early_blitz.md](sig_team_shooting_goals_early_blitz.md) |
@@ -543,6 +570,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_late_surge_goals` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_late_surge_goals.md](sig_team_shooting_goals_late_surge_goals.md) |
 | `sig_team_shooting_goals_lone_shot_win` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_lone_shot_win.md](sig_team_shooting_goals_lone_shot_win.md) |
 | `sig_team_shooting_goals_long_range_barrage` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_long_range_barrage.md](sig_team_shooting_goals_long_range_barrage.md) |
+| `sig_team_shooting_goals_low_quality_volume` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_low_quality_volume.md](sig_team_shooting_goals_low_quality_volume.md) |
 | `sig_team_shooting_goals_no_shots_allowed` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_no_shots_allowed.md](sig_team_shooting_goals_no_shots_allowed.md) |
 | `sig_team_shooting_goals_no_shots_on_target_shame` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_no_shots_on_target_shame.md](sig_team_shooting_goals_no_shots_on_target_shame.md) |
 | `sig_team_shooting_goals_no_striker_needed` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_no_striker_needed.md](sig_team_shooting_goals_no_striker_needed.md) |
@@ -620,4 +648,5 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_total_shot_dominance` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_total_shot_dominance.md](sig_team_streak_consistency_total_shot_dominance.md) |
 | `sig_team_streak_consistency_unanswered_goals_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_unanswered_goals_run.md](sig_team_streak_consistency_unanswered_goals_run.md) |
 | `sig_team_streak_consistency_winning_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_winning_machine.md](sig_team_streak_consistency_winning_machine.md) |
+| `sig_team_streak_consistency_woodwork_magnet_streak` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_woodwork_magnet_streak.md](sig_team_streak_consistency_woodwork_magnet_streak.md) |
 <!-- signal-index:end -->
