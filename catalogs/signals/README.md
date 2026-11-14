@@ -125,6 +125,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_streak_consistency_bogey_team` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_bogey_team.md](sig_match_streak_consistency_bogey_team.md) |
 | `sig_match_streak_consistency_goal_fest_history` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_goal_fest_history.md](sig_match_streak_consistency_goal_fest_history.md) |
 | `sig_match_streak_consistency_high_scoring_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_high_scoring_rivalry.md](sig_match_streak_consistency_high_scoring_rivalry.md) |
+| `sig_match_streak_consistency_home_dominance` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_home_dominance.md](sig_match_streak_consistency_home_dominance.md) |
 | `sig_match_streak_consistency_low_scoring_history` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_low_scoring_history.md](sig_match_streak_consistency_low_scoring_history.md) |
 | `sig_match_streak_consistency_nil_nil_curse` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_nil_nil_curse.md](sig_match_streak_consistency_nil_nil_curse.md) |
 | `sig_match_streak_consistency_revolving_door` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_revolving_door.md](sig_match_streak_consistency_revolving_door.md) |
