@@ -86,3 +86,43 @@ CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_player_streak_consistency_cre
 ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
 PARTITION BY toYYYYMM(match_date);
 
+CREATE TABLE IF NOT EXISTS fotmob_gold_signals.sig_player_streak_consistency_the_iron_man (
+    match_id Int32,
+    match_date Date,
+    home_team_id Nullable(Int32),
+    home_team_name Nullable(String),
+    away_team_id Nullable(Int32),
+    away_team_name Nullable(String),
+    home_score Nullable(Int32),
+    away_score Nullable(Int32),
+    triggered_side LowCardinality(String),
+    triggered_player_id Int32,
+    triggered_player_name Nullable(String),
+    triggered_team_id Nullable(Int32),
+    triggered_team_name Nullable(String),
+    opponent_team_id Nullable(Int32),
+    opponent_team_name Nullable(String),
+    trigger_threshold_min_consecutive_full_matches Int32,
+    triggered_player_full_match_streak_matches Int32,
+    streak_matches_above_threshold Int32,
+    streak_start_date Date,
+    triggered_player_streak_minutes Int32,
+    triggered_player_minutes_played Int32,
+    triggered_player_goals Int32,
+    triggered_player_assists Int32,
+    triggered_team_goals Int32,
+    opponent_goals Int32,
+    triggered_team_xg Float32,
+    opponent_xg Float32,
+    triggered_team_total_shots Int32,
+    opponent_total_shots Int32,
+    triggered_team_shots_on_target Int32,
+    opponent_shots_on_target Int32,
+    triggered_team_possession_pct Float32,
+    opponent_possession_pct Float32,
+    signal_instance_id String DEFAULT lower(hex(SHA256(concat('v1', '|', 'sig_player_streak_consistency_the_iron_man', '|', coalesce(toString(match_id), ''), '|', coalesce(toString(triggered_player_id), ''), '|', coalesce(toString(triggered_team_id), ''))))),
+    inserted_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(inserted_at)
+ORDER BY (match_id, triggered_side, triggered_player_id, signal_instance_id)
+PARTITION BY toYYYYMM(match_date);
+
