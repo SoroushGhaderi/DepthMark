@@ -256,6 +256,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_clean_sheet_century` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clean_sheet_century.md](sig_player_streak_consistency_clean_sheet_century.md) |
 | `sig_player_streak_consistency_clinical_finisher` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clinical_finisher.md](sig_player_streak_consistency_clinical_finisher.md) |
 | `sig_player_streak_consistency_creative_hub` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_creative_hub.md](sig_player_streak_consistency_creative_hub.md) |
+| `sig_player_streak_consistency_dribble_engine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_dribble_engine.md](sig_player_streak_consistency_dribble_engine.md) |
 | `sig_player_streak_consistency_shot_machine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_machine.md](sig_player_streak_consistency_shot_machine.md) |
 | `sig_player_streak_consistency_shot_on_target_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_shot_on_target_run.md](sig_player_streak_consistency_shot_on_target_run.md) |
 | `sig_player_streak_consistency_the_iron_man` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_the_iron_man.md](sig_player_streak_consistency_the_iron_man.md) |
