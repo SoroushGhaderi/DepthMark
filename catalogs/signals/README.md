@@ -373,6 +373,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_woodwork_frustration_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_woodwork_frustration_team.md](sig_team_shooting_goals_woodwork_frustration_team.md) |
 | `sig_team_shooting_goals_xg_overperformance_team` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_xg_overperformance_team.md](sig_team_shooting_goals_xg_overperformance_team.md) |
 | `sig_team_shooting_goals_zero_shot_half` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_zero_shot_half.md](sig_team_shooting_goals_zero_shot_half.md) |
+| `sig_team_streak_consistency_first_goal_winner` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_goal_winner.md](sig_team_streak_consistency_first_goal_winner.md) |
 | `sig_team_streak_consistency_invincible_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_invincible_run.md](sig_team_streak_consistency_invincible_run.md) |
 | `sig_team_streak_consistency_winning_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_winning_machine.md](sig_team_streak_consistency_winning_machine.md) |
 <!-- signal-index:end -->

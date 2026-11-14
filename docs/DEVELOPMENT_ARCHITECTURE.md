@@ -516,8 +516,8 @@ Current Gold inventory:
 
 - 48 scenario SQL transforms in `clickhouse/gold/dml/scenarios/{team,player}/`
   (23 team/match-grain, 25 player-grain)
-- 346 signal SQL transforms in `clickhouse/gold/dml/signals/{match,team,player}/`
-- 346 signal catalog markdown files in `catalogs/signals/`, read only through
+- 347 signal SQL transforms in `clickhouse/gold/dml/signals/{match,team,player}/`
+- 347 signal catalog markdown files in `catalogs/signals/`, read only through
   `load_signal_catalog()` in `src/fotmob/gold/signal_catalog.py` (ADR 0033)
 - 1 shared activation serving table in `fotmob_gold.signal_activations`
 
