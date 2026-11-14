@@ -378,6 +378,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_discipline_cards_man_advantage_collapse` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_man_advantage_collapse.md](sig_team_discipline_cards_man_advantage_collapse.md) |
 | `sig_team_discipline_cards_man_down_resilience` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_man_down_resilience.md](sig_team_discipline_cards_man_down_resilience.md) |
 | `sig_team_discipline_cards_midfield_enforcement` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_midfield_enforcement.md](sig_team_discipline_cards_midfield_enforcement.md) |
+| `sig_team_discipline_cards_offside_trap_risk` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_offside_trap_risk.md](sig_team_discipline_cards_offside_trap_risk.md) |
 | `sig_team_discipline_cards_penalty_prone` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_penalty_prone.md](sig_team_discipline_cards_penalty_prone.md) |
 | `sig_team_discipline_cards_physical_superiority` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_physical_superiority.md](sig_team_discipline_cards_physical_superiority.md) |
 | `sig_team_discipline_cards_red_card_neutralizer` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_red_card_neutralizer.md](sig_team_discipline_cards_red_card_neutralizer.md) |
