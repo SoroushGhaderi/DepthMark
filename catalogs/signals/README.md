@@ -465,6 +465,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_offside_trap_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_offside_trap_run.md](sig_team_streak_consistency_offside_trap_run.md) |
 | `sig_team_streak_consistency_one_nil_specialists` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_one_nil_specialists.md](sig_team_streak_consistency_one_nil_specialists.md) |
 | `sig_team_streak_consistency_over_25_goals_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_over_25_goals_run.md](sig_team_streak_consistency_over_25_goals_run.md) |
+| `sig_team_streak_consistency_pass_volume_rise` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_pass_volume_rise.md](sig_team_streak_consistency_pass_volume_rise.md) |
 | `sig_team_streak_consistency_penalty_concession_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_penalty_concession_run.md](sig_team_streak_consistency_penalty_concession_run.md) |
 | `sig_team_streak_consistency_penalty_luck` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_penalty_luck.md](sig_team_streak_consistency_penalty_luck.md) |
 | `sig_team_streak_consistency_possession_monopoly` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_possession_monopoly.md](sig_team_streak_consistency_possession_monopoly.md) |
