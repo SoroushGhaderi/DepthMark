@@ -77,6 +77,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_discipline_cards_referee_strictness` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_referee_strictness.md](sig_match_discipline_cards_referee_strictness.md) |
 | `sig_match_discipline_cards_stop_start_hell` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_stop_start_hell.md](sig_match_discipline_cards_stop_start_hell.md) |
 | `sig_match_discipline_cards_the_disciplined_siege` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_the_disciplined_siege.md](sig_match_discipline_cards_the_disciplined_siege.md) |
+| `sig_match_discipline_cards_the_red_card_reset` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_the_red_card_reset.md](sig_match_discipline_cards_the_red_card_reset.md) |
 | `sig_match_discipline_cards_unpunished_aggression` | match | discipline | cards | `match_team` | active | [sig_match_discipline_cards_unpunished_aggression.md](sig_match_discipline_cards_unpunished_aggression.md) |
 | `sig_match_goalkeeping_defense_aerial_battleground` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_aerial_battleground.md](sig_match_goalkeeping_defense_aerial_battleground.md) |
 | `sig_match_goalkeeping_defense_aerial_goal_denial` | match | goalkeeping | defense | `match_team` | active | [sig_match_goalkeeping_defense_aerial_goal_denial.md](sig_match_goalkeeping_defense_aerial_goal_denial.md) |
