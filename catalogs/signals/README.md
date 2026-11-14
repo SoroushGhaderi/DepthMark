@@ -500,6 +500,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_offensive_masterclass` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_offensive_masterclass.md](sig_team_shooting_goals_offensive_masterclass.md) |
 | `sig_team_shooting_goals_rapid_double_salvo` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_rapid_double_salvo.md](sig_team_shooting_goals_rapid_double_salvo.md) |
 | `sig_team_shooting_goals_rapid_response_goal` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_rapid_response_goal.md](sig_team_shooting_goals_rapid_response_goal.md) |
+| `sig_team_shooting_goals_rout_win` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_rout_win.md](sig_team_shooting_goals_rout_win.md) |
 | `sig_team_shooting_goals_ruthless_efficiency` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_ruthless_efficiency.md](sig_team_shooting_goals_ruthless_efficiency.md) |
 | `sig_team_shooting_goals_set_piece_masterclass` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_set_piece_masterclass.md](sig_team_shooting_goals_set_piece_masterclass.md) |
 | `sig_team_shooting_goals_shared_scoring` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_shared_scoring.md](sig_team_shooting_goals_shared_scoring.md) |
