@@ -455,7 +455,6 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_shooting_goals_aerial_assault` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_aerial_assault.md](sig_team_shooting_goals_aerial_assault.md) |
 | `sig_team_shooting_goals_bench_goals_impact` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_bench_goals_impact.md](sig_team_shooting_goals_bench_goals_impact.md) |
 | `sig_team_shooting_goals_big_chance_efficiency` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_big_chance_efficiency.md](sig_team_shooting_goals_big_chance_efficiency.md) |
-| `sig_team_shooting_goals_big_chance_monopoly` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_big_chance_monopoly.md](sig_team_shooting_goals_big_chance_monopoly.md) |
 | `sig_team_shooting_goals_blank_range` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_blank_range.md](sig_team_shooting_goals_blank_range.md) |
 | `sig_team_shooting_goals_box_siege` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_box_siege.md](sig_team_shooting_goals_box_siege.md) |
 | `sig_team_shooting_goals_clinical_bench_impact` | team | shooting | goals | `match_team` | active | [sig_team_shooting_goals_clinical_bench_impact.md](sig_team_shooting_goals_clinical_bench_impact.md) |
