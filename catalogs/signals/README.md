@@ -125,6 +125,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_streak_consistency_away_specialist` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_away_specialist.md](sig_match_streak_consistency_away_specialist.md) |
 | `sig_match_streak_consistency_bogey_team` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_bogey_team.md](sig_match_streak_consistency_bogey_team.md) |
 | `sig_match_streak_consistency_box_dominance_head_to_head` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_box_dominance_head_to_head.md](sig_match_streak_consistency_box_dominance_head_to_head.md) |
+| `sig_match_streak_consistency_card_fest_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_card_fest_rivalry.md](sig_match_streak_consistency_card_fest_rivalry.md) |
 | `sig_match_streak_consistency_clean_sheet_head_to_head` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_clean_sheet_head_to_head.md](sig_match_streak_consistency_clean_sheet_head_to_head.md) |
 | `sig_match_streak_consistency_comeback_head_to_head` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_comeback_head_to_head.md](sig_match_streak_consistency_comeback_head_to_head.md) |
 | `sig_match_streak_consistency_corner_fest_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_corner_fest_rivalry.md](sig_match_streak_consistency_corner_fest_rivalry.md) |
@@ -137,6 +138,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_streak_consistency_high_scoring_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_high_scoring_rivalry.md](sig_match_streak_consistency_high_scoring_rivalry.md) |
 | `sig_match_streak_consistency_home_dominance` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_home_dominance.md](sig_match_streak_consistency_home_dominance.md) |
 | `sig_match_streak_consistency_interception_fest_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_interception_fest_rivalry.md](sig_match_streak_consistency_interception_fest_rivalry.md) |
+| `sig_match_streak_consistency_keeper_top_rated_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_keeper_top_rated_rivalry.md](sig_match_streak_consistency_keeper_top_rated_rivalry.md) |
 | `sig_match_streak_consistency_late_drama_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_late_drama_rivalry.md](sig_match_streak_consistency_late_drama_rivalry.md) |
 | `sig_match_streak_consistency_low_scoring_history` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_low_scoring_history.md](sig_match_streak_consistency_low_scoring_history.md) |
 | `sig_match_streak_consistency_manager_bogey` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_manager_bogey.md](sig_match_streak_consistency_manager_bogey.md) |
@@ -153,6 +155,8 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_match_streak_consistency_stadium_hoodoo` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_stadium_hoodoo.md](sig_match_streak_consistency_stadium_hoodoo.md) |
 | `sig_match_streak_consistency_stalemate_cycle` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_stalemate_cycle.md](sig_match_streak_consistency_stalemate_cycle.md) |
 | `sig_match_streak_consistency_substitute_scorer_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_substitute_scorer_rivalry.md](sig_match_streak_consistency_substitute_scorer_rivalry.md) |
+| `sig_match_streak_consistency_woodwork_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_woodwork_rivalry.md](sig_match_streak_consistency_woodwork_rivalry.md) |
+| `sig_match_streak_consistency_xg_goal_gap_rivalry` | match | streak | consistency | `match_team` | active | [sig_match_streak_consistency_xg_goal_gap_rivalry.md](sig_match_streak_consistency_xg_goal_gap_rivalry.md) |
 | `sig_player_creativity_playmaking_assist_brace` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_assist_brace.md](sig_player_creativity_playmaking_assist_brace.md) |
 | `sig_player_creativity_playmaking_assist_hat_trick` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_assist_hat_trick.md](sig_player_creativity_playmaking_assist_hat_trick.md) |
 | `sig_player_creativity_playmaking_box_penetrator` | player | creativity | playmaking | `match_player` | active | [sig_player_creativity_playmaking_box_penetrator.md](sig_player_creativity_playmaking_box_penetrator.md) |
@@ -292,6 +296,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_clean_sheet_century` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clean_sheet_century.md](sig_player_streak_consistency_clean_sheet_century.md) |
 | `sig_player_streak_consistency_clinical_finisher` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clinical_finisher.md](sig_player_streak_consistency_clinical_finisher.md) |
 | `sig_player_streak_consistency_clutch_performer` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_clutch_performer.md](sig_player_streak_consistency_clutch_performer.md) |
+| `sig_player_streak_consistency_creative_drought` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_creative_drought.md](sig_player_streak_consistency_creative_drought.md) |
 | `sig_player_streak_consistency_creative_hub` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_creative_hub.md](sig_player_streak_consistency_creative_hub.md) |
 | `sig_player_streak_consistency_cross_volume_peak` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_cross_volume_peak.md](sig_player_streak_consistency_cross_volume_peak.md) |
 | `sig_player_streak_consistency_crossing_expert` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_crossing_expert.md](sig_player_streak_consistency_crossing_expert.md) |
@@ -304,6 +309,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_player_streak_consistency_foul_magnet_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_foul_magnet_run.md](sig_player_streak_consistency_foul_magnet_run.md) |
 | `sig_player_streak_consistency_fullback_assist_run` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_fullback_assist_run.md](sig_player_streak_consistency_fullback_assist_run.md) |
 | `sig_player_streak_consistency_goal_rate_elite` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_goal_rate_elite.md](sig_player_streak_consistency_goal_rate_elite.md) |
+| `sig_player_streak_consistency_head_to_head_scorer` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_head_to_head_scorer.md](sig_player_streak_consistency_head_to_head_scorer.md) |
 | `sig_player_streak_consistency_impact_sub_success` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_impact_sub_success.md](sig_player_streak_consistency_impact_sub_success.md) |
 | `sig_player_streak_consistency_interception_elite` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_interception_elite.md](sig_player_streak_consistency_interception_elite.md) |
 | `sig_player_streak_consistency_key_pass_machine` | player | streak | consistency | `match_player` | active | [sig_player_streak_consistency_key_pass_machine.md](sig_player_streak_consistency_key_pass_machine.md) |
@@ -464,6 +470,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_first_half_blank_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_half_blank_run.md](sig_team_streak_consistency_first_half_blank_run.md) |
 | `sig_team_streak_consistency_first_half_dominance` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_half_dominance.md](sig_team_streak_consistency_first_half_dominance.md) |
 | `sig_team_streak_consistency_goal_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_goal_machine.md](sig_team_streak_consistency_goal_machine.md) |
+| `sig_team_streak_consistency_goal_sharing` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_goal_sharing.md](sig_team_streak_consistency_goal_sharing.md) |
 | `sig_team_streak_consistency_half_time_draw_win_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_half_time_draw_win_run.md](sig_team_streak_consistency_half_time_draw_win_run.md) |
 | `sig_team_streak_consistency_high_xg_no_win` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_high_xg_no_win.md](sig_team_streak_consistency_high_xg_no_win.md) |
 | `sig_team_streak_consistency_home_fortress` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_home_fortress.md](sig_team_streak_consistency_home_fortress.md) |
@@ -471,6 +478,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_invincible_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_invincible_run.md](sig_team_streak_consistency_invincible_run.md) |
 | `sig_team_streak_consistency_keeper_save_fest_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_keeper_save_fest_run.md](sig_team_streak_consistency_keeper_save_fest_run.md) |
 | `sig_team_streak_consistency_late_show` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_late_show.md](sig_team_streak_consistency_late_show.md) |
+| `sig_team_streak_consistency_midfield_stability_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_midfield_stability_run.md](sig_team_streak_consistency_midfield_stability_run.md) |
 | `sig_team_streak_consistency_nil_nil_specialists` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_nil_nil_specialists.md](sig_team_streak_consistency_nil_nil_specialists.md) |
 | `sig_team_streak_consistency_offside_trap_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_offside_trap_run.md](sig_team_streak_consistency_offside_trap_run.md) |
 | `sig_team_streak_consistency_one_nil_specialists` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_one_nil_specialists.md](sig_team_streak_consistency_one_nil_specialists.md) |
@@ -481,6 +489,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_possession_monopoly` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_possession_monopoly.md](sig_team_streak_consistency_possession_monopoly.md) |
 | `sig_team_streak_consistency_promotion_form` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_promotion_form.md](sig_team_streak_consistency_promotion_form.md) |
 | `sig_team_streak_consistency_relegation_threat` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_relegation_threat.md](sig_team_streak_consistency_relegation_threat.md) |
+| `sig_team_streak_consistency_rotation_chaos` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_rotation_chaos.md](sig_team_streak_consistency_rotation_chaos.md) |
 | `sig_team_streak_consistency_rotation_policy` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_rotation_policy.md](sig_team_streak_consistency_rotation_policy.md) |
 | `sig_team_streak_consistency_scoring_drought` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_scoring_drought.md](sig_team_streak_consistency_scoring_drought.md) |
 | `sig_team_streak_consistency_scoring_marathon` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_scoring_marathon.md](sig_team_streak_consistency_scoring_marathon.md) |
