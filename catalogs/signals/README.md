@@ -384,6 +384,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_streak_consistency_draw_specialist` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_draw_specialist.md](sig_team_streak_consistency_draw_specialist.md) |
 | `sig_team_streak_consistency_first_goal_winner` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_first_goal_winner.md](sig_team_streak_consistency_first_goal_winner.md) |
 | `sig_team_streak_consistency_goal_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_goal_machine.md](sig_team_streak_consistency_goal_machine.md) |
+| `sig_team_streak_consistency_home_fortress` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_home_fortress.md](sig_team_streak_consistency_home_fortress.md) |
 | `sig_team_streak_consistency_invincible_run` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_invincible_run.md](sig_team_streak_consistency_invincible_run.md) |
 | `sig_team_streak_consistency_scoring_drought` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_scoring_drought.md](sig_team_streak_consistency_scoring_drought.md) |
 | `sig_team_streak_consistency_winning_machine` | team | streak | consistency | `match_team` | active | [sig_team_streak_consistency_winning_machine.md](sig_team_streak_consistency_winning_machine.md) |
