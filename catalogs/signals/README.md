@@ -434,6 +434,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_discipline_cards_yellow_card_flood` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_yellow_card_flood.md](sig_team_discipline_cards_yellow_card_flood.md) |
 | `sig_team_discipline_cards_zero_card_clean_sheet` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_zero_card_clean_sheet.md](sig_team_discipline_cards_zero_card_clean_sheet.md) |
 | `sig_team_discipline_cards_zero_card_miracle` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_zero_card_miracle.md](sig_team_discipline_cards_zero_card_miracle.md) |
+| `sig_team_goalkeeping_defense_aerial_clearance_specialists` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_aerial_clearance_specialists.md](sig_team_goalkeeping_defense_aerial_clearance_specialists.md) |
 | `sig_team_goalkeeping_defense_aerial_fortress` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_aerial_fortress.md](sig_team_goalkeeping_defense_aerial_fortress.md) |
 | `sig_team_goalkeeping_defense_box_entry_denial` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_box_entry_denial.md](sig_team_goalkeeping_defense_box_entry_denial.md) |
 | `sig_team_goalkeeping_defense_box_evacuation` | team | goalkeeping | defense | `match_team` | active | [sig_team_goalkeeping_defense_box_evacuation.md](sig_team_goalkeeping_defense_box_evacuation.md) |
