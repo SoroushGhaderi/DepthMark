@@ -418,6 +418,7 @@ python3 scripts/quality/check_signal_catalogs.py --write-index
 | `sig_team_discipline_cards_clean_sheet_aggression` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_clean_sheet_aggression.md](sig_team_discipline_cards_clean_sheet_aggression.md) |
 | `sig_team_discipline_cards_collective_aggression` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_collective_aggression.md](sig_team_discipline_cards_collective_aggression.md) |
 | `sig_team_discipline_cards_dark_arts_win` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_dark_arts_win.md](sig_team_discipline_cards_dark_arts_win.md) |
+| `sig_team_discipline_cards_disciplinary_reset` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_disciplinary_reset.md](sig_team_discipline_cards_disciplinary_reset.md) |
 | `sig_team_discipline_cards_discipline_meltdown` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_discipline_meltdown.md](sig_team_discipline_cards_discipline_meltdown.md) |
 | `sig_team_discipline_cards_early_warning` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_early_warning.md](sig_team_discipline_cards_early_warning.md) |
 | `sig_team_discipline_cards_first_half_frenzy` | team | discipline | cards | `match_team` | active | [sig_team_discipline_cards_first_half_frenzy.md](sig_team_discipline_cards_first_half_frenzy.md) |
